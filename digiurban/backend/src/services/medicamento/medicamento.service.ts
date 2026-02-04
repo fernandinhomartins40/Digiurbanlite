@@ -113,6 +113,80 @@ export class MedicamentoService {
   }
 
   /**
+   * Buscar medicamentos da RENAME
+   */
+  async searchRename(termo: string, limit = 50) {
+    return await prisma.medicamento.findMany({
+      where: {
+        isActive: true,
+        isRename: true,
+        OR: [
+          { nome: { contains: termo, mode: 'insensitive' } },
+          { principioAtivo: { contains: termo, mode: 'insensitive' } },
+          { catmat: { contains: termo, mode: 'insensitive' } },
+        ],
+      },
+      select: {
+        id: true,
+        nome: true,
+        principioAtivo: true,
+        concentracao: true,
+        tipo: true,
+        apresentacao: true,
+        catmat: true,
+        isControlado: true,
+      },
+      orderBy: { nome: 'asc' },
+      take: limit,
+    });
+  }
+
+  /**
+   * Listar medicamentos da RENAME com paginação
+   */
+  async listRename(page = 1, limit = 50) {
+    const skip = (page - 1) * limit;
+
+    const [medicamentos, total] = await Promise.all([
+      prisma.medicamento.findMany({
+        where: {
+          isActive: true,
+          isRename: true,
+        },
+        select: {
+          id: true,
+          nome: true,
+          principioAtivo: true,
+          concentracao: true,
+          tipo: true,
+          apresentacao: true,
+          catmat: true,
+          isControlado: true,
+        },
+        orderBy: { nome: 'asc' },
+        skip,
+        take: limit,
+      }),
+      prisma.medicamento.count({
+        where: {
+          isActive: true,
+          isRename: true,
+        },
+      }),
+    ]);
+
+    return {
+      data: medicamentos,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  /**
    * Atualizar medicamento
    */
   async updateMedicamento(id: string, data: Partial<CreateMedicamentoDTO>) {

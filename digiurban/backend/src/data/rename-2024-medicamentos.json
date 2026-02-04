@@ -1,0 +1,1122 @@
+[
+  {
+    "nome": "Paracetamol 500mg",
+    "principioAtivo": "Paracetamol",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 500mg",
+    "catmat": "BR0372707",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Paracetamol 750mg",
+    "principioAtivo": "Paracetamol",
+    "concentracao": "750mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 750mg",
+    "catmat": "BR0372708",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Dipirona Sódica 500mg",
+    "principioAtivo": "Dipirona Sódica",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 500mg",
+    "catmat": "BR0282701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Dipirona Sódica 500mg/mL",
+    "principioAtivo": "Dipirona Sódica",
+    "concentracao": "500mg/mL",
+    "formaFarmaceutica": "SOLUCAO",
+    "apresentacao": "Solução oral 500mg/mL",
+    "catmat": "BR0282702",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ibuprofeno 600mg",
+    "principioAtivo": "Ibuprofeno",
+    "concentracao": "600mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 600mg",
+    "catmat": "BR0321801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Amoxicilina 500mg",
+    "principioAtivo": "Amoxicilina",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 500mg",
+    "catmat": "BR0062401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Amoxicilina 250mg/5mL",
+    "principioAtivo": "Amoxicilina",
+    "concentracao": "250mg/5mL",
+    "formaFarmaceutica": "SUSPENSAO",
+    "apresentacao": "Suspensão oral 250mg/5mL",
+    "catmat": "BR0062402",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Azitromicina 500mg",
+    "principioAtivo": "Azitromicina",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 500mg",
+    "catmat": "BR0092301",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Cefalexina 500mg",
+    "principioAtivo": "Cefalexina",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 500mg",
+    "catmat": "BR0162501",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Metronidazol 250mg",
+    "principioAtivo": "Metronidazol",
+    "concentracao": "250mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 250mg",
+    "catmat": "BR0412801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Metronidazol 400mg",
+    "principioAtivo": "Metronidazol",
+    "concentracao": "400mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 400mg",
+    "catmat": "BR0412802",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Omeprazol 20mg",
+    "principioAtivo": "Omeprazol",
+    "concentracao": "20mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 20mg",
+    "catmat": "BR0462901",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Losartana Potássica 50mg",
+    "principioAtivo": "Losartana Potássica",
+    "concentracao": "50mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 50mg",
+    "catmat": "BR0382101",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Captopril 25mg",
+    "principioAtivo": "Captopril",
+    "concentracao": "25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 25mg",
+    "catmat": "BR0152201",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Enalapril 10mg",
+    "principioAtivo": "Maleato de Enalapril",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0292401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Atenolol 25mg",
+    "principioAtivo": "Atenolol",
+    "concentracao": "25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 25mg",
+    "catmat": "BR0082101",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Atenolol 50mg",
+    "principioAtivo": "Atenolol",
+    "concentracao": "50mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 50mg",
+    "catmat": "BR0082102",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Hidroclorotiazida 25mg",
+    "principioAtivo": "Hidroclorotiazida",
+    "concentracao": "25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 25mg",
+    "catmat": "BR0312701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Metformina 500mg",
+    "principioAtivo": "Cloridrato de Metformina",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 500mg",
+    "catmat": "BR0412701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Metformina 850mg",
+    "principioAtivo": "Cloridrato de Metformina",
+    "concentracao": "850mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 850mg",
+    "catmat": "BR0412702",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Glibenclamida 5mg",
+    "principioAtivo": "Glibenclamida",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0302601",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Insulina NPH 100UI/mL",
+    "principioAtivo": "Insulina Humana NPH",
+    "concentracao": "100UI/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Suspensão injetável 100UI/mL",
+    "catmat": "BR0332801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Insulina Regular 100UI/mL",
+    "principioAtivo": "Insulina Humana Regular",
+    "concentracao": "100UI/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 100UI/mL",
+    "catmat": "BR0332802",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Sinvastatina 20mg",
+    "principioAtivo": "Sinvastatina",
+    "concentracao": "20mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 20mg",
+    "catmat": "BR0542801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Sinvastatina 40mg",
+    "principioAtivo": "Sinvastatina",
+    "concentracao": "40mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 40mg",
+    "catmat": "BR0542802",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ácido Acetilsalicílico 100mg",
+    "principioAtivo": "Ácido Acetilsalicílico",
+    "concentracao": "100mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 100mg",
+    "catmat": "BR0022101",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ácido Fólico 5mg",
+    "principioAtivo": "Ácido Fólico",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0022201",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Sulfato Ferroso 40mg",
+    "principioAtivo": "Sulfato Ferroso",
+    "concentracao": "40mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 40mg de ferro elementar",
+    "catmat": "BR0552701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Dexametasona 4mg",
+    "principioAtivo": "Dexametasona",
+    "concentracao": "4mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 4mg",
+    "catmat": "BR0262301",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Prednisona 5mg",
+    "principioAtivo": "Prednisona",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0492801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Prednisona 20mg",
+    "principioAtivo": "Prednisona",
+    "concentracao": "20mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 20mg",
+    "catmat": "BR0492802",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Salbutamol 100mcg",
+    "principioAtivo": "Sulfato de Salbutamol",
+    "concentracao": "100mcg",
+    "formaFarmaceutica": "AEROSOL",
+    "apresentacao": "Aerossol 100mcg/dose",
+    "catmat": "BR0522701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Salbutamol 2mg/5mL",
+    "principioAtivo": "Sulfato de Salbutamol",
+    "concentracao": "2mg/5mL",
+    "formaFarmaceutica": "XAROPE",
+    "apresentacao": "Xarope 2mg/5mL",
+    "catmat": "BR0522702",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Beclometasona 250mcg",
+    "principioAtivo": "Dipropionato de Beclometasona",
+    "concentracao": "250mcg",
+    "formaFarmaceutica": "AEROSOL",
+    "apresentacao": "Aerossol 250mcg/dose",
+    "catmat": "BR0102401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Loratadina 10mg",
+    "principioAtivo": "Loratadina",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0382001",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Maleato de Dexclorfeniramina 2mg",
+    "principioAtivo": "Maleato de Dexclorfeniramina",
+    "concentracao": "2mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 2mg",
+    "catmat": "BR0262401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Diazepam 5mg",
+    "principioAtivo": "Diazepam",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0272301",
+    "componenteRename": "CBAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Diazepam 10mg",
+    "principioAtivo": "Diazepam",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0272302",
+    "componenteRename": "CBAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Fluoxetina 20mg",
+    "principioAtivo": "Cloridrato de Fluoxetina",
+    "concentracao": "20mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 20mg",
+    "catmat": "BR0292501",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Sertralina 50mg",
+    "principioAtivo": "Cloridrato de Sertralina",
+    "concentracao": "50mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 50mg",
+    "catmat": "BR0532801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Carbamazepina 200mg",
+    "principioAtivo": "Carbamazepina",
+    "concentracao": "200mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 200mg",
+    "catmat": "BR0152301",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Fenitoína 100mg",
+    "principioAtivo": "Fenitoína Sódica",
+    "concentracao": "100mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 100mg",
+    "catmat": "BR0292601",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ácido Valpróico 250mg",
+    "principioAtivo": "Ácido Valpróico",
+    "concentracao": "250mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 250mg",
+    "catmat": "BR0022301",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Levotiroxina Sódica 25mcg",
+    "principioAtivo": "Levotiroxina Sódica",
+    "concentracao": "25mcg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 25mcg",
+    "catmat": "BR0372001",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Levotiroxina Sódica 50mcg",
+    "principioAtivo": "Levotiroxina Sódica",
+    "concentracao": "50mcg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 50mcg",
+    "catmat": "BR0372002",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Levotiroxina Sódica 100mcg",
+    "principioAtivo": "Levotiroxina Sódica",
+    "concentracao": "100mcg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 100mcg",
+    "catmat": "BR0372003",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Complexo B",
+    "principioAtivo": "Vitaminas do Complexo B",
+    "concentracao": "",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido",
+    "catmat": "BR0202801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Vitamina C 500mg",
+    "principioAtivo": "Ácido Ascórbico",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 500mg",
+    "catmat": "BR0582801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Nistatina 100.000UI/mL",
+    "principioAtivo": "Nistatina",
+    "concentracao": "100.000UI/mL",
+    "formaFarmaceutica": "SUSPENSAO",
+    "apresentacao": "Suspensão oral 100.000UI/mL",
+    "catmat": "BR0452801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Clotrimazol 10mg/g",
+    "principioAtivo": "Clotrimazol",
+    "concentracao": "10mg/g",
+    "formaFarmaceutica": "CREME",
+    "apresentacao": "Creme vaginal 10mg/g",
+    "catmat": "BR0192701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Miconazol 20mg/g",
+    "principioAtivo": "Nitrato de Miconazol",
+    "concentracao": "20mg/g",
+    "formaFarmaceutica": "CREME",
+    "apresentacao": "Creme 20mg/g",
+    "catmat": "BR0422801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Albendazol 400mg",
+    "principioAtivo": "Albendazol",
+    "concentracao": "400mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido mastigável 400mg",
+    "catmat": "BR0042401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Mebendazol 100mg",
+    "principioAtivo": "Mebendazol",
+    "concentracao": "100mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido mastigável 100mg",
+    "catmat": "BR0402801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Colírio de Cloranfenicol 5mg/mL",
+    "principioAtivo": "Cloranfenicol",
+    "concentracao": "5mg/mL",
+    "formaFarmaceutica": "SOLUCAO",
+    "apresentacao": "Solução oftálmica 5mg/mL",
+    "catmat": "BR0182701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Tobramicina 3mg/mL",
+    "principioAtivo": "Tobramicina",
+    "concentracao": "3mg/mL",
+    "formaFarmaceutica": "SOLUCAO",
+    "apresentacao": "Solução oftálmica 3mg/mL",
+    "catmat": "BR0562801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Soro Fisiológico 0,9%",
+    "principioAtivo": "Cloreto de Sódio",
+    "concentracao": "0,9%",
+    "formaFarmaceutica": "SOLUCAO",
+    "apresentacao": "Solução injetável 0,9%",
+    "catmat": "BR0542901",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Soro Glicosado 5%",
+    "principioAtivo": "Glicose",
+    "concentracao": "5%",
+    "formaFarmaceutica": "SOLUCAO",
+    "apresentacao": "Solução injetável 5%",
+    "catmat": "BR0543001",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Lidocaína 2%",
+    "principioAtivo": "Cloridrato de Lidocaína",
+    "concentracao": "2%",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 2%",
+    "catmat": "BR0372101",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Benzilpenicilina Benzatina 1.200.000UI",
+    "principioAtivo": "Benzilpenicilina Benzatina",
+    "concentracao": "1.200.000UI",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Pó para suspensão injetável 1.200.000UI",
+    "catmat": "BR0112401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Dexametasona 4mg/mL",
+    "principioAtivo": "Dexametasona",
+    "concentracao": "4mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 4mg/mL",
+    "catmat": "BR0262302",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Furosemida 10mg/mL",
+    "principioAtivo": "Furosemida",
+    "concentracao": "10mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 10mg/mL",
+    "catmat": "BR0292701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Metoclopramida 5mg/mL",
+    "principioAtivo": "Cloridrato de Metoclopramida",
+    "concentracao": "5mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 5mg/mL",
+    "catmat": "BR0412901",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Diclofenaco Sódico 75mg/3mL",
+    "principioAtivo": "Diclofenaco Sódico",
+    "concentracao": "75mg/3mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 75mg/3mL",
+    "catmat": "BR0272401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Epinefrina 1mg/mL",
+    "principioAtivo": "Adrenalina/Epinefrina",
+    "concentracao": "1mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 1mg/mL",
+    "catmat": "BR0292801",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Atropina 0,25mg/mL",
+    "principioAtivo": "Sulfato de Atropina",
+    "concentracao": "0,25mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 0,25mg/mL",
+    "catmat": "BR0082201",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Hidrocortisona 100mg",
+    "principioAtivo": "Succinato Sódico de Hidrocortisona",
+    "concentracao": "100mg",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Pó para solução injetável 100mg",
+    "catmat": "BR0312801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Hidrocortisona 500mg",
+    "principioAtivo": "Succinato Sódico de Hidrocortisona",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Pó para solução injetável 500mg",
+    "catmat": "BR0312802",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ceftriaxona 1g",
+    "principioAtivo": "Ceftriaxona Sódica",
+    "concentracao": "1g",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Pó para solução injetável 1g",
+    "catmat": "BR0162601",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Gentamicina 40mg/mL",
+    "principioAtivo": "Sulfato de Gentamicina",
+    "concentracao": "40mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Solução injetável 40mg/mL",
+    "catmat": "BR0302701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Clindamicina 300mg",
+    "principioAtivo": "Cloridrato de Clindamicina",
+    "concentracao": "300mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 300mg",
+    "catmat": "BR0192601",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ciprofloxacino 500mg",
+    "principioAtivo": "Cloridrato de Ciprofloxacino",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 500mg",
+    "catmat": "BR0172701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Norfloxacino 400mg",
+    "principioAtivo": "Norfloxacino",
+    "concentracao": "400mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 400mg",
+    "catmat": "BR0452901",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Sulfametoxazol + Trimetoprima 400mg + 80mg",
+    "principioAtivo": "Sulfametoxazol + Trimetoprima",
+    "concentracao": "400mg + 80mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 400mg + 80mg",
+    "catmat": "BR0552801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Ranitidina 150mg",
+    "principioAtivo": "Cloridrato de Ranitidina",
+    "concentracao": "150mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido revestido 150mg",
+    "catmat": "BR0512801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Domperidona 10mg",
+    "principioAtivo": "Domperidona",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0282801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Brometo de N-Butilescopolamina 10mg",
+    "principioAtivo": "Brometo de N-Butilescopolamina",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0132401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Carbonato de Cálcio 500mg",
+    "principioAtivo": "Carbonato de Cálcio",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 500mg (200mg cálcio elementar)",
+    "catmat": "BR0152401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Neomicina + Bacitracina",
+    "principioAtivo": "Sulfato de Neomicina + Bacitracina Zíncica",
+    "concentracao": "",
+    "formaFarmaceutica": "POMADA",
+    "apresentacao": "Pomada dermatológica",
+    "catmat": "BR0442801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Permetrina 5%",
+    "principioAtivo": "Permetrina",
+    "concentracao": "5%",
+    "formaFarmaceutica": "CREME",
+    "apresentacao": "Loção 5%",
+    "catmat": "BR0482801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Óleo Mineral",
+    "principioAtivo": "Óleo Mineral",
+    "concentracao": "",
+    "formaFarmaceutica": "SOLUCAO",
+    "apresentacao": "Solução oral",
+    "catmat": "BR0462701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Lactulose 667mg/mL",
+    "principioAtivo": "Lactulose",
+    "concentracao": "667mg/mL",
+    "formaFarmaceutica": "XAROPE",
+    "apresentacao": "Xarope 667mg/mL",
+    "catmat": "BR0352801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Sais para Reidratação Oral",
+    "principioAtivo": "Cloreto de Sódio + Citrato de Sódio + Cloreto de Potássio + Glicose",
+    "concentracao": "",
+    "formaFarmaceutica": "OUTRO",
+    "apresentacao": "Pó para solução oral",
+    "catmat": "BR0522801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Cloroquina 150mg",
+    "principioAtivo": "Difosfato de Cloroquina",
+    "concentracao": "150mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 150mg",
+    "catmat": "BR0182801",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Primaquina 15mg",
+    "principioAtivo": "Difosfato de Primaquina",
+    "concentracao": "15mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 15mg",
+    "catmat": "BR0492901",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Medroxiprogesterona 150mg/mL",
+    "principioAtivo": "Acetato de Medroxiprogesterona",
+    "concentracao": "150mg/mL",
+    "formaFarmaceutica": "INJETAVEL",
+    "apresentacao": "Suspensão injetável 150mg/mL",
+    "catmat": "BR0402901",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Etinilestradiol + Levonorgestrel 0,03mg + 0,15mg",
+    "principioAtivo": "Etinilestradiol + Levonorgestrel",
+    "concentracao": "0,03mg + 0,15mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 0,03mg + 0,15mg",
+    "catmat": "BR0292901",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Levonorgestrel 1,5mg",
+    "principioAtivo": "Levonorgestrel",
+    "concentracao": "1,5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 1,5mg (Contracepção de Emergência)",
+    "catmat": "BR0372201",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Misoprostol 200mcg",
+    "principioAtivo": "Misoprostol",
+    "concentracao": "200mcg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 200mcg",
+    "catmat": "BR0422901",
+    "componenteRename": "CESAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Isoniazida 100mg",
+    "principioAtivo": "Isoniazida",
+    "concentracao": "100mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 100mg",
+    "catmat": "BR0342801",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Rifampicina 300mg",
+    "principioAtivo": "Rifampicina",
+    "concentracao": "300mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 300mg",
+    "catmat": "BR0512901",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Pirazinamida 500mg",
+    "principioAtivo": "Pirazinamida",
+    "concentracao": "500mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 500mg",
+    "catmat": "BR0482901",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Etambutol 400mg",
+    "principioAtivo": "Cloridrato de Etambutol",
+    "concentracao": "400mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 400mg",
+    "catmat": "BR0292701",
+    "componenteRename": "CESAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Anlodipino 5mg",
+    "principioAtivo": "Besilato de Anlodipino",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0072101",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Propranolol 40mg",
+    "principioAtivo": "Cloridrato de Propranolol",
+    "concentracao": "40mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 40mg",
+    "catmat": "BR0502801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Espironolactona 25mg",
+    "principioAtivo": "Espironolactona",
+    "concentracao": "25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 25mg",
+    "catmat": "BR0292801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Furosemida 40mg",
+    "principioAtivo": "Furosemida",
+    "concentracao": "40mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 40mg",
+    "catmat": "BR0292702",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Varfarina Sódica 5mg",
+    "principioAtivo": "Varfarina Sódica",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0582701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Digoxina 0,25mg",
+    "principioAtivo": "Digoxina",
+    "concentracao": "0,25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 0,25mg",
+    "catmat": "BR0272501",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Isossorbida 10mg",
+    "principioAtivo": "Mononitrato de Isossorbida",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0342701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Codeína 30mg",
+    "principioAtivo": "Fosfato de Codeína",
+    "concentracao": "30mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 30mg",
+    "catmat": "BR0202701",
+    "componenteRename": "CBAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Morfina 10mg",
+    "principioAtivo": "Sulfato de Morfina",
+    "concentracao": "10mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 10mg",
+    "catmat": "BR0432801",
+    "componenteRename": "CBAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Tramadol 50mg",
+    "principioAtivo": "Cloridrato de Tramadol",
+    "concentracao": "50mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 50mg",
+    "catmat": "BR0562701",
+    "componenteRename": "CBAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Clonazepam 2mg",
+    "principioAtivo": "Clonazepam",
+    "concentracao": "2mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 2mg",
+    "catmat": "BR0192801",
+    "componenteRename": "CBAF",
+    "isControlado": true
+  },
+  {
+    "nome": "Risperidona 2mg",
+    "principioAtivo": "Risperidona",
+    "concentracao": "2mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 2mg",
+    "catmat": "BR0512701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Haloperidol 5mg",
+    "principioAtivo": "Haloperidol",
+    "concentracao": "5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 5mg",
+    "catmat": "BR0312701",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Carbonato de Lítio 300mg",
+    "principioAtivo": "Carbonato de Lítio",
+    "concentracao": "300mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 300mg",
+    "catmat": "BR0152501",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Amitriptilina 25mg",
+    "principioAtivo": "Cloridrato de Amitriptilina",
+    "concentracao": "25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 25mg",
+    "catmat": "BR0052401",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Nortriptilina 25mg",
+    "principioAtivo": "Cloridrato de Nortriptilina",
+    "concentracao": "25mg",
+    "formaFarmaceutica": "CAPSULA",
+    "apresentacao": "Cápsula 25mg",
+    "catmat": "BR0452801",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Alopurinol 100mg",
+    "principioAtivo": "Alopurinol",
+    "concentracao": "100mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 100mg",
+    "catmat": "BR0052301",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Colchicina 0,5mg",
+    "principioAtivo": "Colchicina",
+    "concentracao": "0,5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 0,5mg",
+    "catmat": "BR0202601",
+    "componenteRename": "CBAF",
+    "isControlado": false
+  },
+  {
+    "nome": "Metotrexato 2,5mg",
+    "principioAtivo": "Metotrexato",
+    "concentracao": "2,5mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 2,5mg",
+    "catmat": "BR0413001",
+    "componenteRename": "Especializado",
+    "isControlado": false
+  },
+  {
+    "nome": "Levodopa + Carbidopa 250mg + 25mg",
+    "principioAtivo": "Levodopa + Carbidopa",
+    "concentracao": "250mg + 25mg",
+    "formaFarmaceutica": "COMPRIMIDO",
+    "apresentacao": "Comprimido 250mg + 25mg",
+    "catmat": "BR0372301",
+    "componenteRename": "Especializado",
+    "isControlado": false
+  }
+]

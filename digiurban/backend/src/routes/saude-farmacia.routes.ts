@@ -4,12 +4,53 @@
 
 import { Router, Request, Response } from 'express';
 import { EstoqueService, DispensacaoService } from '../services/farmacia';
+import MedicamentoService from '../services/medicamento/medicamento.service';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
 
 // Middleware de autenticação para todas as rotas de farmácia
 router.use(authenticateToken);
+
+// ============================================================================
+// MEDICAMENTOS RENAME
+// ============================================================================
+
+/**
+ * GET /api/saude/farmacia/medicamentos/rename/search
+ * Buscar medicamentos da RENAME
+ */
+router.get('/medicamentos/rename/search', async (req: Request, res: Response) => {
+  try {
+    const termo = req.query.q as string;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+
+    if (!termo) {
+      return res.status(400).json({ error: 'Parâmetro de busca "q" é obrigatório' });
+    }
+
+    const medicamentos = await MedicamentoService.searchRename(termo, limit);
+    res.json(medicamentos);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/farmacia/medicamentos/rename/list
+ * Listar medicamentos da RENAME com paginação
+ */
+router.get('/medicamentos/rename/list', async (req: Request, res: Response) => {
+  try {
+    const page = req.query.page ? parseInt(req.query.page as string) : 1;
+    const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+
+    const resultado = await MedicamentoService.listRename(page, limit);
+    res.json(resultado);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
 
 // ============================================================================
 // LOTES DE MEDICAMENTOS
@@ -149,6 +190,59 @@ router.get('/lote/vencidos', async (req: Request, res: Response) => {
 // ============================================================================
 // ESTOQUE
 // ============================================================================
+
+/**
+ * POST /api/saude/farmacia/estoque
+ * Criar novo medicamento e adicionar ao estoque
+ */
+router.post('/estoque', async (req: Request, res: Response) => {
+  try {
+    const { medicamentoId, isRename, ...estoqueData } = req.body;
+
+    let medicamento;
+
+    // Se for medicamento da RENAME, usa o ID
+    if (isRename && medicamentoId) {
+      medicamento = await MedicamentoService.findById(medicamentoId);
+      if (!medicamento) {
+        return res.status(404).json({ error: 'Medicamento RENAME não encontrado' });
+      }
+    } else {
+      // Se for manual, cria novo medicamento
+      medicamento = await MedicamentoService.createMedicamento({
+        nome: estoqueData.nome,
+        principioAtivo: estoqueData.principioAtivo,
+        apresentacao: `${estoqueData.formaFarmaceutica} ${estoqueData.concentracao || ''}`.trim(),
+        tipo: estoqueData.formaFarmaceutica,
+        concentracao: estoqueData.concentracao,
+        fabricante: estoqueData.fabricante,
+        isControlado: estoqueData.isControlado || false,
+      });
+    }
+
+    // Criar entrada no estoque (usar serviço existente ou criar novo)
+    const estoque = await MedicamentoService.createEstoque({
+      medicamentoId: medicamento.id,
+      unidadeId: req.body.unidadeId || 'default-unidade-id', // TODO: Pegar da sessão
+      lote: estoqueData.lote,
+      validade: new Date(estoqueData.validade),
+      dataValidade: new Date(estoqueData.validade),
+      quantidade: estoqueData.quantidade,
+      quantidadeAtual: estoqueData.quantidade,
+      estoqueMinimo: estoqueData.estoqueMinimo,
+      quantidadeMinima: estoqueData.estoqueMinimo,
+    });
+
+    res.status(201).json({
+      success: true,
+      medicamento,
+      estoque,
+    });
+  } catch (error: any) {
+    console.error('Erro ao criar estoque:', error);
+    res.status(400).json({ error: error.message });
+  }
+});
 
 /**
  * GET /api/saude/farmacia/estoque/:unidadeId
