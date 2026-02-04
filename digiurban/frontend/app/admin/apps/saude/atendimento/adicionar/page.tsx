@@ -409,7 +409,7 @@ export default function AdicionarCidadaoListaPage() {
                     <SelectContent>
                       {profissionais.map((prof) => (
                         <SelectItem key={prof.id} value={prof.id}>
-                          {prof.nome} - {prof.categoria}
+                          {prof.name} - {prof.categoria}
                         </SelectItem>
                       ))}
                     </SelectContent>

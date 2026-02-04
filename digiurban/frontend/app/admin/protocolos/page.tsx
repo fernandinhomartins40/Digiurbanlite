@@ -492,7 +492,7 @@ export default function ProtocolsPage() {
             open={showAssignServerDialog}
             onOpenChange={setShowAssignServerDialog}
             protocolId={activeProtocolId}
-            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
+            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id || ''}
             onSuccess={() => {
               setShowAssignServerDialog(false)
               setActiveProtocolId(null)
@@ -504,7 +504,6 @@ export default function ProtocolsPage() {
             open={showDelegateDialog}
             onOpenChange={setShowDelegateDialog}
             protocolId={activeProtocolId}
-            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
             onSuccess={() => {
               setShowDelegateDialog(false)
               setActiveProtocolId(null)
@@ -516,7 +515,6 @@ export default function ProtocolsPage() {
             open={showForwardDialog}
             onOpenChange={setShowForwardDialog}
             protocolId={activeProtocolId}
-            currentDepartmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
             onSuccess={() => {
               setShowForwardDialog(false)
               setActiveProtocolId(null)
@@ -528,7 +526,6 @@ export default function ProtocolsPage() {
             open={showAssignTeamDialog}
             onOpenChange={setShowAssignTeamDialog}
             protocolId={activeProtocolId}
-            departmentId={protocols.find(p => p.id === activeProtocolId)?.department?.id}
             onSuccess={() => {
               setShowAssignTeamDialog(false)
               setActiveProtocolId(null)

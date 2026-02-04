@@ -358,7 +358,7 @@ export function AssignProtocolDialog({
                             {suggestion.score}
                           </div>
                           <p className="text-xs text-gray-500">Score</p>
-                          <Badge className={getCargaBadgeClass(suggestion.cargaPercentual)} variant="outline" className="mt-2">
+                          <Badge className={`${getCargaBadgeClass(suggestion.cargaPercentual)} mt-2`} variant="outline">
                             {suggestion.protocolosAtivos} ativos
                           </Badge>
                         </div>
