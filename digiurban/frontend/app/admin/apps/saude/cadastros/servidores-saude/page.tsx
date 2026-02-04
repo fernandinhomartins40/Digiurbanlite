@@ -53,7 +53,7 @@ export default function ServidoresSaudeListagem() {
   const loadServidores = async () => {
     try {
       setLoading(true);
-      let url = '/api/apps/saude/cadastros/dados-saude';
+      let url = '/api/professional-data/health';
 
       const params = new URLSearchParams();
       if (filtroCategoria && filtroCategoria !== 'TODAS') params.append('categoria', filtroCategoria);
@@ -65,10 +65,42 @@ export default function ServidoresSaudeListagem() {
       const response = await fetch(url, {
         credentials: 'include',
       });
+
+      if (!response.ok) {
+        throw new Error(`Erro ${response.status}: ${response.statusText}`);
+      }
+
       const data = await response.json();
-      setServidores(data);
+
+      // Transformar os dados para o formato esperado pelo frontend
+      const servidoresFormatados = Array.isArray(data) ? data.map((item: any) => ({
+        id: item.user?.id || item.userId,
+        name: item.user?.name || '',
+        email: item.user?.email || '',
+        departmentName: item.user?.assignments?.[0]?.department?.name ||
+                        item.user?.assignments?.[0]?.organizationalUnit?.nome ||
+                        'Sem lotação',
+        dadosSaude: {
+          id: item.id,
+          categoria: item.categoria,
+          registroProfissional: item.registroProfissional,
+          tipoRegistro: item.tipoRegistro,
+          ufRegistro: item.ufRegistro,
+          cns: item.cns,
+          cbo: item.cbo,
+          ativo: item.ativo,
+          especialidades: item.especialidades,
+        },
+        _count: {
+          vinculosUnidades: 0, // TODO: Buscar vínculos
+          vinculosEquipes: 0,  // TODO: Buscar vínculos
+        },
+      })) : [];
+
+      setServidores(servidoresFormatados);
     } catch (error) {
       console.error('Erro ao carregar servidores:', error);
+      setServidores([]);
     } finally {
       setLoading(false);
     }

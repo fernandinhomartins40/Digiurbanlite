@@ -287,6 +287,177 @@ router.delete('/unidades/:id', async (req: Request, res: Response) => {
 // ROTAS DE PROFISSIONAIS DE SAÚDE
 // ============================================================
 
+/**
+ * GET /api/apps/saude/cadastros/profissionais
+ * Listar profissionais de saúde
+ */
+router.get('/profissionais', async (req: Request, res: Response) => {
+  try {
+    const { search, categoria, unidadeId, isActive } = req.query;
+
+    const where: any = {};
+    if (categoria) where.categoria = categoria as string;
+    if (isActive !== undefined) where.ativo = isActive === 'true';
+
+    const profissionais = await prisma.healthProfessionalData.findMany({
+      where,
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            assignments: {
+              where: { situacao: 'ATIVO', isPrimary: true },
+              include: {
+                department: {
+                  select: { id: true, name: true },
+                },
+                organizationalUnit: {
+                  select: { id: true, nome: true, sigla: true },
+                },
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Filtro de busca por nome, email ou registro
+    let filtered = profissionais;
+    if (search) {
+      const searchLower = (search as string).toLowerCase();
+      filtered = profissionais.filter(
+        (item) =>
+          item.user.name.toLowerCase().includes(searchLower) ||
+          item.user.email.toLowerCase().includes(searchLower) ||
+          item.registroProfissional?.toLowerCase().includes(searchLower) ||
+          item.cns?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Formatar resposta
+    const profissionaisFormatados = filtered.map((item) => ({
+      id: item.user.id,
+      userId: item.userId,
+      name: item.user.name,
+      email: item.user.email,
+      categoria: item.categoria,
+      registroProfissional: item.registroProfissional,
+      tipoRegistro: item.tipoRegistro,
+      ufRegistro: item.ufRegistro,
+      cns: item.cns,
+      cbo: item.cbo,
+      especialidades: item.especialidades,
+      ativo: item.ativo,
+      departmentName:
+        item.user.assignments?.[0]?.department?.name ||
+        item.user.assignments?.[0]?.organizationalUnit?.nome ||
+        'Sem lotação',
+    }));
+
+    res.json(profissionaisFormatados);
+  } catch (error: any) {
+    console.error('Erro ao buscar profissionais:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/profissionais/:id
+ * Buscar profissional específico
+ */
+router.get('/profissionais/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const profissional = await prisma.healthProfessionalData.findFirst({
+      where: {
+        OR: [{ userId: id }, { user: { id } }],
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            role: true,
+            assignments: {
+              where: { situacao: 'ATIVO' },
+              include: {
+                department: {
+                  select: { id: true, name: true },
+                },
+                organizationalUnit: {
+                  select: { id: true, nome: true, sigla: true },
+                },
+                position: {
+                  select: { id: true, nome: true },
+                },
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!profissional) {
+      return res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+
+    const response = {
+      id: profissional.user.id,
+      userId: profissional.userId,
+      name: profissional.user.name,
+      email: profissional.user.email,
+      role: profissional.user.role,
+      categoria: profissional.categoria,
+      registroProfissional: profissional.registroProfissional,
+      tipoRegistro: profissional.tipoRegistro,
+      ufRegistro: profissional.ufRegistro,
+      cns: profissional.cns,
+      cbo: profissional.cbo,
+      especialidades: profissional.especialidades,
+      ativo: profissional.ativo,
+      assignments: profissional.user.assignments,
+    };
+
+    res.json(response);
+  } catch (error: any) {
+    console.error('Erro ao buscar profissional:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/apps/saude/cadastros/profissionais/:id/especialidades
+ * Buscar especialidades de um profissional
+ */
+router.get('/profissionais/:id/especialidades', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+
+    const profissional = await prisma.healthProfessionalData.findFirst({
+      where: {
+        OR: [{ userId: id }, { user: { id } }],
+      },
+      select: {
+        especialidades: true,
+      },
+    });
+
+    if (!profissional) {
+      return res.status(404).json({ error: 'Profissional não encontrado' });
+    }
+
+    res.json(profissional.especialidades || []);
+  } catch (error: any) {
+    console.error('Erro ao buscar especialidades:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 // ============================================================
 // ROTAS DE ESPECIALIDADES MÉDICAS
 // ============================================================

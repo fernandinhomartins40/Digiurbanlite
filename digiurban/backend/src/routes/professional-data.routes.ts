@@ -653,11 +653,11 @@ router.get('/health/stats', authenticateToken, async (req: Request, res: Respons
   try {
     const [total, ativos, porCategoria] = await Promise.all([
       prisma.healthProfessionalData.count(),
-      prisma.healthProfessionalData.count({ where: { status: 'ATIVO' } }),
+      prisma.healthProfessionalData.count({ where: { ativo: true } }),
       prisma.healthProfessionalData.groupBy({
         by: ['categoria'],
         _count: true,
-        where: { status: 'ATIVO' },
+        where: { ativo: true },
       }),
     ]);
 
