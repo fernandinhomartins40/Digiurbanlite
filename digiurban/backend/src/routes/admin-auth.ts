@@ -189,8 +189,9 @@ router.post(
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',
         maxAge: 3600000,
-        path: '/',
-        domain: process.env.NODE_ENV === 'production' ? '.digiurban.com.br' : undefined
+        path: '/'
+        // CRITICAL FIX: Não definir domain - deixar o browser usar o domínio atual
+        // Isso evita problemas com cookies em digiurban.com.br vs www.digiurban.com.br
         });
 
       // Remover senha da resposta
@@ -522,8 +523,8 @@ router.post('/logout', handleAsyncRoute(async (req, res) => {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.digiurban.com.br' : undefined
+      path: '/'
+      // CRITICAL FIX: Não definir domain para corresponder ao cookie original
         });
 
     res.json({
