@@ -186,19 +186,19 @@ export default function NovaAgenda() {
   const validateVinculo = async (profissionalId: string, unidadeId: string) => {
     try {
       const response = await fetch(
-        `/api/apps/saude/cadastros/vinculos?profissionalId=${profissionalId}&unidadeId=${unidadeId}`,
+        `/api/employee-assignments?userId=${profissionalId}&situacao=ATIVO`,
         { credentials: 'include' }
       );
 
       if (response.ok) {
-        const data = await response.json();
-        const vinculoAtivo = data.find((v: any) => v.ativo && v.unidade.id === unidadeId);
+        const assignments = await response.json();
+        const vinculoAtivo = assignments.find((a: any) => a.organizationalUnit?.id === unidadeId);
 
         if (vinculoAtivo) {
           setVinculoInfo({
             temVinculo: true,
             cargaHoraria: vinculoAtivo.cargaHoraria,
-            unidadeNome: vinculoAtivo.unidade.nome,
+            unidadeNome: vinculoAtivo.organizationalUnit?.nome || '',
           });
         } else {
           setVinculoInfo({ temVinculo: false });

@@ -14,35 +14,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, UserPlus, Save, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import { ArrowLeft, Save, User, Link2, Trash2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
-interface ServidorSaude {
-  id: string;
-  name: string;
-  email: string;
-  departmentName: string;
-  dadosSaude: {
-    id: string;
-    categoria: string;
-    registroProfissional: string | null;
-    tipoRegistro: string | null;
-    ufRegistro: string | null;
-    cns: string | null;
-    cbo: string | null;
-    especialidades: any;
-    ativo: boolean;
-    aceitaAgendamento: boolean;
-    tempoMedioConsulta: number;
-    observacoes: string | null;
-  } | null;
-}
+// ============================================================
+// CONSTANTES
+// ============================================================
 
 const CATEGORIAS = [
   { value: 'MEDICO', label: 'Médico' },
   { value: 'ENFERMEIRO', label: 'Enfermeiro' },
   { value: 'TECNICO_ENFERMAGEM', label: 'Técnico de Enfermagem' },
-  { value: 'ACS', label: 'Agente Comunitário de Saúde (ACS)' },
+  { value: 'ACS', label: 'Agente Comunitário de Saúde' },
   { value: 'DENTISTA', label: 'Dentista' },
   { value: 'FARMACEUTICO', label: 'Farmacêutico' },
   { value: 'PSICOLOGO', label: 'Psicólogo' },
@@ -53,27 +37,60 @@ const CATEGORIAS = [
 ];
 
 const TIPOS_REGISTRO = [
-  { value: 'CRM', label: 'CRM - Conselho Regional de Medicina' },
-  { value: 'COREN', label: 'COREN - Conselho Regional de Enfermagem' },
-  { value: 'CRO', label: 'CRO - Conselho Regional de Odontologia' },
-  { value: 'CRF', label: 'CRF - Conselho Regional de Farmácia' },
-  { value: 'CRP', label: 'CRP - Conselho Regional de Psicologia' },
-  { value: 'CREFITO', label: 'CREFITO - Conselho Regional de Fisioterapia' },
-  { value: 'CRN', label: 'CRN - Conselho Regional de Nutrição' },
-  { value: 'CRESS', label: 'CRESS - Conselho Regional de Serviço Social' },
+  { value: 'CRM', label: 'CRM' },
+  { value: 'COREN', label: 'COREN' },
+  { value: 'CRO', label: 'CRO' },
+  { value: 'CRF', label: 'CRF' },
+  { value: 'CRP', label: 'CRP' },
+  { value: 'CREFITO', label: 'CREFITO' },
+  { value: 'CRN', label: 'CRN' },
+  { value: 'CRESS', label: 'CRESS' },
   { value: 'OUTRO', label: 'Outro' },
 ];
 
-const UFS = ['AC', 'AL', 'AP', 'AM', 'BA', 'CE', 'DF', 'ES', 'GO', 'MA', 'MT', 'MS', 'MG', 'PA', 'PB', 'PR', 'PE', 'PI', 'RJ', 'RN', 'RS', 'RO', 'RR', 'SC', 'SP', 'SE', 'TO'];
+const UFS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
+const CATEGORIAS_COM_REGISTRO = ['MEDICO','ENFERMEIRO','DENTISTA','FARMACEUTICO','PSICOLOGO','FISIOTERAPEUTA','NUTRICIONISTA','ASSISTENTE_SOCIAL'];
+
+// ============================================================
+// TIPOS
+// ============================================================
+
+interface VinculoUnidade {
+  id: string;
+  situacao: string;
+  tipo: string;
+  isPrimary: boolean;
+  cargaHoraria: number | null;
+  dataInicio: string;
+  dataFim: string | null;
+  organizationalUnit: { nome: string; sigla: string } | null;
+}
+
+interface VinculoEquipe {
+  id: string;
+  ativo: boolean;
+  team: { nome: string; sigla: string } | null;
+}
+
+// ============================================================
+// COMPONENTE
+// ============================================================
 
 export default function EditarServidorSaude() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const servidorId = params.id as string;
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [servidor, setServidor] = useState<ServidorSaude | null>(null);
+
+  // Dados do servidor
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [departamento, setDepartamento] = useState('');
+
+  // Dados profissionais (HealthProfessionalData)
   const [formData, setFormData] = useState({
     categoria: '',
     registroProfissional: '',
@@ -82,11 +99,15 @@ export default function EditarServidorSaude() {
     cns: '',
     cbo: '',
     especialidades: '',
-    ativo: true,
+    status: 'ATIVO',
     aceitaAgendamento: true,
     tempoMedioConsulta: '30',
     observacoes: '',
   });
+
+  // Vínculos existentes
+  const [vinculosUnidades, setVinculosUnidades] = useState<VinculoUnidade[]>([]);
+  const [vinculosEquipes, setVinculosEquipes] = useState<VinculoEquipe[]>([]);
 
   useEffect(() => {
     loadServidor();
@@ -94,30 +115,44 @@ export default function EditarServidorSaude() {
 
   const loadServidor = async () => {
     try {
-      const response = await fetch(`/api/apps/saude/cadastros/dados-saude/${servidorId}`, {
-        credentials: 'include',
-      });
-      const data = await response.json();
-      setServidor(data);
+      // Buscar dados completos via adapter V2.0
+      const res = await fetch(`/api/saude/servidores/${servidorId}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Servidor não encontrado');
 
-      if (data.dadosSaude) {
+      const data = await res.json();
+
+      setNome(data.name || '');
+      setEmail(data.email || '');
+      setDepartamento(data.department?.name || '');
+
+      if (data.healthData) {
         setFormData({
-          categoria: data.dadosSaude.categoria,
-          registroProfissional: data.dadosSaude.registroProfissional || '',
-          tipoRegistro: data.dadosSaude.tipoRegistro || '',
-          ufRegistro: data.dadosSaude.ufRegistro || '',
-          cns: data.dadosSaude.cns || '',
-          cbo: data.dadosSaude.cbo || '',
-          especialidades: data.dadosSaude.especialidades ? JSON.stringify(data.dadosSaude.especialidades).slice(1, -1) : '',
-          ativo: data.dadosSaude.ativo,
-          aceitaAgendamento: data.dadosSaude.aceitaAgendamento,
-          tempoMedioConsulta: String(data.dadosSaude.tempoMedioConsulta || 30),
-          observacoes: data.dadosSaude.observacoes || '',
+          categoria: data.healthData.categoria || '',
+          registroProfissional: data.healthData.registroProfissional || '',
+          tipoRegistro: data.healthData.tipoRegistro || '',
+          ufRegistro: data.healthData.ufRegistro || '',
+          cns: data.healthData.cns || '',
+          cbo: data.healthData.cbo || '',
+          especialidades: Array.isArray(data.healthData.especialidades)
+            ? data.healthData.especialidades.join(', ')
+            : '',
+          status: data.healthData.status || 'ATIVO',
+          aceitaAgendamento: data.healthData.aceitaAgendamento ?? true,
+          tempoMedioConsulta: String(data.healthData.tempoMedioConsulta || 30),
+          observacoes: data.healthData.observacoes || '',
         });
       }
+
+      // Vínculos com unidades (EmployeeAssignment ativo)
+      const unidadeVinculos = (data.assignments || []).filter((a: any) => a.situacao === 'ATIVO');
+      setVinculosUnidades(unidadeVinculos);
+
+      // Vínculos com equipes
+      const equipesVinculos = (data.equipesParticipa || []).filter((e: any) => e.ativo);
+      setVinculosEquipes(equipesVinculos);
     } catch (error) {
       console.error('Erro ao carregar servidor:', error);
-      alert('Erro ao carregar servidor');
+      toast({ title: 'Erro', description: 'Servidor não encontrado ou sem dados de saúde.', variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -125,79 +160,99 @@ export default function EditarServidorSaude() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.categoria) {
-      alert('Categoria é obrigatória');
+      toast({ title: 'Atenção', description: 'Categoria é obrigatória.', variant: 'destructive' });
       return;
     }
 
     setSaving(true);
-
     try {
-      const payload = {
+      const payload: any = {
         categoria: formData.categoria,
         registroProfissional: formData.registroProfissional || null,
         tipoRegistro: formData.tipoRegistro || null,
         ufRegistro: formData.ufRegistro || null,
         cns: formData.cns || null,
         cbo: formData.cbo || null,
-        especialidades: formData.especialidades ? JSON.parse(`[${formData.especialidades}]`) : null,
-        ativo: formData.ativo,
+        especialidades: formData.especialidades
+          ? formData.especialidades.split(',').map((s: string) => s.trim()).filter(Boolean)
+          : null,
+        ativo: formData.status === 'ATIVO',
         aceitaAgendamento: formData.aceitaAgendamento,
-        tempoMedioConsulta: formData.tempoMedioConsulta ? parseInt(formData.tempoMedioConsulta) : 30,
+        tempoMedioConsulta: parseInt(formData.tempoMedioConsulta) || 30,
         observacoes: formData.observacoes || null,
       };
 
-      const response = await fetch(`/api/apps/saude/cadastros/dados-saude/${servidorId}`, {
+      const res = await fetch(`/api/professional-data/health/${servidorId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify(payload),
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        alert(error.error || 'Erro ao atualizar dados de saúde');
-        return;
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Erro ao atualizar');
       }
 
-      alert('Dados de saúde atualizados com sucesso!');
+      toast({ title: 'Sucesso', description: 'Dados de saúde atualizados.' });
       router.push('/admin/apps/saude/cadastros/servidores-saude');
-    } catch (error) {
-      console.error('Erro ao atualizar dados de saúde:', error);
-      alert('Erro ao atualizar dados de saúde');
+    } catch (error: any) {
+      toast({ title: 'Erro', description: error.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
   };
 
-  const categoriaRequerRegistro = ['MEDICO', 'ENFERMEIRO', 'DENTISTA', 'FARMACEUTICO', 'PSICOLOGO', 'FISIOTERAPEUTA', 'NUTRICIONISTA', 'ASSISTENTE_SOCIAL'].includes(formData.categoria);
+  const encerrarVinculo = async (assignmentId: string) => {
+    if (!confirm('Deseja encerrar este vínculo?')) return;
+    try {
+      const res = await fetch(`/api/saude/servidores/${servidorId}/vinculos/${assignmentId}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ motivo: 'Encerrado pela página de edição' }),
+      });
+      if (!res.ok) throw new Error('Erro ao encerrar');
+      toast({ title: 'Sucesso', description: 'Vínculo encerrado.' });
+      loadServidor();
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    }
+  };
 
+  const removerEquipe = async (memberId: string) => {
+    if (!confirm('Deseja remover da equipe?')) return;
+    try {
+      const res = await fetch(`/api/saude/servidores/${servidorId}/equipes/${memberId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!res.ok) throw new Error('Erro ao remover');
+      toast({ title: 'Sucesso', description: 'Removido da equipe.' });
+      loadServidor();
+    } catch (e: any) {
+      toast({ title: 'Erro', description: e.message, variant: 'destructive' });
+    }
+  };
+
+  const categoriaRequerRegistro = CATEGORIAS_COM_REGISTRO.includes(formData.categoria);
+
+  // ── Loading / Not Found ──
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
         <div className="text-center">
           <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-blue-600 border-r-transparent"></div>
-          <p className="mt-4 text-gray-600">Carregando servidor...</p>
+          <p className="mt-4 text-gray-600">Carregando...</p>
         </div>
       </div>
     );
   }
 
-  if (!servidor) {
-    return (
-      <div className="min-h-screen bg-gray-50 p-6 flex items-center justify-center">
-        <div className="text-center">
-          <User className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-gray-600">Servidor não encontrado</p>
-          <Button variant="outline" className="mt-4" onClick={() => router.back()}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
-          </Button>
-        </div>
-      </div>
-    );
-  }
+  // ============================================================
+  // RENDER
+  // ============================================================
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -209,167 +264,167 @@ export default function EditarServidorSaude() {
           </Button>
           <div className="flex-1">
             <h1 className="text-3xl font-bold flex items-center gap-2">
-              <UserPlus className="h-8 w-8 text-blue-600" />
+              <User className="h-8 w-8 text-blue-600" />
               Editar Dados de Saúde
             </h1>
-            <p className="text-gray-600">Atualizar dados de saúde do servidor</p>
+            <p className="text-gray-600">Atualizar dados e vínculos do profissional</p>
           </div>
-          <Badge variant={formData.ativo ? 'default' : 'secondary'}>
-            {formData.ativo ? 'Ativo' : 'Inativo'}
+          <Badge className={formData.status === 'ATIVO' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+            {formData.status}
           </Badge>
         </div>
 
-        {/* Servidor Info */}
+        {/* Info do servidor */}
         <Card className="mb-6 bg-gray-50">
           <CardContent className="pt-6">
             <div className="flex items-start gap-3">
               <User className="h-5 w-5 text-gray-400 mt-0.5" />
               <div>
-                <p className="font-medium text-lg">{servidor.name}</p>
-                <p className="text-sm text-gray-600">{servidor.email}</p>
-                <p className="text-xs text-gray-500">{servidor.departmentName}</p>
+                <p className="font-semibold text-lg">{nome}</p>
+                <p className="text-sm text-gray-600">{email}</p>
+                {departamento && <p className="text-xs text-gray-500">{departamento}</p>}
               </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Form */}
+        {/* Vínculos atuais (somente leitura — gerenciados pelo wizard) */}
+        <Card className="mb-6">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Link2 className="h-5 w-5 text-blue-600" />
+                Vínculos Atuais
+              </CardTitle>
+              <Button variant="outline" size="sm" onClick={() => router.push('/admin/apps/saude/cadastros/vinculos')}>
+                Adicionar via Wizard
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {/* Unidades */}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">Unidades de Saúde</p>
+              {vinculosUnidades.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">Nenhum vínculo com unidade</p>
+              ) : (
+                <div className="space-y-2">
+                  {vinculosUnidades.map((v) => (
+                    <div key={v.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium">{v.organizationalUnit?.nome || '—'}</span>
+                        {v.cargaHoraria && <Badge variant="outline" className="text-xs">{v.cargaHoraria}h/sem</Badge>}
+                        {v.isPrimary && <Badge className="text-xs bg-blue-100 text-blue-800">Principal</Badge>}
+                        <Badge variant="outline" className="text-xs">{v.tipo}</Badge>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => encerrarVinculo(v.id)}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Equipes */}
+            <div>
+              <p className="text-sm font-semibold text-gray-700 mb-2">Equipes ESF</p>
+              {vinculosEquipes.length === 0 ? (
+                <p className="text-sm text-gray-400 italic">Não pertence a nenhuma equipe</p>
+              ) : (
+                <div className="space-y-2">
+                  {vinculosEquipes.map((e) => (
+                    <div key={e.id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border">
+                      <span className="text-sm font-medium">{e.team?.nome || '—'}</span>
+                      <button
+                        type="button"
+                        onClick={() => removerEquipe(e.id)}
+                        className="text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Formulário de dados profissionais */}
         <form onSubmit={handleSubmit}>
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Dados Profissionais</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Categoria */}
+            <CardContent className="space-y-5">
               <div>
-                <Label htmlFor="categoria" className="required">
-                  Categoria Profissional *
-                </Label>
-                <Select
-                  value={formData.categoria}
-                  onValueChange={(value) => setFormData({ ...formData, categoria: value })}
-                >
-                  <SelectTrigger id="categoria">
-                    <SelectValue placeholder="Selecione a categoria" />
-                  </SelectTrigger>
+                <Label>Categoria Profissional *</Label>
+                <Select value={formData.categoria} onValueChange={(v) => setFormData((f) => ({ ...f, categoria: v }))}>
+                  <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                   <SelectContent>
-                    {CATEGORIAS.map((cat) => (
-                      <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
+                    {CATEGORIAS.map((c) => <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* Registro Profissional */}
               {categoriaRequerRegistro && (
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-1">
-                      <Label htmlFor="tipoRegistro">Tipo de Registro</Label>
-                      <Select
-                        value={formData.tipoRegistro}
-                        onValueChange={(value) => setFormData({ ...formData, tipoRegistro: value })}
-                      >
-                        <SelectTrigger id="tipoRegistro">
-                          <SelectValue placeholder="Ex: CRM" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {TIPOS_REGISTRO.map((tipo) => (
-                            <SelectItem key={tipo.value} value={tipo.value}>
-                              {tipo.label}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="md:col-span-1">
-                      <Label htmlFor="registroProfissional">Número</Label>
-                      <Input
-                        id="registroProfissional"
-                        type="text"
-                        placeholder="Ex: 123456"
-                        value={formData.registroProfissional}
-                        onChange={(e) => setFormData({ ...formData, registroProfissional: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="md:col-span-1">
-                      <Label htmlFor="ufRegistro">UF</Label>
-                      <Select
-                        value={formData.ufRegistro}
-                        onValueChange={(value) => setFormData({ ...formData, ufRegistro: value })}
-                      >
-                        <SelectTrigger id="ufRegistro">
-                          <SelectValue placeholder="UF" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {UFS.map((uf) => (
-                            <SelectItem key={uf} value={uf}>
-                              {uf}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <Label>Tipo de Registro</Label>
+                    <Select value={formData.tipoRegistro} onValueChange={(v) => setFormData((f) => ({ ...f, tipoRegistro: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Ex: CRM" /></SelectTrigger>
+                      <SelectContent>
+                        {TIPOS_REGISTRO.map((t) => <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
                   </div>
-                </>
-              )}
-
-              {/* CNS */}
-              <div>
-                <Label htmlFor="cns">Cartão Nacional de Saúde (CNS)</Label>
-                <Input
-                  id="cns"
-                  type="text"
-                  placeholder="15 dígitos"
-                  maxLength={15}
-                  value={formData.cns}
-                  onChange={(e) => setFormData({ ...formData, cns: e.target.value })}
-                />
-              </div>
-
-              {/* CBO */}
-              <div>
-                <Label htmlFor="cbo">CBO - Classificação Brasileira de Ocupações</Label>
-                <Input
-                  id="cbo"
-                  type="text"
-                  placeholder="Ex: 225125"
-                  value={formData.cbo}
-                  onChange={(e) => setFormData({ ...formData, cbo: e.target.value })}
-                />
-              </div>
-
-              {/* Especialidades */}
-              {formData.categoria === 'MEDICO' && (
-                <div>
-                  <Label htmlFor="especialidades">Especialidades</Label>
-                  <Input
-                    id="especialidades"
-                    type="text"
-                    placeholder="Ex: &quot;Clínica Geral&quot;, &quot;Cardiologia&quot;"
-                    value={formData.especialidades}
-                    onChange={(e) => setFormData({ ...formData, especialidades: e.target.value })}
-                  />
+                  <div>
+                    <Label>Número</Label>
+                    <Input placeholder="123456" value={formData.registroProfissional} onChange={(e) => setFormData((f) => ({ ...f, registroProfissional: e.target.value }))} />
+                  </div>
+                  <div>
+                    <Label>UF</Label>
+                    <Select value={formData.ufRegistro} onValueChange={(v) => setFormData((f) => ({ ...f, ufRegistro: v }))}>
+                      <SelectTrigger><SelectValue placeholder="UF" /></SelectTrigger>
+                      <SelectContent>
+                        {UFS.map((uf) => <SelectItem key={uf} value={uf}>{uf}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               )}
 
-              {/* Status */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>CNS (Cartão Nacional de Saúde)</Label>
+                  <Input placeholder="15 dígitos" maxLength={15} value={formData.cns} onChange={(e) => setFormData((f) => ({ ...f, cns: e.target.value }))} />
+                </div>
+                <div>
+                  <Label>CBO</Label>
+                  <Input placeholder="Ex: 225125" value={formData.cbo} onChange={(e) => setFormData((f) => ({ ...f, cbo: e.target.value }))} />
+                </div>
+              </div>
+
+              {formData.categoria === 'MEDICO' && (
+                <div>
+                  <Label>Especialidades</Label>
+                  <Input placeholder="Clínica Geral, Cardiologia" value={formData.especialidades} onChange={(e) => setFormData((f) => ({ ...f, especialidades: e.target.value }))} />
+                  <p className="text-xs text-gray-500 mt-1">Separadas por vírgula</p>
+                </div>
+              )}
+
               <div>
-                <Label htmlFor="ativo">Status</Label>
-                <Select
-                  value={formData.ativo ? 'true' : 'false'}
-                  onValueChange={(value) => setFormData({ ...formData, ativo: value === 'true' })}
-                >
-                  <SelectTrigger id="ativo">
-                    <SelectValue />
-                  </SelectTrigger>
+                <Label>Status</Label>
+                <Select value={formData.status} onValueChange={(v) => setFormData((f) => ({ ...f, status: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="true">Ativo</SelectItem>
-                    <SelectItem value="false">Inativo</SelectItem>
+                    <SelectItem value="ATIVO">Ativo</SelectItem>
+                    <SelectItem value="INATIVO">Inativo</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -380,62 +435,34 @@ export default function EditarServidorSaude() {
             <CardHeader>
               <CardTitle>Configurações de Atendimento</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
-              {/* Aceita Agendamento */}
-              <div>
-                <Label htmlFor="aceitaAgendamento">Aceita Agendamento</Label>
-                <Select
-                  value={formData.aceitaAgendamento ? 'true' : 'false'}
-                  onValueChange={(value) => setFormData({ ...formData, aceitaAgendamento: value === 'true' })}
-                >
-                  <SelectTrigger id="aceitaAgendamento">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="true">Sim</SelectItem>
-                    <SelectItem value="false">Não</SelectItem>
-                  </SelectContent>
-                </Select>
+            <CardContent className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Aceita Agendamento</Label>
+                  <Select value={formData.aceitaAgendamento ? 'true' : 'false'} onValueChange={(v) => setFormData((f) => ({ ...f, aceitaAgendamento: v === 'true' }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="true">Sim</SelectItem>
+                      <SelectItem value="false">Não</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Tempo Médio de Consulta (minutos)</Label>
+                  <Input type="number" min="5" max="180" value={formData.tempoMedioConsulta} onChange={(e) => setFormData((f) => ({ ...f, tempoMedioConsulta: e.target.value }))} />
+                </div>
               </div>
-
-              {/* Tempo Médio de Consulta */}
               <div>
-                <Label htmlFor="tempoMedioConsulta">Tempo Médio de Consulta (minutos)</Label>
-                <Input
-                  id="tempoMedioConsulta"
-                  type="number"
-                  min="5"
-                  max="180"
-                  value={formData.tempoMedioConsulta}
-                  onChange={(e) => setFormData({ ...formData, tempoMedioConsulta: e.target.value })}
-                />
-              </div>
-
-              {/* Observações */}
-              <div>
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  placeholder="Observações adicionais..."
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  rows={3}
-                />
+                <Label>Observações</Label>
+                <Textarea placeholder="Informações adicionais..." rows={3} value={formData.observacoes} onChange={(e) => setFormData((f) => ({ ...f, observacoes: e.target.value }))} />
               </div>
             </CardContent>
           </Card>
 
           {/* Actions */}
           <div className="flex gap-4 justify-end">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => router.back()}
-              disabled={saving}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={saving}>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={saving}>Cancelar</Button>
+            <Button type="submit" disabled={saving} className="bg-blue-600 hover:bg-blue-700">
               <Save className="h-4 w-4 mr-2" />
               {saving ? 'Salvando...' : 'Salvar Alterações'}
             </Button>

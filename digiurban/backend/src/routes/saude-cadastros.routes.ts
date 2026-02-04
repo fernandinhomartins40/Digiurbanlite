@@ -123,6 +123,66 @@ router.get('/agendas/stats', async (req: Request, res: Response) => {
 });
 
 // ============================================================
+// ROTAS DE DADOS DE SAÚDE (servidores disponíveis para vinculação)
+// ============================================================
+
+/**
+ * GET /api/apps/saude/cadastros/dados-saude
+ * Listar servidores para vinculação.
+ * - semDadosSaude=true  → servidores que ainda NÃO têm HealthProfessionalData
+ * - categoria=X&ativo=true → servidores com dados de saúde filtrados
+ */
+router.get('/dados-saude', async (req: Request, res: Response) => {
+  try {
+    const { semDadosSaude, categoria, ativo } = req.query;
+
+    if (semDadosSaude === 'true') {
+      // Buscar usuários sem HealthProfessionalData
+      const servidores = await prisma.user.findMany({
+        where: {
+          healthData: { is: null },
+          role: { not: 'GUEST' as const },
+          isActive: true,
+        },
+        include: {
+          department: true,
+        },
+        orderBy: { name: 'asc' },
+      });
+
+      const formatted = servidores.map((s) => ({
+        id: s.id,
+        name: s.name,
+        email: s.email,
+        departmentName: s.department?.name || '',
+      }));
+
+      return res.json(formatted);
+    }
+
+    // Caso contrário: buscar servidores COM dados de saúde
+    const where: any = {};
+    if (categoria) where.categoria = categoria as string;
+    if (ativo !== undefined) where.status = ativo === 'true' ? 'ATIVO' : 'INATIVO';
+
+    const healthData = await prisma.healthProfessionalData.findMany({
+      where,
+      include: {
+        user: {
+          select: { id: true, name: true, email: true },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    res.json(healthData);
+  } catch (error: any) {
+    console.error('Erro ao buscar dados-saude:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================
 // ROTAS DE UNIDADES DE SAÚDE
 // ============================================================
 

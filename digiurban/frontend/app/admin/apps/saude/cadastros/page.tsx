@@ -17,7 +17,6 @@ import {
   Link2,
   Users,
   MapPin,
-  UserPlus,
   UserCog,
 } from 'lucide-react';
 
@@ -118,19 +117,19 @@ export default function CadastrosDashboard() {
       cards: [
         {
           title: 'Servidores de Saúde',
-          description: 'Vincular servidores aos serviços de saúde',
-          icon: UserPlus,
+          description: 'Listagem de profissionais vinculados',
+          icon: UserCog,
           color: 'bg-green-500',
           href: '/admin/apps/saude/cadastros/servidores-saude',
-          badge: 'Novo',
+          badge: `${stats?.profissionais?.ativos || 0} ativos`,
         },
         {
-          title: 'Vínculos Profissional-Unidade',
-          description: 'Gerenciar vínculos entre profissionais e unidades',
+          title: 'Vínculos Unificados',
+          description: 'Criar e gerenciar todas as vinculações em um lugar',
           icon: Link2,
           color: 'bg-cyan-500',
           href: '/admin/apps/saude/cadastros/vinculos',
-          badge: 'Vínculos',
+          badge: 'Sistema V2',
         },
       ],
     },
@@ -192,10 +191,11 @@ export default function CadastrosDashboard() {
             <div className="flex gap-3">
               <Activity className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
               <div>
-                <h3 className="font-semibold text-blue-900 mb-1">Nova Organização de Cadastros</h3>
+                <h3 className="font-semibold text-blue-900 mb-1">Sistema Unificado de Vinculação V2</h3>
                 <p className="text-sm text-blue-800">
-                  Os cadastros foram reorganizados em 4 seções lógicas: Infraestrutura (locais físicos),
-                  ESF (equipes e territorialização), RH (servidores e vínculos) e Operação (agendas e configurações).
+                  Todas as vinculações de profissionais (dados profissionais, unidades e equipes ESF) são feitas
+                  em um único lugar via wizard sequencial em "Vínculos Unificados". Não é necessário navegar entre
+                  páginas separadas.
                 </p>
               </div>
             </div>
@@ -255,9 +255,8 @@ export default function CadastrosDashboard() {
                 <ol className="text-sm text-purple-900 space-y-2">
                   <li><strong>1. Infraestrutura:</strong> Cadastre as unidades de saúde, salas e especialidades</li>
                   <li><strong>2. ESF:</strong> Crie as equipes de Saúde da Família e defina as microáreas</li>
-                  <li><strong>3. RH:</strong> Vincule os servidores existentes do Digiurban aos serviços de saúde</li>
-                  <li><strong>4. Vínculos:</strong> Associe os profissionais às unidades e equipes onde atuam</li>
-                  <li><strong>5. Operação:</strong> Configure turnos de trabalho e crie as agendas médicas</li>
+                  <li><strong>3. Vínculos Unificados:</strong> Use o wizard para vincular servidores — dados profissionais, unidades e equipes são feitos na mesma etapa</li>
+                  <li><strong>4. Operação:</strong> Configure turnos de trabalho e crie as agendas médicas</li>
                 </ol>
               </CardContent>
             </Card>
