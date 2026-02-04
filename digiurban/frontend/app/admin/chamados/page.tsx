@@ -32,6 +32,7 @@ import {
 import { toast } from 'sonner'
 import { api } from '@/lib/services/api'
 import Link from 'next/link'
+import { ServiceSelectorCards } from '@/components/admin/ServiceSelectorCards'
 
 interface Citizen {
   id: string
@@ -73,9 +74,6 @@ export default function CriarChamadoPage() {
 
   // Estados para serviço
   const [selectedService, setSelectedService] = useState<Service | null>(null)
-  const [serviceSearch, setServiceSearch] = useState('')
-  const [searchingService, setSearchingService] = useState(false)
-  const [serviceResults, setServiceResults] = useState<Service[]>([])
 
   // Estados do formulário
   const [formData, setFormData] = useState({
@@ -89,7 +87,6 @@ export default function CriarChamadoPage() {
 
   // Refs para debounce
   const citizenSearchTimerRef = useRef<NodeJS.Timeout | null>(null)
-  const serviceSearchTimerRef = useRef<NodeJS.Timeout | null>(null)
 
   // ============================================================================
   // BUSCA DE CIDADÃO (Padrão de /admin/servicos/[id]/solicitar)
@@ -147,59 +144,15 @@ export default function CriarChamadoPage() {
   }
 
   // ============================================================================
-  // BUSCA DE SERVIÇO (Novo padrão similar ao cidadão)
+  // HANDLERS DE SERVIÇO (para o novo componente ServiceSelectorCards)
   // ============================================================================
-
-  const handleSearchService = useCallback(async (searchTerm: string) => {
-    if (searchTerm.trim().length < 2) {
-      setServiceResults([])
-      setSearchingService(false)
-      return
-    }
-
-    setSearchingService(true)
-    try {
-      // Buscar serviços ativos
-      const response = await api.get(`/services?search=${encodeURIComponent(searchTerm.trim())}&isActive=true`)
-
-      if (response.data.success && response.data.data) {
-        const results = Array.isArray(response.data.data)
-          ? response.data.data
-          : []
-        setServiceResults(results)
-      } else {
-        setServiceResults([])
-      }
-    } catch (error: any) {
-      console.error('❌ Erro ao buscar serviço:', error)
-      setServiceResults([])
-      toast.error('Erro ao buscar serviço')
-    } finally {
-      setSearchingService(false)
-    }
-  }, [])
-
-  const debouncedServiceSearch = useCallback((searchTerm: string) => {
-    if (serviceSearchTimerRef.current) {
-      clearTimeout(serviceSearchTimerRef.current)
-    }
-
-    serviceSearchTimerRef.current = setTimeout(() => {
-      handleSearchService(searchTerm)
-    }, 400)
-  }, [handleSearchService])
 
   const handleSelectService = (service: Service) => {
     setSelectedService(service)
-    setServiceSearch(service.name)
-    setServiceResults([])
-    toast.success(`Serviço selecionado: ${service.name}`)
   }
 
   const handleRemoveService = () => {
     setSelectedService(null)
-    setServiceSearch('')
-    setServiceResults([])
   }
 
   // ============================================================================
@@ -272,7 +225,6 @@ export default function CriarChamadoPage() {
           setSelectedCitizen(null)
           setSelectedService(null)
           setCitizenSearch('')
-          setServiceSearch('')
 
           // Redirecionar para a mesma página para criar novo chamado
           router.push('/admin/chamados')
@@ -445,114 +397,12 @@ export default function CriarChamadoPage() {
               )}
             </div>
 
-            {/* 2. BUSCAR/SELECIONAR SERVIÇO */}
-            <div>
-              {!selectedService ? (
-                <Card className="border-blue-200 bg-blue-50/50">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2 text-blue-900">
-                      <Search className="h-5 w-5" />
-                      Buscar Serviço
-                    </CardTitle>
-                    <CardDescription className="text-blue-700">
-                      Digite o nome do serviço para buscar
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-3">
-                      <div className="relative">
-                        <Input
-                          type="text"
-                          value={serviceSearch}
-                          onChange={(e) => {
-                            const value = e.target.value
-                            setServiceSearch(value)
-
-                            if (!value.trim()) {
-                              setServiceResults([])
-                              return
-                            }
-
-                            debouncedServiceSearch(value)
-                          }}
-                          placeholder="Digite o nome do serviço..."
-                          className="bg-white pr-10"
-                          autoComplete="off"
-                        />
-                        <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                          {searchingService ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-                          ) : (
-                            <Search className="h-4 w-4 text-gray-400" />
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Resultados da Busca */}
-                      {serviceResults.length > 0 && (
-                        <div className="bg-white border border-blue-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
-                          {serviceResults.map((service) => (
-                            <button
-                              key={service.id}
-                              type="button"
-                              onClick={() => handleSelectService(service)}
-                              className="w-full text-left px-4 py-3 hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0"
-                            >
-                              <div className="font-medium text-gray-900">{service.name}</div>
-                              <div className="text-sm text-gray-600 mt-1">
-                                {service.department.name}
-                                {service.estimatedDays && ` • Prazo: ${service.estimatedDays} dias`}
-                              </div>
-                            </button>
-                          ))}
-                        </div>
-                      )}
-
-                      {/* Sem resultados */}
-                      {serviceSearch.length >= 2 && !searchingService && serviceResults.length === 0 && (
-                        <div className="text-sm text-blue-700 bg-white rounded-lg p-3 border border-blue-200">
-                          Nenhum serviço encontrado com este nome
-                        </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : (
-                <Card className="border-green-200 bg-green-50">
-                  <CardHeader>
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="flex items-center text-green-900">
-                        <FileText className="h-5 w-5 mr-2" />
-                        Serviço Selecionado
-                      </CardTitle>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={handleRemoveService}
-                        className="text-green-700 hover:text-green-900"
-                      >
-                        Alterar
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div>
-                        <p className="font-medium text-lg text-green-900">{selectedService.name}</p>
-                        <p className="text-sm text-green-700">
-                          <Building2 className="h-4 w-4 inline mr-1" />
-                          {selectedService.department.name}
-                        </p>
-                      </div>
-                      {selectedService.description && (
-                        <p className="text-sm text-green-700">{selectedService.description}</p>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-            </div>
+            {/* 2. BUSCAR/SELECIONAR SERVIÇO - Novo componente com cards e filtros */}
+            <ServiceSelectorCards
+              selectedService={selectedService}
+              onSelectService={handleSelectService}
+              onRemoveService={handleRemoveService}
+            />
 
             {/* 3. DADOS DO CHAMADO */}
             {selectedCitizen && selectedService && (
