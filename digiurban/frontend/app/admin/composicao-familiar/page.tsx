@@ -1,13 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { Search, Users, Loader2, UserCircle } from 'lucide-react'
 import { CitizenFamilyCompositionEnhanced } from '@/components/admin/CitizenFamilyCompositionEnhanced'
+import { api } from '@/lib/services/api'
 
 interface CitizenSearchResult {
   id: string
@@ -17,7 +17,6 @@ interface CitizenSearchResult {
 }
 
 export default function ComposicaoFamiliarPage() {
-  const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
 
   const [searchTerm, setSearchTerm] = useState('')
@@ -25,31 +24,38 @@ export default function ComposicaoFamiliarPage() {
   const [searchResults, setSearchResults] = useState<CitizenSearchResult[]>([])
   const [selectedCitizen, setSelectedCitizen] = useState<CitizenSearchResult | null>(null)
 
-  const handleSearch = async () => {
-    if (!searchTerm || searchTerm.length < 3) {
-      toast({
-        variant: 'destructive',
-        title: 'Digite pelo menos 3 caracteres',
-        description: 'Informe nome ou CPF para buscar'
-      })
+  // Ref para debounce
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+  const handleSearchCitizen = useCallback(async (searchValue: string) => {
+    if (searchValue.trim().length < 2) {
+      setSearchResults([])
+      setSearching(false)
       return
     }
 
+    setSearching(true)
     try {
-      setSearching(true)
-      const response = await apiRequest(`/admin/citizens/search?q=${encodeURIComponent(searchTerm)}`)
+      const response = await api.get(`/admin/citizens/search?q=${encodeURIComponent(searchValue.trim())}`)
 
-      if (response.success) {
-        setSearchResults(response.data.citizens || [])
+      if (response.data.success && response.data.data) {
+        const results = Array.isArray(response.data.data)
+          ? response.data.data
+          : (response.data.data.citizens || [])
+        setSearchResults(results)
 
-        if (response.data.citizens.length === 0) {
+        if (results.length === 0) {
           toast({
             title: 'Nenhum resultado',
             description: 'Nenhum cidadão encontrado com esse critério'
           })
         }
+      } else {
+        setSearchResults([])
       }
     } catch (error: any) {
+      console.error('❌ Erro ao buscar cidadão:', error)
+      setSearchResults([])
       toast({
         variant: 'destructive',
         title: 'Erro ao buscar',
@@ -58,6 +64,29 @@ export default function ComposicaoFamiliarPage() {
     } finally {
       setSearching(false)
     }
+  }, [toast])
+
+  const debouncedSearch = useCallback((searchValue: string) => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+
+    searchTimerRef.current = setTimeout(() => {
+      handleSearchCitizen(searchValue)
+    }, 400)
+  }, [handleSearchCitizen])
+
+  const handleSearch = () => {
+    if (!searchTerm || searchTerm.length < 2) {
+      toast({
+        variant: 'destructive',
+        title: 'Digite pelo menos 2 caracteres',
+        description: 'Informe nome ou CPF para buscar'
+      })
+      return
+    }
+
+    handleSearchCitizen(searchTerm)
   }
 
   const handleSelectCitizen = (citizen: CitizenSearchResult) => {
@@ -91,9 +120,13 @@ export default function ComposicaoFamiliarPage() {
             <div className="flex gap-2">
               <div className="flex-1">
                 <Input
-                  placeholder="Digite nome ou CPF do cidadão (mínimo 3 caracteres)"
+                  placeholder="Digite nome ou CPF do cidadão (mínimo 2 caracteres)"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value
+                    setSearchTerm(value)
+                    debouncedSearch(value)
+                  }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') {
                       handleSearch()
@@ -103,7 +136,7 @@ export default function ComposicaoFamiliarPage() {
               </div>
               <Button
                 onClick={handleSearch}
-                disabled={searching || searchTerm.length < 3}
+                disabled={searching || searchTerm.length < 2}
               >
                 {searching ? (
                   <>
