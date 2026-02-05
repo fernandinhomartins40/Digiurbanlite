@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useToast } from '@/hooks/use-toast'
 import { Search, Loader2, AlertTriangle } from 'lucide-react'
 import { RELATIONSHIP_OPTIONS } from '@/shared/constants/family.constants'
+import { api } from '@/lib/services/api'
 
 interface CitizenOption {
   id: string
@@ -48,6 +49,9 @@ export function AddFamilyMemberDialog({
   const [warnings, setWarnings] = useState<ValidationWarning[]>([])
   const [submitting, setSubmitting] = useState(false)
 
+  // Ref para debounce
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   const [formData, setFormData] = useState({
     memberId: '',
     relationship: '',
@@ -78,26 +82,47 @@ export function AddFamilyMemberDialog({
   }, [open])
 
   // Buscar cidadãos
-  const searchCitizens = async (term: string) => {
-    if (!term || term.length < 3) {
+  const searchCitizens = useCallback(async (term: string) => {
+    if (!term || term.trim().length < 2) {
       setSearchResults([])
+      setSearching(false)
       return
     }
 
+    setSearching(true)
     try {
-      setSearching(true)
-      const response = await apiRequest(`/citizen/family/search?q=${encodeURIComponent(term)}`)
+      const response = await api.get(`/citizen/family/search?q=${encodeURIComponent(term.trim())}`)
 
-      if (response.success) {
-        setSearchResults(response.data.citizens || [])
+      if (response.data.success && response.data.data) {
+        const results = Array.isArray(response.data.data)
+          ? response.data.data
+          : (response.data.data.citizens || [])
+        setSearchResults(results)
+      } else {
+        setSearchResults([])
       }
-    } catch (error) {
-      console.error('Erro ao buscar cidadãos:', error)
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar cidadãos:', error)
       setSearchResults([])
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao buscar',
+        description: error.message || 'Não foi possível buscar cidadãos'
+      })
     } finally {
       setSearching(false)
     }
-  }
+  }, [toast])
+
+  const debouncedSearch = useCallback((term: string) => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+
+    searchTimerRef.current = setTimeout(() => {
+      searchCitizens(term)
+    }, 400)
+  }, [searchCitizens])
 
   // Selecionar cidadão
   const selectCitizen = (citizen: CitizenOption) => {
@@ -276,10 +301,11 @@ export function AddFamilyMemberDialog({
                 id="searchCitizen"
                 value={searchTerm}
                 onChange={(e) => {
-                  setSearchTerm(e.target.value)
-                  searchCitizens(e.target.value)
+                  const value = e.target.value
+                  setSearchTerm(value)
+                  debouncedSearch(value)
                 }}
-                placeholder="Digite nome ou CPF (mínimo 3 caracteres)"
+                placeholder="Digite nome ou CPF (mínimo 2 caracteres)"
                 className="pl-10"
                 disabled={submitting}
               />
