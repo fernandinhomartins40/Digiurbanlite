@@ -764,7 +764,7 @@ router.get(
 
     const invites = await prisma.familyInvite.findMany({
       where: {
-        inviterId: id
+        headId: id
       },
       orderBy: { createdAt: 'desc' }
     });
