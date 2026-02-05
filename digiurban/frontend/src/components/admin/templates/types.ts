@@ -16,6 +16,7 @@ export interface DocumentTemplate {
     description: string
     example: string
   }>
+  serviceIds?: string[]
   isGlobal: boolean
   isActive: boolean
   version: number

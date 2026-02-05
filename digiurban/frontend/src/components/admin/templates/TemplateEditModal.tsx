@@ -11,18 +11,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { RichTextEditor } from './RichTextEditor'
-import { Code, Eye, FileText, Info, Save, Settings } from 'lucide-react'
+import { ServiceMultiSelect } from './ServiceMultiSelect'
+import { Code, Eye, FileText, Info, Save, Settings, Globe } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { DocumentTemplate } from './types'
+import { Checkbox } from '@/components/ui/checkbox'
+
+interface Service {
+  id: string
+  name: string
+}
 
 interface TemplateEditModalProps {
   template: DocumentTemplate | null
   open: boolean
   onClose: () => void
   onSave: (template: Partial<DocumentTemplate>) => Promise<void>
+  services?: Service[]
 }
 
-export function TemplateEditModal({ template, open, onClose, onSave }: TemplateEditModalProps) {
+export function TemplateEditModal({ template, open, onClose, onSave, services = [] }: TemplateEditModalProps) {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
   const [editMode, setEditMode] = useState<'wysiwyg' | 'code'>('wysiwyg')
@@ -39,6 +47,8 @@ export function TemplateEditModal({ template, open, onClose, onSave }: TemplateE
     cssStyles: '',
     pageSize: 'A4',
     orientation: 'portrait',
+    serviceIds: [],
+    isGlobal: false,
   })
 
   useEffect(() => {
@@ -54,6 +64,8 @@ export function TemplateEditModal({ template, open, onClose, onSave }: TemplateE
         cssStyles: template.cssStyles || '',
         pageSize: template.pageSize,
         orientation: template.orientation,
+        serviceIds: template.serviceIds || [],
+        isGlobal: template.isGlobal,
       })
     }
   }, [template])
@@ -257,6 +269,41 @@ export function TemplateEditModal({ template, open, onClose, onSave }: TemplateE
                     rows={10}
                     className="font-mono text-xs"
                   />
+                </div>
+
+                {/* Vinculação de Serviços */}
+                <div className="space-y-4 border-t pt-4">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id="isGlobal"
+                      checked={formData.isGlobal}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          isGlobal: checked as boolean,
+                          serviceIds: checked ? [] : formData.serviceIds
+                        })
+                      }
+                    />
+                    <Label htmlFor="isGlobal" className="flex items-center gap-2 cursor-pointer">
+                      <Globe className="h-4 w-4" />
+                      Template Global (disponível para todos os serviços)
+                    </Label>
+                  </div>
+
+                  {!formData.isGlobal && (
+                    <div className="space-y-2">
+                      <Label>Serviços Vinculados</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Selecione quais serviços podem usar este template. Se nenhum for selecionado, o template ficará disponível apenas como global.
+                      </p>
+                      <ServiceMultiSelect
+                        services={services}
+                        selectedServiceIds={formData.serviceIds || []}
+                        onChange={(serviceIds) => setFormData({ ...formData, serviceIds })}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {template.availableVariables && template.availableVariables.length > 0 && (

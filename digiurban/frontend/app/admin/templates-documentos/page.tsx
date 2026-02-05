@@ -29,15 +29,17 @@ export default function TemplatesDocumentosPage() {
   const { toast } = useToast()
 
   const [templates, setTemplates] = useState<DocumentTemplate[]>([])
+  const [services, setServices] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PROTOCOL_CERTIFICATE' | 'COMPLETION_REPORT'>('all')
   const [viewModalOpen, setViewModalOpen] = useState(false)
   const [editModalOpen, setEditModalOpen] = useState(false)
   const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null)
 
-  // Carregar templates
+  // Carregar templates e serviços
   useEffect(() => {
     loadTemplates()
+    loadServices()
   }, [])
 
   const loadTemplates = async () => {
@@ -58,6 +60,18 @@ export default function TemplatesDocumentosPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const loadServices = async () => {
+    try {
+      const result = await apiRequest('/services')
+
+      if (result.success) {
+        setServices(result.data || [])
+      }
+    } catch (error: any) {
+      console.error('Erro ao carregar serviços:', error)
     }
   }
 
@@ -350,11 +364,26 @@ export default function TemplatesDocumentosPage() {
                   </Badge>
                 </div>
 
-                {/* Estatísticas */}
-                <div className="text-sm text-muted-foreground">
+                {/* Estatísticas e Vinculação */}
+                <div className="text-sm text-muted-foreground space-y-2">
                   <p>
                     Documentos gerados: <strong>{template._count?.generatedDocuments || 0}</strong>
                   </p>
+                  {!template.isGlobal && template.serviceIds && template.serviceIds.length > 0 && (
+                    <div>
+                      <p className="text-xs font-semibold mb-1">Serviços vinculados:</p>
+                      <div className="flex flex-wrap gap-1">
+                        {template.serviceIds.map(serviceId => {
+                          const service = services.find(s => s.id === serviceId)
+                          return service ? (
+                            <Badge key={serviceId} variant="outline" className="text-xs">
+                              {service.name}
+                            </Badge>
+                          ) : null
+                        })}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Ações */}
@@ -404,6 +433,11 @@ export default function TemplatesDocumentosPage() {
           setViewModalOpen(false)
           setSelectedTemplate(null)
         }}
+        onEdit={() => {
+          setViewModalOpen(false)
+          setEditModalOpen(true)
+        }}
+        isSuperAdmin={isSuperAdmin}
       />
 
       <TemplateEditModal
@@ -414,6 +448,7 @@ export default function TemplatesDocumentosPage() {
           setSelectedTemplate(null)
         }}
         onSave={handleSaveTemplate}
+        services={services}
       />
     </div>
   )

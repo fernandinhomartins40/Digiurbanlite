@@ -5,16 +5,18 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Code, Eye, FileText, Info } from 'lucide-react'
+import { Code, Eye, FileText, Info, Edit } from 'lucide-react'
 import { DocumentTemplate } from './types'
 
 interface TemplateViewModalProps {
   template: DocumentTemplate | null
   open: boolean
   onClose: () => void
+  onEdit?: () => void
+  isSuperAdmin?: boolean
 }
 
-export function TemplateViewModal({ template, open, onClose }: TemplateViewModalProps) {
+export function TemplateViewModal({ template, open, onClose, onEdit, isSuperAdmin }: TemplateViewModalProps) {
   if (!template) return null
 
   const getTypeLabel = (type: string) => {
@@ -104,10 +106,9 @@ export function TemplateViewModal({ template, open, onClose }: TemplateViewModal
 
           <TabsContent value="preview" className="flex-1 overflow-hidden">
             <ScrollArea className="h-[calc(90vh-300px)] border rounded-md bg-white">
-              <iframe
-                srcDoc={createPreview()}
-                className="w-full h-full min-h-[600px] border-0"
-                title="Template Preview"
+              <div
+                className="w-full min-h-[600px] p-4"
+                dangerouslySetInnerHTML={{ __html: createPreview() }}
               />
             </ScrollArea>
           </TabsContent>
@@ -187,6 +188,12 @@ export function TemplateViewModal({ template, open, onClose }: TemplateViewModal
         </Tabs>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
+          {isSuperAdmin && onEdit && (
+            <Button onClick={onEdit}>
+              <Edit className="h-4 w-4 mr-2" />
+              Editar Template
+            </Button>
+          )}
           <Button variant="outline" onClick={onClose}>
             Fechar
           </Button>
