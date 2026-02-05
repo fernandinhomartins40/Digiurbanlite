@@ -44,6 +44,7 @@ export const apiClient = {
         'Content-Type': 'application/json',
         ...options?.headers,
       },
+      credentials: 'include', // ✅ Enviar cookies HttpOnly
     });
     return response;
   },
@@ -58,6 +59,7 @@ export const apiClient = {
         ...options?.headers,
       },
       body: JSON.stringify(data),
+      credentials: 'include', // ✅ Enviar cookies HttpOnly
     });
     return response;
   },
@@ -72,6 +74,7 @@ export const apiClient = {
         ...options?.headers,
       },
       body: JSON.stringify(data),
+      credentials: 'include', // ✅ Enviar cookies HttpOnly
     });
     return response;
   },
@@ -85,6 +88,7 @@ export const apiClient = {
         'Content-Type': 'application/json',
         ...options?.headers,
       },
+      credentials: 'include', // ✅ Enviar cookies HttpOnly
     });
     return response;
   },
