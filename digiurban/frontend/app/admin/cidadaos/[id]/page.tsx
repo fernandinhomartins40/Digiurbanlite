@@ -26,7 +26,6 @@ import {
   Home,
   Eye,
   Download,
-  Trash2,
   Check,
   X,
   File,
@@ -330,15 +329,6 @@ export default function CitizenDetailsPage() {
     )
   }
 
-  const getSourceLabel = (source: string) => {
-    const sources = {
-      WEB_PORTAL: 'Portal Web',
-      MOBILE_APP: 'App Mobile',
-      ADMIN_PANEL: 'Painel Admin',
-      IMPORT: 'Importação',
-    }
-    return sources[source as keyof typeof sources] || source
-  }
 
   const getDocumentLabel = (type: string) => {
     const labels: Record<string, string> = {
@@ -440,9 +430,6 @@ export default function CitizenDetailsPage() {
     }
   }
 
-  const isImageDocument = (mimeType: string) => {
-    return mimeType?.startsWith('image/')
-  }
 
   const getDocumentStatusBadge = (status: string) => {
     const statusConfig = {
@@ -850,7 +837,7 @@ export default function CitizenDetailsPage() {
           </Card>
 
           {/* Documentos Gerados (de Protocolos/Workflows) */}
-          <Card>
+          <Card id="generated-docs-section">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
@@ -961,7 +948,7 @@ export default function CitizenDetailsPage() {
                       key={protocol.id}
                       className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
                     >
-                      <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-4">
                         <div className="flex-1">
                           <div className="font-medium text-gray-900">
                             {protocol.protocolNumber}
@@ -973,9 +960,37 @@ export default function CitizenDetailsPage() {
                             {protocol.department.name} • {formatDate(protocol.createdAt)}
                           </div>
                         </div>
-                        <Badge variant={protocol.status === 'CONCLUIDO' ? 'default' : 'secondary'}>
-                          {protocol.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge variant={protocol.status === 'CONCLUIDO' ? 'default' : 'secondary'}>
+                            {protocol.status}
+                          </Badge>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/admin/protocolos/${protocol.id}`)}
+                            title="Visualizar protocolo"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          {protocol.documentFiles && protocol.documentFiles.length > 0 && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                const docsTab = document.querySelector('[data-value="documents"]') as HTMLElement;
+                                docsTab?.click();
+                                setTimeout(() => {
+                                  const docsSection = document.getElementById('generated-docs-section');
+                                  docsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                }, 100);
+                              }}
+                              title={`${protocol.documentFiles.length} documento(s)`}
+                            >
+                              <FileText className="w-4 h-4" />
+                              <span className="ml-1">{protocol.documentFiles.length}</span>
+                            </Button>
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
