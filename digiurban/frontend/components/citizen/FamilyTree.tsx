@@ -214,7 +214,7 @@ export function FamilyTree({
                       </span>
                       <div>
                         <CardTitle className="text-base">
-                          {familyMember.member.name}
+                          {familyMember?.member?.name || 'Nome não disponível'}
                         </CardTitle>
                         <p className="text-sm text-muted-foreground">
                           {getRelationshipLabel(familyMember.relationship)}
@@ -248,10 +248,10 @@ export function FamilyTree({
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">CPF:</span>
                         <span className="font-medium">
-                          {formatCPF(familyMember.member.cpf)}
+                          {familyMember?.member?.cpf ? formatCPF(familyMember.member.cpf) : 'N/A'}
                         </span>
                       </div>
-                      {familyMember.member.birthDate && (
+                      {familyMember?.member?.birthDate && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Idade:</span>
                           <span className="font-medium">
@@ -261,9 +261,9 @@ export function FamilyTree({
                       )}
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Email:</span>
-                        <span className="font-medium">{familyMember.member.email}</span>
+                        <span className="font-medium">{familyMember?.member?.email || 'N/A'}</span>
                       </div>
-                      {familyMember.member.phone && (
+                      {familyMember?.member?.phone && (
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-muted-foreground">Telefone:</span>
                           <span className="font-medium">
@@ -294,16 +294,16 @@ export function FamilyTree({
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-muted-foreground">Status:</span>
                         <span className={`font-medium ${
-                          familyMember.member.isActive ? 'text-green-600' : 'text-red-600'
+                          familyMember?.member?.isActive ? 'text-green-600' : 'text-red-600'
                         }`}>
-                          {familyMember.member.isActive ? 'Ativo' : 'Inativo'}
+                          {familyMember?.member?.isActive ? 'Ativo' : 'Inativo'}
                         </span>
                       </div>
                     </div>
                   )}
 
                   <div className="flex gap-2">
-                    {onViewMember && (
+                    {onViewMember && familyMember?.member?.id && (
                       <Button
                         variant="outline"
                         size="sm"
@@ -357,7 +357,7 @@ export function FamilyTree({
                     <div className="flex items-center space-x-3">
                       <span className="text-lg">👥</span>
                       <div>
-                        <p className="font-medium">{relation.head.name}</p>
+                        <p className="font-medium">{relation?.head?.name || 'Nome não disponível'}</p>
                         <p className="text-sm text-muted-foreground">
                           Você é {getRelationshipLabel(relation.relationship)} nesta família
                         </p>
@@ -366,7 +366,7 @@ export function FamilyTree({
                     <div className="text-right">
                       <p className="text-sm text-muted-foreground">CPF</p>
                       <p className="text-sm font-medium">
-                        {formatCPF(relation.head.cpf)}
+                        {relation?.head?.cpf ? formatCPF(relation.head.cpf) : 'N/A'}
                       </p>
                     </div>
                   </div>

@@ -362,7 +362,7 @@ export default function FamiliaPage() {
           <div className="space-y-4">
             <p className="text-sm text-gray-600">
               Tem certeza que deseja remover{' '}
-              <strong>{selectedMember?.member.name}</strong>{' '}
+              <strong>{selectedMember?.member?.name || 'este membro'}</strong>{' '}
               da sua composição familiar?
             </p>
 
