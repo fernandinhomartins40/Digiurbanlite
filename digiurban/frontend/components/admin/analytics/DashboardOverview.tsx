@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { TrendingUp, TrendingDown, Minus, Activity, CheckCircle, Clock, AlertTriangle, Users } from 'lucide-react';
+import { TrendingUp, TrendingDown, Minus, Activity, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 
 interface DashboardData {
   overview: {
@@ -19,9 +19,31 @@ interface DashboardData {
     slaComplianceRate: number | null;
     avgSlaDeviation: number | null;
   };
-  departments: any[];
-  topServers: any[];
-  bottlenecks: any[];
+  departments: {
+    departmentId: string;
+    departmentName: string;
+    totalProtocols: number;
+    activeProtocols: number;
+    completedProtocols: number;
+    slaComplianceRate: number | null;
+    avgCompletionTime: number | null;
+  }[];
+  topServers: {
+    userId: string;
+    userName: string;
+    protocolsCompleted: number;
+    protocolsOnTime: number;
+    avgCompletionTime: number | null;
+  }[];
+  bottlenecks: {
+    entityName: string;
+    entityId: string;
+    bottleneckType: string;
+    affectedProtocols: number;
+    avgStuckTime: number;
+    impactScore: number;
+    priority: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  }[];
 }
 
 interface MetricCardProps {
@@ -117,6 +139,11 @@ export default function DashboardOverview() {
     return value.toFixed(1);
   };
 
+  const safePercent = (numerator: number, denominator: number) => {
+    if (denominator === 0) return 'N/A';
+    return formatPercentage((numerator / denominator) * 100);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header com filtros */}
@@ -145,13 +172,13 @@ export default function DashboardOverview() {
         <MetricCard
           title="Total de Protocolos"
           value={data.overview.totalProtocols}
-          subtitle={`${data.overview.newProtocols} novos`}
+          subtitle={`${data.overview.newProtocols} novos no período`}
           icon={<Activity />}
         />
         <MetricCard
           title="Protocolos Concluídos"
           value={data.overview.closedProtocols}
-          subtitle={formatPercentage((data.overview.closedProtocols / data.overview.totalProtocols) * 100)}
+          subtitle={safePercent(data.overview.closedProtocols, data.overview.totalProtocols)}
           icon={<CheckCircle />}
         />
         <MetricCard
@@ -163,7 +190,7 @@ export default function DashboardOverview() {
         <MetricCard
           title="Protocolos Atrasados"
           value={data.overview.overdueProtocols}
-          subtitle={formatPercentage((data.overview.overdueProtocols / data.overview.totalProtocols) * 100)}
+          subtitle={safePercent(data.overview.overdueProtocols, data.overview.totalProtocols)}
           icon={<AlertTriangle />}
         />
       </div>
@@ -175,11 +202,18 @@ export default function DashboardOverview() {
           value={formatPercentage(data.overview.slaComplianceRate)}
           subtitle="Taxa de cumprimento de prazos"
           trend={
-            data.overview.slaComplianceRate && data.overview.slaComplianceRate >= 90
-              ? 'up'
-              : data.overview.slaComplianceRate && data.overview.slaComplianceRate < 70
-              ? 'down'
-              : 'neutral'
+            data.overview.slaComplianceRate !== null
+              ? data.overview.slaComplianceRate >= 90 ? 'up'
+                : data.overview.slaComplianceRate < 70 ? 'down'
+                : 'neutral'
+              : undefined
+          }
+          trendValue={
+            data.overview.slaComplianceRate !== null
+              ? data.overview.slaComplianceRate >= 90 ? 'Dentro da meta'
+                : data.overview.slaComplianceRate < 70 ? 'Abaixo da meta'
+                : 'Próximo da meta'
+              : undefined
           }
         />
         <MetricCard
@@ -187,11 +221,18 @@ export default function DashboardOverview() {
           value={formatScore(data.overview.satisfactionScore)}
           subtitle="Nota média (0-5)"
           trend={
-            data.overview.satisfactionScore && data.overview.satisfactionScore >= 4
-              ? 'up'
-              : data.overview.satisfactionScore && data.overview.satisfactionScore < 3
-              ? 'down'
-              : 'neutral'
+            data.overview.satisfactionScore !== null
+              ? data.overview.satisfactionScore >= 4 ? 'up'
+                : data.overview.satisfactionScore < 3 ? 'down'
+                : 'neutral'
+              : undefined
+          }
+          trendValue={
+            data.overview.satisfactionScore !== null
+              ? data.overview.satisfactionScore >= 4 ? 'Boa avaliação'
+                : data.overview.satisfactionScore < 3 ? 'Precisa de melhoria'
+                : 'Avaliação média'
+              : undefined
           }
         />
         <MetricCard
@@ -204,11 +245,14 @@ export default function DashboardOverview() {
       {/* Tabs com detalhes */}
       <Tabs defaultValue="bottlenecks" className="space-y-4">
         <TabsList>
-          <TabsTrigger value="bottlenecks">Gargalos</TabsTrigger>
+          <TabsTrigger value="bottlenecks">
+            Gargalos {data.bottlenecks.length > 0 && <span className="ml-1 text-xs text-orange-600 font-bold">({data.bottlenecks.length})</span>}
+          </TabsTrigger>
           <TabsTrigger value="departments">Departamentos</TabsTrigger>
           <TabsTrigger value="servers">Top Servidores</TabsTrigger>
         </TabsList>
 
+        {/* GARGALOS */}
         <TabsContent value="bottlenecks" className="space-y-4">
           <Card>
             <CardHeader>
@@ -224,16 +268,16 @@ export default function DashboardOverview() {
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {data.bottlenecks.map((bottleneck: any, index: number) => (
+                  {data.bottlenecks.map((bottleneck) => (
                     <div
-                      key={index}
+                      key={bottleneck.entityId}
                       className="flex items-center justify-between p-4 border rounded-lg"
                     >
                       <div className="flex-1">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-medium">{bottleneck.entityName}</span>
                           <span
-                            className={`text-xs px-2 py-1 rounded ${
+                            className={`text-xs px-2 py-0.5 rounded ${
                               bottleneck.priority === 'CRITICAL'
                                 ? 'bg-red-100 text-red-800'
                                 : bottleneck.priority === 'HIGH'
@@ -245,13 +289,16 @@ export default function DashboardOverview() {
                           >
                             {bottleneck.priority}
                           </span>
+                          <span className="text-xs px-2 py-0.5 rounded bg-blue-50 text-blue-700">
+                            {bottleneck.bottleneckType}
+                          </span>
                         </div>
                         <p className="text-sm text-muted-foreground mt-1">
-                          {bottleneck.affectedProtocols} protocolos afetados • Tempo médio:{' '}
+                          {bottleneck.affectedProtocols} protocolos afetados • Tempo médio parado:{' '}
                           {formatTime(bottleneck.avgStuckTime)}
                         </p>
                       </div>
-                      <div className="text-right">
+                      <div className="text-right ml-4">
                         <div className="text-2xl font-bold text-orange-600">
                           {bottleneck.impactScore.toFixed(0)}
                         </div>
@@ -265,6 +312,7 @@ export default function DashboardOverview() {
           </Card>
         </TabsContent>
 
+        {/* DEPARTAMENTOS */}
         <TabsContent value="departments" className="space-y-4">
           <Card>
             <CardHeader>
@@ -274,19 +322,19 @@ export default function DashboardOverview() {
             <CardContent>
               {data.departments.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhum dado de departamento disponível
+                  Nenhum dado de departamento disponível no período
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {data.departments.map((dept: any, index: number) => (
-                    <div key={index} className="p-4 border rounded-lg">
+                  {data.departments.map((dept) => (
+                    <div key={dept.departmentId} className="p-4 border rounded-lg">
                       <div className="flex items-center justify-between mb-3">
-                        <h4 className="font-medium">Departamento #{dept.departmentId.slice(0, 8)}</h4>
+                        <h4 className="font-medium">{dept.departmentName}</h4>
                         <span className="text-sm text-muted-foreground">
                           {dept.totalProtocols} protocolos
                         </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-4 text-sm">
+                      <div className="grid grid-cols-4 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground">Ativos</p>
                           <p className="font-medium">{dept.activeProtocols}</p>
@@ -299,6 +347,10 @@ export default function DashboardOverview() {
                           <p className="text-muted-foreground">SLA</p>
                           <p className="font-medium">{formatPercentage(dept.slaComplianceRate)}</p>
                         </div>
+                        <div>
+                          <p className="text-muted-foreground">Tempo Médio</p>
+                          <p className="font-medium">{formatTime(dept.avgCompletionTime)}</p>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -308,6 +360,7 @@ export default function DashboardOverview() {
           </Card>
         </TabsContent>
 
+        {/* TOP SERVIDORES */}
         <TabsContent value="servers" className="space-y-4">
           <Card>
             <CardHeader>
@@ -317,28 +370,28 @@ export default function DashboardOverview() {
             <CardContent>
               {data.topServers.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
-                  Nenhum dado de servidor disponível
+                  Nenhum dado de servidor disponível no período
                 </p>
               ) : (
                 <div className="space-y-4">
-                  {data.topServers.map((server: any, index: number) => (
-                    <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
+                  {data.topServers.map((server, index) => (
+                    <div key={server.userId} className="flex items-center justify-between p-4 border rounded-lg">
                       <div className="flex items-center gap-3">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-sm">
                           {index + 1}
                         </div>
                         <div>
-                          <p className="font-medium">Servidor #{server.userId.slice(0, 8)}</p>
+                          <p className="font-medium">{server.userName}</p>
                           <p className="text-sm text-muted-foreground">
-                            {server.protocolsCompleted} protocolos concluídos
+                            {server.protocolsCompleted} protocolos concluídos • Tempo médio: {formatTime(server.avgCompletionTime)}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-medium">
-                          {formatPercentage(
-                            (server.protocolsOnTime / server.protocolsCompleted) * 100
-                          )}
+                          {server.protocolsCompleted > 0
+                            ? formatPercentage((server.protocolsOnTime / server.protocolsCompleted) * 100)
+                            : '0%'}
                         </p>
                         <p className="text-xs text-muted-foreground">No prazo</p>
                       </div>

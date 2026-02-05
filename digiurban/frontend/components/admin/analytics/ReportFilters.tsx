@@ -12,8 +12,6 @@ interface FilterOptions {
   periodType: 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY';
   departmentId?: string;
   serviceId?: string;
-  startDate?: string;
-  endDate?: string;
 }
 
 interface Department {
@@ -45,7 +43,7 @@ export default function ReportFilters() {
       const response = await fetch('/api/departments', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
-        setDepartments(data);
+        setDepartments(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Erro ao carregar departamentos:', error);
@@ -57,7 +55,7 @@ export default function ReportFilters() {
       const response = await fetch('/api/services', { credentials: 'include' });
       if (response.ok) {
         const data = await response.json();
-        setServices(data);
+        setServices(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Erro ao carregar serviços:', error);
@@ -78,22 +76,25 @@ export default function ReportFilters() {
         credentials: 'include'
       });
 
-      if (!response.ok) throw new Error('Erro ao exportar relatório');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Erro ao exportar relatório');
+      }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `relatorio-protocolos-${filters.periodType}-${new Date().toISOString()}.csv`;
+      a.download = `relatorio-analytics-${filters.periodType}-${new Date().toISOString().split('T')[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
       toast.success('Relatório exportado com sucesso!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Erro ao exportar:', error);
-      toast.error('Erro ao exportar relatório');
+      toast.error(error.message || 'Erro ao exportar relatório');
     } finally {
       setExporting(false);
     }
@@ -112,13 +113,16 @@ export default function ReportFilters() {
         })
       });
 
-      if (!response.ok) throw new Error('Erro ao recalcular métricas');
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        throw new Error(errorData?.error || 'Erro ao recalcular métricas');
+      }
 
       const result = await response.json();
-      toast.success(`Métricas recalculadas! ${result.data.bottlenecksFound} gargalos identificados.`);
+      toast.success(`Métricas recalculadas! ${result.data.bottlenecksFound} gargalo(s) identificado(s).`);
 
-      // Recarregar página para atualizar dados
-      window.location.reload();
+      // Dispara evento customizado para que DashboardOverview recarregue
+      window.dispatchEvent(new CustomEvent('analytics-recalculated'));
     } catch (error: any) {
       console.error('Erro ao recalcular:', error);
       toast.error(error.message || 'Erro ao recalcular métricas');
@@ -135,11 +139,11 @@ export default function ReportFilters() {
           Filtros e Exportação
         </CardTitle>
         <CardDescription>
-          Configure os filtros para personalizar os relatórios
+          Configure os filtros para personalizar os relatórios e exportações
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-4 md:grid-cols-3">
           {/* Período */}
           <div className="space-y-2">
             <Label htmlFor="periodType">Período</Label>
@@ -163,7 +167,7 @@ export default function ReportFilters() {
           <div className="space-y-2">
             <Label htmlFor="department">Departamento</Label>
             <Select
-              value={filters.departmentId}
+              value={filters.departmentId || 'all'}
               onValueChange={(value) =>
                 setFilters({ ...filters, departmentId: value === 'all' ? undefined : value })
               }
@@ -186,7 +190,7 @@ export default function ReportFilters() {
           <div className="space-y-2">
             <Label htmlFor="service">Serviço</Label>
             <Select
-              value={filters.serviceId}
+              value={filters.serviceId || 'all'}
               onValueChange={(value) =>
                 setFilters({ ...filters, serviceId: value === 'all' ? undefined : value })
               }
@@ -227,22 +231,22 @@ export default function ReportFilters() {
           </Button>
         </div>
 
-        {/* Informações */}
+        {/* Informações sobre exportação */}
         <div className="bg-muted p-3 rounded-md text-sm">
-          <p className="font-medium mb-1">Sobre a Exportação</p>
+          <p className="font-medium mb-1">Sobre a Exportação CSV</p>
           <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-            <li>O arquivo CSV contém todas as métricas do período selecionado</li>
-            <li>Inclui overview geral e detalhamento de gargalos</li>
-            <li>Compatível com Excel, Google Sheets e outros softwares</li>
+            <li>Contém visão geral, performance por departamento, top servidores e gargalos</li>
+            <li>Dados são calculados em tempo real com base nos filtros selecionados</li>
+            <li>Compatível com Excel, Google Sheets e outros softwares (UTF-8 com BOM)</li>
           </ul>
         </div>
 
         <div className="bg-blue-50 p-3 rounded-md text-sm">
           <p className="font-medium mb-1 text-blue-900">Recálculo de Métricas</p>
           <ul className="list-disc list-inside space-y-1 text-blue-700">
-            <li>Atualiza todas as métricas com base nos dados mais recentes</li>
-            <li>Identifica novos gargalos e atualiza scores de impacto</li>
-            <li>Recomendado executar 1x por semana ou após mudanças importantes</li>
+            <li>Atualiza as métricas agregadas (ProtocolMetrics, DepartmentMetrics)</li>
+            <li>Detecta e persiste novos gargalos no banco de dados</li>
+            <li>Recomendado executar periodicamente ou após alterações importantes</li>
             <li>Requer permissões de administrador</li>
           </ul>
         </div>

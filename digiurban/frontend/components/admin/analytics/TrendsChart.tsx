@@ -37,10 +37,11 @@ export default function TrendsChart() {
 
       if (!response.ok) throw new Error('Erro ao carregar tendências');
 
-      const trendsData = await response.json();
+      const trendsData: TrendData[] = await response.json();
       setData(trendsData);
     } catch (error) {
       console.error('Erro ao carregar tendências:', error);
+      setData([]);
     } finally {
       setLoading(false);
     }
@@ -67,7 +68,7 @@ export default function TrendsChart() {
       period: d.period,
       total: d.metrics!.totalProtocols,
       concluidos: d.metrics!.closedProtocols,
-      tempo: d.metrics!.avgCompletionTime ? d.metrics!.avgCompletionTime / 24 : 0, // Converter para dias
+      tempo: d.metrics!.avgCompletionTime !== null ? d.metrics!.avgCompletionTime / 24 : 0,
       satisfacao: d.metrics!.satisfactionScore || 0,
       sla: d.metrics!.slaComplianceRate || 0
     }));
@@ -78,7 +79,7 @@ export default function TrendsChart() {
         <div className="flex items-center justify-between">
           <div>
             <CardTitle>Tendências ao Longo do Tempo</CardTitle>
-            <CardDescription>Evolução das métricas ao longo dos meses</CardDescription>
+            <CardDescription>Evolução das métricas ao longo dos períodos</CardDescription>
           </div>
           <div className="flex gap-2">
             <Select value={chartType} onValueChange={(value: any) => setChartType(value)}>
@@ -106,27 +107,28 @@ export default function TrendsChart() {
       </CardHeader>
       <CardContent>
         {chartData.length === 0 ? (
-          <div className="flex items-center justify-center h-96">
-            <p className="text-muted-foreground">Nenhum dado disponível para o período</p>
+          <div className="flex flex-col items-center justify-center h-64 gap-2">
+            <p className="text-muted-foreground">Nenhum dado disponível para o período selecionado</p>
+            <p className="text-xs text-muted-foreground">Os dados aparecerão à medida que protocolos forem criados e processados</p>
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={400}>
             {chartType === 'volume' ? (
               <BarChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis />
+                <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+                <YAxis allowDecimals={false} />
                 <Tooltip />
                 <Legend />
-                <Bar dataKey="total" fill="#8884d8" name="Total de Protocolos" />
-                <Bar dataKey="concluidos" fill="#82ca9d" name="Concluídos" />
+                <Bar dataKey="total" fill="#8884d8" name="Total de Protocolos" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="concluidos" fill="#82ca9d" name="Concluídos" radius={[4, 4, 0, 0]} />
               </BarChart>
             ) : chartType === 'performance' ? (
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis yAxisId="left" />
-                <YAxis yAxisId="right" orientation="right" />
+                <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+                <YAxis yAxisId="left" label={{ value: 'Dias', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }} />
+                <YAxis yAxisId="right" orientation="right" domain={[0, 100]} label={{ value: '%', angle: 90, position: 'insideRight', style: { fontSize: 11 } }} />
                 <Tooltip />
                 <Legend />
                 <Line
@@ -136,6 +138,8 @@ export default function TrendsChart() {
                   stroke="#8884d8"
                   name="Tempo Médio (dias)"
                   strokeWidth={2}
+                  dot={{ r: 4 }}
+                  connectNulls
                 />
                 <Line
                   yAxisId="right"
@@ -144,13 +148,15 @@ export default function TrendsChart() {
                   stroke="#82ca9d"
                   name="SLA (%)"
                   strokeWidth={2}
+                  dot={{ r: 4 }}
+                  connectNulls
                 />
               </LineChart>
             ) : (
               <LineChart data={chartData}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="period" />
-                <YAxis domain={[0, 5]} />
+                <XAxis dataKey="period" tick={{ fontSize: 12 }} />
+                <YAxis domain={[0, 5]} ticks={[0, 1, 2, 3, 4, 5]} label={{ value: 'Nota', angle: -90, position: 'insideLeft', style: { fontSize: 11 } }} />
                 <Tooltip />
                 <Legend />
                 <Line
@@ -159,6 +165,8 @@ export default function TrendsChart() {
                   stroke="#ffc658"
                   name="Satisfação (0-5)"
                   strokeWidth={2}
+                  dot={{ r: 4 }}
+                  connectNulls
                 />
               </LineChart>
             )}

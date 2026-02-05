@@ -679,68 +679,263 @@ function getUserLevel(role: string): number {
 
 async function getCitizenDashboard(userId: string) {
   const protocols = await prisma.protocolSimplified.findMany({
-    where: { createdBy: userId as any }
-      });
+    where: { createdById: userId },
+    orderBy: { createdAt: 'desc' }
+  });
+
+  const evals = await prisma.protocolEvaluationSimplified.aggregate({
+    where: { protocol: { createdById: userId } },
+    _avg: { rating: true }
+  });
 
   return {
     myProtocols: protocols.length,
-    activeProtocols: protocols.filter(p => p.status !== 'CONCLUIDO').length,
+    activeProtocols: protocols.filter(p => ACTIVE_STATUSES.includes(p.status as any)).length,
     completedProtocols: protocols.filter(p => p.status === 'CONCLUIDO').length,
-    averageRating: 0,
-    recentProtocols: protocols.slice(-5)
+    averageRating: evals._avg.rating || 0,
+    recentProtocols: protocols.slice(0, 5)
         };
 }
 
 async function getEmployeeDashboard(userId: string) {
-  // Dashboard para funcionário - implementação simplificada
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const [assigned, completedToday, pending] = await Promise.all([
+    prisma.protocolSimplified.count({
+      where: { currentAssignedUserId: userId, status: { in: ACTIVE_STATUSES } }
+    }),
+    prisma.protocolSimplified.count({
+      where: { currentAssignedUserId: userId, status: 'CONCLUIDO', updatedAt: { gte: today } }
+    }),
+    prisma.protocolSimplified.count({
+      where: { currentAssignedUserId: userId, status: 'PENDENCIA' }
+    })
+  ]);
+
+  const evals = await prisma.protocolEvaluationSimplified.aggregate({
+    where: { protocol: { currentAssignedUserId: userId } },
+    _avg: { rating: true }
+  });
+
   return {
-    assignedProtocols: 0,
-    completedToday: 0,
-    pendingProtocols: 0,
-    averageRating: 0
+    assignedProtocols: assigned,
+    completedToday,
+    pendingProtocols: pending,
+    averageRating: evals._avg.rating || 0
         };
 }
 
 async function getCoordinatorDashboard(userId: string) {
-  // Dashboard para coordenador - implementação simplificada
+  // Buscar departamentos que o coordenador gerencia
+  const userDepts = await prisma.userDepartment.findMany({
+    where: { userId },
+    select: { departmentId: true }
+  });
+  const deptIds = userDepts.map(d => d.departmentId);
+
+  const deptGroups = await prisma.protocolSimplified.groupBy({
+    by: ['departmentId'],
+    where: { departmentId: { in: deptIds } },
+    _count: { id: true }
+  });
+
+  const teamPerformance = await Promise.all(deptGroups.map(async (g) => {
+    const dept = await prisma.department.findFirst({ where: { id: g.departmentId }, select: { name: true } });
+    const completed = await prisma.protocolSimplified.count({
+      where: { departmentId: g.departmentId, status: 'CONCLUIDO' }
+    });
+    return { departmentName: dept?.name || g.departmentId, total: g._count.id, completed };
+  }));
+
+  // Workload: servidores nos departamentos do coordenador
+  const serverGroups = await prisma.protocolSimplified.groupBy({
+    by: ['currentAssignedUserId'],
+    where: { departmentId: { in: deptIds }, status: { in: ACTIVE_STATUSES }, currentAssignedUserId: { not: null } },
+    _count: { id: true }
+  });
+
+  const workloadDistribution = await Promise.all(serverGroups.map(async (g) => {
+    const user = await prisma.user.findFirst({ where: { id: g.currentAssignedUserId! }, select: { name: true } });
+    return { serverName: user?.name || g.currentAssignedUserId, protocols: g._count.id };
+  }));
+
   return {
-    teamPerformance: [],
-    departmentKPIs: [],
-    workloadDistribution: []
+    teamPerformance,
+    departmentKPIs: teamPerformance,
+    workloadDistribution
         };
 }
 
 async function getManagerDashboard(userId: string) {
-  // Dashboard para secretário - implementação simplificada
+  // Secretário vê dados do seu departamento principal
+  const user = await prisma.user.findFirst({ where: { id: userId }, select: { departmentId: true } });
+  const deptId = user?.departmentId;
+
+  const where: any = deptId ? { departmentId: deptId } : {};
+
+  const [total, completed, active] = await Promise.all([
+    prisma.protocolSimplified.count({ where }),
+    prisma.protocolSimplified.count({ where: { ...where, status: 'CONCLUIDO' } }),
+    prisma.protocolSimplified.count({ where: { ...where, status: { in: ACTIVE_STATUSES } } })
+  ]);
+
+  const evals = await prisma.protocolEvaluationSimplified.aggregate({
+    where: { protocol: where },
+    _avg: { rating: true }
+  });
+
+  // Eficiência por serviço
+  const serviceGroups = await prisma.protocolSimplified.groupBy({
+    by: ['serviceId'],
+    where,
+    _count: { id: true }
+  });
+
+  const serviceEfficiency = await Promise.all(serviceGroups.map(async (g) => {
+    const svc = await prisma.serviceSimplified.findFirst({ where: { id: g.serviceId }, select: { name: true } });
+    const svcCompleted = await prisma.protocolSimplified.count({
+      where: { serviceId: g.serviceId, status: 'CONCLUIDO' }
+    });
+    return {
+      serviceName: svc?.name || g.serviceId,
+      total: g._count.id,
+      completed: svcCompleted,
+      rate: g._count.id > 0 ? (svcCompleted / g._count.id) * 100 : 0
+    };
+  }));
+
   return {
-    departmentMetrics: [],
-    serviceEfficiency: [],
-    citizenSatisfaction: 0
+    departmentMetrics: { total, completed, active },
+    serviceEfficiency,
+    citizenSatisfaction: evals._avg.rating || 0
         };
 }
 
 async function getExecutiveDashboard() {
-  // Dashboard executivo - implementação simplificada
+  const [total, completed, cancelled, active] = await Promise.all([
+    prisma.protocolSimplified.count({}),
+    prisma.protocolSimplified.count({ where: { status: 'CONCLUIDO' } }),
+    prisma.protocolSimplified.count({ where: { status: 'CANCELADO' } }),
+    prisma.protocolSimplified.count({ where: { status: { in: ACTIVE_STATUSES } } })
+  ]);
+
+  const evals = await prisma.protocolEvaluationSimplified.aggregate({
+    _avg: { rating: true }
+  });
+
+  const slas = await prisma.protocolSLA.findMany({ select: { isOverdue: true } });
+  const slaCompliance = slas.length > 0 ? (slas.filter(s => !s.isOverdue).length / slas.length) * 100 : 100;
+
+  // Comparação por departamento
+  const deptGroups = await prisma.protocolSimplified.groupBy({
+    by: ['departmentId'],
+    _count: { id: true }
+  });
+
+  const departmentComparison = await Promise.all(deptGroups.map(async (g) => {
+    const dept = await prisma.department.findFirst({ where: { id: g.departmentId }, select: { name: true } });
+    const deptCompleted = await prisma.protocolSimplified.count({
+      where: { departmentId: g.departmentId, status: 'CONCLUIDO' }
+    });
+    return {
+      name: dept?.name || g.departmentId,
+      total: g._count.id,
+      completed: deptCompleted,
+      completionRate: g._count.id > 0 ? (deptCompleted / g._count.id) * 100 : 0
+    };
+  }));
+
   return {
-    municipalKPIs: [],
-    departmentComparison: [],
-    citizenSatisfaction: 0,
+    municipalKPIs: [
+      { id: 'total', name: 'Total Protocolos', value: total },
+      { id: 'completed', name: 'Concluídos', value: completed },
+      { id: 'active', name: 'Ativos', value: active },
+      { id: 'cancelled', name: 'Cancelados', value: cancelled },
+      { id: 'sla', name: 'Cumprimento SLA (%)', value: slaCompliance }
+    ],
+    departmentComparison,
+    citizenSatisfaction: evals._avg.rating || 0,
     budgetEfficiency: 0
         };
 }
 
 async function getSuperAdminDashboard() {
-  // Dashboard super admin - implementação simplificada
+  // Super admin vê tudo do sistema
+  const [totalProtocols, totalDepts, totalServices, totalUsers, totalCitizens] = await Promise.all([
+    prisma.protocolSimplified.count({}),
+    prisma.department.count({ where: { isActive: true } }),
+    prisma.serviceSimplified.count({ where: { isActive: true } }),
+    prisma.user.count({ where: { isActive: true } }),
+    prisma.citizen.count({})
+  ]);
+
+  const [completed, active, overdue] = await Promise.all([
+    prisma.protocolSimplified.count({ where: { status: 'CONCLUIDO' } }),
+    prisma.protocolSimplified.count({ where: { status: { in: ACTIVE_STATUSES } } }),
+    prisma.protocolSimplified.count({
+      where: { status: { in: ACTIVE_STATUSES }, sla: { isOverdue: true } }
+    })
+  ]);
+
   return {
-    platformMetrics: [],
-    tenantPerformance: [],
+    platformMetrics: [
+      { id: 'protocols', name: 'Total Protocolos', value: totalProtocols },
+      { id: 'departments', name: 'Departamentos Ativos', value: totalDepts },
+      { id: 'services', name: 'Serviços Ativos', value: totalServices },
+      { id: 'users', name: 'Servidores Ativos', value: totalUsers },
+      { id: 'citizens', name: 'Cidadãos Cadastrados', value: totalCitizens },
+      { id: 'completed', name: 'Protocolos Concluídos', value: completed },
+      { id: 'active', name: 'Protocolos Ativos', value: active },
+      { id: 'overdue', name: 'Protocolos Atrasados', value: overdue }
+    ],
+    tenantPerformance: {
+      completionRate: totalProtocols > 0 ? (completed / totalProtocols) * 100 : 0,
+      activeRate: totalProtocols > 0 ? (active / totalProtocols) * 100 : 0,
+      overdueRate: totalProtocols > 0 ? (overdue / totalProtocols) * 100 : 0
+    },
     revenueAnalytics: []
         };
 }
 
 async function calculateKPIValue(kpi: KPIDefinition, filters: FilterOptions): Promise<number> {
-  // Implementação simplificada do cálculo de KPI
-  return Math.random() * 100;
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const baseWhere: any = { createdAt: { gte: thirtyDaysAgo } };
+  if (filters.department) baseWhere.departmentId = filters.department;
+
+  switch (kpi.metric) {
+    case 'completion_rate': {
+      const total = await prisma.protocolSimplified.count({ where: baseWhere });
+      const closed = await prisma.protocolSimplified.count({ where: { ...baseWhere, status: 'CONCLUIDO' } });
+      return total > 0 ? (closed / total) * 100 : 0;
+    }
+    case 'sla_compliance': {
+      const slas = await prisma.protocolSLA.findMany({
+        where: { protocol: baseWhere },
+        select: { isOverdue: true }
+      });
+      return slas.length > 0 ? (slas.filter(s => !s.isOverdue).length / slas.length) * 100 : 100;
+    }
+    case 'satisfaction_score': {
+      const evals = await prisma.protocolEvaluationSimplified.aggregate({
+        where: { protocol: baseWhere },
+        _avg: { rating: true }
+      });
+      return evals._avg.rating || 0;
+    }
+    case 'overdue_count': {
+      return await prisma.protocolSimplified.count({
+        where: { ...baseWhere, status: { in: ACTIVE_STATUSES }, sla: { isOverdue: true } }
+      });
+    }
+    case 'total_protocols': {
+      return await prisma.protocolSimplified.count({ where: baseWhere });
+    }
+    default:
+      // Para KPIs personalizados sem implementação específica, retorna o currentValue se existir
+      return kpi.target || 0;
+  }
 }
 
 function getKPIStatus(
@@ -756,8 +951,52 @@ function getKPIStatus(
 }
 
 async function calculateKPITrend(kpi: KPIDefinition): Promise<string> {
-  // Implementação simplificada do cálculo de tendência
-  return ['up', 'down', 'stable'][Math.floor(Math.random() * 3)];
+  // Compara valor atual com valor de 30 dias atrás
+  const now = new Date();
+  const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000);
+
+  const currentFilters: FilterOptions = {};
+  const previousFilters: FilterOptions = {};
+
+  // Calcular valor atual (último 30 dias) e anterior (30-60 dias)
+  const currentValue = await calculateKPIValue(kpi, currentFilters);
+
+  // Para calcular o valor anterior, usamos uma query direta
+  const prevBaseWhere: any = { createdAt: { gte: sixtyDaysAgo, lt: thirtyDaysAgo } };
+  let prevValue = 0;
+
+  switch (kpi.metric) {
+    case 'completion_rate': {
+      const total = await prisma.protocolSimplified.count({ where: prevBaseWhere });
+      const closed = await prisma.protocolSimplified.count({ where: { ...prevBaseWhere, status: 'CONCLUIDO' } });
+      prevValue = total > 0 ? (closed / total) * 100 : 0;
+      break;
+    }
+    case 'sla_compliance': {
+      const slas = await prisma.protocolSLA.findMany({
+        where: { protocol: prevBaseWhere },
+        select: { isOverdue: true }
+      });
+      prevValue = slas.length > 0 ? (slas.filter(s => !s.isOverdue).length / slas.length) * 100 : 100;
+      break;
+    }
+    case 'satisfaction_score': {
+      const evals = await prisma.protocolEvaluationSimplified.aggregate({
+        where: { protocol: prevBaseWhere },
+        _avg: { rating: true }
+      });
+      prevValue = evals._avg.rating || 0;
+      break;
+    }
+    default:
+      return 'stable';
+  }
+
+  const threshold = 2; // 2% de diferença para considerar mudança
+  if (currentValue > prevValue + threshold) return 'up';
+  if (currentValue < prevValue - threshold) return 'down';
+  return 'stable';
 }
 
 function processTrendData(trends: TrendDataPoint[]): ProcessedTrendData {
@@ -777,28 +1016,75 @@ function processTrendData(trends: TrendDataPoint[]): ProcessedTrendData {
 }
 
 async function processReportInBackground(executionId: string, report: ReportDefinition, params: ReportParams) {
-  // Implementação simplificada do processamento de relatório
-  setTimeout(async () => {
+  // Processar de forma assíncrona (sem await no chamador)
+  (async () => {
     try {
+      const reportConfig = report as any;
+      const category = reportConfig.category || 'general';
+
+      // Buscar dados reais baseados na configuração do relatório
+      const now = new Date();
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      const baseWhere: any = { createdAt: { gte: thirtyDaysAgo } };
+
+      // Aplicar filtros do params
+      if (params.filters?.departmentId) baseWhere.departmentId = params.filters.departmentId;
+      if (params.filters?.serviceId) baseWhere.serviceId = params.filters.serviceId;
+
+      const [total, completed, cancelled, active] = await Promise.all([
+        prisma.protocolSimplified.count({ where: baseWhere }),
+        prisma.protocolSimplified.count({ where: { ...baseWhere, status: 'CONCLUIDO' } }),
+        prisma.protocolSimplified.count({ where: { ...baseWhere, status: 'CANCELADO' } }),
+        prisma.protocolSimplified.count({ where: { ...baseWhere, status: { in: ACTIVE_STATUSES } } })
+      ]);
+
+      const evals = await prisma.protocolEvaluationSimplified.aggregate({
+        where: { protocol: baseWhere },
+        _avg: { rating: true }
+      });
+
+      const slas = await prisma.protocolSLA.findMany({
+        where: { protocol: baseWhere },
+        select: { isOverdue: true, daysOverdue: true }
+      });
+
+      const reportData = {
+        generatedAt: now.toISOString(),
+        category,
+        summary: {
+          totalProtocols: total,
+          completedProtocols: completed,
+          cancelledProtocols: cancelled,
+          activeProtocols: active,
+          completionRate: total > 0 ? ((completed / total) * 100).toFixed(2) : '0',
+          satisfactionScore: evals._avg.rating ? evals._avg.rating.toFixed(2) : 'N/A',
+          slaCompliance: slas.length > 0
+            ? ((slas.filter(s => !s.isOverdue).length / slas.length) * 100).toFixed(2)
+            : '100',
+          overdueProtocols: slas.filter(s => s.isOverdue).length
+        }
+      };
+
       await prisma.reportExecution.update({
         where: { id: executionId },
         data: {
           status: 'COMPLETED',
           completedAt: new Date(),
-          data: { message: 'Relatório processado com sucesso', timestamp: new Date() }
+          data: reportData
         }
-        });
+      });
     } catch (error) {
+      console.error('Erro ao processar relatório em background:', error);
       await prisma.reportExecution.update({
         where: { id: executionId },
         data: {
           status: 'FAILED',
           completedAt: new Date(),
-          errorMessage: 'Erro no processamento do relatório'
+          errorMessage: error instanceof Error ? error.message : 'Erro desconhecido no processamento'
         }
-        });
+      });
     }
-  }, 5000); // Simula processamento de 5 segundos
+  })();
 }
 
 function calculateBenchmarkPosition(value: number, benchmarks: BenchmarkData[]): BenchmarkPosition | null {

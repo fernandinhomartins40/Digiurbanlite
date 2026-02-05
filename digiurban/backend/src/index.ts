@@ -416,6 +416,27 @@ try {
 
 console.log('⚠️  Rotas antigas das secretarias DESABILITADAS - usando apenas sistema de abas');
 
+// ============================================================
+// ROTAS DE ANALYTICS (PROTOCOL-ANALYTICS)
+// ============================================================
+console.log('📊 Carregando rotas de analytics...');
+try {
+  const protocolAnalyticsRoutes = require('./routes/protocol-analytics.routes').default;
+  app.use('/api/protocol-analytics', protocolAnalyticsRoutes);
+  console.log('✅ Rotas de protocol-analytics carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de protocol-analytics:', error);
+}
+
+// Analytics genérico (KPIs, reports, benchmarks)
+try {
+  const analyticsRoutes = require('./routes/analytics').default;
+  app.use('/api/analytics', analyticsRoutes);
+  console.log('✅ Rotas de analytics genérico carregadas!');
+} catch (error) {
+  console.error('❌ Erro ao carregar rotas de analytics:', error);
+}
+
 // Complementares
 console.log('🔧 Carregando rotas complementares...');
 try { console.log('   → custom-modules...'); app.use('/api/admin/custom-modules', require('./routes/custom-modules').default); console.log('   ✓'); } catch (e) { console.error('❌ custom-modules:', e); }
