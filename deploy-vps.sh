@@ -17,6 +17,27 @@ echo "⚠️  Este script replica o deploy automático do GitHub Actions"
 echo "📝 Todas as etapas de validação e limpeza serão executadas"
 echo ""
 
+# ============================================================================
+# PRÉ-VALIDAÇÃO LOCAL
+# ============================================================================
+
+echo "🔍 Executando validação pré-deploy..."
+if [ -f "scripts/pre-deploy-check.sh" ]; then
+  chmod +x scripts/pre-deploy-check.sh
+  if ! ./scripts/pre-deploy-check.sh; then
+    echo ""
+    echo "❌ Validação pré-deploy falhou!"
+    echo "Corrija os erros antes de executar o deploy."
+    exit 1
+  fi
+  echo ""
+  echo "✅ Validação pré-deploy concluída"
+  echo ""
+else
+  echo "⚠️  Script de validação não encontrado, continuando sem validação local..."
+  echo ""
+fi
+
 # Configurações
 VPS_HOST="digiurban.com.br"
 VPS_USER="root"
@@ -34,6 +55,30 @@ echo ""
 
 # Diretório da aplicação
 APP_DIR="/root/digiurban"
+
+# ============================================================================
+# ETAPA 0: VALIDAÇÃO E PREPARAÇÃO DO AMBIENTE GIT
+# ============================================================================
+
+echo "🔍 Validando estado do repositório Git..."
+cd $APP_DIR
+
+# Verificar se estamos no branch correto
+CURRENT_BRANCH=$(git branch --show-current)
+echo "Branch atual: $CURRENT_BRANCH"
+
+if [ "$CURRENT_BRANCH" != "main" ]; then
+  echo "⚠️  Não estamos no branch main, mudando..."
+  git checkout main || echo "❌ Falha ao mudar para main"
+fi
+
+# Verificar quantos commits estamos atrás
+BEHIND_COMMITS=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo "0")
+echo "📊 Commits atrás do origin/main: $BEHIND_COMMITS"
+
+# Listar arquivos modificados e untracked
+echo "📋 Arquivos modificados localmente:"
+git status --short || true
 
 # ============================================================================
 # ETAPA 1: PARAR CONTAINERS E LIMPAR ÓRFÃOS
@@ -57,11 +102,90 @@ echo "✅ Containers órfãos removidos"
 echo ""
 
 # ============================================================================
-# ETAPA 2: ATUALIZAR CÓDIGO
+# ETAPA 2: ATUALIZAR CÓDIGO (COM PROTEÇÃO CONTRA CONFLITOS)
 # ============================================================================
 
-echo "📥 Atualizando código (git pull)..."
-git pull origin main
+echo "📥 Atualizando código do repositório..."
+
+# Fazer backup de arquivos .env e configurações críticas
+echo "💾 Fazendo backup de configurações..."
+cp .env .env.backup 2>/dev/null || echo "Nenhum .env para backup"
+
+# Verificar se há alterações locais
+if ! git diff-index --quiet HEAD --; then
+  echo "⚠️  Detectadas alterações locais não comitadas"
+  echo "📦 Fazendo stash das alterações..."
+  git stash push -m "Auto-stash antes do deploy $(date +%Y%m%d_%H%M%S)"
+fi
+
+# Verificar se há arquivos untracked que possam conflitar
+echo "🧹 Verificando arquivos untracked..."
+UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
+if [ ! -z "$UNTRACKED_FILES" ]; then
+  echo "📦 Encontrados arquivos untracked, fazendo backup..."
+  mkdir -p .backup-untracked-$(date +%Y%m%d_%H%M%S)
+  echo "$UNTRACKED_FILES" | while read file; do
+    if [ -f "$file" ]; then
+      mkdir -p ".backup-untracked-$(date +%Y%m%d_%H%M%S)/$(dirname "$file")"
+      cp "$file" ".backup-untracked-$(date +%Y%m%d_%H%M%S)/$file" 2>/dev/null || true
+    fi
+  done
+fi
+
+# Método 1: Tentar pull normal
+echo "🔄 Tentando git pull..."
+if git pull origin main; then
+  echo "✅ Pull realizado com sucesso"
+else
+  echo "⚠️  Pull falhou, usando método alternativo..."
+
+  # Método 2: Fetch + Reset Hard (força atualização)
+  echo "🔄 Fazendo fetch do repositório..."
+  git fetch origin main
+
+  echo "🔄 Resetando para origin/main (força sincronização)..."
+  git reset --hard origin/main
+
+  echo "🧹 Limpando arquivos não rastreados..."
+  git clean -fd
+
+  echo "✅ Código sincronizado forçadamente com origin/main"
+fi
+
+# Restaurar .env se foi deletado
+if [ ! -f ".env" ] && [ -f ".env.backup" ]; then
+  echo "🔄 Restaurando arquivo .env do backup..."
+  cp .env.backup .env
+fi
+
+# Verificar commit atual
+echo "📊 Commit atual após atualização:"
+CURRENT_COMMIT=$(git rev-parse HEAD)
+ORIGIN_COMMIT=$(git rev-parse origin/main)
+echo "Local:  $CURRENT_COMMIT"
+echo "Origin: $ORIGIN_COMMIT"
+
+if [ "$CURRENT_COMMIT" != "$ORIGIN_COMMIT" ]; then
+  echo "❌ ERRO: Código local NÃO está sincronizado com origin/main!"
+  echo "Tentando sincronizar novamente com reset --hard..."
+  git fetch origin main
+  git reset --hard origin/main
+  git clean -fd
+
+  # Verificar novamente
+  CURRENT_COMMIT=$(git rev-parse HEAD)
+  if [ "$CURRENT_COMMIT" != "$ORIGIN_COMMIT" ]; then
+    echo "❌ ERRO CRÍTICO: Não foi possível sincronizar o código!"
+    exit 1
+  fi
+  echo "✅ Código sincronizado após segundo reset"
+else
+  echo "✅ Código está sincronizado com origin/main"
+fi
+
+# Mostrar últimos 5 commits para confirmar
+echo "📜 Últimos 5 commits:"
+git log --oneline -5
 
 echo "📂 Verificando código sincronizado..."
 ls -la
@@ -202,6 +326,30 @@ echo ""
 
 echo "=== Validando arquivos críticos antes do build ==="
 echo ""
+
+# Verificar hash dos arquivos críticos para garantir que foram atualizados
+echo "🔍 Verificando hash dos arquivos críticos..."
+
+# Admin-citizens.ts (deve ter a correção headId)
+if grep -q "headId: id" digiurban/backend/src/routes/admin-citizens.ts; then
+  echo "✓ admin-citizens.ts tem correção headId"
+else
+  echo "⚠️  admin-citizens.ts pode estar desatualizado (não encontrou headId)"
+fi
+
+# Página de família do cidadão (deve ter optional chaining)
+if grep -q "familyData?.head?.birthDate" digiurban/frontend/app/cidadao/familia/page.tsx 2>/dev/null; then
+  echo "✓ cidadao/familia/page.tsx tem optional chaining"
+else
+  echo "⚠️  cidadao/familia/page.tsx pode estar desatualizado"
+fi
+
+# AddFamilyMemberDialog (deve ter debounce)
+if grep -q "debouncedSearch" digiurban/frontend/components/citizen/AddFamilyMemberDialog.tsx 2>/dev/null; then
+  echo "✓ AddFamilyMemberDialog.tsx tem debounce implementado"
+else
+  echo "⚠️  AddFamilyMemberDialog.tsx pode estar desatualizado"
+fi
 
 # Validar estrutura de arquivos backend
 if [ ! -f "digiurban/backend/src/routes/citizen-services.ts" ]; then
