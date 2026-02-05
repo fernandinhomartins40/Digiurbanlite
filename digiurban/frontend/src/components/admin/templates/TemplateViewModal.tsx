@@ -13,10 +13,10 @@ interface TemplateViewModalProps {
   open: boolean
   onClose: () => void
   onEdit?: () => void
-  isSuperAdmin?: boolean
+  canEdit?: boolean
 }
 
-export function TemplateViewModal({ template, open, onClose, onEdit, isSuperAdmin }: TemplateViewModalProps) {
+export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: TemplateViewModalProps) {
   if (!template) return null
 
   const getTypeLabel = (type: string) => {
@@ -188,7 +188,7 @@ export function TemplateViewModal({ template, open, onClose, onEdit, isSuperAdmi
         </Tabs>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
-          {isSuperAdmin && onEdit && (
+          {canEdit && onEdit && (
             <Button onClick={onEdit}>
               <Edit className="h-4 w-4 mr-2" />
               Editar Template

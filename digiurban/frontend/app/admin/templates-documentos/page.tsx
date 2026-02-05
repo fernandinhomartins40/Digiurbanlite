@@ -177,8 +177,8 @@ export default function TemplatesDocumentosPage() {
     ? templates
     : templates.filter(t => t.documentType === filter)
 
-  // Verificar se é SUPER_ADMIN
-  const isSuperAdmin = user?.role === 'SUPER_ADMIN'
+  // Verificar permissões - SUPER_ADMIN e ADMIN podem editar templates
+  const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN'
 
   if (loading) {
     return (
@@ -211,7 +211,7 @@ export default function TemplatesDocumentosPage() {
             Gerenciar templates para geração de documentos PDF
           </p>
         </div>
-        {isSuperAdmin && (
+        {canEdit && (
           <Button disabled>
             <Plus className="h-4 w-4 mr-2" />
             Novo Template
@@ -219,12 +219,12 @@ export default function TemplatesDocumentosPage() {
         )}
       </div>
 
-      {/* Aviso para não SUPER_ADMIN */}
-      {!isSuperAdmin && (
+      {/* Aviso para usuários sem permissão de edição */}
+      {!canEdit && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Apenas SUPER_ADMIN pode criar/editar templates. Você pode visualizar os templates existentes.
+            Apenas SUPER_ADMIN e ADMIN podem criar/editar templates. Você pode visualizar os templates existentes.
           </AlertDescription>
         </Alert>
       )}
@@ -317,7 +317,7 @@ export default function TemplatesDocumentosPage() {
                 ? 'Nenhum template cadastrado. Execute o seed de templates primeiro.'
                 : 'Nenhum template encontrado com este filtro.'}
             </p>
-            {filter === 'all' && isSuperAdmin && (
+            {filter === 'all' && canEdit && (
               <Button className="mt-4" disabled>
                 <Plus className="h-4 w-4 mr-2" />
                 Criar Primeiro Template
@@ -396,7 +396,7 @@ export default function TemplatesDocumentosPage() {
                     <Eye className="h-4 w-4 mr-1" />
                     Visualizar
                   </Button>
-                  {isSuperAdmin && (
+                  {canEdit && (
                     <>
                       <Button
                         variant="outline"
@@ -437,7 +437,7 @@ export default function TemplatesDocumentosPage() {
           setViewModalOpen(false)
           setEditModalOpen(true)
         }}
-        isSuperAdmin={isSuperAdmin}
+        canEdit={canEdit}
       />
 
       <TemplateEditModal
