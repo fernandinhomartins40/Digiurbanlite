@@ -471,7 +471,8 @@ export default function CitizenDetailsPage() {
     )
   }
 
-  const canEdit = hasPermission('citizens:verify') || hasPermission('citizens:update')
+  const canEditFamily = hasPermission('citizens:update')
+  const canVerifyDocuments = hasPermission('citizens:verify')
 
   return (
     <div className="p-8 space-y-6">
@@ -789,7 +790,7 @@ export default function CitizenDetailsPage() {
                             <Download className="w-4 h-4" />
                           </Button>
 
-                          {doc.status === 'PENDING' && (
+                          {doc.status === 'PENDING' && canVerifyDocuments && (
                             <>
                               <Button
                                 variant="outline"
@@ -927,7 +928,7 @@ export default function CitizenDetailsPage() {
           <CitizenFamilyCompositionEnhanced
             citizenId={citizen.id}
             citizenName={citizen.name}
-            canEdit={canEdit}
+            canEdit={canEditFamily}
           />
         </TabsContent>
 
@@ -1190,7 +1191,7 @@ export default function CitizenDetailsPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Baixar
                 </Button>
-                {previewDocument.status === 'PENDING' && (
+                {previewDocument.status === 'PENDING' && canVerifyDocuments && (
                   <>
                     <Button
                       variant="outline"
