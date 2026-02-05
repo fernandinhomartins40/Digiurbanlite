@@ -331,7 +331,7 @@ export default function FamiliaPage() {
         onOpenChange={setShowAddDialog}
         onSuccess={handleSuccess}
         apiRequest={apiRequest}
-        headBirthDate={familyData.head.birthDate}
+        headBirthDate={familyData?.head?.birthDate}
       />
 
       <EditFamilyMemberDialog
