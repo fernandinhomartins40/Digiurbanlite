@@ -6,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { CitizenFamilyComposition } from '@/components/admin/CitizenFamilyComposition'
+import { CitizenFamilyCompositionEnhanced } from '@/components/admin/CitizenFamilyCompositionEnhanced'
 import { useToast } from '@/hooks/use-toast'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import {
@@ -809,7 +809,7 @@ export default function CitizenDetailsPage() {
 
         {/* Composição Familiar */}
         <TabsContent value="family">
-          <CitizenFamilyComposition
+          <CitizenFamilyCompositionEnhanced
             citizenId={citizen.id}
             citizenName={citizen.name}
             canEdit={canEdit}
