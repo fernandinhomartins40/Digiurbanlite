@@ -100,11 +100,12 @@
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.3",
     "tesseract.js": "^6.0.1",
+    "ua-parser-js": "^2.0.9",
     "uuid": "^13.0.0",
     "winston": "^3.19.0",
     "winston-daily-rotate-file": "^5.0.0",
     "xlsx": "^0.18.5",
-    "zod": "^4.1.11"
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@playwright/test": "^1.56.1",
@@ -128,6 +129,7 @@
     "@types/nodemailer": "^7.0.1",
     "@types/smtp-server": "^3.5.12",
     "@types/supertest": "^6.0.3",
+    "@types/ua-parser-js": "^0.7.39",
     "@typescript-eslint/eslint-plugin": "^8.44.1",
     "@typescript-eslint/parser": "^8.44.1",
     "eslint": "^9.36.0",

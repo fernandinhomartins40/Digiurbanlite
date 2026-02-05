@@ -360,7 +360,7 @@ export default function RelatoriosPage() {
 
   // ====================== EXECUTAR ======================
 
-  const buildFiltersPayload(): Record<string, unknown> {
+  const buildFiltersPayload = (): Record<string, unknown> => {
     const filters: Record<string, unknown> = {}
     if (executeData.filterStatus) filters.status = executeData.filterStatus
     if (executeData.filterDepartmentId) filters.departmentId = executeData.filterDepartmentId

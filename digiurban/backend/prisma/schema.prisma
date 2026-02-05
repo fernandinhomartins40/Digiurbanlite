@@ -157,6 +157,10 @@ model User {
   indisponibilidadesAgenda  IndisponibilidadeAgenda[]
   imunizacoes               ImunizacaoCidadao[]
 
+  // ✅ NOVO: Preferências do usuário (2026-02-05)
+  preferences               UserPreferences?          @relation("UserPreferences")
+  activeSessions            UserSession[]             @relation("UserSessions")
+
   @@map("users")
 }
 
@@ -179,6 +183,99 @@ model UserDepartment {
   @@index([departmentId])
   @@index([userId, isPrimary])
   @@map("user_departments")
+}
+
+// ============================================
+// PREFERÊNCIAS E SESSÕES DO USUÁRIO (2026-02-05)
+// ============================================
+
+model UserPreferences {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation("UserPreferences", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Aparência
+  theme                 String   @default("system") // light, dark, system
+  primaryColor          String?  // Cor primária personalizada (hex)
+  compactMode           Boolean  @default(false) // UI compacta
+  fontSize              String   @default("medium") // small, medium, large
+  highContrast          Boolean  @default(false)
+  reduceMotion          Boolean  @default(false)
+
+  // Avatar
+  avatarUrl             String?  // URL da foto de perfil
+
+  // Notificações - Canais
+  emailNotifications    Boolean  @default(true)
+  browserNotifications  Boolean  @default(true)
+  soundEnabled          Boolean  @default(true)
+
+  // Notificações - Tipos específicos
+  notifyNewProtocol     Boolean  @default(true)
+  notifyProtocolUpdate  Boolean  @default(true)
+  notifyNewCitizen      Boolean  @default(false)
+  notifySystemUpdates   Boolean  @default(true)
+  notifyAssignment      Boolean  @default(true)
+  notifyOverdueSLA      Boolean  @default(true)
+  notifyMessages        Boolean  @default(true)
+  notifyDocuments       Boolean  @default(true)
+
+  // Horário de silêncio (formato HH:mm)
+  quietHoursEnabled     Boolean  @default(false)
+  quietHoursStart       String?  // Ex: "22:00"
+  quietHoursEnd         String?  // Ex: "07:00"
+
+  // Preferências de visualização
+  defaultProtocolView   String   @default("table") // table, grid, kanban
+  protocolsPerPage      Int      @default(20)
+  showArchivedByDefault Boolean  @default(false)
+
+  // Dashboard
+  dashboardLayout       Json?    // Layout personalizado de widgets
+
+  // Localização
+  timezone              String   @default("America/Sao_Paulo")
+  language              String   @default("pt-BR")
+  dateFormat            String   @default("DD/MM/YYYY")
+  timeFormat            String   @default("24h") // 12h, 24h
+
+  // Privacidade
+  showOnlineStatus      Boolean  @default(true)
+  allowAnalytics        Boolean  @default(true)
+  showActivityHistory   Boolean  @default(true)
+
+  // Avançado
+  developerMode         Boolean  @default(false)
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("user_preferences")
+}
+
+model UserSession {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+
+  token        String    @unique
+  ipAddress    String?
+  userAgent    String?
+  device       String?   // desktop, mobile, tablet
+  browser      String?   // chrome, firefox, safari, etc
+  os           String?   // windows, macos, linux, android, ios
+  location     String?   // cidade/estado (via IP)
+
+  isActive     Boolean   @default(true)
+  lastActivity DateTime  @default(now())
+  expiresAt    DateTime
+
+  createdAt    DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@index([userId, isActive])
+  @@map("user_sessions")
 }
 
 // ✅ NOVO: Dados específicos de saúde vinculados ao servidor (User)

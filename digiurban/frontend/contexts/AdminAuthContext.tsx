@@ -35,6 +35,15 @@ export interface AdminUser {
     code: string
     description?: string
   }
+  // Dados do servidor público
+  telefone?: string
+  telefoneSecundario?: string
+  cpf?: string
+  rg?: string
+  matricula?: string
+  cargoEfetivo?: string
+  dataAdmissao?: string
+  situacaoFuncional?: string
   userDepartments?: Array<{
     id: string
     departmentId: string

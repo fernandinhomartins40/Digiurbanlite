@@ -130,6 +130,16 @@ console.log('   ✅ citizen-auth importado');
 app.use('/api/admin/auth', adminAuthRoutes);
 app.use('/api/citizen/auth', citizenAuthRoutes);
 
+// Rotas de preferências do usuário admin
+console.log('   Carregando admin-preferences...');
+try {
+  const adminPreferencesRoutes = require('./routes/admin-preferences').default;
+  app.use('/api/admin/preferences', adminPreferencesRoutes);
+  console.log('   ✅ admin-preferences carregado');
+} catch (error) {
+  console.error('❌ Erro ao carregar admin-preferences:', error);
+}
+
 // ============================================================
 // ROTAS INTERNAS (PARA ULTRAZEND MESSAGES)
 // ============================================================
