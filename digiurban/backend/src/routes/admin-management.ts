@@ -404,7 +404,19 @@ const createUserSchema = z.object({
   // ✅ SUPORTA AMBOS: antigo e novo
   departmentId: z.string().optional(),           // Schema antigo (1 dept)
   departmentIds: z.array(z.string()).optional(), // Schema novo (N depts)
-  primaryDepartmentId: z.string().optional()     // Qual é o principal
+  primaryDepartmentId: z.string().optional(),    // Qual é o principal
+  // ✅ DADOS DE SERVIDOR PÚBLICO
+  cpf: z.string().optional(),
+  matricula: z.string().optional(),
+  rg: z.string().optional(),
+  dataNascimento: z.string().optional(), // ISO date string
+  telefone: z.string().optional(),
+  telefoneSecundario: z.string().optional(),
+  endereco: z.any().optional(), // JSON
+  cargoEfetivo: z.string().optional(),
+  situacaoFuncional: z.string().optional(),
+  dataAdmissao: z.string().optional(), // ISO date string
+  observacoes: z.string().optional()
         });
 
 const updateUserSchema = z.object({
@@ -415,7 +427,19 @@ const updateUserSchema = z.object({
   // ✅ SUPORTA AMBOS
   departmentId: z.string().optional(),
   departmentIds: z.array(z.string()).optional(),
-  primaryDepartmentId: z.string().optional()
+  primaryDepartmentId: z.string().optional(),
+  // ✅ DADOS DE SERVIDOR PÚBLICO
+  cpf: z.string().optional(),
+  matricula: z.string().optional(),
+  rg: z.string().optional(),
+  dataNascimento: z.string().optional(), // ISO date string
+  telefone: z.string().optional(),
+  telefoneSecundario: z.string().optional(),
+  endereco: z.any().optional(), // JSON
+  cargoEfetivo: z.string().optional(),
+  situacaoFuncional: z.string().optional(),
+  dataAdmissao: z.string().optional(), // ISO date string
+  observacoes: z.string().optional()
         });
 
 // ====================== ROUTER SETUP ======================
@@ -718,6 +742,18 @@ router.get(
           createdAt: true,
           lastLogin: true,
           departmentId: true,
+          // ✅ DADOS DE SERVIDOR PÚBLICO
+          cpf: true,
+          matricula: true,
+          rg: true,
+          dataNascimento: true,
+          telefone: true,
+          telefoneSecundario: true,
+          endereco: true,
+          cargoEfetivo: true,
+          situacaoFuncional: true,
+          dataAdmissao: true,
+          observacoes: true,
           department: {
             select: {
               id: true,
@@ -742,9 +778,108 @@ router.get(
               { createdAt: 'asc' }
             ]
           },
+          // ✅ SISTEMA UNIFICADO: Vínculos funcionais ativos
+          assignments: {
+            where: {
+              situacao: { in: ['ATIVO', 'AFASTADO', 'LICENCA'] }
+            },
+            include: {
+              department: {
+                select: { id: true, name: true, code: true }
+              },
+              organizationalUnit: {
+                select: {
+                  id: true,
+                  nome: true,
+                  sigla: true,
+                  tipo: true,
+                  nivel: true
+                }
+              },
+              position: {
+                select: {
+                  id: true,
+                  nome: true,
+                  tipo: true,
+                  nivel: true
+                }
+              },
+              function: {
+                select: {
+                  id: true,
+                  nome: true,
+                  tipo: true,
+                  simbolo: true
+                }
+              }
+            },
+            orderBy: [
+              { isPrimary: 'desc' },
+              { dataInicio: 'desc' }
+            ]
+          },
+          // ✅ Hierarquia: Supervisores
+          supervisores: {
+            where: { ativo: true },
+            select: {
+              id: true,
+              tipo: true,
+              supervisor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true,
+                  cpf: true,
+                  matricula: true
+                }
+              }
+            }
+          },
+          // ✅ Hierarquia: Subordinados (count)
+          subordinados: {
+            where: { ativo: true },
+            select: {
+              id: true
+            }
+          },
+          // ✅ Dados profissionais específicos
+          healthData: {
+            select: {
+              categoria: true,
+              registroProfissional: true,
+              tipoRegistro: true,
+              especialidades: true,
+              status: true
+            }
+          },
+          educationData: {
+            select: {
+              categoria: true,
+              formacao: true,
+              disciplinas: true,
+              nivelEnsino: true
+            }
+          },
+          engineeringData: {
+            select: {
+              categoria: true,
+              registroProfissional: true,
+              tipoRegistro: true,
+              especialidades: true
+            }
+          },
+          socialAssistanceData: {
+            select: {
+              categoria: true,
+              registroProfissional: true,
+              tipoRegistro: true,
+              areasAtuacao: true
+            }
+          },
           _count: {
             select: {
-              assignedProtocolsSimplified: true
+              assignedProtocolsSimplified: true,
+              subordinados: true
         }
       }
         },
@@ -901,7 +1036,7 @@ router.post(
     // Hash da senha
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Criar usuário COM múltiplos departamentos
+    // Criar usuário COM múltiplos departamentos E dados de servidor
     const newUser = await prisma.user.create({
       data: {
         name: data.name,
@@ -911,6 +1046,18 @@ router.post(
         departmentId: primaryDepartmentId, // ✅ Manter compatibilidade
         isActive: true,
         mustChangePassword: true,
+        // ✅ DADOS DE SERVIDOR PÚBLICO
+        cpf: data.cpf || null,
+        matricula: data.matricula || null,
+        rg: data.rg || null,
+        dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
+        telefone: data.telefone || null,
+        telefoneSecundario: data.telefoneSecundario || null,
+        endereco: data.endereco || null,
+        cargoEfetivo: data.cargoEfetivo || null,
+        situacaoFuncional: data.situacaoFuncional || 'ATIVO',
+        dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao) : null,
+        observacoes: data.observacoes || null,
         // ✅ NOVO: Criar userDepartments
         userDepartments: {
           create: departmentIds.map(deptId => ({
@@ -1089,6 +1236,19 @@ router.put(
     if (primaryDepartmentId !== undefined) {
       updateData.departmentId = primaryDepartmentId;
     }
+
+    // ✅ DADOS DE SERVIDOR PÚBLICO
+    if (data.cpf !== undefined) updateData.cpf = data.cpf || null;
+    if (data.matricula !== undefined) updateData.matricula = data.matricula || null;
+    if (data.rg !== undefined) updateData.rg = data.rg || null;
+    if (data.dataNascimento !== undefined) updateData.dataNascimento = data.dataNascimento ? new Date(data.dataNascimento) : null;
+    if (data.telefone !== undefined) updateData.telefone = data.telefone || null;
+    if (data.telefoneSecundario !== undefined) updateData.telefoneSecundario = data.telefoneSecundario || null;
+    if (data.endereco !== undefined) updateData.endereco = data.endereco || null;
+    if (data.cargoEfetivo !== undefined) updateData.cargoEfetivo = data.cargoEfetivo || null;
+    if (data.situacaoFuncional !== undefined) updateData.situacaoFuncional = data.situacaoFuncional || null;
+    if (data.dataAdmissao !== undefined) updateData.dataAdmissao = data.dataAdmissao ? new Date(data.dataAdmissao) : null;
+    if (data.observacoes !== undefined) updateData.observacoes = data.observacoes || null;
 
     // ✅ NOVO: Atualizar userDepartments se fornecido
     if (departmentIds !== undefined) {

@@ -50,6 +50,19 @@ model User {
   updatedAt           DateTime  @updatedAt
   lastLogin           DateTime?
 
+  // ✅ DADOS DE SERVIDOR PÚBLICO (Sistema Unificado)
+  cpf                 String?   @unique // CPF do servidor
+  matricula           String?   @unique // Matrícula funcional
+  rg                  String? // RG
+  dataNascimento      DateTime? // Data de nascimento
+  telefone            String? // Telefone principal
+  telefoneSecundario  String? // Telefone secundário
+  endereco            Json? // Endereço completo
+  cargoEfetivo        String? // Cargo de concurso (ex: "Médico", "Professor")
+  situacaoFuncional   String? // ATIVO, APOSENTADO, EXONERADO, etc
+  dataAdmissao        DateTime? // Data de admissão no serviço público
+  observacoes         String? // Observações gerais
+
   // Relacionamentos
   agendaEvents                AgendaEvent[]            @relation("AgendaEventCreator")
   auditLogs                   AuditLog[]
