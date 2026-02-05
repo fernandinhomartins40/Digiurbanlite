@@ -422,18 +422,21 @@ export function analyzeService(input: {
 
   // Análise de documentos
   const hasIdentityDocuments = requiredDocuments.some(d =>
-    d.type.toUpperCase().includes('RG') ||
-    d.type.toUpperCase().includes('CPF') ||
-    d.type.toUpperCase().includes('CERTIDAO') ||
-    d.type.toUpperCase().includes('IDENTIDADE')
+    d.type && (
+      d.type.toUpperCase().includes('RG') ||
+      d.type.toUpperCase().includes('CPF') ||
+      d.type.toUpperCase().includes('CERTIDAO') ||
+      d.type.toUpperCase().includes('IDENTIDADE')
+    )
   );
 
   const hasAddressDocuments = requiredDocuments.some(d =>
-    d.type.toUpperCase().includes('COMPROVANTE') &&
+    d.type && d.type.toUpperCase().includes('COMPROVANTE') &&
     (d.type.toUpperCase().includes('RESIDENCIA') || d.type.toUpperCase().includes('ENDERECO'))
   );
 
   const hasSpecificDocuments = requiredDocuments.filter(d => {
+    if (!d.type) return false;
     const type = d.type.toUpperCase();
     return !type.includes('RG') &&
            !type.includes('CPF') &&
