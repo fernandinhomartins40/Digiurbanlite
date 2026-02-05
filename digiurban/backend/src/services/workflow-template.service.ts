@@ -543,6 +543,7 @@ export function generateSpecializedWorkflow(input: {
   // Separar documentos por categoria
   const identityDocs = requiredDocuments
     .filter(d => {
+      if (!d.type) return false;
       const type = d.type.toUpperCase();
       return type.includes('RG') || type.includes('CPF') || type.includes('IDENTIDADE') || type.includes('CERTIDAO');
     })
@@ -550,6 +551,7 @@ export function generateSpecializedWorkflow(input: {
 
   const addressDocs = requiredDocuments
     .filter(d => {
+      if (!d.type) return false;
       const type = d.type.toUpperCase();
       return type.includes('COMPROVANTE') && (type.includes('RESIDENCIA') || type.includes('ENDERECO'));
     })
@@ -764,6 +766,7 @@ export function generateSpecializedWorkflow(input: {
  * Helpers para classificação de documentos
  */
 function isIdentityDocument(doc: { type: string }): boolean {
+  if (!doc.type) return false;
   const type = doc.type.toUpperCase();
   return type.includes('RG') ||
          type.includes('CPF') ||
@@ -773,6 +776,7 @@ function isIdentityDocument(doc: { type: string }): boolean {
 }
 
 function isAddressDocument(doc: { type: string }): boolean {
+  if (!doc.type) return false;
   const type = doc.type.toUpperCase();
   return (type.includes('COMPROVANTE') || type.includes('COMPROVA')) &&
          (type.includes('RESIDENCIA') || type.includes('ENDERECO'));
