@@ -191,13 +191,15 @@ export default function IntegrationsManagement() {
     try {
       const response = await fetch('/api/integrations')
       const data = await response.json()
-      setIntegrations(data)
+      // Backend retorna { success: true, data: integrations[] }
+      setIntegrations(Array.isArray(data) ? data : (data.data || []))
     } catch (error) {
       toast({
         title: 'Erro',
         description: 'Falha ao carregar integrações',
         variant: 'destructive'
       })
+      setIntegrations([])
     } finally {
       setLoading(false)
     }
@@ -207,9 +209,12 @@ export default function IntegrationsManagement() {
     try {
       const response = await fetch('/api/integrations/logs?limit=50')
       const data = await response.json()
-      setLogs(data.logs)
+      // Backend retorna { success: true, data: { logs: [], pagination: {} } }
+      const logsData = data.data?.logs || data.logs || []
+      setLogs(Array.isArray(logsData) ? logsData : [])
     } catch (error) {
       console.error('Error loading logs:', error)
+      setLogs([])
     }
   }
 
@@ -352,10 +357,10 @@ export default function IntegrationsManagement() {
 
         <div className="flex items-center gap-2 flex-wrap">
           <Badge variant="outline" className="text-green-600">
-            {integrations.filter(i => i.isActive).length} ativas
+            {Array.isArray(integrations) ? integrations.filter(i => i.isActive).length : 0} ativas
           </Badge>
           <Badge variant="outline">
-            {integrations.length} configuradas
+            {Array.isArray(integrations) ? integrations.length : 0} configuradas
           </Badge>
         </div>
       </div>
@@ -389,7 +394,7 @@ export default function IntegrationsManagement() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {INTEGRATION_PROVIDERS.filter(p => p.type === type).map(provider => {
-                    const isConfigured = integrations.some(i => i.provider === provider.id)
+                    const isConfigured = Array.isArray(integrations) ? integrations.some(i => i.provider === provider.id) : false
 
                     return (
                       <Card key={provider.id} className="p-4 hover:shadow-md transition-shadow">
@@ -455,7 +460,7 @@ export default function IntegrationsManagement() {
 
         {/* Tab: Integrações Configuradas */}
         <TabsContent value="configured" className="space-y-6">
-          {integrations.length === 0 ? (
+          {!Array.isArray(integrations) || integrations.length === 0 ? (
             <Card className="p-8 text-center">
               <Database className="h-12 w-12 text-gray-400 mx-auto mb-3" />
               <h3 className="text-lg font-semibold mb-2">Nenhuma integração configurada</h3>
@@ -550,7 +555,7 @@ export default function IntegrationsManagement() {
             </div>
 
             <div className="space-y-2">
-              {logs.map(log => (
+              {Array.isArray(logs) && logs.length > 0 ? logs.map(log => (
                 <div key={log.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-3 border rounded-lg">
                   <Badge
                     variant={log.status === 'success' ? 'default' : 'destructive'}
@@ -576,7 +581,11 @@ export default function IntegrationsManagement() {
                     </p>
                   </div>
                 </div>
-              ))}
+              )) : (
+                <div className="text-center py-8 text-muted-foreground">
+                  Nenhum log disponível
+                </div>
+              )}
             </div>
           </Card>
         </TabsContent>
