@@ -137,7 +137,9 @@
       "Bash(npm run db:seed:saude:*)",
       "Bash(tar czf:*)",
       "Bash(do sed -i 's/UnidadeSaude: true/unidadeSaude: true/g' \"$file\")",
-      "Bash(./deploy-vps.sh)"
+      "Bash(./deploy-vps.sh)",
+      "Bash(git fetch:*)",
+      "WebFetch(domain:sisaps.saude.gov.br)"
     ],
     "deny": [],
     "ask": []
