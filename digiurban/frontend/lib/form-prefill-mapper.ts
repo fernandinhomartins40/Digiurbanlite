@@ -94,19 +94,34 @@ interface FormField {
  *
  * IMPORTANTE: Usamos input de texto com máscara brasileira DD/MM/YYYY
  * para uma melhor experiência do usuário brasileiro
+ *
+ * CORREÇÃO DE FUSO HORÁRIO:
+ * - Datas ISO (YYYY-MM-DD) são interpretadas como UTC meia-noite
+ * - Ao converter para fuso horário local (Brasil UTC-3), pode subtrair 1 dia
+ * - Solução: extrair componentes diretamente da string ISO quando possível
  */
 function formatBrazilianDate(dateString: string): string {
   try {
     if (!dateString) return '';
 
-    // Parse da data
+    // Se a data estiver no formato ISO (YYYY-MM-DD), extrair diretamente os componentes
+    // Isso evita problemas de fuso horário
+    const isoMatch = dateString.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (isoMatch) {
+      const [, year, month, day] = isoMatch;
+      return `${day}/${month}/${year}`;
+    }
+
+    // Se for outro formato, tentar parsear como Date
+    // Usar toISOString() para obter a data em UTC e evitar conversões de fuso
     const date = new Date(dateString);
     if (isNaN(date.getTime())) return '';
 
-    // Formatar no padrão brasileiro: DD/MM/YYYY
-    const day = String(date.getDate()).padStart(2, '0');
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const year = date.getFullYear();
+    // Usar toISOString() que retorna YYYY-MM-DDTHH:mm:ss.sssZ
+    // e extrair apenas a parte da data
+    const isoString = date.toISOString();
+    const [datePart] = isoString.split('T');
+    const [year, month, day] = datePart.split('-');
 
     return `${day}/${month}/${year}`;
   } catch {
