@@ -560,6 +560,16 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
               role: true
         }
       },
+          // ✅ INCLUIR HISTÓRICO (para dashboard mostrar cobranças de agilidade)
+          history: {
+            where: {
+              action: 'REQUEST_UPDATE'
+            },
+            orderBy: {
+              timestamp: 'desc'
+            },
+            take: 1
+          },
           // ✅ INCLUIR STAGES SE SOLICITADO
           ...(includeStages && {
             stages: {

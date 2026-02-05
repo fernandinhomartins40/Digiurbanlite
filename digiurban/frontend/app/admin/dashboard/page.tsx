@@ -115,11 +115,11 @@ export default function AdminDashboard() {
     try {
       setLoadingProtocols(true)
 
-      // Buscar protocolos do backend - API retorna { success: true, data: { protocols: [], pagination: {} } }
+      // Buscar protocolos do backend - API retorna { success: true, protocols: [], pagination: {} }
       const response = await apiRequest('/protocols?limit=5')
 
-      // Extrair protocolos da resposta
-      const protocols = response?.data?.protocols || []
+      // Extrair protocolos da resposta (API retorna diretamente em 'protocols', não em 'data.protocols')
+      const protocols = response?.protocols || response?.data?.protocols || []
 
       // Validar que recebemos um array
       if (!Array.isArray(protocols)) {
