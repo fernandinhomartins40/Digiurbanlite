@@ -41,7 +41,7 @@ const routes = [
   { path: './routes/secretarias-turismo', mount: '/api/admin/secretarias/turismo', name: 'secretarias-turismo' },
   { path: './routes/admin-secretarias', mount: '/api/secretarias', name: 'admin-secretarias' },
   { path: './routes/custom-modules', mount: '/api/admin/custom-modules', name: 'custom-modules' },
-  { path: './routes/service-templates', mount: '/api/admin/templates', name: 'service-templates' },
+  // REMOVED: service-templates - código legado/abandonado
   { path: './routes/admin-email', mount: '/api/admin/email', name: 'admin-email' },
   { path: './routes/integrations', mount: '/api/integrations', name: 'integrations' },
   { path: './routes/municipality-config', mount: '/api/municipality', name: 'municipality-config' },

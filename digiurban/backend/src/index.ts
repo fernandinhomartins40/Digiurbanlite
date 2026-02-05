@@ -419,7 +419,7 @@ console.log('⚠️  Rotas antigas das secretarias DESABILITADAS - usando apenas
 // Complementares
 console.log('🔧 Carregando rotas complementares...');
 try { console.log('   → custom-modules...'); app.use('/api/admin/custom-modules', require('./routes/custom-modules').default); console.log('   ✓'); } catch (e) { console.error('❌ custom-modules:', e); }
-try { console.log('   → templates...'); app.use('/api/admin/templates', require('./routes/service-templates').default); console.log('   ✓'); } catch (e) { console.error('❌ templates:', e); }
+// REMOVED: service-templates - código legado/abandonado (sem modelo no Prisma)
 try { console.log('   → email...'); app.use('/api/admin/email', require('./routes/admin-email').default); console.log('   ✓'); } catch (e) { console.error('❌ email:', e); }
 try { console.log('   → email-service...'); app.use('/api/admin/email-service', require('./routes/admin-email').default); console.log('   ✓'); } catch (e) { console.error('❌ email-service:', e); }
 try { console.log('   → email-accounts...'); app.use('/api/admin/email-accounts', require('./routes/admin-email-accounts').default); console.log('   ✓'); } catch (e) { console.error('❌ email-accounts:', e); }

@@ -115,8 +115,8 @@ export const loadAdminRoutes = () => {
   const adminReportsRoutes = require('./admin-reports').default;
   const adminGabineteRoutes = require('./admin-gabinete').default;
   const adminGabinetePainelRoutes = require('./admin-gabinete-painel').default;
-  const serviceTemplatesRoutes = require('./service-templates').default;
   // REMOVED: customModulesRoutes - código morto de micro-sistemas abandonados
+  // REMOVED: serviceTemplatesRoutes - código legado/abandonado (sem modelo no Prisma)
   // DIA 3: REMOVED - admin-transfer era específico para multi-tenant
   const citizensRoutes = require('./citizens').default;
   const adminCitizensRoutes = require('./admin-citizens').default;
@@ -131,7 +131,7 @@ export const loadAdminRoutes = () => {
   router.use('/admin/relatorios', adminReportsRoutes);
   router.use('/admin/gabinete', adminGabineteRoutes);
   router.use('/admin/gabinete/painel-prefeito', adminGabinetePainelRoutes);
-  router.use('/admin/templates', serviceTemplatesRoutes);
+  // REMOVED: admin/templates route - código legado/abandonado
   // REMOVED: custom-modules route - código morto
   // DIA 3: REMOVED - admin-transfer route
   router.use('/citizens', citizensRoutes);

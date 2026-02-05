@@ -46,8 +46,7 @@ import {
   Bus,
   MessageCircle,
   Bot,
-  FileSignature,
-  Sparkles
+  FileSignature
 } from 'lucide-react'
 
 interface NavItem {
@@ -150,12 +149,6 @@ export function AdminSidebar() {
           href: '/admin/gerenciamento-servicos',
           icon: TrendingUp,
           permissions: ['services:read']
-        },
-        {
-          title: 'Templates de Serviços',
-          href: '/admin/servicos/templates',
-          icon: Sparkles,
-          minRole: 'ADMIN'
         }
       ]
     },
