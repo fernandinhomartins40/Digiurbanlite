@@ -205,12 +205,6 @@ export function AdminSidebar() {
       title: 'Pessoas',
       items: [
         {
-          title: 'Equipe',
-          href: '/admin/equipe',
-          icon: Users,
-          permissions: ['team:read']
-        },
-        {
           title: 'Cidadãos',
           href: '/admin/cidadaos',
           icon: UserPlus,

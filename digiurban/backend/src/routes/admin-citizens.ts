@@ -754,6 +754,28 @@ router.get(
   })
 );
 
+// GET /api/admin/citizens/:id/family/invites - Lista de convites de família
+router.get(
+  '/:id/family/invites',
+  requirePermission('citizens:read'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+
+    const invites = await prisma.familyInvite.findMany({
+      where: {
+        inviterId: id
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    res.json({
+      success: true,
+      data: { invites }
+    });
+  })
+);
+
 // POST /api/admin/citizens/:id/family - Adicionar membro (REFATORADO - USA SERVIÇO CENTRALIZADO)
 router.post(
   '/:id/family',

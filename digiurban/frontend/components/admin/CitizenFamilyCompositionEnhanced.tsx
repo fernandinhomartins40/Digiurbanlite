@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -14,6 +14,7 @@ import { apiRequest } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
 import { Users, UserPlus, Trash2, UserCircle, AlertCircle, Search, Edit2, Mail, Clock, CheckCircle, XCircle } from 'lucide-react'
 import { RELATIONSHIP_OPTIONS, getRelationshipLabel, getRelationshipEmoji } from '@/shared/constants/family.constants'
+import { api } from '@/lib/services/api'
 
 interface FamilyMember {
   id: string
@@ -76,6 +77,9 @@ export function CitizenFamilyCompositionEnhanced({
   const [searchResults, setSearchResults] = useState<CitizenOption[]>([])
   const [searching, setSearching] = useState(false)
 
+  // Ref para debounce
+  const searchTimerRef = useRef<NodeJS.Timeout | null>(null)
+
   // Form state
   const [formData, setFormData] = useState({
     memberId: '',
@@ -127,29 +131,53 @@ export function CitizenFamilyCompositionEnhanced({
     }
   }
 
-  const searchCitizens = async (term: string) => {
-    if (!term || term.length < 3) {
+  const searchCitizens = useCallback(async (term: string) => {
+    if (!term || term.trim().length < 2) {
       setSearchResults([])
+      setSearching(false)
       return
     }
 
+    setSearching(true)
     try {
-      setSearching(true)
-      const response = await apiRequest(`/admin/citizens/search?q=${encodeURIComponent(term)}`)
+      const response = await api.get(`/admin/citizens/search?q=${encodeURIComponent(term.trim())}`)
 
-      if (response.success) {
+      if (response.data.success && response.data.data) {
+        const results = Array.isArray(response.data.data)
+          ? response.data.data
+          : (response.data.data.citizens || [])
+
+        // Filtrar membros que já fazem parte da família
         const familyMemberIds = family.map(f => f.member.id)
-        const filtered = response.data.citizens.filter(
+        const filtered = results.filter(
           (c: CitizenOption) => c.id !== citizenId && !familyMemberIds.includes(c.id)
         )
         setSearchResults(filtered)
+      } else {
+        setSearchResults([])
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Erro ao buscar cidadãos:', error)
       setSearchResults([])
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao buscar',
+        description: error.message || 'Não foi possível buscar cidadãos'
+      })
     } finally {
       setSearching(false)
     }
-  }
+  }, [citizenId, family, toast])
+
+  const debouncedSearch = useCallback((term: string) => {
+    if (searchTimerRef.current) {
+      clearTimeout(searchTimerRef.current)
+    }
+
+    searchTimerRef.current = setTimeout(() => {
+      searchCitizens(term)
+    }, 400)
+  }, [searchCitizens])
 
   const calculateAge = (birthDate: string | undefined): string => {
     if (!birthDate) return '-'
@@ -534,10 +562,11 @@ export function CitizenFamilyCompositionEnhanced({
                   id="searchCitizen"
                   value={searchTerm}
                   onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    searchCitizens(e.target.value)
+                    const value = e.target.value
+                    setSearchTerm(value)
+                    debouncedSearch(value)
                   }}
-                  placeholder="Digite nome ou CPF (mínimo 3 caracteres)"
+                  placeholder="Digite nome ou CPF (mínimo 2 caracteres)"
                   className="pl-10"
                 />
               </div>
