@@ -64,12 +64,14 @@ function DocumentThumbnail({
   documentId,
   fileName,
   mimeType,
-  className
+  className,
+  protocolId
 }: {
   documentId: string;
   fileName: string;
   mimeType: string;
   className?: string;
+  protocolId?: string;
 }) {
   const [imageUrl, setImageUrl] = useState<string>('');
   const [loading, setLoading] = useState(true);
@@ -90,7 +92,11 @@ function DocumentThumbnail({
 
     const loadImage = async () => {
       try {
-        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${documentId}/download`, {
+        const url = protocolId
+          ? `${process.env.NEXT_PUBLIC_API_URL}/protocols/${protocolId}/documents/${documentId}/download?inline=true`
+          : `${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${documentId}/download`;
+
+        const response = await fetch(url, {
           credentials: 'include',
           headers: {
             'Accept': 'image/*',
@@ -125,7 +131,7 @@ function DocumentThumbnail({
         URL.revokeObjectURL(objectUrl);
       }
     };
-  }, [documentId, docInfo.type]);
+  }, [documentId, docInfo.type, protocolId]);
 
   if (loading) {
     return (
@@ -202,6 +208,20 @@ interface CitizenDetails {
     createdAt: string
     service: { name: string }
     department: { name: string }
+    documentFiles?: Array<{
+      id: string
+      documentType: string
+      fileName: string
+      fileSize: number
+      mimeType: string
+      status: string
+      uploadedAt: string
+      validatedAt?: string
+      validatedBy?: string
+      rejectedAt?: string
+      rejectionReason?: string
+      version: number
+    }>
   }>
   _count: {
     protocols: number
@@ -222,6 +242,21 @@ interface CitizenDetails {
     reviewedAt?: string
     rejectionReason?: string
   }>
+  generatedDocuments?: Array<{
+    id: string
+    documentType: string
+    fileName: string
+    fileSize: number
+    mimeType: string
+    status: string
+    notes?: string
+    uploadedAt: string
+    reviewedBy?: string
+    reviewedAt?: string
+    rejectionReason?: string
+    sourceType?: string
+    sourceDocumentId?: string
+  }>
 }
 
 export default function CitizenDetailsPage() {
@@ -237,6 +272,7 @@ export default function CitizenDetailsPage() {
   const [previewDocument, setPreviewDocument] = useState<any>(null)
   const [approving, setApproving] = useState<string | null>(null)
   const [rejecting, setRejecting] = useState<string | null>(null)
+  const [imageZoom, setImageZoom] = useState(100)
 
   useEffect(() => {
     loadCitizen()
@@ -375,7 +411,12 @@ export default function CitizenDetailsPage() {
 
   const handleDownloadDocument = async (documentId: string, fileName: string) => {
     try {
-      const response = await apiRequest(`/admin/citizen-documents/${documentId}/download?download=true`)
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/citizen-documents/${documentId}/download?download=true`, {
+        credentials: 'include',
+        headers: {
+          'Accept': '*/*',
+        }
+      })
 
       if (!response.ok) {
         throw new Error('Erro ao fazer download')
@@ -687,12 +728,14 @@ export default function CitizenDetailsPage() {
         </TabsContent>
 
         {/* Documentos */}
-        <TabsContent value="documents">
+        <TabsContent value="documents" className="space-y-6">
+          {/* Documentos Pessoais */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5" />
                 Documentos Pessoais
+                <Badge variant="secondary" className="ml-2">{citizen.documents?.length || 0}</Badge>
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -801,6 +844,91 @@ export default function CitizenDetailsPage() {
                 <div className="text-center py-12 text-gray-500">
                   <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
                   <p>Nenhum documento enviado ainda</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Documentos Gerados (de Protocolos/Workflows) */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Documentos Gerados
+                <Badge variant="secondary" className="ml-2">{citizen.generatedDocuments?.length || 0}</Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {citizen.generatedDocuments && citizen.generatedDocuments.length > 0 ? (
+                <div className="space-y-3">
+                  {citizen.generatedDocuments.map((doc) => (
+                    <div
+                      key={doc.id}
+                      className="p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors border-l-4 border-l-blue-500"
+                    >
+                      <div className="flex items-start gap-4">
+                        <div
+                          className="w-20 h-20 flex-shrink-0 bg-gray-100 rounded border overflow-hidden cursor-pointer"
+                          onClick={() => setPreviewDocument({ ...doc, _isGenerated: true })}
+                        >
+                          <DocumentThumbnail
+                            documentId={doc.id}
+                            fileName={doc.fileName}
+                            mimeType={doc.mimeType}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold text-gray-900">
+                              {getDocumentLabel(doc.documentType)}
+                            </h3>
+                            {getDocumentStatusBadge(doc.status)}
+                          </div>
+                          <p className="text-sm text-gray-600">{doc.fileName}</p>
+                          <p className="text-xs text-gray-500 mt-1">
+                            Gerado em {formatDate(doc.uploadedAt)}
+                          </p>
+                          {doc.notes && (
+                            <p className="text-xs text-orange-600 mt-1">
+                              Observação: {doc.notes}
+                            </p>
+                          )}
+                          {doc.rejectionReason && (
+                            <p className="text-xs text-red-600 mt-1">
+                              Motivo da rejeição: {doc.rejectionReason}
+                            </p>
+                          )}
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setPreviewDocument({ ...doc, _isGenerated: true })}
+                            title="Visualizar"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDownloadDocument(doc.id, doc.fileName)}
+                            title="Baixar"
+                          >
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-12 text-gray-500">
+                  <FileText className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                  <p>Nenhum documento gerado ainda</p>
                 </div>
               )}
             </CardContent>
@@ -925,7 +1053,10 @@ export default function CitizenDetailsPage() {
       {previewDocument && (
         <div
           className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4"
-          onClick={() => setPreviewDocument(null)}
+          onClick={() => {
+            setPreviewDocument(null)
+            setImageZoom(100)
+          }}
         >
           <div
             className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto"
@@ -940,7 +1071,10 @@ export default function CitizenDetailsPage() {
                   <p className="text-sm text-gray-500">{previewDocument.fileName}</p>
                 </div>
                 <button
-                  onClick={() => setPreviewDocument(null)}
+                  onClick={() => {
+                    setPreviewDocument(null)
+                    setImageZoom(100)
+                  }}
                   className="text-gray-500 hover:text-gray-700"
                 >
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -949,24 +1083,58 @@ export default function CitizenDetailsPage() {
                 </button>
               </div>
 
-              <div className="mb-4">
+              <div className="mb-4 flex items-center gap-3">
                 {getDocumentStatusBadge(previewDocument.status)}
+
+                {/* Controles de Zoom (somente para imagens) */}
+                {getDocumentTypeInfo(previewDocument.mimeType, previewDocument.fileName).type === 'image' && (
+                  <div className="flex items-center gap-2 ml-auto">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setImageZoom(Math.max(50, imageZoom - 25))}
+                      disabled={imageZoom <= 50}
+                    >
+                      -
+                    </Button>
+                    <span className="text-sm font-medium min-w-[60px] text-center">
+                      {imageZoom}%
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setImageZoom(Math.min(300, imageZoom + 25))}
+                      disabled={imageZoom >= 300}
+                    >
+                      +
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setImageZoom(100)}
+                    >
+                      Reset
+                    </Button>
+                  </div>
+                )}
               </div>
 
-              <div className="mb-4 bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[400px]">
+              <div className="mb-4 bg-gray-100 rounded-lg p-2 flex items-center justify-center min-h-[400px] overflow-auto">
                 {(() => {
                   const docInfo = getDocumentTypeInfo(previewDocument.mimeType, previewDocument.fileName);
                   const Icon = docInfo.icon;
 
-                  // Para imagens, mostrar preview
+                  // Para imagens, mostrar preview com zoom
                   if (docInfo.type === 'image') {
                     return (
-                      <DocumentThumbnail
-                        documentId={previewDocument.id}
-                        fileName={previewDocument.fileName}
-                        mimeType={previewDocument.mimeType}
-                        className="max-w-full max-h-[600px] object-contain"
-                      />
+                      <div style={{ transform: `scale(${imageZoom / 100})`, transformOrigin: 'center', transition: 'transform 0.2s' }}>
+                        <DocumentThumbnail
+                          documentId={previewDocument.id}
+                          fileName={previewDocument.fileName}
+                          mimeType={previewDocument.mimeType}
+                          className="max-w-full max-h-[600px] object-contain"
+                        />
+                      </div>
                     );
                   }
 

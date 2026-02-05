@@ -609,10 +609,33 @@ router.get(
           take: 10,
           include: {
             service: { select: { name: true } },
-            department: { select: { name: true } }
+            department: { select: { name: true } },
+            documentFiles: {
+              orderBy: { uploadedAt: 'desc' },
+              select: {
+                id: true,
+                documentType: true,
+                fileName: true,
+                fileSize: true,
+                mimeType: true,
+                status: true,
+                uploadedAt: true,
+                validatedAt: true,
+                validatedBy: true,
+                rejectedAt: true,
+                rejectionReason: true,
+                version: true
+              }
+            }
         }
         },
         documents: {
+          where: {
+            OR: [
+              { sourceType: null },
+              { sourceType: 'UPLOAD' }
+            ]
+          },
           orderBy: { uploadedAt: 'desc' },
           select: {
             id: true,
@@ -625,7 +648,8 @@ router.get(
             uploadedAt: true,
             reviewedBy: true,
             reviewedAt: true,
-            rejectionReason: true
+            rejectionReason: true,
+            sourceType: true
           }
         },
         _count: {
@@ -647,9 +671,51 @@ router.get(
       return;
     }
 
+    // Buscar documentos gerados por protocolos separadamente
+    const generatedDocuments = await prisma.citizenDocument.findMany({
+      where: {
+        citizenId: id,
+        sourceType: 'PROTOCOL'
+      },
+      orderBy: { uploadedAt: 'desc' },
+      select: {
+        id: true,
+        documentType: true,
+        fileName: true,
+        fileSize: true,
+        mimeType: true,
+        status: true,
+        notes: true,
+        uploadedAt: true,
+        reviewedBy: true,
+        reviewedAt: true,
+        rejectionReason: true,
+        sourceType: true,
+        sourceDocumentId: true
+      }
+    });
+
+    // Mapear campos dos protocolos para o formato esperado pelo frontend
+    const protocols = (citizen as any).protocolsSimplified?.map((p: any) => ({
+      id: p.id,
+      protocolNumber: p.number,
+      status: p.status,
+      createdAt: p.createdAt,
+      service: p.service,
+      department: p.department,
+      documentFiles: p.documentFiles
+    })) || [];
+
     res.json({
       success: true,
-      data: { citizen }
+      data: {
+        citizen: {
+          ...citizen,
+          protocols,
+          generatedDocuments,
+          protocolsSimplified: undefined
+        }
+      }
         });
   })
 );
