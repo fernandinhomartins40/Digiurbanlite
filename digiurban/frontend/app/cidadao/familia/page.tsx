@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { CitizenLayout } from '@/components/citizen/CitizenLayout'
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { FamilyTree } from '@/components/citizen/FamilyTree'
@@ -63,7 +63,7 @@ interface FamilyData {
 }
 
 export default function FamiliaPage() {
-  const { citizen, apiRequest } = useCitizenAuth()
+  const { apiRequest } = useCitizenAuth()
   const { toast } = useToast()
 
   const [loading, setLoading] = useState(true)
@@ -266,7 +266,7 @@ export default function FamiliaPage() {
           <TabsList className="grid w-full grid-cols-2 md:grid-cols-4">
             <TabsTrigger value="members">
               <Users className="h-4 w-4 mr-2" />
-              Membros ({familyData.members.length})
+              Membros ({familyData?.members?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="tree">
               <GitBranch className="h-4 w-4 mr-2" />
@@ -274,7 +274,7 @@ export default function FamiliaPage() {
             </TabsTrigger>
             <TabsTrigger value="invites">
               <Mail className="h-4 w-4 mr-2" />
-              Convites ({invites.length})
+              Convites ({invites?.length || 0})
             </TabsTrigger>
             <TabsTrigger value="stats">
               <Info className="h-4 w-4 mr-2" />

@@ -177,8 +177,8 @@ export default function TemplatesDocumentosPage() {
     ? templates
     : templates.filter(t => t.documentType === filter)
 
-  // Verificar permissões - SUPER_ADMIN e ADMIN podem editar templates
-  const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN'
+  // Verificar permissões - SUPER_ADMIN, ADMIN e MANAGER podem editar templates
+  const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'MANAGER'
 
   if (loading) {
     return (
@@ -224,7 +224,7 @@ export default function TemplatesDocumentosPage() {
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
-            Apenas SUPER_ADMIN e ADMIN podem criar/editar templates. Você pode visualizar os templates existentes.
+            Apenas SUPER_ADMIN, ADMIN e MANAGER podem criar/editar templates. Você pode visualizar os templates existentes.
           </AlertDescription>
         </Alert>
       )}

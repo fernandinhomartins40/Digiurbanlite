@@ -16,6 +16,7 @@ import {
   Building2,
   UserPlus,
   UserCheck,
+  Users as UsersGroup,
   Heart,
   GraduationCap,
   HandHeart,
@@ -221,6 +222,12 @@ export function AdminSidebar() {
           icon: UserCheck,
           permissions: ['citizens:verify'],
           badge: stats?.pendingCitizens?.toString()
+        },
+        {
+          title: 'Composição Familiar',
+          href: '/admin/composicao-familiar',
+          icon: UsersGroup,
+          permissions: ['citizens:read']
         }
       ]
     },
