@@ -57,28 +57,46 @@ echo ""
 APP_DIR="/root/digiurban"
 
 # ============================================================================
-# ETAPA 0: VALIDAÇÃO E PREPARAÇÃO DO AMBIENTE GIT
+# ETAPA 0: PREPARAÇÃO DO AMBIENTE GIT (COM FETCH FORÇADO)
 # ============================================================================
 
-echo "🔍 Validando estado do repositório Git..."
+echo "🔍 Preparando ambiente Git..."
 cd $APP_DIR
+
+# ⚡ PRIMEIRO: Sempre fazer fetch completo do origin
+echo "🌐 Fazendo fetch completo do origin/main..."
+git fetch origin main --prune --force || {
+  echo "⚠️  Fetch falhou, tentando novamente..."
+  git fetch origin --all --prune --force
+}
 
 # Verificar se estamos no branch correto
 CURRENT_BRANCH=$(git branch --show-current)
-echo "Branch atual: $CURRENT_BRANCH"
+echo "📍 Branch atual: $CURRENT_BRANCH"
 
 if [ "$CURRENT_BRANCH" != "main" ]; then
   echo "⚠️  Não estamos no branch main, mudando..."
-  git checkout main || echo "❌ Falha ao mudar para main"
+  git checkout main || {
+    echo "❌ Falha ao mudar para main, forçando..."
+    git checkout -B main origin/main
+  }
 fi
 
-# Verificar quantos commits estamos atrás
+# Mostrar diferença entre local e origin ANTES de sincronizar
+echo ""
+echo "📊 Status ANTES da sincronização:"
+echo "Commit local:  $(git rev-parse HEAD 2>/dev/null || echo 'unknown')"
+echo "Commit origin: $(git rev-parse origin/main 2>/dev/null || echo 'unknown')"
 BEHIND_COMMITS=$(git rev-list HEAD..origin/main --count 2>/dev/null || echo "0")
-echo "📊 Commits atrás do origin/main: $BEHIND_COMMITS"
+AHEAD_COMMITS=$(git rev-list origin/main..HEAD --count 2>/dev/null || echo "0")
+echo "Commits atrás:  $BEHIND_COMMITS"
+echo "Commits à frente: $AHEAD_COMMITS"
 
 # Listar arquivos modificados e untracked
+echo ""
 echo "📋 Arquivos modificados localmente:"
 git status --short || true
+echo ""
 
 # ============================================================================
 # ETAPA 1: PARAR CONTAINERS E LIMPAR ÓRFÃOS
@@ -102,7 +120,7 @@ echo "✅ Containers órfãos removidos"
 echo ""
 
 # ============================================================================
-# ETAPA 2: ATUALIZAR CÓDIGO (COM PROTEÇÃO CONTRA CONFLITOS)
+# ETAPA 2: ATUALIZAR CÓDIGO (FORÇA SINCRONIZAÇÃO TOTAL)
 # ============================================================================
 
 echo "📥 Atualizando código do repositório..."
@@ -111,46 +129,26 @@ echo "📥 Atualizando código do repositório..."
 echo "💾 Fazendo backup de configurações..."
 cp .env .env.backup 2>/dev/null || echo "Nenhum .env para backup"
 
-# Verificar se há alterações locais
-if ! git diff-index --quiet HEAD --; then
-  echo "⚠️  Detectadas alterações locais não comitadas"
-  echo "📦 Fazendo stash das alterações..."
-  git stash push -m "Auto-stash antes do deploy $(date +%Y%m%d_%H%M%S)"
-fi
+# ⚡ MÉTODO DIRETO: Sempre forçar sincronização com origin/main
+echo "🔄 Fazendo fetch de todas as mudanças do origin..."
+git fetch origin main --prune
 
-# Verificar se há arquivos untracked que possam conflitar
-echo "🧹 Verificando arquivos untracked..."
-UNTRACKED_FILES=$(git ls-files --others --exclude-standard)
-if [ ! -z "$UNTRACKED_FILES" ]; then
-  echo "📦 Encontrados arquivos untracked, fazendo backup..."
-  mkdir -p .backup-untracked-$(date +%Y%m%d_%H%M%S)
-  echo "$UNTRACKED_FILES" | while read file; do
-    if [ -f "$file" ]; then
-      mkdir -p ".backup-untracked-$(date +%Y%m%d_%H%M%S)/$(dirname "$file")"
-      cp "$file" ".backup-untracked-$(date +%Y%m%d_%H%M%S)/$file" 2>/dev/null || true
-    fi
-  done
-fi
+echo "📊 Verificando commits antes da sincronização:"
+echo "Local atual: $(git rev-parse HEAD)"
+echo "Origin/main: $(git rev-parse origin/main)"
 
-# Método 1: Tentar pull normal
-echo "🔄 Tentando git pull..."
-if git pull origin main; then
-  echo "✅ Pull realizado com sucesso"
-else
-  echo "⚠️  Pull falhou, usando método alternativo..."
+# Fazer stash de qualquer alteração local (incluindo untracked)
+echo "📦 Salvando alterações locais em stash..."
+git add -A 2>/dev/null || true
+git stash push -u -m "Auto-stash completo antes do deploy $(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
 
-  # Método 2: Fetch + Reset Hard (força atualização)
-  echo "🔄 Fazendo fetch do repositório..."
-  git fetch origin main
+# ⚡ FORÇA SINCRONIZAÇÃO TOTAL COM ORIGIN/MAIN
+echo "🔄 FORÇANDO sincronização total com origin/main..."
+git reset --hard origin/main
 
-  echo "🔄 Resetando para origin/main (força sincronização)..."
-  git reset --hard origin/main
-
-  echo "🧹 Limpando arquivos não rastreados..."
-  git clean -fd
-
-  echo "✅ Código sincronizado forçadamente com origin/main"
-fi
+# Limpar TODOS os arquivos não rastreados (exceto .env)
+echo "🧹 Limpando arquivos não rastreados (preservando .env)..."
+git clean -fdx -e .env -e .env.backup
 
 # Restaurar .env se foi deletado
 if [ ! -f ".env" ] && [ -f ".env.backup" ]; then
@@ -158,30 +156,32 @@ if [ ! -f ".env" ] && [ -f ".env.backup" ]; then
   cp .env.backup .env
 fi
 
-# Verificar commit atual
-echo "📊 Commit atual após atualização:"
+# VERIFICAÇÃO FINAL DO COMMIT
+echo ""
+echo "📊 Verificação FINAL após sincronização:"
 CURRENT_COMMIT=$(git rev-parse HEAD)
 ORIGIN_COMMIT=$(git rev-parse origin/main)
 echo "Local:  $CURRENT_COMMIT"
 echo "Origin: $ORIGIN_COMMIT"
 
 if [ "$CURRENT_COMMIT" != "$ORIGIN_COMMIT" ]; then
-  echo "❌ ERRO: Código local NÃO está sincronizado com origin/main!"
-  echo "Tentando sincronizar novamente com reset --hard..."
-  git fetch origin main
-  git reset --hard origin/main
-  git clean -fd
+  echo ""
+  echo "❌ ERRO CRÍTICO: Código AINDA não está sincronizado!"
+  echo "Tentando uma última vez com prune completo..."
 
-  # Verificar novamente
+  git fetch origin --prune --force
+  git reset --hard origin/main
+  git clean -fdx -e .env -e .env.backup
+
   CURRENT_COMMIT=$(git rev-parse HEAD)
   if [ "$CURRENT_COMMIT" != "$ORIGIN_COMMIT" ]; then
-    echo "❌ ERRO CRÍTICO: Não foi possível sincronizar o código!"
+    echo "❌ FALHA FATAL: Impossível sincronizar código com origin/main!"
+    echo "Execute manualmente: git fetch origin && git reset --hard origin/main"
     exit 1
   fi
-  echo "✅ Código sincronizado após segundo reset"
-else
-  echo "✅ Código está sincronizado com origin/main"
 fi
+
+echo "✅ Código CONFIRMADO sincronizado com origin/main"
 
 # Mostrar últimos 5 commits para confirmar
 echo "📜 Últimos 5 commits:"
@@ -321,34 +321,77 @@ docker pull node:18-bookworm-slim
 echo ""
 
 # ============================================================================
-# ETAPA 7: VALIDAÇÃO PRÉ-BUILD - ARQUIVOS CRÍTICOS
+# ETAPA 7: VALIDAÇÃO PRÉ-BUILD - COMMIT E ARQUIVOS CRÍTICOS
 # ============================================================================
 
-echo "=== Validando arquivos críticos antes do build ==="
+echo "=== Validando commit e arquivos críticos antes do build ==="
+echo ""
+
+# ⚡ VALIDAÇÃO CRÍTICA: Verificar que estamos no commit certo
+echo "🔍 Verificação FINAL de sincronização do código:"
+CURRENT_COMMIT=$(git rev-parse HEAD)
+ORIGIN_COMMIT=$(git rev-parse origin/main)
+echo "Commit local:  $CURRENT_COMMIT"
+echo "Commit origin: $ORIGIN_COMMIT"
+
+if [ "$CURRENT_COMMIT" != "$ORIGIN_COMMIT" ]; then
+  echo ""
+  echo "❌ ERRO CRÍTICO: Código NÃO SINCRONIZADO!"
+  echo "Não podemos continuar com o build usando código desatualizado!"
+  echo ""
+  echo "Execute manualmente:"
+  echo "  git fetch origin main"
+  echo "  git reset --hard origin/main"
+  exit 1
+fi
+echo "✅ Código CONFIRMADO no commit correto"
+echo ""
+
+# Mostrar últimos commits para confirmar visualmente
+echo "📜 Últimos 5 commits (confirmar que são os mais recentes):"
+git log --oneline -5
 echo ""
 
 # Verificar hash dos arquivos críticos para garantir que foram atualizados
-echo "🔍 Verificando hash dos arquivos críticos..."
+echo "🔍 Verificando arquivos críticos..."
+
+# Dockerfile (não deve ter comandos de debug)
+if grep -q "ls -la src/" digiurban/Dockerfile; then
+  echo "⚠️  AVISO: Dockerfile ainda tem comandos de debug"
+else
+  echo "✓ Dockerfile sem comandos de debug"
+fi
 
 # Admin-citizens.ts (deve ter a correção headId)
 if grep -q "headId: id" digiurban/backend/src/routes/admin-citizens.ts; then
   echo "✓ admin-citizens.ts tem correção headId"
 else
-  echo "⚠️  admin-citizens.ts pode estar desatualizado (não encontrou headId)"
+  echo "❌ ERRO: admin-citizens.ts pode estar desatualizado (não encontrou headId)"
+  exit 1
 fi
 
 # Página de família do cidadão (deve ter optional chaining)
 if grep -q "familyData?.head?.birthDate" digiurban/frontend/app/cidadao/familia/page.tsx 2>/dev/null; then
   echo "✓ cidadao/familia/page.tsx tem optional chaining"
 else
-  echo "⚠️  cidadao/familia/page.tsx pode estar desatualizado"
+  echo "❌ ERRO: cidadao/familia/page.tsx pode estar desatualizado"
+  exit 1
+fi
+
+# FamilyTree component (deve ter optional chaining)
+if grep -q "familyMember?.member?.name" digiurban/frontend/components/citizen/FamilyTree.tsx 2>/dev/null; then
+  echo "✓ FamilyTree.tsx tem optional chaining"
+else
+  echo "❌ ERRO: FamilyTree.tsx pode estar desatualizado"
+  exit 1
 fi
 
 # AddFamilyMemberDialog (deve ter debounce)
 if grep -q "debouncedSearch" digiurban/frontend/components/citizen/AddFamilyMemberDialog.tsx 2>/dev/null; then
   echo "✓ AddFamilyMemberDialog.tsx tem debounce implementado"
 else
-  echo "⚠️  AddFamilyMemberDialog.tsx pode estar desatualizado"
+  echo "❌ ERRO: AddFamilyMemberDialog.tsx pode estar desatualizado"
+  exit 1
 fi
 
 # Validar estrutura de arquivos backend
