@@ -61,6 +61,15 @@ router.get('/document-templates', authenticateToken, requireAdmin, async (req, r
         version: true,
         createdAt: true,
         updatedAt: true,
+        // ✅ ADICIONAR campos necessários para preview
+        htmlTemplate: true,
+        headerHtml: true,
+        footerHtml: true,
+        cssStyles: true,
+        availableVariables: true,
+        pageSize: true,
+        orientation: true,
+        margins: true,
         _count: {
           select: { generatedDocuments: true }
         }

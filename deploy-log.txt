@@ -1,0 +1,47 @@
+==========================================
+🚀 Deploy DigiUrban VPS (Manual)
+==========================================
+
+⚠️  Este script replica o deploy automático do GitHub Actions
+📝 Todas as etapas de validação e limpeza serão executadas
+
+🔍 Executando validação pré-deploy...
+==========================================
+🔍 Validação Pré-Deploy
+==========================================
+
+📋 Validando status do Git...
+[0;32m✓[0m Branch: main
+[0;32m✓[0m Sem alterações não comitadas
+[0;32m✓[0m Sincronizado com origin/main
+
+📁 Validando arquivos críticos...
+[0;32m✓[0m admin-citizens.ts (com correção headId)
+[0;32m✓[0m cidadao/familia/page.tsx (com optional chaining)
+[0;32m✓[0m AddFamilyMemberDialog.tsx (com debounce)
+[0;32m✓[0m CitizenFamilyCompositionEnhanced.tsx (com debounce)
+[0;32m✓[0m AdminSidebar.tsx (sem link de equipe)
+
+🐳 Validando arquivos Docker...
+[0;32m✓[0m Dockerfile encontrado
+[0;32m✓[0m docker-compose.vps.yml encontrado
+
+==========================================
+📊 Resumo da Validação
+==========================================
+
+[0;32m✅ Validação concluída com sucesso![0m
+
+✓ Código está pronto para deploy
+
+Execute o deploy com:
+  ./deploy-vps.sh
+
+
+✅ Validação pré-deploy concluída
+
+📡 Conectando em root@digiurban.com.br...
+
+Pseudo-terminal will not be allocated because stdin is not a terminal.
+Warning: Permanently added 'digiurban.com.br' (ED25519) to the list of known hosts.
+Connection closed by 72.60.10.108 port 22

@@ -463,8 +463,29 @@ try { console.log('   → municipality...'); app.use('/api/municipality', requir
 try { console.log('   → workflows (legado)...'); app.use('/api/workflows', require('./routes/module-workflows').default); console.log('   ✓'); } catch (e) { console.error('❌ workflows:', e); }
 try { console.log('   → service-workflows (novo)...'); app.use('/api/service-workflows', require('./routes/service-workflows.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ service-workflows:', e); }
 
-// ✅ Notificações SSE
+// ✅ SISTEMA DE NOTIFICAÇÕES COMPLETO (2026-02-06)
+console.log('🔔 Carregando sistema de notificações...');
 try { console.log('   → notifications (SSE)...'); app.use('/api/notifications', require('./routes/notifications.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ notifications:', e); }
+try { console.log('   → push subscriptions...'); app.use('/api/push', require('./routes/push-subscriptions.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ push subscriptions:', e); }
+try { console.log('   → notification preferences...'); app.use('/api/notifications', require('./routes/notification-preferences.routes').default); console.log('   ✓'); } catch (e) { console.error('❌ notification preferences:', e); }
+
+// ✅ Iniciar Notification Worker
+try {
+  console.log('   → notification worker...');
+  require('./workers/notification.worker');
+  console.log('   ✓ Notification worker started');
+} catch (e) {
+  console.error('❌ notification worker:', e);
+}
+
+// ✅ Iniciar Notification Cron Jobs
+try {
+  console.log('   → notification cron jobs...');
+  require('./jobs/notification.jobs');
+  console.log('   ✓ Notification cron jobs started');
+} catch (e) {
+  console.error('❌ notification cron jobs:', e);
+}
 
 // ============================================================
 // 🏥 ROTAS DE SAÚDE - APPS INTEGRADOS

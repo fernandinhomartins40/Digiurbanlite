@@ -26,6 +26,7 @@ import {
   SERVICE_TYPE_VALIDATIONS
 } from '../config/protocol-status.config';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
+import NotificationTriggers from './notification-triggers';
 
 /**
  * ============================================================================
@@ -136,6 +137,15 @@ export class ProtocolStatusEngine {
     this.sendNotifications(result.protocol, currentStatus, input.newStatus).catch((error) => {
       console.error('❌ Erro ao enviar notificações:', error);
       // Não falha a transação se notificação falhar
+    });
+
+    // ✅ NOVO: Disparar triggers de notificações
+    NotificationTriggers.onProtocolStatusChanged(
+      result.protocol.id,
+      currentStatus,
+      input.newStatus
+    ).catch((error) => {
+      console.error('❌ Erro ao disparar trigger de notificação:', error);
     });
 
     console.log(`✅ Status atualizado: ${currentStatus} → ${input.newStatus} (Protocolo: ${protocol.number})`);

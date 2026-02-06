@@ -22,7 +22,24 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
 
   useEffect(() => {
     if (template && open) {
-      // Gerar preview HTML completo
+      // Substituir variáveis Handlebars {{variavel}} por valores de exemplo
+      let headerHtml = template.headerHtml || ''
+      let bodyHtml = template.htmlTemplate || '<p>Template vazio</p>'
+      let footerHtml = template.footerHtml || ''
+
+      // Se há variáveis disponíveis, substituir no HTML
+      if (template.availableVariables && Array.isArray(template.availableVariables)) {
+        template.availableVariables.forEach((variable: any) => {
+          const regex = new RegExp(`{{${variable.name}}}`, 'g')
+          const exampleValue = variable.example || `[${variable.name}]`
+
+          headerHtml = headerHtml.replace(regex, exampleValue)
+          bodyHtml = bodyHtml.replace(regex, exampleValue)
+          footerHtml = footerHtml.replace(regex, exampleValue)
+        })
+      }
+
+      // Gerar preview HTML completo com variáveis substituídas
       const html = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -67,9 +84,9 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
 </head>
 <body>
   <div class="template-container">
-    ${template.headerHtml || ''}
-    ${template.htmlTemplate || '<p>Template vazio</p>'}
-    ${template.footerHtml || ''}
+    ${headerHtml}
+    ${bodyHtml}
+    ${footerHtml}
   </div>
 </body>
 </html>`
@@ -129,12 +146,27 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
           {/* Aba de Preview */}
           <TabsContent value="preview" className="flex-1 overflow-hidden">
             <ScrollArea className="h-[calc(90vh-280px)]">
+              {/* Mensagem informativa */}
+              {template.availableVariables && template.availableVariables.length > 0 && (
+                <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-start gap-2">
+                    <Info className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="text-xs text-blue-800">
+                      <p className="font-medium">Preview com dados de exemplo</p>
+                      <p className="text-blue-600 mt-1">
+                        As variáveis <code className="bg-blue-100 px-1 rounded">{"{{variavel}}"}</code> foram substituídas pelos valores de exemplo.
+                        No documento real, serão preenchidas com os dados do protocolo.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
               <div className="bg-gray-100 p-4 rounded-md">
                 <iframe
                   srcDoc={previewHtml}
                   className="w-full h-[800px] bg-white rounded shadow-sm border-2 border-gray-200"
                   title="Preview do Template"
-                  sandbox="allow-same-origin"
+                  sandbox="allow-same-origin allow-scripts"
                 />
               </div>
             </ScrollArea>
@@ -204,9 +236,15 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
                     </div>
                   </div>
                 ) : (
-                  <div className="text-center py-12 text-muted-foreground bg-gray-50 rounded-lg">
-                    <Info className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p className="text-sm">Nenhuma variável documentada para este template</p>
+                  <div className="text-center py-12 bg-yellow-50 rounded-lg border border-yellow-200">
+                    <Info className="h-12 w-12 mx-auto mb-4 text-yellow-600" />
+                    <p className="text-sm text-yellow-800 font-medium">
+                      Este template não possui variáveis documentadas
+                    </p>
+                    <p className="text-xs text-yellow-600 mt-2 px-4">
+                      As variáveis serão substituídas automaticamente ao gerar o documento.
+                      Entre em contato com o suporte técnico para adicionar documentação das variáveis.
+                    </p>
                   </div>
                 )}
               </div>

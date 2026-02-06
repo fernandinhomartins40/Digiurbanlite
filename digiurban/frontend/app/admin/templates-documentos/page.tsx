@@ -219,12 +219,23 @@ export default function TemplatesDocumentosPage() {
         )}
       </div>
 
-      {/* Aviso para usuários sem permissão de edição */}
+      {/* Avisos e Informações */}
       {!canEdit && (
         <Alert>
           <AlertCircle className="h-4 w-4" />
           <AlertDescription>
             Apenas SUPER_ADMIN, ADMIN e MANAGER podem criar/editar templates. Você pode visualizar os templates existentes.
+          </AlertDescription>
+        </Alert>
+      )}
+
+      {/* Alerta informativo sobre funcionamento dos templates */}
+      {templates.length > 0 && (
+        <Alert className="bg-blue-50 border-blue-200">
+          <AlertCircle className="h-4 w-4 text-blue-600" />
+          <AlertDescription className="text-blue-800">
+            Os templates utilizam variáveis dinâmicas (ex: <code className="bg-blue-100 px-1 rounded">{"{{protocolNumber}}"}</code>) que são automaticamente substituídas pelos dados reais ao gerar documentos.
+            Use o botão "Visualizar" para ver o preview com dados de exemplo.
           </AlertDescription>
         </Alert>
       )}
@@ -312,16 +323,36 @@ export default function TemplatesDocumentosPage() {
         <Card>
           <CardContent className="text-center py-12">
             <FileText className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-            <p className="text-muted-foreground">
-              {filter === 'all'
-                ? 'Nenhum template cadastrado. Execute o seed de templates primeiro.'
-                : 'Nenhum template encontrado com este filtro.'}
-            </p>
-            {filter === 'all' && canEdit && (
-              <Button className="mt-4" disabled>
-                <Plus className="h-4 w-4 mr-2" />
-                Criar Primeiro Template
-              </Button>
+            {filter === 'all' ? (
+              <>
+                <p className="text-lg font-medium text-gray-900 mb-2">
+                  Nenhum template cadastrado
+                </p>
+                <p className="text-sm text-muted-foreground mb-4 max-w-md mx-auto">
+                  Os templates de documentos são necessários para gerar certidões, relatórios e outros documentos oficiais.
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-lg mx-auto mb-4">
+                  <p className="text-sm text-yellow-800 font-medium mb-2">
+                    📋 Como adicionar templates?
+                  </p>
+                  <p className="text-xs text-yellow-700 text-left">
+                    Execute o comando no backend:<br/>
+                    <code className="bg-yellow-100 px-2 py-1 rounded mt-1 inline-block">
+                      npx tsx prisma/seeds/insert-templates-pg.ts
+                    </code>
+                  </p>
+                </div>
+                {canEdit && (
+                  <Button className="mt-4" disabled>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Criar Primeiro Template
+                  </Button>
+                )}
+              </>
+            ) : (
+              <p className="text-muted-foreground">
+                Nenhum template encontrado com este filtro.
+              </p>
             )}
           </CardContent>
         </Card>

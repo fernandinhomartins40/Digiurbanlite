@@ -141,7 +141,9 @@
       "Bash(git fetch:*)",
       "WebFetch(domain:sisaps.saude.gov.br)",
       "Bash(Get-Content \"C:\\\\Users\\\\fusea\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Projetos-Cursor-Digiurbanlite\\\\tasks\\\\b9e594d.output\")",
-      "Bash(Select-Object -Last 80)"
+      "Bash(Select-Object -Last 80)",
+      "Bash(npm run:*)",
+      "Bash(npx web-push:*)"
     ],
     "deny": [],
     "ask": []

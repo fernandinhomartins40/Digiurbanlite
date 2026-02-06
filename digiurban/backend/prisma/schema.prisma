@@ -51,17 +51,17 @@ model User {
   lastLogin           DateTime?
 
   // ✅ DADOS DE SERVIDOR PÚBLICO (Sistema Unificado)
-  cpf                 String?   @unique // CPF do servidor
-  matricula           String?   @unique // Matrícula funcional
-  rg                  String? // RG
-  dataNascimento      DateTime? // Data de nascimento
-  telefone            String? // Telefone principal
-  telefoneSecundario  String? // Telefone secundário
-  endereco            Json? // Endereço completo
-  cargoEfetivo        String? // Cargo de concurso (ex: "Médico", "Professor")
-  situacaoFuncional   String? // ATIVO, APOSENTADO, EXONERADO, etc
-  dataAdmissao        DateTime? // Data de admissão no serviço público
-  observacoes         String? // Observações gerais
+  cpf                String?   @unique // CPF do servidor
+  matricula          String?   @unique // Matrícula funcional
+  rg                 String? // RG
+  dataNascimento     DateTime? // Data de nascimento
+  telefone           String? // Telefone principal
+  telefoneSecundario String? // Telefone secundário
+  endereco           Json? // Endereço completo
+  cargoEfetivo       String? // Cargo de concurso (ex: "Médico", "Professor")
+  situacaoFuncional  String? // ATIVO, APOSENTADO, EXONERADO, etc
+  dataAdmissao       DateTime? // Data de admissão no serviço público
+  observacoes        String? // Observações gerais
 
   // Relacionamentos
   agendaEvents                AgendaEvent[]            @relation("AgendaEventCreator")
@@ -135,31 +135,36 @@ model User {
   indisponibilidades     IndisponibilidadeProfissional[] @relation("ProfissionalIndisponibilidades")
 
   // ✅ SISTEMA UNIFICADO DE VINCULAÇÃO V2.0
-  assignments              EmployeeAssignment[]  @relation("ServidorVinculos")
-  subordinados             EmployeeHierarchy[]   @relation("Subordinados")
-  supervisores             EmployeeHierarchy[]   @relation("Supervisores")
-  unidadesResponsavel      OrganizationalUnit[]  @relation("ResponsavelUnidade")
-  equipesCoordena          Team[]                @relation("CoordenadorEquipe")
-  equipesParticipa         TeamMember[]          @relation("MembroEquipes")
-  healthData               HealthProfessionalData? @relation("UserHealthData")
-  educationData            EducationProfessionalData? @relation("UserEducationData")
-  engineeringData          EngineeringProfessionalData? @relation("UserEngineeringData")
-  socialAssistanceData     SocialAssistanceProfessionalData? @relation("UserSocialAssistanceData")
+  assignments          EmployeeAssignment[]              @relation("ServidorVinculos")
+  subordinados         EmployeeHierarchy[]               @relation("Subordinados")
+  supervisores         EmployeeHierarchy[]               @relation("Supervisores")
+  unidadesResponsavel  OrganizationalUnit[]              @relation("ResponsavelUnidade")
+  equipesCoordena      Team[]                            @relation("CoordenadorEquipe")
+  equipesParticipa     TeamMember[]                      @relation("MembroEquipes")
+  healthData           HealthProfessionalData?           @relation("UserHealthData")
+  educationData        EducationProfessionalData?        @relation("UserEducationData")
+  engineeringData      EngineeringProfessionalData?      @relation("UserEngineeringData")
+  socialAssistanceData SocialAssistanceProfessionalData? @relation("UserSocialAssistanceData")
 
   // ✅ NOVO: Sistema de Atribuição de Protocolos (Sistema Unificado V2.0)
-  protocolAssignments    ProtocolServerAssignment[] @relation("UserProtocolAssignments")
-  protocolsAssignedBy    ProtocolServerAssignment[] @relation("ProtocolAssignedBy")
-  currentProtocols       ProtocolSimplified[]       @relation("CurrentProtocolAssignment")
+  protocolAssignments ProtocolServerAssignment[] @relation("UserProtocolAssignments")
+  protocolsAssignedBy ProtocolServerAssignment[] @relation("ProtocolAssignedBy")
+  currentProtocols    ProtocolSimplified[]       @relation("CurrentProtocolAssignment")
 
   // ✅ Apps Saúde - Relacionamentos que migraram de ProfissionalSaude
-  atendimentosOdonto        AtendimentoOdontologico[] @relation("DentistaAtendimentos")
-  visitasDomiciliares       VisitaDomiciliar[]        @relation("ACSVisitas")
-  indisponibilidadesAgenda  IndisponibilidadeAgenda[]
-  imunizacoes               ImunizacaoCidadao[]
+  atendimentosOdonto       AtendimentoOdontologico[] @relation("DentistaAtendimentos")
+  visitasDomiciliares      VisitaDomiciliar[]        @relation("ACSVisitas")
+  indisponibilidadesAgenda IndisponibilidadeAgenda[]
+  imunizacoes              ImunizacaoCidadao[]
 
   // ✅ NOVO: Preferências do usuário (2026-02-05)
-  preferences               UserPreferences?          @relation("UserPreferences")
-  activeSessions            UserSession[]             @relation("UserSessions")
+  preferences    UserPreferences? @relation("UserPreferences")
+  activeSessions UserSession[]    @relation("UserSessions")
+
+  // ✅ NOVO: Sistema de Notificações Completo (2026-02-06)
+  notifications           Notification[]          @relation("UserNotifications")
+  pushSubscriptions       PushSubscription[]      @relation("UserPushSubscriptions")
+  notificationPreferences NotificationPreference? @relation("UserNotificationPreferences")
 
   @@map("users")
 }
@@ -190,87 +195,87 @@ model UserDepartment {
 // ============================================
 
 model UserPreferences {
-  id        String   @id @default(cuid())
-  userId    String   @unique
-  user      User     @relation("UserPreferences", fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String @unique
+  user   User   @relation("UserPreferences", fields: [userId], references: [id], onDelete: Cascade)
 
   // Aparência
-  theme                 String   @default("system") // light, dark, system
-  primaryColor          String?  // Cor primária personalizada (hex)
-  compactMode           Boolean  @default(false) // UI compacta
-  fontSize              String   @default("medium") // small, medium, large
-  highContrast          Boolean  @default(false)
-  reduceMotion          Boolean  @default(false)
+  theme        String  @default("system") // light, dark, system
+  primaryColor String? // Cor primária personalizada (hex)
+  compactMode  Boolean @default(false) // UI compacta
+  fontSize     String  @default("medium") // small, medium, large
+  highContrast Boolean @default(false)
+  reduceMotion Boolean @default(false)
 
   // Avatar
-  avatarUrl             String?  // URL da foto de perfil
+  avatarUrl String? // URL da foto de perfil
 
   // Notificações - Canais
-  emailNotifications    Boolean  @default(true)
-  browserNotifications  Boolean  @default(true)
-  soundEnabled          Boolean  @default(true)
+  emailNotifications   Boolean @default(true)
+  browserNotifications Boolean @default(true)
+  soundEnabled         Boolean @default(true)
 
   // Notificações - Tipos específicos
-  notifyNewProtocol     Boolean  @default(true)
-  notifyProtocolUpdate  Boolean  @default(true)
-  notifyNewCitizen      Boolean  @default(false)
-  notifySystemUpdates   Boolean  @default(true)
-  notifyAssignment      Boolean  @default(true)
-  notifyOverdueSLA      Boolean  @default(true)
-  notifyMessages        Boolean  @default(true)
-  notifyDocuments       Boolean  @default(true)
+  notifyNewProtocol    Boolean @default(true)
+  notifyProtocolUpdate Boolean @default(true)
+  notifyNewCitizen     Boolean @default(false)
+  notifySystemUpdates  Boolean @default(true)
+  notifyAssignment     Boolean @default(true)
+  notifyOverdueSLA     Boolean @default(true)
+  notifyMessages       Boolean @default(true)
+  notifyDocuments      Boolean @default(true)
 
   // Horário de silêncio (formato HH:mm)
-  quietHoursEnabled     Boolean  @default(false)
-  quietHoursStart       String?  // Ex: "22:00"
-  quietHoursEnd         String?  // Ex: "07:00"
+  quietHoursEnabled Boolean @default(false)
+  quietHoursStart   String? // Ex: "22:00"
+  quietHoursEnd     String? // Ex: "07:00"
 
   // Preferências de visualização
-  defaultProtocolView   String   @default("table") // table, grid, kanban
-  protocolsPerPage      Int      @default(20)
-  showArchivedByDefault Boolean  @default(false)
+  defaultProtocolView   String  @default("table") // table, grid, kanban
+  protocolsPerPage      Int     @default(20)
+  showArchivedByDefault Boolean @default(false)
 
   // Dashboard
-  dashboardLayout       Json?    // Layout personalizado de widgets
+  dashboardLayout Json? // Layout personalizado de widgets
 
   // Localização
-  timezone              String   @default("America/Sao_Paulo")
-  language              String   @default("pt-BR")
-  dateFormat            String   @default("DD/MM/YYYY")
-  timeFormat            String   @default("24h") // 12h, 24h
+  timezone   String @default("America/Sao_Paulo")
+  language   String @default("pt-BR")
+  dateFormat String @default("DD/MM/YYYY")
+  timeFormat String @default("24h") // 12h, 24h
 
   // Privacidade
-  showOnlineStatus      Boolean  @default(true)
-  allowAnalytics        Boolean  @default(true)
-  showActivityHistory   Boolean  @default(true)
+  showOnlineStatus    Boolean @default(true)
+  allowAnalytics      Boolean @default(true)
+  showActivityHistory Boolean @default(true)
 
   // Avançado
-  developerMode         Boolean  @default(false)
+  developerMode Boolean @default(false)
 
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("user_preferences")
 }
 
 model UserSession {
-  id           String    @id @default(cuid())
-  userId       String
-  user         User      @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation("UserSessions", fields: [userId], references: [id], onDelete: Cascade)
 
-  token        String    @unique
-  ipAddress    String?
-  userAgent    String?
-  device       String?   // desktop, mobile, tablet
-  browser      String?   // chrome, firefox, safari, etc
-  os           String?   // windows, macos, linux, android, ios
-  location     String?   // cidade/estado (via IP)
+  token     String  @unique
+  ipAddress String?
+  userAgent String?
+  device    String? // desktop, mobile, tablet
+  browser   String? // chrome, firefox, safari, etc
+  os        String? // windows, macos, linux, android, ios
+  location  String? // cidade/estado (via IP)
 
-  isActive     Boolean   @default(true)
-  lastActivity DateTime  @default(now())
+  isActive     Boolean  @default(true)
+  lastActivity DateTime @default(now())
   expiresAt    DateTime
 
-  createdAt    DateTime  @default(now())
+  createdAt DateTime @default(now())
 
   @@index([userId])
   @@index([token])
@@ -393,6 +398,10 @@ model Citizen {
   microareaId      String?
   microarea        Microarea?        @relation("CitizenMicroarea", fields: [microareaId], references: [id])
   filaAtendimentos FilaAtendimento[] @relation("CitizenFilaAtendimentos")
+
+  // ✅ NOVO: Sistema de Notificações Completo (2026-02-06)
+  pushSubscriptions       PushSubscription[]      @relation("CitizenPushSubscriptions")
+  notificationPreferences NotificationPreference? @relation("CitizenNotificationPreferences")
 
   @@unique([cpf])
   @@index([equipeId])
@@ -532,11 +541,11 @@ model FamilyComposition {
 
 model FamilyInvite {
   id           String             @id @default(cuid())
-  headId       String             // Quem está convidando
-  email        String             // Email do convidado
-  cpf          String?            // CPF (opcional)
-  phone        String?            // Telefone (opcional)
-  name         String?            // Nome do convidado
+  headId       String // Quem está convidando
+  email        String // Email do convidado
+  cpf          String? // CPF (opcional)
+  phone        String? // Telefone (opcional)
+  name         String? // Nome do convidado
   relationship FamilyRelationship // Relacionamento proposto
   isDependent  Boolean            @default(false)
   status       InviteStatus       @default(PENDING)
@@ -699,8 +708,8 @@ model ProtocolSimplified {
 
   // ✅ NOVO: Sistema de Atribuição Avançado (Sistema Unificado V2.0)
   currentAssignedUserId String? // Servidor principal atual (denormalizado para performance)
-  organizationalUnitId String? // Unidade organizacional responsável
-  teamId String? // Equipe responsável (para protocolos de múltiplos servidores)
+  organizationalUnitId  String? // Unidade organizacional responsável
+  teamId                String? // Equipe responsável (para protocolos de múltiplos servidores)
 
   // Timestamps
   createdAt   DateTime  @default(now())
@@ -716,10 +725,10 @@ model ProtocolSimplified {
   createdBy    User?             @relation("CreatedByUserSimplified", fields: [createdById], references: [id])
 
   // ✅ NOVO: Relacionamentos com Sistema Unificado V2.0
-  currentAssignedUser  User?               @relation("CurrentProtocolAssignment", fields: [currentAssignedUserId], references: [id])
-  organizationalUnit   OrganizationalUnit? @relation("ProtocolOrganizationalUnits", fields: [organizationalUnitId], references: [id])
-  team                 Team?               @relation("ProtocolTeams", fields: [teamId], references: [id])
-  serverAssignments    ProtocolServerAssignment[] @relation("ProtocolServerAssignments")
+  currentAssignedUser User?                      @relation("CurrentProtocolAssignment", fields: [currentAssignedUserId], references: [id])
+  organizationalUnit  OrganizationalUnit?        @relation("ProtocolOrganizationalUnits", fields: [organizationalUnitId], references: [id])
+  team                Team?                      @relation("ProtocolTeams", fields: [teamId], references: [id])
+  serverAssignments   ProtocolServerAssignment[] @relation("ProtocolServerAssignments")
 
   // Relacionamentos núcleo do protocolo
   history                 ProtocolHistorySimplified[]
@@ -1247,7 +1256,8 @@ model ProtocolSLA {
 
 model Notification {
   id         String    @id @default(cuid())
-  citizenId  String
+  userId     String? // Admin/servidor
+  citizenId  String? // Cidadão
   title      String
   message    String
   type       String    @default("INFO")
@@ -1258,9 +1268,104 @@ model Notification {
   protocolId String?
   metadata   Json?
   createdAt  DateTime  @default(now())
-  citizen    Citizen   @relation(fields: [citizenId], references: [id], onDelete: Cascade)
 
+  user    User?             @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  citizen Citizen?          @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  logs    NotificationLog[]
+
+  @@index([userId])
+  @@index([citizenId])
+  @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
   @@map("notifications")
+}
+
+// Push Subscription para Web Push API
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String? // Admin/servidor
+  citizenId String? // Cidadão
+  endpoint  String   @unique
+  p256dh    String // Chave pública
+  auth      String // Chave de autenticação
+  userAgent String?
+  createdAt DateTime @default(now())
+  lastUsed  DateTime @default(now())
+
+  user    User?    @relation("UserPushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+  citizen Citizen? @relation("CitizenPushSubscriptions", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([citizenId])
+  @@index([endpoint])
+  @@map("push_subscriptions")
+}
+
+// Preferências de notificações
+model NotificationPreference {
+  id        String  @id @default(cuid())
+  userId    String? @unique
+  citizenId String? @unique
+
+  // Canais habilitados
+  webEnabled   Boolean @default(true)
+  pushEnabled  Boolean @default(false)
+  emailEnabled Boolean @default(true)
+  smsEnabled   Boolean @default(false)
+
+  // Tipos de notificação (JSON com granularidade)
+  preferences Json @default("{}")
+  // Exemplo: { "protocol_status": { "web": true, "push": true, "email": false } }
+
+  // Horário de silêncio
+  quietHoursStart String? // "22:00"
+  quietHoursEnd   String? // "08:00"
+
+  // Resumo diário
+  dailyDigest     Boolean @default(false)
+  dailyDigestTime String? // "08:00"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user    User?    @relation("UserNotificationPreferences", fields: [userId], references: [id], onDelete: Cascade)
+  citizen Citizen? @relation("CitizenNotificationPreferences", fields: [citizenId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([citizenId])
+  @@map("notification_preferences")
+}
+
+// Log de notificações enviadas (auditoria + retry)
+model NotificationLog {
+  id             String  @id @default(cuid())
+  notificationId String? // Referência à Notification se existir
+  userId         String?
+  citizenId      String?
+
+  type    String // PROTOCOL_STATUS, DOCUMENT_APPROVED, etc
+  channel String // WEB, PUSH, EMAIL, SMS
+  status  String // PENDING, SENT, FAILED, DELIVERED, CLICKED
+
+  payload Json // Dados da notificação
+  error   String? // Mensagem de erro se falhou
+
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  clickedAt   DateTime?
+
+  createdAt DateTime @default(now())
+
+  notification Notification? @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([citizenId])
+  @@index([type])
+  @@index([status])
+  @@index([channel])
+  @@index([createdAt])
+  @@map("notification_logs")
 }
 
 model CitizenTransferRequest {
@@ -7474,7 +7579,7 @@ enum TipoIndisponibilidadeProfissional {
 // ============================================
 
 model OrganizationalUnit {
-  id    String @id @default(cuid())
+  id    String                    @id @default(cuid())
   nome  String
   sigla String?
   tipo  TipoUnidadeOrganizacional // SECRETARIA, DIRETORIA, COORDENADORIA, DIVISAO, SETOR
@@ -7493,11 +7598,11 @@ model OrganizationalUnit {
   responsavel   User?   @relation("ResponsavelUnidade", fields: [responsavelId], references: [id])
 
   // Dados complementares
-  descricao     String?
-  competencias  Json? // Array de competências da unidade
-  endereco      String?
-  telefone      String?
-  email         String?
+  descricao    String?
+  competencias Json? // Array de competências da unidade
+  endereco     String?
+  telefone     String?
+  email        String?
 
   // Status
   isActive Boolean @default(true)
@@ -7549,7 +7654,7 @@ model Position {
   descricao String?
   cbo       String? // Classificação Brasileira de Ocupações
 
-  tipo      TipoCargo   // EFETIVO, COMISSIONADO, TEMPORARIO, ESTAGIARIO
+  tipo      TipoCargo // EFETIVO, COMISSIONADO, TEMPORARIO, ESTAGIARIO
   categoria String? // "Médico", "Professor", "Engenheiro", etc
   nivel     NivelCargo? // BASICO, TECNICO, SUPERIOR, GERENCIAL, DIRECAO
 
@@ -7662,7 +7767,7 @@ model EmployeeAssignment {
   functionId String?
   function   Function? @relation(fields: [functionId], references: [id])
 
-  tipo     TipoVinculo     // LOTACAO, CEDENCIA, REQUISICAO, REMOCAO
+  tipo     TipoVinculo // LOTACAO, CEDENCIA, REQUISICAO, REMOCAO
   situacao SituacaoVinculo // ATIVO, AFASTADO, LICENCA, SUSPENSO
 
   isPrimary Boolean @default(false) // Vínculo principal do servidor
@@ -7731,9 +7836,9 @@ model EmployeeHierarchy {
   organizationalUnitId String?
   organizationalUnit   OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id])
 
-  dataInicio DateTime @default(now())
+  dataInicio DateTime  @default(now())
   dataFim    DateTime?
-  ativo      Boolean  @default(true)
+  ativo      Boolean   @default(true)
 
   observacoes String?
 
@@ -7917,7 +8022,7 @@ model Team {
   coordenadorId String?
   coordenador   User?   @relation("CoordenadorEquipe", fields: [coordenadorId], references: [id])
 
-  dataInicio DateTime @default(now())
+  dataInicio DateTime  @default(now())
   dataFim    DateTime?
 
   ativo Boolean @default(true)
@@ -7963,9 +8068,9 @@ model TeamMember {
   papel       String? // "Coordenador", "Membro", "Secretário", etc
   atribuicoes String?
 
-  dataInicio DateTime @default(now())
+  dataInicio DateTime  @default(now())
   dataFim    DateTime?
-  ativo      Boolean  @default(true)
+  ativo      Boolean   @default(true)
 
   // Auditoria
   createdAt DateTime @default(now())
@@ -7997,9 +8102,9 @@ model AssignmentAudit {
   departmentId   String?
   departmentName String?
 
-  unitOrigemId   String?
-  unitOrigemName String?
-  unitDestinoId  String?
+  unitOrigemId    String?
+  unitOrigemName  String?
+  unitDestinoId   String?
   unitDestinoName String?
 
   positionOrigemId    String?
@@ -8071,23 +8176,23 @@ model ProtocolServerAssignment {
   assignedBy     User?   @relation("ProtocolAssignedBy", fields: [assignedById], references: [id], onDelete: SetNull)
 
   // Contexto
-  motivo            String? // Por que foi atribuído
-  prioridade        Int?    // Se diferentes servidores têm prioridades diferentes
-  percentualCarga   Int?    // % de dedicação esperada
-  prazoResposta     DateTime? // Prazo para este servidor responder
+  motivo          String? // Por que foi atribuído
+  prioridade      Int? // Se diferentes servidores têm prioridades diferentes
+  percentualCarga Int? // % de dedicação esperada
+  prazoResposta   DateTime? // Prazo para este servidor responder
 
   // Delegação temporária
-  isDelegacao       Boolean   @default(false)
-  delegadoPor       String?   // userId do servidor original
-  ativaAte          DateTime? // Data de retorno da delegação
-  motivoDelegacao   String?   // FERIAS, AFASTAMENTO, SOBRECARGA
+  isDelegacao     Boolean   @default(false)
+  delegadoPor     String? // userId do servidor original
+  ativaAte        DateTime? // Data de retorno da delegação
+  motivoDelegacao String? // FERIAS, AFASTAMENTO, SOBRECARGA
 
   // Encaminhamento interdepartamental
-  departmentOrigemId   String?
-  departmentOrigemName String?
-  departmentDestinoId  String?
+  departmentOrigemId    String?
+  departmentOrigemName  String?
+  departmentDestinoId   String?
   departmentDestinoName String?
-  isInterdepartamental Boolean @default(false)
+  isInterdepartamental  Boolean @default(false)
 
   // ✅ INTEGRAÇÃO COM SISTEMA UNIFICADO V2.0
   employeeAssignmentId String? // Referência ao vínculo funcional do servidor
@@ -8097,17 +8202,17 @@ model ProtocolServerAssignment {
   organizationalUnit   OrganizationalUnit? @relation("ProtocolUnitAssignments", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
 
   // Comunicação
-  comentario     String?
-  lido           Boolean   @default(false)
-  lidoEm         DateTime?
-  respondeEm     DateTime?
-  respostaTexto  String?
+  comentario    String?
+  lido          Boolean   @default(false)
+  lidoEm        DateTime?
+  respondeEm    DateTime?
+  respostaTexto String?
 
   // Timestamps
-  dataInicio DateTime @default(now())
+  dataInicio DateTime  @default(now())
   dataFim    DateTime?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([protocolId, situacao])
   @@index([userId, situacao])
@@ -8119,17 +8224,17 @@ model ProtocolServerAssignment {
 }
 
 enum TipoAtribuicaoProtocolo {
-  PRINCIPAL       // Servidor principal responsável
-  DELEGADO        // Substituto temporário (férias, afastamento)
-  ENCAMINHADO     // Encaminhado para outro departamento
-  CONSULTA        // Apenas para consulta/parecer
-  APOIO           // Servidor de apoio (não principal)
+  PRINCIPAL // Servidor principal responsável
+  DELEGADO // Substituto temporário (férias, afastamento)
+  ENCAMINHADO // Encaminhado para outro departamento
+  CONSULTA // Apenas para consulta/parecer
+  APOIO // Servidor de apoio (não principal)
 }
 
 enum SituacaoAtribuicao {
-  ATIVA        // Atribuição ativa
-  CONCLUIDA    // Servidor concluiu sua parte
-  CANCELADA    // Atribuição cancelada
-  SUBSTITUIDA  // Foi substituído por outro servidor
-  PENDENTE     // Aguardando aceite do servidor
+  ATIVA // Atribuição ativa
+  CONCLUIDA // Servidor concluiu sua parte
+  CANCELADA // Atribuição cancelada
+  SUBSTITUIDA // Foi substituído por outro servidor
+  PENDENTE // Aguardando aceite do servidor
 }

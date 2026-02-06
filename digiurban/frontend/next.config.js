@@ -10,8 +10,14 @@ const withPWA = require('@ducanh2912/next-pwa').default({
   aggressiveFrontEndNavCaching: false, // ✅ CORRIGIDO: Desabilitar cache agressivo de navegação
   reloadOnOnline: true,
   swcMinify: true,
+  // ✅ NOVO: Incluir handler de push notifications
+  additionalManifestEntries: [
+    { url: '/sw-push-handler.js', revision: '1' },
+  ],
   workboxOptions: {
     disableDevLogs: true,
+    // ✅ NOVO: Importar handler de push
+    importScripts: ['/sw-push-handler.js'],
     // ✅ NOVO: Não cachear páginas HTML administrativas
     navigateFallback: undefined, // Desabilitar fallback de navegação
     navigateFallbackDenylist: [/^\/admin/, /^\/_next\/data/], // Não cachear rotas admin

@@ -58,7 +58,24 @@ export function TemplateEditModal({ template, open, onClose, onSave, services = 
 
   // Atualizar preview quando o conteúdo mudar
   useEffect(() => {
-    if (open) {
+    if (open && template) {
+      // Substituir variáveis Handlebars por valores de exemplo
+      let headerHtml = formData.headerHtml || ''
+      let bodyHtml = formData.htmlTemplate || '<p>Comece a editar o template...</p>'
+      let footerHtml = formData.footerHtml || ''
+
+      // Se há variáveis disponíveis, substituir no HTML
+      if (template.availableVariables && Array.isArray(template.availableVariables)) {
+        template.availableVariables.forEach((variable: any) => {
+          const regex = new RegExp(`{{${variable.name}}}`, 'g')
+          const exampleValue = variable.example || `[${variable.name}]`
+
+          headerHtml = headerHtml.replace(regex, exampleValue)
+          bodyHtml = bodyHtml.replace(regex, exampleValue)
+          footerHtml = footerHtml.replace(regex, exampleValue)
+        })
+      }
+
       const html = `
 <!DOCTYPE html>
 <html lang="pt-BR">
@@ -86,15 +103,15 @@ export function TemplateEditModal({ template, open, onClose, onSave, services = 
 </head>
 <body>
   <div class="template-container">
-    ${formData.headerHtml || ''}
-    ${formData.htmlTemplate || '<p>Comece a editar o template...</p>'}
-    ${formData.footerHtml || ''}
+    ${headerHtml}
+    ${bodyHtml}
+    ${footerHtml}
   </div>
 </body>
 </html>`
       setPreviewHtml(html)
     }
-  }, [formData, open])
+  }, [formData, open, template])
 
   const handleSave = async () => {
     if (!template) return
@@ -224,7 +241,7 @@ export function TemplateEditModal({ template, open, onClose, onSave, services = 
                       srcDoc={previewHtml}
                       className="w-full h-[400px] bg-white rounded shadow-sm"
                       title="Preview"
-                      sandbox="allow-same-origin"
+                      sandbox="allow-same-origin allow-scripts"
                     />
                   </div>
                 </div>
