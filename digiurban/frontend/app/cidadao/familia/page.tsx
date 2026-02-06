@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { CitizenLayout } from '@/components/citizen/CitizenLayout'
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext'
 import { Card, CardContent } from '@/components/ui/card'
@@ -80,12 +80,7 @@ export default function FamiliaPage() {
   const [selectedMember, setSelectedMember] = useState<FamilyMember | null>(null)
   const [removing, setRemoving] = useState(false)
 
-  useEffect(() => {
-    loadFamilyData()
-    loadInvites()
-  }, [])
-
-  const loadFamilyData = async () => {
+  const loadFamilyData = useCallback(async () => {
     try {
       setLoading(true)
       const response = await apiRequest('/citizen/family')
@@ -102,9 +97,9 @@ export default function FamiliaPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [apiRequest, toast])
 
-  const loadInvites = async () => {
+  const loadInvites = useCallback(async () => {
     try {
       const response = await apiRequest('/citizen/family/invites')
 
@@ -114,7 +109,14 @@ export default function FamiliaPage() {
     } catch (error) {
       console.error('Erro ao carregar convites:', error)
     }
-  }
+  }, [apiRequest])
+
+  useEffect(() => {
+    if (apiRequest) {
+      loadFamilyData()
+      loadInvites()
+    }
+  }, [apiRequest, loadFamilyData, loadInvites])
 
   const handleEditMember = (memberId: string) => {
     const member = familyData?.members.find(m => m.id === memberId)
