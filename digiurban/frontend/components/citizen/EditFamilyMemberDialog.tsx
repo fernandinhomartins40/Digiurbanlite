@@ -133,13 +133,13 @@ export function EditFamilyMemberDialog({
             <div className="grid grid-cols-2 gap-3 text-sm">
               <div>
                 <span className="text-gray-500">Nome:</span>
-                <p className="font-medium text-gray-900">{member.member.name}</p>
+                <p className="font-medium text-gray-900">{member?.member?.name || 'Nome não disponível'}</p>
               </div>
               <div>
                 <span className="text-gray-500">CPF:</span>
-                <p className="font-medium text-gray-900">{member.member.cpf}</p>
+                <p className="font-medium text-gray-900">{member?.member?.cpf || 'N/A'}</p>
               </div>
-              {member.member.birthDate && (
+              {member?.member?.birthDate && (
                 <div>
                   <span className="text-gray-500">Idade:</span>
                   <p className="font-medium text-gray-900">
