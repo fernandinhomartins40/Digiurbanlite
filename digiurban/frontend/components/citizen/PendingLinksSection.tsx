@@ -138,8 +138,8 @@ export function PendingLinksSection({
                   <div className="flex items-center gap-2 mb-2">
                     <User className="h-5 w-5 text-gray-400" />
                     <div>
-                      <p className="font-medium text-gray-900">{link.head.name}</p>
-                      <p className="text-sm text-gray-500">CPF: {link.head.cpf}</p>
+                      <p className="font-medium text-gray-900">{link?.head?.name || 'Nome não disponível'}</p>
+                      <p className="text-sm text-gray-500">CPF: {link?.head?.cpf || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 mt-2">

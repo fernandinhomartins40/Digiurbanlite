@@ -77,7 +77,7 @@ export function FamilyTreeDiagram({ head, members }: FamilyTreeDiagramProps) {
       </div>
 
       <div className="font-semibold text-sm text-gray-900 mb-0.5 truncate">
-        {person.name}
+        {person?.name || 'Nome não disponível'}
       </div>
 
       {relationship && (
