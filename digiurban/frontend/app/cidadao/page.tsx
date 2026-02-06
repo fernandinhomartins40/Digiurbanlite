@@ -121,26 +121,17 @@ export default function CitizenDashboard() {
     }
   }, [citizen, authLoading, router]);
 
-  // Redirect inicial para serviços em desktop (apenas no primeiro acesso da sessão)
+  // Redirect para serviços em desktop - telas maiores sempre mostram serviços
   useEffect(() => {
-    if (!authLoading && citizen && !hasRedirected && !isMobileView && window.innerWidth >= 768) {
-      // Verifica se já visitou a página de chat nesta sessão
-      const hasVisitedChat = sessionStorage.getItem('cidadao_visited_chat');
-
-      if (!hasVisitedChat) {
-        // Primeira visita da sessão - redireciona para serviços
-        setHasRedirected(true);
-        router.push('/cidadao/servicos');
-      } else {
-        // Já visitou antes nesta sessão - permite acesso ao chat
-        setHasRedirected(true);
-      }
+    if (!authLoading && citizen && !hasRedirected && window.innerWidth >= 768) {
+      // Desktop/Tablet - redireciona sempre para serviços
+      setHasRedirected(true);
+      router.push('/cidadao/servicos');
     } else if (!authLoading && citizen) {
-      // Marca que visitou o chat
-      sessionStorage.setItem('cidadao_visited_chat', 'true');
+      // Mobile - permite acesso direto ao chat
       setHasRedirected(true);
     }
-  }, [citizen, authLoading, hasRedirected, isMobileView, router]);
+  }, [citizen, authLoading, hasRedirected, router]);
 
   // Carregar mensagens quando uma conversa é selecionada
   useEffect(() => {
