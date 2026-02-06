@@ -14,31 +14,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup SSH key
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.VPS_PASSWORD }}" > ~/.ssh/vps_password
-          chmod 600 ~/.ssh/vps_password
-
-      - name: Sync code to VPS
-        run: |
-          # Instalar sshpass para autenticação com senha
-          sudo apt-get update && sudo apt-get install -y sshpass rsync
-
-          # Criar diretório no VPS
-          sshpass -f ~/.ssh/vps_password ssh -o StrictHostKeyChecking=no root@digiurban.com.br "mkdir -p /root/digiurban"
-
-          # Sincronizar código via rsync
-          sshpass -f ~/.ssh/vps_password rsync -avz --delete \
-            --exclude='.git' \
-            --exclude='node_modules' \
-            --exclude='.next' \
-            --exclude='dist' \
-            --exclude='*.db' \
-            --exclude='*.db-*' \
-            -e "ssh -o StrictHostKeyChecking=no" \
-            ./ root@digiurban.com.br:/root/digiurban/
-
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
         with:
@@ -72,8 +47,44 @@ jobs:
             docker stop digiurban-redis 2>/dev/null || true
             docker rm digiurban-redis 2>/dev/null || true
 
-            echo "Verificando código sincronizado..."
-            ls -la
+            # ===== ATUALIZAR CÓDIGO DO GITHUB =====
+            echo "=== Atualizando código do GitHub ==="
+
+            # Fazer backup do .env se existir
+            if [ -f ".env" ]; then
+              cp .env .env.backup
+              echo "✓ Backup do .env criado"
+            fi
+
+            # Garantir que estamos no branch main
+            git checkout main || git checkout -b main origin/main
+
+            # Fazer fetch e reset hard para sincronizar com origin/main
+            echo "📥 Fazendo fetch do origin/main..."
+            git fetch origin main --prune --force
+
+            echo "📊 Status antes da sincronização:"
+            echo "Commit local:  $(git rev-parse HEAD)"
+            echo "Commit origin: $(git rev-parse origin/main)"
+
+            # Stash de qualquer alteração local
+            git add -A 2>/dev/null || true
+            git stash push -u -m "Auto-stash antes do deploy $(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
+
+            # Forçar sincronização com origin/main
+            echo "🔄 Sincronizando com origin/main..."
+            git reset --hard origin/main
+            git clean -fdx -e .env -e .env.backup
+
+            # Restaurar .env se foi deletado
+            if [ ! -f ".env" ] && [ -f ".env.backup" ]; then
+              cp .env.backup .env
+              echo "✓ .env restaurado do backup"
+            fi
+
+            echo "✅ Código atualizado para commit: $(git rev-parse HEAD)"
+            echo "📜 Últimos 3 commits:"
+            git log --oneline -3
 
             # Criar arquivo .env
             echo "Criando arquivo .env..."
