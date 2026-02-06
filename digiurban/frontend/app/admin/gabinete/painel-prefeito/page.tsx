@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Circle, RefreshCw, AlertTriangle, Bell, Calendar, Map } from 'lucide-react'
+import { Circle, RefreshCw, AlertTriangle, Bell, Calendar, Map, CheckCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { CitizenSearchBar } from '@/components/admin/gabinete/CitizenSearchBar'
@@ -299,7 +299,7 @@ export default function PainelPrefeitoPage() {
           ) : overdueSLAs.length === 0 ? (
             <div className="text-center py-8 text-gray-500">
               <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-3">
-                <span className="text-3xl">✅</span>
+                <CheckCircle className="h-8 w-8 text-green-600" />
               </div>
               <p className="text-lg font-medium text-gray-900 mb-1">Nenhum protocolo atrasado!</p>
               <p className="text-sm text-gray-500">Todos os SLAs estão dentro do prazo</p>
@@ -320,8 +320,9 @@ export default function PainelPrefeitoPage() {
                         >
                           #{sla.protocol.number}
                         </a>
-                        <Badge variant="destructive" className="animate-pulse text-xs">
-                          ⚠️ {sla.daysOverdue} dias de atraso
+                        <Badge variant="destructive" className="animate-pulse text-xs flex items-center gap-1">
+                          <AlertTriangle className="h-3 w-3" />
+                          {sla.daysOverdue} dias de atraso
                         </Badge>
                       </div>
                       <p className="text-sm font-medium text-gray-900 mb-2 line-clamp-2">

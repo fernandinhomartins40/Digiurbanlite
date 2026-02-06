@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { criarTriagem } from '@/lib/api/atendimento-api';
-import { Activity, AlertTriangle, Heart, Thermometer, Wind } from 'lucide-react';
+import { Activity, AlertTriangle, Heart, Thermometer, Wind, AlertCircle, Zap, CheckCircle, FileText, Siren } from 'lucide-react';
 
 export default function TriagemPage() {
   const router = useRouter();
@@ -73,11 +73,11 @@ export default function TriagemPage() {
 
   const getClassificacaoInfo = (classificacao: string) => {
     const classes = {
-      VERMELHO: { color: 'bg-red-100 border-red-500 text-red-700', label: 'VERMELHO - Emergência', icon: '🚨' },
-      LARANJA: { color: 'bg-orange-100 border-orange-500 text-orange-700', label: 'LARANJA - Urgente', icon: '⚠️' },
-      AMARELO: { color: 'bg-yellow-100 border-yellow-500 text-yellow-700', label: 'AMARELO - Pouco Urgente', icon: '⚡' },
-      VERDE: { color: 'bg-green-100 border-green-500 text-green-700', label: 'VERDE - Não Urgente', icon: '✅' },
-      AZUL: { color: 'bg-blue-100 border-blue-500 text-blue-700', label: 'AZUL - Consulta', icon: '📋' },
+      VERMELHO: { color: 'bg-red-100 border-red-500 text-red-700', label: 'VERMELHO - Emergência', icon: Siren },
+      LARANJA: { color: 'bg-orange-100 border-orange-500 text-orange-700', label: 'LARANJA - Urgente', icon: AlertCircle },
+      AMARELO: { color: 'bg-yellow-100 border-yellow-500 text-yellow-700', label: 'AMARELO - Pouco Urgente', icon: Zap },
+      VERDE: { color: 'bg-green-100 border-green-500 text-green-700', label: 'VERDE - Não Urgente', icon: CheckCircle },
+      AZUL: { color: 'bg-blue-100 border-blue-500 text-blue-700', label: 'AZUL - Consulta', icon: FileText },
     };
     return classes[classificacao as keyof typeof classes] || classes.VERDE;
   };
@@ -119,15 +119,16 @@ export default function TriagemPage() {
                   <SelectValue placeholder="Selecione a classificação" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="VERMELHO">🚨 VERMELHO - Emergência</SelectItem>
-                  <SelectItem value="LARANJA">⚠️ LARANJA - Urgente</SelectItem>
-                  <SelectItem value="AMARELO">⚡ AMARELO - Pouco Urgente</SelectItem>
-                  <SelectItem value="VERDE">✅ VERDE - Não Urgente</SelectItem>
-                  <SelectItem value="AZUL">📋 AZUL - Consulta</SelectItem>
+                  <SelectItem value="VERMELHO">VERMELHO - Emergência</SelectItem>
+                  <SelectItem value="LARANJA">LARANJA - Urgente</SelectItem>
+                  <SelectItem value="AMARELO">AMARELO - Pouco Urgente</SelectItem>
+                  <SelectItem value="VERDE">VERDE - Não Urgente</SelectItem>
+                  <SelectItem value="AZUL">AZUL - Consulta</SelectItem>
                 </SelectContent>
               </Select>
-              <div className={`p-3 rounded-lg ${classificacaoInfo.color} text-sm`}>
-                {classificacaoInfo.icon} {classificacaoInfo.label}
+              <div className={`p-3 rounded-lg ${classificacaoInfo.color} text-sm flex items-center gap-2`}>
+                {React.createElement(classificacaoInfo.icon, { className: 'h-4 w-4' })}
+                <span>{classificacaoInfo.label}</span>
               </div>
             </div>
           </CardContent>

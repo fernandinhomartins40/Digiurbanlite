@@ -27,7 +27,9 @@ import {
   Mail,
   Search,
   Loader2,
-  UserCheck
+  UserCheck,
+  Check,
+  Circle
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/services/api'
@@ -112,7 +114,7 @@ export default function CriarChamadoPage() {
         setCitizenResults([])
       }
     } catch (error: any) {
-      console.error('❌ Erro ao buscar cidadão:', error)
+      console.error('[Chamados] Erro ao buscar cidadão:', error)
       setCitizenResults([])
       toast.error('Erro ao buscar cidadão')
     } finally {
@@ -531,17 +533,32 @@ export default function CriarChamadoPage() {
                         <div className={`flex items-center gap-2 ${
                           formData.title.length >= 5 ? 'text-green-600' : 'text-muted-foreground'
                         }`}>
-                          {formData.title.length >= 5 ? '✓' : '○'} Título com mínimo 5 caracteres
+                          {formData.title.length >= 5 ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Circle className="h-3 w-3" />
+                          )}
+                          Título com mínimo 5 caracteres
                         </div>
                         <div className={`flex items-center gap-2 ${
                           formData.description.length >= 10 ? 'text-green-600' : 'text-muted-foreground'
                         }`}>
-                          {formData.description.length >= 10 ? '✓' : '○'} Descrição com mínimo 10 caracteres
+                          {formData.description.length >= 10 ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Circle className="h-3 w-3" />
+                          )}
+                          Descrição com mínimo 10 caracteres
                         </div>
                         <div className={`flex items-center gap-2 ${
                           formData.priority ? 'text-green-600' : 'text-muted-foreground'
                         }`}>
-                          {formData.priority ? '✓' : '○'} Prioridade selecionada
+                          {formData.priority ? (
+                            <Check className="h-3 w-3" />
+                          ) : (
+                            <Circle className="h-3 w-3" />
+                          )}
+                          Prioridade selecionada
                         </div>
                       </div>
                     </div>

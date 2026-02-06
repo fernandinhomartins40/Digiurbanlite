@@ -89,11 +89,11 @@ export default function FamiliaPage() {
         // A API retorna { success: true, data: { family: {...} } }
         setFamilyData(response.data.family)
       } else {
-        console.error('❌ Resposta inesperada da API:', response)
+        console.error('[Família] Resposta inesperada da API:', response)
         throw new Error('Dados de família não encontrados na resposta')
       }
     } catch (error: any) {
-      console.error('❌ Erro ao carregar família:', error)
+      console.error('[Família] Erro ao carregar família:', error)
       toast({
         variant: 'destructive',
         title: 'Erro',
@@ -112,16 +112,14 @@ export default function FamiliaPage() {
         setInvites(response.data.invites || [])
       }
     } catch (error) {
-      console.error('Erro ao carregar convites:', error)
+      console.error('[Família] Erro ao carregar convites:', error)
     }
   }, [apiRequest])
 
   useEffect(() => {
-    if (apiRequest) {
-      loadFamilyData()
-      loadInvites()
-    }
-  }, [apiRequest, loadFamilyData, loadInvites])
+    loadFamilyData()
+    loadInvites()
+  }, [loadFamilyData, loadInvites])
 
   const handleEditMember = (memberId: string) => {
     const member = familyData?.members.find(m => m.id === memberId)

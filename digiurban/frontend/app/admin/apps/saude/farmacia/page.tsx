@@ -19,6 +19,9 @@ import {
   ArrowRight,
   Pill,
   Plus,
+  AlertCircle,
+  Clock,
+  XCircle,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -203,11 +206,31 @@ export default function FarmaciaPage() {
                   >
                     <div className="flex-1">
                       <div className="font-medium">{alerta.medicamento}</div>
-                      <div className="text-sm text-gray-500 mt-1">
-                        {alerta.tipo === 'ESTOQUE_BAIXO' && '⚠️ Estoque baixo'}
-                        {alerta.tipo === 'ESTOQUE_MINIMO' && '🚨 Estoque mínimo'}
-                        {alerta.tipo === 'VALIDADE_PROXIMA' && '📅 Vencimento próximo'}
-                        {alerta.tipo === 'VENCIDO' && '❌ Medicamento vencido'}
+                      <div className="text-sm text-gray-500 mt-1 flex items-center gap-1">
+                        {alerta.tipo === 'ESTOQUE_BAIXO' && (
+                          <>
+                            <AlertCircle className="h-3 w-3" />
+                            <span>Estoque baixo</span>
+                          </>
+                        )}
+                        {alerta.tipo === 'ESTOQUE_MINIMO' && (
+                          <>
+                            <AlertTriangle className="h-3 w-3" />
+                            <span>Estoque mínimo</span>
+                          </>
+                        )}
+                        {alerta.tipo === 'VALIDADE_PROXIMA' && (
+                          <>
+                            <Clock className="h-3 w-3" />
+                            <span>Vencimento próximo</span>
+                          </>
+                        )}
+                        {alerta.tipo === 'VENCIDO' && (
+                          <>
+                            <XCircle className="h-3 w-3" />
+                            <span>Medicamento vencido</span>
+                          </>
+                        )}
                       </div>
                       {alerta.dataValidade && (
                         <div className="text-xs text-gray-400 mt-1">

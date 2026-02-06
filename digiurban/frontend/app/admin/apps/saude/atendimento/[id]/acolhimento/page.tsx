@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, Save, Heart, Stethoscope, Syringe, Calendar, Building2, MessageCircle } from 'lucide-react';
+import { ArrowLeft, Save, Heart, Stethoscope, Syringe, Calendar, Building2, MessageCircle, CheckCircle, ArrowRight as ArrowRightIcon, Info } from 'lucide-react';
 
 interface FilaAtendimento {
   id: string;
@@ -288,10 +288,18 @@ export default function AcolhimentoPage() {
                       Conduta Selecionada: {condutaSelecionadaObj.label}
                     </span>
                   </div>
-                  <p className="text-sm text-blue-800">
-                    {['RESOLVER_ACOLHIMENTO', 'ORIENTACAO'].includes(condutaSelecionada)
-                      ? '✓ O atendimento será finalizado após salvar (resolvido no acolhimento)'
-                      : '→ O paciente será encaminhado conforme a conduta selecionada'}
+                  <p className="text-sm text-blue-800 flex items-center gap-2">
+                    {['RESOLVER_ACOLHIMENTO', 'ORIENTACAO'].includes(condutaSelecionada) ? (
+                      <>
+                        <CheckCircle className="h-4 w-4" />
+                        <span>O atendimento será finalizado após salvar (resolvido no acolhimento)</span>
+                      </>
+                    ) : (
+                      <>
+                        <ArrowRightIcon className="h-4 w-4" />
+                        <span>O paciente será encaminhado conforme a conduta selecionada</span>
+                      </>
+                    )}
                   </p>
                 </div>
               )}
@@ -322,8 +330,9 @@ export default function AcolhimentoPage() {
           {/* Informações Importantes */}
           <Card className="mb-6 bg-green-50 border-green-200">
             <CardHeader>
-              <CardTitle className="text-green-900">
-                ℹ️ Sobre o Acolhimento na Atenção Básica
+              <CardTitle className="text-green-900 flex items-center gap-2">
+                <Info className="h-5 w-5" />
+                Sobre o Acolhimento na Atenção Básica
               </CardTitle>
             </CardHeader>
             <CardContent>

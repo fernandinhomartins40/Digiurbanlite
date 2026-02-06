@@ -1,12 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { User, FileText, Users, Award, Calendar, ArrowLeft, Phone, Mail, MapPin, Clock } from 'lucide-react'
+import { User, FileText, Users, Award, Calendar, ArrowLeft, Phone, Mail, MapPin, Clock, Star, Medal, Trophy, XCircle } from 'lucide-react'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getFullApiUrl } from '@/lib/api-config'
 
@@ -91,13 +91,13 @@ export default function CitizenHistoryPage() {
   const getVerificationBadge = (status: CitizenData['verificationStatus']) => {
     switch (status) {
       case 'GOLD':
-        return { label: 'Cidadão Ouro', variant: 'default' as const, icon: '⭐', color: 'text-yellow-600' }
+        return { label: 'Cidadão Ouro', variant: 'default' as const, icon: Star, color: 'text-yellow-600' }
       case 'VERIFIED':
-        return { label: 'Cidadão Prata', variant: 'secondary' as const, icon: '🥈', color: 'text-gray-600' }
+        return { label: 'Cidadão Prata', variant: 'secondary' as const, icon: Medal, color: 'text-gray-600' }
       case 'PENDING':
-        return { label: 'Cidadão Bronze', variant: 'outline' as const, icon: '🥉', color: 'text-orange-600' }
+        return { label: 'Cidadão Bronze', variant: 'outline' as const, icon: Trophy, color: 'text-orange-600' }
       case 'REJECTED':
-        return { label: 'Rejeitado', variant: 'destructive' as const, icon: '❌', color: 'text-red-600' }
+        return { label: 'Rejeitado', variant: 'destructive' as const, icon: XCircle, color: 'text-red-600' }
     }
   }
 
@@ -193,8 +193,9 @@ export default function CitizenHistoryPage() {
               </div>
             </div>
             <div className="text-right">
-              <Badge variant={badge.variant} className="text-lg px-4 py-2 mb-2">
-                {badge.icon} {badge.label}
+              <Badge variant={badge.variant} className="text-lg px-4 py-2 mb-2 flex items-center gap-2 w-fit ml-auto">
+                {React.createElement(badge.icon, { className: 'h-5 w-5' })}
+                {badge.label}
               </Badge>
               <p className="text-sm text-gray-500">
                 <Clock className="h-4 w-4 inline mr-1" />
