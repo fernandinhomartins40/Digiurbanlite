@@ -139,7 +139,9 @@
       "Bash(do sed -i 's/UnidadeSaude: true/unidadeSaude: true/g' \"$file\")",
       "Bash(./deploy-vps.sh)",
       "Bash(git fetch:*)",
-      "WebFetch(domain:sisaps.saude.gov.br)"
+      "WebFetch(domain:sisaps.saude.gov.br)",
+      "Bash(Get-Content \"C:\\\\Users\\\\fusea\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Projetos-Cursor-Digiurbanlite\\\\tasks\\\\b9e594d.output\")",
+      "Bash(Select-Object -Last 80)"
     ],
     "deny": [],
     "ask": []
