@@ -244,7 +244,7 @@ export function FamilyExportButton({ head, members, stats }: FamilyExportButtonP
                 <div class="member-header">
                   <div>
                     <div class="member-name">
-                      ${idx + 1}. ${member.member.name}
+                      ${idx + 1}. ${member?.member?.name || 'Nome não disponível'}
                       <span class="badge badge-relationship">${getRelationshipLabel(member.relationship)}</span>
                       ${member.isDependent ? '<span class="badge badge-dependent">Dependente</span>' : ''}
                       ${member.hasDisability ? '<span class="badge badge-pcd">PCD</span>' : ''}
@@ -254,11 +254,11 @@ export function FamilyExportButton({ head, members, stats }: FamilyExportButtonP
                 <div class="info-grid">
                   <div class="info-item">
                     <div class="info-label">CPF</div>
-                    <div class="info-value">${member.member.cpf}</div>
+                    <div class="info-value">${member?.member?.cpf || 'N/A'}</div>
                   </div>
                   <div class="info-item">
                     <div class="info-label">Idade</div>
-                    <div class="info-value">${calculateAge(member.member.birthDate)}</div>
+                    <div class="info-value">${member?.member?.birthDate ? calculateAge(member.member.birthDate) : 'Não informado'}</div>
                   </div>
                   ${member.occupation ? `
                     <div class="info-item">
