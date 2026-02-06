@@ -13,11 +13,9 @@ export type NodeType =
   | 'menu'         // Exibe menu com opções
   | 'action'       // Executa ação no backend
   | 'condition'    // Decisão baseada em dados
-  | 'api_call'     // Chama API externa
   | 'form'         // Coleta múltiplos campos
   | 'upload'       // Solicita arquivo
   | 'location'     // Solicita localização
-  | 'wait'         // Aguarda tempo ou evento
   | 'end';         // Finaliza fluxo
 
 // ============================================
@@ -78,14 +76,6 @@ export interface ConditionNodeConfig {
   defaultGoto?: string; // Fallback se nenhuma condição for verdadeira
 }
 
-export interface ApiCallNodeConfig {
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE';
-  url: string; // Pode usar templates
-  headers?: Record<string, string>;
-  body?: Record<string, any>;
-  saveResultAs?: string;
-}
-
 export interface FormField {
   id: string;
   type: 'text' | 'number' | 'email' | 'phone' | 'date' | 'select' | 'radio' | 'checkbox' | 'textarea';
@@ -120,12 +110,6 @@ export interface LocationNodeConfig {
   saveAs?: string;
 }
 
-export interface WaitNodeConfig {
-  duration?: number; // em milissegundos
-  waitForEvent?: string; // Nome do evento para aguardar
-  timeout?: number;
-}
-
 export interface EndNodeConfig {
   message?: string;
   returnToMain?: boolean;
@@ -138,11 +122,9 @@ export type NodeConfig =
   | MenuNodeConfig
   | ActionNodeConfig
   | ConditionNodeConfig
-  | ApiCallNodeConfig
   | FormNodeConfig
   | UploadNodeConfig
   | LocationNodeConfig
-  | WaitNodeConfig
   | EndNodeConfig;
 
 // ============================================

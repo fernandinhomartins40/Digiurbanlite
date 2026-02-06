@@ -4,7 +4,6 @@
  */
 
 import { FlowEngine } from '../bot/flow/FlowEngine';
-// import { ConversationService } from './ConversationService';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
@@ -14,12 +13,10 @@ const isPlainObject = (value: unknown): value is Record<string, any> =>
 
 export class FlowEngineService {
   private flowEngine: FlowEngine;
-  // private conversationService: ConversationService;
   private wsServer: WebSocketServer | null = null;
 
   constructor(wsServer?: WebSocketServer) {
     this.flowEngine = new FlowEngine(actionHandlers);
-    // this.conversationService = new ConversationService();
     if (wsServer) {
       this.wsServer = wsServer;
     }

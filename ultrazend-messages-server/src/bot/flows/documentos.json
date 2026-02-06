@@ -1,0 +1,231 @@
+{
+  "name": "documentos",
+  "description": "Fluxo para consultar documentos do cidadão",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "📄",
+    "color": "#607D8B",
+    "category": "documents"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "📄 **Meus Documentos**\n\nAqui você pode consultar os documentos anexados às suas solicitações."
+      },
+      "transitions": [
+        { "to": "documents_menu" }
+      ]
+    },
+    {
+      "id": "documents_menu",
+      "type": "menu",
+      "config": {
+        "text": "O que você gostaria de fazer?",
+        "options": [
+          {
+            "id": "todos",
+            "label": "📋 Ver todos os documentos",
+            "description": "Listar todos os documentos enviados"
+          },
+          {
+            "id": "por_protocolo",
+            "label": "🔍 Documentos de um protocolo",
+            "description": "Ver documentos de uma solicitação específica"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Cancelar"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "todos", "to": "load_all_documents" },
+        { "when": "por_protocolo", "to": "load_protocols_for_docs" },
+        { "when": "voltar", "to": "end" }
+      ]
+    },
+    {
+      "id": "load_all_documents",
+      "type": "action",
+      "config": {
+        "action": "getDocuments",
+        "params": {
+          "limit": 20
+        },
+        "saveResultAs": "documentsList"
+      },
+      "transitions": [
+        { "to": "check_documents_found" }
+      ]
+    },
+    {
+      "id": "check_documents_found",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "documentsList.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_documents_list"
+          }
+        ],
+        "defaultGoto": "no_documents"
+      }
+    },
+    {
+      "id": "no_documents",
+      "type": "message",
+      "config": {
+        "text": "📭 Você ainda não possui documentos cadastrados.\n\nOs documentos são anexados quando você cria uma solicitação de serviço."
+      },
+      "transitions": [
+        { "to": "documents_menu" }
+      ]
+    },
+    {
+      "id": "show_documents_list",
+      "type": "message",
+      "config": {
+        "text": "📄 **Seus Documentos:**\n\nVocê possui {{documentsList.count}} documento(s) cadastrado(s).\n\nOs documentos estão vinculados aos seus protocolos e podem ser acessados pelo painel do cidadão."
+      },
+      "transitions": [
+        { "to": "after_documents" }
+      ]
+    },
+    {
+      "id": "load_protocols_for_docs",
+      "type": "action",
+      "config": {
+        "action": "getProtocols",
+        "params": {
+          "limit": 20
+        },
+        "saveResultAs": "protocolsForDocs"
+      },
+      "transitions": [
+        { "to": "check_protocols_for_docs" }
+      ]
+    },
+    {
+      "id": "check_protocols_for_docs",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "protocolsForDocs.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "select_protocol_for_docs"
+          }
+        ],
+        "defaultGoto": "no_protocols_for_docs"
+      }
+    },
+    {
+      "id": "no_protocols_for_docs",
+      "type": "message",
+      "config": {
+        "text": "📭 Você ainda não possui protocolos. Crie uma solicitação para anexar documentos."
+      },
+      "transitions": [
+        { "to": "documents_menu" }
+      ]
+    },
+    {
+      "id": "select_protocol_for_docs",
+      "type": "menu",
+      "config": {
+        "text": "📋 Selecione o protocolo para ver os documentos:",
+        "options": "{{protocolsForDocs.protocols}}",
+        "saveAs": "selectedProtocolForDocs"
+      },
+      "transitions": [
+        { "to": "load_protocol_documents" }
+      ]
+    },
+    {
+      "id": "load_protocol_documents",
+      "type": "action",
+      "config": {
+        "action": "getProtocolDocuments",
+        "params": {
+          "protocolId": "{{selectedProtocolForDocs}}"
+        },
+        "saveResultAs": "protocolDocuments"
+      },
+      "transitions": [
+        { "to": "check_protocol_documents" }
+      ]
+    },
+    {
+      "id": "check_protocol_documents",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "protocolDocuments.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_protocol_documents"
+          }
+        ],
+        "defaultGoto": "no_protocol_documents"
+      }
+    },
+    {
+      "id": "no_protocol_documents",
+      "type": "message",
+      "config": {
+        "text": "📭 Este protocolo não possui documentos anexados."
+      },
+      "transitions": [
+        { "to": "after_documents" }
+      ]
+    },
+    {
+      "id": "show_protocol_documents",
+      "type": "message",
+      "config": {
+        "text": "📄 **Documentos do Protocolo:**\n\nForam encontrados {{protocolDocuments.count}} documento(s) neste protocolo.\n\nPara visualizar ou baixar os documentos, acesse o painel do cidadão."
+      },
+      "transitions": [
+        { "to": "after_documents" }
+      ]
+    },
+    {
+      "id": "after_documents",
+      "type": "menu",
+      "config": {
+        "text": "O que deseja fazer agora?",
+        "options": [
+          {
+            "id": "continuar",
+            "label": "📄 Consultar mais documentos",
+            "description": "Voltar ao menu de documentos"
+          },
+          {
+            "id": "menu",
+            "label": "🏠 Menu principal",
+            "description": "Voltar ao início"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "continuar", "to": "documents_menu" },
+        { "when": "menu", "to": "end" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}

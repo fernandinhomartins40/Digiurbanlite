@@ -242,6 +242,7 @@ export class FlowStateManager {
       history: execution.history as string[],
       status: execution.status,
       errorMessage: execution.errorMessage,
+      metadata: execution.metadata as Record<string, any> | undefined,
       startedAt: execution.startedAt,
       updatedAt: execution.updatedAt,
       completedAt: execution.completedAt,

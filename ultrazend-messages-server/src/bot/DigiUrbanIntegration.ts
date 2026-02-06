@@ -21,8 +21,26 @@ export class DigiUrbanIntegration {
         Authorization: `Bearer ${this.serviceToken}`,
         'Content-Type': 'application/json',
       },
-      timeout: 10000,
+      timeout: 15000,
     });
+
+    // Interceptor de retry para falhas de conexão
+    this.api.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        const config = error.config;
+        if (
+          !config._retryCount &&
+          (error.code === 'ECONNREFUSED' || error.code === 'ECONNABORTED' || error.code === 'ENOTFOUND')
+        ) {
+          config._retryCount = 1;
+          console.warn(`[DigiUrbanIntegration] Retry automático para ${config.url} (${error.code})`);
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          return this.api(config);
+        }
+        throw error;
+      }
+    );
   }
 
   /**
@@ -156,6 +174,59 @@ export class DigiUrbanIntegration {
    */
   async getDepartments() {
     const response = await this.api.get('/internal/departments');
+    return response.data;
+  }
+
+  /**
+   * Buscar interações/histórico de um protocolo
+   */
+  async getProtocolInteractions(protocolId: string, citizenId: string) {
+    const response = await this.api.get(`/internal/protocols/${protocolId}/interactions`, {
+      params: { citizenId },
+    });
+    return response.data;
+  }
+
+  /**
+   * Buscar documentos do cidadão
+   */
+  async getDocuments(citizenId: string, limit: number = 20) {
+    const response = await this.api.get(`/internal/citizens/${citizenId}/documents`, {
+      params: { limit },
+    });
+    return response.data;
+  }
+
+  /**
+   * Buscar documentos de um protocolo específico
+   */
+  async getProtocolDocuments(protocolId: string, citizenId: string) {
+    const response = await this.api.get(`/internal/protocols/${protocolId}/documents`, {
+      params: { citizenId },
+    });
+    return response.data;
+  }
+
+  /**
+   * Buscar protocolos concluídos sem avaliação
+   */
+  async getPendingEvaluations(citizenId: string) {
+    const response = await this.api.get('/internal/evaluations/pending', {
+      params: { citizenId },
+    });
+    return response.data;
+  }
+
+  /**
+   * Submeter avaliação de protocolo
+   */
+  async submitEvaluation(protocolId: string, citizenId: string, rating: number, comment?: string) {
+    const response = await this.api.post('/internal/evaluations', {
+      protocolId,
+      citizenId,
+      rating,
+      comment,
+    });
     return response.data;
   }
 

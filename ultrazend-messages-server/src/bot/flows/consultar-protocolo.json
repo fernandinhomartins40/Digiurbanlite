@@ -1,7 +1,7 @@
 {
   "name": "consultar_protocolo",
   "description": "Fluxo para consultar e gerenciar protocolos",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "metadata": {
     "icon": "🔍",
     "color": "#FF9800",
@@ -195,9 +195,19 @@
         "text": "O que você gostaria de fazer?",
         "options": [
           {
+            "id": "historico",
+            "label": "📜 Ver histórico",
+            "description": "Interações e atualizações"
+          },
+          {
             "id": "comentar",
             "label": "💬 Adicionar comentário",
             "description": "Enviar mensagem"
+          },
+          {
+            "id": "documentos",
+            "label": "📄 Ver documentos",
+            "description": "Documentos do protocolo"
           },
           {
             "id": "consultar_outro",
@@ -212,9 +222,109 @@
         ]
       },
       "transitions": [
+        { "when": "historico", "to": "load_interactions" },
         { "when": "comentar", "to": "ask_comment" },
+        { "when": "documentos", "to": "load_protocol_docs" },
         { "when": "consultar_outro", "to": "search_method" },
         { "when": "menu", "to": "end" }
+      ]
+    },
+    {
+      "id": "load_interactions",
+      "type": "action",
+      "config": {
+        "action": "getProtocolInteractions",
+        "params": {
+          "protocolId": "{{protocolDetails.protocol.id}}"
+        },
+        "saveResultAs": "protocolInteractions"
+      },
+      "transitions": [
+        { "to": "check_interactions" }
+      ]
+    },
+    {
+      "id": "check_interactions",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "protocolInteractions.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_interactions"
+          }
+        ],
+        "defaultGoto": "no_interactions"
+      }
+    },
+    {
+      "id": "no_interactions",
+      "type": "message",
+      "config": {
+        "text": "📭 Ainda não há interações registradas neste protocolo."
+      },
+      "transitions": [
+        { "to": "protocol_actions_menu" }
+      ]
+    },
+    {
+      "id": "show_interactions",
+      "type": "message",
+      "config": {
+        "text": "📜 **Histórico do Protocolo #{{protocolDetails.protocol.number}}**\n\nTotal de interações: {{protocolInteractions.count}}\n\nPara ver os detalhes completos de cada interação, acesse o painel do cidadão."
+      },
+      "transitions": [
+        { "to": "protocol_actions_menu" }
+      ]
+    },
+    {
+      "id": "load_protocol_docs",
+      "type": "action",
+      "config": {
+        "action": "getProtocolDocuments",
+        "params": {
+          "protocolId": "{{protocolDetails.protocol.id}}"
+        },
+        "saveResultAs": "protocolDocs"
+      },
+      "transitions": [
+        { "to": "check_protocol_docs" }
+      ]
+    },
+    {
+      "id": "check_protocol_docs",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "protocolDocs.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_protocol_docs"
+          }
+        ],
+        "defaultGoto": "no_protocol_docs"
+      }
+    },
+    {
+      "id": "no_protocol_docs",
+      "type": "message",
+      "config": {
+        "text": "📭 Este protocolo não possui documentos anexados."
+      },
+      "transitions": [
+        { "to": "protocol_actions_menu" }
+      ]
+    },
+    {
+      "id": "show_protocol_docs",
+      "type": "message",
+      "config": {
+        "text": "📄 **Documentos do Protocolo #{{protocolDetails.protocol.number}}**\n\nTotal de documentos: {{protocolDocs.count}}\n\nPara visualizar ou baixar os documentos, acesse o painel do cidadão."
+      },
+      "transitions": [
+        { "to": "protocol_actions_menu" }
       ]
     },
     {
@@ -268,4 +378,3 @@
     }
   ]
 }
-

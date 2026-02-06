@@ -47,7 +47,18 @@ export class FlowEngine {
     // Busca definição do fluxo
     const flow = await this.getFlowDefinition(flowName);
     if (!flow) {
-      throw new Error(`Flow '${flowName}' not found`);
+      console.error(`[FlowEngine.startFlow] Fluxo '${flowName}' não encontrado no banco`);
+      return {
+        message: `O fluxo "${flowName}" não está disponível no momento. Tente novamente mais tarde.`,
+        messageType: 'text' as const,
+        metadata: {
+          flowId: '',
+          executionId: '',
+          nodeId: '',
+          waitingForInput: false,
+          error: true,
+        },
+      };
     }
 
     // Cria nova execução
@@ -108,13 +119,17 @@ export class FlowEngine {
     // Busca definição do fluxo
     const flow = await this.getFlowById(execution.flowId);
     if (!flow) {
-      throw new Error(`Flow ${execution.flowId} not found`);
+      console.error(`[FlowEngine.processMessage] Fluxo ${execution.flowId} não encontrado`);
+      await this.stateManager.cancelActiveExecutions(citizenId);
+      return this.startFlow(citizenId, 'menu_principal', conversationId);
     }
 
     // Busca nodo atual
     const currentNode = flow.nodes.find((n) => n.id === execution!.currentNodeId);
     if (!currentNode) {
-      throw new Error(`Node ${execution.currentNodeId} not found in flow ${flow.name}`);
+      console.error(`[FlowEngine.processMessage] Nodo ${execution.currentNodeId} não encontrado no fluxo ${flow.name}`);
+      await this.stateManager.cancelActiveExecutions(citizenId);
+      return this.startFlow(citizenId, 'menu_principal', conversationId);
     }
 
     console.log('[FlowEngine.processMessage] Nodo atual:', {
@@ -385,12 +400,40 @@ export class FlowEngine {
           };
       }
     } catch (error: any) {
+      const friendlyError = this.formatNodeError(error, node);
+      console.error(`[FlowEngine] Erro no nodo ${node.id} (${node.type}):`, error?.message);
       return {
         success: false,
-        error: `Node execution error: ${error.message}`,
+        error: friendlyError,
         waitingForInput: false,
       };
     }
+  }
+
+  /**
+   * Formata erro de nodo de forma amigável para o cidadão
+   */
+  private formatNodeError(error: any, _node: FlowNode): string {
+    const code = error?.code || error?.response?.status;
+    const message = error?.message || '';
+
+    if (code === 'ECONNREFUSED' || code === 'ENOTFOUND') {
+      return 'O sistema está temporariamente indisponível. Por favor, tente novamente em alguns minutos.';
+    }
+    if (code === 'ECONNABORTED' || message.includes('timeout')) {
+      return 'A operação demorou mais do que o esperado. Tente novamente em instantes.';
+    }
+    if (code === 401 || code === 403) {
+      return 'Sua sessão expirou. Por favor, faça login novamente.';
+    }
+    if (code === 404) {
+      return 'O recurso solicitado não foi encontrado. Verifique os dados e tente novamente.';
+    }
+    if (code >= 500) {
+      return 'Ocorreu um erro interno. Nossa equipe já foi notificada. Tente novamente em breve.';
+    }
+
+    return 'Ocorreu um erro ao processar sua solicitação. Tente novamente.';
   }
 
   /**

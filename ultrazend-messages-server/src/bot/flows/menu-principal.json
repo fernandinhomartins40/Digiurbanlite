@@ -1,7 +1,7 @@
 {
   "name": "menu_principal",
   "description": "Menu principal do DigiBot",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "metadata": {
     "icon": "🏠",
     "color": "#4CAF50",
@@ -40,6 +40,11 @@
             "description": "Ver e editar dados pessoais"
           },
           {
+            "id": "documentos",
+            "label": "📄 Meus Documentos",
+            "description": "Consultar documentos enviados"
+          },
+          {
             "id": "minha_familia",
             "label": "👨‍👩‍👧‍👦 Minha Família",
             "description": "Gerenciar composição familiar"
@@ -48,6 +53,11 @@
             "id": "notificacoes",
             "label": "🔔 Notificações",
             "description": "Ver avisos e mensagens"
+          },
+          {
+            "id": "avaliacao",
+            "label": "⭐ Avaliar Atendimento",
+            "description": "Avaliar protocolos concluídos"
           },
           {
             "id": "ajuda",
@@ -60,8 +70,10 @@
         { "when": "solicitar_servico", "to": "redirect_solicitar_servico" },
         { "when": "consultar_protocolo", "to": "redirect_consultar_protocolo" },
         { "when": "meu_perfil", "to": "redirect_perfil" },
+        { "when": "documentos", "to": "redirect_documentos" },
         { "when": "minha_familia", "to": "redirect_familia" },
         { "when": "notificacoes", "to": "redirect_notificacoes" },
+        { "when": "avaliacao", "to": "redirect_avaliacao" },
         { "when": "ajuda", "to": "redirect_ajuda" }
       ]
     },
@@ -105,6 +117,19 @@
       ]
     },
     {
+      "id": "redirect_documentos",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "documentos"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
       "id": "redirect_familia",
       "type": "action",
       "config": {
@@ -124,6 +149,19 @@
         "action": "startFlow",
         "params": {
           "flowName": "notificacoes"
+        }
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "redirect_avaliacao",
+      "type": "action",
+      "config": {
+        "action": "startFlow",
+        "params": {
+          "flowName": "avaliacao"
         }
       },
       "transitions": [

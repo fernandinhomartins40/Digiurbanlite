@@ -622,6 +622,205 @@ router.put('/notifications/read', async (req: Request, res: Response) => {
 });
 
 // ========================================
+// PROTOCOL INTERACTIONS
+// ========================================
+
+// GET /api/internal/protocols/:protocolId/interactions - Histórico de interações
+router.get('/protocols/:protocolId/interactions', async (req: Request, res: Response) => {
+  try {
+    const { protocolId } = req.params;
+    const { citizenId } = req.query;
+
+    if (!citizenId) {
+      return res.status(400).json({ error: 'citizenId is required' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: { id: protocolId, citizenId: citizenId as string },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const interactions = await prisma.protocolInteraction.findMany({
+      where: {
+        protocolId,
+        isInternal: false, // Não mostrar interações internas ao cidadão
+      },
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    });
+
+    res.json(interactions);
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /protocols/:protocolId/interactions', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========================================
+// DOCUMENTS
+// ========================================
+
+// GET /api/internal/citizens/:citizenId/documents - Documentos do cidadão
+router.get('/citizens/:citizenId/documents', async (req: Request, res: Response) => {
+  try {
+    const { citizenId } = req.params;
+    const { limit = '20' } = req.query;
+    const limitNum = parseInt(limit as string, 10);
+
+    const documents = await prisma.protocolDocument.findMany({
+      where: {
+        protocol: {
+          citizenId,
+        },
+      },
+      include: {
+        protocol: {
+          select: {
+            id: true,
+            number: true,
+            title: true,
+          },
+        },
+      },
+      orderBy: { uploadedAt: 'desc' },
+      take: limitNum,
+    });
+
+    res.json(documents);
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /citizens/:citizenId/documents', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/internal/protocols/:protocolId/documents - Documentos de um protocolo
+router.get('/protocols/:protocolId/documents', async (req: Request, res: Response) => {
+  try {
+    const { protocolId } = req.params;
+    const { citizenId } = req.query;
+
+    if (!citizenId) {
+      return res.status(400).json({ error: 'citizenId is required' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: { id: protocolId, citizenId: citizenId as string },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const documents = await prisma.protocolDocument.findMany({
+      where: { protocolId },
+      orderBy: { uploadedAt: 'desc' },
+    });
+
+    res.json(documents);
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /protocols/:protocolId/documents', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========================================
+// EVALUATIONS
+// ========================================
+
+// GET /api/internal/evaluations/pending - Protocolos concluídos sem avaliação
+router.get('/evaluations/pending', async (req: Request, res: Response) => {
+  try {
+    const { citizenId } = req.query;
+
+    if (!citizenId) {
+      return res.status(400).json({ error: 'citizenId is required' });
+    }
+
+    // Buscar protocolos concluídos do cidadão que ainda não foram avaliados
+    const protocols = await prisma.protocolSimplified.findMany({
+      where: {
+        citizenId: citizenId as string,
+        status: 'CONCLUIDO',
+        evaluations: {
+          none: {},
+        },
+      },
+      include: {
+        service: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+        department: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { concludedAt: 'desc' },
+    });
+
+    res.json(protocols);
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /evaluations/pending', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/internal/evaluations - Submeter avaliação
+router.post('/evaluations', async (req: Request, res: Response) => {
+  try {
+    const { protocolId, citizenId, rating, comment } = req.body;
+
+    if (!protocolId || !citizenId || rating === undefined) {
+      return res.status(400).json({ error: 'protocolId, citizenId and rating are required' });
+    }
+
+    // Verificar se o protocolo pertence ao cidadão e está concluído
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        citizenId,
+        status: 'CONCLUIDO',
+      },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ error: 'Protocol not found or not completed' });
+    }
+
+    // Verificar se já existe avaliação
+    const existingEval = await prisma.protocolEvaluationSimplified.findFirst({
+      where: { protocolId },
+    });
+
+    if (existingEval) {
+      return res.status(400).json({ error: 'Protocol already evaluated' });
+    }
+
+    const evaluation = await prisma.protocolEvaluationSimplified.create({
+      data: {
+        protocolId,
+        rating: Math.min(5, Math.max(0, parseInt(String(rating), 10))),
+        comment: comment || '',
+      },
+    });
+
+    res.json(evaluation);
+  } catch (error) {
+    console.error('[internal.routes] Error in POST /evaluations', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ========================================
 // DEPARTMENTS
 // ========================================
 

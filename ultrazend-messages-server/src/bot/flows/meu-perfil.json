@@ -1,7 +1,7 @@
 {
   "name": "meu_perfil",
   "description": "Fluxo para visualizar e editar perfil do cidadão",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "metadata": {
     "icon": "👤",
     "color": "#9C27B0",
@@ -95,6 +95,11 @@
             "description": "Atualizar telefone alternativo"
           },
           {
+            "id": "endereco",
+            "label": "🏠 Endereço",
+            "description": "Atualizar endereço completo"
+          },
+          {
             "id": "cancelar",
             "label": "🔙 Voltar",
             "description": "Cancelar edição"
@@ -106,6 +111,7 @@
         { "when": "email", "to": "ask_email" },
         { "when": "telefone", "to": "ask_phone" },
         { "when": "telefone_secundario", "to": "ask_phone_secondary" },
+        { "when": "endereco", "to": "ask_cep" },
         { "when": "cancelar", "to": "profile_menu" }
       ]
     },
@@ -168,6 +174,136 @@
       },
       "transitions": [
         { "to": "update_profile" }
+      ]
+    },
+    {
+      "id": "ask_cep",
+      "type": "question",
+      "config": {
+        "text": "🏠 Digite seu CEP:\n\n(Ex: 12345-678)",
+        "validation": {
+          "type": "text",
+          "minLength": 8,
+          "maxLength": 10,
+          "errorMessage": "CEP inválido. Digite no formato XXXXX-XXX"
+        },
+        "saveAs": "addressData.cep"
+      },
+      "transitions": [
+        { "to": "ask_logradouro" }
+      ]
+    },
+    {
+      "id": "ask_logradouro",
+      "type": "question",
+      "config": {
+        "text": "📍 Digite o logradouro (rua, avenida, etc.):",
+        "validation": {
+          "type": "text",
+          "minLength": 3,
+          "maxLength": 200,
+          "errorMessage": "Logradouro deve ter entre 3 e 200 caracteres"
+        },
+        "saveAs": "addressData.logradouro"
+      },
+      "transitions": [
+        { "to": "ask_numero" }
+      ]
+    },
+    {
+      "id": "ask_numero",
+      "type": "question",
+      "config": {
+        "text": "🔢 Digite o número:",
+        "validation": {
+          "type": "text",
+          "minLength": 1,
+          "maxLength": 10,
+          "errorMessage": "Número inválido"
+        },
+        "saveAs": "addressData.numero"
+      },
+      "transitions": [
+        { "to": "ask_complemento" }
+      ]
+    },
+    {
+      "id": "ask_complemento",
+      "type": "question",
+      "config": {
+        "text": "🏢 Digite o complemento (ou \"pular\" para ignorar):\n\n(Ex: Apt 101, Bloco A, etc.)",
+        "validation": {
+          "type": "text",
+          "maxLength": 100
+        },
+        "saveAs": "addressData.complemento"
+      },
+      "transitions": [
+        { "to": "ask_bairro" }
+      ]
+    },
+    {
+      "id": "ask_bairro",
+      "type": "question",
+      "config": {
+        "text": "🏘️ Digite o bairro:",
+        "validation": {
+          "type": "text",
+          "minLength": 2,
+          "maxLength": 100,
+          "errorMessage": "Bairro deve ter entre 2 e 100 caracteres"
+        },
+        "saveAs": "addressData.bairro"
+      },
+      "transitions": [
+        { "to": "ask_cidade" }
+      ]
+    },
+    {
+      "id": "ask_cidade",
+      "type": "question",
+      "config": {
+        "text": "🏙️ Digite a cidade:",
+        "validation": {
+          "type": "text",
+          "minLength": 2,
+          "maxLength": 100,
+          "errorMessage": "Cidade deve ter entre 2 e 100 caracteres"
+        },
+        "saveAs": "addressData.cidade"
+      },
+      "transitions": [
+        { "to": "ask_uf" }
+      ]
+    },
+    {
+      "id": "ask_uf",
+      "type": "question",
+      "config": {
+        "text": "📍 Digite o estado (UF):\n\n(Ex: SP, RJ, MG)",
+        "validation": {
+          "type": "text",
+          "minLength": 2,
+          "maxLength": 2,
+          "errorMessage": "UF deve ter 2 letras (Ex: SP)"
+        },
+        "saveAs": "addressData.uf"
+      },
+      "transitions": [
+        { "to": "update_address" }
+      ]
+    },
+    {
+      "id": "update_address",
+      "type": "action",
+      "config": {
+        "action": "updateCitizenProfile",
+        "params": {
+          "address": "{{addressData}}"
+        }
+      },
+      "transitions": [
+        { "to": "update_success" }
       ]
     },
     {

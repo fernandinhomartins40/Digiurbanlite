@@ -10,6 +10,29 @@ const integration = getDigiUrbanIntegration();
 
 const ensureArray = (data: any) => (Array.isArray(data) ? data : []);
 
+/**
+ * Formata erros de forma amigável para o cidadão
+ */
+const formatFriendlyError = (error: any, fallback: string): string => {
+  if (error?.response?.status === 404) {
+    return '🔍 Não encontrado. Verifique os dados informados e tente novamente.';
+  }
+  if (error?.response?.status === 401 || error?.response?.status === 403) {
+    return '🔒 Acesso não autorizado. Tente fazer login novamente.';
+  }
+  if (error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND') {
+    return '⚠️ Serviço temporariamente indisponível. Tente novamente em alguns minutos.';
+  }
+  if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+    return '⏱️ A operação demorou muito. Tente novamente em instantes.';
+  }
+  const msg = error?.response?.data?.error || error?.message;
+  if (msg && typeof msg === 'string' && msg.length < 200) {
+    return `❌ ${msg}`;
+  }
+  return `❌ ${fallback}`;
+};
+
 const buildServiceOptions = (services: any[]) =>
   services.map((service: any) => ({
     id: service.id,
@@ -65,130 +88,97 @@ const buildNotificationOptions = (notifications: any[]) =>
     },
   }));
 
-/**
- * Busca serviços disponíveis
- */
+const buildDocumentOptions = (documents: any[]) =>
+  documents.map((doc: any) => ({
+    id: doc.id,
+    label: doc.name || doc.fileName || 'Documento',
+    description: doc.type || doc.category || 'Arquivo',
+    metadata: {
+      name: doc.name || doc.fileName,
+      type: doc.type || doc.mimeType,
+      size: doc.size || doc.fileSize,
+      uploadedAt: doc.uploadedAt || doc.createdAt,
+      url: doc.url || doc.filePath,
+      protocolNumber: doc.protocol?.number,
+    },
+  }));
+
+const buildInteractionOptions = (interactions: any[]) =>
+  interactions.map((interaction: any, index: number) => ({
+    id: interaction.id,
+    label: `${index + 1}. ${interaction.type === 'MESSAGE' ? '💬' : interaction.type === 'STATUS_CHANGE' ? '🔄' : '📋'} ${interaction.authorName || 'Sistema'}`,
+    description: (interaction.message || '').substring(0, 80),
+    metadata: {
+      type: interaction.type,
+      authorType: interaction.authorType,
+      authorName: interaction.authorName,
+      message: interaction.message,
+      createdAt: interaction.createdAt,
+      isInternal: interaction.isInternal,
+    },
+  }));
+
+// ====================================================
+// SERVIÇOS
+// ====================================================
+
 export const searchServices: ActionHandler = async (params, _context) => {
-  console.log('[ActionHandlers.searchServices] Iniciando busca:', params);
-
   const { query, category, limit = 10 } = params;
-
   try {
     const result = ensureArray(await integration.searchServices(query, category, limit));
-    return {
-      count: result.length,
-      services: buildServiceOptions(result),
-      raw: result,
-    };
+    return { count: result.length, services: buildServiceOptions(result), raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.searchServices] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao buscar serviços',
-    };
+    console.error('[ActionHandlers.searchServices] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível buscar serviços. Tente novamente.') };
   }
 };
 
-/**
- * Lista todos os serviços
- */
 export const listServices: ActionHandler = async (params, _context) => {
   const { limit = 50 } = params;
-
   try {
     const result = ensureArray(await integration.listServices(limit));
-    return {
-      count: result.length,
-      services: buildServiceOptions(result),
-      raw: result,
-    };
+    return { count: result.length, services: buildServiceOptions(result), raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.listServices] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao listar serviços',
-    };
+    console.error('[ActionHandlers.listServices] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar serviços. Tente novamente.') };
   }
 };
 
-/**
- * Lista categorias de serviços
- */
 export const listServiceCategories: ActionHandler = async (_params, _context) => {
   try {
     const result = ensureArray(await integration.listServiceCategories());
-    return {
-      count: result.length,
-      categories: buildCategoryOptions(result),
-      raw: result,
-    };
+    return { count: result.length, categories: buildCategoryOptions(result), raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.listServiceCategories] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao listar categorias',
-    };
+    console.error('[ActionHandlers.listServiceCategories] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar categorias. Tente novamente.') };
   }
 };
 
-/**
- * Obtém detalhes de um serviço
- */
 export const getService: ActionHandler = async (params, _context) => {
   const { serviceId } = params;
-
   if (!serviceId) {
-    return {
-      success: false,
-      error: 'ID do serviço não fornecido',
-    };
+    return { success: false, error: '❌ ID do serviço não fornecido. Selecione um serviço da lista.' };
   }
-
   try {
     const result = await integration.getService(serviceId);
-    return {
-      service: result,
-    };
+    return { service: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.getService] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao obter serviço',
-    };
+    console.error('[ActionHandlers.getService] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível obter os detalhes do serviço.') };
   }
 };
 
-/**
- * Cria protocolo
- */
+// ====================================================
+// PROTOCOLOS
+// ====================================================
+
 export const createProtocol: ActionHandler = async (params, context) => {
-  console.log('[ActionHandlers.createProtocol] Criando protocolo:', {
-    citizenId: context.citizenId,
-    params,
-  });
-
-  const {
-    serviceId,
-    description,
-    customData,
-    formData,
-    documents,
-    uploadedDocuments,
-  } = params;
-
+  const { serviceId, description, customData, formData, documents, uploadedDocuments } = params;
   if (!serviceId) {
-    return {
-      success: false,
-      error: 'ID do serviço não fornecido',
-    };
+    return { success: false, error: '❌ Serviço não selecionado. Volte e escolha um serviço.' };
   }
-
   try {
-    const resolvedDescription =
-      description ||
-      formData?.description ||
-      formData?.descricao ||
-      '';
+    const resolvedDescription = description || formData?.description || formData?.descricao || '';
     const resolvedCustomData = customData || formData || {};
     const resolvedDocuments = documents || uploadedDocuments || [];
 
@@ -200,241 +190,253 @@ export const createProtocol: ActionHandler = async (params, context) => {
       documents: resolvedDocuments,
     });
 
-    console.log('[ActionHandlers.createProtocol] Protocolo criado:', result);
-
-    return {
-      protocol: result?.protocol || result,
-      warnings: result?.warnings,
-    };
+    return { protocol: result?.protocol || result, warnings: result?.warnings };
   } catch (error: any) {
-    console.error('[ActionHandlers.createProtocol] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao criar protocolo',
-    };
+    console.error('[ActionHandlers.createProtocol] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível criar o protocolo. Verifique os dados e tente novamente.') };
   }
 };
 
-/**
- * Lista protocolos do cidadão
- */
 export const getProtocols: ActionHandler = async (params, context) => {
   const { limit = 10 } = params;
-
   try {
     const result = ensureArray(await integration.getProtocols(context.citizenId, limit));
-    return {
-      count: result.length,
-      protocols: buildProtocolOptions(result),
-      raw: result,
-    };
+    return { count: result.length, protocols: buildProtocolOptions(result), raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.getProtocols] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao listar protocolos',
-    };
+    console.error('[ActionHandlers.getProtocols] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar seus protocolos.') };
   }
 };
 
-/**
- * Busca protocolo por número
- */
 export const getProtocolByNumber: ActionHandler = async (params, context) => {
   const { protocolNumber } = params;
-
   if (!protocolNumber) {
-    return {
-      success: false,
-      error: 'Número do protocolo não fornecido',
-    };
+    return { success: false, error: '❌ Número do protocolo não fornecido. Digite o número do protocolo.' };
   }
-
   try {
     const result = await integration.getProtocolByNumber(protocolNumber, context.citizenId);
-
-    return {
-      protocol: result,
-    };
+    return { protocol: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.getProtocolByNumber] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Protocolo não encontrado',
-    };
+    console.error('[ActionHandlers.getProtocolByNumber] Erro:', error?.message);
+    if (error?.response?.status === 404) {
+      return { success: false, error: `🔍 Protocolo "${protocolNumber}" não encontrado. Verifique o número e tente novamente.` };
+    }
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível buscar o protocolo.') };
   }
 };
 
-/**
- * Adiciona comentário ao protocolo
- */
 export const addProtocolComment: ActionHandler = async (params, context) => {
   const { protocolId, comment, message } = params;
   const resolvedComment = comment || message;
-
   if (!protocolId || !resolvedComment) {
-    return {
-      success: false,
-      error: 'Dados incompletos para adicionar comentário',
-    };
+    return { success: false, error: '❌ Dados incompletos. Forneça o protocolo e o comentário.' };
   }
-
   try {
-    const result = await integration.addProtocolComment(
-      protocolId,
-      context.citizenId,
-      resolvedComment
-    );
-
-    return {
-      comment: result,
-    };
+    const result = await integration.addProtocolComment(protocolId, context.citizenId, resolvedComment);
+    return { comment: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.addProtocolComment] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao adicionar comentário',
-    };
+    console.error('[ActionHandlers.addProtocolComment] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível adicionar o comentário.') };
   }
 };
 
 /**
- * Obtém perfil do cidadão
+ * Lista interações/histórico de um protocolo
  */
+export const getProtocolInteractions: ActionHandler = async (params, context) => {
+  const { protocolId } = params;
+  if (!protocolId) {
+    return { success: false, error: '❌ ID do protocolo não fornecido.' };
+  }
+  try {
+    const result = ensureArray(await integration.getProtocolInteractions(protocolId, context.citizenId));
+    return {
+      count: result.length,
+      interactions: buildInteractionOptions(result),
+      raw: result,
+    };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getProtocolInteractions] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível obter o histórico do protocolo.') };
+  }
+};
+
+// ====================================================
+// PERFIL
+// ====================================================
+
 export const getCitizenProfile: ActionHandler = async (_params, context) => {
   try {
     const result = await integration.getCitizen(context.citizenId);
-
-    return {
-      profile: result,
-    };
+    return { profile: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.getCitizenProfile] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao obter perfil',
-    };
+    console.error('[ActionHandlers.getCitizenProfile] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível obter seu perfil.') };
   }
 };
 
-/**
- * Atualiza perfil do cidadão
- */
 export const updateCitizenProfile: ActionHandler = async (params, context) => {
-  const updates = params;
+  // Filtrar apenas campos válidos para envio
+  const allowedFields = ['name', 'email', 'phone', 'phoneSecondary', 'address', 'birthDate'];
+  const updates: Record<string, any> = {};
+  for (const field of allowedFields) {
+    if (params[field] !== undefined && params[field] !== null && params[field] !== '') {
+      updates[field] = params[field];
+    }
+  }
+
+  if (Object.keys(updates).length === 0) {
+    return { success: false, error: '❌ Nenhum dado para atualizar.' };
+  }
 
   try {
     const result = await integration.updateCitizenProfile(context.citizenId, updates);
-
-    return {
-      profile: result,
-    };
+    return { profile: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.updateCitizenProfile] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao atualizar perfil',
-    };
+    console.error('[ActionHandlers.updateCitizenProfile] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível atualizar seu perfil.') };
   }
 };
 
-/**
- * Obtém composição familiar
- */
+// ====================================================
+// FAMÍLIA
+// ====================================================
+
 export const getFamilyMembers: ActionHandler = async (_params, context) => {
   try {
     const result = ensureArray(await integration.getFamilyMembers(context.citizenId));
     const uniqueMembers = Array.from(
-      new Map(
-        result.map((item: any) => [item.member?.id || item.id, item])
-      ).values()
+      new Map(result.map((item: any) => [item.member?.id || item.id, item])).values()
     );
-
-    return {
-      count: uniqueMembers.length,
-      members: buildFamilyOptions(uniqueMembers),
-      raw: uniqueMembers,
-    };
+    return { count: uniqueMembers.length, members: buildFamilyOptions(uniqueMembers), raw: uniqueMembers };
   } catch (error: any) {
-    console.error('[ActionHandlers.getFamilyMembers] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao obter composição familiar',
-    };
+    console.error('[ActionHandlers.getFamilyMembers] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível obter a composição familiar.') };
+  }
+};
+
+// ====================================================
+// NOTIFICAÇÕES
+// ====================================================
+
+export const getNotifications: ActionHandler = async (params, context) => {
+  const { unreadOnly = false, limit = 20 } = params;
+  try {
+    const result = ensureArray(await integration.getNotifications(context.citizenId, unreadOnly, limit));
+    return { count: result.length, notifications: buildNotificationOptions(result), raw: result };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getNotifications] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar suas notificações.') };
+  }
+};
+
+export const markNotificationsAsRead: ActionHandler = async (params, context) => {
+  const { notificationIds } = params;
+  try {
+    const result = await integration.markNotificationsAsRead(context.citizenId, notificationIds);
+    return { result };
+  } catch (error: any) {
+    console.error('[ActionHandlers.markNotificationsAsRead] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível marcar as notificações como lidas.') };
+  }
+};
+
+// ====================================================
+// DOCUMENTOS
+// ====================================================
+
+/**
+ * Lista documentos do cidadão
+ */
+export const getDocuments: ActionHandler = async (params, context) => {
+  const { limit = 20 } = params;
+  try {
+    const result = ensureArray(await integration.getDocuments(context.citizenId, limit));
+    return { count: result.length, documents: buildDocumentOptions(result), raw: result };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getDocuments] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar seus documentos.') };
   }
 };
 
 /**
- * Lista notificações
+ * Busca documentos de um protocolo específico
  */
-export const getNotifications: ActionHandler = async (params, context) => {
-  const { unreadOnly = false, limit = 20 } = params;
-
+export const getProtocolDocuments: ActionHandler = async (params, context) => {
+  const { protocolId } = params;
+  if (!protocolId) {
+    return { success: false, error: '❌ ID do protocolo não fornecido.' };
+  }
   try {
-    const result = ensureArray(
-      await integration.getNotifications(context.citizenId, unreadOnly, limit)
-    );
+    const result = ensureArray(await integration.getProtocolDocuments(protocolId, context.citizenId));
+    return { count: result.length, documents: buildDocumentOptions(result), raw: result };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getProtocolDocuments] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar os documentos do protocolo.') };
+  }
+};
 
+// ====================================================
+// AVALIAÇÃO
+// ====================================================
+
+/**
+ * Busca protocolos concluídos sem avaliação
+ */
+export const getPendingEvaluations: ActionHandler = async (_params, context) => {
+  try {
+    const result = ensureArray(await integration.getPendingEvaluations(context.citizenId));
     return {
       count: result.length,
-      notifications: buildNotificationOptions(result),
+      protocols: result.map((p: any) => ({
+        id: p.id,
+        label: `#${p.number} - ${p.title}`,
+        description: `Concluído em ${p.concludedAt ? new Date(p.concludedAt).toLocaleDateString('pt-BR') : 'N/A'}`,
+        metadata: { number: p.number, service: p.service, department: p.department },
+      })),
       raw: result,
     };
   } catch (error: any) {
-    console.error('[ActionHandlers.getNotifications] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao listar notificações',
-    };
+    console.error('[ActionHandlers.getPendingEvaluations] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível buscar avaliações pendentes.') };
   }
 };
 
 /**
- * Marca notificações como lidas
+ * Submete avaliação de protocolo
  */
-export const markNotificationsAsRead: ActionHandler = async (params, context) => {
-  const { notificationIds } = params;
-
+export const submitEvaluation: ActionHandler = async (params, context) => {
+  const { protocolId, rating, comment } = params;
+  if (!protocolId || rating === undefined) {
+    return { success: false, error: '❌ Protocolo e nota são obrigatórios para a avaliação.' };
+  }
   try {
-    const result = await integration.markNotificationsAsRead(context.citizenId, notificationIds);
-
-    return {
-      result,
-    };
+    const result = await integration.submitEvaluation(protocolId, context.citizenId, rating, comment);
+    return { evaluation: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.markNotificationsAsRead] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao marcar notificações',
-    };
+    console.error('[ActionHandlers.submitEvaluation] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível enviar sua avaliação.') };
   }
 };
 
-/**
- * Formata dados do protocolo para revisão
- */
+// ====================================================
+// REVISÃO
+// ====================================================
+
 export const formatProtocolReview: ActionHandler = async (_params, context) => {
   try {
     const reviewText = integration.formatProtocolReview(context.state);
-
-    return {
-      success: true,
-      data: {
-        reviewText,
-      },
-    };
+    return { success: true, data: { reviewText } };
   } catch (error: any) {
-    console.error('[ActionHandlers.formatProtocolReview] Erro:', error);
-    return {
-      success: false,
-      error: error.message || 'Erro ao formatar revisão',
-    };
+    console.error('[ActionHandlers.formatProtocolReview] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível formatar a revisão.') };
   }
 };
 
-/**
- * Mapa de handlers disponíveis
- */
+// ====================================================
+// MAPA DE HANDLERS
+// ====================================================
+
 export const actionHandlers: Record<string, ActionHandler> = {
   searchServices,
   listServices,
@@ -444,11 +446,16 @@ export const actionHandlers: Record<string, ActionHandler> = {
   getProtocols,
   getProtocolByNumber,
   addProtocolComment,
+  getProtocolInteractions,
   getCitizenProfile,
   updateCitizenProfile,
   getFamilyMembers,
   getNotifications,
   markNotificationsAsRead,
+  getDocuments,
+  getProtocolDocuments,
+  getPendingEvaluations,
+  submitEvaluation,
   formatProtocolReview,
 };
 

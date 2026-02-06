@@ -1,0 +1,219 @@
+{
+  "name": "avaliacao",
+  "description": "Fluxo para avaliar atendimento de protocolos concluídos",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "⭐",
+    "color": "#FFC107",
+    "category": "evaluation"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "⭐ **Avaliar Atendimento**\n\nSua opinião é muito importante para melhorarmos nossos serviços!"
+      },
+      "transitions": [
+        { "to": "load_pending_evaluations" }
+      ]
+    },
+    {
+      "id": "load_pending_evaluations",
+      "type": "action",
+      "config": {
+        "action": "getPendingEvaluations",
+        "saveResultAs": "pendingEvaluations"
+      },
+      "transitions": [
+        { "to": "check_pending" }
+      ]
+    },
+    {
+      "id": "check_pending",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "pendingEvaluations.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "select_protocol"
+          }
+        ],
+        "defaultGoto": "no_pending"
+      }
+    },
+    {
+      "id": "no_pending",
+      "type": "message",
+      "config": {
+        "text": "✅ Parabéns! Você não possui avaliações pendentes no momento.\n\nQuando um protocolo for concluído, você poderá avaliar o atendimento aqui."
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "select_protocol",
+      "type": "menu",
+      "config": {
+        "text": "📋 Selecione o protocolo que deseja avaliar:",
+        "options": "{{pendingEvaluations.protocols}}",
+        "saveAs": "selectedEvalProtocol"
+      },
+      "transitions": [
+        { "to": "ask_rating" }
+      ]
+    },
+    {
+      "id": "ask_rating",
+      "type": "menu",
+      "config": {
+        "text": "⭐ Como você avalia o atendimento recebido?\n\nEscolha uma nota de 1 a 5:",
+        "options": [
+          {
+            "id": "1",
+            "label": "⭐ 1 - Péssimo",
+            "description": "Muito insatisfeito"
+          },
+          {
+            "id": "2",
+            "label": "⭐⭐ 2 - Ruim",
+            "description": "Insatisfeito"
+          },
+          {
+            "id": "3",
+            "label": "⭐⭐⭐ 3 - Regular",
+            "description": "Neutro"
+          },
+          {
+            "id": "4",
+            "label": "⭐⭐⭐⭐ 4 - Bom",
+            "description": "Satisfeito"
+          }
+        ],
+        "saveAs": "evaluationRating"
+      },
+      "transitions": [
+        { "to": "ask_rating_5" }
+      ]
+    },
+    {
+      "id": "ask_rating_5",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "evaluationRating",
+            "operator": "exists",
+            "goto": "ask_comment"
+          }
+        ],
+        "defaultGoto": "ask_rating"
+      }
+    },
+    {
+      "id": "ask_comment",
+      "type": "question",
+      "config": {
+        "text": "💬 Deseja deixar um comentário sobre o atendimento?\n\n(Digite seu comentário ou envie \"pular\" para continuar sem comentário)",
+        "validation": {
+          "type": "text",
+          "maxLength": 500
+        },
+        "saveAs": "evaluationComment"
+      },
+      "transitions": [
+        { "to": "process_comment" }
+      ]
+    },
+    {
+      "id": "process_comment",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "evaluationComment",
+            "operator": "eq",
+            "value": "pular",
+            "goto": "submit_evaluation_no_comment"
+          }
+        ],
+        "defaultGoto": "submit_evaluation"
+      }
+    },
+    {
+      "id": "submit_evaluation_no_comment",
+      "type": "action",
+      "config": {
+        "action": "submitEvaluation",
+        "params": {
+          "protocolId": "{{selectedEvalProtocol}}",
+          "rating": "{{evaluationRating}}"
+        },
+        "saveResultAs": "evaluationResult"
+      },
+      "transitions": [
+        { "to": "evaluation_success" }
+      ]
+    },
+    {
+      "id": "submit_evaluation",
+      "type": "action",
+      "config": {
+        "action": "submitEvaluation",
+        "params": {
+          "protocolId": "{{selectedEvalProtocol}}",
+          "rating": "{{evaluationRating}}",
+          "comment": "{{evaluationComment}}"
+        },
+        "saveResultAs": "evaluationResult"
+      },
+      "transitions": [
+        { "to": "evaluation_success" }
+      ]
+    },
+    {
+      "id": "evaluation_success",
+      "type": "message",
+      "config": {
+        "text": "✅ **Avaliação enviada com sucesso!**\n\nObrigado pelo seu feedback! Sua opinião nos ajuda a melhorar continuamente."
+      },
+      "transitions": [
+        { "to": "ask_evaluate_more" }
+      ]
+    },
+    {
+      "id": "ask_evaluate_more",
+      "type": "menu",
+      "config": {
+        "text": "Deseja avaliar outro protocolo?",
+        "options": [
+          {
+            "id": "sim",
+            "label": "⭐ Sim, avaliar outro",
+            "description": "Avaliar mais protocolos"
+          },
+          {
+            "id": "nao",
+            "label": "🏠 Não, voltar ao menu",
+            "description": "Menu principal"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "sim", "to": "load_pending_evaluations" },
+        { "when": "nao", "to": "end" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "message": "Voltando ao menu principal...",
+        "returnToMain": true
+      }
+    }
+  ]
+}
