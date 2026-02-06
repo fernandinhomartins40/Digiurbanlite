@@ -6,16 +6,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components/ui/tabs'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { RichTextEditor } from './RichTextEditor'
-import { ServiceMultiSelect } from './ServiceMultiSelect'
-import { Code, Eye, FileText, Info, Save, Settings, Globe } from 'lucide-react'
+import { Checkbox } from '@/components/ui/checkbox'
+import { Save, Globe, AlertCircle } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { DocumentTemplate } from './types'
-import { Checkbox } from '@/components/ui/checkbox'
+import { Alert, AlertDescription } from '@/components/ui/alert'
 
 interface Service {
   id: string
@@ -33,22 +30,12 @@ interface TemplateEditModalProps {
 export function TemplateEditModal({ template, open, onClose, onSave, services = [] }: TemplateEditModalProps) {
   const { toast } = useToast()
   const [saving, setSaving] = useState(false)
-  const [editMode, setEditMode] = useState<'wysiwyg' | 'code'>('wysiwyg')
 
-  // Form state
+  // Form state - APENAS campos básicos para usuários leigos
   const [formData, setFormData] = useState<Partial<DocumentTemplate>>({
     name: '',
     description: '',
-    documentType: 'CUSTOM',
-    outputFormat: 'PDF',
-    htmlTemplate: '',
-    headerHtml: '',
-    footerHtml: '',
-    cssStyles: '',
-    pageSize: 'A4',
-    orientation: 'portrait',
-    serviceIds: [],
-    isGlobal: false,
+    isActive: true,
   })
 
   useEffect(() => {
@@ -56,16 +43,7 @@ export function TemplateEditModal({ template, open, onClose, onSave, services = 
       setFormData({
         name: template.name,
         description: template.description || '',
-        documentType: template.documentType,
-        outputFormat: template.outputFormat,
-        htmlTemplate: template.htmlTemplate,
-        headerHtml: template.headerHtml || '',
-        footerHtml: template.footerHtml || '',
-        cssStyles: template.cssStyles || '',
-        pageSize: template.pageSize,
-        orientation: template.orientation,
-        serviceIds: template.serviceIds || [],
-        isGlobal: template.isGlobal,
+        isActive: template.isActive,
       })
     }
   }, [template])
@@ -73,12 +51,22 @@ export function TemplateEditModal({ template, open, onClose, onSave, services = 
   const handleSave = async () => {
     if (!template) return
 
+    // Validações básicas
+    if (!formData.name?.trim()) {
+      toast({
+        title: 'Nome obrigatório',
+        description: 'Por favor, informe o nome do template',
+        variant: 'destructive'
+      })
+      return
+    }
+
     setSaving(true)
     try {
       await onSave(formData)
       toast({
         title: 'Template atualizado',
-        description: 'Template foi atualizado com sucesso'
+        description: 'As informações do template foram atualizadas com sucesso'
       })
       onClose()
     } catch (error: any) {
@@ -92,376 +80,123 @@ export function TemplateEditModal({ template, open, onClose, onSave, services = 
     }
   }
 
-  const createPreview = () => {
-    const styles = formData.cssStyles || ''
-    const header = formData.headerHtml || ''
-    const footer = formData.footerHtml || ''
-    const body = formData.htmlTemplate || ''
-
-    return `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            ${styles}
-            body {
-              margin: 0;
-              padding: 20px;
-              font-family: Arial, sans-serif;
-            }
-          </style>
-        </head>
-        <body>
-          ${header}
-          ${body}
-          ${footer}
-        </body>
-      </html>
-    `
-  }
-
   if (!template) return null
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <FileText className="h-5 w-5" />
-            Editar Template: {template.name}
-          </DialogTitle>
+          <DialogTitle>Editar Template</DialogTitle>
           <DialogDescription>
-            Edite o conteúdo e configurações do template de documento
+            Edite as informações básicas do template. Para alterações no conteúdo do documento, entre em contato com o suporte técnico.
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="basic" className="flex-1 overflow-hidden flex flex-col">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="basic" className="flex items-center gap-2">
-              <Settings className="h-4 w-4" />
-              Básico
-            </TabsTrigger>
-            <TabsTrigger value="header" className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              Cabeçalho
-            </TabsTrigger>
-            <TabsTrigger value="body" className="flex items-center gap-2">
-              <FileText className="h-4 w-4" />
-              Corpo
-            </TabsTrigger>
-            <TabsTrigger value="footer" className="flex items-center gap-2">
-              <Code className="h-4 w-4" />
-              Rodapé
-            </TabsTrigger>
-            <TabsTrigger value="preview" className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              Visualização
-            </TabsTrigger>
-          </TabsList>
+        {/* Alerta informativo */}
+        <Alert>
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            Você pode editar apenas o nome, descrição e status do template. O conteúdo do documento (HTML, CSS, estrutura) deve ser alterado por um administrador técnico.
+          </AlertDescription>
+        </Alert>
 
-          {/* Aba Básico */}
-          <TabsContent value="basic" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(95vh-350px)]">
-              <div className="space-y-4 pr-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="name">Nome do Template</Label>
-                    <Input
-                      id="name"
-                      value={formData.name}
-                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                      placeholder="Ex: Certidão de Protocolo"
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="documentType">Tipo de Documento</Label>
-                    <Select
-                      value={formData.documentType}
-                      onValueChange={(value) => setFormData({ ...formData, documentType: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PROTOCOL_CERTIFICATE">Certidão de Protocolo</SelectItem>
-                        <SelectItem value="COMPLETION_REPORT">Relatório de Conclusão</SelectItem>
-                        <SelectItem value="RECEIPT">Recibo</SelectItem>
-                        <SelectItem value="AUTHORIZATION">Autorização</SelectItem>
-                        <SelectItem value="NOTIFICATION">Notificação</SelectItem>
-                        <SelectItem value="CUSTOM">Personalizado</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Descrição do template"
-                    rows={2}
-                  />
-                </div>
-
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="outputFormat">Formato</Label>
-                    <Select
-                      value={formData.outputFormat}
-                      onValueChange={(value) => setFormData({ ...formData, outputFormat: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="PDF">PDF</SelectItem>
-                        <SelectItem value="HTML">HTML</SelectItem>
-                        <SelectItem value="DOCX">DOCX</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="pageSize">Tamanho da Página</Label>
-                    <Select
-                      value={formData.pageSize}
-                      onValueChange={(value) => setFormData({ ...formData, pageSize: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="A4">A4</SelectItem>
-                        <SelectItem value="Letter">Letter</SelectItem>
-                        <SelectItem value="Legal">Legal</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="orientation">Orientação</Label>
-                    <Select
-                      value={formData.orientation}
-                      onValueChange={(value) => setFormData({ ...formData, orientation: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="portrait">Retrato</SelectItem>
-                        <SelectItem value="landscape">Paisagem</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="cssStyles">Estilos CSS</Label>
-                  <Textarea
-                    id="cssStyles"
-                    value={formData.cssStyles}
-                    onChange={(e) => setFormData({ ...formData, cssStyles: e.target.value })}
-                    placeholder="@page { size: A4; margin: 0; }"
-                    rows={10}
-                    className="font-mono text-xs"
-                  />
-                </div>
-
-                {/* Vinculação de Serviços */}
-                <div className="space-y-4 border-t pt-4">
-                  <div className="flex items-center space-x-2">
-                    <Checkbox
-                      id="isGlobal"
-                      checked={formData.isGlobal}
-                      onCheckedChange={(checked) =>
-                        setFormData({
-                          ...formData,
-                          isGlobal: checked as boolean,
-                          serviceIds: checked ? [] : formData.serviceIds
-                        })
-                      }
-                    />
-                    <Label htmlFor="isGlobal" className="flex items-center gap-2 cursor-pointer">
-                      <Globe className="h-4 w-4" />
-                      Template Global (disponível para todos os serviços)
-                    </Label>
-                  </div>
-
-                  {!formData.isGlobal && (
-                    <div className="space-y-2">
-                      <Label>Serviços Vinculados</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Selecione quais serviços podem usar este template. Se nenhum for selecionado, o template ficará disponível apenas como global.
-                      </p>
-                      <ServiceMultiSelect
-                        services={services}
-                        selectedServiceIds={formData.serviceIds || []}
-                        onChange={(serviceIds) => setFormData({ ...formData, serviceIds })}
-                      />
-                    </div>
-                  )}
-                </div>
-
-                {template.availableVariables && template.availableVariables.length > 0 && (
-                  <div className="space-y-2">
-                    <Label>Variáveis Disponíveis</Label>
-                    <div className="grid grid-cols-2 gap-2 p-4 bg-muted rounded-md">
-                      {template.availableVariables.map((variable, index) => (
-                        <code key={index} className="text-xs bg-background px-2 py-1 rounded">
-                          {`{{${variable.name}}}`}
-                        </code>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          {/* Aba Cabeçalho */}
-          <TabsContent value="header" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(95vh-350px)]">
-              <div className="space-y-4 pr-4">
-                <div className="flex justify-between items-center mb-4">
-                  <Label>Cabeçalho do Documento</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={editMode === 'wysiwyg' ? 'default' : 'outline'}
-                      onClick={() => setEditMode('wysiwyg')}
-                    >
-                      Visual
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={editMode === 'code' ? 'default' : 'outline'}
-                      onClick={() => setEditMode('code')}
-                    >
-                      Código
-                    </Button>
-                  </div>
-                </div>
-
-                {editMode === 'wysiwyg' ? (
-                  <RichTextEditor
-                    content={formData.headerHtml || ''}
-                    onChange={(html) => setFormData({ ...formData, headerHtml: html })}
-                    placeholder="Digite o cabeçalho do documento..."
-                  />
-                ) : (
-                  <Textarea
-                    value={formData.headerHtml}
-                    onChange={(e) => setFormData({ ...formData, headerHtml: e.target.value })}
-                    placeholder="<div>HTML do cabeçalho...</div>"
-                    rows={20}
-                    className="font-mono text-xs"
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          {/* Aba Corpo */}
-          <TabsContent value="body" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(95vh-350px)]">
-              <div className="space-y-4 pr-4">
-                <div className="flex justify-between items-center mb-4">
-                  <Label>Corpo Principal do Documento</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={editMode === 'wysiwyg' ? 'default' : 'outline'}
-                      onClick={() => setEditMode('wysiwyg')}
-                    >
-                      Visual
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={editMode === 'code' ? 'default' : 'outline'}
-                      onClick={() => setEditMode('code')}
-                    >
-                      Código
-                    </Button>
-                  </div>
-                </div>
-
-                {editMode === 'wysiwyg' ? (
-                  <RichTextEditor
-                    content={formData.htmlTemplate || ''}
-                    onChange={(html) => setFormData({ ...formData, htmlTemplate: html })}
-                    placeholder="Digite o conteúdo do documento..."
-                  />
-                ) : (
-                  <Textarea
-                    value={formData.htmlTemplate}
-                    onChange={(e) => setFormData({ ...formData, htmlTemplate: e.target.value })}
-                    placeholder="<div>HTML do corpo...</div>"
-                    rows={20}
-                    className="font-mono text-xs"
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          {/* Aba Rodapé */}
-          <TabsContent value="footer" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(95vh-350px)]">
-              <div className="space-y-4 pr-4">
-                <div className="flex justify-between items-center mb-4">
-                  <Label>Rodapé do Documento</Label>
-                  <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant={editMode === 'wysiwyg' ? 'default' : 'outline'}
-                      onClick={() => setEditMode('wysiwyg')}
-                    >
-                      Visual
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant={editMode === 'code' ? 'default' : 'outline'}
-                      onClick={() => setEditMode('code')}
-                    >
-                      Código
-                    </Button>
-                  </div>
-                </div>
-
-                {editMode === 'wysiwyg' ? (
-                  <RichTextEditor
-                    content={formData.footerHtml || ''}
-                    onChange={(html) => setFormData({ ...formData, footerHtml: html })}
-                    placeholder="Digite o rodapé do documento..."
-                  />
-                ) : (
-                  <Textarea
-                    value={formData.footerHtml}
-                    onChange={(e) => setFormData({ ...formData, footerHtml: e.target.value })}
-                    placeholder="<div>HTML do rodapé...</div>"
-                    rows={20}
-                    className="font-mono text-xs"
-                  />
-                )}
-              </div>
-            </ScrollArea>
-          </TabsContent>
-
-          {/* Aba Visualização */}
-          <TabsContent value="preview" className="flex-1 overflow-hidden">
-            <ScrollArea className="h-[calc(95vh-350px)] border rounded-md bg-white">
-              <iframe
-                srcDoc={createPreview()}
-                className="w-full h-full min-h-[700px] border-0"
-                title="Template Preview"
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-6">
+            {/* Nome do Template */}
+            <div className="space-y-2">
+              <Label htmlFor="name" className="text-base font-semibold">
+                Nome do Template *
+              </Label>
+              <Input
+                id="name"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder="Ex: Certidão de Protocolo Padrão"
+                className="text-base"
               />
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
+              <p className="text-xs text-muted-foreground">
+                Nome que será exibido ao selecionar este template
+              </p>
+            </div>
+
+            {/* Descrição */}
+            <div className="space-y-2">
+              <Label htmlFor="description" className="text-base font-semibold">
+                Descrição
+              </Label>
+              <Textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descreva para que serve este template e quando deve ser usado"
+                rows={4}
+                className="text-base"
+              />
+              <p className="text-xs text-muted-foreground">
+                Explique quando este template deve ser utilizado
+              </p>
+            </div>
+
+            {/* Status Ativo/Inativo */}
+            <div className="space-y-3 border-t pt-4">
+              <Label className="text-base font-semibold">Status do Template</Label>
+              <div className="flex items-start space-x-3">
+                <Checkbox
+                  id="isActive"
+                  checked={formData.isActive}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, isActive: checked as boolean })
+                  }
+                />
+                <div className="space-y-1">
+                  <Label htmlFor="isActive" className="cursor-pointer font-normal">
+                    Template ativo e disponível para uso
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Desmarque para desativar temporariamente este template sem excluí-lo
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Informações somente leitura */}
+            <div className="bg-gray-50 rounded-lg p-4 space-y-3 border">
+              <h4 className="font-semibold text-sm text-gray-700">Informações Técnicas (somente leitura)</h4>
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <span className="text-muted-foreground">Código:</span>
+                  <p className="font-mono text-xs bg-white px-2 py-1 rounded mt-1">{template.code}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Tipo:</span>
+                  <p className="font-medium mt-1">{template.documentType}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Formato de saída:</span>
+                  <p className="font-medium mt-1">{template.outputFormat}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Versão:</span>
+                  <p className="font-medium mt-1">v{template.version}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Tamanho da página:</span>
+                  <p className="font-medium mt-1">{template.pageSize}</p>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Orientação:</span>
+                  <p className="font-medium mt-1">{template.orientation === 'portrait' ? 'Retrato' : 'Paisagem'}</p>
+                </div>
+              </div>
+              {template.isGlobal && (
+                <div className="flex items-center gap-2 text-sm text-blue-600 bg-blue-50 p-2 rounded">
+                  <Globe className="h-4 w-4" />
+                  <span className="font-medium">Template Global - Disponível para todos os serviços</span>
+                </div>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
 
         <div className="flex justify-end gap-2 pt-4 border-t">
           <Button variant="outline" onClick={onClose} disabled={saving}>
