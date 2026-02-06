@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Edit, Trash2 } from 'lucide-react';
 
 interface FamilyMember {
   id: string;
@@ -320,7 +321,7 @@ export function FamilyTree({
                         size="sm"
                         onClick={() => onEditMember(familyMember.id)}
                       >
-                        ✏️
+                        <Edit className="h-4 w-4" />
                       </Button>
                     )}
 
@@ -331,7 +332,7 @@ export function FamilyTree({
                         onClick={() => onRemoveMember(familyMember.id)}
                         className="text-red-600 hover:text-red-700"
                       >
-                        🗑️
+                        <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
                   </div>

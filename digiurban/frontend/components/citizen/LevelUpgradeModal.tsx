@@ -1,6 +1,6 @@
 'use client';
 
-import { X, CheckCircle2 } from 'lucide-react';
+import { X, CheckCircle2, ArrowRight, Check, Trophy, Medal } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { mapVerificationStatusToLevel, getNextLevel, getRegistrationLevelInfo } from '@/lib/citizen-utils';
@@ -59,15 +59,23 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <span className="text-xl">{nextLevelInfo?.icon || '🎖️'}</span>
+              {nextLevelInfo?.name === 'Ouro' ? (
+                <Trophy className="h-5 w-5 text-blue-600" />
+              ) : nextLevelInfo?.name === 'Prata' ? (
+                <Medal className="h-5 w-5 text-blue-600" />
+              ) : (
+                <Medal className="h-5 w-5 text-blue-600" />
+              )}
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">
                 Solicitar Aumento de Nível
               </h2>
               {nextLevelInfo && (
-                <p className="text-sm text-gray-600">
-                  {currentLevelInfo.name} → {nextLevelInfo.name}
+                <p className="text-sm text-gray-600 flex items-center gap-1">
+                  <span>{currentLevelInfo.name}</span>
+                  <ArrowRight className="h-3 w-3" />
+                  <span>{nextLevelInfo.name}</span>
                 </p>
               )}
             </div>
@@ -84,7 +92,9 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
         <div className="p-6 space-y-6">
           {!nextLevelInfo ? (
             <div className="text-center py-8">
-              <span className="text-6xl">🏆</span>
+              <div className="h-16 w-16 rounded-full bg-yellow-100 flex items-center justify-center mx-auto">
+                <Trophy className="h-10 w-10 text-yellow-600" />
+              </div>
               <h3 className="text-lg font-semibold text-gray-900 mt-4">
                 Parabéns!
               </h3>
@@ -134,10 +144,13 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
               {/* Aviso */}
               {nextLevelName === 'GOLD' ? (
                 <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-800">
-                    <strong>✓ Funcionalidade Disponível!</strong> Você já pode enviar seus documentos
-                    pela página "Meus Documentos". Após a aprovação de todos os documentos obrigatórios,
-                    você será automaticamente promovido para o nível Ouro! 🥇
+                  <p className="text-sm text-green-800 flex items-start gap-2">
+                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <span>
+                      <strong>Funcionalidade Disponível!</strong> Você já pode enviar seus documentos
+                      pela página "Meus Documentos". Após a aprovação de todos os documentos obrigatórios,
+                      você será automaticamente promovido para o nível Ouro!
+                    </span>
                   </p>
                 </div>
               ) : (
