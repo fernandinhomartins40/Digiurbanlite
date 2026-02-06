@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, FileText, Info, Calendar, Send, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { AlertCircle, FileText, Info, Calendar, Send, CheckCircle2, XCircle, Clock, Check } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
@@ -202,7 +202,7 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
         {/* Resolução (se já foi resolvida) */}
         {pending.status === 'RESOLVED' && pending.resolution && (
           <div className="p-3 rounded-lg bg-green-100 border border-green-300">
-            <p className="text-sm font-medium text-green-900 mb-1">✓ Resolução enviada</p>
+            <p className="text-sm font-medium text-green-900 mb-1 flex items-center gap-1"><Check className="h-4 w-4" /> Resolução enviada</p>
             <p className="text-sm text-green-800">{pending.resolution}</p>
             {pending.resolvedAt && (
               <p className="text-xs text-green-700 mt-2">

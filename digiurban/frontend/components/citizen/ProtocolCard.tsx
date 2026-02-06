@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { StatusBadge } from '@/components/ui/status-badge';
+import { Link2, Cog, RefreshCw, CheckCircle, Clock, FileText, Stethoscope, GraduationCap, Handshake, Theater, ShieldCheck, BarChart3, Leaf, ClipboardList } from 'lucide-react';
 
 interface Protocol {
   id: string;
@@ -56,38 +57,38 @@ export function ProtocolCard({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'VINCULADO':
-        return '🔗';
+        return <Link2 className="h-5 w-5 text-blue-500" />;
       case 'PROGRESSO':
-        return '⚙️';
+        return <Cog className="h-5 w-5 text-yellow-500" />;
       case 'ATUALIZACAO':
-        return '🔄';
+        return <RefreshCw className="h-5 w-5 text-orange-500" />;
       case 'CONCLUIDO':
-        return '✅';
+        return <CheckCircle className="h-5 w-5 text-green-500" />;
       case 'PENDENCIA':
-        return '⏳';
+        return <Clock className="h-5 w-5 text-red-500" />;
       default:
-        return '📄';
+        return <FileText className="h-5 w-5 text-gray-500" />;
     }
   };
 
   const getCategoryIcon = (category?: string) => {
     switch (category?.toLowerCase()) {
       case 'saúde':
-        return '🏥';
+        return <Stethoscope className="h-6 w-6 text-red-500" />;
       case 'educação':
-        return '🎓';
+        return <GraduationCap className="h-6 w-6 text-blue-500" />;
       case 'assistência social':
-        return '🤝';
+        return <Handshake className="h-6 w-6 text-purple-500" />;
       case 'cultura':
-        return '🎭';
+        return <Theater className="h-6 w-6 text-pink-500" />;
       case 'segurança':
-        return '🚔';
+        return <ShieldCheck className="h-6 w-6 text-indigo-500" />;
       case 'planejamento':
-        return '📊';
+        return <BarChart3 className="h-6 w-6 text-cyan-500" />;
       case 'meio ambiente':
-        return '🌱';
+        return <Leaf className="h-6 w-6 text-green-500" />;
       default:
-        return '📋';
+        return <ClipboardList className="h-6 w-6 text-gray-500" />;
     }
   };
 
@@ -119,9 +120,9 @@ export function ProtocolCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <span className="text-2xl">
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-gray-100">
               {getCategoryIcon(protocol.service.category)}
-            </span>
+            </div>
             <div>
               <CardTitle className="text-lg leading-tight">
                 Protocolo {protocol.number}
@@ -133,7 +134,7 @@ export function ProtocolCard({
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-lg">{getStatusIcon(protocol.status)}</span>
+            {getStatusIcon(protocol.status)}
             <StatusBadge status={protocol.status} />
           </div>
         </div>

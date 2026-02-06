@@ -70,12 +70,12 @@ export default function CitizenLoginPage() {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
         const url = `${apiUrl}/public/municipio-config`
 
-        console.log('🔍 Buscando configuração do município:', url)
+        console.log('[Login] Buscando configuração do município:', url)
 
         const response = await fetch(url)
         const data = await response.json()
 
-        console.log('📊 Configuração do município:', data)
+        console.log('[Login] Configuração do município:', data)
 
         if (data.success && data.config) {
           setMunicipioConfig({
@@ -83,9 +83,9 @@ export default function CitizenLoginPage() {
             ufMunicipio: data.config.ufMunicipio,
             codigoIbge: data.config.codigoIbge || null
           })
-          console.log('✅ Município configurado:', data.config.nomeMunicipio)
+          console.log('[Login] Município configurado:', data.config.nomeMunicipio)
         } else {
-          console.error('❌ Erro na resposta:', data)
+          console.error('[Login] Erro na resposta:', data)
           toast({
             variant: 'destructive',
             title: 'Erro',
@@ -93,7 +93,7 @@ export default function CitizenLoginPage() {
           })
         }
       } catch (error) {
-        console.error('❌ Erro ao buscar configuração do município:', error)
+        console.error('[Login] Erro ao buscar configuração do município:', error)
         toast({
           variant: 'destructive',
           title: 'Erro',

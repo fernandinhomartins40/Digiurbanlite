@@ -162,7 +162,7 @@ export default function PerfilPage() {
         }
       };
 
-      console.log('📝 Dados sendo enviados para atualização:', updateData);
+      console.log('[Perfil] Dados sendo enviados para atualização:', updateData);
       const result = await updateProfile(updateData);
 
       if (result.success) {

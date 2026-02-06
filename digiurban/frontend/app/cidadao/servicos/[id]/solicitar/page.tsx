@@ -118,7 +118,7 @@ export default function SolicitarServicoPage() {
     fields: activeFormFields,
     onPrefillComplete: (count) => {
       if (count > 0) {
-        console.log(`✓ ${count} campos pré-preenchidos automaticamente`);
+        console.log(`[Solicitar] ${count} campos pré-preenchidos automaticamente`);
       }
     }
   });
@@ -280,7 +280,7 @@ export default function SolicitarServicoPage() {
       // ✅ NOVO: Adicionar locationData se existir
       if (locationData) {
         formData.append('locationData', JSON.stringify(locationData));
-        console.log('📍 [FRONTEND DEBUG] locationData enviado:', locationData);
+        console.log('[Solicitar] locationData enviado:', locationData);
       }
 
       // ✅ FORMATO CORRETO: Enviar com índices para compatibilidade com Multer .any()

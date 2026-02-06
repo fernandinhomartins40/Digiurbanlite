@@ -1,6 +1,6 @@
 'use client';
 
-import { Award, ArrowUpCircle } from 'lucide-react';
+import { Award, ArrowUpCircle, Trophy, Medal, Star } from 'lucide-react';
 
 interface RegistrationLevelBadgeProps {
   level: 'BRONZE' | 'SILVER' | 'GOLD';
@@ -15,7 +15,8 @@ export function RegistrationLevelBadge({ level, onUpgradeClick }: RegistrationLe
       textColor: 'text-amber-700',
       bgColor: 'bg-amber-50',
       borderColor: 'border-amber-200',
-      icon: '🥉'
+      icon: Award,
+      iconColor: 'text-amber-600',
     },
     SILVER: {
       label: 'Prata',
@@ -23,7 +24,8 @@ export function RegistrationLevelBadge({ level, onUpgradeClick }: RegistrationLe
       textColor: 'text-gray-700',
       bgColor: 'bg-gray-50',
       borderColor: 'border-gray-200',
-      icon: '🥈'
+      icon: Medal,
+      iconColor: 'text-gray-500',
     },
     GOLD: {
       label: 'Ouro',
@@ -31,11 +33,13 @@ export function RegistrationLevelBadge({ level, onUpgradeClick }: RegistrationLe
       textColor: 'text-yellow-700',
       bgColor: 'bg-yellow-50',
       borderColor: 'border-yellow-200',
-      icon: '🥇'
+      icon: Trophy,
+      iconColor: 'text-yellow-500',
     }
   };
 
   const config = levelConfig[level];
+  const IconComponent = config.icon;
 
   return (
     <div className="flex items-center gap-2">
@@ -46,7 +50,7 @@ export function RegistrationLevelBadge({ level, onUpgradeClick }: RegistrationLe
           ${config.bgColor} ${config.borderColor}
         `}
       >
-        <span className="text-base">{config.icon}</span>
+        <IconComponent className={`h-4 w-4 ${config.iconColor}`} />
         <span className={`text-xs font-semibold ${config.textColor}`}>
           {config.label}
         </span>

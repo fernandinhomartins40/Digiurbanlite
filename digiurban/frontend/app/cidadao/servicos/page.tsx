@@ -17,7 +17,9 @@ import {
   X,
   TrendingUp,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  ClipboardList,
+  Landmark
 } from 'lucide-react';
 import { useCitizenServices, CitizenService } from '@/hooks/useCitizenServices';
 import { getDepartmentTheme, getCategoryColor } from '@/lib/department-colors';
@@ -70,12 +72,12 @@ export default function ServicosPage() {
     });
 
     return [
-      { id: 'todos', name: 'Todos', icon: '📋', count: services.length },
+      { id: 'todos', name: 'Todos', icon: 'clipboard', count: services.length },
       ...Array.from(uniqueDepts.values())
         .sort((a, b) => a.name.localeCompare(b.name))
         .map(dept => ({
           ...dept,
-          icon: '🏛️'
+          icon: 'landmark'
         }))
     ];
   }, [services]);
@@ -272,7 +274,11 @@ export default function ServicosPage() {
                     : "bg-white text-gray-700 border border-gray-300 hover:border-blue-300 hover:bg-blue-50"
                 )}
               >
-                <span>{dept.icon}</span>
+                {dept.icon === 'clipboard' ? (
+                  <ClipboardList className="h-4 w-4" />
+                ) : (
+                  <Landmark className="h-4 w-4" />
+                )}
                 <span>{dept.name}</span>
                 <span className={cn(
                   "text-xs px-1.5 py-0.5 rounded-full",

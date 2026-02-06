@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Stethoscope, GraduationCap, Handshake, Theater, ShieldCheck, BarChart3, Leaf, ClipboardList } from 'lucide-react';
 
 interface Service {
   id: string;
@@ -45,21 +46,21 @@ export function ServiceCard({
   const getCategoryIcon = (category?: string) => {
     switch (category?.toLowerCase()) {
       case 'saúde':
-        return '🏥';
+        return <Stethoscope className="h-6 w-6 text-red-500" />;
       case 'educação':
-        return '🎓';
+        return <GraduationCap className="h-6 w-6 text-blue-500" />;
       case 'assistência social':
-        return '🤝';
+        return <Handshake className="h-6 w-6 text-purple-500" />;
       case 'cultura':
-        return '🎭';
+        return <Theater className="h-6 w-6 text-pink-500" />;
       case 'segurança':
-        return '🚔';
+        return <ShieldCheck className="h-6 w-6 text-indigo-500" />;
       case 'planejamento':
-        return '📊';
+        return <BarChart3 className="h-6 w-6 text-cyan-500" />;
       case 'meio ambiente':
-        return '🌱';
+        return <Leaf className="h-6 w-6 text-green-500" />;
       default:
-        return '📋';
+        return <ClipboardList className="h-6 w-6 text-gray-500" />;
     }
   };
 
@@ -74,9 +75,13 @@ export function ServiceCard({
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center space-x-3">
-            <span className="text-2xl">
-              {service.icon || getCategoryIcon(service.category)}
-            </span>
+            <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-gray-100">
+              {service.icon ? (
+                <span className="text-xl">{service.icon}</span>
+              ) : (
+                getCategoryIcon(service.category)
+              )}
+            </div>
             <div>
               <CardTitle className="text-lg leading-tight">
                 {service.name}

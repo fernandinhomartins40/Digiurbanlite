@@ -8,7 +8,8 @@ import {
   MessageSquare,
   Users,
   Calendar,
-  User as UserIcon
+  User as UserIcon,
+  Lightbulb
 } from 'lucide-react'
 
 interface CitizenCompactSidebarProps {
@@ -148,8 +149,8 @@ export function CitizenCompactSidebar({
       {/* Dica */}
       <Card className="bg-blue-50 border-blue-200">
         <CardContent className="p-4">
-          <p className="text-sm text-blue-900 font-medium mb-1">
-            💡 Dica
+          <p className="text-sm text-blue-900 font-medium mb-1 flex items-center gap-1">
+            <Lightbulb className="h-4 w-4" /> Dica
           </p>
           <p className="text-xs text-blue-800">
             Você receberá notificações por email sempre que houver atualizações no seu protocolo.

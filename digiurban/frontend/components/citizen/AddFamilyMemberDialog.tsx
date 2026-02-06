@@ -102,7 +102,7 @@ export function AddFamilyMemberDialog({
         setSearchResults([])
       }
     } catch (error: any) {
-      console.error('❌ Erro ao buscar cidadãos:', error)
+      console.error('[Família] Erro ao buscar cidadãos:', error)
       setSearchResults([])
       toast({
         variant: 'destructive',

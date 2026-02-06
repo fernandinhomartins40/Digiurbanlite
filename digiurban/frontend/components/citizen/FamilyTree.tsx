@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Edit, Trash2 } from 'lucide-react';
+import { Edit, Trash2, Heart, Baby, User, Users } from 'lucide-react';
 
 interface FamilyMember {
   id: string;
@@ -87,26 +87,24 @@ export function FamilyTree({
   const getRelationshipIcon = (relationship: string) => {
     switch (relationship) {
       case 'SPOUSE':
-        return '💑';
+        return <Heart className="h-6 w-6 text-pink-500" />;
       case 'SON':
       case 'DAUGHTER':
-        return '👶';
+        return <Baby className="h-6 w-6 text-blue-500" />;
       case 'FATHER':
-        return '👨';
       case 'MOTHER':
-        return '👩';
+        return <User className="h-6 w-6 text-indigo-500" />;
       case 'BROTHER':
       case 'SISTER':
-        return '👫';
+        return <Users className="h-6 w-6 text-teal-500" />;
       case 'GRANDFATHER':
-        return '👴';
       case 'GRANDMOTHER':
-        return '👵';
+        return <User className="h-6 w-6 text-amber-600" />;
       case 'GRANDSON':
       case 'GRANDDAUGHTER':
-        return '👧';
+        return <Baby className="h-6 w-6 text-green-500" />;
       default:
-        return '👤';
+        return <User className="h-6 w-6 text-gray-500" />;
     }
   };
 
@@ -183,7 +181,6 @@ export function FamilyTree({
           </h3>
           {onAddMember && (
             <Button onClick={onAddMember} size="sm">
-              <span className="mr-2">➕</span>
               Adicionar Membro
             </Button>
           )}
@@ -192,7 +189,9 @@ export function FamilyTree({
         {family.members.length === 0 ? (
           <Card>
             <CardContent className="text-center py-8">
-              <span className="text-4xl mb-4 block">👨‍👩‍👧‍👦</span>
+              <div className="flex items-center justify-center gap-1 mb-4">
+                <Users className="h-10 w-10 text-gray-400" />
+              </div>
               <p className="text-muted-foreground mb-4">
                 Você ainda não adicionou nenhum membro à sua família.
               </p>
@@ -210,9 +209,9 @@ export function FamilyTree({
                 <CardHeader className="pb-3">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <span className="text-2xl">
+                      <div className="flex items-center justify-center h-10 w-10 rounded-full bg-gray-100">
                         {getRelationshipIcon(familyMember.relationship)}
-                      </span>
+                      </div>
                       <div>
                         <CardTitle className="text-base">
                           {familyMember?.member?.name || 'Nome não disponível'}

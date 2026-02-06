@@ -236,7 +236,7 @@ export function FamilyExportButton({ head, members, stats }: FamilyExportButtonP
 
         <!-- Membros da Família -->
         <div class="section">
-          <div class="section-title">👨‍👩‍👧‍👦 Membros da Família (${members.length})</div>
+          <div class="section-title">Membros da Família (${members.length})</div>
           ${members.length === 0
             ? '<p style="text-align: center; color: #9ca3af; padding: 20px;">Nenhum membro cadastrado</p>'
             : members.map((member, idx) => `
@@ -286,7 +286,7 @@ export function FamilyExportButton({ head, members, stats }: FamilyExportButtonP
         <!-- Estatísticas -->
         ${stats ? `
           <div class="section">
-            <div class="section-title">📊 Estatísticas da Família</div>
+            <div class="section-title">Estatísticas da Família</div>
             <div class="stats-grid">
               <div class="stat-card">
                 <div class="stat-value">${stats.totalMembers || 0}</div>
