@@ -85,10 +85,15 @@ export default function FamiliaPage() {
       setLoading(true)
       const response = await apiRequest('/citizen/family')
 
-      if (response.success) {
-        setFamilyData(response.data)
+      if (response.success && response.data?.family) {
+        // A API retorna { success: true, data: { family: {...} } }
+        setFamilyData(response.data.family)
+      } else {
+        console.error('❌ Resposta inesperada da API:', response)
+        throw new Error('Dados de família não encontrados na resposta')
       }
     } catch (error: any) {
+      console.error('❌ Erro ao carregar família:', error)
       toast({
         variant: 'destructive',
         title: 'Erro',
