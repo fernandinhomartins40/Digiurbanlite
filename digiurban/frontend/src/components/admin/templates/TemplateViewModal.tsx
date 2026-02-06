@@ -7,6 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../../../../components
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { Eye, Info, Edit, FileText } from 'lucide-react'
 import { DocumentTemplate } from './types'
+import { useEffect, useState } from 'react'
 
 interface TemplateViewModalProps {
   template: DocumentTemplate | null
@@ -17,6 +18,65 @@ interface TemplateViewModalProps {
 }
 
 export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: TemplateViewModalProps) {
+  const [previewHtml, setPreviewHtml] = useState('')
+
+  useEffect(() => {
+    if (template && open) {
+      // Gerar preview HTML completo
+      const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview</title>
+  <style>
+    ${template.cssStyles || ''}
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: white;
+      color: #333;
+      line-height: 1.6;
+    }
+    .template-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+      padding: 20mm;
+    }
+    img {
+      max-width: 100%;
+      height: auto;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1em 0;
+    }
+    table td, table th {
+      border: 1px solid #ddd;
+      padding: 8px;
+    }
+    table th {
+      background-color: #f4f4f4;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="template-container">
+    ${template.headerHtml || ''}
+    ${template.htmlTemplate || '<p>Template vazio</p>'}
+    ${template.footerHtml || ''}
+  </div>
+</body>
+</html>`
+      setPreviewHtml(html)
+    }
+  }, [template, open])
+
   if (!template) return null
 
   const getTypeLabel = (type: string) => {
@@ -29,46 +89,6 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
       'CUSTOM': 'Personalizado'
     }
     return types[type] || type
-  }
-
-  // Criar preview HTML com estilos - usando iframe com srcDoc
-  const createPreviewHtml = () => {
-    const styles = template.cssStyles || ''
-    const header = template.headerHtml || ''
-    const footer = template.footerHtml || ''
-    const body = template.htmlTemplate || ''
-
-    return `<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Preview</title>
-  <style>
-    ${styles}
-    body {
-      margin: 0;
-      padding: 20px;
-      font-family: 'Segoe UI', Arial, sans-serif;
-      background: white;
-      color: #333;
-    }
-    .template-container {
-      max-width: 210mm;
-      margin: 0 auto;
-      background: white;
-      padding: 20mm;
-    }
-  </style>
-</head>
-<body>
-  <div class="template-container">
-    ${header}
-    ${body}
-    ${footer}
-  </div>
-</body>
-</html>`
   }
 
   return (
@@ -106,12 +126,12 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
             </TabsTrigger>
           </TabsList>
 
-          {/* Aba de Preview - SIMPLIFICADA */}
+          {/* Aba de Preview */}
           <TabsContent value="preview" className="flex-1 overflow-hidden">
             <ScrollArea className="h-[calc(90vh-280px)]">
               <div className="bg-gray-100 p-4 rounded-md">
                 <iframe
-                  srcDoc={createPreviewHtml()}
+                  srcDoc={previewHtml}
                   className="w-full h-[800px] bg-white rounded shadow-sm border-2 border-gray-200"
                   title="Preview do Template"
                   sandbox="allow-same-origin"
@@ -120,7 +140,7 @@ export function TemplateViewModal({ template, open, onClose, onEdit, canEdit }: 
             </ScrollArea>
           </TabsContent>
 
-          {/* Aba de Variáveis - SIMPLIFICADA */}
+          {/* Aba de Variáveis */}
           <TabsContent value="variables" className="flex-1 overflow-hidden">
             <ScrollArea className="h-[calc(90vh-280px)]">
               <div className="space-y-6 pr-4">
