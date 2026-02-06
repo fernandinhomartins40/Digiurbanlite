@@ -25,7 +25,8 @@ import {
   FileCheck,
   LogOut,
   Settings,
-  Sparkles
+  Sparkles,
+  Users
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -100,8 +101,9 @@ export default function CitizenDashboard() {
     { name: 'Serviços', href: '/cidadao/servicos', icon: FileText },
     { name: 'Protocolos', href: '/cidadao/protocolos', icon: Folder },
     { name: 'Documentos', href: '/cidadao/documentos', icon: FileCheck },
+    { name: 'Minha Família', href: '/cidadao/familia', icon: Users },
     { name: 'Perfil', href: '/cidadao/perfil', icon: User },
-    { name: 'Configurações', href: '/cidadao/mais', icon: Settings }
+    { name: 'Mais', href: '/cidadao/mais', icon: Menu }
   ];
 
   // Detectar mobile
