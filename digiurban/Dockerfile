@@ -77,9 +77,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}" && \
     echo "Additional cache bust: ${CACHE_BUST:-none}"
 
-# ✅ CRÍTICO: API URL para produção
+# ✅ CRÍTICO: API URLs para produção
 ARG NEXT_PUBLIC_API_URL=/api
+ARG NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
+ARG NEXT_PUBLIC_MESSAGES_WS_URL=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_MESSAGES_API_URL=$NEXT_PUBLIC_MESSAGES_API_URL
+ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./

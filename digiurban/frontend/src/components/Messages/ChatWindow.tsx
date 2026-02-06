@@ -42,7 +42,7 @@ export default function ChatWindow({
 
   // Conectar ao WebSocket
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
+    const wsUrl = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001');
 
     const newSocket = io(wsUrl, {
       auth: { token },

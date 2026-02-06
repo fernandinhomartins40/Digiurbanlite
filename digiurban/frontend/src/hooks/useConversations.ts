@@ -117,7 +117,7 @@ export function useConversations({
   );
 
   const MESSAGES_WS_URL = useMemo(() =>
-    wsUrl || process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001',
+    wsUrl || process.env.NEXT_PUBLIC_MESSAGES_WS_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001'),
     [wsUrl]
   );
 

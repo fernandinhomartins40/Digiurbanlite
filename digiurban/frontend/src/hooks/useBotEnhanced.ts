@@ -13,7 +13,7 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
 
-const ULTRAZEND_WS_URL = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || 'http://localhost:9001';
+const ULTRAZEND_WS_URL = process.env.NEXT_PUBLIC_MESSAGES_WS_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001');
 const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
 interface Message {
