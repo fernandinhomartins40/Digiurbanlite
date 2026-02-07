@@ -3,6 +3,78 @@ import logger from '../utils/logger';
 import { ParticipantType, ConversationType } from '@prisma/client';
 
 export class ConversationService {
+  /**
+   * Enriquecer conversa com nomes dos participantes
+   */
+  private async enrichConversationWithNames(conversation: any) {
+    try {
+      const metadata: any = conversation.metadata || {};
+
+      // Buscar nome do participante 1
+      if (conversation.participant1Type === 'CITIZEN') {
+        const citizen = await prisma.citizen.findUnique({
+          where: { id: conversation.participant1Id },
+          select: { name: true, avatar: true },
+        });
+        if (citizen) {
+          metadata.citizen1Name = citizen.name;
+          if (citizen.avatar) metadata.citizen1Avatar = citizen.avatar;
+        }
+      } else if (conversation.participant1Type === 'SERVER') {
+        const user = await prisma.user.findUnique({
+          where: { id: conversation.participant1Id },
+          select: { name: true },
+        });
+        if (user) {
+          metadata.server1Name = user.name;
+        }
+      }
+
+      // Buscar nome do participante 2
+      if (conversation.participant2Type === 'CITIZEN') {
+        const citizen = await prisma.citizen.findUnique({
+          where: { id: conversation.participant2Id },
+          select: { name: true, avatar: true },
+        });
+        if (citizen) {
+          metadata.citizen2Name = citizen.name;
+          if (citizen.avatar) metadata.citizen2Avatar = citizen.avatar;
+        }
+      } else if (conversation.participant2Type === 'SERVER') {
+        const user = await prisma.user.findUnique({
+          where: { id: conversation.participant2Id },
+          select: { name: true },
+        });
+        if (user) {
+          metadata.server2Name = user.name;
+        }
+      }
+
+      // Para compatibilidade com código existente
+      if (conversation.participant1Type === 'CITIZEN') {
+        metadata.citizenName = metadata.citizen1Name;
+        metadata.avatar = metadata.citizen1Avatar;
+      } else if (conversation.participant2Type === 'CITIZEN') {
+        metadata.citizenName = metadata.citizen2Name;
+        metadata.avatar = metadata.citizen2Avatar;
+      }
+
+      if (conversation.participant1Type === 'SERVER') {
+        metadata.serverName = metadata.server1Name;
+      } else if (conversation.participant2Type === 'SERVER') {
+        metadata.serverName = metadata.server2Name;
+      }
+
+      return {
+        ...conversation,
+        metadata,
+      };
+    } catch (error) {
+      logger.error('Error enriching conversation with names', { error, conversationId: conversation.id });
+      return conversation;
+    }
+  }
+
   async findOrCreateConversation(params: {
     participant1Id: string;
     participant1Type: ParticipantType;
@@ -85,7 +157,8 @@ export class ConversationService {
         });
       }
 
-      return conversation;
+      // Enriquecer com nomes dos participantes
+      return this.enrichConversationWithNames(conversation);
     } catch (error) {
       logger.error('Error in findOrCreateConversation', { error, params });
       throw error;
@@ -136,9 +209,12 @@ export class ConversationService {
         },
       });
 
-      // NOTA: Nomes dos participantes devem ser buscados pelo frontend
-      // pois ultrazend-messages não tem acesso às tabelas citizens/admins do DigiUrban
-      return conversations;
+      // Enriquecer todas as conversas com nomes dos participantes
+      const enriched = await Promise.all(
+        conversations.map(conv => this.enrichConversationWithNames(conv))
+      );
+
+      return enriched;
     } catch (error) {
       logger.error('Error getting conversations', { error, userId });
       throw error;
