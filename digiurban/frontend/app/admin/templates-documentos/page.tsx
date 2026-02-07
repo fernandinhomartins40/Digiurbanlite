@@ -20,21 +20,18 @@ import {
   AlertCircle
 } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { TemplateViewModal } from '@/src/components/admin/templates/TemplateViewModal'
-import { TemplateEditModal } from '@/src/components/admin/templates/TemplateEditModal'
+import { useRouter } from 'next/navigation'
 import type { DocumentTemplate } from '@/src/components/admin/templates/types'
 
 export default function TemplatesDocumentosPage() {
   const { apiRequest, user } = useAdminAuth()
   const { toast } = useToast()
+  const router = useRouter()
 
   const [templates, setTemplates] = useState<DocumentTemplate[]>([])
   const [services, setServices] = useState<Array<{ id: string; name: string }>>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'PROTOCOL_CERTIFICATE' | 'COMPLETION_REPORT'>('all')
-  const [viewModalOpen, setViewModalOpen] = useState(false)
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [selectedTemplate, setSelectedTemplate] = useState<DocumentTemplate | null>(null)
 
   // Carregar templates e serviços
   useEffect(() => {
@@ -106,47 +103,12 @@ export default function TemplatesDocumentosPage() {
     }
   }
 
-  const handleViewTemplate = (template: DocumentTemplate) => {
-    setSelectedTemplate(template)
-    setViewModalOpen(true)
+  const handleViewTemplate = (templateId: string) => {
+    router.push(`/admin/templates-documentos/${templateId}/view`)
   }
 
-  const handleEditTemplate = async (template: DocumentTemplate) => {
-    // Carregar template completo
-    try {
-      const result = await apiRequest(`/document-templates/${template.id}`)
-      if (result.success) {
-        setSelectedTemplate(result.data)
-        setEditModalOpen(true)
-      }
-    } catch (error: any) {
-      toast({
-        title: 'Erro ao carregar template',
-        description: error.message,
-        variant: 'destructive'
-      })
-    }
-  }
-
-  const handleSaveTemplate = async (updatedTemplate: Partial<DocumentTemplate>) => {
-    if (!selectedTemplate) return
-
-    try {
-      const result = await apiRequest(`/document-templates/${selectedTemplate.id}`, {
-        method: 'PUT',
-        body: JSON.stringify(updatedTemplate)
-      })
-
-      if (result.success) {
-        await loadTemplates()
-        setEditModalOpen(false)
-        setSelectedTemplate(null)
-      } else {
-        throw new Error(result.error || 'Erro ao salvar template')
-      }
-    } catch (error: any) {
-      throw error
-    }
+  const handleEditTemplate = (templateId: string) => {
+    router.push(`/admin/templates-documentos/${templateId}/edit`)
   }
 
   const getTypeLabel = (type: string) => {
@@ -422,7 +384,7 @@ export default function TemplatesDocumentosPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleViewTemplate(template)}
+                    onClick={() => handleViewTemplate(template.id)}
                   >
                     <Eye className="h-4 w-4 mr-1" />
                     Visualizar
@@ -432,7 +394,7 @@ export default function TemplatesDocumentosPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        onClick={() => handleEditTemplate(template)}
+                        onClick={() => handleEditTemplate(template.id)}
                       >
                         <Edit className="h-4 w-4 mr-1" />
                         Editar
@@ -455,32 +417,6 @@ export default function TemplatesDocumentosPage() {
           ))}
         </div>
       )}
-
-      {/* Modais */}
-      <TemplateViewModal
-        template={selectedTemplate}
-        open={viewModalOpen}
-        onClose={() => {
-          setViewModalOpen(false)
-          setSelectedTemplate(null)
-        }}
-        onEdit={() => {
-          setViewModalOpen(false)
-          setEditModalOpen(true)
-        }}
-        canEdit={canEdit}
-      />
-
-      <TemplateEditModal
-        template={selectedTemplate}
-        open={editModalOpen}
-        onClose={() => {
-          setEditModalOpen(false)
-          setSelectedTemplate(null)
-        }}
-        onSave={handleSaveTemplate}
-        services={services}
-      />
     </div>
   )
 }
