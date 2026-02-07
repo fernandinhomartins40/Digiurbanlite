@@ -105,7 +105,7 @@ export default function ProtocolsPage() {
   const { user, apiRequest, loading: authLoading } = useAdminAuth()
   const { hasPermission } = useAdminPermissions()
   const [protocols, setProtocols] = useState<Protocol[]>([])
-  const [loading, setLoading] = useState(true)
+  const [dataLoading, setDataLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
@@ -126,7 +126,7 @@ export default function ProtocolsPage() {
   // Carregar protocolos
   const loadProtocols = async () => {
     try {
-      setLoading(true)
+      setDataLoading(true)
       const params = new URLSearchParams()
 
       if (statusFilter !== 'all') params.append('status', statusFilter)
@@ -139,8 +139,9 @@ export default function ProtocolsPage() {
       setProtocols(protocolsData)
     } catch (error) {
       console.error('Erro ao carregar protocolos:', error)
+      setProtocols([])
     } finally {
-      setLoading(false)
+      setDataLoading(false)
     }
   }
 
@@ -195,19 +196,36 @@ export default function ProtocolsPage() {
   }
 
 
+  // Carregar dados iniciais quando autenticação completa
   useEffect(() => {
-    // Só carregar dados quando autenticação estiver completa e usuário existir
-    if (authLoading || !user) {
-      return
-    }
-
-    // Token agora vem via httpOnly cookie, não precisa verificar localStorage
-    loadProtocols()
-    if (hasPermission('protocols:assign')) {
-      loadTeamMembers()
+    if (!authLoading && user) {
+      loadProtocols()
+      if (hasPermission('protocols:assign')) {
+        loadTeamMembers()
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authLoading, user?.id, searchTerm, statusFilter, priorityFilter])
+  }, [authLoading, user])
+
+  // Recarregar quando filtros mudarem
+  useEffect(() => {
+    if (!authLoading && user) {
+      loadProtocols()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchTerm, statusFilter, priorityFilter])
+
+  // Guard: aguardar autenticação
+  if (authLoading || !user) {
+    return (
+      <div className="flex items-center justify-center min-h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Carregando...</p>
+        </div>
+      </div>
+    )
+  }
 
   const filteredProtocols = protocols.filter(protocol => {
     const matchesSearch = protocol.number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -290,7 +308,7 @@ export default function ProtocolsPage() {
       </Card>
 
       {/* Lista de Protocolos */}
-      {loading ? (
+      {dataLoading ? (
         <div className="flex items-center justify-center py-8">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
