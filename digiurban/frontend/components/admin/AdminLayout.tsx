@@ -16,15 +16,15 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const { user, loading } = useAdminAuth()
   const pathname = usePathname()
   const router = useRouter()
-  const hasRedirected = useRef(false)
+  const isRedirecting = useRef(false)
 
-  // ✅ NOVO: Conectar ao sistema de notificações em tempo real
+  // Conectar ao sistema de notificações em tempo real
   const { connected } = useNotifications()
 
   // Log de conexão SSE (apenas desenvolvimento)
   useEffect(() => {
     if (connected) {
-      console.log('✅ Sistema de notificações conectado')
+      console.log('[AdminLayout] Sistema de notificações conectado')
     }
   }, [connected])
 
@@ -36,16 +36,23 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   ]
   const isPublicPath = publicPaths.some(path => pathname?.startsWith(path))
 
-  // Verificar se o usuário está autenticado
+  // Resetar flag de redirect quando o user volta a existir (login bem-sucedido)
   useEffect(() => {
-    if (!loading && !user && !isPublicPath && !hasRedirected.current) {
-      hasRedirected.current = true
+    if (user) {
+      isRedirecting.current = false
+    }
+  }, [user])
+
+  // Redirecionar para login quando não autenticado
+  useEffect(() => {
+    if (!loading && !user && !isPublicPath && !isRedirecting.current) {
+      isRedirecting.current = true
       router.replace('/admin/login')
     }
   }, [user, loading, pathname, router, isPublicPath])
 
-  // Mostrar loading enquanto carrega
-  if (loading) {
+  // Mostrar loading enquanto carrega ou enquanto redireciona
+  if (loading || (!user && !isPublicPath)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
@@ -54,12 +61,6 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </div>
       </div>
     )
-  }
-
-  // Se não há usuário e não está em página pública, não renderizar nada
-  // (o redirect irá acontecer)
-  if (!user && !isPublicPath) {
-    return null
   }
 
   // Se estiver em página pública, renderizar apenas o conteúdo

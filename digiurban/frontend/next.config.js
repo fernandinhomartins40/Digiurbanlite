@@ -65,10 +65,12 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         },
       },
       {
+        // JS/CSS: NetworkFirst para garantir bundles frescos pós-deploy
         urlPattern: /\.(?:js|css)$/,
-        handler: 'StaleWhileRevalidate',
+        handler: 'NetworkFirst',
         options: {
           cacheName: 'static-resources',
+          networkTimeoutSeconds: 3,
           expiration: {
             maxEntries: 100,
             maxAgeSeconds: 7 * 24 * 60 * 60, // 7 dias

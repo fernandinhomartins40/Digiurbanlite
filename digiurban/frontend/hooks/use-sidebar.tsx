@@ -15,13 +15,9 @@ const SidebarContext = createContext<SidebarContextType | undefined>(undefined)
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
-  const [isMobile, setIsMobile] = useState(() => {
-    // Detectar mobile no estado inicial (SSR safe)
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 768
-    }
-    return false
-  })
+  // Inicializar sempre como false para evitar hydration mismatch (SSR=false, Client=false)
+  // O useEffect abaixo corrige o valor real no client após a hidratação
+  const [isMobile, setIsMobile] = useState(false)
 
   const toggle = () => {
     console.log('[SIDEBAR DEBUG] toggle() chamado. Estado atual:', isOpen, 'isMobile:', isMobile)
@@ -39,16 +35,16 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     setIsOpen(false)
   }
 
-  // Listener para mudanças de tamanho da janela
+  // Detectar mobile no mount e ouvir mudanças de tamanho
   useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768)
     }
 
-    // Adicionar listener
-    window.addEventListener('resize', handleResize)
+    // Setar valor real na primeira renderização client-side
+    handleResize()
 
-    // Limpar listener
+    window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 

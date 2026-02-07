@@ -102,7 +102,7 @@ export default function AdminPage() {
     setMounted(true)
   }, [])
 
-  if (loading || !user || !stats) {
+  if (loading || !user) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <div className="text-center">
@@ -111,6 +111,16 @@ export default function AdminPage() {
         </div>
       </div>
     )
+  }
+
+  // Stats default quando null (evita spinner infinito se backend retorna parcial)
+  const safeStats = stats || {
+    totalProtocols: 0,
+    pendingProtocols: 0,
+    completedProtocols: 0,
+    pendingCitizens: 0,
+    unreadMessages: 0,
+    protocolsByStatus: []
   }
 
   // Handler para rastrear cliques
@@ -163,36 +173,36 @@ export default function AdminPage() {
           {hasPermission('protocols:read') && (
             <StatCard
               title="Protocolos Pendentes"
-              value={stats.pendingProtocols || 0}
+              value={safeStats.pendingProtocols || 0}
               icon={Clock}
-              trend={stats.pendingProtocols > 0 ? { value: 'Requer atenção', direction: 'neutral' } : undefined}
+              trend={safeStats.pendingProtocols > 0 ? { value: 'Requer atenção', direction: 'neutral' } : undefined}
               href="/admin/protocolos"
             />
           )}
 
-          {stats.totalProtocols !== undefined && (
+          {safeStats.totalProtocols !== undefined && (
             <StatCard
               title="Total de Protocolos"
-              value={stats.totalProtocols}
+              value={safeStats.totalProtocols}
               icon={FileText}
               href="/admin/protocolos"
             />
           )}
 
-          {stats.unreadMessages !== undefined && stats.unreadMessages > 0 && (
+          {safeStats.unreadMessages !== undefined && safeStats.unreadMessages > 0 && (
             <StatCard
               title="Mensagens Não Lidas"
-              value={stats.unreadMessages}
+              value={safeStats.unreadMessages}
               icon={MessageCircle}
               trend={{ value: 'Novas', direction: 'up' }}
               href="/admin/mensagens"
             />
           )}
 
-          {stats.pendingCitizens !== undefined && stats.pendingCitizens > 0 && (
+          {safeStats.pendingCitizens !== undefined && safeStats.pendingCitizens > 0 && (
             <StatCard
               title="Cidadãos Pendentes"
-              value={stats.pendingCitizens}
+              value={safeStats.pendingCitizens}
               icon={UserCheck}
               trend={{ value: 'Aguardando aprovação', direction: 'neutral' }}
               href="/admin/cidadaos/pendentes"
@@ -283,7 +293,7 @@ export default function AdminPage() {
               icon={FileText}
               iconColor="text-blue-600"
               iconBgColor="bg-blue-50"
-              badge={stats.pendingProtocols}
+              badge={safeStats.pendingProtocols}
               onClick={() => handleCardClick('Protocolos', '/admin/protocolos', 'Gestão')}
             />
           )}
@@ -518,7 +528,7 @@ export default function AdminPage() {
               icon={MessageCircle}
               iconColor="text-blue-600"
               iconBgColor="bg-blue-50"
-              badge={stats.unreadMessages}
+              badge={safeStats.unreadMessages}
               onClick={() => handleCardClick('Mensagens', '/admin/mensagens', 'Comunicação')}
             />
           )}

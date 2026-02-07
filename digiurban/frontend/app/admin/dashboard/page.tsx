@@ -204,7 +204,7 @@ export default function AdminDashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  if (!user || !stats) {
+  if (!user) {
     return (
       <div className="flex items-center justify-center min-h-96">
         <div className="text-center">
@@ -215,8 +215,18 @@ export default function AdminDashboard() {
     )
   }
 
-  const completionRate = stats.totalProtocols > 0
-    ? Math.round((stats.completedProtocols / stats.totalProtocols) * 100)
+  // Stats default quando null (evita spinner infinito se backend retorna parcial)
+  const safeStats = stats || {
+    totalProtocols: 0,
+    pendingProtocols: 0,
+    completedProtocols: 0,
+    pendingCitizens: 0,
+    unreadMessages: 0,
+    protocolsByStatus: []
+  }
+
+  const completionRate = safeStats.totalProtocols > 0
+    ? Math.round((safeStats.completedProtocols / safeStats.totalProtocols) * 100)
     : 0
 
   return (
@@ -245,7 +255,7 @@ export default function AdminDashboard() {
             <FileText className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            <div className="text-xl sm:text-2xl font-bold">{stats.totalProtocols}</div>
+            <div className="text-xl sm:text-2xl font-bold">{safeStats.totalProtocols}</div>
             <p className="text-xs text-muted-foreground mt-1">
               {user.role === 'USER' ? 'Atribuídos a você' :
                user.role === 'ADMIN' ? 'Todo o município' : 'Do seu setor'}
@@ -260,7 +270,7 @@ export default function AdminDashboard() {
             <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.pendingProtocols}</div>
+            <div className="text-xl sm:text-2xl font-bold text-orange-600">{safeStats.pendingProtocols}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Requerem atenção
             </p>
@@ -274,7 +284,7 @@ export default function AdminDashboard() {
             <CheckCircle2 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground shrink-0" />
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
-            <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.completedProtocols}</div>
+            <div className="text-xl sm:text-2xl font-bold text-green-600">{safeStats.completedProtocols}</div>
             <p className="text-xs text-muted-foreground mt-1">
               Taxa de conclusão: {completionRate}%
             </p>
@@ -305,10 +315,10 @@ export default function AdminDashboard() {
           </CardHeader>
           <CardContent className="px-4 sm:px-6 pb-4 sm:pb-6">
             <div className="space-y-2 sm:space-y-3">
-              {stats.protocolsByStatus.map((item) => {
+              {safeStats.protocolsByStatus.map((item) => {
                 const count = item._count?._all || 0
-                const percentage = stats.totalProtocols > 0
-                  ? Math.round((count / stats.totalProtocols) * 100)
+                const percentage = safeStats.totalProtocols > 0
+                  ? Math.round((count / safeStats.totalProtocols) * 100)
                   : 0
 
                 return (
