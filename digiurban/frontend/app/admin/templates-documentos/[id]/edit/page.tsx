@@ -24,7 +24,7 @@ import {
   Code
 } from 'lucide-react'
 import type { DocumentTemplate } from '@/src/components/admin/templates/types'
-import { CodeTemplateEditor } from '@/src/components/admin/templates/CodeTemplateEditor'
+import { WysiwygTemplateEditor } from '@/src/components/admin/templates/WysiwygTemplateEditor'
 
 export default function TemplateEditPage() {
   const params = useParams()
@@ -362,15 +362,14 @@ export default function TemplateEditPage() {
             <div className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                 <p className="text-sm text-blue-900">
-                  <strong>💡 Dica:</strong> Edite o HTML do template diretamente.
+                  <strong>💡 Dica:</strong> Edite o documento visualmente como se fosse o Word.
                   Use variáveis como <code className="bg-white px-2 py-0.5 rounded">{`{{protocolNumber}}`}</code> que serão substituídas automaticamente pelos dados reais.
-                  Use os botões da toolbar para inserir elementos rapidamente.
                 </p>
               </div>
-              <CodeTemplateEditor
+              <WysiwygTemplateEditor
                 content={formData.fullTemplate}
                 onChange={(html) => setFormData({ ...formData, fullTemplate: html })}
-                placeholder="Digite o HTML do template aqui... Use os botões da toolbar para inserir elementos."
+                placeholder="Digite o conteúdo do documento aqui... Use a barra de ferramentas acima para formatar."
               />
             </div>
           </CardContent>
