@@ -36,7 +36,8 @@ import {
   Heading3,
   Quote,
   Minus,
-  Highlighter
+  Highlighter,
+  PenTool
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { useState, useEffect } from 'react'
@@ -125,6 +126,31 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
 
   const insertTable = () => {
     editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()
+  }
+
+  const insertSignatureArea = () => {
+    const signatureHtml = `
+      <div class="signature-placeholder"
+           data-signature-width="200"
+           data-signature-height="80"
+           style="border: 2px dashed #3b82f6;
+                  background-color: rgba(59, 130, 246, 0.05);
+                  padding: 20px;
+                  margin: 20px 0;
+                  text-align: center;
+                  border-radius: 8px;
+                  display: inline-block;
+                  min-width: 200px;
+                  min-height: 80px;">
+        <div style="color: #3b82f6; font-size: 14px; font-weight: 500;">
+          ✍️ ÁREA DE ASSINATURA DIGITAL
+        </div>
+        <div style="color: #6b7280; font-size: 11px; margin-top: 4px;">
+          A assinatura será aplicada automaticamente aqui
+        </div>
+      </div>
+    `
+    editor.chain().focus().insertContent(signatureHtml).run()
   }
 
   return (
@@ -300,6 +326,15 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
             title="Linha horizontal"
           >
             <Minus className="h-4 w-4" />
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={insertSignatureArea}
+            title="Inserir área de assinatura digital"
+            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <PenTool className="h-4 w-4" />
           </Button>
         </div>
 
