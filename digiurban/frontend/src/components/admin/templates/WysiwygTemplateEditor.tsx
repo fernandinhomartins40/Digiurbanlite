@@ -14,6 +14,7 @@ import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Highlight } from '@tiptap/extension-highlight'
 import { Extension } from '@tiptap/core'
+import { Node, mergeAttributes } from '@tiptap/core'
 import { Button } from '@/components/ui/button'
 import {
   Bold,
@@ -56,14 +57,38 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
   const [linkUrl, setLinkUrl] = useState('')
   const [linkText, setLinkText] = useState('')
 
-  // Extensão customizada para preservar HTML e Handlebars
+  // Extensão para preservar divs customizadas e todos os atributos
+  const CustomDiv = Node.create({
+    name: 'customDiv',
+    group: 'block',
+    content: 'block*',
+
+    parseHTML() {
+      return [{ tag: 'div' }]
+    },
+
+    renderHTML({ HTMLAttributes }) {
+      return ['div', mergeAttributes(HTMLAttributes), 0]
+    },
+
+    addAttributes() {
+      return {
+        class: { default: null },
+        style: { default: null },
+        'data-signature-width': { default: null },
+        'data-signature-height': { default: null },
+      }
+    },
+  })
+
+  // Extensão para preservar atributos style em todos os elementos
   const CustomHTML = Extension.create({
     name: 'customHTML',
 
     addGlobalAttributes() {
       return [
         {
-          types: ['textStyle'],
+          types: ['heading', 'paragraph', 'textStyle', 'tableCell', 'tableHeader'],
           attributes: {
             style: {
               default: null,
@@ -75,6 +100,16 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
                 return { style: attributes.style }
               },
             },
+            class: {
+              default: null,
+              parseHTML: element => element.getAttribute('class'),
+              renderHTML: attributes => {
+                if (!attributes.class) {
+                  return {}
+                }
+                return { class: attributes.class }
+              },
+            },
           },
         },
       ]
@@ -84,10 +119,16 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        codeBlock: false, // Desabilitar codeBlock padrão para não interpretar HTML como código
+        codeBlock: false, // Desabilitar codeBlock padrão
+        heading: {
+          levels: [1, 2, 3, 4, 5, 6],
+        },
       }),
       Underline,
-      Image,
+      Image.configure({
+        inline: true,
+        allowBase64: true,
+      }),
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
@@ -99,6 +140,9 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
       }),
       Table.configure({
         resizable: true,
+        HTMLAttributes: {
+          style: 'width: 100%; border-collapse: collapse;',
+        },
       }),
       TableRow,
       TableHeader,
@@ -108,7 +152,8 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
       Highlight.configure({
         multicolor: true
       }),
-      CustomHTML,
+      CustomDiv, // Suporte a divs customizadas
+      CustomHTML, // Preservar atributos style e class
     ],
     content: content || '',
     editorProps: {
@@ -122,6 +167,8 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
     parseOptions: {
       preserveWhitespace: 'full',
     },
+    enableInputRules: false, // Desabilitar regras automáticas que podem interferir
+    enablePasteRules: false, // Desabilitar regras de colagem
   })
 
   // Atualizar conteúdo do editor quando prop 'content' mudar
