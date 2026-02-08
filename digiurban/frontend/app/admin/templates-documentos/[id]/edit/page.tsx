@@ -17,9 +17,14 @@ import {
   Save,
   FileText,
   AlertCircle,
-  Loader2
+  Loader2,
+  FileUp,
+  FileDown,
+  Eye,
+  Code
 } from 'lucide-react'
 import type { DocumentTemplate } from '@/src/components/admin/templates/types'
+import { WysiwygTemplateEditor } from '@/src/components/admin/templates/WysiwygTemplateEditor'
 
 export default function TemplateEditPage() {
   const params = useParams()
@@ -37,8 +42,14 @@ export default function TemplateEditPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    htmlTemplate: '',
+    headerHtml: '',
+    footerHtml: '',
+    cssStyles: '',
     isActive: true,
   })
+
+  const [previewHtml, setPreviewHtml] = useState('')
 
   // Verificar permissões - SUPER_ADMIN, ADMIN e MANAGER podem editar templates
   const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'MANAGER'
@@ -58,6 +69,69 @@ export default function TemplateEditPage() {
     loadTemplate()
   }, [templateId, canEdit])
 
+  // Atualizar preview quando o conteúdo mudar
+  useEffect(() => {
+    if (template) {
+      generatePreview()
+    }
+  }, [formData, template])
+
+  const generatePreview = () => {
+    if (!template) return
+
+    // Substituir variáveis Handlebars por valores de exemplo
+    let headerHtml = formData.headerHtml || ''
+    let bodyHtml = formData.htmlTemplate || '<p>Comece a editar o template...</p>'
+    let footerHtml = formData.footerHtml || ''
+
+    // Se há variáveis disponíveis, substituir no HTML
+    if (template.availableVariables && Array.isArray(template.availableVariables)) {
+      template.availableVariables.forEach((variable: any) => {
+        const regex = new RegExp(`{{${variable.name}}}`, 'g')
+        const exampleValue = variable.example || `[${variable.name}]`
+
+        headerHtml = headerHtml.replace(regex, exampleValue)
+        bodyHtml = bodyHtml.replace(regex, exampleValue)
+        footerHtml = footerHtml.replace(regex, exampleValue)
+      })
+    }
+
+    const html = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    ${formData.cssStyles || ''}
+    body {
+      margin: 0;
+      padding: 20px;
+      font-family: 'Segoe UI', Arial, sans-serif;
+      line-height: 1.6;
+    }
+    .template-container {
+      max-width: 210mm;
+      margin: 0 auto;
+      background: white;
+      padding: 20mm;
+    }
+    img { max-width: 100%; height: auto; }
+    table { width: 100%; border-collapse: collapse; margin: 1em 0; }
+    table td, table th { border: 1px solid #ddd; padding: 8px; }
+    table th { background-color: #f4f4f4; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <div class="template-container">
+    ${headerHtml}
+    ${bodyHtml}
+    ${footerHtml}
+  </div>
+</body>
+</html>`
+    setPreviewHtml(html)
+  }
+
   const loadTemplate = async () => {
     setLoading(true)
     try {
@@ -68,6 +142,10 @@ export default function TemplateEditPage() {
         setFormData({
           name: result.data.name,
           description: result.data.description || '',
+          htmlTemplate: result.data.htmlTemplate || '',
+          headerHtml: result.data.headerHtml || '',
+          footerHtml: result.data.footerHtml || '',
+          cssStyles: result.data.cssStyles || '',
           isActive: result.data.isActive,
         })
       } else {
@@ -168,20 +246,30 @@ export default function TemplateEditPage() {
         </Button>
       </div>
 
-      {/* Alerta informativo */}
-      <Alert className="bg-yellow-50 border-yellow-200">
-        <AlertCircle className="h-4 w-4 text-yellow-600" />
-        <AlertDescription className="text-yellow-800">
-          <strong>Modo Simplificado:</strong> Apenas informações básicas podem ser editadas aqui.
-          Para alterações avançadas no HTML, CSS ou estrutura do template, entre em contato com o suporte técnico.
-        </AlertDescription>
-      </Alert>
-
       {/* Formulário */}
       <Tabs defaultValue="basic" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 max-w-md">
-          <TabsTrigger value="basic">Informações Básicas</TabsTrigger>
-          <TabsTrigger value="technical">Informações Técnicas</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-6 max-w-4xl">
+          <TabsTrigger value="basic">Informações</TabsTrigger>
+          <TabsTrigger value="header" className="flex items-center gap-1">
+            <FileUp className="h-3 w-3" />
+            Cabeçalho
+          </TabsTrigger>
+          <TabsTrigger value="body" className="flex items-center gap-1">
+            <FileText className="h-3 w-3" />
+            Corpo
+          </TabsTrigger>
+          <TabsTrigger value="footer" className="flex items-center gap-1">
+            <FileDown className="h-3 w-3" />
+            Rodapé
+          </TabsTrigger>
+          <TabsTrigger value="css" className="flex items-center gap-1">
+            <Code className="h-3 w-3" />
+            CSS
+          </TabsTrigger>
+          <TabsTrigger value="preview" className="flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            Preview
+          </TabsTrigger>
         </TabsList>
 
         {/* Aba Informações Básicas */}
@@ -242,115 +330,147 @@ export default function TemplateEditPage() {
                     Templates inativos não aparecem para seleção ao gerar documentos
                   </p>
                 </div>
+
+                {/* Informações Técnicas */}
+                <div className="bg-gray-50 rounded-lg p-4 space-y-3 border">
+                  <h4 className="font-semibold text-sm text-gray-700">Informações Técnicas</h4>
+                  <div className="grid grid-cols-2 gap-3 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Código:</span>
+                      <p className="font-mono text-xs bg-white px-2 py-1 rounded mt-1">{template.code}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Tipo:</span>
+                      <p className="font-medium mt-1">{template.documentType}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Formato:</span>
+                      <p className="font-medium mt-1">{template.outputFormat}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Versão:</span>
+                      <p className="font-medium mt-1">v{template.version}</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* Aba Informações Técnicas (Read-only) */}
-        <TabsContent value="technical" className="mt-6">
+        {/* Aba Cabeçalho */}
+        <TabsContent value="header" className="mt-6">
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-6">
-                <Alert>
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>
-                    Estas informações técnicas são somente leitura. Para alterá-las, entre em contato com o suporte.
-                  </AlertDescription>
-                </Alert>
-
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Código do Template
-                    </Label>
-                    <div className="p-3 bg-gray-100 rounded-md font-mono text-sm">
-                      {template.code}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Tipo de Documento
-                    </Label>
-                    <div className="p-3 bg-gray-100 rounded-md">
-                      {template.documentType}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Formato de Saída
-                    </Label>
-                    <div className="p-3 bg-gray-100 rounded-md">
-                      {template.outputFormat}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Tamanho da Página
-                    </Label>
-                    <div className="p-3 bg-gray-100 rounded-md">
-                      {template.pageSize} - {template.orientation === 'portrait' ? 'Retrato' : 'Paisagem'}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Versão
-                    </Label>
-                    <div className="p-3 bg-gray-100 rounded-md">
-                      v{template.version}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Tipo de Template
-                    </Label>
-                    <div className="p-3 bg-gray-100 rounded-md">
-                      {template.isGlobal ? 'Global (todos os serviços)' : 'Específico de serviço'}
-                    </div>
-                  </div>
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Dica:</strong> O cabeçalho aparece no topo de todas as páginas do documento.
+                    Use para inserir logotipo, título do documento, etc.
+                  </p>
                 </div>
+                <WysiwygTemplateEditor
+                  content={formData.headerHtml || ''}
+                  onChange={(html) => setFormData({ ...formData, headerHtml: html })}
+                  placeholder="Digite o cabeçalho do documento..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-                {/* Variáveis */}
+        {/* Aba Corpo Principal */}
+        <TabsContent value="body" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Dica:</strong> Este é o conteúdo principal do documento.
+                    Você pode usar variáveis como <code className="bg-white px-2 py-0.5 rounded">{`{{protocolNumber}}`}</code> que serão substituídas automaticamente.
+                  </p>
+                </div>
+                <WysiwygTemplateEditor
+                  content={formData.htmlTemplate || ''}
+                  onChange={(html) => setFormData({ ...formData, htmlTemplate: html })}
+                  placeholder="Digite o conteúdo principal do documento..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Rodapé */}
+        <TabsContent value="footer" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Dica:</strong> O rodapé aparece no final de todas as páginas.
+                    Use para informações de contato, números de página, etc.
+                  </p>
+                </div>
+                <WysiwygTemplateEditor
+                  content={formData.footerHtml || ''}
+                  onChange={(html) => setFormData({ ...formData, footerHtml: html })}
+                  placeholder="Digite o rodapé do documento..."
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba CSS */}
+        <TabsContent value="css" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <p className="text-sm text-blue-900">
+                    <strong>Dica:</strong> Estilos CSS personalizados para o template.
+                    Use classes e seletores para estilizar o documento.
+                  </p>
+                </div>
+                <Textarea
+                  value={formData.cssStyles || ''}
+                  onChange={(e) => setFormData({ ...formData, cssStyles: e.target.value })}
+                  placeholder="/* Adicione seus estilos CSS aqui */&#10;.titulo {&#10;  color: #333;&#10;  font-size: 24px;&#10;}"
+                  rows={20}
+                  className="font-mono text-sm"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Aba Preview */}
+        <TabsContent value="preview" className="mt-6">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                {/* Mensagem informativa */}
                 {template.availableVariables && template.availableVariables.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-sm font-semibold text-muted-foreground">
-                      Variáveis Disponíveis
-                    </Label>
-                    <div className="p-4 bg-gray-50 rounded-md border">
-                      <ScrollArea className="max-h-60">
-                        <div className="space-y-2">
-                          {template.availableVariables.map((variable, index) => (
-                            <div key={index} className="text-sm">
-                              <code className="bg-white px-2 py-1 rounded text-xs font-mono">
-                                {`{{${variable.name}}}`}
-                              </code>
-                              <span className="ml-2 text-muted-foreground">
-                                {variable.description}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
+                  <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="flex items-start gap-2">
+                      <AlertCircle className="h-4 w-4 text-blue-600 mt-0.5 flex-shrink-0" />
+                      <div className="text-xs text-blue-800">
+                        <p className="font-medium">Preview com dados de exemplo</p>
+                        <p className="text-blue-600 mt-1">
+                          As variáveis <code className="bg-blue-100 px-1 rounded">{"{{variavel}}"}</code> foram substituídas pelos valores de exemplo.
+                          No documento real, serão preenchidas com os dados do protocolo.
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
-
-                {/* Estatísticas de Uso */}
-                <div className="space-y-2">
-                  <Label className="text-sm font-semibold text-muted-foreground">
-                    Estatísticas de Uso
-                  </Label>
-                  <div className="p-3 bg-gray-100 rounded-md">
-                    <p className="text-sm">
-                      Este template foi usado para gerar{' '}
-                      <strong>{template._count?.generatedDocuments || 0}</strong> documentos
-                    </p>
-                  </div>
+                <div className="bg-gray-100 p-4 rounded-md">
+                  <iframe
+                    srcDoc={previewHtml}
+                    className="w-full h-[800px] bg-white rounded shadow-sm border-2 border-gray-200"
+                    title="Preview do Template"
+                    sandbox="allow-same-origin allow-scripts"
+                  />
                 </div>
               </div>
             </CardContent>
