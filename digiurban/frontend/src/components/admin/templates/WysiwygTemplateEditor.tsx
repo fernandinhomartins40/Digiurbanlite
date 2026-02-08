@@ -39,7 +39,7 @@ import {
   Highlighter
 } from 'lucide-react'
 import { Input } from '@/components/ui/input'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
 interface WysiwygTemplateEditorProps {
   content: string
@@ -90,6 +90,13 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
       onChange(editor.getHTML())
     },
   })
+
+  // Atualizar conteúdo do editor quando prop 'content' mudar
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content || '')
+    }
+  }, [content, editor])
 
   if (!editor) {
     return null
