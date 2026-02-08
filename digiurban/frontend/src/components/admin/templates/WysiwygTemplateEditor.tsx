@@ -13,6 +13,7 @@ import { TableHeader } from '@tiptap/extension-table-header'
 import { Color } from '@tiptap/extension-color'
 import { TextStyle } from '@tiptap/extension-text-style'
 import { Highlight } from '@tiptap/extension-highlight'
+import { Extension } from '@tiptap/core'
 import { Button } from '@/components/ui/button'
 import {
   Bold,
@@ -55,9 +56,36 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
   const [linkUrl, setLinkUrl] = useState('')
   const [linkText, setLinkText] = useState('')
 
+  // Extensão customizada para preservar HTML e Handlebars
+  const CustomHTML = Extension.create({
+    name: 'customHTML',
+
+    addGlobalAttributes() {
+      return [
+        {
+          types: ['textStyle'],
+          attributes: {
+            style: {
+              default: null,
+              parseHTML: element => element.getAttribute('style'),
+              renderHTML: attributes => {
+                if (!attributes.style) {
+                  return {}
+                }
+                return { style: attributes.style }
+              },
+            },
+          },
+        },
+      ]
+    },
+  })
+
   const editor = useEditor({
     extensions: [
-      StarterKit,
+      StarterKit.configure({
+        codeBlock: false, // Desabilitar codeBlock padrão para não interpretar HTML como código
+      }),
       Underline,
       Image,
       Link.configure({
@@ -79,7 +107,8 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
       Color,
       Highlight.configure({
         multicolor: true
-      })
+      }),
+      CustomHTML,
     ],
     content: content || '',
     editorProps: {
@@ -90,12 +119,19 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
     onUpdate: ({ editor }) => {
       onChange(editor.getHTML())
     },
+    parseOptions: {
+      preserveWhitespace: 'full',
+    },
   })
 
   // Atualizar conteúdo do editor quando prop 'content' mudar
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content || '')
+    if (editor && content) {
+      const currentContent = editor.getHTML()
+      // Só atualizar se o conteúdo for diferente para evitar loops
+      if (currentContent !== content) {
+        editor.commands.setContent(content, { emitUpdate: false })
+      }
     }
   }, [content, editor])
 

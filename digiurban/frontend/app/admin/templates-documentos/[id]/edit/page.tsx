@@ -172,17 +172,17 @@ export default function TemplateEditPage() {
         setTemplate(result.data)
 
         // Combinar header + body + footer em um único template
-        const combinedTemplate = `
-${result.data.headerHtml || ''}
+        const parts = []
+        if (result.data.headerHtml) parts.push(result.data.headerHtml)
+        if (result.data.htmlTemplate) parts.push(result.data.htmlTemplate)
+        if (result.data.footerHtml) parts.push(result.data.footerHtml)
 
-${result.data.htmlTemplate || ''}
-
-${result.data.footerHtml || ''}`
+        const combinedTemplate = parts.join('\n\n')
 
         setFormData({
           name: result.data.name,
           description: result.data.description || '',
-          fullTemplate: combinedTemplate.trim(),
+          fullTemplate: combinedTemplate || '<p>Comece a editar o template...</p>',
           isActive: result.data.isActive,
         })
       } else {
