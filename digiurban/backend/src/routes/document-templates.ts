@@ -149,7 +149,7 @@ router.post('/document-templates', authenticateToken, requireSuperAdmin, async (
  * PUT /api/document-templates/:id
  * Atualizar template
  */
-router.put('/document-templates/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.put('/document-templates/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const { id, createdBy, createdAt, updatedAt, _count, ...updateData } = req.body;
 
@@ -180,7 +180,7 @@ router.put('/document-templates/:id', authenticateToken, requireSuperAdmin, asyn
  * DELETE /api/document-templates/:id
  * Desativar template (soft delete)
  */
-router.delete('/document-templates/:id', authenticateToken, requireSuperAdmin, async (req, res) => {
+router.delete('/document-templates/:id', authenticateToken, requireAdmin, async (req, res) => {
   try {
     const template = await prisma.documentTemplate.update({
       where: { id: req.params.id },

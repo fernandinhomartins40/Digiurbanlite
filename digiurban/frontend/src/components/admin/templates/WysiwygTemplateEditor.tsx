@@ -128,6 +128,63 @@ export function WysiwygTemplateEditor({ content, onChange, placeholder }: Wysiwy
       Image.configure({
         inline: true,
         allowBase64: true,
+        HTMLAttributes: {
+          // Evitar erro 404 quando src contém variáveis Handlebars
+          loading: 'lazy',
+        },
+      }).extend({
+        // Sobrescrever parseHTML para tratar variáveis Handlebars
+        parseHTML() {
+          return [
+            {
+              tag: 'img[src]',
+              getAttrs: (node) => {
+                const src = (node as HTMLElement).getAttribute('src')
+                // Permitir variáveis Handlebars sem validação
+                if (src?.includes('{{')) {
+                  return { src }
+                }
+                return { src }
+              },
+            },
+          ]
+        },
+        addAttributes() {
+          return {
+            src: {
+              default: null,
+              parseHTML: (element) => element.getAttribute('src'),
+              renderHTML: (attributes) => {
+                if (!attributes.src) return {}
+                return { src: attributes.src }
+              },
+            },
+            alt: {
+              default: null,
+              parseHTML: (element) => element.getAttribute('alt'),
+              renderHTML: (attributes) => {
+                if (!attributes.alt) return {}
+                return { alt: attributes.alt }
+              },
+            },
+            title: {
+              default: null,
+              parseHTML: (element) => element.getAttribute('title'),
+              renderHTML: (attributes) => {
+                if (!attributes.title) return {}
+                return { title: attributes.title }
+              },
+            },
+            style: {
+              default: null,
+              parseHTML: (element) => element.getAttribute('style'),
+              renderHTML: (attributes) => {
+                if (!attributes.style) return {}
+                return { style: attributes.style }
+              },
+            },
+          }
+        },
       }),
       Link.configure({
         openOnClick: false,
