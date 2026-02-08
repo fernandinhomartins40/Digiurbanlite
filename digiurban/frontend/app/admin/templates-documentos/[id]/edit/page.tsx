@@ -113,6 +113,45 @@ export default function TemplateEditPage() {
     table { width: 100%; border-collapse: collapse; margin: 1em 0; }
     table td, table th { border: 1px solid #ddd; padding: 8px; }
     table th { background-color: #f4f4f4; font-weight: bold; }
+
+    /* Preview da área de assinatura (substituir placeholder visual) */
+    .signature-placeholder {
+      border: 2px solid #1e40af !important;
+      background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+      padding: 15px !important;
+      margin: 20px 0 !important;
+      text-align: center !important;
+      border-radius: 8px !important;
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-height: 100px !important;
+      box-shadow: 0 2px 8px rgba(30, 64, 175, 0.15) !important;
+    }
+    .signature-placeholder > div:first-child {
+      color: #1e40af !important;
+      font-size: 16px !important;
+      font-weight: 600 !important;
+      margin-bottom: 8px !important;
+    }
+    .signature-placeholder > div:last-child {
+      color: #475569 !important;
+      font-size: 11px !important;
+      font-style: italic !important;
+    }
+    .signature-placeholder::after {
+      content: '🔐 Documento será assinado digitalmente' !important;
+      display: block !important;
+      margin-top: 12px !important;
+      padding: 8px 16px !important;
+      background: #1e40af !important;
+      color: white !important;
+      border-radius: 6px !important;
+      font-size: 12px !important;
+      font-weight: 500 !important;
+      box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3) !important;
+    }
   </style>
 </head>
 <body>
