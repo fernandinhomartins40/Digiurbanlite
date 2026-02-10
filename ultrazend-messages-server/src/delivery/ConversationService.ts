@@ -252,6 +252,11 @@ export class ConversationService {
         throw new Error('Conversation not found');
       }
 
+      // Proteger conversa do bot contra arquivamento
+      if (conversation.isBotConversation) {
+        throw new Error('A conversa com o DigiBot não pode ser arquivada');
+      }
+
       // Verificar se o usuário participa
       const isParticipant =
         (conversation.participant1Id === userId && conversation.participant1Type === userType) ||
@@ -281,6 +286,11 @@ export class ConversationService {
 
       if (!conversation) {
         throw new Error('Conversation not found');
+      }
+
+      // Proteger conversa do bot contra deleção
+      if (conversation.isBotConversation) {
+        throw new Error('A conversa com o DigiBot não pode ser excluída');
       }
 
       const isParticipant =

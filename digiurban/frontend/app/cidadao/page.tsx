@@ -66,7 +66,7 @@ export default function CitizenDashboard() {
   const [showConversationsList, setShowConversationsList] = useState(true);
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
-  const [hasRedirected, setHasRedirected] = useState(false);
+  const [isBotTyping, setIsBotTyping] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
@@ -123,17 +123,7 @@ export default function CitizenDashboard() {
     }
   }, [citizen, authLoading, router]);
 
-  // Redirect para serviços em desktop - telas maiores sempre mostram serviços
-  useEffect(() => {
-    if (!authLoading && citizen && !hasRedirected && window.innerWidth >= 768) {
-      // Desktop/Tablet - redireciona sempre para serviços
-      setHasRedirected(true);
-      router.push('/cidadao/servicos');
-    } else if (!authLoading && citizen) {
-      // Mobile - permite acesso direto ao chat
-      setHasRedirected(true);
-    }
-  }, [citizen, authLoading, hasRedirected, router]);
+  // Não redirecionar em desktop: o chat do DigiBot precisa ser acessível em todas as telas.
 
   // Carregar mensagens quando uma conversa é selecionada
   useEffect(() => {
@@ -152,14 +142,29 @@ export default function CitizenDashboard() {
    */
   const startBotFlow = async (conversationId: string) => {
     try {
-      await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ flowName: 'menu_principal', conversationId })
       });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Erro ao iniciar fluxo do bot:', errorData);
+        toast({
+          variant: 'destructive',
+          title: 'Erro ao iniciar o assistente',
+          description: 'Nao foi possivel iniciar o DigiBot. Tente recarregar a pagina.',
+        });
+      }
     } catch (error) {
       console.error('Erro ao iniciar fluxo do bot:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro de conexao',
+        description: 'Nao foi possivel conectar ao DigiBot. Verifique sua conexao.',
+      });
     }
   };
 
@@ -224,6 +229,8 @@ export default function CitizenDashboard() {
   const handleBotMessage = async (payload: any) => {
     if (!selectedConversation) return;
 
+    setIsBotTyping(true);
+
     try {
       const response = await fetch(`${MESSAGES_API_URL}/bot-flow/message`, {
         method: 'POST',
@@ -236,7 +243,16 @@ export default function CitizenDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error('Erro ao enviar mensagem para o bot');
+        const status = response.status;
+        if (status === 401) {
+          toast({
+            variant: 'destructive',
+            title: 'Sessao expirada',
+            description: 'Sua sessao expirou. Faca login novamente.',
+          });
+          return;
+        }
+        throw new Error(`Erro ${status} ao enviar mensagem para o bot`);
       }
 
       const data = await response.json();
@@ -260,16 +276,23 @@ export default function CitizenDashboard() {
       scrollToBottom();
     } catch (error) {
       console.error('Erro ao enviar mensagem para o bot:', error);
+      const isNetworkError = error instanceof TypeError && error.message === 'Failed to fetch';
       toast({
         variant: 'destructive',
-        title: 'Erro',
-        description: 'Nao foi possivel enviar a mensagem para o bot',
+        title: isNetworkError ? 'Sem conexao' : 'Erro',
+        description: isNetworkError
+          ? 'Verifique sua conexao com a internet e tente novamente.'
+          : 'Nao foi possivel enviar a mensagem. Tente novamente.',
       });
+    } finally {
+      setIsBotTyping(false);
     }
   };
 
   const handleBotUpload = async (files: File[]) => {
     if (!selectedConversation) return;
+
+    setIsBotTyping(true);
 
     try {
       const formData = new FormData();
@@ -310,25 +333,55 @@ export default function CitizenDashboard() {
       toast({
         variant: 'destructive',
         title: 'Erro',
-        description: 'Nao foi possivel enviar os arquivos',
+        description: 'Nao foi possivel enviar os arquivos. Tente novamente.',
       });
+    } finally {
+      setIsBotTyping(false);
     }
   };
 
   const handleBotInteraction = async (interaction: any) => {
     try {
+      // Caso 1: Upload de arquivos (array de File)
       if (Array.isArray(interaction) && interaction.length > 0 && interaction[0] instanceof File) {
         await handleBotUpload(interaction);
         return;
       }
 
+      // Determinar o tipo da última mensagem do bot para distinguir menu vs form
+      const currentBotMessageType = lastBotMessage?.metadata?.messageType;
+
       if (interaction && typeof interaction === 'object' && !Array.isArray(interaction)) {
+        // Caso 2: Opção de menu - enviar { optionId, label } para matching exato no FlowEngine
+        if (currentBotMessageType === 'menu' && interaction.label) {
+          if (interaction.id) {
+            await handleBotMessage({
+              optionId: interaction.id,
+              label: interaction.label,
+            });
+          } else {
+            await handleBotMessage(interaction.label);
+          }
+          return;
+        }
+
+        // Caso 3: Dados de formulário - enviar objeto completo
+        if (currentBotMessageType === 'form') {
+          await handleBotMessage(interaction);
+          return;
+        }
+
+        // Caso 4: Fallback para objetos com label+id (menu sem messageType)
         if (interaction.label && interaction.id) {
-          await handleBotMessage(interaction.label);
+          await handleBotMessage({
+            optionId: interaction.id,
+            label: interaction.label,
+          });
           return;
         }
       }
 
+      // Caso 5: Texto simples, localização ou qualquer outro tipo
       await handleBotMessage(interaction);
     } catch (error) {
       console.error('Erro ao processar interacao do bot:', error);
@@ -810,6 +863,24 @@ export default function CitizenDashboard() {
                       </div>
                     );
                   })}
+                  {/* Typing indicator */}
+                  {isBotTyping && (
+                    <div className="flex justify-start">
+                      <div className="max-w-[70%] space-y-2">
+                        <div className="flex items-center gap-2 text-blue-700">
+                          <Sparkles className="w-4 h-4 text-blue-600" />
+                          <span className="text-xs font-semibold">DigiBot</span>
+                        </div>
+                        <div className="bg-white rounded-lg px-4 py-3 shadow-sm">
+                          <div className="flex items-center gap-1">
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                   <div ref={messagesEndRef} />
                 </div>
               )}
@@ -932,9 +1003,6 @@ export default function CitizenDashboard() {
     </div>
   );
 }
-
-
-
 
 
 

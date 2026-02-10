@@ -270,9 +270,21 @@
     },
     {
       "id": "show_interactions",
+      "type": "menu",
+      "config": {
+        "text": "📜 **Histórico do Protocolo #{{protocolDetails.protocol.number}}**\n\nSelecione uma interação para ver os detalhes:",
+        "options": "{{protocolInteractions.interactions}}",
+        "saveAs": "selectedInteractionId"
+      },
+      "transitions": [
+        { "to": "show_selected_interaction" }
+      ]
+    },
+    {
+      "id": "show_selected_interaction",
       "type": "message",
       "config": {
-        "text": "📜 **Histórico do Protocolo #{{protocolDetails.protocol.number}}**\n\nTotal de interações: {{protocolInteractions.count}}\n\nPara ver os detalhes completos de cada interação, acesse o painel do cidadão."
+        "text": "📜 **Interação selecionada**\n\n**Autor:** {{selectedInteractionId_data.metadata.authorName}}\n**Tipo:** {{selectedInteractionId_data.metadata.type}}\n**Data:** {{selectedInteractionId_data.metadata.createdAt}}\n\n{{selectedInteractionId_data.metadata.message}}"
       },
       "transitions": [
         { "to": "protocol_actions_menu" }
@@ -319,9 +331,21 @@
     },
     {
       "id": "show_protocol_docs",
+      "type": "menu",
+      "config": {
+        "text": "📄 **Documentos do Protocolo #{{protocolDetails.protocol.number}}**\n\nSelecione um documento para ver os detalhes:",
+        "options": "{{protocolDocs.documents}}",
+        "saveAs": "selectedProtocolDocId"
+      },
+      "transitions": [
+        { "to": "show_selected_protocol_doc" }
+      ]
+    },
+    {
+      "id": "show_selected_protocol_doc",
       "type": "message",
       "config": {
-        "text": "📄 **Documentos do Protocolo #{{protocolDetails.protocol.number}}**\n\nTotal de documentos: {{protocolDocs.count}}\n\nPara visualizar ou baixar os documentos, acesse o painel do cidadão."
+        "text": "📄 **Documento selecionado**\n\n**Tipo:** {{selectedProtocolDocId_data.metadata.documentType}}\n**Arquivo:** {{selectedProtocolDocId_data.metadata.name}}\n**MIME:** {{selectedProtocolDocId_data.metadata.type}}\n**Tamanho:** {{selectedProtocolDocId_data.metadata.size}} bytes\n**Enviado em:** {{selectedProtocolDocId_data.metadata.uploadedAt}}\n\n**Link:** {{selectedProtocolDocId_data.metadata.url}}"
       },
       "transitions": [
         { "to": "protocol_actions_menu" }

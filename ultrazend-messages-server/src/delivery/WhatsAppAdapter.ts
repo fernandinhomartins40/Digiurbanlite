@@ -139,7 +139,10 @@ export class WhatsAppAdapter {
    */
   private async sendTwilioMessage(to: string, message: string) {
     const from = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-    const toFormatted = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+
+    const rawTo = to.startsWith('whatsapp:') ? to.replace(/^whatsapp:/, '') : to;
+    const normalizedTo = rawTo.trim().startsWith('+') ? rawTo.trim() : `+${rawTo.trim()}`;
+    const toFormatted = `whatsapp:${normalizedTo}`;
 
     const params = new URLSearchParams();
     params.append('From', from);
@@ -162,7 +165,10 @@ export class WhatsAppAdapter {
    */
   private async sendTwilioMediaMessage(to: string, mediaUrl: string, caption?: string) {
     const from = process.env.TWILIO_WHATSAPP_NUMBER || 'whatsapp:+14155238886';
-    const toFormatted = to.startsWith('whatsapp:') ? to : `whatsapp:${to}`;
+
+    const rawTo = to.startsWith('whatsapp:') ? to.replace(/^whatsapp:/, '') : to;
+    const normalizedTo = rawTo.trim().startsWith('+') ? rawTo.trim() : `+${rawTo.trim()}`;
+    const toFormatted = `whatsapp:${normalizedTo}`;
 
     const params = new URLSearchParams();
     params.append('From', from);

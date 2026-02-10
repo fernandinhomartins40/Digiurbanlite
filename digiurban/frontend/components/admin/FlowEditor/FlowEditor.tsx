@@ -339,16 +339,40 @@ export default function FlowEditor({
         errors.push({ path: `nodes[${index}].config`, message: 'Config obrigatorio' });
       }
 
-      if (node.type !== 'end') {
+      const requiresTransitions = ['question', 'menu', 'action', 'form', 'upload', 'location'].includes(node.type);
+
+      // message pode ser terminal (sem transições). condition usa goto/defaultGoto ao invés de transitions.
+      if (requiresTransitions) {
         if (!node.transitions || !Array.isArray(node.transitions)) {
           errors.push({ path: `nodes[${index}].transitions`, message: 'Transitions deve ser um array' });
         } else if (node.transitions.length === 0) {
           errors.push({ path: `nodes[${index}].transitions`, message: 'Deve haver ao menos uma transicao' });
         }
+      } else if (node.transitions !== undefined && !Array.isArray(node.transitions)) {
+        errors.push({ path: `nodes[${index}].transitions`, message: 'Transitions deve ser um array' });
       }
     });
 
     json.nodes.forEach((node: any, index: number) => {
+      if (node.type === 'condition' && node.config) {
+        const conditions = Array.isArray(node.config.conditions) ? node.config.conditions : [];
+        conditions.forEach((condition: any, cIndex: number) => {
+          if (condition?.goto && !nodeIds.has(condition.goto)) {
+            errors.push({
+              path: `nodes[${index}].config.conditions[${cIndex}].goto`,
+              message: `Destino nao existe: ${condition.goto}`
+            });
+          }
+        });
+
+        if (node.config.defaultGoto && !nodeIds.has(node.config.defaultGoto)) {
+          errors.push({
+            path: `nodes[${index}].config.defaultGoto`,
+            message: `Destino nao existe: ${node.config.defaultGoto}`
+          });
+        }
+      }
+
       if (node.transitions) {
         node.transitions.forEach((transition: any, tIndex: number) => {
           if (!transition.to) {

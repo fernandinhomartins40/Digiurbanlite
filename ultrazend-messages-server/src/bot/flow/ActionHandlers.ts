@@ -91,14 +91,15 @@ const buildNotificationOptions = (notifications: any[]) =>
 const buildDocumentOptions = (documents: any[]) =>
   documents.map((doc: any) => ({
     id: doc.id,
-    label: doc.name || doc.fileName || 'Documento',
-    description: doc.type || doc.category || 'Arquivo',
+    label: doc.documentType || doc.name || doc.fileName || 'Documento',
+    description: doc.fileName || doc.mimeType || doc.type || doc.category || 'Arquivo',
     metadata: {
+      documentType: doc.documentType,
       name: doc.name || doc.fileName,
-      type: doc.type || doc.mimeType,
+      type: doc.mimeType || doc.type,
       size: doc.size || doc.fileSize,
       uploadedAt: doc.uploadedAt || doc.createdAt,
-      url: doc.url || doc.filePath,
+      url: doc.fileUrl || doc.url || doc.filePath,
       protocolNumber: doc.protocol?.number,
     },
   }));
@@ -285,6 +286,15 @@ export const updateCitizenProfile: ActionHandler = async (params, context) => {
     }
   }
 
+  // Fluxos usam "pular" como sentinela para não definir complemento de endereço.
+  if (updates.address && typeof updates.address === 'object' && !Array.isArray(updates.address)) {
+    const address = { ...(updates.address as any) };
+    if (typeof address.complemento === 'string' && address.complemento.trim().toLowerCase() === 'pular') {
+      delete address.complemento;
+    }
+    updates.address = address;
+  }
+
   if (Object.keys(updates).length === 0) {
     return { success: false, error: '❌ Nenhum dado para atualizar.' };
   }
@@ -426,7 +436,7 @@ export const submitEvaluation: ActionHandler = async (params, context) => {
 export const formatProtocolReview: ActionHandler = async (_params, context) => {
   try {
     const reviewText = integration.formatProtocolReview(context.state);
-    return { success: true, data: { reviewText } };
+    return { reviewText };
   } catch (error: any) {
     console.error('[ActionHandlers.formatProtocolReview] Erro:', error?.message);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível formatar a revisão.') };

@@ -5,9 +5,8 @@ import { uploadDocuments } from '../config/upload';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse, WhereCondition } from '../types';
 import { validateServiceFormData } from '../lib/json-schema-validator';
 import { DocumentUploadService } from '../services/document-upload.service';
-import { DocumentStatus } from '@prisma/client';
-import { normalizeDocumentConfigs } from '../utils/document-validation';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
+import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
 
 // REMOVED: generateProtocolNumber - agora usa protocolModuleService.createProtocolWithModule
 // REMOVED: ModuleHandler - agora usa protocolModuleService.createProtocolWithModule
@@ -25,69 +24,6 @@ class ValidationError extends Error {
 
 const router = Router();
 const documentUploadService = new DocumentUploadService();
-
-// Cria registros PENDING para documentos obrigatórios, ou marca UPLOADED se já vieram
-async function ensureRequiredProtocolDocuments(
-  protocolId: string,
-  service: any,
-  uploadedDocs: Array<{ documentType?: string; fileName?: string; fileUrl?: string; fileSize?: number; mimeType?: string }> = []
-) {
-  if (!service?.requiredDocuments || service.requiresDocuments === false) return;
-
-  let requiredRaw: any[] = [];
-  if (typeof service.requiredDocuments === 'string') {
-    try {
-      requiredRaw = JSON.parse(service.requiredDocuments);
-    } catch (e) {
-      console.warn('Erro ao parsear requiredDocuments:', e);
-      return;
-    }
-  } else if (Array.isArray(service.requiredDocuments)) {
-    requiredRaw = service.requiredDocuments;
-  }
-
-  const configs = normalizeDocumentConfigs(requiredRaw);
-  if (configs.length === 0) return;
-
-  for (const config of configs) {
-    const docName = config.name || 'Documento';
-
-    const exists = await prisma.protocolDocument.findFirst({
-      where: { protocolId, documentType: docName }
-    });
-    if (exists) continue;
-
-    const matchingUpload = uploadedDocs.find(doc => {
-      const type = doc.documentType || '';
-      return type === docName || type?.toLowerCase() === docName.toLowerCase();
-    });
-
-    if (matchingUpload && matchingUpload.fileUrl) {
-      await prisma.protocolDocument.create({
-        data: {
-          protocolId,
-          documentType: docName,
-          isRequired: config.required ?? true,
-          fileName: matchingUpload.fileName,
-          fileUrl: matchingUpload.fileUrl,
-          fileSize: matchingUpload.fileSize,
-          mimeType: matchingUpload.mimeType,
-          uploadedAt: new Date(),
-          status: DocumentStatus.UPLOADED
-        }
-      });
-    } else {
-      await prisma.protocolDocument.create({
-        data: {
-          protocolId,
-          documentType: docName,
-          isRequired: config.required ?? true,
-          status: DocumentStatus.PENDING
-        }
-      });
-    }
-  }
-}
 
 
 // GET /api/services - Listar servi+ºos ativos
@@ -1093,7 +1029,6 @@ function toRad(deg: number): number {
 }
 
 export default router;
-
 
 
 

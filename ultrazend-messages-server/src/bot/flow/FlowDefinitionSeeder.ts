@@ -96,6 +96,10 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
         select: { id: true, metadata: true },
       });
 
+      const managedBy = isPlainObject(existing?.metadata)
+        ? (existing!.metadata as any).managedBy
+        : undefined;
+
       const metadata = buildMetadata(existing?.metadata, flowData.metadata);
       const description = flowData.description || null;
       const version = flowData.version || '1.0.0';
@@ -105,6 +109,13 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
           summary.skipped += 1;
           continue;
         }
+
+        // NÃ£o sobrescrever fluxos gerenciados pelo painel (admin) via seeds do filesystem.
+        if (String(managedBy || '').toLowerCase() === 'admin') {
+          summary.skipped += 1;
+          continue;
+        }
+
         await prisma.flowDefinition.update({
           where: { id: existing.id },
           data: {

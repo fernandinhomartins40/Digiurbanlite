@@ -88,9 +88,21 @@
     },
     {
       "id": "show_documents_list",
+      "type": "menu",
+      "config": {
+        "text": "📄 **Seus Documentos**\n\nSelecione um documento para ver os detalhes:",
+        "options": "{{documentsList.documents}}",
+        "saveAs": "selectedDocumentId"
+      },
+      "transitions": [
+        { "to": "show_selected_document" }
+      ]
+    },
+    {
+      "id": "show_selected_document",
       "type": "message",
       "config": {
-        "text": "📄 **Seus Documentos:**\n\nVocê possui {{documentsList.count}} documento(s) cadastrado(s).\n\nOs documentos estão vinculados aos seus protocolos e podem ser acessados pelo painel do cidadão."
+        "text": "📄 **Detalhes do Documento**\n\n**Tipo:** {{selectedDocumentId_data.metadata.documentType}}\n**Arquivo:** {{selectedDocumentId_data.metadata.name}}\n**MIME:** {{selectedDocumentId_data.metadata.type}}\n**Tamanho:** {{selectedDocumentId_data.metadata.size}} bytes\n**Enviado em:** {{selectedDocumentId_data.metadata.uploadedAt}}\n**Protocolo:** {{selectedDocumentId_data.metadata.protocolNumber}}\n\n**Link:** {{selectedDocumentId_data.metadata.url}}"
       },
       "transitions": [
         { "to": "after_documents" }
@@ -188,9 +200,21 @@
     },
     {
       "id": "show_protocol_documents",
+      "type": "menu",
+      "config": {
+        "text": "📄 **Documentos do Protocolo**\n\nSelecione um documento para ver os detalhes:",
+        "options": "{{protocolDocuments.documents}}",
+        "saveAs": "selectedProtocolDocumentId"
+      },
+      "transitions": [
+        { "to": "show_selected_protocol_document" }
+      ]
+    },
+    {
+      "id": "show_selected_protocol_document",
       "type": "message",
       "config": {
-        "text": "📄 **Documentos do Protocolo:**\n\nForam encontrados {{protocolDocuments.count}} documento(s) neste protocolo.\n\nPara visualizar ou baixar os documentos, acesse o painel do cidadão."
+        "text": "📄 **Detalhes do Documento**\n\n**Tipo:** {{selectedProtocolDocumentId_data.metadata.documentType}}\n**Arquivo:** {{selectedProtocolDocumentId_data.metadata.name}}\n**MIME:** {{selectedProtocolDocumentId_data.metadata.type}}\n**Tamanho:** {{selectedProtocolDocumentId_data.metadata.size}} bytes\n**Enviado em:** {{selectedProtocolDocumentId_data.metadata.uploadedAt}}\n\n**Link:** {{selectedProtocolDocumentId_data.metadata.url}}"
       },
       "transitions": [
         { "to": "after_documents" }

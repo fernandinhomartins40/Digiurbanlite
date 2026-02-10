@@ -1,6 +1,7 @@
 import ultraZendMessages from './UltraZendMessagesAdapter';
 import { prisma } from '../prisma';
 import { generateToken } from '../../utils/jwt';
+import axios from 'axios';
 
 // Logger simples para notification service
 const logger = {
@@ -322,25 +323,27 @@ export class MessageNotificationService {
 
       if (!citizen) return;
 
-      const municipio = await prisma.municipioConfig.findUnique({
-        where: { id: 'singleton' },
+      // Inicia o fluxo do bot como o próprio cidadão para garantir
+      // que a conversa "fixada" seja a conversa do DigiBot (e não um chat SERVER->CITIZEN separado).
+      const citizenToken = generateToken({
+        userId: citizenId,
+        userType: 'CITIZEN',
+        role: 'CITIZEN',
+        email: citizen.email || undefined,
+        name: citizen.name || undefined,
       });
 
-      const serverToken = generateToken({
-        userId: 'system',
-        userType: 'SERVER',
-        role: 'ADMIN',
-      });
+      const baseUrl = process.env.MESSAGES_SERVER_URL || 'http://ultrazend-messages:9001';
 
-      ultraZendMessages.setToken(serverToken);
-
-      await ultraZendMessages.sendMessage(
-        'system',
-        'SERVER',
+      await axios.post(
+        `${baseUrl}/api/bot-flow/start`,
+        { flowName: 'menu_principal' },
         {
-          participant2Id: citizenId,
-          participant2Type: 'CITIZEN',
-          content: `Bem-vindo(a) ao DigiUrban ${municipio?.nomeMunicipio || ''}! 🎉\n\nEstamos felizes em tê-lo(a) conosco. Aqui você pode abrir protocolos, acompanhar solicitações e receber atualizações importantes.\n\nSe precisar de ajuda, é só chamar!`,
+          timeout: 15000,
+          headers: {
+            Authorization: `Bearer ${citizenToken}`,
+            'Content-Type': 'application/json',
+          },
         }
       );
 

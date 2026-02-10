@@ -7,6 +7,8 @@ import { FlowEngine } from '../bot/flow/FlowEngine';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
+import fs from 'fs/promises';
+import path from 'path';
 
 const isPlainObject = (value: unknown): value is Record<string, any> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
@@ -58,13 +60,34 @@ export class FlowEngineService {
     return metadata;
   }
 
-  private formatUserMessageContent(message: any) {
+  private formatUserMessageContent(message: any): string {
     if (typeof message === 'string') {
       return message;
     }
 
     if (Array.isArray(message)) {
-      return `Dados enviados (${message.length})`;
+      // Para uploads, gerar descrição legível
+      if (message.length > 0 && message[0]?.fileName) {
+        const fileNames = message.map((f: any) => f.fileName).join(', ');
+        return `📎 Arquivos enviados: ${fileNames}`;
+      }
+      return `Dados enviados (${message.length} itens)`;
+    }
+
+    if (typeof message === 'object' && message !== null) {
+      // Seleção de menu (frontend envia { optionId, label })
+      if (typeof (message as any).label === 'string' && (message as any).label.trim()) {
+        return (message as any).label.trim();
+      }
+
+      // Para formulários, gerar resumo legível dos campos
+      const entries = Object.entries(message).filter(([_, v]) => v !== null && v !== undefined && v !== '');
+      if (entries.length > 0) {
+        const summary = entries
+          .map(([key, value]) => `${key}: ${value}`)
+          .join('\n');
+        return `📝 Dados do formulário:\n${summary}`;
+      }
     }
 
     try {
@@ -206,7 +229,13 @@ export class FlowEngineService {
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
 
-    // 2. Salvar mensagem do cidadão
+    // 2. Salvar mensagem do cidadão (content legível + dados originais em metadata)
+    const userMessageMetadata: any = {};
+    if (typeof message === 'object' && message !== null) {
+      userMessageMetadata.originalData = message;
+      userMessageMetadata.dataType = Array.isArray(message) ? 'array' : 'form';
+    }
+
     const userMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -216,6 +245,7 @@ export class FlowEngineService {
         contentType: 'TEXT',
         status: 'SENT',
         sentAt: new Date(),
+        ...(Object.keys(userMessageMetadata).length > 0 ? { metadata: userMessageMetadata as any } : {}),
       },
     });
 
@@ -360,6 +390,47 @@ export class FlowEngineService {
   }
 
   /**
+   * Move arquivo de temp para armazenamento permanente
+   */
+  private async moveToPermStorage(file: any): Promise<{ fileName: string; filePath: string; fileUrl: string; fileSize: number; mimeType: string }> {
+    const uploadDir = process.env.UPLOAD_DIR || './uploads';
+    const baseUrl = process.env.BASE_URL || 'http://localhost:9001';
+
+    // Determinar subpasta pelo tipo
+    let subfolder = 'documents';
+    if (file.mimetype?.startsWith('image/')) {
+      subfolder = 'images';
+    } else if (file.mimetype?.startsWith('audio/')) {
+      subfolder = 'audio';
+    }
+
+    const destDir = path.join(uploadDir, 'bot', subfolder);
+    await fs.mkdir(destDir, { recursive: true });
+
+    // Nome único preservando extensão original
+    const ext = path.extname(file.originalname || '');
+    const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
+    const destPath = path.join(destDir, uniqueName);
+
+    // Mover de temp para permanente
+    if (file.path) {
+      await fs.rename(file.path, destPath).catch(async () => {
+        // Se rename falha (cross-device), copiar e deletar
+        await fs.copyFile(file.path, destPath);
+        await fs.unlink(file.path).catch(() => {});
+      });
+    }
+
+    return {
+      fileName: file.originalname || uniqueName,
+      filePath: destPath,
+      fileUrl: `${baseUrl}/uploads/bot/${subfolder}/${uniqueName}`,
+      fileSize: file.size || 0,
+      mimeType: file.mimetype || 'application/octet-stream',
+    };
+  }
+
+  /**
    * Handle upload de arquivos
    */
   async handleUpload(citizenId: string, files: any[], conversationId?: string) {
@@ -381,12 +452,23 @@ export class FlowEngineService {
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
 
-    const uploadedFiles = files.map((file: any) => ({
-      fileName: file.originalname,
-      filePath: file.path,
-      fileSize: file.size,
-      mimeType: file.mimetype,
-    }));
+    // Mover arquivos de temp para armazenamento permanente
+    const uploadedFiles = await Promise.all(
+      files.map(async (file: any) => {
+        try {
+          return await this.moveToPermStorage(file);
+        } catch (err) {
+          console.error('[FlowEngineService] Erro ao mover arquivo:', err);
+          return {
+            fileName: file.originalname,
+            filePath: file.path,
+            fileUrl: '',
+            fileSize: file.size,
+            mimeType: file.mimetype,
+          };
+        }
+      })
+    );
 
     const userMessage = await prisma.message.create({
       data: {

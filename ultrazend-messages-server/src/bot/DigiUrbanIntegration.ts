@@ -5,6 +5,8 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import fs from 'fs/promises';
+import path from 'path';
 
 export class DigiUrbanIntegration {
   private api: AxiosInstance;
@@ -105,8 +107,84 @@ export class DigiUrbanIntegration {
     customData?: any;
     documents?: any[];
   }) {
-    const response = await this.api.post('/internal/protocols', data);
-    return response.data;
+    const docs = Array.isArray(data.documents) ? data.documents : [];
+
+    // Se houver documentos com filePath local, enviar como multipart para o backend
+    const hasLocalFiles = docs.some((doc) => typeof doc?.filePath === 'string' && doc.filePath.trim().length > 0);
+
+    if (!hasLocalFiles) {
+      const response = await this.api.post('/internal/protocols', data);
+      return response.data;
+    }
+
+    const formData = new FormData();
+    formData.append('citizenId', data.citizenId);
+    formData.append('serviceId', data.serviceId);
+    formData.append('description', data.description || '');
+    formData.append('customData', JSON.stringify(data.customData || {}));
+
+    const documentTypes: string[] = [];
+    const uploadedFilePaths: string[] = [];
+
+    for (const doc of docs) {
+      const rawPath = typeof doc?.filePath === 'string' ? doc.filePath.trim() : '';
+      if (!rawPath) continue;
+
+      const resolvedPath = path.isAbsolute(rawPath) ? rawPath : path.resolve(process.cwd(), rawPath);
+      const buffer = await fs.readFile(resolvedPath);
+
+      const fileName = String(doc?.fileName || doc?.originalName || path.basename(resolvedPath) || 'documento');
+      const mimeType = String(doc?.mimeType || doc?.mimetype || 'application/octet-stream');
+
+      documentTypes.push(String(doc?.documentType || fileName));
+      uploadedFilePaths.push(resolvedPath);
+
+      const blob = new Blob([buffer], { type: mimeType });
+      formData.append('documents', blob, fileName);
+    }
+
+    formData.append('documentTypes', JSON.stringify(documentTypes));
+
+    const url = `${this.apiUrl}/internal/protocols`;
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.serviceToken}`,
+      },
+      body: formData,
+    });
+
+    const responseText = await response.text();
+    let payload: any;
+    try {
+      payload = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      payload = { raw: responseText };
+    }
+
+    if (!response.ok) {
+      const errorMessage = payload?.error || `HTTP ${response.status} ao criar protocolo`;
+      const err = new Error(errorMessage) as any;
+      err.response = { status: response.status, data: payload };
+      throw err;
+    }
+
+    // Limpeza: remover arquivos locais apÃ³s encaminhar ao backend (evita bloat no servidor de mensagens)
+    await Promise.all(
+      uploadedFilePaths.map(async (filePath) => {
+        try {
+          // Apenas arquivos do bot (uploads/bot/*) devem ser removidos automaticamente
+          const normalized = filePath.replace(/\\/g, '/');
+          if (normalized.includes('/uploads/bot/')) {
+            await fs.unlink(filePath);
+          }
+        } catch {
+          // Ignorar falhas de limpeza
+        }
+      })
+    );
+
+    return payload;
   }
 
   /**

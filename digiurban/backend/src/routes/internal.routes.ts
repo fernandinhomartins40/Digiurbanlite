@@ -3,14 +3,18 @@
  */
 
 import { Router, Request, Response } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
-import { generateProtocolNumberSafe } from '../services/protocol-number.service';
-import { applyWorkflowToProtocol } from '../services/service-workflow.service';
-import { createProtocolSLA } from '../services/protocol-sla.service';
+import { uploadDocuments } from '../config/upload';
+import { prisma } from '../lib/prisma';
+import { validateServiceFormData } from '../lib/json-schema-validator';
+import { DocumentUploadService } from '../services/document-upload.service';
+import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
+import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
+import { protocolModuleService } from '../services/protocol-module.service';
 
 const router = Router();
-const prisma = new PrismaClient();
+const documentUploadService = new DocumentUploadService();
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(internalAuthMiddleware);
@@ -95,6 +99,28 @@ router.put('/citizens/:citizenId', async (req: Request, res: Response) => {
     for (const field of allowedFields) {
       if (updates[field] !== undefined) {
         dataToUpdate[field] = updates[field];
+      }
+    }
+
+    // EndereÃ§o Ã© um JSON: fazer merge com o endereÃ§o atual para permitir atualizaÃ§Ãµes parciais
+    // e suportar "pular" no complemento (fluxo envia sem o campo em vez de sobrescrever com "pular").
+    if (dataToUpdate.address !== undefined) {
+      const incomingAddress = coerceObject(dataToUpdate.address);
+
+      if (incomingAddress && Object.keys(incomingAddress).length > 0) {
+        const existing = await prisma.citizen.findUnique({
+          where: { id: citizenId },
+          select: { address: true },
+        });
+
+        const baseAddress = coerceObject(existing?.address);
+        dataToUpdate.address = {
+          ...(baseAddress as any),
+          ...(incomingAddress as any),
+        };
+      } else {
+        // Evita sobrescrever com objeto vazio
+        delete dataToUpdate.address;
       }
     }
 
@@ -309,117 +335,163 @@ router.get('/services/:serviceId', async (req: Request, res: Response) => {
 // ========================================
 
 // POST /api/internal/protocols - Criar protocolo
-router.post('/protocols', async (req: Request, res: Response) => {
-    try {
-      const { citizenId, serviceId, description, customData, documents, moduleType } = req.body;
-
-    if (!citizenId || !serviceId) {
-      return res.status(400).json({ error: 'citizenId and serviceId are required' });
-    }
-
-    // Buscar o serviço
-    const service = await prisma.serviceSimplified.findUnique({
-      where: { id: serviceId },
-      include: {
-        department: true,
-      },
+router.post(
+  '/protocols',
+  (req, res, next) => {
+    uploadDocuments(req, res, (err) => {
+      if (err) {
+        console.error('[internal.routes] Multer error in POST /protocols:', err);
+        return res.status(400).json({
+          error: 'Erro ao processar upload de arquivos',
+          details: err.message,
+        });
+      }
+      next();
     });
+  },
+  async (req: Request, res: Response) => {
+    try {
+      const { citizenId, serviceId, description, customData } = req.body as any;
 
-    if (!service) {
-      return res.status(404).json({ error: 'Service not found' });
-    }
+      if (!citizenId || !serviceId) {
+        return res.status(400).json({ error: 'citizenId and serviceId are required' });
+      }
 
-    // Gerar número do protocolo
-    const protocolNumber = await generateProtocolNumberSafe();
+      const service = await prisma.serviceSimplified.findUnique({
+        where: { id: serviceId },
+        include: { department: true },
+      });
 
-    const baseCustomData = coerceObject(customData);
-    const resolvedDocuments = Array.isArray(documents) ? documents : [];
-    const mergedCustomData = {
-      ...baseCustomData,
-      botDocuments: resolvedDocuments,
-      source: 'DIGIBOT',
-    };
+      if (!service) {
+        return res.status(404).json({ error: 'Service not found' });
+      }
 
-    // Criar protocolo
-    const protocol = await prisma.protocolSimplified.create({
-      data: {
-        number: protocolNumber,
-        title: service.name,
+      // Extrair e limpar dados do formulário (description é campo separado)
+      const baseCustomData = coerceObject(customData);
+      const cleanedCustomData: Record<string, any> = { ...(baseCustomData as any) };
+      delete cleanedCustomData.description;
+      delete cleanedCustomData.descricao;
+
+      // Validar formData contra o JSON Schema do serviço (se houver)
+      if (Object.keys(cleanedCustomData).length > 0) {
+        const validation = validateServiceFormData(service as any, cleanedCustomData);
+        if (!validation.valid) {
+          return res.status(400).json({
+            error: 'Dados do formulário inválidos',
+            details: validation.errors,
+          });
+        }
+      }
+
+      const moduleFormData = {
+        citizenId,
+        ...cleanedCustomData,
+      };
+
+      // Validação de unicidade (mesma regra do painel do cidadão)
+      const uniquenessValidation = await validateProtocolUniqueness(
         citizenId,
         serviceId,
-        departmentId: service.departmentId,
+        moduleFormData
+      );
+
+      if (!uniquenessValidation.canCreate) {
+        return res.status(400).json({
+          error: uniquenessValidation.errorMessage || 'Não é possível criar este protocolo',
+          reason: uniquenessValidation.reason,
+          existingProtocolNumber: uniquenessValidation.existingProtocolNumber,
+        });
+      }
+
+      // Criar protocolo usando o mesmo pipeline do painel do cidadão
+      const result = await protocolModuleService.createProtocolWithModule({
+        citizenId,
+        serviceId,
+        formData: moduleFormData,
         description: description || '',
-        status: 'VINCULADO',
-        priority: 3, // Prioridade normal
-        customData: mergedCustomData || Prisma.JsonNull,
-        moduleType: service.moduleType || moduleType || 'GERAL',
-        createdById: citizenId, // Cidadão é o criador
-      },
-      include: {
-        service: true,
-        department: true,
-      },
-    });
+        createdById: undefined,
+      });
 
-    const citizen = await prisma.citizen.findUnique({
-      where: { id: citizenId },
-      select: { id: true, name: true, cpf: true },
-    });
+      const uploadedFiles = ((req as any).files || []) as Express.Multer.File[];
 
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId: protocol.id,
-        action: 'Protocolo criado',
-        comment: `Protocolo criado via DigiBot para o serviÇõo: ${service.name}`,
-        timestamp: new Date(),
-      },
-    });
-
-    await prisma.protocolInteraction.create({
-      data: {
-        protocolId: protocol.id,
-        type: 'MESSAGE',
-        authorType: 'CITIZEN',
-        authorId: citizenId,
-        authorName: citizen?.name || 'Cidadao',
-        message: `Protocolo ${protocolNumber} criado`,
-        isInternal: false,
-        isRead: false,
-      },
-    });
-
-    let workflowWarning: string | null = null;
-    let slaWarning: string | null = null;
-
-    try {
-      const stages = await applyWorkflowToProtocol(protocol.id);
-      if (!stages || stages.length === 0) {
-        workflowWarning = `Servico "${service.name}" sem workflow configurado`;
+      let documentTypes: string[] = [];
+      if ((req.body as any).documentTypes) {
+        const raw = (req.body as any).documentTypes;
+        if (Array.isArray(raw)) {
+          documentTypes = raw;
+        } else if (typeof raw === 'string') {
+          try {
+            const parsed = JSON.parse(raw);
+            documentTypes = Array.isArray(parsed) ? parsed : [raw];
+          } catch {
+            documentTypes = [raw];
+          }
+        }
       }
-    } catch (error: any) {
-      workflowWarning = error?.message || 'Erro ao aplicar workflow';
-    }
 
-    try {
-      const sla = await createProtocolSLA(protocol.id);
-      if (!sla) {
-        slaWarning = 'Erro ao criar SLA do protocolo';
+      let uploadedDocsResult: any[] = [];
+      let uploadErrors: string[] = [];
+
+      if (uploadedFiles.length > 0) {
+        try {
+          const uploadResult = await documentUploadService.uploadDocumentsToProtocol({
+            protocolId: result.protocol.id,
+            files: uploadedFiles,
+            uploadedBy: citizenId,
+            documentTypes,
+          });
+          uploadedDocsResult = uploadResult.uploadedDocuments || [];
+          uploadErrors = uploadResult.errors || [];
+        } catch (docErr: any) {
+          console.error('[internal.routes] Error uploading protocol documents:', docErr);
+          uploadErrors = [docErr?.message || 'Erro ao salvar documentos do protocolo'];
+        }
       }
-    } catch (error: any) {
-      slaWarning = error?.message || 'Erro ao criar SLA do protocolo';
-    }
 
-    const warnings = [workflowWarning, slaWarning].filter(Boolean);
-    if (warnings.length > 0) {
-      console.warn('[internal.routes] Protocol created with warnings:', warnings);
-    }
+      // Criar pendentes para documentos obrigatórios que não foram enviados
+      await ensureRequiredProtocolDocuments(result.protocol.id, service as any, uploadedDocsResult);
 
-    res.json({ protocol, warnings });
-  } catch (error) {
-    console.error('[internal.routes] Error in POST /protocols', error);
-    res.status(500).json({ error: 'Internal server error' });
+      const fullProtocol = await prisma.protocolSimplified.findUnique({
+        where: { id: result.protocol.id },
+        include: { service: true, department: true },
+      });
+
+      // Registrar uma interaÃ§Ã£o pÃºblica no protocolo (visÃ­vel ao cidadÃ£o)
+      // Isso ajuda a manter o histÃ³rico consistente no painel.
+      try {
+        const citizen = await prisma.citizen.findUnique({
+          where: { id: citizenId },
+          select: { name: true },
+        });
+
+        await prisma.protocolInteraction.create({
+          data: {
+            protocolId: result.protocol.id,
+            type: 'MESSAGE',
+            authorType: 'CITIZEN',
+            authorId: citizenId,
+            authorName: citizen?.name || 'Cidadão',
+            message: `Protocolo ${result.protocol.number} criado via DigiBot`,
+            isInternal: false,
+            isRead: false,
+          },
+        });
+      } catch (interactionErr) {
+        console.warn('[internal.routes] Failed to create protocol interaction:', interactionErr);
+      }
+
+      const warnings = uploadErrors.filter(Boolean);
+      if (warnings.length > 0) {
+        console.warn('[internal.routes] Protocol created with warnings:', warnings);
+      }
+
+      res.json({ protocol: fullProtocol, warnings });
+    } catch (error) {
+      console.error('[internal.routes] Error in POST /protocols', error);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // GET /api/internal/protocols - Listar protocolos do cidadão
 router.get('/protocols', async (req: Request, res: Response) => {

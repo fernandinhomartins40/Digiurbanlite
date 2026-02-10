@@ -318,11 +318,13 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
     // Log de auditoria: login bem-sucedido
     await logLoginSuccess(req, 'citizen', citizen.id);
 
-    // Gerar token JWT com tenantId do cidadão
+    // Gerar token JWT com campos compatíveis com ultrazend-messages
     const token = jwt.sign(
       {
         citizenId: citizen.id,
-        type: 'citizen'
+        userId: citizen.id,
+        type: 'citizen',
+        userType: 'CITIZEN'
       },
       process.env.JWT_SECRET!,
       { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }

@@ -127,6 +127,7 @@ export function useConversations({
     }
 
     try {
+      // Iniciar fluxo sem conversationId - o backend cria a conversa automaticamente
       const response = await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
         method: 'POST',
         credentials: 'include',
@@ -134,9 +135,15 @@ export function useConversations({
         body: JSON.stringify({ flowName: 'menu_principal' }),
       });
 
-      return response.ok;
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('[useConversations] Erro ao criar conversa do bot:', response.status, errorData);
+        return false;
+      }
+
+      return true;
     } catch (error) {
-      console.error('Erro ao criar conversa do bot:', error);
+      console.error('[useConversations] Erro de rede ao criar conversa do bot:', error);
       return false;
     }
   }, [MESSAGES_API_URL]);
@@ -285,12 +292,24 @@ export function useConversations({
     socketRef.current = newSocket;
 
     newSocket.on('connect', () => {
+      const wasReconnect = reconnectAttemptsRef.current > 0;
       reconnectAttemptsRef.current = 0;
       setIsConnected(true);
       console.log('[useConversations] Conectado ao servidor de mensagens', {
         userId,
         userType,
+        wasReconnect,
       });
+
+      // Se foi uma reconexão, recarregar conversas para sincronizar estado
+      if (wasReconnect) {
+        console.log('[useConversations] Reconexão detectada, recarregando conversas...');
+        fetchConversations().then(sorted => {
+          setConversations(sorted);
+        }).catch(err => {
+          console.error('[useConversations] Erro ao recarregar conversas após reconexão:', err);
+        });
+      }
     });
 
     newSocket.on('disconnect', (reason) => {

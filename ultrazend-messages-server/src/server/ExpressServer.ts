@@ -12,6 +12,7 @@ import channelService from '../delivery/ChannelService';
 import fileStorage from '../storage/FileStorage';
 import prisma from '../utils/prisma';
 import { FlowEngineService } from '../delivery/FlowEngineService';
+import whatsappAdapter from '../delivery/WhatsAppAdapter';
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -87,6 +88,9 @@ export class ExpressServer {
       });
     });
 
+    // Webhooks (sem auth)
+    this.app.use('/webhooks/whatsapp', this.whatsappWebhookRoutes());
+
     // API routes
     this.app.use('/api/conversations', this.authMiddleware.bind(this), this.conversationRoutes());
     this.app.use('/api/messages', this.authMiddleware.bind(this), this.messageRoutes());
@@ -106,6 +110,164 @@ export class ExpressServer {
     this.app.use((_req: Request, res: Response) => {
       res.status(404).json({ error: 'Route not found' });
     });
+  }
+
+  private whatsappWebhookRoutes() {
+    const router = express.Router();
+
+    // Meta WhatsApp Cloud API: verificação do webhook
+    router.get('/', (req: Request, res: Response) => {
+      const mode = req.query['hub.mode'];
+      const token = req.query['hub.verify_token'];
+      const challenge = req.query['hub.challenge'];
+
+      const expectedToken = process.env.WHATSAPP_VERIFY_TOKEN;
+
+      if (mode === 'subscribe' && expectedToken && token === expectedToken && typeof challenge === 'string') {
+        res.status(200).send(challenge);
+        return;
+      }
+
+      res.status(403).json({ error: 'Forbidden' });
+    });
+
+    // Meta WhatsApp Cloud API: recebimento de mensagens
+    router.post('/', async (req: Request, res: Response) => {
+      try {
+        const body: any = req.body;
+
+        const messages: Array<{ from: string; type: string; text?: string }> = [];
+
+        const entries = Array.isArray(body?.entry) ? body.entry : [];
+        for (const entry of entries) {
+          const changes = Array.isArray(entry?.changes) ? entry.changes : [];
+          for (const change of changes) {
+            const value = change?.value;
+            const incoming = Array.isArray(value?.messages) ? value.messages : [];
+            for (const msg of incoming) {
+              const from = String(msg?.from || '').trim();
+              const type = String(msg?.type || '').trim();
+              if (!from || !type) continue;
+
+              if (type === 'text') {
+                const text = String(msg?.text?.body || '').trim();
+                if (!text) continue;
+                messages.push({ from, type, text });
+              } else {
+                // Suporte inicial: apenas texto
+                messages.push({ from, type });
+              }
+            }
+          }
+        }
+
+        // Sempre responder 200 para o WhatsApp (evita retries agressivos)
+        res.status(200).json({ received: true });
+
+        if (messages.length === 0) {
+          return;
+        }
+
+        if (!whatsappAdapter.isConfigured()) {
+          logger.warn('WhatsApp webhook received messages, but adapter is not configured');
+          return;
+        }
+
+        // Processar cada mensagem
+        for (const msg of messages) {
+          const citizenId = await this.findCitizenIdByPhone(msg.from);
+
+          if (!citizenId) {
+            await whatsappAdapter.sendTextMessage(
+              msg.from,
+              'Não encontrei um cadastro com este número. Acesse o Portal do Cidadão para criar sua conta e depois volte aqui.'
+            ).catch(() => {});
+            continue;
+          }
+
+          const input = msg.type === 'text'
+            ? (msg.text as string)
+            : 'Recebi sua mensagem. Por enquanto, o atendimento via WhatsApp suporta apenas texto.';
+
+          const result = await this.flowEngineService.processMessage(citizenId, input);
+
+          let replyText = result?.response?.message || '';
+          const responseData = result?.response?.data as any;
+
+          // Para menus, anexar lista de opções ao texto (WhatsApp não recebe metadata estruturada)
+          if (result?.response?.messageType === 'menu' && Array.isArray(responseData?.options) && responseData.options.length > 0) {
+            const optionsList = responseData.options
+              .map((o: any) => `- ${o.label}`)
+              .join('\n');
+            replyText = `${replyText}\n\nOpções:\n${optionsList}\n\nResponda com a opção desejada.`;
+          }
+
+          if (replyText.trim().length === 0) {
+            replyText = 'Ok.';
+          }
+
+          await whatsappAdapter.sendTextMessage(msg.from, replyText);
+        }
+      } catch (error) {
+        logger.error('Error in WhatsApp webhook', { error });
+        // Mesmo em erro, responder 200 para evitar retries em loop.
+        if (!res.headersSent) {
+          res.status(200).json({ received: true });
+        }
+      }
+    });
+
+    return router;
+  }
+
+  private async findCitizenIdByPhone(phone: string): Promise<string | null> {
+    const digits = String(phone || '').replace(/\D/g, '');
+    const local = digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
+
+    if (local.length < 10) return null;
+
+    const suffix = local.slice(-4);
+    const prefix = local.length === 11 ? local.slice(2, 7) : local.slice(2, 6);
+
+    const candidates = await prisma.citizen.findMany({
+      where: {
+        isActive: true,
+        OR: [
+          ...(prefix && suffix
+            ? [
+                { AND: [{ phone: { contains: prefix } }, { phone: { contains: suffix } }] },
+                { AND: [{ phoneSecondary: { contains: prefix } }, { phoneSecondary: { contains: suffix } }] },
+              ]
+            : []),
+          ...(suffix
+            ? [{ phone: { contains: suffix } }, { phoneSecondary: { contains: suffix } }]
+            : []),
+          { phone: { contains: local } },
+          { phoneSecondary: { contains: local } },
+          { phone: { contains: digits } },
+          { phoneSecondary: { contains: digits } },
+        ],
+      },
+      select: {
+        id: true,
+        phone: true,
+        phoneSecondary: true,
+      },
+      take: 10,
+    });
+
+    const normalize = (value: any) => String(value || '').replace(/\D/g, '');
+
+    const exact = candidates.find((c) => {
+      const p1 = normalize(c.phone);
+      const p2 = normalize(c.phoneSecondary);
+      return p1 === local || p1 === digits || p2 === local || p2 === digits;
+    });
+
+    if (exact) return exact.id;
+    if (candidates.length === 1) return candidates[0].id;
+
+    return null;
   }
 
   private authMiddleware(req: AuthRequest, res: Response, next: NextFunction): void {

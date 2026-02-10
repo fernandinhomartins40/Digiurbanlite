@@ -12,7 +12,7 @@
       "id": "start",
       "type": "message",
       "config": {
-        "text": "👋 Olá! Sou o DigiBot, seu assistente virtual.\n\nEstou aqui para te ajudar com os serviços da prefeitura."
+        "text": "👋 Olá! Sou o DigiBot, seu canal de atendimento no DigiUrban.\n\nAqui você pode solicitar serviços, consultar protocolos e acompanhar suas solicitações de forma conversacional."
       },
       "transitions": [
         { "to": "main_menu" }
@@ -22,7 +22,7 @@
       "id": "main_menu",
       "type": "menu",
       "config": {
-        "text": "👋 Olá! Sou o DigiBot, seu assistente virtual.\n\nEstou aqui para te ajudar com os serviços da prefeitura.\n\nO que você gostaria de fazer?",
+        "text": "O que você gostaria de fazer?",
         "options": [
           {
             "id": "solicitar_servico",

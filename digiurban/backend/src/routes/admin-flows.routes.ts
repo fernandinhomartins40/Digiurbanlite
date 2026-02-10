@@ -13,6 +13,21 @@ const prisma = new PrismaClient();
 // Todas as rotas exigem autenticação de admin
 router.use(authenticateToken);
 
+const isPlainObject = (value: unknown): value is Record<string, any> =>
+  !!value && typeof value === 'object' && !Array.isArray(value);
+
+const stampAdminManagedMetadata = (existing: unknown, incoming: unknown) => {
+  const base = isPlainObject(existing) ? existing : {};
+  const next = isPlainObject(incoming) ? incoming : {};
+
+  return {
+    ...base,
+    ...next,
+    managedBy: 'admin',
+    managedByUpdatedAt: new Date().toISOString(),
+  };
+};
+
 /**
  * GET /api/admin/flows/stats
  * Estatisticas resumidas
@@ -180,7 +195,7 @@ router.post('/', async (req: Request, res: Response) => {
         description,
         version: version || '1.0.0',
         nodes,
-        metadata: metadata || {},
+        metadata: stampAdminManagedMetadata({}, metadata),
         municipioId,
         isActive: isActive !== undefined ? isActive : true,
         isDefault: isDefault || false,
@@ -241,7 +256,10 @@ const updateFlowHandler = async (req: Request, res: Response) => {
     if (description !== undefined) updateData.description = description;
     if (version !== undefined) updateData.version = version;
     if (nodes !== undefined) updateData.nodes = nodes;
-    if (metadata !== undefined) updateData.metadata = metadata;
+
+    // Sinalizar que este fluxo Ã© gerenciado pelo painel (para nÃ£o ser sobrescrito por seeds do filesystem).
+    updateData.metadata = stampAdminManagedMetadata(flow.metadata, metadata);
+
     if (isActive !== undefined) updateData.isActive = isActive;
     if (isDefault !== undefined) updateData.isDefault = isDefault;
 
@@ -370,7 +388,7 @@ router.post('/:id/duplicate', async (req: Request, res: Response) => {
         description: `${original.description} (Cópia)`,
         version: '1.0.0',
         nodes: original.nodes as any,
-        metadata: original.metadata as any,
+        metadata: stampAdminManagedMetadata(original.metadata, original.metadata),
         municipioId: original.municipioId,
         isActive: false, // Inicia inativo
         isDefault: false,
