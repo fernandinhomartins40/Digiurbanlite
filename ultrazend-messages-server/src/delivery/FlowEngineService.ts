@@ -9,6 +9,7 @@ import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
 import fs from 'fs/promises';
 import path from 'path';
+import { ensureActiveMessageServerId } from '../utils/messageServer';
 
 const isPlainObject = (value: unknown): value is Record<string, any> =>
   !!value && typeof value === 'object' && !Array.isArray(value);
@@ -553,20 +554,7 @@ export class FlowEngineService {
    * Busca ou cria conversa do bot
    */
   private async findOrCreateBotConversation(citizenId: string) {
-    let messageServerId = process.env.MESSAGE_SERVER_ID;
-
-    if (!messageServerId) {
-      const activeServer = await prisma.messageServer.findFirst({
-        where: { isActive: true },
-        orderBy: { createdAt: 'asc' },
-      });
-
-      if (!activeServer) {
-        throw new Error('No active message server found');
-      }
-
-      messageServerId = activeServer.id;
-    }
+    const messageServerId = await ensureActiveMessageServerId();
 
     // Buscar conversa existente
     let conversation = await prisma.conversation.findFirst({

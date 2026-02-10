@@ -183,12 +183,19 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
 
       return true;
     } catch (error) {
-      console.error('❌ [CitizenAuth] Erro ao buscar dados do cidadão:', error);
+      const message = error instanceof Error ? error.message : String(error);
+
+      // Token expirado é um caso esperado (sessão antiga). Evitar poluir o console com stacktrace.
+      if (message !== 'Token expirado') {
+        console.error('❌ [CitizenAuth] Erro ao buscar dados do cidadão:', error);
+      } else {
+        console.log('[CitizenAuth] Sessão expirada, usuário não autenticado.');
+      }
       // ✅ CORRIGIDO: Não fazer logout se estiver em páginas públicas
       const publicPaths = ['/login', '/forgot-password', '/reset-password'];
       const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path));
 
-      if (typeof window !== 'undefined' && !isPublicPath) {
+      if (typeof window !== 'undefined' && !isPublicPath && message !== 'Token expirado') {
         await logout();
       }
       return false;

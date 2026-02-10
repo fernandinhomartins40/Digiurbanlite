@@ -130,6 +130,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        {/* Compat: alguns browsers reclamam do meta apple-only */}
+        <meta name="mobile-web-app-capable" content="yes" />
         {/* OpenCV.js para jscanify (document scanner) - usando CDN com CORS habilitado */}
         <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/opencv.js" async></script>
       </head>

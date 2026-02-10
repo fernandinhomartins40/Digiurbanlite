@@ -57,7 +57,9 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
         handler: 'CacheFirst',
         options: {
-          cacheName: 'image-cache',
+          // Bump de versão para evitar que respostas antigas (ex: HTML 200) fiquem presas no cache
+          // e quebrem ícones do manifest como /icon-144x144.png.
+          cacheName: 'image-cache-v2',
           expiration: {
             maxEntries: 100,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dias

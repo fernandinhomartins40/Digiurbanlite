@@ -1,5 +1,6 @@
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
+import { ensureActiveMessageServerId } from '../utils/messageServer';
 
 export class ChannelService {
   async createChannel(params: {
@@ -14,21 +15,7 @@ export class ChannelService {
     requiresApproval?: boolean;
   }) {
     try {
-      // Buscar o primeiro servidor de mensagens ativo
-      let messageServerId = process.env.MESSAGE_SERVER_ID;
-
-      if (!messageServerId) {
-        const activeServer = await prisma.messageServer.findFirst({
-          where: { isActive: true },
-          orderBy: { createdAt: 'asc' }
-        });
-
-        if (!activeServer) {
-          throw new Error('No active message server found');
-        }
-
-        messageServerId = activeServer.id;
-      }
+      const messageServerId = await ensureActiveMessageServerId();
 
       const channel = await prisma.officialChannel.create({
         data: {
