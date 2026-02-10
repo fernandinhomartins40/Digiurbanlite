@@ -87,6 +87,7 @@ export function useConversations({
   const reconnectAttemptsRef = useRef(0);
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
   const botEnsureAttemptedRef = useRef(false);
+  const conversationRefreshInFlightRef = useRef(false);
   const MAX_RECONNECT_ATTEMPTS = 5;
 
   // Refs para callbacks e valores para evitar recriação do socket
@@ -116,10 +117,25 @@ export function useConversations({
     [apiUrl]
   );
 
-  const MESSAGES_WS_URL = useMemo(() =>
-    wsUrl || process.env.NEXT_PUBLIC_MESSAGES_WS_URL || (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001'),
-    [wsUrl]
-  );
+  const normalizeSocketBaseUrl = (value: string) => {
+    const raw = String(value || '').trim();
+    if (!raw) return raw;
+
+    // Socket.IO client espera http(s) como base. wss:// costuma quebrar em alguns cenários.
+    if (raw.startsWith('wss://')) return `https://${raw.slice('wss://'.length)}`;
+    if (raw.startsWith('ws://')) return `http://${raw.slice('ws://'.length)}`;
+
+    return raw;
+  };
+
+  const MESSAGES_WS_URL = useMemo(() => {
+    const raw =
+      wsUrl ||
+      process.env.NEXT_PUBLIC_MESSAGES_WS_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001');
+
+    return normalizeSocketBaseUrl(raw);
+  }, [wsUrl]);
 
   const ensureBotConversation = useCallback(async () => {
     if (userTypeRef.current !== 'CITIZEN') {
@@ -347,8 +363,24 @@ export function useConversations({
         const conversationExists = prev.some(c => c.id === data.conversationId);
 
         if (!conversationExists) {
-          // Conversa não existe localmente
-          console.log('[useConversations] Conversa não encontrada localmente, aguardando evento conversation:new');
+          // Conversa não existe localmente: isso acontece quando o outro lado cria a conversa
+          // e envia a primeira mensagem. Recarregar a lista para sincronizar.
+          console.log('[useConversations] Conversa não encontrada localmente, recarregando conversas...');
+
+          if (!conversationRefreshInFlightRef.current) {
+            conversationRefreshInFlightRef.current = true;
+            fetchConversations()
+              .then(sorted => {
+                setConversations(sorted);
+              })
+              .catch(err => {
+                console.error('[useConversations] Erro ao recarregar conversas após message:new:', err);
+              })
+              .finally(() => {
+                conversationRefreshInFlightRef.current = false;
+              });
+          }
+
           return prev;
         }
 
@@ -486,39 +518,99 @@ export function useConversations({
   /**
    * Enviar mensagem via WebSocket
    */
-  const sendMessage = useCallback((conversationId: string, content: string, attachments?: any[]) => {
-    if (!socket || !isConnected) {
-      toast({
-        title: 'Erro',
-        description: 'Não conectado ao servidor de mensagens',
-        variant: 'destructive',
+  const sendMessage = useCallback(async (
+    conversationId: string,
+    content: string,
+    attachments?: any[]
+  ): Promise<{ success: boolean; message?: Message; error?: string }> => {
+    // Preferir WebSocket quando conectado
+    if (socket && isConnected) {
+      return new Promise<{ success: boolean; message?: Message; error?: string }>((resolve) => {
+        socket.emit(
+          'message:send',
+          {
+            conversationId,
+            content,
+            attachments,
+          },
+          (response: any) => {
+            if (response?.error) {
+              toast({
+                title: 'Erro',
+                description: 'Não foi possível enviar a mensagem',
+                variant: 'destructive',
+              });
+              resolve({ success: false, error: response.error });
+            } else {
+              resolve({ success: true, message: response.message });
+            }
+          }
+        );
       });
-      return Promise.reject(new Error('Not connected'));
     }
 
-    return new Promise<{ success: boolean; message?: Message; error?: string }>((resolve) => {
-      socket.emit(
-        'message:send',
-        {
-          conversationId,
-          content,
-          attachments,
-        },
-        (response: any) => {
-          if (response?.error) {
-            toast({
-              title: 'Erro',
-              description: 'Não foi possível enviar a mensagem',
-              variant: 'destructive',
-            });
-            resolve({ success: false, error: response.error });
-          } else {
-            resolve({ success: true, message: response.message });
-          }
+    // Fallback HTTP (permite envio mesmo se WS cair)
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/messages/send`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, content, attachments }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const msg = errorData?.error || `Erro ${response.status} ao enviar mensagem`;
+        throw new Error(msg);
+      }
+
+      const message = (await response.json()) as Message;
+
+      // Atualizar preview/timestamp localmente
+      setConversations(prev => {
+        const exists = prev.some(c => c.id === conversationId);
+
+        if (!exists) {
+          return prev;
         }
-      );
-    });
-  }, [socket, isConnected, toast]);
+
+        const updated = prev.map(c =>
+          c.id === conversationId
+            ? {
+                ...c,
+                lastMessagePreview: message.content.substring(0, 100),
+                lastMessageAt: message.sentAt,
+              }
+            : c
+        ).sort((a, b) => {
+          if (a.isBotConversation && !b.isBotConversation) return -1;
+          if (!a.isBotConversation && b.isBotConversation) return 1;
+
+          const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+          const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+
+          return dateB - dateA;
+        });
+
+        return updated;
+      });
+
+      // Notificar componente consumidor (ex: página) para atualizar a lista de mensagens
+      if (onNewMessageRef.current) {
+        onNewMessageRef.current(message, conversationId);
+      }
+
+      return { success: true, message };
+    } catch (error: any) {
+      console.error('[useConversations] Falha ao enviar mensagem (HTTP fallback):', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível enviar a mensagem',
+        variant: 'destructive',
+      });
+      return { success: false, error: error?.message || 'Falha ao enviar mensagem' };
+    }
+  }, [socket, isConnected, toast, MESSAGES_API_URL]);
 
   /**
    * Marcar mensagem como lida
@@ -629,4 +721,3 @@ export function useConversations({
 }
 
 export default useConversations;
-
