@@ -156,22 +156,22 @@ function SlideCapa() {
         {/* Subtitle */}
         <div className="mb-8">
           <h2 className="text-[26px] font-semibold text-[#193642]/85 tracking-tight">
-            Gestao Publica Digital Integrada
+            Gestão Pública Digital Integrada
           </h2>
           <div className="h-1 w-14 bg-gradient-to-r from-[#0f6fbe] to-[#0fffbf] mt-4 rounded-full" />
         </div>
 
         {/* Tagline */}
         <p className="text-[17px] text-slate-500 leading-relaxed max-w-[500px] mb-10">
-          Conecta cidadaos, servidores e gestores em tempo real — do protocolo ao relatorio, da solicitacao a avaliacao.
+          Conecta cidadãos, servidores e gestores em tempo real — do protocolo ao relatório, da solicitação à avaliação.
         </p>
 
         {/* Feature badges 2x2 */}
         <div className="grid grid-cols-2 gap-4 max-w-[480px] mb-10">
           {[
-            { icon: Smartphone, title: 'PWA Mobile-first', desc: 'Acesso facil para o cidadao', bg: 'bg-[#0f6fbe]/10', color: 'text-[#0f6fbe]' },
-            { icon: HeartPulse, title: 'Saude Integrada', desc: 'Prontuario, Farmacia e TFD', bg: 'bg-[#0fffbf]/10', color: 'text-emerald-600' },
-            { icon: BarChart3, title: 'Dashboards Executivos', desc: 'KPIs e relatorios em tempo real', bg: 'bg-indigo-50', color: 'text-indigo-600' },
+            { icon: Smartphone, title: 'PWA Mobile-first', desc: 'Acesso fácil para o cidadão', bg: 'bg-[#0f6fbe]/10', color: 'text-[#0f6fbe]' },
+            { icon: HeartPulse, title: 'Saúde Integrada', desc: 'Prontuário, Farmácia e TFD', bg: 'bg-[#0fffbf]/10', color: 'text-emerald-600' },
+            { icon: BarChart3, title: 'Dashboards Executivos', desc: 'KPIs e relatórios em tempo real', bg: 'bg-indigo-50', color: 'text-indigo-600' },
             { icon: ListChecks, title: 'Workflows com SLA', desc: 'Controle total de prazos', bg: 'bg-orange-50', color: 'text-orange-600' },
           ].map(({ icon: Icon, title, desc, bg, color }) => (
             <div key={title} className="flex items-center gap-3">
@@ -189,7 +189,7 @@ function SlideCapa() {
         {/* Footer */}
         <div className="flex items-center gap-8 pt-5 border-t border-slate-200 max-w-[480px]">
           <span className="text-xs text-slate-400"><Clock className="w-3 h-3 inline mr-1.5" />30-45 min</span>
-          <span className="text-xs text-slate-400 font-semibold">Apresentacao Comercial</span>
+          <span className="text-xs text-slate-400 font-semibold">Apresentação Comercial</span>
           <span className="text-xs text-slate-400">2026</span>
         </div>
       </div>
@@ -229,7 +229,7 @@ function SlideCapa() {
             {[
               { n: '14', l: 'Secretarias' },
               { n: '3.5k', l: 'Protocolos' },
-              { n: '98%', l: 'Resolucao' },
+              { n: '98%', l: 'Resolução' },
             ].map(({ n, l }) => (
               <div key={l}>
                 <p className="text-2xl font-extrabold text-[#193642]">{n}</p>
@@ -247,7 +247,7 @@ function SlideCapa() {
         <div className="absolute bottom-[110px] left-6 w-[200px] bg-white rounded-[14px] shadow-xl p-4 border-b-4 border-[#0f6fbe]">
           <div className="flex items-center mb-3">
             <Users className="w-3.5 h-3.5 text-[#0f6fbe] mr-2" />
-            <span className="font-bold text-[13px] text-[#193642]">Cidadao</span>
+            <span className="font-bold text-[13px] text-[#193642]">Cidadão</span>
           </div>
           <div className="flex items-center bg-slate-50 p-2 rounded-[10px] mb-2.5 gap-2.5">
             <div className="w-8 h-8 rounded-full bg-[#0f6fbe]/10 flex items-center justify-center shrink-0">
@@ -259,7 +259,7 @@ function SlideCapa() {
             </div>
           </div>
           <div className="w-full py-2 bg-[#0f6fbe] text-white text-xs font-bold text-center rounded-lg tracking-wide">
-            + Nova Solicitacao
+            + Nova Solicitação
           </div>
         </div>
 
@@ -1489,12 +1489,12 @@ function SlideFechamento() {
 
 function SlideValor() {
   const values = [
-    { icon: TrendingUp, title: 'Eficiencia operacional', desc: 'Protocolos digitais eliminam papel e retrabalho' },
-    { icon: Eye, title: 'Transparencia', desc: 'Cidadao acompanha tudo em tempo real' },
-    { icon: BarChart3, title: 'Controle de gestao', desc: 'Dashboards e relatorios com dados reais' },
-    { icon: Smartphone, title: 'Satisfacao do cidadao', desc: 'Atendimento 24/7 pelo celular com chatbot' },
+    { icon: TrendingUp, title: 'Eficiência operacional', desc: 'Protocolos digitais eliminam papel e retrabalho' },
+    { icon: Eye, title: 'Transparência', desc: 'Cidadão acompanha tudo em tempo real' },
+    { icon: BarChart3, title: 'Controle de gestão', desc: 'Dashboards e relatórios com dados reais' },
+    { icon: Smartphone, title: 'Satisfação do cidadão', desc: 'Atendimento 24/7 pelo celular com chatbot' },
     { icon: Fingerprint, title: 'Conformidade legal', desc: 'Assinatura digital, auditoria, rastreabilidade' },
-    { icon: HeartPulse, title: 'Saude integrada', desc: 'Prontuario, farmacia, TFD (poucos tem)' },
+    { icon: HeartPulse, title: 'Saúde integrada', desc: 'Prontuário, farmácia, TFD (poucos têm)' },
   ];
 
   return (
@@ -1506,13 +1506,13 @@ function SlideValor() {
         <h2 className="text-4xl font-black text-white mb-4 tracking-tight leading-tight">
           Por que escolher o <span className="text-[#0fffbf]">DigiUrban</span>?
         </h2>
-        <p className="text-base text-white/60 mb-8">7 razoes concretas de valor para a gestao publica:</p>
+        <p className="text-base text-white/60 mb-8">7 razões concretas de valor para a gestão pública:</p>
 
         <div className="flex items-center gap-4 p-4 rounded-xl bg-white/5 border border-white/10">
           <Play className="w-6 h-6 text-[#0fffbf]" />
           <div>
-            <p className="text-sm font-semibold text-white">Implantacao em 2-4 semanas</p>
-            <p className="text-xs text-white/50">Rapido retorno sobre investimento</p>
+            <p className="text-sm font-semibold text-white">Implantação em 2-4 semanas</p>
+            <p className="text-xs text-white/50">Rápido retorno sobre investimento</p>
           </div>
         </div>
       </div>
@@ -1535,7 +1535,7 @@ function SlideValor() {
 
         <div className="mt-10 p-5 rounded-2xl bg-[#0fffbf]/5 border border-[#0fffbf]/20">
           <p className="text-sm text-[#193642]">
-            <span className="font-bold">&quot;Posso agendar uma demonstracao tecnica?&quot;</span>
+            <span className="font-bold">&quot;Posso agendar uma demonstração técnica?&quot;</span>
             <br />
             <span className="text-slate-500">Podemos fazer um piloto com 2-3 secretarias para validar.</span>
           </p>
@@ -1737,7 +1737,7 @@ export default function ApresentacaoPage() {
       {/* Keyboard hint (hidden in fullscreen) */}
       {!isFullscreen && (
         <p className="text-white/20 text-xs mt-4">
-          Setas para navegar &middot; Espaco para avancar &middot; F para tela cheia
+          Setas para navegar &middot; Espaço para avançar &middot; F para tela cheia
         </p>
       )}
     </div>
