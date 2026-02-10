@@ -22,7 +22,8 @@ import {
   Bell,
   BarChart3,
   Award,
-  Search
+  Search,
+  Presentation,
 } from 'lucide-react';
 import {
   OrganizationStructuredData,
@@ -58,6 +59,10 @@ export default function LandingPage() {
               <a href="#servicos" className="text-sm font-medium text-gray-600 hover:text-[#0f6fbe] transition-colors">Serviços</a>
               <a href="#como-funciona" className="text-sm font-medium text-gray-600 hover:text-[#0f6fbe] transition-colors">Como Funciona</a>
               <a href="#seguranca" className="text-sm font-medium text-gray-600 hover:text-[#0f6fbe] transition-colors">Segurança</a>
+              <Link href="/apresentacao" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0f6fbe] hover:text-[#0fffbf] transition-colors">
+                <Presentation className="w-4 h-4" />
+                Apresentação
+              </Link>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -683,6 +688,7 @@ export default function LandingPage() {
               <ul className="space-y-1.5 sm:space-y-2 text-xs sm:text-sm">
                 <li><Link href="/cidadao/login" className="text-white/60 hover:text-[#0fffbf] transition-colors">Portal do Cidadão</Link></li>
                 <li><Link href="/admin/login" className="text-white/60 hover:text-[#0fffbf] transition-colors">Portal Administrativo</Link></li>
+                <li><Link href="/apresentacao" className="text-white/60 hover:text-[#0fffbf] transition-colors">Apresentação</Link></li>
                 <li><a href="#" className="text-white/60 hover:text-[#0fffbf] transition-colors">Privacidade</a></li>
                 <li><a href="#" className="text-white/60 hover:text-[#0fffbf] transition-colors">Termos de Uso</a></li>
               </ul>
