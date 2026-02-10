@@ -412,20 +412,8 @@ export default function CitizenDashboard() {
       if (conv?.isBotConversation) {
         await handleBotMessage(messageContent);
       } else {
-        const tempMessage: Message = {
-          id: `temp-${Date.now()}`,
-          content: messageContent,
-          senderId: citizen.id,
-          senderType: 'CITIZEN',
-          contentType: 'TEXT',
-          sentAt: new Date().toISOString(),
-          status: 'SENT',
-          isEdited: false,
-          isDeleted: false,
-          conversationId: selectedConversation.id,
-        };
-
-        setMessages(prev => [...prev, tempMessage]);
+        // Não inserir mensagem "temp" aqui: o hook `useConversations.sendMessage()` já
+        // dispara `onNewMessage` e evita duplicação com o evento `message:new`.
         await sendMessage(selectedConversation.id, messageContent);
       }
     } catch (error) {
@@ -1003,6 +991,5 @@ export default function CitizenDashboard() {
     </div>
   );
 }
-
 
 

@@ -542,7 +542,48 @@ export function useConversations({
               });
               resolve({ success: false, error: response.error });
             } else {
-              resolve({ success: true, message: response.message });
+              const message = response.message as Message | undefined;
+
+              // Evitar duplicar quando o servidor também emite `message:new` para o remetente.
+              if (message?.id) {
+                processedMessageIdsRef.current.add(message.id);
+              }
+
+              // Atualizar preview/timestamp localmente (a conversa sobe na lista).
+              if (message?.content) {
+                setConversations(prev => {
+                  const exists = prev.some(c => c.id === conversationId);
+                  if (!exists) return prev;
+
+                  const updated = prev.map(c =>
+                    c.id === conversationId
+                      ? {
+                          ...c,
+                          lastMessagePreview: message.content.substring(0, 100),
+                          lastMessageAt: message.sentAt,
+                        }
+                      : c
+                  ).sort((a, b) => {
+                    if (a.isBotConversation && !b.isBotConversation) return -1;
+                    if (!a.isBotConversation && b.isBotConversation) return 1;
+
+                    const dateA = a.lastMessageAt ? new Date(a.lastMessageAt).getTime() : 0;
+                    const dateB = b.lastMessageAt ? new Date(b.lastMessageAt).getTime() : 0;
+
+                    return dateB - dateA;
+                  });
+
+                  return updated;
+                });
+              }
+
+              // Notificar consumidor imediatamente (especialmente útil se o socket
+              // ainda não entrou na room da conversa).
+              if (message && onNewMessageRef.current) {
+                onNewMessageRef.current(message, conversationId);
+              }
+
+              resolve({ success: true, message });
             }
           }
         );
