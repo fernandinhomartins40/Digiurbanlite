@@ -47,7 +47,8 @@ import {
   Bus,
   MessageCircle,
   Bot,
-  FileSignature
+  FileSignature,
+  Network
 } from 'lucide-react'
 
 interface NavItem {
@@ -222,6 +223,18 @@ export function AdminSidebar() {
           href: '/admin/composicao-familiar',
           icon: UsersGroup,
           permissions: ['citizens:read']
+        },
+        {
+          title: 'Equipe',
+          href: '/admin/servidores/equipe',
+          icon: Users,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Organograma',
+          href: '/admin/organograma',
+          icon: Network,
+          minRole: 'COORDINATOR'
         }
       ]
     },
