@@ -48,7 +48,10 @@ import {
   MessageCircle,
   Bot,
   FileSignature,
-  Network
+  Network,
+  FolderTree,
+  Briefcase,
+  UserCog
 } from 'lucide-react'
 
 interface NavItem {
@@ -235,6 +238,36 @@ export function AdminSidebar() {
           href: '/admin/organograma',
           icon: Network,
           minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Unidades Org.',
+          href: '/admin/organograma/unidades',
+          icon: FolderTree,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Cargos',
+          href: '/admin/organograma/cargos',
+          icon: Briefcase,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Lotações',
+          href: '/admin/organograma/lotacoes',
+          icon: UserCog,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Equipes/Grupos',
+          href: '/admin/organograma/equipes',
+          icon: UsersGroup,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Hierarquias',
+          href: '/admin/organograma/hierarquias',
+          icon: GitBranch,
+          minRole: 'ADMIN'
         }
       ]
     },
