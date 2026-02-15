@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { Building2, X } from 'lucide-react'
+import { Building2 } from 'lucide-react'
 import {
   Sheet,
   SheetContent,
@@ -23,6 +23,7 @@ import {
   Calendar,
   Map,
   Users,
+  Users as UsersGroup,
   Settings,
   Mail,
   Sprout,
@@ -43,12 +44,18 @@ import {
   UserCheck,
   GitBranch,
   TrendingUp,
-  Send,
-  Inbox,
   UserCircle,
-  MailOpen,
-  Trash2,
-  ScrollText
+  ScrollText,
+  Network,
+  Bot,
+  FileSignature,
+  Award,
+  MessageCircle,
+  Cpu,
+  DollarSign,
+  ShieldAlert,
+  Car,
+  Bus
 } from 'lucide-react'
 
 interface NavItem {
@@ -131,7 +138,7 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
       ]
     },
     {
-      title: 'Gestão',
+      title: 'Serviços',
       items: [
         {
           title: 'Catálogo de Serviços',
@@ -140,34 +147,64 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
           permissions: ['services:create', 'services:update']
         },
         {
+          title: 'Estatísticas',
+          href: '/admin/gerenciamento-servicos',
+          icon: TrendingUp,
+          permissions: ['services:read']
+        }
+      ]
+    },
+    {
+      title: 'Gestão de Processos',
+      items: [
+        {
           title: 'Workflows',
           href: '/admin/workflows',
           icon: GitBranch,
           minRole: 'ADMIN'
         },
         {
-          title: 'Estatísticas',
-          href: '/admin/gerenciamento-servicos',
-          icon: TrendingUp,
-          permissions: ['services:read']
+          title: 'Fluxos do Bot',
+          href: '/admin/bot-flows',
+          icon: Bot,
+          minRole: 'ADMIN',
+          badge: 'NOVO'
         },
         {
-          title: 'Relatórios',
-          href: '/admin/relatorios',
-          icon: BarChart3,
-          permissions: ['reports:department', 'reports:full']
+          title: 'Templates de Documentos',
+          href: '/admin/templates-documentos',
+          icon: ScrollText,
+          minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
+      title: 'Documentos & Assinaturas',
+      items: [
+        {
+          title: 'Meus Documentos',
+          href: '/admin/meus-documentos',
+          icon: FileText,
+          minRole: 'USER'
+        },
+        {
+          title: 'Assinaturas Digitais',
+          href: '/admin/assinaturas-digitais',
+          icon: FileSignature,
+          minRole: 'COORDINATOR',
+          badge: 'NOVO'
+        },
+        {
+          title: 'Certificados Digitais',
+          href: '/admin/certificados-digitais',
+          icon: Award,
+          minRole: 'ADMIN'
         }
       ]
     },
     {
       title: 'Pessoas',
       items: [
-        {
-          title: 'Equipe',
-          href: '/admin/equipe',
-          icon: Users,
-          permissions: ['team:read']
-        },
         {
           title: 'Cidadãos',
           href: '/admin/cidadaos',
@@ -180,64 +217,87 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
           icon: UserCheck,
           permissions: ['citizens:verify'],
           badge: stats?.pendingCitizens?.toString()
+        },
+        {
+          title: 'Composição Familiar',
+          href: '/admin/composicao-familiar',
+          icon: UsersGroup,
+          permissions: ['citizens:read']
+        },
+        {
+          title: 'Equipe',
+          href: '/admin/servidores/equipe',
+          icon: Users,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Organograma',
+          href: '/admin/organograma',
+          icon: Network,
+          minRole: 'COORDINATOR'
         }
       ]
     },
     {
-      title: 'Email',
+      title: 'Comunicação',
       items: [
         {
-          title: 'Dashboard',
+          title: 'Mensagens',
+          href: '/admin/mensagens',
+          icon: MessageCircle,
+          permissions: ['messages:read'],
+          badge: stats?.unreadMessages?.toString()
+        },
+        {
+          title: 'Email',
           href: '/admin/email',
           icon: Mail,
-          minRole: 'ADMIN'
-        },
-        {
-          title: 'Caixa de Entrada',
-          href: '/admin/email/inbox',
-          icon: Inbox,
           minRole: 'COORDINATOR'
         },
         {
-          title: 'Escrever Email',
-          href: '/admin/email/compose',
-          icon: Send,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Enviados',
-          href: '/admin/email/sent',
-          icon: MailOpen,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Rascunhos',
-          href: '/admin/email/drafts',
-          icon: FileText,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Templates',
-          href: '/admin/email/templates',
-          icon: ScrollText,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Lixeira',
-          href: '/admin/email/trash',
-          icon: Trash2,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Contas',
+          title: 'Contas de Email',
           href: '/admin/email-accounts',
           icon: UserCircle,
           minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
+      title: 'Análise & Relatórios',
+      items: [
+        {
+          title: 'Analytics',
+          href: '/admin/analytics',
+          icon: BarChart3,
+          minRole: 'COORDINATOR'
+        },
+        {
+          title: 'Relatórios',
+          href: '/admin/relatorios',
+          icon: FileText,
+          permissions: ['reports:department', 'reports:full']
+        }
+      ]
+    },
+    {
+      title: 'Configurações',
+      items: [
+        {
+          title: 'Perfil',
+          href: '/admin/perfil',
+          icon: UserCircle,
+          minRole: 'USER'
         },
         {
           title: 'Configurações',
-          href: '/admin/email-service',
+          href: '/admin/configuracoes',
           icon: Settings,
+          minRole: 'ADMIN'
+        },
+        {
+          title: 'Integrações',
+          href: '/admin/integracoes',
+          icon: Cpu,
           minRole: 'ADMIN'
         }
       ]
@@ -323,6 +383,54 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
         title: 'Turismo',
         href: '/admin/secretarias/turismo',
         icon: Camera,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Administração',
+        href: '/admin/secretarias/administracao',
+        icon: Building,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Defesa Civil',
+        href: '/admin/secretarias/defesa-civil',
+        icon: ShieldAlert,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Desenvolvimento Econômico',
+        href: '/admin/secretarias/desenvolvimento-economico',
+        icon: TrendingUp,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Finanças',
+        href: '/admin/secretarias/financas',
+        icon: DollarSign,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Mobilidade Urbana',
+        href: '/admin/secretarias/mobilidade-urbana',
+        icon: Bus,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Políticas para Mulheres',
+        href: '/admin/secretarias/politicas-mulheres',
+        icon: Users,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Tecnologia e Inovação',
+        href: '/admin/secretarias/tecnologia-inovacao',
+        icon: Cpu,
+        minRole: 'COORDINATOR'
+      },
+      {
+        title: 'Transportes e Trânsito',
+        href: '/admin/secretarias/transportes-transito',
+        icon: Car,
         minRole: 'COORDINATOR'
       }
     ]
