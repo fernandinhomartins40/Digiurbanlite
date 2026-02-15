@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { OrgChart } from '@/components/unified-system/OrgChart';
 import { Loader2, Building2, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 interface Department {
   id: string;
@@ -34,6 +35,7 @@ interface OrganizationalUnit {
 
 export default function OrganogramaPage() {
   const router = useRouter();
+  const { apiRequest } = useAdminAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [selectedDepartment, setSelectedDepartment] = useState<string>('');
   const [orgData, setOrgData] = useState<OrganizationalUnit | null>(null);
@@ -54,18 +56,14 @@ export default function OrganogramaPage() {
 
   const fetchDepartments = async () => {
     try {
-      const response = await fetch('/api/admin/departments', {
-        credentials: 'include',
-      });
-
-      if (!response.ok) throw new Error('Erro ao carregar departamentos');
-
-      const data = await response.json();
-      setDepartments(data);
+      const response = await apiRequest('/admin/departments');
+      // API retorna { success, data: { departments: [...] } }
+      const deptList = response?.data?.departments ?? response?.departments ?? [];
+      setDepartments(deptList);
 
       // Selecionar primeiro departamento por padrão
-      if (data.length > 0 && !selectedDepartment) {
-        setSelectedDepartment(data[0].id);
+      if (deptList.length > 0 && !selectedDepartment) {
+        setSelectedDepartment(deptList[0].id);
       }
     } catch (err: any) {
       console.error('Erro ao carregar departamentos:', err);
@@ -79,37 +77,21 @@ export default function OrganogramaPage() {
 
     try {
       // Buscar unidade raiz (Secretaria)
-      const response = await fetch(
-        `/api/organizational-units?departmentId=${selectedDepartment}&tipo=SECRETARIA`,
-        {
-          credentials: 'include',
-        }
-      );
+      const units = await apiRequest(`/organizational-units?departmentId=${selectedDepartment}&tipo=SECRETARIA`);
+      // organizational-units retorna array diretamente
+      const unitList = Array.isArray(units) ? units : (units?.data ?? []);
 
-      if (!response.ok) throw new Error('Erro ao carregar organograma');
-
-      const units = await response.json();
-
-      if (units.length === 0) {
+      if (unitList.length === 0) {
         setError('Nenhuma estrutura organizacional encontrada para este departamento');
         setOrgData(null);
         return;
       }
 
       // Pegar primeira unidade (secretaria)
-      const secretaria = units[0];
+      const secretaria = unitList[0];
 
       // Buscar hierarquia completa
-      const hierarchyResponse = await fetch(
-        `/api/organizational-units/${secretaria.id}/hierarchy`,
-        {
-          credentials: 'include',
-        }
-      );
-
-      if (!hierarchyResponse.ok) throw new Error('Erro ao carregar hierarquia');
-
-      const hierarchy = await hierarchyResponse.json();
+      const hierarchy = await apiRequest(`/organizational-units/${secretaria.id}/hierarchy`);
       setOrgData(hierarchy);
     } catch (err: any) {
       console.error('Erro ao carregar organograma:', err);
