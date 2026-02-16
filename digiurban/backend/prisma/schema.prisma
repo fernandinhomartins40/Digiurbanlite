@@ -2704,8 +2704,13 @@ model UnidadeEducacao {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
+  // ✅ NOVO: Vínculo com Sistema Unificado V2.0
+  organizationalUnitId String?             @unique
+  organizationalUnit   OrganizationalUnit? @relation("UnidadeEducacaoOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
   @@index([tipo, isActive])
   @@index([isActive])
+  @@index([organizationalUnitId])
   @@map("unidades_educacao")
 }
 
@@ -2724,8 +2729,13 @@ model UnidadeCRAS {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // ✅ NOVO: Vínculo com Sistema Unificado V2.0
+  organizationalUnitId String?             @unique
+  organizationalUnit   OrganizationalUnit? @relation("UnidadeCRASOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
   @@index([tipo, isActive])
   @@index([isActive])
+  @@index([organizationalUnitId])
   @@map("unidades_cras")
 }
 
@@ -7618,8 +7628,10 @@ model OrganizationalUnit {
   teams       Team[]
   hierarchies EmployeeHierarchy[]
 
-  // ✅ NOVO: Relacionamento com UnidadeSaude (apps específicos)
-  unidadeSaude UnidadeSaude? @relation("UnidadeSaudeOrgUnit")
+  // ✅ Relacionamento com apps de domínio específico
+  unidadeSaude    UnidadeSaude?    @relation("UnidadeSaudeOrgUnit")
+  unidadeEducacao UnidadeEducacao? @relation("UnidadeEducacaoOrgUnit")
+  unidadeCRAS     UnidadeCRAS?     @relation("UnidadeCRASOrgUnit")
 
   // ✅ NOVO: Sistema de Atribuição de Protocolos
   protocolAssignments ProtocolServerAssignment[] @relation("ProtocolUnitAssignments")

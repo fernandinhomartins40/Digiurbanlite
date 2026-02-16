@@ -58,7 +58,8 @@ import {
   Bus,
   FolderTree,
   Briefcase,
-  UserCog
+  UserCog,
+  Link2
 } from 'lucide-react'
 
 interface NavItem {
@@ -268,6 +269,13 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
           href: '/admin/organograma/hierarquias',
           icon: GitBranch,
           minRole: 'ADMIN'
+        },
+        {
+          title: 'Mapeamento',
+          href: '/admin/organograma/mapeamento',
+          icon: Link2,
+          minRole: 'ADMIN',
+          badge: 'NOVO'
         }
       ]
     },

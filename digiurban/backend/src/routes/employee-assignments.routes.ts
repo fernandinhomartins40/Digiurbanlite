@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
+import { syncUserDepartmentsFromAssignments, syncAllUserDepartments } from '../services/assignment-sync.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -330,6 +331,9 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       },
     });
 
+    // P0: Sincronizar UserDepartment automaticamente
+    await syncUserDepartmentsFromAssignments(userId);
+
     res.status(201).json(assignment);
   } catch (error: any) {
     console.error('Erro ao criar vínculo:', error);
@@ -465,6 +469,9 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
       },
     });
 
+    // P0: Sincronizar UserDepartment automaticamente
+    await syncUserDepartmentsFromAssignments(existingAssignment.userId);
+
     res.json(assignment);
   } catch (error: any) {
     console.error('Erro ao atualizar vínculo:', error);
@@ -523,6 +530,9 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
       },
     });
 
+    // P0: Sincronizar UserDepartment automaticamente
+    await syncUserDepartmentsFromAssignments(assignment.userId);
+
     res.json({
       message: 'Vínculo encerrado com sucesso',
       assignment: terminated,
@@ -550,6 +560,23 @@ router.get('/:id/audit', authenticateToken, async (req: Request, res: Response) 
   } catch (error) {
     console.error('Erro ao buscar auditoria:', error);
     res.status(500).json({ error: 'Erro ao buscar auditoria' });
+  }
+});
+
+/**
+ * POST /api/employee-assignments/sync-all
+ * Sincronizar UserDepartments de TODOS os servidores (migração/reparo)
+ */
+router.post('/sync-all', authenticateToken, async (req: Request, res: Response) => {
+  try {
+    const result = await syncAllUserDepartments();
+    res.json({
+      message: 'Sincronização em lote concluída',
+      ...result,
+    });
+  } catch (error) {
+    console.error('Erro na sincronização em lote:', error);
+    res.status(500).json({ error: 'Erro na sincronização em lote' });
   }
 });
 

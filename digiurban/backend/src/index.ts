@@ -556,6 +556,27 @@ try {
 console.log('✅ Apps de Saúde carregados com sucesso! Total: ~132 endpoints');
 
 // ============================================================
+// 📚 DASHBOARDS REAIS: Educação e Assistência Social
+// ============================================================
+try {
+  console.log('   → Dashboard Secretaria de Educação...');
+  const secretariasEducacaoRoutes = require('./routes/secretarias-educacao').default;
+  app.use('/api/secretarias/educacao', secretariasEducacaoRoutes);
+  console.log('   ✅ Rotas de secretaria de educação carregadas');
+} catch (e) {
+  console.error('❌ Erro ao carregar rotas de secretaria de educação:', e);
+}
+
+try {
+  console.log('   → Dashboard Secretaria de Assistência Social...');
+  const secretariasAssistenciaSocialRoutes = require('./routes/secretarias-assistencia-social').default;
+  app.use('/api/secretarias/assistencia-social', secretariasAssistenciaSocialRoutes);
+  console.log('   ✅ Rotas de secretaria de assistência social carregadas');
+} catch (e) {
+  console.error('❌ Erro ao carregar rotas de assistência social:', e);
+}
+
+// ============================================================
 // 🏛️ SISTEMA UNIFICADO DE VINCULAÇÃO DE SERVIDORES V2.0
 // ============================================================
 console.log('🏛️ Carregando Sistema Unificado de Vinculação de Servidores...');
