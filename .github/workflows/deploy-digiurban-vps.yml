@@ -16,6 +16,8 @@ jobs:
 
       - name: Deploy to VPS
         uses: appleboy/ssh-action@master
+        env:
+          GIT_TOKEN: ${{ secrets.GIT_TOKEN }}
         with:
           host: digiurban.com.br
           username: root
@@ -23,6 +25,7 @@ jobs:
           port: 22
           timeout: 20m
           command_timeout: 20m
+          envs: GIT_TOKEN
           script: |
             set -e
 
@@ -54,6 +57,16 @@ jobs:
             if [ -f ".env" ]; then
               cp .env .env.backup
               echo "✓ Backup do .env criado"
+            fi
+
+            # Configurar autenticação Git (funciona tanto para repo público quanto privado)
+            REPO_URL="https://github.com/fernandinhomartins40/Digiurbanlite.git"
+            if [ -n "${GIT_TOKEN}" ]; then
+              echo "🔑 Token Git detectado, configurando autenticação para repo privado..."
+              git remote set-url origin "https://${GIT_TOKEN}@github.com/fernandinhomartins40/Digiurbanlite.git"
+            else
+              echo "ℹ️ Sem token Git, usando acesso público..."
+              git remote set-url origin "${REPO_URL}"
             fi
 
             # Garantir que estamos no branch main
