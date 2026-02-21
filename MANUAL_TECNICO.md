@@ -199,14 +199,14 @@ Digiurbanlite/
 │   │   ├── src/
 │   │   │   ├── config/           # Configurações (logger, status, security)
 │   │   │   ├── middleware/       # Auth, rate-limit, validation, upload
-│   │   │   ├── routes/           # 100+ arquivos de rotas
-│   │   │   ├── services/         # 95+ serviços de negócio
+│   │   │   ├── routes/           # 98 arquivos de rotas (~891 endpoints)
+│   │   │   ├── services/         # 86 serviços de negócio
 │   │   │   ├── workers/          # BullMQ workers (notificações)
 │   │   │   ├── jobs/             # Cron jobs (email, notificações)
 │   │   │   ├── socket.ts         # Inicialização Socket.IO
 │   │   │   ├── data/             # Dados estáticos (seeds JSON)
 │   │   │   ├── seeds/            # Scripts de seed
-│   │   │   └── index.ts          # Entry point (727 linhas)
+│   │   │   └── index.ts          # Entry point (~396 linhas)
 │   │   ├── prisma/
 │   │   │   └── schema.prisma     # 213 models
 │   │   ├── templates/            # Templates HTML para documentos
@@ -219,7 +219,7 @@ Digiurbanlite/
 │   │   │   │   ├── cidadao/      # Portal do cidadão
 │   │   │   │   └── layout.tsx    # Layout raiz (SEO, PWA, providers)
 │   │   │   ├── components/       # Componentes React organizados por domínio
-│   │   │   ├── hooks/            # 47 hooks customizados
+│   │   │   ├── hooks/            # 45 hooks customizados
 │   │   │   └── lib/              # Utilitários, API clients, services
 │   │   ├── public/               # Assets estáticos + PWA manifest
 │   │   ├── next.config.js        # Configuração Next.js + PWA
@@ -263,17 +263,17 @@ Digiurbanlite/
 
 ### 4.1 Inicialização e Registro de Rotas
 
-O entry point está em `digiurban/backend/src/index.ts` (727 linhas). Na inicialização:
+O entry point está em `digiurban/backend/src/index.ts` (~396 linhas, refatorado de 727). Na inicialização:
 
 1. **Valida JWT_SECRET** — Se não definido, `process.exit(1)` (fatal)
 2. **Aplica middlewares globais** (Helmet, CORS, Morgan, Winston, body parser, cookie parser)
-3. **Registra 73 prefixos de rota** via `app.use()` com try/catch individual
+3. **Registra ~94 prefixos de rota** via `app.use()` com try/catch individual (helper `loadRoute()`)
 4. **Inicializa WebSocket** via `initializeSocket(httpServer)`
 5. **Inicia workers** (notification worker, notification cron jobs)
 6. **Inicia cron jobs de email** após servidor escutar
 7. **Configura graceful shutdown** (SIGTERM/SIGINT)
 
-**Rotas registradas (73 prefixos):**
+**Rotas registradas (~94 prefixos):**
 
 | Prefixo | Arquivo | Descrição |
 |---------|---------|-----------|
@@ -362,11 +362,11 @@ O entry point está em `digiurban/backend/src/index.ts` (727 linhas). Na inicial
 
 Aplicados nesta ordem em `index.ts`:
 
-1. **Helmet** — Headers de segurança HTTP
-2. **CORS** — Aceita múltiplas origens configuráveis, `credentials: true`
-3. **Trust Proxy** — `app.set('trust proxy', true)` para rate limiting atrás de Nginx
-4. **Morgan** — Logging HTTP (formato combined)
-5. **Winston Request Logger** — Log estruturado de cada requisição
+1. **Helmet** — Headers de segurança HTTP com CSP customizado (script-src, style-src, font-src, img-src, connect-src, frame-src, object-src)
+2. **CORS** — Whitelist estrita de origens. Em produção, requests sem origin são bloqueados. Origins não autorizados recebem erro CORS
+3. **Trust Proxy** — `app.set('trust proxy', true)` para rate limiting funcionar atrás de Nginx
+4. **Rate Limiting Global** — `apiRateLimiter` aplicado em todas as rotas `/api` (100 req/min por IP). Rotas de auth têm limites próprios mais restritos
+5. **Winston Request Logger** — Log estruturado de cada requisição (substituiu Morgan)
 6. **Conditional Body Parser** — Pula `multipart/form-data` (Multer), aplica JSON/URL-encoded com limite 50MB
 7. **Cookie Parser** — Parse de cookies para autenticação JWT
 8. **Static Files** — `/uploads` servido estaticamente
@@ -460,7 +460,7 @@ GUEST (0) → USER (1) → COORDINATOR (2) → MANAGER (3) → ADMIN (4) → SUP
 
 ### 4.5 Configuração de Segurança
 
-Centralizada em `config/security.ts`:
+Centralizada em `config/security.ts`. Helmet configurado com CSP customizado em `index.ts`:
 
 | Configuração | Valor | Observação |
 |-------------|-------|-----------|
@@ -477,8 +477,8 @@ Centralizada em `config/security.ts`:
 | **Senha lowercase** | Obrigatório | Letra minúscula |
 | **Senha number** | Obrigatório | Número |
 | **Senha especial** | Obrigatório | !@#$%^&*(),.? |
-| **Senha histórico** | 5 últimas | Não repetir |
-| **Senha expiração** | 90 dias | Troca periódica |
+| **Senha histórico** | 5 últimas | **NÃO IMPLEMENTADO** — planejado para versão futura |
+| **Senha expiração** | 90 dias | **NÃO IMPLEMENTADO** — planejado para versão futura |
 | **Sessão timeout** | 30min | Inatividade |
 | **Auditoria retenção** | 365 dias | LGPD: mín 6 meses |
 
@@ -917,7 +917,7 @@ EspacoPublico, ConjuntoHabitacional, ViaturaSeguranca, ParquePraca, Estabelecime
 
 ---
 
-## 7. API — Catálogo de Endpoints (291+)
+## 7. API — Catálogo de Endpoints (~891)
 
 ### 7.1 Autenticação Admin
 
@@ -1346,7 +1346,7 @@ Servidor de email independente com entrega MX direta:
 **Segurança:**
 - DKIM automático (RSA 2048 bits)
 - SPF + DMARC configuráveis
-- TLS opcional
+- TLS opcional (desabilitado por padrão, requer `tlsEnabled: true` + certificados)
 
 **Entrega:** MX direto via DNS (sem dependência de serviço externo como SendGrid).
 
@@ -1461,8 +1461,9 @@ DATABASE_URL=postgresql://digiurban:digiurban2024@postgres:5432/digiurban
 
 # JWT (OBRIGATÓRIO)
 JWT_SECRET=sua-chave-secreta-muito-longa
-JWT_ADMIN_EXPIRES_IN=8h
-JWT_CITIZEN_EXPIRES_IN=30d
+# Expiração dos tokens JWT é configurada em código (config/security.ts):
+# Admin: 1h | Cidadão: 8h | Super Admin: 30min
+# NÃO existe variável de ambiente para override de expiração
 
 # URLs
 FRONTEND_URL=https://seudominio.com.br

@@ -26,7 +26,7 @@ Digiurbanlite/
 - Winston logger + Zod/Joi validação
 
 ### Arquivos Críticos
-- `index.ts` — Registro de TODAS as rotas via `app.use()` com try/catch
+- `index.ts` — Registro de ~94 prefixos de rota via helper `loadRoute()` com try/catch
 - `prisma/schema.prisma` — 213 models (fonte de verdade do banco)
 - `middleware/admin-auth.ts` — Auth admin (cookie `digiurban_admin_token`)
 - `middleware/citizen-auth.ts` — Auth cidadão (cookie `digiurban_citizen_token`)

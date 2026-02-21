@@ -68,9 +68,10 @@ export const SECURITY_CONFIG = {
     REQUIRE_SPECIAL: true,
     SPECIAL_CHARS: '!@#$%^&*(),.?":{}|<>',
 
-    // Password History (futuro)
-    HISTORY_COUNT: 5,
-    EXPIRY_DAYS: 90, // Opcional para admins
+    // Password History — NÃO IMPLEMENTADO (planejado para versão futura)
+    // Requer model PasswordHistory no Prisma + lógica de validação
+    HISTORY_COUNT: 5, // unused
+    EXPIRY_DAYS: 90, // unused
   },
 
   /**

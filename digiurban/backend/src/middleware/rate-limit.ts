@@ -5,6 +5,7 @@
 
 import rateLimit from 'express-rate-limit';
 import { RATE_LIMIT } from '../config/security';
+import { logger } from '../config/logger.config';
 
 /**
  * Rate limiter para rotas de login
@@ -23,7 +24,7 @@ export const loginRateLimiter = rateLimit({
   skipSuccessfulRequests: false, // Conta requisições bem-sucedidas
   skipFailedRequests: false, // Conta requisições que falharam
   handler: (req, res) => {
-    console.warn(`[SECURITY] Rate limit exceeded for IP: ${req.ip}, Tenant: ${(req as any).tenant?.id}`);
+    logger.warn('Rate limit exceeded', { ip: req.ip, path: req.path });
     res.status(429).json({
       success: false,
       error: 'Too many requests',
