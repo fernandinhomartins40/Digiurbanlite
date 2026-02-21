@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>DigiUrban - Slide 01 - Capa</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com" rel="preconnect"/>
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* DigiUrban Brand Colors */
+        :root {
+            --brand-dark: #193642;
+            --brand-blue: #0f6fbe;
+            --brand-cyan: #0fffbf;
+            --brand-mint: #a7dbc9;
+            --brand-blue-light: #e8f4fd;
+            --brand-cyan-light: #e6fff7;
+        }
+
+        #slide-container {
+            width: 1280px;
+            height: 720px;
+            background-color: #ffffff;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            flex-direction: row;
+        }
+
+        /* Sidebar panel with brand identity */
+        .sidebar-panel {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 38%;
+            height: 100%;
+            background: linear-gradient(165deg, var(--brand-dark) 0%, #0d2a34 60%, #0a1f28 100%);
+            z-index: 0;
+        }
+
+        /* Accent line between sections */
+        .sidebar-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--brand-blue) 0%, var(--brand-cyan) 50%, var(--brand-mint) 100%);
+        }
+
+        /* Decorative geometric shapes */
+        .geo-circle {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(15, 255, 191, 0.12);
+        }
+
+        .geo-circle-1 {
+            width: 300px; height: 300px;
+            top: -60px; right: -40px;
+        }
+        .geo-circle-2 {
+            width: 200px; height: 200px;
+            bottom: 60px; right: 60px;
+        }
+        .geo-circle-3 {
+            width: 120px; height: 120px;
+            top: 200px; right: 200px;
+            border-color: rgba(15, 111, 190, 0.15);
+        }
+
+        /* Dot pattern */
+        .dot-pattern {
+            position: absolute;
+            bottom: 40px;
+            right: 30px;
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            opacity: 0.2;
+        }
+        .dot-pattern span {
+            width: 4px;
+            height: 4px;
+            background: var(--brand-cyan);
+            border-radius: 50%;
+        }
+
+        .card-glass {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+        }
+
+        .card-float {
+            box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.15);
+            border-radius: 14px;
+            background: white;
+        }
+
+        /* Animated pulse dot */
+        .pulse-dot {
+            width: 8px; height: 8px;
+            background: var(--brand-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 0 0 rgba(15, 255, 191, 0.4);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(15, 255, 191, 0.5); }
+            70% { box-shadow: 0 0 0 8px rgba(15, 255, 191, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(15, 255, 191, 0); }
+        }
+
+        /* Progress bar gradient */
+        .progress-brand {
+            background: linear-gradient(90deg, var(--brand-blue) 0%, var(--brand-cyan) 100%);
+        }
+
+        /* Badge chip */
+        .badge-online {
+            background: rgba(15, 255, 191, 0.15);
+            color: var(--brand-cyan);
+            font-weight: 600;
+            font-size: 10px;
+            padding: 3px 10px;
+            border-radius: 100px;
+            letter-spacing: 0.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="slide-container">
+
+    <!-- Right Panel (Dark brand background) -->
+    <div class="sidebar-panel">
+        <div class="geo-circle geo-circle-1"></div>
+        <div class="geo-circle geo-circle-2"></div>
+        <div class="geo-circle geo-circle-3"></div>
+        <div class="dot-pattern">
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+            <span></span><span></span><span></span><span></span><span></span>
+        </div>
+    </div>
+
+    <!-- LEFT CONTENT -->
+    <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; padding: 0 56px; z-index: 10; position: relative;">
+
+        <!-- Top: Brand mark -->
+        <div style="display: flex; align-items: center; margin-bottom: 40px;">
+            <div style="width: 44px; height: 44px; background: var(--brand-dark); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-right: 14px;">
+                <i class="fa-solid fa-city" style="color: var(--brand-cyan); font-size: 20px;"></i>
+            </div>
+            <span style="font-size: 13px; font-weight: 700; color: #94a3b8; letter-spacing: 3px; text-transform: uppercase;">Plataforma Gov.Tech</span>
+        </div>
+
+        <!-- Title -->
+        <div style="margin-bottom: 6px;">
+            <h1 style="font-size: 72px; font-weight: 900; color: var(--brand-dark); line-height: 1; letter-spacing: -2px;">
+                Digi<span style="color: var(--brand-blue);">Urban</span>
+            </h1>
+        </div>
+
+        <!-- Subtitle -->
+        <div style="margin-bottom: 32px;">
+            <h2 style="font-size: 26px; font-weight: 600; color: var(--brand-dark); opacity: 0.85; letter-spacing: -0.5px;">
+                Gestao Publica Digital Integrada
+            </h2>
+            <div style="height: 4px; width: 56px; background: linear-gradient(90deg, var(--brand-blue), var(--brand-cyan)); margin-top: 16px; border-radius: 4px;"></div>
+        </div>
+
+        <!-- Tagline -->
+        <div style="margin-bottom: 44px; max-width: 500px;">
+            <p style="font-size: 17px; color: #64748b; line-height: 1.7; font-weight: 400;">
+                Conecta cidadaos, servidores e gestores em tempo real — do protocolo ao relatorio, da solicitacao a avaliacao.
+            </p>
+        </div>
+
+        <!-- Feature badges (2x2 grid) -->
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; max-width: 480px; margin-bottom: 44px;">
+            <!-- Badge 1 -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: var(--brand-blue-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fa-solid fa-mobile-screen-button" style="color: var(--brand-blue); font-size: 16px;"></i>
+                </div>
+                <div>
+                    <p style="font-size: 13px; font-weight: 700; color: var(--brand-dark);">PWA Mobile-first</p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 1px;">Acesso facil para o cidadao</p>
+                </div>
+            </div>
+            <!-- Badge 2 -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: var(--brand-cyan-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fa-solid fa-heart-pulse" style="color: #059669; font-size: 16px;"></i>
+                </div>
+                <div>
+                    <p style="font-size: 13px; font-weight: 700; color: var(--brand-dark);">Saude Integrada</p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 1px;">Prontuario, Farmacia e TFD</p>
+                </div>
+            </div>
+            <!-- Badge 3 -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: #f0f0ff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fa-solid fa-chart-line" style="color: #4f46e5; font-size: 16px;"></i>
+                </div>
+                <div>
+                    <p style="font-size: 13px; font-weight: 700; color: var(--brand-dark);">Dashboards Executivos</p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 1px;">KPIs e relatorios em tempo real</p>
+                </div>
+            </div>
+            <!-- Badge 4 -->
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <div style="width: 42px; height: 42px; border-radius: 12px; background: #fff7ed; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fa-solid fa-list-check" style="color: #ea580c; font-size: 16px;"></i>
+                </div>
+                <div>
+                    <p style="font-size: 13px; font-weight: 700; color: var(--brand-dark);">Workflows com SLA</p>
+                    <p style="font-size: 11px; color: #94a3b8; margin-top: 1px;">Controle total de prazos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer info -->
+        <div style="display: flex; align-items: center; gap: 32px; padding-top: 20px; border-top: 1px solid #e2e8f0; max-width: 480px;">
+            <span style="font-size: 12px; color: #94a3b8;"><i class="fa-regular fa-clock" style="margin-right: 6px;"></i>30-45 min</span>
+            <span style="font-size: 12px; color: #94a3b8; font-weight: 600;">Apresentacao Comercial</span>
+            <span style="font-size: 12px; color: #94a3b8;"><i class="fa-regular fa-calendar" style="margin-right: 6px;"></i>2026</span>
+        </div>
+    </div>
+
+    <!-- RIGHT CONTENT (Cards on dark background) -->
+    <div style="width: 38%; height: 100%; z-index: 10; position: relative; display: flex; align-items: center; justify-content: center;">
+
+        <!-- Card 1: Gestor (top-right) -->
+        <div class="card-float" style="position: absolute; top: 100px; right: 36px; width: 220px; padding: 18px; border-left: 4px solid var(--brand-blue);">
+            <div style="display: flex; align-items: center; margin-bottom: 14px;">
+                <i class="fa-solid fa-user-tie" style="color: var(--brand-blue); margin-right: 8px; font-size: 14px;"></i>
+                <span style="font-weight: 700; font-size: 13px; color: var(--brand-dark);">Painel Gestor</span>
+            </div>
+            <div style="display: flex; gap: 6px; margin-bottom: 8px;">
+                <div style="flex: 1; height: 6px; background: #f1f5f9; border-radius: 4px;"></div>
+                <div style="flex: 0.6; height: 6px; background: #f1f5f9; border-radius: 4px;"></div>
+            </div>
+            <div style="display: flex; gap: 4px;">
+                <div style="flex: 1; height: 28px; background: var(--brand-blue-light); border-radius: 6px;"></div>
+                <div style="flex: 1; height: 28px; background: var(--brand-blue-light); border-radius: 6px;"></div>
+                <div style="flex: 1; height: 28px; background: var(--brand-blue-light); border-radius: 6px;"></div>
+            </div>
+        </div>
+
+        <!-- Card 2: Prefeitura (center - main card) -->
+        <div class="card-float" style="width: 260px; padding: 24px; border-top: 4px solid var(--brand-cyan); z-index: 20;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-building-columns" style="color: var(--brand-blue); font-size: 15px;"></i>
+                    <span style="font-weight: 700; font-size: 14px; color: var(--brand-dark);">Prefeitura Digital</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 5px;">
+                    <div class="pulse-dot"></div>
+                    <span class="badge-online">ONLINE</span>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; text-align: center; margin-bottom: 18px;">
+                <div>
+                    <p style="font-size: 24px; font-weight: 800; color: var(--brand-dark);">14</p>
+                    <p style="font-size: 10px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Secretarias</p>
+                </div>
+                <div>
+                    <p style="font-size: 24px; font-weight: 800; color: var(--brand-dark);">3.5k</p>
+                    <p style="font-size: 10px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Protocolos</p>
+                </div>
+                <div>
+                    <p style="font-size: 24px; font-weight: 800; color: var(--brand-dark);">98%</p>
+                    <p style="font-size: 10px; color: #94a3b8; margin-top: 2px; text-transform: uppercase; letter-spacing: 0.5px;">Resolucao</p>
+                </div>
+            </div>
+            <div style="width: 100%; height: 6px; background: #f1f5f9; border-radius: 100px; overflow: hidden; margin-bottom: 6px;">
+                <div class="progress-brand" style="width: 85%; height: 100%; border-radius: 100px;"></div>
+            </div>
+            <p style="font-size: 10px; color: #94a3b8; text-align: right;">Meta Mensal: 85%</p>
+        </div>
+
+        <!-- Card 3: Cidadao (bottom-left) -->
+        <div class="card-float" style="position: absolute; bottom: 110px; left: 24px; width: 200px; padding: 16px; border-bottom: 4px solid var(--brand-blue);">
+            <div style="display: flex; align-items: center; margin-bottom: 12px;">
+                <i class="fa-solid fa-user" style="color: var(--brand-blue); margin-right: 8px; font-size: 14px;"></i>
+                <span style="font-weight: 700; font-size: 13px; color: var(--brand-dark);">Cidadao</span>
+            </div>
+            <div style="display: flex; align-items: center; background: #f8fafc; padding: 8px 10px; border-radius: 10px; margin-bottom: 10px; gap: 10px;">
+                <div style="width: 32px; height: 32px; border-radius: 50%; background: var(--brand-blue-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                    <i class="fa-solid fa-robot" style="color: var(--brand-blue); font-size: 13px;"></i>
+                </div>
+                <div style="flex: 1;">
+                    <div style="height: 5px; background: #e2e8f0; border-radius: 4px; width: 80%; margin-bottom: 5px;"></div>
+                    <div style="height: 5px; background: #e2e8f0; border-radius: 4px; width: 55%;"></div>
+                </div>
+            </div>
+            <div style="width: 100%; padding: 8px 0; background: var(--brand-blue); color: white; font-size: 12px; font-weight: 700; text-align: center; border-radius: 8px; letter-spacing: 0.3px;">
+                <i class="fa-solid fa-plus" style="margin-right: 4px; font-size: 10px;"></i>
+                Nova Solicitacao
+            </div>
+        </div>
+
+        <!-- Connection lines (dashed) -->
+        <svg style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; pointer-events: none;">
+            <!-- Citizen to Server -->
+            <line x1="140" y1="520" x2="160" y2="420" stroke="#0f6fbe" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.25"/>
+            <!-- Server to Manager -->
+            <line x1="200" y1="310" x2="250" y2="230" stroke="#0f6fbe" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.25"/>
+        </svg>
+
+    </div>
+</div>
+
+</body>
+</html>

@@ -143,7 +143,14 @@
       "Bash(Get-Content \"C:\\\\Users\\\\fusea\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Projetos-Cursor-Digiurbanlite\\\\tasks\\\\b9e594d.output\")",
       "Bash(Select-Object -Last 80)",
       "Bash(npm run:*)",
-      "Bash(npx web-push:*)"
+      "Bash(npx web-push:*)",
+      "Bash(1 <<'SQL'\nSELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN \\('organizational_units', 'positions', 'functions', 'employee_assignments', 'employee_hierarchies', 'teams', 'team_members', 'protocol_server_assignments'\\) ORDER BY table_name;\nSQL)",
+      "Bash(move \"CREDENCIAIS.md\" \"documentacao-desatualizada\\\\CREDENCIAIS.md\")",
+      "Bash(move \"docs\\\\SUPER_ADMIN_CREDENCIAIS.md\" \"documentacao-desatualizada\\\\SUPER_ADMIN_CREDENCIAIS.md\")",
+      "Bash(move:*)",
+      "Bash(move \"docs\\\\INTEGRACAO-ESUS-PEC.md\" \"documentacao-desatualizada\\\\INTEGRACAO-ESUS-PEC.md\")",
+      "Bash(move \"docs\\\\IMPLEMENTACAO-COMPLETA-ESUS.md\" \"documentacao-desatualizada\\\\IMPLEMENTACAO-COMPLETA-ESUS.md\")",
+      "WebFetch(domain:registro.br)"
     ],
     "deny": [],
     "ask": []
