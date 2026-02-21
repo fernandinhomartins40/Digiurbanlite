@@ -55,12 +55,9 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Permitir requisições sem origin apenas em desenvolvimento (Postman, mobile apps)
+      // Requests sem origin: health checks (Nginx/Docker), SSR (Next.js), mobile apps, Postman
+      // CORS é proteção de BROWSER — requests server-to-server nunca enviam Origin
       if (!origin) {
-        if (process.env.NODE_ENV === 'production') {
-          logger.warn('CORS: request sem origin bloqueado em produção');
-          return callback(new Error('CORS: origin obrigatório em produção'));
-        }
         return callback(null, true);
       }
 
