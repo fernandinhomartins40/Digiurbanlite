@@ -12,7 +12,7 @@ import { MXDeliveryService } from '../delivery/MXDeliveryService.prisma';
 import { DKIMManager } from '../security/DKIMManager.prisma';
 import { SMTPServerConfig, SMTPSession, EmailData } from '../types';
 import { prisma } from '../lib/prisma';
-import { EmailUser as User, EmailStatus } from '@prisma/client';
+import { EmailUser as User, EmailStatus, Prisma } from '@prisma/client';
 
 /**
  * Helper para extrair texto de endereço de email
@@ -413,8 +413,8 @@ export class UltraZendSMTPServer {
           fromEmail,
           fromName,
           toEmail,
-          ccEmails: ccEmails && ccEmails.length > 0 ? ccEmails : null,
-          bccEmails: bccEmails && bccEmails.length > 0 ? bccEmails : null,
+          ccEmails: ccEmails && ccEmails.length > 0 ? ccEmails : Prisma.JsonNull,
+          bccEmails: bccEmails && bccEmails.length > 0 ? bccEmails : Prisma.JsonNull,
           replyTo: parsedEmail.replyTo ? this.extractEmail(parsedEmail.replyTo) : null,
           subject: parsedEmail.subject || '(Sem assunto)',
           textContent: parsedEmail.text || null,
@@ -422,7 +422,7 @@ export class UltraZendSMTPServer {
           headers: parsedEmail.headers
             ? JSON.parse(JSON.stringify(Object.fromEntries(parsedEmail.headers.entries())))
             : null,
-          attachments: attachments.length > 0 ? attachments : null,
+          attachments: attachments.length > 0 ? attachments : Prisma.JsonNull,
           size: this.calculateEmailSize(parsedEmail),
           receivedAt: parsedEmail.date || new Date(),
           emailServerId: emailServer.id,
