@@ -66,7 +66,7 @@ const getSearchItems = () => [
   { title: 'Serviços', description: 'Catálogo de serviços', href: '/admin/servicos', category: 'Gestão', keywords: ['serviço', 'catálogo', 'configuração'] },
   { title: 'Workflows', description: 'Fluxos de trabalho', href: '/admin/workflows', category: 'Gestão', keywords: ['workflow', 'fluxo', 'processo'] },
   { title: 'Cidadãos', description: 'Gestão de cidadãos', href: '/admin/cidadaos', category: 'Gestão', keywords: ['cidadão', 'munícipe', 'população'] },
-  { title: 'Equipe', description: 'Gerenciar equipes', href: '/admin/equipe', category: 'Gestão', keywords: ['equipe', 'funcionário', 'servidor'] },
+  { title: 'Equipe', description: 'Gerenciar equipes', href: '/admin/servidores/equipe', category: 'Gestão', keywords: ['equipe', 'funcionário', 'servidor'] },
   { title: 'Relatórios', description: 'Business Intelligence', href: '/admin/relatorios', category: 'Gestão', keywords: ['relatório', 'bi', 'analytics'] },
 
   // Documentos
@@ -338,11 +338,11 @@ export default function AdminPage() {
             <DashboardCard
               title="Equipe"
               description="Gerenciar equipes e permissões"
-              href="/admin/equipe"
+              href="/admin/servidores/equipe"
               icon={Users}
               iconColor="text-orange-600"
               iconBgColor="bg-orange-50"
-              onClick={() => handleCardClick('Equipe', '/admin/equipe', 'Gestão')}
+              onClick={() => handleCardClick('Equipe', '/admin/servidores/equipe', 'Gestão')}
             />
           )}
 

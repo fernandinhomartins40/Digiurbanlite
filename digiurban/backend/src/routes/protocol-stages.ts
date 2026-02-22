@@ -273,11 +273,16 @@ router.put(
         data: stage
         });
     } catch (error) {
-      console.error('Erro ao completar etapa:', error);
-      return res.status(500).json({
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      const isValidation = message.includes('Não é possível aprovar') || message.includes('Pendências') || message.includes('Documentos pendentes');
+      const statusCode = isValidation ? 400 : 500;
+      if (!isValidation) {
+        console.error('Erro ao completar etapa:', error);
+      }
+      return res.status(statusCode).json({
         success: false,
-        error: 'Erro ao completar etapa',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: isValidation ? message : 'Erro ao completar etapa',
+        details: message
         });
     }
   }

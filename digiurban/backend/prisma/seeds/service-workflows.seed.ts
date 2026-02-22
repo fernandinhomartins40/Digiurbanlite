@@ -63,7 +63,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         // Requisitos
-        requiredDocumentTypes: ['Atestado Médico', 'Exames', 'Guia de Encaminhamento'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
 
         // Ações
@@ -258,7 +258,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
-        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'DAP - Declaração de Aptidão ao Pronaf (opcional)'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -328,7 +328,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
-        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART/RRT', 'Matrícula do Imóvel', 'Documento do Proprietário'],
+        requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel'],
         requiredFormFields: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -427,7 +427,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
-        requiredDocumentTypes: ['CNPJ/CPF', 'Contrato Social', 'Comprovante de Endereço', 'Planta Baixa'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Comprovante de Endereço do Estabelecimento', 'Planta Baixa'],
         requiredFormFields: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -576,7 +576,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Requisição Médica', 'Cartão SUS'],
+        requiredDocumentTypes: ['Pedido Médico', 'Cartão SUS'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -644,7 +644,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'RG ou Certidão'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'RG ou CNH'],
         requiredFormFields: ['nome_completo', 'data_nascimento', 'nome_mae'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -713,7 +713,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina', 'Histórico Escolar'],
+        requiredDocumentTypes: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina'],
         requiredFormFields: ['nome_aluno', 'data_nascimento', 'serie_pretendida'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -830,7 +830,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredDocumentTypes: ['Comprovante de Residência', 'Declaração de Matrícula'],
+        requiredDocumentTypes: ['Comprovante de Residência', 'Comprovante de Matrícula'],
         requiredFormFields: ['endereco_completo', 'escola', 'distancia_km'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -909,7 +909,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['Documento da Propriedade (opcional)'],
         requiredFormFields: ['tipo_assistencia', 'area_propriedade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -993,7 +993,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Matrícula do Imóvel', 'CPF/CNPJ', 'Comprovante de Posse'],
+        requiredDocumentTypes: ['Escritura ou Contrato', 'CAR - Cadastro Ambiental Rural (opcional)', 'ITR - Imposto Territorial Rural (opcional)'],
         requiredFormFields: ['area_total', 'localizacao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1062,7 +1062,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['DAP', 'CPF', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['programa_escolhido', 'area_producao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1131,7 +1131,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['DAP', 'Atestado de Sanidade'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredFormFields: ['produtos_comercializar', 'tipo_banca'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1200,7 +1200,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto do Evento', 'CPF/CNPJ Organizador', 'Comprovante de Local'],
+        requiredDocumentTypes: ['Projeto do Evento', 'CPF'],
         requiredFormFields: ['tipo_evento', 'data_evento', 'publico_estimado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1284,7 +1284,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: ['tipo_analise', 'area_amostra'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1440,7 +1440,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['DAP', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['tipo_maquina', 'area_trabalho', 'finalidade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1609,7 +1609,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
         requiredFormFields: ['composicao_familiar', 'renda_per_capita'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1693,7 +1693,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF de todos', 'Comprovante de Residência', 'Certidões de Nascimento'],
+        requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais', 'Comprovante de Renda'],
         requiredFormFields: ['composicao_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1762,7 +1762,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
         requiredFormFields: ['grupo_interesse', 'faixa_etaria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1831,7 +1831,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais'],
         requiredFormFields: ['programa_solicitado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1915,7 +1915,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Documentos Específicos'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['tipo_beneficio'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2084,7 +2084,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['CPF', 'RG'],
         requiredFormFields: ['nome_artistico', 'categoria_artistica'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2112,7 +2112,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['area_atuacao', 'experiencia'],
-        requiredDocumentTypes: ['Portfólio', 'Curriculum Artístico'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Projeto do Evento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2168,7 +2168,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto do Evento', 'CPF/CNPJ Responsável'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['nome_evento', 'data_evento', 'tipo_evento', 'publico_estimado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2264,7 +2264,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF do Representante', 'Estatuto/Regimento', 'Lista de Integrantes'],
+        requiredDocumentTypes: ['Documentos dos Integrantes', 'Portfólio do Grupo', 'Estatuto (opcional)'],
         requiredFormFields: ['nome_grupo', 'categoria', 'numero_integrantes'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2292,7 +2292,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['area_atuacao', 'historico_grupo'],
-        requiredDocumentTypes: ['Portfólio do Grupo', 'Material Promocional'],
+        requiredDocumentTypes: ['Portfólio do Grupo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2417,7 +2417,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Dossiê da Manifestação', 'Documentos do Responsável'],
+        requiredDocumentTypes: ['Documentação Histórica', 'Fotos', 'Depoimentos'],
         requiredFormFields: ['nome_manifestacao', 'tipo', 'historico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2501,7 +2501,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto do Evento'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['espaco_solicitado', 'data_evento', 'tipo_atividade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2582,7 +2582,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Cultural', 'Orçamento', 'CPF/CNPJ'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: ['tipo_apoio', 'valor_solicitado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2738,7 +2738,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Completo', 'Orçamento Detalhado', 'Cronograma', 'CPF/CNPJ'],
+        requiredDocumentTypes: ['Orçamento', 'CPF'],
         requiredFormFields: ['titulo_projeto', 'objetivo', 'publico_alvo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2835,7 +2835,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Diploma', 'Certificado de Conclusão', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência'],
         requiredFormFields: ['nome_completo', 'disciplina', 'nivel_ensino'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2920,7 +2920,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['nome_aluno', 'matricula', 'vinculo'],
-        requiredDocumentTypes: ['Documento de Identidade'],
+        requiredDocumentTypes: ['Diploma', 'Currículo', 'Comprovante de Residência'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2977,7 +2977,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['nome_curso', 'turma', 'turno'],
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Escolaridade'],
+        requiredDocumentTypes: ['RG', 'CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3118,7 +3118,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['tipo_documento', 'nome_aluno', 'matricula'],
-        requiredDocumentTypes: ['Documento de Identidade'],
+        requiredDocumentTypes: ['RG'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3187,7 +3187,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico'],
         requiredFormFields: ['nome_completo', 'modalidade', 'categoria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3272,7 +3272,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['nome_competicao', 'modalidade', 'categoria'],
-        requiredDocumentTypes: ['Ficha de Inscrição', 'Atestado Médico'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3341,7 +3341,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['modalidade', 'turma', 'turno'],
-        requiredDocumentTypes: ['Certidão de Nascimento', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3494,7 +3494,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Arquitetônico', 'Matrícula do Imóvel', 'ART/RRT', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'Matrícula do Imóvel', 'ART (Anotação de Responsabilidade Técnica)'],
         requiredFormFields: ['area_construir', 'endereco', 'tipo_construcao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3590,7 +3590,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Certidão de Casamento/Nascimento'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de Endereço'],
         requiredFormFields: ['composicao_familiar', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3686,7 +3686,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Documento Pessoal', 'Comprovante de Posse', 'Planta do Imóvel'],
+        requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de Residência'],
         requiredFormFields: ['tempo_ocupacao', 'area_terreno'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3782,7 +3782,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Contrato de Aluguel', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda'],
         requiredFormFields: ['valor_aluguel', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3964,7 +3964,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['endereco', 'tipo_solicitacao', 'motivo'],
-        requiredDocumentTypes: ['Fotos da Árvore', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['Comprovante de Propriedade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4060,7 +4060,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['nome_programa', 'tipo_participacao'],
-        requiredDocumentTypes: ['Documento de Identidade'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4227,7 +4227,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto', 'EIA/RIMA', 'ART', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['Projeto', 'ART'],
         requiredFormFields: ['tipo_atividade', 'porte_empreendimento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4408,7 +4408,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto de Demolição', 'ART', 'Matrícula do Imóvel', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['endereco', 'area_demolir'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4505,7 +4505,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['endereco', 'tipo_intervencao', 'periodo'],
-        requiredDocumentTypes: ['Projeto', 'ART', 'Plano de Sinalização'],
+        requiredDocumentTypes: ['Projeto de Intervenção', 'ART'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4685,7 +4685,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto de Parcelamento', 'Matrícula', 'Planta Topográfica', 'Memorial Descritivo', 'ART'],
+        requiredDocumentTypes: ['Projeto de Parcelamento', 'Matrícula do Imóvel', 'ART do Responsável Técnico'],
         requiredFormFields: ['area_total', 'numero_lotes'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4793,7 +4793,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART/RRT', 'Matrícula do Imóvel', 'Planta de Situação'],
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4889,7 +4889,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Matrícula do Imóvel', 'Planta de Situação'],
+        requiredDocumentTypes: ['Matrícula do Imóvel'],
         requiredFormFields: ['endereco', 'area_terreno', 'tipo_empreendimento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4973,7 +4973,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Aprovado', 'ART de Execução', 'Matrícula do Imóvel', 'IPTU', 'Certidão de Viabilidade'],
+        requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5239,7 +5239,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['medicamento', 'dosagem', 'quantidade'],
-        requiredDocumentTypes: ['Receita Médica', 'CPF', 'Cartão SUS'],
+        requiredDocumentTypes: ['Receita Médica', 'RG ou CPF', 'Cartão SUS'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -5296,7 +5296,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['programa', 'unidade_saude'],
-        requiredDocumentTypes: ['CPF', 'Cartão SUS', 'Comprovante de Residência'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -5426,7 +5426,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['tipo_evento', 'data_evento', 'publico_esperado', 'local'],
-        requiredDocumentTypes: ['Projeto do Evento', 'CPF', 'CNPJ', 'Comprovante de Endereço'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -5465,7 +5465,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['relatorio_vistoria', 'adequacoes_necessarias'],
-        requiredDocumentTypes: ['Relatório de Vistoria'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -5654,7 +5654,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['tipo_vistoria', 'finalidade'],
-        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['Alvará de Funcionamento', 'CNPJ'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -5693,7 +5693,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['itens_verificados', 'conformidades', 'nao_conformidades'],
-        requiredDocumentTypes: ['Relatório de Vistoria', 'Fotos'],
+        requiredDocumentTypes: ['Alvará de Funcionamento', 'CNPJ'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -6006,7 +6006,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['relatorio_vistoria', 'equipamentos_necessarios'],
-        requiredDocumentTypes: ['Fotos'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -6090,7 +6090,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['diagnostico', 'materiais_necessarios'],
-        requiredDocumentTypes: ['Fotos'],
+        requiredDocumentTypes: ['Foto do Problema'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -6231,7 +6231,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['tipo_problema', 'descricao'],
-        requiredDocumentTypes: ['Fotos'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -6342,7 +6342,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['area_total', 'tipo_vegetacao', 'equipamentos_necessarios'],
-        requiredDocumentTypes: ['Fotos'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -6412,7 +6412,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['nome_estabelecimento', 'categoria', 'tipo_servico'],
-        requiredDocumentTypes: ['CNPJ', 'Alvará', 'Contrato Social', 'Comprovante de Endereço'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -6439,7 +6439,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['relatorio_vistoria', 'adequacoes_necessarias', 'classificacao'],
-        requiredDocumentTypes: ['Relatório de Vistoria', 'Fotos'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -6451,7 +6451,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['adequacoes_realizadas'],
-        requiredDocumentTypes: ['Comprovantes'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: true
       },
@@ -6496,7 +6496,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredFormFields: ['nome_completo', 'idiomas', 'especializacao'],
-        requiredDocumentTypes: ['CPF', 'RG', 'Certificado de Curso', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -6580,7 +6580,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['nome_evento', 'tipo', 'data_realizacao', 'publico_esperado'],
-        requiredDocumentTypes: ['Projeto do Evento', 'CPF ou CNPJ'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -8153,7 +8153,7 @@ APROVACAO_CALCADA: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Projeto de Calçada', 'Escritura do Imóvel', 'Documento de Identidade'],
+      requiredDocumentTypes: [],
       requiredFormFields: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -8222,7 +8222,7 @@ APROVACAO_MURO: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Projeto de Muro', 'Escritura do Imóvel', 'Documento de Identidade'],
+      requiredDocumentTypes: [],
       requiredFormFields: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -8291,7 +8291,7 @@ APROVACAO_TERRAPLENO: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Projeto de Terraplanagem', 'Laudo Geotécnico', 'Escritura do Imóvel'],
+      requiredDocumentTypes: [],
       requiredFormFields: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -9255,7 +9255,7 @@ DOCUMENTACAO_CIVIL: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Comprovante de Residência', 'Documento de Identidade'],
+      requiredDocumentTypes: ['RG'],
       requiredFormFields: ['situacao_economica_verificada'],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -9629,7 +9629,7 @@ CADASTRO_CAMERAS_BAIRRO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Termo de Adesão', 'Comprovante de Propriedade', 'Documento de Identidade'],
+      requiredDocumentTypes: ['Justificativa', 'Projeto ou Memorial', 'Autorização do Responsável'],
       requiredFormFields: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -9687,7 +9687,7 @@ GRUPO_WHATSAPP_VIZINHANCA: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredFormFields: ['dados_validados'],
-      requiredDocumentTypes: ['Comprovante de Residência'],
+      requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
     },
@@ -9776,7 +9776,7 @@ INSCRICAO_QUALIFICACAO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Documento de Identidade', 'CPF', 'Comprovante de Escolaridade'],
+      requiredDocumentTypes: [],
       requiredFormFields: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -9833,7 +9833,7 @@ INSCRICAO_HACKATHON: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Documento de Identidade dos Membros'],
+      requiredDocumentTypes: [],
       requiredFormFields: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -10416,7 +10416,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -10663,7 +10663,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -10721,7 +10721,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Título de Eleitor'],
+        requiredDocumentTypes: ['Documentos Pessoais'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -10779,7 +10779,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -10850,7 +10850,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11051,7 +11051,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Portfólio'],
+        requiredDocumentTypes: ['RG', 'CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11299,7 +11299,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Detalhado', 'Orçamento', 'Cronograma'],
+        requiredDocumentTypes: ['Projeto Detalhado', 'Orçamento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11441,7 +11441,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Estatuto ou Ata de Fundação', 'Lista de Integrantes', 'Portfólio'],
+        requiredDocumentTypes: ['Portfólio do Grupo'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11736,7 +11736,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12747,7 +12747,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade ou Posse'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12829,7 +12829,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'DAP ou Cadastro de Produtor'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13246,7 +13246,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG ou Certidão de Nascimento', 'CPF', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG ou CNH', 'CPF', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13318,7 +13318,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Certidão de Nascimento', 'RG (se possuir)', 'CPF (se possuir)', 'Histórico Escolar', 'Comprovante de Residência', 'Cartão de Vacina'],
+        requiredDocumentTypes: ['Certidão de Nascimento', 'RG do Responsável', 'Comprovante de Residência', 'Cartão de Vacina'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13664,7 +13664,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Documento da Propriedade', 'CAR (Cadastro Ambiental Rural)'],
+        requiredDocumentTypes: ['Escritura ou Contrato', 'CAR - Cadastro Ambiental Rural (opcional)'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13747,7 +13747,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'DAP', 'Cadastro de Produtor'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13830,7 +13830,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Autorização do Proprietário', 'Projeto do Evento'],
+        requiredDocumentTypes: ['CPF', 'Projeto do Evento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14149,7 +14149,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14220,7 +14220,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14291,7 +14291,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14362,7 +14362,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14433,7 +14433,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14504,7 +14504,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14575,7 +14575,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado Médico', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14646,7 +14646,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Histórico Esportivo', 'Atestado Médico'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Histórico Esportivo'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14742,7 +14742,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Certidão de Nascimento', 'CPF da Criança', 'RG dos Pais', 'Comprovante de Residência', 'Cartão de Vacina', 'Comprovante de Renda'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -14825,7 +14825,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Diploma', 'Histórico de Graduação', 'Certificados de Pós-Graduação', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15131,7 +15131,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Encaminhamento Médico', 'Cartão SUS'],
+        requiredDocumentTypes: ['RG e CPF', 'Documentos relacionados ao assunto do agendamento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15285,7 +15285,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Receita Médica', 'Laudo Médico', 'Exames', 'Cartão SUS', 'RG', 'CPF'],
+        requiredDocumentTypes: ['Receita Médica Especial', 'Laudo Médico', 'Exames Complementares', 'Cartão SUS', 'RG ou CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15381,7 +15381,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Matrícula do Imóvel', 'Projeto', 'Inventário Florestal'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15476,7 +15476,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto', 'Memorial Descritivo', 'Documentação do Imóvel'],
+        requiredDocumentTypes: ['CPF', 'Projeto Simplificado'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15571,7 +15571,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Projeto Hidráulico', 'ART'],
+        requiredDocumentTypes: ['CPF', 'Projeto Hidráulico', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15833,7 +15833,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['relatorio_pedagogico', 'necessidades_identificadas', 'potencialidades'],
-        requiredDocumentTypes: ['Laudo Médico', 'Histórico Escolar'],
+        requiredDocumentTypes: ['Laudo Médico'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15987,7 +15987,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Encaminhamento Médico', 'Cartão SUS', 'Exames (se houver)'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16071,7 +16071,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Projeto de Reforma', 'ART', 'Fotos do Local'],
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto de Reforma', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16166,7 +16166,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Matrícula do Imóvel', 'Projeto Arquitetônico', 'Memorial Descritivo', 'ART', 'Planta de Situação'],
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto Arquitetônico', 'ART', 'Planta de Situação'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16261,7 +16261,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Matrícula do Imóvel', 'Projeto de Loteamento', 'Memorial Descritivo', 'ART', 'Levantamento Topográfico', 'Certidões Negativas'],
+        requiredDocumentTypes: ['Projeto de Loteamento', 'Memorial Descritivo', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16368,7 +16368,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel'],
+        requiredDocumentTypes: ['CPF', 'Matrícula do Imóvel'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16452,7 +16452,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Plano de Negócios', 'Projeção Financeira'],
+        requiredDocumentTypes: ['CNPJ'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16549,7 +16549,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['requisitos_tecnicos', 'volume_requisicoes', 'dados_necessarios'],
-        requiredDocumentTypes: ['Documentação Técnica', 'Termo de Responsabilidade'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16644,7 +16644,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto do Evento', 'Orçamento'],
+        requiredDocumentTypes: ['CPF ou CNPJ', 'Projeto do Evento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16740,7 +16740,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Projeto de Demolição', 'ART', 'Fotos'],
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto de Demolição', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16835,7 +16835,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto de Urbanização', 'Memorial Descritivo', 'ART', 'Levantamento Topográfico'],
+        requiredDocumentTypes: ['Projeto de Urbanização', 'Memorial Descritivo', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16944,7 +16944,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['criterios_elegibilidade', 'prioridade', 'tipo_atendimento_necessario'],
-        requiredDocumentTypes: ['Encaminhamento Médico (se houver)', 'Cartão SUS'],
+        requiredDocumentTypes: ['Cartão SUS'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },
@@ -17015,7 +17015,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Contrato Social Atualizado', 'Comprovante de Endereço', 'Documentos dos Sócios'],
+        requiredDocumentTypes: ['Contrato Social Atualizado', 'Comprovante de Endereço Comercial'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17099,7 +17099,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['Escritura ou Contrato de Compra e Venda', 'RG e CPF do Proprietário', 'Comprovante de Endereço', 'Carnê de IPTU'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17195,7 +17195,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto do Evento', 'Plano de Segurança'],
+        requiredDocumentTypes: ['Projeto do Evento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17303,7 +17303,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Projeto Técnico', 'ART', 'Registro Profissional'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17399,7 +17399,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNH', 'CRLV', 'Seguro', 'Certidões Negativas', 'Atestado de Saúde Motorista'],
+        requiredDocumentTypes: ['Seguro do Veículo'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17495,7 +17495,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'CRLV', 'Cadastur', 'Seguro', 'CNH Motorista', 'Certidões'],
+        requiredDocumentTypes: ['CNPJ', 'Seguro dos Veículos'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17579,7 +17579,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Residência', 'Documentos da Família'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17674,7 +17674,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Documento do Terreno', 'Projeto Arquitetônico'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17782,7 +17782,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Distrato Social', 'Certidões Negativas', 'Comprovante de Baixa na Junta', 'Comprovante Encerramento CNPJ'],
+        requiredDocumentTypes: ['Certidões Negativas (Tributos Municipais, Estaduais e Federais)', 'CNPJ'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17890,7 +17890,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Documentos Específicos'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17973,7 +17973,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Residência', 'Documentos da Família', 'NIS'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda Familiar', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18069,7 +18069,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Alvará de Funcionamento', 'Licença Sanitária', 'Documento do Imóvel'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18165,7 +18165,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Fotos', 'Autorização do Proprietário'],
+        requiredDocumentTypes: ['CPF ou CNPJ', 'Fotos do Local'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18249,7 +18249,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Comprovante de Endereço', 'Documentos Específicos'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18333,7 +18333,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Residência', 'Documentos da Família'],
+        requiredDocumentTypes: ['CPF', 'RG'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18500,7 +18500,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Certidões Negativas', 'Comprovante de Endereço', 'Alvará de Funcionamento'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Certidões Negativas'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18596,7 +18596,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Licença Ambiental', 'PGRS', 'Contrato com Transportador'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Projeto de Manejo', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18693,7 +18693,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['cpf_valido', 'email_validado', 'telefone_validado'],
-        requiredDocumentTypes: ['CPF', 'RG', 'Foto'],
+        requiredDocumentTypes: ['CPF', 'RG'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18751,7 +18751,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Endereço', 'CCMEI'],
+        requiredDocumentTypes: ['RG e CPF', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18847,7 +18847,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Licença Ambiental', 'Outorga de Água'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18943,7 +18943,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Estatuto Social', 'Plano de Ação', 'Portfólio'],
+        requiredDocumentTypes: ['CPF', 'Portfólio'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19039,7 +19039,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Pitch Deck', 'Plano de Negócios'],
+        requiredDocumentTypes: ['CNPJ da Empresa', 'Contrato Social'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19123,7 +19123,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Registro no MAPA', 'ART'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19219,7 +19219,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Atestado de Antecedentes', 'Currículo'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19303,7 +19303,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Ficha de Inscrição', 'Documentos dos Atletas', 'Atestado Médico'],
+        requiredDocumentTypes: ['Documentos dos Atletas'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19387,7 +19387,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Matrícula', 'Foto 3x4'],
+        requiredDocumentTypes: ['RG ou CPF', 'Declaração de Matrícula', 'Foto 3x4 recente'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19470,7 +19470,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Laudo Médico', 'Comprovante de Residência', 'Foto 3x4'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Laudo Médico', 'Comprovante de Residência', 'Foto 3x4 recente'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19565,7 +19565,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Foto 3x4', 'Documentos Específicos'],
+        requiredDocumentTypes: ['RG ou CPF', 'Comprovante de Residência', 'Foto 3x4 recente'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19649,7 +19649,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Cartão SUS', 'Laudo Médico', 'Documentos da Família'],
+        requiredDocumentTypes: ['RG', 'CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19745,7 +19745,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19829,7 +19829,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'RG', 'Comprovante de Residência', 'Documentos Específicos'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19913,7 +19913,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19997,7 +19997,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Comprovante de Renda', 'NIS'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Comprovante de Renda Familiar'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20093,7 +20093,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'DAP', 'Cadastro de Produtor', 'Certidões'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20189,7 +20189,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Comprovantes de Ocupação', 'Projeto de Uso', 'Fotos'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20322,7 +20322,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['possui_acesso', 'vinculo_processo', 'observacoes'],
-        requiredDocumentTypes: ['CPF', 'Procuração (se aplicável)'],
+        requiredDocumentTypes: ['RG e CPF'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },
@@ -20393,7 +20393,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Cadastur', 'Alvará', 'Certidões'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Cadastur', 'Alvará de Funcionamento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20476,7 +20476,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Currículo', 'Certificados', 'Diplomas', 'Atestados'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Currículo', 'Certificados'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20572,7 +20572,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH Categoria A', 'CPF', 'RG', 'CRLV', 'Seguro', 'Certidões', 'Atestado de Saúde'],
+        requiredDocumentTypes: ['CNH Categoria A (mínimo)', 'Certidão de Antecedentes Criminais'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20667,7 +20667,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Currículo', 'Certificados', 'Portfólio'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20762,7 +20762,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH', 'CPF', 'RG', 'CRLV', 'Seguro', 'Certidões', 'Atestado de Saúde', 'Atestado de Antecedentes'],
+        requiredDocumentTypes: ['CNH Categoria B (mínimo)', 'Certidão de Antecedentes Criminais'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20857,7 +20857,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH Categoria D', 'CPF', 'RG', 'CRLV', 'Seguro', 'Certidões', 'Atestado de Saúde', 'Curso Transporte Escolar'],
+        requiredDocumentTypes: ['CNH Categoria D', 'CRLV', 'Seguro Obrigatório', 'Certidão de Antecedentes Criminais', 'Curso de Transporte Escolar'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21035,7 +21035,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['RG ou CPF', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21119,7 +21119,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Propriedade/Posse', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CPF', 'RG'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21203,7 +21203,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Documentos Comprobatórios'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21274,7 +21274,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Auto de Infração', 'Defesa Escrita', 'Documentos Probatórios'],
+        requiredDocumentTypes: ['CNH', 'CRLV', 'Notificação de Autuação', 'Comprovantes (se houver)'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21370,7 +21370,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['finalidade_adequada', 'local_plantio', 'parecer_tecnico'],
-        requiredDocumentTypes: ['Comprovante de Propriedade/Autorização'],
+        requiredDocumentTypes: ['Comprovante de Propriedade ou Posse'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21440,7 +21440,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'DAP', 'Comprovante de Propriedade'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21549,7 +21549,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['finalidade_adequada', 'responsavel_evento', 'parecer_tecnico'],
-        requiredDocumentTypes: ['Projeto do Evento', 'CPF/CNPJ'],
+        requiredDocumentTypes: ['CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21620,7 +21620,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato de Locação/Propriedade'],
+        requiredDocumentTypes: ['Alvará de Funcionamento'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21716,7 +21716,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda (se houver)', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21813,7 +21813,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['condicoes_bem', 'valor_estimado', 'necessidades_conservacao'],
-        requiredDocumentTypes: ['Fotos', 'Documentos do Bem'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21896,7 +21896,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Cadastur', 'Fotos', 'Material Promocional'],
+        requiredDocumentTypes: ['CNPJ ou CPF', 'Cadastur (se aplicável)'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21991,7 +21991,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade', 'Comprovante de Pagamento'],
+        requiredDocumentTypes: ['RG e CPF', 'Comprovante de Escolaridade'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22074,7 +22074,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Atestado Médico', 'Comprovante de Pagamento'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Atestado Médico'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22157,7 +22157,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade', 'Comprovante de Residência', 'Currículo'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22240,7 +22240,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Plano de Negócios', 'Pitch Deck', 'Projeções Financeiras'],
+        requiredDocumentTypes: ['CNPJ (se já constituída)', 'Pitch Deck (Apresentação)'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22336,7 +22336,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22419,7 +22419,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Documento do Imóvel', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['RG e CPF', 'Comprovante de Renda'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22526,7 +22526,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Documentos Específicos'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22622,7 +22622,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Documento do Imóvel', 'Projeto Técnico', 'EIA/RIMA (se aplicável)', 'ART'],
+        requiredDocumentTypes: ['CNPJ', 'Projeto Técnico', 'ART'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22729,7 +22729,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Cadastur', 'Alvará', 'Licenças Específicas', 'Seguro'],
+        requiredDocumentTypes: ['CPF ou CNPJ'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22824,7 +22824,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Projeto Técnico', 'ART'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22945,7 +22945,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['finalidade_adequada', 'responsavel_evento', 'parecer_tecnico'],
-        requiredDocumentTypes: ['Projeto do Evento', 'CPF/CNPJ'],
+        requiredDocumentTypes: ['Projeto do Evento', 'CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23016,7 +23016,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Residência', 'Documento do Terreno'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23124,7 +23124,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF do Responsável', 'RG do Aluno', 'Comprovante de Matrícula', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['Comprovante de Matrícula'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23291,7 +23291,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Residência', 'Documento do Imóvel', 'Fotos'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23398,7 +23398,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Laudo Médico', 'Prescrição Nutricional', 'CPF do Responsável', 'Comprovante de Matrícula'],
+        requiredDocumentTypes: ['Comprovante de Matrícula'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23482,7 +23482,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Documento do Imóvel', 'Escritura/Contrato', 'Avaliação (se aplicável)'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23565,7 +23565,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF/CNPJ', 'Comprovante de Renda', 'Certidões de Débito'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23661,7 +23661,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'DAP', 'Cadastro de Produtor', 'Licenças Sanitárias'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Catálogo de Produtos/Serviços (se houver)'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23745,7 +23745,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Laudo Médico', 'Comprovante de Residência', 'Comprovante de Renda', 'Foto 3x4'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Laudo Médico (modelo específico)', 'Comprovante de Residência', 'Foto 3x4 recente'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23842,7 +23842,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['necessidade_pericia', 'tipo_avaliacao'],
-        requiredDocumentTypes: ['Documentos do Solicitante', 'Solicitação Judicial (se houver)'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Processo Judicial', 'Encaminhamento do Juizado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23937,7 +23937,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24045,7 +24045,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Certidão de Nascimento', 'CPF Responsável', 'Cartão SUS', 'Comprovante de Residência', 'Comprovante de Renda'],
+        requiredDocumentTypes: [],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24153,7 +24153,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Cartão SUS de todos', 'CPF', 'Comprovante de Residência'],
+        requiredDocumentTypes: ['Cartão SUS', 'RG ou CPF'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24237,7 +24237,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Documento do Terreno', 'Levantamento Topográfico'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
         requiredFormFields: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24379,7 +24379,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'COMPROVANTE_RESIDENCIA', 'ESCRITURA_IMOVEL'],
+        requiredDocumentTypes: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação'],
         requiredFormFields: ['inscricao_imobiliaria', 'tipo_obra', 'area_construida'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24405,7 +24405,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['laudo_tecnico', 'parecer_vistoria'],
-        requiredDocumentTypes: ['LAUDO_TECNICO'],
+        requiredDocumentTypes: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -24475,7 +24475,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'ESCRITURA_IMOVEL', 'PLANTA_LOTE'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['inscricoes_lotes', 'area_total', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24559,7 +24559,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CERTIDAO_NEGATIVA'],
+        requiredDocumentTypes: ['CNH Atualizada', 'CRLV Atualizado', 'Vistoria em Dia', 'Certidão Negativa de Multas'],
         requiredFormFields: ['tipo_credenciamento', 'numero_credenciamento_atual'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24643,7 +24643,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'COMPROVANTE_RESIDENCIA', 'PLANTA_AREA'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência'],
         requiredFormFields: ['tipo_reurb', 'area_ocupacao', 'numero_familias'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24669,7 +24669,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['levantamento_topografico'],
-        requiredDocumentTypes: ['LEVANTAMENTO_TOPOGRAFICO'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -24693,7 +24693,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['projeto_regularizacao'],
-        requiredDocumentTypes: ['PROJETO_REGULARIZACAO'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -24750,7 +24750,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CARNÊ_IPTU'],
+        requiredDocumentTypes: ['Carnê de IPTU', 'Fotos do Imóvel', 'Laudo de Avaliação (se houver)', 'Escritura do Imóvel'],
         requiredFormFields: ['inscricao_imobiliaria', 'motivo_revisao', 'ano_exercicio'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24833,7 +24833,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'DAP', 'COMPROVANTE_CULTIVO'],
+        requiredDocumentTypes: ['CPF', 'DAP'],
         requiredFormFields: ['area_plantada', 'cultura', 'ano_agricola'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24859,7 +24859,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['laudo_vistoria'],
-        requiredDocumentTypes: ['LAUDO_VISTORIA'],
+        requiredDocumentTypes: ['CPF', 'DAP', 'Comprovante de Área Plantada'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -24928,7 +24928,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['motivo_solicitacao', 'numero_pessoas', 'situacao_vulnerabilidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -24987,7 +24987,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CARTAO_SUS', 'PEDIDO_MEDICO'],
+        requiredDocumentTypes: ['RG ou CPF'],
         requiredFormFields: ['tipo_tratamento', 'frequencia_semanal'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25046,7 +25046,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_RENDA'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['distrito_interesse', 'tamanho_lote', 'finalidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25142,7 +25142,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'COMPROVANTE_RESIDENCIA', 'COMPROVANTE_RENDA'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['valor_solicitado', 'finalidade', 'prazo_pagamento'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25204,7 +25204,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
         requiredFormFields: [],
-        requiredDocumentTypes: ['CONTRATO_ASSINADO'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
         stageType: 'DOCUMENT_GENERATION'
@@ -25238,7 +25238,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'COMPROVANTE_RESIDENCIA', 'CONTA_ENERGIA'],
+        requiredDocumentTypes: ['CPF'],
         requiredFormFields: ['numero_instalacao', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25321,7 +25321,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'FOTOS_BEM', 'HISTORICO_BEM'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Fotos'],
         requiredFormFields: ['tipo_bem', 'endereco', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25347,7 +25347,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['pesquisa_historica'],
-        requiredDocumentTypes: ['PESQUISA_HISTORICA'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Documentação Histórica', 'Fotos', 'Laudo Técnico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -25359,7 +25359,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['laudo_tecnico'],
-        requiredDocumentTypes: ['LAUDO_TECNICO'],
+        requiredDocumentTypes: ['Laudo Técnico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -25428,7 +25428,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CNH', 'CERTIDAO_NEGATIVA'],
+        requiredDocumentTypes: ['Credencial de Taxista', 'Certidão Negativa de Multas', 'Justificativa'],
         requiredFormFields: ['ponto_atual', 'ponto_destino', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25512,7 +25512,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'COMPROVANTE_RESIDENCIA', 'DECLARACAO_ESCOLAR'],
+        requiredDocumentTypes: ['RG ou Certidão de Nascimento', 'CPF', 'Comprovante de Residência'],
         requiredFormFields: ['nome_aluno', 'escola', 'serie', 'turno', 'endereco'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25583,7 +25583,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF'],
+        requiredDocumentTypes: ['RG ou CPF'],
         requiredFormFields: ['tipo_treinamento', 'disponibilidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25654,7 +25654,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG_RESPONSAVEL', 'CPF_RESPONSAVEL', 'DECLARACAO_ESCOLAR'],
+        requiredDocumentTypes: ['Comprovante de Matrícula', 'Declaração de Baixa Renda (se aplicável)'],
         requiredFormFields: ['nome_aluno', 'escola', 'serie', 'tamanho'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25725,7 +25725,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'PROJETO_EVENTO'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['tipo_evento', 'local', 'data_evento', 'horario', 'publico_esperado'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25881,7 +25881,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CNH', 'COMPROVANTE_RESIDENCIA'],
+        requiredDocumentTypes: [],
         requiredFormFields: ['endereco_vaga', 'justificativa', 'placa_veiculo'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -25907,7 +25907,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['laudo_vistoria'],
-        requiredDocumentTypes: ['LAUDO_VISTORIA'],
+        requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -25964,7 +25964,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CNH', 'LAUDO_MEDICO_PCD', 'COMPROVANTE_RESIDENCIA'],
+        requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Comprovante de Residência'],
         requiredFormFields: ['endereco_vaga', 'tipo_deficiencia', 'placa_veiculo'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -26002,7 +26002,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['laudo_vistoria'],
-        requiredDocumentTypes: ['LAUDO_VISTORIA'],
+        requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Laudo Médico', 'Documento do Veículo', 'Comprovante de Residência'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -26059,7 +26059,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF'],
+        requiredDocumentTypes: ['RG ou CPF'],
         requiredFormFields: ['endereco', 'tipo_risco', 'descricao_situacao'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -26097,7 +26097,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['laudo_vistoria', 'medidas_recomendadas'],
-        requiredDocumentTypes: ['LAUDO_VISTORIA', 'FOTOS'],
+        requiredDocumentTypes: ['Fotos do Local (se possível)'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -26142,7 +26142,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CNH', 'CRLV'],
+        requiredDocumentTypes: ['CRLV'],
         requiredFormFields: ['placa_veiculo', 'tipo_vistoria', 'finalidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
@@ -26168,7 +26168,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredFormFields: ['resultado_vistoria', 'observacoes'],
-        requiredDocumentTypes: ['FOTOS_VEICULO'],
+        requiredDocumentTypes: ['CRLV', 'Comprovante de Pagamento de Taxas'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },

@@ -234,6 +234,7 @@ loadRoute('/api/protocols', './routes/protocol-documents');
 loadRoute('/api', './routes/protocol-data-fields');
 loadRoute('/api/protocols', './routes/protocol-pendings');
 loadRoute('/api/protocols', './routes/protocol-stages');
+loadRoute('/api/protocols', './routes/protocol-citizen-links.routes');
 loadRoute('/api', './routes/document-templates');
 
 // Rotas genericas de protocolos POR ULTIMO (/:id captura tudo)

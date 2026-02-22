@@ -374,7 +374,7 @@ export default function AdminDashboard() {
 
               {hasPermission('team:read') && (
                 <a
-                  href="/admin/equipe"
+                  href="/admin/servidores/equipe"
                   className="flex items-center p-3 border rounded-lg hover:bg-gray-50 transition-colors active:bg-gray-100"
                 >
                   <Users className="h-4 w-4 sm:h-5 sm:w-5 text-green-600 mr-2 shrink-0" />
