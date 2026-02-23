@@ -26,13 +26,15 @@ import {
   LogOut,
   Settings,
   Sparkles,
-  Users
+  Users,
+  UserCheck
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -71,7 +73,7 @@ export default function CitizenDashboard() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
-  // Hook unificado de conversas
+  // Hook unificado de conversas (✅ COM BOT AUTO-INICIADO)
   const {
     conversations,
     socket,
@@ -80,6 +82,7 @@ export default function CitizenDashboard() {
     sendMessage,
     markConversationAsRead,
     findOrCreateConversation,
+    ensureBotConversation, // ✅ NOVO
   } = useConversations({
     userId: citizen?.id || '',
     userType: 'CITIZEN',
@@ -91,6 +94,11 @@ export default function CitizenDashboard() {
         if (message.senderId !== citizen?.id) {
           markConversationAsRead(conversationId);
         }
+      }
+
+      // ✅ NOVO: Parar indicador de digitação do bot quando mensagem chegar
+      if (message.senderId === 'DIGIBOT_SYSTEM') {
+        setIsBotTyping(false);
       }
     },
   });
@@ -138,43 +146,32 @@ export default function CitizenDashboard() {
   }, [messages]);
 
   /**
-   * Iniciar fluxo do bot
+   * ✅ NOVO: Auto-iniciar bot quando cidadão abre a página
    */
-  const startBotFlow = async (conversationId: string) => {
-    try {
-      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ flowName: 'menu_principal', conversationId })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Erro ao iniciar fluxo do bot:', errorData);
-        toast({
-          variant: 'destructive',
-          title: 'Erro ao iniciar o assistente',
-          description: 'Nao foi possivel iniciar o DigiBot. Tente recarregar a pagina.',
-        });
+  useEffect(() => {
+    if (citizen?.id && conversations.length > 0) {
+      const botConv = conversations.find(c => c.isBotConversation);
+      if (!botConv) {
+        // Se não tem conversa com bot, criar
+        console.log('[Cidadao] Bot não encontrado, criando...');
+        ensureBotConversation();
+      } else {
+        // Selecionar conversa com bot automaticamente
+        if (!selectedConversation) {
+          setSelectedConversation(botConv);
+          if (isMobileView) {
+            setShowConversationsList(false);
+          }
+        }
       }
-    } catch (error) {
-      console.error('Erro ao iniciar fluxo do bot:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Erro de conexao',
-        description: 'Nao foi possivel conectar ao DigiBot. Verifique sua conexao.',
-      });
     }
-  };
+  }, [citizen?.id, conversations.length, ensureBotConversation]);
 
   /**
    * Carregar mensagens de uma conversa
    */
   const loadMessages = async (conversationId: string) => {
     setIsLoadingMessages(true);
-
-    const conv = conversations.find(c => c.id === conversationId);
 
     try {
       const response = await fetch(
@@ -183,21 +180,9 @@ export default function CitizenDashboard() {
       );
 
       if (response.ok) {
-        let data = await response.json();
+        const data = await response.json();
         const normalized = Array.isArray(data) ? data : data.messages || [];
-
-        if (conv?.isBotConversation && normalized.length === 0) {
-          await startBotFlow(conversationId);
-
-          const refreshResponse = await fetch(
-            `${MESSAGES_API_URL}/conversations/${conversationId}/messages?limit=50`,
-            { credentials: 'include' }
-          );
-
-          if (refreshResponse.ok) {
-            data = await refreshResponse.json();
-          }
-        }
+        setMessages(normalized);
 
         setMessages(Array.isArray(data) ? data : data.messages || []);
         scrollToBottom();
@@ -783,6 +768,17 @@ export default function CitizenDashboard() {
                 </div>
               ) : (
                 <div className="space-y-4 max-w-4xl mx-auto">
+                  {/* ✅ NOVO: Alert de status do bot */}
+                  {selectedConversation.isBotConversation && selectedConversation.metadata?.botStatus === 'HUMAN_TAKEOVER' && (
+                    <Alert className="bg-orange-50 border-orange-200">
+                      <UserCheck className="h-4 w-4 text-orange-600" />
+                      <AlertTitle className="text-orange-900">Atendente humano conectado</AlertTitle>
+                      <AlertDescription className="text-orange-700">
+                        Um servidor assumiu sua conversa. Responderemos em breve!
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
                   {messages.map((message, index) => {
                     const isOwnMessage = message.senderId === citizen?.id;
                     const isBot = message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';

@@ -13,6 +13,7 @@ import fileStorage from '../storage/FileStorage';
 import prisma from '../utils/prisma';
 import { FlowEngineService } from '../delivery/FlowEngineService';
 import whatsappAdapter from '../delivery/WhatsAppAdapter';
+import messageAnalyticsRoutes from '../routes/message-analytics.routes';
 
 export interface AuthRequest extends Request {
   user?: JwtPayload;
@@ -105,6 +106,9 @@ export class ExpressServer {
 
     // ✅ NOVO: Handover routes (bot → humano)
     this.app.use('/api/handover', this.authMiddleware.bind(this), this.handoverRoutes());
+
+    // ✅ NOVO: Message Analytics routes (ETAPA 4 - campos queryable)
+    this.app.use('/api/message-analytics', this.authMiddleware.bind(this), this.messageAnalyticsRoutes());
 
     // Admin routes
     this.app.use('/api/admin', this.authMiddleware.bind(this), this.adminRoutes());
@@ -1198,6 +1202,13 @@ export class ExpressServer {
     });
 
     return router;
+  }
+
+  /**
+   * ✅ NOVO: Rotas de Analytics (ETAPA 4 - campos queryable)
+   */
+  private messageAnalyticsRoutes() {
+    return messageAnalyticsRoutes;
   }
 
   /**

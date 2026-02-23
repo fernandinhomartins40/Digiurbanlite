@@ -52,6 +52,28 @@ export interface Message {
   isDeleted: boolean;
   senderName?: string;
   metadata?: any; // Para suportar dados do bot (options, quickReplies, etc)
+  // ✅ Campos queryable do bot
+  isBotMessage?: boolean;
+  botInteractionType?: string;
+  botSelectedOption?: string;
+  botStructuredData?: any;
+  botFlowNodeId?: string;
+}
+
+// ✅ NOVO: Tipo para item da fila de handover
+export interface HandoverQueueItem {
+  conversationId: string;
+  citizenId: string;
+  citizenName: string;
+  citizenEmail?: string;
+  citizenPhone?: string;
+  lastMessage: string | null;
+  pausedAt: Date | null;
+  pausedBy: string | null;
+  pauseReason: string | null;
+  waitTime: number; // segundos
+  departmentId: string | null;
+  protocolId: string | null;
 }
 
 interface UseConversationsOptions {
@@ -59,8 +81,10 @@ interface UseConversationsOptions {
   userType: 'CITIZEN' | 'SERVER';
   apiUrl?: string;
   wsUrl?: string;
+  departmentId?: string; // ✅ NOVO: Para filtrar fila de handover por departamento
   onNewConversation?: (conversation: Conversation) => void;
   onNewMessage?: (message: Message, conversationId: string) => void;
+  onHandoverNew?: (handoverItem: HandoverQueueItem) => void; // ✅ NOVO
 }
 
 /**
@@ -72,12 +96,15 @@ export function useConversations({
   userType,
   apiUrl,
   wsUrl,
+  departmentId,
   onNewConversation,
   onNewMessage,
+  onHandoverNew,
 }: UseConversationsOptions) {
   const { toast } = useToast();
 
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [handoverQueue, setHandoverQueue] = useState<HandoverQueueItem[]>([]); // ✅ NOVO
   const [socket, setSocket] = useState<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -88,13 +115,24 @@ export function useConversations({
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
   const botEnsureAttemptedRef = useRef(false);
   const conversationRefreshInFlightRef = useRef(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null); // ✅ NOVO: Áudio de notificação
   const MAX_RECONNECT_ATTEMPTS = 5;
 
   // Refs para callbacks e valores para evitar recriação do socket
   const onNewMessageRef = useRef(onNewMessage);
   const onNewConversationRef = useRef(onNewConversation);
+  const onHandoverNewRef = useRef(onHandoverNew); // ✅ NOVO
   const userIdRef = useRef(userId);
   const userTypeRef = useRef(userType);
+  const departmentIdRef = useRef(departmentId); // ✅ NOVO
+
+  // ✅ NOVO: Inicializar áudio de notificação
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      audioRef.current = new Audio('/notification.mp3');
+      audioRef.current.volume = 0.5;
+    }
+  }, []);
 
   // Atualizar refs quando valores mudarem
   useEffect(() => {
@@ -106,10 +144,15 @@ export function useConversations({
   }, [onNewConversation]);
 
   useEffect(() => {
+    onHandoverNewRef.current = onHandoverNew; // ✅ NOVO
+  }, [onHandoverNew]);
+
+  useEffect(() => {
     userIdRef.current = userId;
     userTypeRef.current = userType;
+    departmentIdRef.current = departmentId; // ✅ NOVO
     processedMessageIdsRef.current.clear();
-  }, [userId, userType]);
+  }, [userId, userType, departmentId]);
 
   // Estabilizar URLs usando useMemo
   const MESSAGES_API_URL = useMemo(() =>
@@ -220,6 +263,171 @@ export function useConversations({
       };
     }
   }, []); // Sem dependências - usa refs
+
+  /**
+   * ✅ NOVO: Buscar fila de handover (bot→humano aguardando atendimento)
+   */
+  const fetchHandoverQueue = useCallback(async () => {
+    // Só buscar se for usuário SERVER
+    if (userTypeRef.current !== 'SERVER') {
+      return;
+    }
+
+    try {
+      const url = departmentIdRef.current
+        ? `${MESSAGES_API_URL}/handover/queue?departmentId=${departmentIdRef.current}`
+        : `${MESSAGES_API_URL}/handover/queue`;
+
+      const response = await fetch(url, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao buscar fila de handover');
+      }
+
+      const data = await response.json();
+      setHandoverQueue(data.queue || []);
+    } catch (error) {
+      console.error('[useConversations] Erro ao buscar fila de handover:', error);
+    }
+  }, [MESSAGES_API_URL]);
+
+  /**
+   * ✅ NOVO: Assumir conversa (takeover)
+   */
+  const takeoverConversation = useCallback(async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/handover/takeover`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao assumir conversa');
+      }
+
+      const data = await response.json();
+
+      toast({
+        title: 'Conversa assumida',
+        description: 'Você assumiu o atendimento desta conversa.',
+      });
+
+      // Remover da fila
+      setHandoverQueue(prev => prev.filter(item => item.conversationId !== conversationId));
+
+      // Recarregar conversas para atualizar status
+      const sorted = await fetchConversations();
+      setConversations(sorted);
+
+      return data;
+    } catch (error) {
+      console.error('[useConversations] Erro ao assumir conversa:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível assumir a conversa',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [MESSAGES_API_URL, toast]);
+
+  /**
+   * ✅ NOVO: Pausar bot
+   */
+  const pauseBot = useCallback(async (conversationId: string, reason?: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/pause`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId, reason }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao pausar bot');
+      }
+
+      toast({
+        title: 'Bot pausado',
+        description: 'O DigiBot foi pausado. Atendimento humano ativado.',
+      });
+
+      // Atualizar status da conversa localmente
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === conversationId
+            ? {
+                ...conv,
+                metadata: {
+                  ...conv.metadata,
+                  botStatus: 'HUMAN_TAKEOVER',
+                },
+                conversationStatus: 'human',
+              }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('[useConversations] Erro ao pausar bot:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível pausar o bot',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [MESSAGES_API_URL, toast]);
+
+  /**
+   * ✅ NOVO: Retomar bot
+   */
+  const resumeBot = useCallback(async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/resume`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ conversationId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao retomar bot');
+      }
+
+      toast({
+        title: 'Bot retomado',
+        description: 'O DigiBot voltou a atender esta conversa.',
+      });
+
+      // Atualizar status da conversa localmente
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === conversationId
+            ? {
+                ...conv,
+                metadata: {
+                  ...conv.metadata,
+                  botStatus: 'ACTIVE',
+                },
+                conversationStatus: 'bot',
+              }
+            : conv
+        )
+      );
+    } catch (error) {
+      console.error('[useConversations] Erro ao retomar bot:', error);
+      toast({
+        title: 'Erro',
+        description: 'Não foi possível retomar o bot',
+        variant: 'destructive',
+      });
+      throw error;
+    }
+  }, [MESSAGES_API_URL, toast]);
 
   const fetchConversations = useCallback(async () => {
     const response = await fetch(`${MESSAGES_API_URL}/conversations`, {
@@ -482,6 +690,41 @@ export function useConversations({
       console.log('[useConversations] Usuário parou de digitar:', data);
     });
 
+    // ✅ NOVO: Event: Nova conversa na fila de handover (só para SERVER)
+    newSocket.on('handover:new', (data: HandoverQueueItem) => {
+      if (userTypeRef.current !== 'SERVER') return;
+
+      console.log('[useConversations] Nova conversa na fila de handover:', data);
+
+      // Tocar som de notificação
+      audioRef.current?.play().catch((err) => console.warn('Erro ao tocar som:', err));
+
+      // Mostrar toast com ação
+      toast({
+        title: 'Nova conversa aguardando atendimento',
+        description: `${data.citizenName} - Clique em "Ver Fila" para atender`,
+        duration: 10000,
+      });
+
+      // Callback para componente pai
+      if (onHandoverNewRef.current) {
+        onHandoverNewRef.current(data);
+      }
+
+      // Atualizar fila
+      fetchHandoverQueue();
+    });
+
+    // ✅ NOVO: Event: Conversa assumida por outro servidor
+    newSocket.on('handover:takeover', (data: { conversationId: string; serverId: string }) => {
+      if (userTypeRef.current !== 'SERVER') return;
+
+      console.log('[useConversations] Conversa assumida por outro servidor:', data);
+
+      // Remover da fila local
+      setHandoverQueue(prev => prev.filter(item => item.conversationId !== data.conversationId));
+    });
+
     setSocket(newSocket);
 
     // Solicitar permissão de notificação
@@ -514,6 +757,23 @@ export function useConversations({
       });
     }
   }, [socket, isConnected, conversations]);
+
+  /**
+   * ✅ NOVO: Auto-refresh da fila de handover a cada 30s (só para SERVER)
+   */
+  useEffect(() => {
+    if (userTypeRef.current !== 'SERVER') return;
+
+    // Buscar imediatamente
+    fetchHandoverQueue();
+
+    // Auto-refresh a cada 30s
+    const interval = setInterval(() => {
+      fetchHandoverQueue();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchHandoverQueue]);
 
   /**
    * Enviar mensagem via WebSocket
@@ -749,15 +1009,21 @@ export function useConversations({
   return {
     conversations,
     setConversations,
+    handoverQueue, // ✅ NOVO
     socket,
     isConnected,
     loading,
     error,
     loadConversations,
+    fetchHandoverQueue, // ✅ NOVO
+    takeoverConversation, // ✅ NOVO
+    pauseBot, // ✅ NOVO
+    resumeBot, // ✅ NOVO
     sendMessage,
     markAsRead,
     markConversationAsRead,
     findOrCreateConversation,
+    ensureBotConversation, // ✅ NOVO: Expor para uso externo
   };
 }
 

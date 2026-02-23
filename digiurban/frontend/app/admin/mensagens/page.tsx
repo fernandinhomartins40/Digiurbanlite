@@ -31,12 +31,13 @@ import {
   Paperclip,
   Mic
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -44,7 +45,7 @@ import { NewConversationDialog } from '@/src/components/Messages/NewConversation
 import Link from 'next/link';
 
 // Hook e helpers unificados
-import { useConversations, Message, Conversation } from '@/src/hooks/useConversations';
+import { useConversations, Message, Conversation, HandoverQueueItem } from '@/src/hooks/useConversations';
 import {
   formatTime,
   formatRelativeTime,
@@ -102,20 +103,26 @@ export default function AdminMessagesPage() {
     { name: 'Configurações', href: '/admin/configuracoes', icon: Settings }
   ];
 
-  // Hook unificado de conversas
+  // Hook unificado de conversas (✅ COM HANDOVER)
   const {
     conversations,
+    handoverQueue, // ✅ NOVO
     socket,
     isConnected,
     loading,
     error,
     loadConversations,
+    fetchHandoverQueue, // ✅ NOVO
+    takeoverConversation, // ✅ NOVO
+    pauseBot, // ✅ NOVO
+    resumeBot, // ✅ NOVO
     sendMessage,
     markConversationAsRead,
     findOrCreateConversation,
   } = useConversations({
     userId: user?.id || '',
     userType: 'SERVER',
+    departmentId: user?.departmentId, // ✅ NOVO: Filtrar fila por departamento
     onNewMessage: (message, conversationId) => {
       // Se é mensagem para conversa selecionada, adicionar à lista
       if (selectedConversation?.id === conversationId) {
@@ -132,6 +139,10 @@ export default function AdminMessagesPage() {
         title: 'Nova conversa',
         description: `Nova conversa com ${conversation.title}`,
       });
+    },
+    onHandoverNew: (handoverItem) => {
+      // ✅ NOVO: Callback quando nova conversa entra na fila
+      console.log('[Admin] Nova conversa na fila:', handoverItem);
     },
   });
 
@@ -256,80 +267,53 @@ export default function AdminMessagesPage() {
   };
 
   /**
-   * Assumir conversa (Bot -> Humano)
+   * ✅ ATUALIZADO: Assumir conversa usando função do hook
    */
   const handleTakeOver = async () => {
     if (!selectedConversation) return;
 
     try {
-      // 1. Pausar o bot
-      await fetch(`${MESSAGES_API_URL}/bot-flow/pause`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          citizenId: selectedConversation.participant1Id
-        })
-      });
+      await pauseBot(selectedConversation.id, 'server_takeover');
 
-      // 2. Enviar mensagem automática
+      // Enviar mensagem de boas-vindas
       if (socket) {
-        socket.emit('message:send', {
-          conversationId: selectedConversation.id,
-          content: 'Um atendente assumiu a conversa. Como posso ajudar?',
-        });
+        await sendMessage(selectedConversation.id, 'Um atendente assumiu a conversa. Como posso ajudar?');
       }
-
-      toast({
-        title: 'Atendimento assumido',
-        description: 'Você assumiu a conversa. O bot foi pausado.',
-      });
-
-      // Recarregar conversa para atualizar status
-      await loadConversations();
     } catch (err) {
       console.error('Erro ao assumir conversa:', err);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível assumir a conversa.',
-        variant: 'destructive'
-      });
     }
   };
 
   /**
-   * Devolver ao bot (Humano -> Bot)
+   * ✅ ATUALIZADO: Devolver ao bot usando função do hook
    */
   const handleHandBackToBot = async () => {
     if (!selectedConversation) return;
 
     try {
-      // 1. Retomar o bot
-      await fetch(`${MESSAGES_API_URL}/bot-flow/resume`, {
-        method: 'POST',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          conversationId: selectedConversation.id,
-          citizenId: selectedConversation.participant1Id
-        })
-      });
-
-      toast({
-        title: 'Conversa retornada ao bot',
-        description: 'O DigiBot voltou a atender esta conversa.',
-      });
-
-      // Recarregar conversa para atualizar status
-      await loadConversations();
+      await resumeBot(selectedConversation.id);
     } catch (err) {
       console.error('Erro ao retornar ao bot:', err);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível retornar a conversa ao bot.',
-        variant: 'destructive'
-      });
+    }
+  };
+
+  /**
+   * ✅ NOVO: Assumir conversa da fila de handover
+   */
+  const handleTakeoverFromQueue = async (conversationId: string) => {
+    try {
+      await takeoverConversation(conversationId);
+
+      // Encontrar e selecionar a conversa
+      const conv = conversations.find(c => c.id === conversationId);
+      if (conv) {
+        setSelectedConversation(conv);
+        if (isMobileView) {
+          setShowConversationsList(false);
+        }
+      }
+    } catch (err) {
+      console.error('Erro ao assumir da fila:', err);
     }
   };
 
@@ -600,19 +584,34 @@ export default function AdminMessagesPage() {
           </div>
         </div>
 
-        {/* Lista de Conversas */}
-        <ScrollArea className="flex-1">
-          {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            </div>
-          ) : filteredConversations.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p className="font-medium">Nenhuma conversa encontrada</p>
-            </div>
-          ) : (
-            filteredConversations.map((conversation) => {
+        {/* ✅ NOVO: Tabs com Lista de Conversas + Fila de Handover */}
+        <Tabs defaultValue="conversations" className="flex-1 flex flex-col">
+          <TabsList className="w-full grid grid-cols-2 m-2">
+            <TabsTrigger value="conversations">
+              Conversas ({conversations.length})
+            </TabsTrigger>
+            <TabsTrigger value="handover">
+              Aguardando
+              {handoverQueue.length > 0 && (
+                <Badge className="ml-2 bg-orange-500">{handoverQueue.length}</Badge>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Lista de Conversas */}
+          <TabsContent value="conversations" className="flex-1 m-0">
+            <ScrollArea className="h-full">
+              {loading ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                </div>
+              ) : filteredConversations.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <MessageCircle className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">Nenhuma conversa encontrada</p>
+                </div>
+              ) : (
+                filteredConversations.map((conversation) => {
               const status = getConversationStatus(conversation);
               return (
                 <div
@@ -696,7 +695,72 @@ export default function AdminMessagesPage() {
               );
             })
           )}
-        </ScrollArea>
+            </ScrollArea>
+          </TabsContent>
+
+          {/* ✅ NOVO: Tab: Fila de Handover */}
+          <TabsContent value="handover" className="flex-1 m-0">
+            <ScrollArea className="h-full">
+              {handoverQueue.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <UserCheck className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p className="font-medium">Nenhuma conversa aguardando</p>
+                  <p className="text-xs mt-1">Conversas pausadas aparecerão aqui</p>
+                </div>
+              ) : (
+                <div className="p-4 space-y-3">
+                  {handoverQueue.map((item) => {
+                    const waitMinutes = Math.floor(item.waitTime / 60);
+                    const waitSeconds = item.waitTime % 60;
+
+                    return (
+                      <Card key={item.conversationId} className="border-orange-200 bg-orange-50/50">
+                        <CardHeader className="pb-3">
+                          <div className="flex items-start justify-between">
+                            <div className="flex items-center gap-3">
+                              <Avatar className="w-10 h-10">
+                                <AvatarFallback className="bg-orange-100 text-orange-700">
+                                  {getInitials(item.citizenName)}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <CardTitle className="text-sm">{item.citizenName}</CardTitle>
+                                <CardDescription className="text-xs flex items-center gap-1 mt-1">
+                                  <AlertCircle className="w-3 h-3" />
+                                  Aguardando há {waitMinutes}min {waitSeconds}s
+                                </CardDescription>
+                              </div>
+                            </div>
+                            <Badge variant="outline" className="text-orange-700 border-orange-300">
+                              Bot Pausado
+                            </Badge>
+                          </div>
+                        </CardHeader>
+                        <CardContent>
+                          {item.lastMessage && (
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-2">
+                              {item.lastMessage}
+                            </p>
+                          )}
+                          <div className="flex gap-2">
+                            <Button
+                              size="sm"
+                              className="flex-1 bg-orange-600 hover:bg-orange-700"
+                              onClick={() => handleTakeoverFromQueue(item.conversationId)}
+                            >
+                              <UserCheck className="w-4 h-4 mr-2" />
+                              Assumir Agora
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+            </ScrollArea>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Área de Chat */}
@@ -844,12 +908,12 @@ export default function AdminMessagesPage() {
                             )}
                             <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
 
-                            {/* Quick Replies - Para admin visualizar apenas */}
-                            {(message as any).metadata?.options && (message as any).metadata.options.length > 0 && (
+                            {/* ✅ Quick Replies - Usando campos queryable */}
+                            {message.isBotMessage && message.botInteractionType === 'menu' && message.botStructuredData && (
                               <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
                                 <p className="text-xs text-blue-700 font-semibold mb-2">Opções disponíveis:</p>
                                 <div className="flex flex-col gap-1">
-                                  {(message as any).metadata.options.map((option: any) => (
+                                  {(message.botStructuredData as any[]).map((option: any) => (
                                     <div key={option.id} className="text-xs text-gray-700">
                                       • {option.label}
                                       {option.description && <span className="text-gray-500"> - {option.description}</span>}
