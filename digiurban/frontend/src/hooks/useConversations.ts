@@ -952,6 +952,7 @@ export function useConversations({
     recipientType: 'CITIZEN' | 'SERVER'
   ): Promise<Conversation | null> => {
     try {
+      // CRÍTICO: Enviar participant1 (usuário atual) E participant2 (destinatário)
       const response = await fetch(`${MESSAGES_API_URL}/conversations/find-or-create`, {
         method: 'POST',
         credentials: 'include',
@@ -959,6 +960,8 @@ export function useConversations({
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          participant1Id: userIdRef.current,
+          participant1Type: userTypeRef.current,
           participant2Id: recipientId,
           participant2Type: recipientType,
         }),
