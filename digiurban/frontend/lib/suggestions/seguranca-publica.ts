@@ -73,7 +73,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'denuncia-sossego',
@@ -148,7 +149,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'seguranca-evento',
@@ -175,7 +177,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'credencial-estacionamento-deficiente',
@@ -199,7 +202,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Credencial de Estacionamento']
   },
   {
     id: 'ronda-escolar',
@@ -342,7 +346,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'balada-segura',
@@ -367,7 +372,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'denuncia-drogas',
@@ -415,7 +421,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Credencial de Acesso']
   },
   {
     id: 'patrulha-rural',
@@ -488,7 +495,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'denuncia-trabalho-infantil',
@@ -541,7 +549,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'vistoria-seguranca',
@@ -566,7 +575,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Laudo de Vistoria']
   },
   {
     id: 'registro-arma-fogo',
@@ -592,7 +602,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'autorizacao-filme',
@@ -619,7 +630,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'denuncia-pichacao',
@@ -670,7 +682,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'ocorrencia-animal-solto',
@@ -747,7 +760,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'denuncia-queimada',
@@ -800,7 +814,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'operacao-transito',
@@ -827,7 +842,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'monitoramento-tornozeira',
@@ -853,7 +869,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'busca-pessoa-desaparecida',
@@ -932,7 +949,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Credencial de Estacionamento']
   },
   {
     id: 'curso-defesa-pessoal',
@@ -1008,7 +1026,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cadastro-guarda-patrimonio',
@@ -1033,7 +1052,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'denuncia-perturbacao-fauna',
@@ -1086,7 +1106,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'denuncia-ocupacao-irregular',
@@ -1137,7 +1158,8 @@ export const segurancapublicaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.168Z'
+    createdAt: '2026-01-26T17:57:57.168Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'patrulha-parques',

@@ -22,7 +22,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Comprovante de Cadastro', 'Cartão de Pré-Natal'],
   },
   {
     id: 'vacinacao-agendamento',
@@ -70,7 +71,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Guia de Exame'],
   },
   {
     id: 'tratamento-especial',
@@ -113,7 +115,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Autorização TFD', 'Guia de Viagem'],
   },
   {
     id: 'programa-hiperdia',
@@ -136,7 +139,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Comprovante de Cadastro', 'Cartão Hiperdia'],
   },
   {
     id: 'saude-bucal',
@@ -185,7 +189,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Guia de Fisioterapia'],
   },
   {
     id: 'psicologia-saude',
@@ -231,7 +236,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Cartão SUS'],
   },
   {
     id: 'atestado-saude',
@@ -327,7 +333,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação'],
   },
   {
     id: 'mamografia',
@@ -519,7 +526,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Receita Médica'],
   },
   {
     id: 'cadeira-rodas',
@@ -542,7 +550,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Termo de Empréstimo'],
   },
   {
     id: 'muletas',
@@ -591,7 +600,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação'],
   },
   {
     id: 'eletrocardiograma',
@@ -639,7 +649,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Guia de Exame'],
   },
   {
     id: 'raio-x',
@@ -664,7 +675,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Guia de Exame'],
   },
   {
     id: 'saude-mental-caps',
@@ -759,7 +771,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Guia de Encaminhamento'],
   },
   {
     id: 'terapia-ocupacional',
@@ -784,7 +797,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Guia de Encaminhamento'],
   },
   {
     id: 'teste-orelhinha',
@@ -878,7 +892,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Atestado de Acompanhante'],
   },
   {
     id: 'programa-obesidade',
@@ -973,7 +988,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Guia de Internação'],
   },
   {
     id: 'retirada-pontos',
@@ -1019,7 +1035,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Atestado de Sanidade Mental'],
   },
   {
     id: 'coleta-preventivo-homem',
@@ -1067,7 +1084,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Termo de Empréstimo'],
   },
   {
     id: 'programa-hanseniase',
@@ -1090,7 +1108,8 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Comprovante de Cadastro', 'Cartão de Acompanhamento'],
   },
   {
     id: 'programa-tuberculose',
@@ -1113,6 +1132,7 @@ export const saudeSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.165Z'
+    createdAt: '2026-01-26T17:57:57.165Z',
+    generatesDocuments: ['Comprovante de Cadastro', 'Cartão de Acompanhamento'],
   }
 ];

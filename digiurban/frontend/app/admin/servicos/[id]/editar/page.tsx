@@ -100,6 +100,8 @@ export default function EditServicePage() {
   const [departments, setDepartments] = useState<Department[]>([])
   const [activeTab, setActiveTab] = useState('basic')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [serviceWorkflow, setServiceWorkflow] = useState<any>(null)
+  const [loadingWorkflow, setLoadingWorkflow] = useState(false)
 
   const [formData, setFormData] = useState<ServiceFormData>({
     name: '',
@@ -126,9 +128,24 @@ export default function EditServicePage() {
     formFieldsConfig: null,
   })
 
+  const loadWorkflow = async () => {
+    try {
+      setLoadingWorkflow(true)
+      const response = await apiRequest(`/service-workflows/service/${serviceId}`)
+      if (response.success && response.data) {
+        setServiceWorkflow(response.data)
+      }
+    } catch {
+      // No workflow exists for this service — that's fine
+    } finally {
+      setLoadingWorkflow(false)
+    }
+  }
+
   useEffect(() => {
     loadService()
     loadDepartments()
+    loadWorkflow()
   }, [serviceId])
 
   const loadService = async () => {
@@ -318,6 +335,7 @@ export default function EditServicePage() {
     { value: 'documents', label: 'Documentos', icon: FileText },
     { value: 'form-config', label: 'Formulário', icon: FormInput },
     { value: 'features', label: 'Recursos', icon: Sparkles },
+    { value: 'workflow', label: 'Workflow', icon: GitBranch },
   ]
 
   const featureTabs = []
@@ -332,9 +350,6 @@ export default function EditServicePage() {
   }
   if (formData.hasSurvey) {
     featureTabs.push({ value: 'survey', label: 'Pesquisa', icon: BarChart })
-  }
-  if (formData.hasCustomWorkflow) {
-    featureTabs.push({ value: 'workflow', label: 'Workflow', icon: GitBranch })
   }
   if (formData.hasAdvancedDocs) {
     featureTabs.push({ value: 'advanced-docs', label: 'Docs Inteligentes', icon: FileSearch })
@@ -580,33 +595,79 @@ export default function EditServicePage() {
           </TabsContent>
         )}
 
-        {/* Aba: Workflow Customizado */}
-        {formData.hasCustomWorkflow && (
-          <TabsContent value="workflow" className="mt-6">
+        {/* Aba: Workflow */}
+        <TabsContent value="workflow" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <GitBranch className="h-5 w-5" />
-                  Workflow Customizado
+                  Workflow do Serviço
                 </CardTitle>
                 <CardDescription>
-                  Defina etapas, aprovações, responsáveis e automações do fluxo de trabalho
+                  Gerencie as etapas, aprovações, responsáveis e SLAs do fluxo de trabalho
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
-                  <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-                  <p className="text-sm text-gray-600 font-medium">
-                    Workflow Customizado
-                  </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Em breve: Editor visual de workflow, etapas, aprovadores, SLAs
-                  </p>
-                </div>
+                {loadingWorkflow ? (
+                  <div className="flex items-center justify-center py-8">
+                    <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                  </div>
+                ) : serviceWorkflow ? (
+                  <div className="space-y-4">
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/20">
+                      <div className="flex items-center justify-between mb-3">
+                        <div>
+                          <h3 className="font-semibold text-sm">{serviceWorkflow.name}</h3>
+                          {serviceWorkflow.description && <p className="text-xs text-muted-foreground mt-0.5">{serviceWorkflow.description}</p>}
+                        </div>
+                        <Badge variant={serviceWorkflow.isActive ? 'default' : 'secondary'}>
+                          {serviceWorkflow.isActive ? 'Ativo' : 'Inativo'}
+                        </Badge>
+                      </div>
+                      <div className="flex flex-wrap gap-3 text-xs text-muted-foreground mb-4">
+                        <span>{Array.isArray(serviceWorkflow.stages) ? serviceWorkflow.stages.length : 0} etapas</span>
+                        {serviceWorkflow.defaultSLA && <span>SLA: {serviceWorkflow.defaultSLA} dias</span>}
+                      </div>
+                      <div className="flex gap-2">
+                        <Link href={`/admin/workflows/${serviceWorkflow.id}/edit`}>
+                          <Button size="sm"><GitBranch className="h-4 w-4 mr-1" />Editar Workflow</Button>
+                        </Link>
+                        <Link href={`/admin/workflows/${serviceWorkflow.id}/view`}>
+                          <Button variant="outline" size="sm">Visualizar</Button>
+                        </Link>
+                      </div>
+                    </div>
+                    {Array.isArray(serviceWorkflow.stages) && serviceWorkflow.stages.length > 0 && (
+                      <div className="space-y-1.5">
+                        <p className="text-xs font-medium text-muted-foreground">Etapas do fluxo:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {serviceWorkflow.stages.map((s: any, i: number) => (
+                            <Badge key={i} variant="outline" className="text-xs">
+                              {s.order || i + 1}. {s.name}
+                              {s.slaDays ? ` (${s.slaDays}d)` : ''}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="p-8 bg-gray-50 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                    <GitBranch className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-sm text-gray-600 font-medium">
+                      Nenhum workflow configurado
+                    </p>
+                    <p className="text-xs text-gray-500 mt-2 mb-4">
+                      Este serviço ainda não possui um workflow personalizado. Crie um para definir etapas, aprovações e SLAs.
+                    </p>
+                    <Link href="/admin/workflows/new">
+                      <Button size="sm"><GitBranch className="h-4 w-4 mr-1" />Criar Workflow</Button>
+                    </Link>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>
-        )}
 
         {/* Aba: Documentos Inteligentes */}
         {formData.hasAdvancedDocs && (

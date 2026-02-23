@@ -116,7 +116,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Autorização de Uso'],
   },
   {
     id: 'reserva-centro-cultural',
@@ -167,7 +168,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Certificado de Aprovação'],
   },
   {
     id: 'tombamento-patrimonio',
@@ -191,7 +193,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Certidão de Tombamento'],
   },
   {
     id: 'cadastro-biblioteca',
@@ -212,7 +215,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Cadastro'],
   },
   {
     id: 'visita-museu',
@@ -262,7 +266,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Inscrição'],
   },
   {
     id: 'cadastro-grupo-teatral',
@@ -286,7 +291,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Cadastro'],
   },
   {
     id: 'ponto-cultura',
@@ -309,7 +315,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Cadastro'],
   },
   {
     id: 'oficina-fotografia',
@@ -564,7 +571,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Autorização de Uso'],
   },
   {
     id: 'quadrinhos-oficina',
@@ -681,7 +689,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Cadastro'],
   },
   {
     id: 'patrimonio-imaterial',
@@ -705,7 +714,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Certidão de Registro'],
   },
   {
     id: 'contacao-historias',
@@ -775,7 +785,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Protocolo de Solicitação'],
   },
   {
     id: 'cultura-indigena',
@@ -911,7 +922,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Autorização'],
   },
   {
     id: 'festa-junina',
@@ -958,7 +970,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Cadastro'],
   },
   {
     id: 'eventos-religiosos',
@@ -982,7 +995,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Protocolo de Solicitação'],
   },
   {
     id: 'feira-artesanato',
@@ -1029,7 +1043,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Protocolo de Solicitação'],
   },
   {
     id: 'pesquisa-cultural',
@@ -1053,7 +1068,8 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Autorização de Pesquisa'],
   },
   {
     id: 'clube-leitura',
@@ -1121,6 +1137,7 @@ export const culturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.128Z'
+    createdAt: '2026-01-26T17:57:57.128Z',
+    generatesDocuments: ['Comprovante de Cadastro'],
   }
 ];

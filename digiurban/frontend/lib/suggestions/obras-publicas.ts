@@ -97,7 +97,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'drenagem-pluvial',
@@ -218,7 +219,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'semaforo-instalacao',
@@ -243,7 +245,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'meio-fio',
@@ -431,7 +434,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'ponto-onibus',
@@ -503,7 +507,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'bueiro-instalacao',
@@ -552,7 +557,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Laudo Técnico', 'Protocolo de Solicitação']
   },
   {
     id: 'galeria-pluvial',
@@ -576,7 +582,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'passarela-pedestre',
@@ -601,7 +608,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'rotatoria',
@@ -625,7 +633,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'pista-caminhada',
@@ -673,7 +682,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'banheiro-publico',
@@ -932,7 +942,8 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'relogio-publico',
@@ -1144,6 +1155,7 @@ export const obraspublicasSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.159Z'
+    createdAt: '2026-01-26T17:57:57.159Z',
+    generatesDocuments: ['Autorização', 'Laudo Técnico']
   }
 ];

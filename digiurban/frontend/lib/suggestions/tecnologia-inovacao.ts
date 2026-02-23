@@ -22,7 +22,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'wifi-publico-cadastro',
@@ -44,7 +45,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Credencial de Acesso']
   },
   {
     id: 'dados-abertos-consulta',
@@ -89,7 +91,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Credencial de Acesso']
   },
   {
     id: 'hackathon-inscricao',
@@ -113,7 +116,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'laboratorio-fabricacao',
@@ -137,7 +141,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'startup-cadastro',
@@ -163,7 +168,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'aceleradora-inscricao',
@@ -188,7 +194,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'sistema-sugestao',
@@ -211,7 +218,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'problema-sistema',
@@ -235,7 +243,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'certificado-digital',
@@ -257,7 +266,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'curso-programacao',
@@ -281,7 +291,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'robotica-inscricao',
@@ -304,7 +315,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'ponto-wifi-solicitacao',
@@ -327,7 +339,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'wifi-mapa-cobertura',
@@ -371,7 +384,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'cidade-inteligente',
@@ -395,7 +409,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'telecentro-cadastro',
@@ -417,7 +432,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Credencial de Acesso']
   },
   {
     id: 'curso-seguranca-digital',
@@ -439,7 +455,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'mentoria-tecnologia',
@@ -463,7 +480,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'aplicativo-cidadao',
@@ -486,7 +504,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'dados-estatisticas',
@@ -509,7 +528,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'blockchain-workshop',
@@ -531,7 +551,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'ia-workshop',
@@ -554,7 +575,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'iot-demonstracao',
@@ -577,7 +599,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'portal-transparencia',
@@ -620,7 +643,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'design-thinking',
@@ -642,7 +666,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'parceria-tecnologica',
@@ -667,7 +692,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'estagio-tecnologia',
@@ -692,7 +718,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'licenca-software-livre',
@@ -716,7 +743,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'youtuber-mirim',
@@ -738,7 +766,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'cyber-seguranca',
@@ -761,7 +790,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'dashboard-visualizacao',
@@ -784,7 +814,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'makerspace-uso',
@@ -808,7 +839,8 @@ export const tecnologiaInovacaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'tech-talk',

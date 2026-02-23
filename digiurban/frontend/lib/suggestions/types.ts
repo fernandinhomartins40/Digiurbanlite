@@ -81,4 +81,8 @@ export interface ServiceSuggestion {
     description?: string;
     links?: Array<Record<string, any>>;
   };
+
+  // Documentos que o serviço GERA (emite) ao final do processo
+  // Ex: ['Certidão', 'Alvará', 'Licença', 'Guia de Recolhimento']
+  generatesDocuments?: string[];
 }

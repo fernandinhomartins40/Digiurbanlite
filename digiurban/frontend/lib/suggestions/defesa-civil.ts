@@ -47,7 +47,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'vistoria-imovel',
@@ -70,7 +71,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'laudo-tecnico',
@@ -91,7 +93,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'cadastro-voluntario',
@@ -116,7 +119,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'curso-capacitacao',
@@ -139,7 +143,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'doacao-desastre',
@@ -163,7 +168,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'abrigo-temporario',
@@ -186,7 +192,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'auxilio-reconstrucao',
@@ -211,7 +218,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'monitoramento-chuvas',
@@ -274,7 +282,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'denuncia-construcao-irregular',
@@ -297,7 +306,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'kit-emergencia',
@@ -321,7 +331,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'ocorrencia-alagamento',
@@ -345,7 +356,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'ocorrencia-deslizamento',
@@ -370,7 +382,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'remocao-preventiva',
@@ -395,7 +408,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'mapa-risco',
@@ -441,7 +455,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'simulado-evacuacao',
@@ -466,7 +481,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'equipamento-protecao',
@@ -490,7 +506,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'apoio-animais',
@@ -514,7 +531,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'certificado-voluntario',
@@ -536,7 +554,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'escala-plantao',
@@ -581,7 +600,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'auxilio-lona',
@@ -604,7 +624,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'analise-solo',
@@ -627,7 +648,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'desobstrucao-drenagem',
@@ -650,7 +672,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'relatorio-ocorrencia',
@@ -671,7 +694,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'ponto-apoio',
@@ -696,7 +720,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'ocorrencia-vendaval',
@@ -720,7 +745,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Laudo Técnico']
   },
   {
     id: 'queda-arvore',
@@ -744,7 +770,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'boletim-climatico',
@@ -789,7 +816,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'estacao-meteorologica',
@@ -835,7 +863,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'plano-fuga',
@@ -858,7 +887,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'historico-desastres',
@@ -924,7 +954,8 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'autorizacao-evento',
@@ -950,6 +981,7 @@ export const defesaCivilSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
 ];

@@ -22,7 +22,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'consulta-protocolo',
@@ -64,7 +65,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Declaração Funcional']
   },
   {
     id: 'ferias-servidor',
@@ -87,7 +89,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização de Férias']
   },
   {
     id: 'contracheque-servidor',
@@ -135,7 +138,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'patrimonio-transferencia',
@@ -158,7 +162,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Termo de Transferência']
   },
   {
     id: 'patrimonio-baixa',
@@ -181,7 +186,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Termo de Baixa']
   },
   {
     id: 'almoxarifado-requisicao',
@@ -205,7 +211,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'almoxarifado-consulta-estoque',
@@ -252,7 +259,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'veiculo-manutencao',
@@ -276,7 +284,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'veiculo-abastecimento',
@@ -301,7 +310,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'licitacao-consulta',
@@ -369,7 +379,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'contrato-consulta',
@@ -414,7 +425,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Termo Aditivo']
   },
   {
     id: 'ouvidoria-manifestacao',
@@ -437,7 +449,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'ouvidoria-acompanhamento',
@@ -483,7 +496,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'concurso-consulta',
@@ -528,7 +542,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'licenca-servidor',
@@ -552,7 +567,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'progressao-funcional',
@@ -575,7 +591,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'capacitacao-inscricao',
@@ -598,7 +615,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'processo-administrativo',
@@ -622,7 +640,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'aposentadoria-requerimento',
@@ -646,7 +665,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'beneficio-servidor',
@@ -668,7 +688,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'seguro-veiculo',
@@ -693,7 +714,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'diarias-viagem',
@@ -718,7 +740,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'central-atendimento',
@@ -741,7 +764,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Agendamento']
   },
   {
     id: 'certidao-tempo-servico',
@@ -785,7 +809,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'inventario-patrimonio',
@@ -807,7 +832,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'ata-registro-precos',
@@ -854,7 +880,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'desistencia-licitacao',
@@ -876,7 +903,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'recurso-licitacao',
@@ -900,7 +928,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'atualizacao-cadastro-servidor',
@@ -922,7 +951,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'malote-correspondencia',
@@ -946,7 +976,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cessao-servidor',
@@ -970,7 +1001,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'acesso-informacao',
@@ -993,7 +1025,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'recurso-manifestacao',
@@ -1014,7 +1047,8 @@ export const administracaoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'pesquisa-satisfacao',

@@ -262,6 +262,18 @@ export default function WorkflowViewPage() {
                         </div>
                       )}
 
+                      {/* Document Templates */}
+                      {stage.documentTemplateIds?.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><FileText className="h-3 w-3" />Templates de documento</p>
+                          <div className="flex flex-wrap gap-1">
+                            {stage.documentTemplateIds.map((id: string) => (
+                              <Badge key={id} variant="outline" className="text-xs bg-indigo-50 text-indigo-700 border-indigo-200">{id.substring(0, 8)}...</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
                       {/* Role & Department */}
                       {(stage.role || stage.department) && (
                         <div>

@@ -21,7 +21,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'bpc',
@@ -45,7 +46,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Benefício']
   },
   {
     id: 'passe-livre',
@@ -68,7 +70,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'aluguel-social',
@@ -93,7 +96,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Benefício']
   },
   {
     id: 'atendimento-psicologo',
@@ -141,7 +145,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'programa-crianca-feliz',
@@ -162,7 +167,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'creas-atendimento',
@@ -210,7 +216,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Benefício']
   },
   {
     id: 'auxilio-funeral',
@@ -233,7 +240,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Benefício']
   },
   {
     id: 'cursos-qualificacao',
@@ -351,7 +359,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'minha-casa-minha-vida',
@@ -373,7 +382,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'atendimento-assistente-social',
@@ -419,7 +429,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'banco-alimentos',
@@ -441,7 +452,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'familia-acolhedora',
@@ -464,7 +476,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'adolescente-aprendiz',
@@ -487,7 +500,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'auxilio-vulnerabilidade',
@@ -510,7 +524,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Benefício']
   },
   {
     id: 'central-interprete-libras',
@@ -580,7 +595,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'servico-convivencia-crianca',
@@ -647,7 +663,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cadastro-artesao',
@@ -670,7 +687,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'mediacao-conflitos',
@@ -716,7 +734,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'cuidador-idoso',
@@ -739,7 +758,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'protecao-animais',
@@ -808,7 +828,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'doacao-sangue-cadastro',
@@ -855,7 +876,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'grupo-gestantes',
@@ -946,7 +968,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'acompanhamento-egressos',
@@ -969,7 +992,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'crianca-desaparecida',
@@ -1018,7 +1042,8 @@ export const assistenciasocialSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.121Z'
+    createdAt: '2026-01-26T17:57:57.121Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Benefício']
   },
   {
     id: 'atestado-residencia',

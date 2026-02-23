@@ -22,7 +22,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'renovacao-cnh',
@@ -44,7 +45,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'adicao-categoria',
@@ -67,7 +69,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'segunda-via-cnh',
@@ -89,7 +92,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'consulta-multas',
@@ -132,7 +136,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'parcelamento-multas',
@@ -154,7 +159,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'indicacao-condutor',
@@ -177,7 +183,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'pontuacao-cnh',
@@ -219,7 +226,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'vaga-especial',
@@ -242,7 +250,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'sinalizacao-solicitacao',
@@ -265,7 +274,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'semaforo-solicitacao',
@@ -288,7 +298,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'semaforo-defeito',
@@ -310,7 +321,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'lombada-solicitacao',
@@ -333,7 +345,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'transporte-escolar-cadastro',
@@ -358,7 +371,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'transporte-escolar-rota',
@@ -403,7 +417,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'bloqueio-via',
@@ -428,7 +443,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'bicicletario-localizacao',
@@ -471,7 +487,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'curso-reciclagem',
@@ -494,7 +511,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'credencial-taxi',
@@ -518,7 +536,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'vistoria-taxi',
@@ -541,7 +560,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'carga-descarga',
@@ -565,7 +585,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'alteracao-caracteristica',
@@ -588,7 +609,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'faixa-exclusiva',
@@ -612,7 +634,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'denuncia-transito',
@@ -637,7 +660,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'velocidade-maxima',
@@ -680,7 +704,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'radar-localizacao',
@@ -723,7 +748,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'passarela-solicitacao',
@@ -747,7 +773,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'mao-direcao',
@@ -770,7 +797,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'rotatoria-solicitacao',
@@ -793,7 +821,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'educacao-transito',
@@ -818,7 +847,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'certidao-nada-consta',
@@ -863,7 +893,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'fiscalizacao-estacionamento',
@@ -886,7 +917,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'transporte-escolar-reclamacao',
@@ -909,7 +941,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'placa-rua-solicitacao',
@@ -931,7 +964,8 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'municipalizacao-transito',
@@ -974,6 +1008,7 @@ export const transportesTransitoSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
 ];

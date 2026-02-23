@@ -25,7 +25,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização de Transporte Escolar']
   },
   {
     id: 'merenda-especial',
@@ -50,7 +51,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'transferencia-escola',
@@ -91,7 +93,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Guia de Transferência']
   },
   {
     id: 'bolsa-estudo',
@@ -115,7 +118,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Inscrição']
   },
   {
     id: 'eja-inscricao',
@@ -138,7 +142,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Comprovante de Inscrição', 'Comprovante de Matrícula']
   },
   {
     id: 'educacao-especial',
@@ -163,7 +168,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'uniforme-escolar',
@@ -239,7 +245,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização de Segunda Chamada']
   },
   {
     id: 'atendimento-psicologo-escolar',
@@ -483,7 +490,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Carteira de Passe Livre Estudantil']
   },
   {
     id: 'carteirinha-estudante',
@@ -505,7 +513,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Carteirinha de Estudante']
   },
   {
     id: 'alergia-medicamentos',
@@ -531,7 +540,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Ficha de Alergia e Medicamentos']
   },
   {
     id: 'dispensa-educacao-fisica',
@@ -558,7 +568,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Atestado de Dispensa de Educação Física']
   },
   {
     id: 'pre-matricula-creche',
@@ -580,7 +591,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'pre-escola',
@@ -602,7 +614,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Comprovante de Matrícula']
   },
   {
     id: 'conselho-escola',
@@ -697,7 +710,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Termo de Compromisso de Estágio']
   },
   {
     id: 'projeto-leitura',
@@ -766,7 +780,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'olimpiadas-escolares',
@@ -813,7 +828,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'capacitacao-professores',
@@ -885,7 +901,8 @@ export const educacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.137Z'
+    createdAt: '2026-01-26T17:57:57.137Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'conselho-classe',

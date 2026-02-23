@@ -24,7 +24,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Declaração de Aptidão ao PRONAF']
   },
   {
     id: 'emprestimo-maquinas',
@@ -49,7 +50,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cadastro-cooperativa',
@@ -72,7 +74,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'cadastro-agroindustria',
@@ -96,7 +99,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'cadastro-apicultor',
@@ -120,7 +124,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'licenca-uso-agua',
@@ -145,7 +150,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Licença de Uso de Água']
   },
   {
     id: 'licenca-poco',
@@ -170,7 +176,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Licença de Perfuração']
   },
   {
     id: 'selo-inspecao-municipal',
@@ -194,7 +201,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Certificado de Inspeção Municipal']
   },
   {
     id: 'assistencia-tecnica',
@@ -266,7 +274,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'credito-rural',
@@ -313,7 +322,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'piscicultura-cadastro',
@@ -337,7 +347,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'feira-produtor',
@@ -384,7 +395,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'organicos-certificacao',
@@ -408,7 +420,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Certificado de Produção Orgânica']
   },
   {
     id: 'patrulha-mecanizada',
@@ -432,7 +445,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'vacina-animal',
@@ -481,7 +495,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Guia de Trânsito Animal']
   },
   {
     id: 'curso-capacitacao',
@@ -551,7 +566,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Autorização de Supressão Vegetal']
   },
   {
     id: 'car-cadastro',
@@ -574,7 +590,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro Ambiental Rural']
   },
   {
     id: 'agrotoxico-receituario',
@@ -645,7 +662,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'tanque-peixe',
@@ -669,7 +687,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'irrigacao-projeto',
@@ -693,7 +712,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cerca-eletrica',
@@ -786,7 +806,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'fruticultura-mudas',
@@ -810,7 +831,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'olericultura-projeto',
@@ -834,7 +856,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'mandioca-processamento',
@@ -881,7 +904,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'avicultura-galinheiro',
@@ -904,7 +928,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'suinocultura-orientacao',
@@ -950,7 +975,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cadastro-produtor-organico',
@@ -973,7 +999,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'apicultura-enxame',
@@ -997,7 +1024,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'agroecologia-transicao',
@@ -1020,7 +1048,8 @@ export const agriculturaSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:56.971Z'
+    createdAt: '2026-01-26T17:57:56.971Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'ervas-medicinais',

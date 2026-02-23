@@ -37,7 +37,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-volei',
@@ -60,7 +61,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-basquete',
@@ -83,7 +85,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'natacao-criancas',
@@ -106,7 +109,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'natacao-adultos',
@@ -226,7 +230,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Reserva']
   },
   {
     id: 'cadastro-equipe-campeonato',
@@ -249,7 +254,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'bolsa-atleta-municipal',
@@ -274,7 +280,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição', 'Certificado']
   },
   {
     id: 'academia-saude-programa',
@@ -368,7 +375,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'treinador-cadastro',
@@ -391,7 +399,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'escolinha-futsal',
@@ -413,7 +422,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-handbol',
@@ -435,7 +445,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-tenis-mesa',
@@ -457,7 +468,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-judo',
@@ -480,7 +492,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-karate',
@@ -502,7 +515,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'escolinha-atletismo',
@@ -524,7 +538,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'ciclismo-grupo',
@@ -615,7 +630,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'skate-pista',
@@ -637,7 +653,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'yoga-aulas',
@@ -774,7 +791,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'badminton-aulas',
@@ -998,7 +1016,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'ginastica-artistica',
@@ -1021,7 +1040,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'esgrima-aulas',
@@ -1043,7 +1063,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'tiro-arco',
@@ -1065,7 +1086,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'rugby-escolinha',
@@ -1087,7 +1109,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'bocha-terceira-idade',
@@ -1158,7 +1181,8 @@ export const esportesSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.142Z'
+    createdAt: '2026-01-26T17:57:57.142Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'material-esportivo-emprestimo',

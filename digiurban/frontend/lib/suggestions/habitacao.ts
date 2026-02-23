@@ -23,7 +23,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'minha-casa-minha-vida',
@@ -48,7 +49,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'regularizacao-fundiaria',
@@ -72,7 +74,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Certidão de Regularização Fundiária']
   },
   {
     id: 'auxilio-aluguel-social',
@@ -96,7 +99,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Concessão de Benefício']
   },
   {
     id: 'reforma-habitacional',
@@ -120,7 +124,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'lote-urbanizado',
@@ -144,7 +149,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'autoconstrucao-assistida',
@@ -168,7 +174,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'usucapiao-urbano',
@@ -192,7 +199,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Certidão de Usucapião']
   },
   {
     id: 'melhorias-sanitarias',
@@ -216,7 +224,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'kit-construcao',
@@ -239,7 +248,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'habitacao-rural',
@@ -263,7 +273,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Inscrição']
   },
   {
     id: 'planta-gratuita',
@@ -332,7 +343,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Certidão de Regularização Fundiária']
   },
   {
     id: 'energia-solar-social',
@@ -355,7 +367,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'cisterna-residencial',
@@ -378,7 +391,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'acessibilidade-residencial',
@@ -401,7 +415,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'mutirao-habitacional',
@@ -424,7 +439,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'troca-imovel',
@@ -447,7 +463,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'desapropriacao-compensacao',
@@ -470,7 +487,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'habitacao-indigena',
@@ -493,7 +511,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Inscrição']
   },
   {
     id: 'habitacao-quilombola',
@@ -516,7 +535,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Inscrição']
   },
   {
     id: 'visita-tecnica-habitacional',
@@ -561,7 +581,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Laudo de Habitabilidade']
   },
   {
     id: 'defesa-civil-moradia',
@@ -607,7 +628,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Comprovante de Concessão de Benefício']
   },
   {
     id: 'conjuntos-habitacionais',
@@ -631,7 +653,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'parcelamento-lote',
@@ -655,7 +678,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Contrato de Parcelamento']
   },
   {
     id: 'habite-se-popular',
@@ -678,7 +702,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Habite-se']
   },
   {
     id: 'certidao-posse',
@@ -701,7 +726,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Certidão de Posse']
   },
   {
     id: 'doacao-terreno-municipal',
@@ -725,7 +751,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'permuta-terreno',
@@ -748,7 +775,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'credito-habitacional-municipal',
@@ -772,7 +800,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Contrato de Financiamento']
   },
   {
     id: 'programa-locacao-social',
@@ -795,7 +824,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Contrato de Locação Social']
   },
   {
     id: 'piso-tatil-residencial',
@@ -818,7 +848,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'rampa-acessibilidade',
@@ -841,7 +872,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'adequacao-incendio',
@@ -1042,7 +1074,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'cadastro-morador-conjunto',
@@ -1065,7 +1098,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'transferencia-unidade',
@@ -1088,7 +1122,8 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Autorização']
   },
   {
     id: 'segunda-via-contrato',
@@ -1133,6 +1168,7 @@ export const habitacaoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.148Z'
+    createdAt: '2026-01-26T17:57:57.148Z',
+    generatesDocuments: ['Certidão de Quitação']
   }
 ];

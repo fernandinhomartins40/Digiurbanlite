@@ -45,7 +45,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Ordem de Serviço']
   },
   {
     id: 'nova-ligacao-agua',
@@ -70,7 +71,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Ordem de Serviço']
   },
   {
     id: 'troca-hidrometro',
@@ -330,7 +332,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Termo de Concessão']
   },
   {
     id: 'exumacao',
@@ -355,7 +358,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Autorização de Exumação']
   },
   {
     id: 'renovacao-concessao-cemiterio',
@@ -379,7 +383,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Termo de Renovação de Concessão']
   },
   {
     id: 'permissao-uso-box-feira',
@@ -404,7 +409,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Termo de Permissão de Uso']
   },
   {
     id: 'permissao-box-mercado-municipal',
@@ -429,7 +435,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Termo de Permissão de Uso']
   },
   {
     id: 'taxa-lixo-isencao',
@@ -453,7 +460,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Certidão de Isenção']
   },
   {
     id: 'alteracao-titularidade-agua',
@@ -477,7 +485,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Comprovante de Alteração de Titularidade']
   },
   {
     id: 'vistoria-caixa-dagua',
@@ -599,7 +608,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'varricao-rua',
@@ -646,7 +656,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Termo de Parcelamento']
   },
   {
     id: 'autorizacao-queima-terreno',
@@ -671,7 +682,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'relocacao-ponto-feira',
@@ -696,7 +708,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Ordem de Serviço']
   },
   {
     id: 'limpeza-caixa-dagua-comunitaria',
@@ -743,7 +756,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'cadastro-carrinheiro',
@@ -767,7 +781,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'limpeza-boca-lobo',
@@ -953,7 +968,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Protocolo de Solicitação', 'Ordem de Serviço']
   },
   {
     id: 'cadastro-coletor-reciclavel',
@@ -978,7 +994,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'autorizacao-ocupacao-calcada-feira',
@@ -1003,7 +1020,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'suspensao-fornecimento-agua',
@@ -1028,7 +1046,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'autorizacao-desfile-rua',
@@ -1056,7 +1075,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Autorização']
   },
   {
     id: 'visita-tecnica-educacional',
@@ -1132,7 +1152,8 @@ export const servicospublicosSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.171Z'
+    createdAt: '2026-01-26T17:57:57.171Z',
+    generatesDocuments: ['Termo de Transferência de Titularidade']
   },
   {
     id: 'recarga-caminhao-pipa',

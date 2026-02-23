@@ -22,7 +22,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'violencia-denuncia',
@@ -46,7 +47,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'acolhimento-emergencia',
@@ -68,7 +70,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'atendimento-psicologico',
@@ -90,7 +93,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'orientacao-juridica',
@@ -113,7 +117,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'assistencia-social',
@@ -136,7 +141,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'curso-qualificacao-mulher',
@@ -160,7 +166,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'empreendedorismo-feminino',
@@ -184,7 +191,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'saude-mulher',
@@ -206,7 +214,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'prevencao-cancer',
@@ -229,7 +238,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'planejamento-familiar',
@@ -250,7 +260,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'roda-conversa',
@@ -271,7 +282,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'oficina-autoestima',
@@ -292,7 +304,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'grupo-apoio',
@@ -313,7 +326,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'medida-protetiva',
@@ -335,7 +349,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'patrulha-maria-penha',
@@ -357,7 +372,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'creche-acolhimento',
@@ -380,7 +396,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cesta-basica',
@@ -403,7 +420,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'auxilio-moradia',
@@ -426,7 +444,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'defensoria-agendamento',
@@ -448,7 +467,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'cadastro-rede-apoio',
@@ -470,7 +490,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'curso-direitos-mulher',
@@ -491,7 +512,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'palestra-violencia',
@@ -514,7 +536,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'artesanato-mulher',
@@ -536,7 +559,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'feira-empreendedoras',
@@ -559,7 +583,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'microcredito-mulher',
@@ -583,7 +608,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'consulta-ginecologica',
@@ -606,7 +632,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'menopausa-atendimento',
@@ -628,7 +655,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'pre-natal-especializado',
@@ -651,7 +679,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'doula-social',
@@ -673,7 +702,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'mutirao-mamografia',
@@ -695,7 +725,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'lideranca-feminina',
@@ -718,7 +749,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'informatica-mulher',
@@ -740,7 +772,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'lingua-estrangeira',
@@ -763,7 +796,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#06b6d4',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'beleza-autoestima',
@@ -784,7 +818,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'emprego-mulher',
@@ -808,7 +843,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'educacao-financeira',
@@ -829,7 +865,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#10b981',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'campanha-conscientizacao',
@@ -853,7 +890,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'conselho-mulher',
@@ -877,7 +915,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'violencia-digital',
@@ -899,7 +938,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#ef4444',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'pensao-alimenticia',
@@ -921,7 +961,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'guarda-filhos',
@@ -944,7 +985,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#8b5cf6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'divorcio-orientacao',
@@ -967,7 +1009,8 @@ export const politicasMulheresSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T18:30:00.000Z'
+    createdAt: '2026-01-26T18:30:00.000Z',
+    generatesDocuments: ['Protocolo de Atendimento']
   },
   {
     id: 'certificado-participacao',

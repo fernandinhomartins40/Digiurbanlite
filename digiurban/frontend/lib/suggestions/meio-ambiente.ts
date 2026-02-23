@@ -24,7 +24,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Licença Ambiental']
   },
   {
     id: 'poda-arvore-via-publica',
@@ -97,7 +98,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Autorização Ambiental']
   },
   {
     id: 'plantio-arvore-calçada',
@@ -147,7 +149,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Autorização Ambiental']
   },
   {
     id: 'recuperacao-nascente',
@@ -172,7 +175,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'compostagem-domestica',
@@ -247,7 +251,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Autorização Ambiental']
   },
   {
     id: 'fiscalizacao-barulho',
@@ -297,7 +302,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Outorga']
   },
   {
     id: 'licenca-poco-artesiano',
@@ -322,7 +328,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Licença Ambiental']
   },
   {
     id: 'area-preservacao-permanente',
@@ -347,7 +354,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'reserva-legal',
@@ -372,7 +380,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'ecoponto-cadastro',
@@ -488,7 +497,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Laudo Ambiental']
   },
   {
     id: 'fauna-silvestre',
@@ -585,7 +595,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'mudas-nativas',
@@ -657,7 +668,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Laudo Ambiental']
   },
   {
     id: 'viveiro-municipal',
@@ -703,7 +715,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'curso-agente-ambiental',
@@ -750,7 +763,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Termo de Compromisso Ambiental']
   },
   {
     id: 'denuncia-maus-tratos-animais',
@@ -800,7 +814,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'fiscalizacao-postura-animal',
@@ -874,7 +889,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   },
   {
     id: 'autorizacao-manejo-fauna',
@@ -898,7 +914,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Autorização Ambiental']
   },
   {
     id: 'monitoramento-qualidade-ar',
@@ -947,7 +964,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Licença Ambiental']
   },
   {
     id: 'certificado-regularidade-ambiental',
@@ -971,7 +989,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'programa-arboriza-cidade',
@@ -1019,7 +1038,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Laudo Ambiental']
   },
   {
     id: 'oficina-reciclagem-artesanato',
@@ -1068,7 +1088,8 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Certidão']
   },
   {
     id: 'projeto-reflorestamento',
@@ -1093,6 +1114,7 @@ export const meioambienteSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.155Z'
+    createdAt: '2026-01-26T17:57:57.155Z',
+    generatesDocuments: ['Protocolo de Solicitação']
   }
 ];

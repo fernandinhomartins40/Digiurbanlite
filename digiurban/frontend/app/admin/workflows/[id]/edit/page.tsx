@@ -16,7 +16,7 @@ import {
   Layers, FileJson, Upload, Download, Undo2
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { WorkflowStageEditor, WorkflowStageData } from '@/components/admin/workflows/WorkflowStageEditor'
+import { WorkflowStageEditor, WorkflowStageData, DocumentTemplateOption } from '@/components/admin/workflows/WorkflowStageEditor'
 
 function createEmptyStage(order: number): WorkflowStageData {
   return {
@@ -33,6 +33,7 @@ function createEmptyStage(order: number): WorkflowStageData {
     actionLabels: {},
     requiredDocumentTypes: [],
     requiredFormFields: [],
+    documentTemplateIds: [],
     role: '',
     department: '',
     requiresApproval: false,
@@ -54,6 +55,7 @@ function normalizeStage(raw: any, order: number): WorkflowStageData {
     actionLabels: raw.actionLabels || {},
     requiredDocumentTypes: Array.isArray(raw.requiredDocumentTypes) ? raw.requiredDocumentTypes : [],
     requiredFormFields: Array.isArray(raw.requiredFormFields || raw.requiredFormFieldIds) ? (raw.requiredFormFields || raw.requiredFormFieldIds) : [],
+    documentTemplateIds: Array.isArray(raw.documentTemplateIds) ? raw.documentTemplateIds : [],
     role: raw.role || '',
     department: raw.department || '',
     requiresApproval: raw.requiresApproval || false,
@@ -135,6 +137,7 @@ export default function WorkflowEditPage() {
   const [workflow, setWorkflow] = useState<any>(null)
   const [serviceInfo, setServiceInfo] = useState<any>(null)
   const [departments, setDepartments] = useState<string[]>([])
+  const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplateOption[]>([])
 
   // Form state
   const [name, setName] = useState('')
@@ -159,11 +162,20 @@ export default function WorkflowEditPage() {
         const rawStages = Array.isArray(wf.stages) ? wf.stages : []
         setStages(rawStages.map((s: any, i: number) => normalizeStage(s, i + 1)))
 
-        // Load service info
+        // Load service info and document templates
         if (wf.serviceId) {
           try {
-            const svcResp = await apiRequest(`/service-workflows/service-info/${wf.serviceId}`)
+            const [svcResp, tplResp] = await Promise.all([
+              apiRequest(`/service-workflows/service-info/${wf.serviceId}`),
+              apiRequest(`/document-templates?serviceId=${wf.serviceId}`)
+            ])
             if (svcResp.success) setServiceInfo(svcResp.data)
+            if (tplResp.success && Array.isArray(tplResp.data)) {
+              setDocumentTemplates(tplResp.data.map((t: any) => ({
+                id: t.id, name: t.name, code: t.code || '',
+                documentType: t.documentType || '', isGlobal: t.isGlobal || false
+              })))
+            }
           } catch {}
         }
       }
@@ -281,7 +293,8 @@ export default function WorkflowEditPage() {
         department: s.department || undefined,
         skipCondition: s.skipCondition || undefined,
         description: s.description || undefined,
-        requiredFormFieldIds: s.requiredFormFields, // Backend expects requiredFormFieldIds
+        requiredFormFieldIds: s.requiredFormFields,
+        documentTemplateIds: s.documentTemplateIds?.length ? s.documentTemplateIds : undefined,
       }))
 
       const response = await apiRequest(`/service-workflows/service/${workflow.serviceId}`, {
@@ -440,6 +453,7 @@ export default function WorkflowEditPage() {
                 serviceDocumentTypes={serviceDocumentTypes}
                 serviceFormFields={serviceFormFields}
                 departments={departments}
+                documentTemplates={documentTemplates}
                 onChange={handleStageChange}
                 onRemove={handleStageRemove}
                 onMove={handleStageMove}

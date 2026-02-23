@@ -16,14 +16,14 @@ import {
   Layers, Search
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { WorkflowStageEditor, WorkflowStageData } from '@/components/admin/workflows/WorkflowStageEditor'
+import { WorkflowStageEditor, WorkflowStageData, DocumentTemplateOption } from '@/components/admin/workflows/WorkflowStageEditor'
 
 function createEmptyStage(order: number): WorkflowStageData {
   return {
     name: '', description: '', order, slaDays: 3, canSkip: false, skipCondition: '',
     stageType: '', availableTabs: ['resumo', 'documentos', 'comunicacao'], primaryTab: 'resumo',
     allowedActions: ['APPROVE'], actionLabels: {}, requiredDocumentTypes: [],
-    requiredFormFields: [], role: '', department: '', requiresApproval: false,
+    requiredFormFields: [], documentTemplateIds: [], role: '', department: '', requiresApproval: false,
   }
 }
 
@@ -38,6 +38,7 @@ function normalizeStage(raw: any, order: number): WorkflowStageData {
     actionLabels: raw.actionLabels || {},
     requiredDocumentTypes: Array.isArray(raw.requiredDocumentTypes) ? raw.requiredDocumentTypes : [],
     requiredFormFields: Array.isArray(raw.requiredFormFields || raw.requiredFormFieldIds) ? (raw.requiredFormFields || raw.requiredFormFieldIds) : [],
+    documentTemplateIds: Array.isArray(raw.documentTemplateIds) ? raw.documentTemplateIds : [],
     role: raw.role || '', department: raw.department || '', requiresApproval: raw.requiresApproval || false,
   }
 }
@@ -76,6 +77,7 @@ export default function NewWorkflowPage() {
   const [defaultSLA, setDefaultSLA] = useState(15)
   const [stages, setStages] = useState<WorkflowStageData[]>([])
   const [serviceInfo, setServiceInfo] = useState<any>(null)
+  const [documentTemplates, setDocumentTemplates] = useState<DocumentTemplateOption[]>([])
 
   // Load services without workflow
   const loadServices = useCallback(async () => {
@@ -119,17 +121,25 @@ export default function NewWorkflowPage() {
     }
   }, [loadServices, loadDepartments, searchParams])
 
-  // Load service info when service selected
+  // Load service info and document templates when service selected
   useEffect(() => {
-    if (!selectedServiceId) { setServiceInfo(null); return }
+    if (!selectedServiceId) { setServiceInfo(null); setDocumentTemplates([]); return }
     const loadInfo = async () => {
       try {
-        const resp = await apiRequest(`/service-workflows/service-info/${selectedServiceId}`)
+        const [resp, tplResp] = await Promise.all([
+          apiRequest(`/service-workflows/service-info/${selectedServiceId}`),
+          apiRequest(`/document-templates?serviceId=${selectedServiceId}`)
+        ])
         if (resp.success) {
           setServiceInfo(resp.data)
-          // Auto-fill name if empty
           if (!name) setName(`Workflow - ${resp.data.name}`)
           if (resp.data.estimatedDays && defaultSLA === 15) setDefaultSLA(resp.data.estimatedDays)
+        }
+        if (tplResp.success && Array.isArray(tplResp.data)) {
+          setDocumentTemplates(tplResp.data.map((t: any) => ({
+            id: t.id, name: t.name, code: t.code || '',
+            documentType: t.documentType || '', isGlobal: t.isGlobal || false
+          })))
         }
       } catch {}
     }
@@ -180,6 +190,7 @@ export default function NewWorkflowPage() {
         role: s.role || undefined, department: s.department || undefined,
         skipCondition: s.skipCondition || undefined, description: s.description || undefined,
         requiredFormFieldIds: s.requiredFormFields,
+        documentTemplateIds: s.documentTemplateIds?.length ? s.documentTemplateIds : undefined,
       }))
 
       const response = await apiRequest('/service-workflows', {
@@ -318,6 +329,7 @@ export default function NewWorkflowPage() {
                     serviceDocumentTypes={serviceDocTypes}
                     serviceFormFields={serviceFormFields}
                     departments={departments}
+                    documentTemplates={documentTemplates}
                     onChange={handleStageChange}
                     onRemove={handleStageRemove}
                     onMove={handleStageMove}

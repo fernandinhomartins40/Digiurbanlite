@@ -35,9 +35,18 @@ export interface WorkflowStageData {
   actionLabels: Record<string, string>
   requiredDocumentTypes: string[]
   requiredFormFields: string[]
+  documentTemplateIds: string[]
   role: string
   department: string
   requiresApproval: boolean
+}
+
+export interface DocumentTemplateOption {
+  id: string
+  name: string
+  code: string
+  documentType: string
+  isGlobal: boolean
 }
 
 interface WorkflowStageEditorProps {
@@ -47,6 +56,7 @@ interface WorkflowStageEditorProps {
   serviceDocumentTypes: string[]
   serviceFormFields: { id: string; label: string }[]
   departments: string[]
+  documentTemplates: DocumentTemplateOption[]
   onChange: (index: number, stage: WorkflowStageData) => void
   onRemove: (index: number) => void
   onMove: (index: number, direction: 'up' | 'down') => void
@@ -103,6 +113,7 @@ export function WorkflowStageEditor({
   serviceDocumentTypes,
   serviceFormFields,
   departments,
+  documentTemplates,
   onChange,
   onRemove,
   onMove,
@@ -144,6 +155,17 @@ export function WorkflowStageEditor({
       : [...stage.requiredFormFields, fieldId]
     update({ requiredFormFields: fields })
   }
+
+  const toggleDocumentTemplate = (templateId: string) => {
+    const ids = (stage.documentTemplateIds || []).includes(templateId)
+      ? stage.documentTemplateIds.filter(id => id !== templateId)
+      : [...(stage.documentTemplateIds || []), templateId]
+    update({ documentTemplateIds: ids })
+  }
+
+  const hasDocGenerationTabs = stage.availableTabs.some(t =>
+    ['generated', 'document-generation', 'documentos-gerados', 'send', 'enviar'].includes(t)
+  ) || stage.stageType === 'DOCUMENT_GENERATION' || stage.stageType === 'CONCLUSION'
 
   const stageTypeInfo = STAGE_TYPES.find(t => t.id === (stage.stageType || ''))
 
@@ -437,6 +459,46 @@ export function WorkflowStageEditor({
                   </div>
                 )}
               </div>
+
+              {/* Document Templates (shown when stage has doc generation tabs) */}
+              {hasDocGenerationTabs && (
+                <>
+                  <Separator />
+                  <div>
+                    <Label className="text-xs font-medium mb-2 block">Templates de documento disponíveis nesta etapa</Label>
+                    <p className="text-[10px] text-muted-foreground mb-2">Selecione quais templates de documento podem ser gerados nesta etapa</p>
+                    {documentTemplates.length > 0 ? (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                        {documentTemplates.map(tpl => (
+                          <div
+                            key={tpl.id}
+                            className={`flex items-center gap-2 p-2 rounded border cursor-pointer text-xs transition-colors ${(stage.documentTemplateIds || []).includes(tpl.id) ? 'bg-indigo-50 border-indigo-200' : 'hover:bg-muted/50'}`}
+                            onClick={() => toggleDocumentTemplate(tpl.id)}
+                          >
+                            <Checkbox checked={(stage.documentTemplateIds || []).includes(tpl.id)} onCheckedChange={() => {}} />
+                            <FileText className="h-3 w-3 text-indigo-500" />
+                            <div className="min-w-0 flex-1">
+                              <span className="font-medium">{tpl.name}</span>
+                              <span className="text-[10px] text-muted-foreground ml-1">({tpl.documentType})</span>
+                              {tpl.isGlobal && <Badge variant="outline" className="text-[9px] ml-1 h-4 px-1">Global</Badge>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="p-3 rounded border border-dashed text-center">
+                        <p className="text-xs text-muted-foreground">Nenhum template de documento cadastrado para este serviço.</p>
+                        <p className="text-[10px] text-muted-foreground mt-1">Crie templates em /admin/templates-documentos e vincule ao serviço.</p>
+                      </div>
+                    )}
+                    {(stage.documentTemplateIds || []).length > 0 && (
+                      <p className="text-[10px] text-muted-foreground mt-2">
+                        {stage.documentTemplateIds.length} template{stage.documentTemplateIds.length > 1 ? 's' : ''} selecionado{stage.documentTemplateIds.length > 1 ? 's' : ''}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </TabsContent>
 
             {/* === TAB 4: GOVERNANÇA === */}

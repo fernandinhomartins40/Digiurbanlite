@@ -23,7 +23,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Uso do Solo']
   },
   {
     id: 'parcelamento-solo-loteamento',
@@ -47,7 +48,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Loteamento']
   },
   {
     id: 'habite-se',
@@ -72,7 +74,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Habite-se']
   },
   {
     id: 'desmembramento-terreno',
@@ -97,7 +100,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Desmembramento']
   },
   {
     id: 'unificacao-lotes',
@@ -121,7 +125,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Unificação']
   },
   {
     id: 'consulta-previa-viabilidade',
@@ -171,7 +176,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Demolição']
   },
   {
     id: 'certidao-numeracao-predial',
@@ -194,7 +200,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Numeração Predial']
   },
   {
     id: 'certidao-alinhamento',
@@ -218,7 +225,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Alinhamento']
   },
   {
     id: 'modificacao-projeto-aprovado',
@@ -242,7 +250,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Modificação']
   },
   {
     id: 'regularizacao-obra',
@@ -268,7 +277,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Regularização']
   },
   {
     id: 'zoneamento-consulta',
@@ -340,7 +350,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Licença de Localização e Funcionamento']
   },
   {
     id: 'alvara-reforma',
@@ -366,7 +377,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Reforma']
   },
   {
     id: 'autorizacao-movimento-terra',
@@ -391,7 +403,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Autorização de Movimento de Terra']
   },
   {
     id: 'licenca-instalacao-publicidade',
@@ -416,7 +429,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Licença de Publicidade']
   },
   {
     id: 'certidao-baixa-imovel',
@@ -440,7 +454,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Baixa de Imóvel']
   },
   {
     id: 'plano-diretor-consulta',
@@ -487,7 +502,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Retificação de Área']
   },
   {
     id: 'desdobro-matricula',
@@ -511,7 +527,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Desdobro']
   },
   {
     id: 'certidao-confrontacao',
@@ -558,7 +575,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Aprovação de Condomínio']
   },
   {
     id: 'aumento-area-construida',
@@ -584,7 +602,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Ampliação']
   },
   {
     id: 'autorizacao-perfuracao-poco',
@@ -608,7 +627,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Autorização de Perfuração de Poço']
   },
   {
     id: 'certidao-area-verde',
@@ -655,7 +675,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Transferência de Potencial Construtivo']
   },
   {
     id: 'certidao-baixa-edificacao',
@@ -679,7 +700,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Baixa de Edificação']
   },
   {
     id: 'licenca-ocupacao-temporaria',
@@ -705,7 +727,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Licença de Ocupação Temporária']
   },
   {
     id: 'aprovacao-remembramento',
@@ -728,7 +751,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Remembramento']
   },
   {
     id: 'certidao-restricao-urbanistica',
@@ -775,7 +799,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Outorga Onerosa']
   },
   {
     id: 'certidao-caracteristicas-urbanisticas',
@@ -824,7 +849,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Construção']
   },
   {
     id: 'licenca-instalacao-antena',
@@ -849,7 +875,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Licença de Instalação de Antena']
   },
   {
     id: 'certidao-destinacao-lote',
@@ -897,7 +924,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Construção']
   },
   {
     id: 'autorizacao-tapume',
@@ -946,7 +974,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Construção']
   },
   {
     id: 'licenca-obra-arte',
@@ -971,7 +1000,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Licença de Obra de Arte']
   },
   {
     id: 'certidao-ocupacao-irregular',
@@ -994,7 +1024,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Ocupação Irregular']
   },
   {
     id: 'aprovacao-piscina',
@@ -1018,7 +1049,8 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Alvará de Construção']
   },
   {
     id: 'certidao-negativa-obra',
@@ -1090,6 +1122,7 @@ export const planejamentourbanoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.161Z'
+    createdAt: '2026-01-26T17:57:57.161Z',
+    generatesDocuments: ['Certidão de Averbação de Construção']
   }
 ];

@@ -26,7 +26,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Autorização de Evento Turístico']
   },
   {
     id: 'roteiro-turistico',
@@ -53,7 +54,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inclusão em Roteiro']
   },
   {
     id: 'selo-turismo',
@@ -79,7 +81,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Certificado de Qualidade Turística']
   },
   {
     id: 'material-promocional',
@@ -150,7 +153,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'feira-artesanato',
@@ -173,7 +177,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'apoio-evento-cultural',
@@ -199,7 +204,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Termo de Apoio Municipal']
   },
   {
     id: 'visita-tecnica-turismo',
@@ -249,7 +255,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'restaurante-tipico',
@@ -274,7 +281,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Certificado de Restaurante Típico']
   },
   {
     id: 'cadastro-condutor',
@@ -298,7 +306,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'patrimonio-historico',
@@ -323,7 +332,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Certidão de Registro de Patrimônio']
   },
   {
     id: 'autorizacao-filmagem',
@@ -350,7 +360,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Autorização de Filmagem']
   },
   {
     id: 'transporte-turistico',
@@ -376,7 +387,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Alvará de Transporte Turístico']
   },
   {
     id: 'mirante-observacao',
@@ -402,7 +414,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Autorização de Instalação']
   },
   {
     id: 'festival-gastronomico',
@@ -427,7 +440,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'rota-gastronomica',
@@ -452,7 +466,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inclusão em Rota']
   },
   {
     id: 'centro-informacoes',
@@ -525,7 +540,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Alvará de Funcionamento']
   },
   {
     id: 'turismo-rural',
@@ -550,7 +566,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'passeio-nautico',
@@ -576,7 +593,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Autorização de Passeio Náutico']
   },
   {
     id: 'tour-bicicleta',
@@ -601,7 +619,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'observacao-fauna',
@@ -626,7 +645,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Autorização de Observação de Fauna']
   },
   {
     id: 'fam-tour',
@@ -651,7 +671,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'feira-turismo',
@@ -676,7 +697,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inscrição']
   },
   {
     id: 'museu-comunitario',
@@ -701,7 +723,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'trilha-ecologica',
@@ -727,7 +750,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#f59e0b',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Autorização de Operação de Trilha']
   },
   {
     id: 'festa-tradicional',
@@ -752,7 +776,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Certificado de Registro Cultural']
   },
   {
     id: 'produtor-local',
@@ -777,7 +802,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'loja-souvenirs',
@@ -801,7 +827,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'wifi-turistico',
@@ -852,7 +879,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#ec4899',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Inclusão no Calendário']
   },
   {
     id: 'programa-voluntario',
@@ -927,7 +955,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   },
   {
     id: 'reclamacao-servico-turistico',
@@ -1001,7 +1030,8 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Termo de Parceria']
   },
   {
     id: 'receptivo-turismo',
@@ -1027,6 +1057,7 @@ export const turismoSuggestions: ServiceSuggestion[] = [
     color: '#3b82f6',
     moduleType: null,
     status: 'ACTIVE' as const,
-    createdAt: '2026-01-26T17:57:57.173Z'
+    createdAt: '2026-01-26T17:57:57.173Z',
+    generatesDocuments: ['Comprovante de Cadastro']
   }
 ];
