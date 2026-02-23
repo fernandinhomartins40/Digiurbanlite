@@ -846,10 +846,21 @@ router.post('/:id/request', (req, res, next) => {
 
     const {
       description,
-      locationData,
       schedulingData,
       priority = 3
         } = req.body;
+
+    // Parse locationData se for string (vindo de FormData)
+    let locationData = req.body.locationData;
+    if (typeof locationData === 'string') {
+      try {
+        locationData = JSON.parse(locationData);
+      } catch (e) {
+        console.warn('Erro ao parsear locationData:', e);
+        locationData = undefined;
+      }
+    }
+    console.log('📍 [Service Request] locationData parseado:', locationData);
 
     if (!description || description.trim().length === 0) {
       return res.status(400).json({ error: 'Descri+º+úo +® obrigat+¦ria' });

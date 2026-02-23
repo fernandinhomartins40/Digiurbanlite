@@ -129,6 +129,13 @@ export class ProtocolModuleService {
             _geoSource: geoResult.source
           };
 
+      // Mapear source para locationType
+      const locationTypeMap: Record<string, string> = {
+        'user_location': 'GPS',
+        'citizen_address': 'CITIZEN_ADDRESS',
+        'none': ''
+      };
+
       // Criar protocolo com geolocalização resolvida
       const protocol = await tx.protocolSimplified.create({
         data: {
@@ -144,7 +151,8 @@ export class ProtocolModuleService {
           createdById,
           latitude: geoResult.latitude,
           longitude: geoResult.longitude,
-          address: geoResult.address
+          address: geoResult.address,
+          locationType: locationTypeMap[geoResult.source] || undefined
         }
       });
 
