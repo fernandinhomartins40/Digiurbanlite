@@ -33,6 +33,7 @@ interface Protocol {
   department?: { name: string }
   citizen?: { name: string }
   locationType?: string
+  geocodingPrecision?: 'exact' | 'geocoded' | 'house' | 'street' | 'neighborhood' | 'city' | 'unknown'
 }
 
 interface ProtocolMapEnhancedProps {
@@ -217,18 +218,44 @@ function MapBounds({ protocols }: { protocols: Protocol[] }) {
   return null
 }
 
+// Determinar se localização é precisa (GPS/manual) ou aproximada (geocodificada de endereço)
+function isExactLocation(protocol: Protocol): boolean {
+  if (protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN') return true
+  if (protocol.geocodingPrecision === 'exact') return true
+  return false
+}
+
+function getPrecisionLabel(protocol: Protocol): { label: string; color: string; icon: string } {
+  if (protocol.locationType === 'GPS') return { label: 'GPS (preciso)', color: '#16a34a', icon: '📍' }
+  if (protocol.locationType === 'MANUAL_PIN') return { label: 'Pin manual (preciso)', color: '#16a34a', icon: '📌' }
+  if (protocol.geocodingPrecision === 'exact') return { label: 'Coordenadas exatas', color: '#16a34a', icon: '📍' }
+  if (protocol.geocodingPrecision === 'house') return { label: 'Endereço (casa)', color: '#22c55e', icon: '🏠' }
+  if (protocol.geocodingPrecision === 'street') return { label: 'Endereço (rua)', color: '#f59e0b', icon: '🛣️' }
+  if (protocol.geocodingPrecision === 'neighborhood') return { label: 'Endereço (bairro)', color: '#f97316', icon: '🏘️' }
+  if (protocol.geocodingPrecision === 'city') return { label: 'Endereço (cidade)', color: '#ef4444', icon: '🏙️' }
+  if (protocol.locationType === 'GEOCODED_ADDRESS') return { label: 'Geocodificado', color: '#f59e0b', icon: '📫' }
+  if (protocol.locationType === 'CITIZEN_ADDRESS') return { label: 'End. cidadão', color: '#f59e0b', icon: '📫' }
+  return { label: 'Coordenadas', color: '#6b7280', icon: '📍' }
+}
+
 // Criar ícone customizado por categoria de serviço
-function createServiceIcon(category?: string, isGPS: boolean = false) {
+function createServiceIcon(category?: string, protocol?: Protocol) {
   const config = getCategoryConfig(category)
+  const isExact = protocol ? isExactLocation(protocol) : true
   const size = config.isAlert ? 35 : 28
   const iconSize = config.isAlert ? 20 : 16
 
+  // Cor do indicador de precisão: verde = exato, laranja = endereço
+  const precisionColor = isExact ? '#16a34a' : '#f59e0b'
+  // Borda do pin tracejada para endereço geocodificado
+  const pinStroke = !isExact ? `stroke="${precisionColor}" stroke-width="2" stroke-dasharray="3,2"` : ''
+
   const svgIcon = `
-    <svg width="${size}" height="${size + 15}" viewBox="0 0 ${size} ${size + 15}" xmlns="http://www.w3.org/2000/svg">
+    <svg width="${size + 8}" height="${size + 20}" viewBox="-4 -4 ${size + 8} ${size + 20}" xmlns="http://www.w3.org/2000/svg">
       <!-- Pin de localização -->
       <path d="M${size/2} 0C${size/4} 0 0 ${size/4} 0 ${size/2}c0 ${size*0.6} ${size/2} ${size + 15 - size/2} ${size/2} ${size + 15 - size/2}S${size} ${size*1.1} ${size} ${size/2}C${size} ${size/4} ${size*0.75} 0 ${size/2} 0z"
             fill="${config.color}"
-            ${config.isAlert ? 'stroke="#ffffff" stroke-width="2"' : ''}
+            ${config.isAlert ? 'stroke="#ffffff" stroke-width="2"' : pinStroke}
             ${config.isAlert ? 'filter="drop-shadow(0 0 8px ' + config.color + ')"' : ''}
       />
 
@@ -243,7 +270,8 @@ function createServiceIcon(category?: string, isGPS: boolean = false) {
         ${config.icon}
       </text>
 
-      ${isGPS ? `<circle cx="${size/2}" cy="${size/2}" r="3" fill="${config.color}"/>` : ''}
+      <!-- Indicador de precisão (bolinha no canto superior direito) -->
+      <circle cx="${size - 2}" cy="4" r="4" fill="${precisionColor}" stroke="white" stroke-width="1.5"/>
 
       ${config.isAlert ? `
         <!-- Animação de pulso para alertas -->
@@ -258,8 +286,8 @@ function createServiceIcon(category?: string, isGPS: boolean = false) {
   return L.divIcon({
     html: svgIcon,
     className: config.isAlert ? 'custom-marker alert-marker' : 'custom-marker',
-    iconSize: [size, size + 15],
-    iconAnchor: [size / 2, size + 15],
+    iconSize: [size + 8, size + 20],
+    iconAnchor: [(size + 8) / 2, size + 15],
     popupAnchor: [0, -(size + 15)]
   })
 }
@@ -320,8 +348,8 @@ export function ProtocolMapEnhanced({
       } else {
         // Múltiplos protocolos na mesma coordenada
         protocolList.forEach((protocol, index) => {
-          // Aplicar jitter apenas se NÃO for GPS real
-          const isRealGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
+          // Aplicar jitter se NÃO for localização exata (GPS/manual pin)
+          const isRealGPS = isExactLocation(protocol)
 
           if (!isRealGPS && index > 0) {
             // Gerar deslocamento aleatório em círculo
@@ -371,12 +399,13 @@ export function ProtocolMapEnhanced({
       return acc
     }, {} as Record<string, number>)
 
-    const gpsCount = filteredProtocols.filter(p =>
-      p.locationType === 'GPS' || p.locationType === 'MANUAL_PIN'
+    const exactCount = filteredProtocols.filter(p => isExactLocation(p)).length
+
+    const geocodedCount = filteredProtocols.filter(p =>
+      !isExactLocation(p) && (p.locationType === 'GEOCODED_ADDRESS' || p.locationType === 'CITIZEN_ADDRESS' || p.geocodingPrecision === 'geocoded')
     ).length
 
     const alertCount = filteredProtocols.filter(p =>
-      // CORREÇÃO: Usar department.name para identificar segurança pública
       p.department?.name === 'Segurança Pública'
     ).length
 
@@ -386,9 +415,10 @@ export function ProtocolMapEnhanced({
       byDepartment,
       byService,
       byCategory,
-      gpsCount,
+      exactCount,
+      geocodedCount,
       alertCount,
-      gpsPercentage: ((gpsCount / filteredProtocols.length) * 100).toFixed(1)
+      exactPercentage: filteredProtocols.length > 0 ? ((exactCount / filteredProtocols.length) * 100).toFixed(1) : '0'
     }
   }, [filteredProtocols])
 
@@ -560,16 +590,37 @@ export function ProtocolMapEnhanced({
               </div>
             </div>
 
+            {/* Legenda de Precisão */}
+            <div className="border-t pt-2 md:pt-3">
+              <p className="text-xs font-medium text-gray-700 mb-1.5">Precisão da localização:</p>
+              <div className="flex flex-wrap gap-2 text-xs text-gray-600">
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-green-500 border border-white shadow-sm" />
+                  Coordenadas exatas (GPS/pin)
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 border border-white shadow-sm" />
+                  Aproximado (endereço geocodificado)
+                </span>
+              </div>
+            </div>
+
             {/* Estatísticas Rápidas */}
             <div className="flex flex-wrap gap-1.5 md:gap-2 border-t pt-2 md:pt-3">
               <Badge variant="secondary" className="text-xs">
                 <MapPin className="h-3 w-3 mr-1" />
                 {stats.total} protocolos
               </Badge>
-              <Badge variant="secondary" className="text-xs">
-                <TrendingUp className="h-3 w-3 mr-1" />
-                {stats.gpsCount} com GPS ({stats.gpsPercentage}%)
+              <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border border-green-200">
+                <span className="inline-block w-2 h-2 rounded-full bg-green-500 mr-1" />
+                {stats.exactCount} precisos ({stats.exactPercentage}%)
               </Badge>
+              {stats.geocodedCount > 0 && (
+                <Badge variant="secondary" className="text-xs bg-amber-50 text-amber-700 border border-amber-200">
+                  <span className="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1" />
+                  {stats.geocodedCount} por endereço
+                </Badge>
+              )}
               {stats.alertCount > 0 && (
                 <Badge variant="destructive" className="animate-pulse text-xs">
                   <Shield className="h-3 w-3 mr-1" />
@@ -640,15 +691,14 @@ export function ProtocolMapEnhanced({
               }}
             >
               {protocolsWithJitter.map((protocol) => {
-                const isGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
-                // CORREÇÃO: Usar department.name para categorização por secretaria
                 const config = getCategoryConfig(protocol.department?.name)
+                const precision = getPrecisionLabel(protocol)
 
                 return (
                   <Marker
                     key={protocol.id}
                     position={[protocol.latitude, protocol.longitude]}
-                    icon={createServiceIcon(protocol.department?.name, isGPS)}
+                    icon={createServiceIcon(protocol.department?.name, protocol)}
                   >
                     <Popup>
                       <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
@@ -697,7 +747,9 @@ export function ProtocolMapEnhanced({
 
                           <p>
                             <strong>Localização:</strong>{' '}
-                            {isGPS && <span className="text-green-600 font-medium">📍 GPS</span>}
+                            <span style={{ color: precision.color }} className="font-medium">
+                              {precision.icon} {precision.label}
+                            </span>
                             <br />
                             <span className="font-mono text-xs">
                               {protocol.latitude.toFixed(6)}, {protocol.longitude.toFixed(6)}
@@ -731,15 +783,14 @@ export function ProtocolMapEnhanced({
           ) : (
             <>
               {protocolsWithJitter.map((protocol) => {
-                const isGPS = protocol.locationType === 'GPS' || protocol.locationType === 'MANUAL_PIN'
-                // CORREÇÃO: Usar department.name para categorização por secretaria
                 const config = getCategoryConfig(protocol.department?.name)
+                const precision = getPrecisionLabel(protocol)
 
                 return (
                   <Marker
                     key={protocol.id}
                     position={[protocol.latitude, protocol.longitude]}
-                    icon={createServiceIcon(protocol.department?.name, isGPS)}
+                    icon={createServiceIcon(protocol.department?.name, protocol)}
                   >
                     <Popup>
                       <div className="p-2 min-w-[240px] sm:min-w-[280px] max-w-[90vw]">
@@ -778,7 +829,9 @@ export function ProtocolMapEnhanced({
 
                           <p>
                             <strong>Localização:</strong>{' '}
-                            {isGPS && <span className="text-green-600 font-medium">📍 GPS</span>}
+                            <span style={{ color: precision.color }} className="font-medium">
+                              {precision.icon} {precision.label}
+                            </span>
                             <br />
                             <span className="font-mono text-xs">
                               {protocol.latitude.toFixed(6)}, {protocol.longitude.toFixed(6)}
@@ -863,22 +916,43 @@ export function ProtocolMapEnhanced({
 
             {/* Precisão e Alertas */}
             <div className="bg-gray-50 rounded-lg p-3">
-              <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-2">Qualidade e Alertas</h4>
+              <h4 className="text-xs md:text-sm font-medium text-gray-700 mb-2">Precisão e Alertas</h4>
               <div className="space-y-2">
                 <div className="flex justify-between text-xs">
-                  <span>Com GPS</span>
-                  <Badge variant="default" className="shrink-0">{stats.gpsCount} ({stats.gpsPercentage}%)</Badge>
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                    Coordenadas precisas
+                  </span>
+                  <Badge variant="default" className="shrink-0 bg-green-600">{stats.exactCount} ({stats.exactPercentage}%)</Badge>
                 </div>
                 <div className="flex justify-between text-xs">
-                  <span>Sem GPS</span>
-                  <Badge variant="secondary" className="shrink-0">
-                    {stats.total - stats.gpsCount} ({(100 - parseFloat(stats.gpsPercentage)).toFixed(1)}%)
+                  <span className="flex items-center gap-1">
+                    <span className="inline-block w-2 h-2 rounded-full bg-amber-500" />
+                    Via endereço
+                  </span>
+                  <Badge variant="secondary" className="shrink-0 bg-amber-100 text-amber-800">
+                    {stats.geocodedCount}
                   </Badge>
                 </div>
-                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                {stats.total - stats.exactCount - stats.geocodedCount > 0 && (
+                  <div className="flex justify-between text-xs">
+                    <span className="flex items-center gap-1">
+                      <span className="inline-block w-2 h-2 rounded-full bg-gray-400" />
+                      Outros
+                    </span>
+                    <Badge variant="secondary" className="shrink-0">
+                      {stats.total - stats.exactCount - stats.geocodedCount}
+                    </Badge>
+                  </div>
+                )}
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden flex">
                   <div
                     className="h-full bg-green-500 transition-all"
-                    style={{ width: `${stats.gpsPercentage}%` }}
+                    style={{ width: `${stats.exactPercentage}%` }}
+                  />
+                  <div
+                    className="h-full bg-amber-400 transition-all"
+                    style={{ width: `${stats.total > 0 ? ((stats.geocodedCount / stats.total) * 100).toFixed(1) : 0}%` }}
                   />
                 </div>
                 {stats.alertCount > 0 && (

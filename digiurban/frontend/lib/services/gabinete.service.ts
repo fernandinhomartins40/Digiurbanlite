@@ -23,7 +23,9 @@ interface Protocol {
   status: string
   latitude: number
   longitude: number
-  endereco?: string
+  address?: string
+  locationType?: string
+  geocodingPrecision?: string
   createdAt: string
   service?: { name: string; category: string }
   department?: { name: string }

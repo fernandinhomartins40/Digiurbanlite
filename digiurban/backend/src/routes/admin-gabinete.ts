@@ -1,6 +1,8 @@
 import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
 import { adminAuthMiddleware } from '../middleware/admin-auth'
+import { GeocodingService } from '../services/geocoding.service'
+import logger from '../config/logger.config'
 const router = Router()
 
 // Apply tenant middleware first
@@ -326,68 +328,177 @@ router.get('/agenda/conflicts', adminAuthMiddleware, requireAdmin, async (req: R
 // MAPA DE DEMANDAS - Apenas Leitura (SELECT)
 // ============================================
 
-// Buscar protocolos com geolocalização
+// Cache de geocodificação para evitar chamadas repetidas
+const geocodeCache = new Map<string, { latitude: number; longitude: number; precision: string } | null>()
+
+// Buscar protocolos com geolocalização (coordenadas prioritárias, endereço como fallback)
 router.get('/mapa-demandas/protocols', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response) => {
   try {
     const { categoria, status, startDate, endDate } = req.query
 
-    const where: any = {
-      latitude: { not: null },
-      longitude: { not: null }
-    }
+    const baseWhere: any = {}
 
     if (categoria) {
-      where.service = {
-        category: categoria
-      }
+      baseWhere.service = { category: categoria }
     }
-
     if (status) {
-      where.status = status
+      baseWhere.status = status
     }
-
     if (startDate && endDate) {
-      where.createdAt = {
+      baseWhere.createdAt = {
         gte: new Date(startDate as string),
         lte: new Date(endDate as string)
       }
     }
 
-    const protocols = await prisma.protocolSimplified.findMany({
-      where,
-      select: {
-        id: true,
-        number: true,
-        title: true,
-        status: true,
-        latitude: true,
-        longitude: true,
-        address: true,
-        locationType: true, // GPS, CITIZEN_ADDRESS, SPECIFIC_LOCATION, MANUAL_PIN
-        createdAt: true,
-        service: {
-          select: {
-            name: true,
-            category: true
-          }
+    const selectFields = {
+      id: true,
+      number: true,
+      title: true,
+      status: true,
+      latitude: true,
+      longitude: true,
+      address: true,
+      locationType: true,
+      geocodingProvider: true,
+      specificLocation: true,
+      createdAt: true,
+      service: { select: { name: true, category: true } },
+      department: { select: { name: true } },
+      citizen: { select: { name: true, address: true } }
+    }
+
+    // 1. Buscar protocolos que JÁ têm coordenadas (fonte primária)
+    const protocolsWithCoords = await prisma.protocolSimplified.findMany({
+      where: {
+        ...baseWhere,
+        latitude: { not: null },
+        longitude: { not: null }
       },
-        department: {
-          select: {
-            name: true
-          }
-      },
-        citizen: {
-          select: {
-            name: true
-          }
-      }
-      },
+      select: selectFields,
       orderBy: { createdAt: 'desc' }
     })
 
-    res.json({ success: true, data: protocols })
+    // 2. Buscar protocolos SEM coordenadas (candidatos a geocodificação via endereço)
+    const protocolsWithoutCoords = await prisma.protocolSimplified.findMany({
+      where: {
+        ...baseWhere,
+        OR: [
+          { latitude: null },
+          { longitude: null }
+        ]
+      },
+      select: selectFields,
+      orderBy: { createdAt: 'desc' }
+    })
+
+    // 3. Geocodificar protocolos sem coordenadas (com cache e rate limit)
+    const geocodedProtocols: any[] = []
+    let geocodedCount = 0
+    const MAX_GEOCODE_PER_REQUEST = 20 // Limitar para não sobrecarregar Nominatim
+
+    for (const protocol of protocolsWithoutCoords) {
+      if (geocodedCount >= MAX_GEOCODE_PER_REQUEST) break
+
+      // Construir endereço para geocodificação - priorizar specificLocation > address > citizen.address
+      let addressToGeocode: string | null = null
+
+      if (protocol.specificLocation) {
+        addressToGeocode = protocol.specificLocation
+      } else if (protocol.address) {
+        addressToGeocode = protocol.address
+      } else if (protocol.citizen?.address) {
+        // Parse citizen address JSON
+        const addr = protocol.citizen.address as any
+        const parts = [
+          addr.street || addr.logradouro,
+          addr.number || addr.numero,
+          addr.neighborhood || addr.bairro,
+          addr.city || addr.cidade || addr.municipio,
+          addr.state || addr.estado || addr.uf,
+          addr.zipcode || addr.cep
+        ].filter(Boolean)
+
+        if (parts.length > 0) {
+          addressToGeocode = parts.join(', ')
+        }
+      }
+
+      if (!addressToGeocode) continue
+
+      // Verificar cache
+      const cacheKey = addressToGeocode.toLowerCase().trim()
+      let geoResult = geocodeCache.get(cacheKey)
+
+      if (geoResult === undefined) {
+        // Não está em cache - geocodificar
+        try {
+          const result = await GeocodingService.geocodeAddress(addressToGeocode)
+          if (result && GeocodingService.isValidBrazilCoordinates(result.latitude, result.longitude)) {
+            geoResult = {
+              latitude: result.latitude,
+              longitude: result.longitude,
+              precision: result.precision || 'unknown'
+            }
+
+            // Salvar coordenadas no banco para futuras consultas
+            await prisma.protocolSimplified.update({
+              where: { id: protocol.id },
+              data: {
+                latitude: result.latitude,
+                longitude: result.longitude,
+                locationType: 'GEOCODED_ADDRESS',
+                geocodingProvider: result.provider
+              }
+            }).catch(err => logger.warn(`Falha ao salvar geocodificação do protocolo ${protocol.number}: ${err.message}`))
+          } else {
+            geoResult = null
+          }
+          geocodeCache.set(cacheKey, geoResult)
+          geocodedCount++
+        } catch (err) {
+          geocodeCache.set(cacheKey, null)
+          geocodedCount++
+        }
+      }
+
+      if (geoResult) {
+        geocodedProtocols.push({
+          ...protocol,
+          latitude: geoResult.latitude,
+          longitude: geoResult.longitude,
+          locationType: protocol.locationType || 'GEOCODED_ADDRESS',
+          geocodingPrecision: geoResult.precision,
+          citizen: protocol.citizen ? { name: protocol.citizen.name } : undefined
+        })
+      }
+    }
+
+    // 4. Combinar resultados - protocolos com coordenadas + geocodificados
+    const allProtocols = [
+      ...protocolsWithCoords.map(p => ({
+        id: p.id,
+        number: p.number,
+        title: p.title,
+        status: p.status,
+        latitude: p.latitude,
+        longitude: p.longitude,
+        address: p.address,
+        locationType: p.locationType,
+        geocodingPrecision: (p.locationType === 'GPS' || p.locationType === 'MANUAL_PIN') ? 'exact' : (p.geocodingProvider ? 'geocoded' : 'exact'),
+        createdAt: p.createdAt,
+        service: p.service,
+        department: p.department,
+        citizen: p.citizen ? { name: p.citizen.name } : undefined
+      })),
+      ...geocodedProtocols
+    ]
+
+    logger.info(`Mapa de demandas: ${protocolsWithCoords.length} com coordenadas + ${geocodedProtocols.length} geocodificados (${protocolsWithoutCoords.length - geocodedProtocols.length} sem localização)`)
+
+    res.json({ success: true, data: allProtocols })
   } catch (error) {
-    console.error('Erro ao buscar protocolos com localização:', error)
+    logger.error('Erro ao buscar protocolos com localização:', error)
     res.status(500).json({ error: 'Erro ao buscar dados do mapa' })
   }
 })
