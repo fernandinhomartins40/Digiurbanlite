@@ -48,8 +48,8 @@ interface CompletingProtocolViewProps {
 
 export function CompletingProtocolView({
   protocol,
-  stages,
-  documents,
+  stages = [],
+  documents = [],
   formData,
   onComplete
 }: CompletingProtocolViewProps) {

@@ -73,12 +73,12 @@ interface ArchivedProtocolViewProps {
 
 export function ArchivedProtocolView({
   protocol,
-  stages,
-  documents,
+  stages = [],
+  documents = [],
   generatedDocuments = [],
-  pendings,
-  interactions,
-  citizenLinks,
+  pendings = [],
+  interactions = [],
+  citizenLinks = [],
   onReopen
 }: ArchivedProtocolViewProps) {
   const { apiRequest } = useAdminAuth()
