@@ -23,6 +23,10 @@ export const loginRateLimiter = rateLimit({
   legacyHeaders: false, // Desabilita headers `X-RateLimit-*`
   skipSuccessfulRequests: false, // Conta requisições bem-sucedidas
   skipFailedRequests: false, // Conta requisições que falharam
+  // CRÍTICO: Usar X-Forwarded-For do Nginx quando trust proxy está ativo
+  keyGenerator: (req) => {
+    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  },
   handler: (req, res) => {
     logger.warn('Rate limit exceeded', { ip: req.ip, path: req.path });
     res.status(429).json({
@@ -45,7 +49,10 @@ export const apiRateLimiter = rateLimit({
     message: 'Muitas requisições. Por favor, aguarde um momento.'
         },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  }
         });
 
 /**
@@ -60,7 +67,10 @@ export const registerRateLimiter = rateLimit({
     message: 'Muitas tentativas de cadastro. Tente novamente em 15 minutos.'
         },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  }
         });
 
 /**
@@ -74,7 +84,10 @@ export const sensitiveOperationLimiter = rateLimit({
     message: 'Muitas operações sensíveis. Tente novamente em 1 hora.'
         },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  }
         });
 
 /**
@@ -88,7 +101,10 @@ export const passwordResetLimiter = rateLimit({
     message: 'Muitas tentativas de reset de senha. Tente novamente em 15 minutos.'
         },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  }
         });
 
 /**
@@ -102,5 +118,8 @@ export const dataExportLimiter = rateLimit({
     message: 'Limite de exportações diárias atingido. Tente novamente amanhã.'
         },
   standardHeaders: true,
-  legacyHeaders: false
+  legacyHeaders: false,
+  keyGenerator: (req) => {
+    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
+  }
         });
