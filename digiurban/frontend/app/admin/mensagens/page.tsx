@@ -801,7 +801,7 @@ export default function AdminMessagesPage() {
                 <div className="space-y-4 max-w-4xl mx-auto">
                   {messages.map((message, index) => {
                     const isOwnMessage = message.senderType === 'SERVER';
-                    const isBot = message.senderType === 'BOT' || message.senderType === 'SYSTEM';
+                    const isBot = message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';
                     const showDate = index === 0 ||
                       new Date(messages[index - 1].sentAt).toDateString() !==
                       new Date(message.sentAt).toDateString();

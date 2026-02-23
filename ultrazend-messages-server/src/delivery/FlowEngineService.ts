@@ -7,19 +7,19 @@ import { FlowEngine } from '../bot/flow/FlowEngine';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
+import { HandoverService } from './HandoverService'; // ✅ NOVO
 import fs from 'fs/promises';
 import path from 'path';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
 
-const isPlainObject = (value: unknown): value is Record<string, any> =>
-  !!value && typeof value === 'object' && !Array.isArray(value);
-
 export class FlowEngineService {
   private flowEngine: FlowEngine;
   private wsServer: WebSocketServer | null = null;
+  private handoverService: HandoverService; // ✅ NOVO
 
   constructor(wsServer?: WebSocketServer) {
     this.flowEngine = new FlowEngine(actionHandlers);
+    this.handoverService = new HandoverService(wsServer); // ✅ NOVO
     if (wsServer) {
       this.wsServer = wsServer;
     }
@@ -27,6 +27,12 @@ export class FlowEngineService {
 
   setWebSocketServer(wsServer: WebSocketServer) {
     this.wsServer = wsServer;
+    this.handoverService.setWebSocketServer(wsServer); // ✅ NOVO
+  }
+
+  // ✅ NOVO: Expor HandoverService para rotas
+  getHandoverService(): HandoverService {
+    return this.handoverService;
   }
 
   private buildBotMetadata(response: any) {
@@ -127,24 +133,23 @@ export class FlowEngineService {
     const response = await this.flowEngine.startFlow(citizenId, flowName, conversationId);
     const botMetadata = this.buildBotMetadata(response);
 
-    // 3. Atualizar conversa com dados do bot
-    await this.updateConversationBotData(conversationId, {
-      isBotConversation: true,
-      botFlowType: flowName,
-      botFlowStep: 0,
-      botLastInteractionAt: new Date(),
-      botFlowData: {
-        currentNodeId: response.metadata?.nodeId,
-        waitingForInput: response.metadata?.waitingForInput,
-        paused: false,
-      },
-      metadata: {
-        botStatus: 'ACTIVE',
-        botStatusUpdatedAt: new Date().toISOString(),
-      },
-    });
+    // 3. Vincular conversa à execução ativa do bot (✅ REFATORADO)
+    const execution = await this.getActiveExecution(citizenId);
+    if (execution) {
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          isBotConversation: true,
+          activeFlowExecutionId: execution.id, // ✅ FK para FlowExecution
+          metadata: {
+            botStatus: 'ACTIVE',
+            botStatusUpdatedAt: new Date().toISOString(),
+          },
+        },
+      });
+    }
 
-    // 4. Salvar mensagem do bot
+    // 4. Salvar mensagem do bot (✅ REFATORADO com campos queryable)
     const message = await prisma.message.create({
       data: {
         conversationId,
@@ -155,6 +160,11 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
+        // ✅ NOVOS CAMPOS QUERYABLE
+        isBotMessage: true,
+        botInteractionType: response.messageType || 'message',
+        botFlowNodeId: response.metadata?.nodeId,
+        botStructuredData: response.data || null,
       },
     });
 
@@ -165,7 +175,7 @@ export class FlowEngineService {
         lastMessageAt: new Date(),
         lastMessagePreview: response.message.substring(0, 100),
         totalMessages: { increment: 1 },
-        ...(isParticipant1
+        ...(isParticipant2
           ? { unreadCount1: { increment: 1 } }
           : { unreadCount2: { increment: 1 } }),
         updatedAt: new Date(),
@@ -230,11 +240,29 @@ export class FlowEngineService {
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
 
-    // 2. Salvar mensagem do cidadão (content legível + dados originais em metadata)
+    // 2. Salvar mensagem do cidadão (✅ REFATORADO com campos queryable)
     const userMessageMetadata: any = {};
+    let botInteractionType: string | null = null;
+    let botSelectedOption: string | null = null;
+    let botStructuredData: any = null;
+
     if (typeof message === 'object' && message !== null) {
       userMessageMetadata.originalData = message;
       userMessageMetadata.dataType = Array.isArray(message) ? 'array' : 'form';
+
+      // Extrair dados estruturados para campos queryable
+      if (!Array.isArray(message)) {
+        if ((message as any).optionId) {
+          botInteractionType = 'menu';
+          botSelectedOption = (message as any).optionId;
+        } else {
+          botInteractionType = 'form';
+        }
+        botStructuredData = message;
+      } else {
+        botInteractionType = 'upload';
+        botStructuredData = message;
+      }
     }
 
     const userMessage = await prisma.message.create({
@@ -247,6 +275,10 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         ...(Object.keys(userMessageMetadata).length > 0 ? { metadata: userMessageMetadata as any } : {}),
+        // ✅ CAMPOS QUERYABLE
+        botInteractionType,
+        botSelectedOption,
+        botStructuredData: botStructuredData as any,
       },
     });
 
@@ -254,14 +286,8 @@ export class FlowEngineService {
     const response = await this.flowEngine.processMessage(citizenId, message, conversationId);
     const botMetadata = this.buildBotMetadata(response);
     const botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
-    const flowName = response.metadata?.flowId
-      ? (await prisma.flowDefinition.findUnique({
-          where: { id: response.metadata.flowId },
-          select: { name: true },
-        }))?.name
-      : null;
 
-    // 4. Salvar resposta do bot
+    // 4. Salvar resposta do bot (✅ REFATORADO)
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -272,28 +298,29 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
+        // ✅ CAMPOS QUERYABLE
+        isBotMessage: true,
+        botInteractionType: response.messageType || 'message',
+        botFlowNodeId: response.metadata?.nodeId,
+        botStructuredData: response.data || null,
       },
     });
 
-    // 5. Atualizar conversa
-    await this.updateConversationBotData(conversationId, {
-      lastMessageAt: new Date(),
-      lastMessagePreview: response.message.substring(0, 100),
-      totalMessages: { increment: 2 },
-      botLastInteractionAt: new Date(),
-      ...(flowName ? { botFlowType: flowName } : {}),
-      botFlowData: {
-        currentNodeId: response.metadata?.nodeId,
-        waitingForInput: response.metadata?.waitingForInput,
-        paused: response.metadata?.paused || false,
+    // 5. Atualizar conversa (✅ REFATORADO - sem botFlowData)
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        lastMessagePreview: response.message.substring(0, 100),
+        totalMessages: { increment: 2 },
+        metadata: {
+          botStatus,
+          botStatusUpdatedAt: new Date().toISOString(),
+        },
+        ...(isParticipant2
+          ? { unreadCount1: { increment: 1 } }
+          : { unreadCount2: { increment: 1 } }),
       },
-      metadata: {
-        botStatus,
-        botStatusUpdatedAt: new Date().toISOString(),
-      },
-      ...(isParticipant1
-        ? { unreadCount1: { increment: 1 } }
-        : { unreadCount2: { increment: 1 } }),
     });
 
     // 6. Emitir via WebSocket
@@ -349,45 +376,89 @@ export class FlowEngineService {
   }
 
   /**
-   * Pausa execução (para atendimento humano)
+   * Pausa execução (para atendimento humano) - ✅ REFATORADO COM HANDOVER
    */
-  async pauseExecution(citizenId: string, conversationId?: string) {
+  async pauseExecution(citizenId: string, conversationId?: string, pausedBy?: string, reason?: string) {
     const execution = await this.getActiveExecution(citizenId);
-    if (execution) {
-      await this.flowEngine.pauseExecution(citizenId);
+    if (!execution) {
+      throw new Error('Nenhuma execução ativa encontrada para este cidadão');
     }
 
+    // Pausar no FlowExecution (fonte de verdade)
+    await prisma.flowExecution.update({
+      where: { id: execution.id },
+      data: {
+        isPaused: true,
+        pausedAt: new Date(),
+        pausedBy: pausedBy || null,
+        pauseReason: reason || 'human_needed',
+      },
+    });
+
+    // Atualizar metadata da conversa (apenas status visual)
+    let conversation = null;
     if (conversationId) {
-      await this.updateConversationBotData(conversationId, {
-        botFlowData: { paused: true, pausedAt: new Date() },
-        metadata: {
-          botStatus: 'HUMAN_TAKEOVER',
-          botStatusUpdatedAt: new Date().toISOString(),
+      conversation = await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          metadata: {
+            botStatus: 'HUMAN_TAKEOVER',
+            botStatusUpdatedAt: new Date().toISOString(),
+            pauseReason: reason || 'human_needed',
+          },
+        },
+        select: {
+          id: true,
+          departmentId: true,
         },
       });
+
+      // ✅ NOVO: Notificar departamento via HandoverService
+      if (conversation.departmentId) {
+        await this.handoverService.notifyDepartmentHandover(
+          conversationId,
+          conversation.departmentId,
+          reason || 'human_needed'
+        );
+      }
     }
-    return { success: true };
+
+    return { success: true, executionId: execution.id };
   }
 
   /**
-   * Retoma execução
+   * Retoma execução - ✅ REFATORADO
    */
-  async resumeExecution(citizenId: string, conversationId?: string) {
+  async resumeExecution(citizenId: string, conversationId?: string, resumedBy?: string) {
     const execution = await this.getActiveExecution(citizenId);
-    if (execution) {
-      await this.flowEngine.resumeExecution(citizenId);
+    if (!execution) {
+      throw new Error('Nenhuma execução ativa encontrada para este cidadão');
     }
 
+    // Retomar no FlowExecution (fonte de verdade)
+    await prisma.flowExecution.update({
+      where: { id: execution.id },
+      data: {
+        isPaused: false,
+        resumedAt: new Date(),
+        resumedBy: resumedBy || null,
+      },
+    });
+
+    // Atualizar metadata da conversa
     if (conversationId) {
-      await this.updateConversationBotData(conversationId, {
-        botFlowData: { paused: false, resumedAt: new Date() },
-        metadata: {
-          botStatus: 'ACTIVE',
-          botStatusUpdatedAt: new Date().toISOString(),
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: {
+          metadata: {
+            botStatus: 'ACTIVE',
+            botStatusUpdatedAt: new Date().toISOString(),
+          },
         },
       });
     }
-    return { success: true };
+
+    return { success: true, executionId: execution.id };
   }
 
   /**
@@ -498,26 +569,40 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
+        // ✅ CAMPOS QUERYABLE
+        isBotMessage: true,
+        botInteractionType: response.messageType || 'message',
+        botFlowNodeId: response.metadata?.nodeId,
+        botStructuredData: response.data || null,
       },
     });
 
-    await this.updateConversationBotData(conversationId, {
-      lastMessageAt: new Date(),
-      lastMessagePreview: response.message.substring(0, 100),
-      totalMessages: { increment: 2 },
-      botLastInteractionAt: new Date(),
-      botFlowData: {
-        currentNodeId: response.metadata?.nodeId,
-        waitingForInput: response.metadata?.waitingForInput,
-        paused: response.metadata?.paused || false,
+    // ✅ REFATORADO - atualização simplificada
+    const conv2 = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        participant1Id: true,
+        participant1Type: true,
       },
-      metadata: {
-        botStatus,
-        botStatusUpdatedAt: new Date().toISOString(),
+    });
+
+    const isParticipant2 = conv2?.participant1Id === citizenId &&
+      conv2?.participant1Type === 'CITIZEN';
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        lastMessageAt: new Date(),
+        lastMessagePreview: response.message.substring(0, 100),
+        totalMessages: { increment: 2 },
+        metadata: {
+          botStatus,
+          botStatusUpdatedAt: new Date().toISOString(),
+        },
+        ...(isParticipant2
+          ? { unreadCount1: { increment: 1 } }
+          : { unreadCount2: { increment: 1 } }),
       },
-      ...(isParticipant1
-        ? { unreadCount1: { increment: 1 } }
-        : { unreadCount2: { increment: 1 } }),
     });
 
     if (this.wsServer) {
@@ -569,7 +654,7 @@ export class FlowEngineService {
     });
 
     if (!conversation) {
-      // Criar nova conversa
+      // Criar nova conversa (✅ REFATORADO - sem campos antigos)
       conversation = await prisma.conversation.create({
         data: {
           messageServerId,
@@ -580,12 +665,9 @@ export class FlowEngineService {
           type: 'SUPPORT',
           status: 'ACTIVE',
           isBotConversation: true,
-          botFlowType: null,
-          botFlowStep: 0,
-          botFlowData: {},
-          botContext: {},
+          // activeFlowExecutionId será setado quando o fluxo iniciar
           metadata: {
-            botStatus: 'ACTIVE',
+            botStatus: 'IDLE',
             botStatusUpdatedAt: new Date().toISOString(),
           },
           totalMessages: 0,
@@ -596,41 +678,6 @@ export class FlowEngineService {
     }
 
     return conversation;
-  }
-
-  /**
-   * Atualiza dados do bot na conversa
-   */
-  private async updateConversationBotData(conversationId: string, data: any) {
-    let metadata = data.metadata;
-    let botFlowData = data.botFlowData;
-
-    if (data.metadata || data.botFlowData) {
-      const existing = await prisma.conversation.findUnique({
-        where: { id: conversationId },
-        select: { metadata: true, botFlowData: true },
-      });
-
-      if (data.metadata) {
-        const base = isPlainObject(existing?.metadata) ? existing!.metadata : {};
-        metadata = { ...base, ...data.metadata };
-      }
-
-      if (data.botFlowData) {
-        const base = isPlainObject(existing?.botFlowData) ? existing!.botFlowData : {};
-        botFlowData = { ...base, ...data.botFlowData };
-      }
-    }
-
-    await prisma.conversation.update({
-      where: { id: conversationId },
-      data: {
-        ...data,
-        ...(metadata ? { metadata } : {}),
-        ...(botFlowData ? { botFlowData } : {}),
-        updatedAt: new Date(),
-      },
-    });
   }
 }
 

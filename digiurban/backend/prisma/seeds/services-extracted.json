@@ -1,0 +1,1584 @@
+{
+  "PROTOCOLO_GERAL": {
+    "file": "administration.seed.ts",
+    "requiredDocuments": [
+      "Documento a ser protocolado",
+      "RG ou CPF"
+    ]
+  },
+  "SIC": {
+    "file": "administration.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF",
+      "Comprovante de Residência (se aplicável)"
+    ]
+  },
+  "COPIA_PROCESSOS": {
+    "file": "administration.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF",
+      "Procuração (se representante legal)"
+    ]
+  },
+  "AGENDAMENTO_GERAL": {
+    "file": "administration.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF do Responsável",
+      "Projeto do Evento (se aplicável)",
+      "Comprovante de Endereço"
+    ]
+  },
+  "AGENDAMENTO_ESPECIALIZADO": {
+    "file": "administration.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF",
+      "Documentos relacionados ao assunto do agendamento"
+    ]
+  },
+  "INSCRICAO_CONCURSO": {
+    "file": "administration.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF",
+      "Comprovante de Escolaridade",
+      "Foto 3x4",
+      "Comprovante de Residência",
+      "Certificados (se aplicável)"
+    ]
+  },
+  "CADASTRO_PRODUTOR": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Propriedade ou Posse"
+    ]
+  },
+  "FEIRA_PRODUTOR": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "ASSISTENCIA_TECNICA": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "Cadastro de Produtor Rural (opcional)",
+      "Documento da Propriedade (opcional)"
+    ]
+  },
+  "CADASTRO_PROPRIEDADE_RURAL": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "Escritura ou Contrato",
+      "CAR - Cadastro Ambiental Rural (opcional)",
+      "ITR - Imposto Territorial Rural (opcional)"
+    ]
+  },
+  "ATENDIMENTOS_AGRICULTURA": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Residência",
+      "Cadastro de Produtor Rural (opcional)"
+    ]
+  },
+  "ANALISE_SOLO": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Cadastro de Produtor Rural (opcional)"
+    ]
+  },
+  "LICENCA_EVENTOS_RURAIS": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "CNPJ (se pessoa jurídica)",
+      "Projeto do Evento"
+    ]
+  },
+  "CADASTRO_PISCICULTURA": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "CNPJ (se houver)",
+      "Licença Sanitária",
+      "Comprovante de Endereço da Agroindústria"
+    ]
+  },
+  "CADASTRO_AGROINDUSTRIA": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Propriedade",
+      "Projeto Técnico"
+    ]
+  },
+  "PROGRAMA_HORTAS_COMUNITARIAS": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "SEGURO_SAFRA": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "DAP",
+      "Comprovante de Área Plantada"
+    ]
+  },
+  "DAP_DIGITAL": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Comprovante de Atividade Rural"
+    ]
+  },
+  "DISTRIBUICAO_SEMENTES": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Cadastro de Produtor Rural"
+    ]
+  },
+  "DISTRIBUICAO_MUDAS": {
+    "file": "agriculture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Propriedade ou Posse"
+    ]
+  },
+  "VISTORIA_AREA_RISCO": {
+    "file": "civil-defense.seed.ts",
+    "requiredDocuments": [
+      "Comprovante de Residência",
+      "RG ou CPF",
+      "Fotos do Local (se possível)"
+    ]
+  },
+  "CADASTRO_FAMILIA_RISCO": {
+    "file": "civil-defense.seed.ts",
+    "requiredDocuments": [
+      "RG ou CPF de todos os moradores",
+      "Laudo Técnico (se houver)",
+      "Comprovante de Residência na Área Afetada"
+    ]
+  },
+  "TREINAMENTO_DEFESA_CIVIL": {
+    "file": "civil-defense.seed.ts",
+    "requiredDocuments": [
+      "RG ou CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "CADASTRO_VOLUNTARIO": {
+    "file": "civil-defense.seed.ts",
+    "requiredDocuments": []
+  },
+  "INSCRICAO_OFICINA": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "CADASTRO_ARTISTA": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Projeto do Evento"
+    ]
+  },
+  "CADASTRO_GRUPO_ARTISTICO": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "Documentos dos Integrantes",
+      "Portfólio do Grupo",
+      "Estatuto (opcional)"
+    ]
+  },
+  "ATENDIMENTOS_CULTURA": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "Projeto do Evento",
+      "Autorizações Necessárias"
+    ]
+  },
+  "REGISTRO_MANIFESTACAO_CULTURAL": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "Documentação Histórica",
+      "Fotos",
+      "Depoimentos"
+    ]
+  },
+  "PROJETO_CULTURAL": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto Detalhado",
+      "Orçamento",
+      "Plano de Divulgação (opcional)"
+    ]
+  },
+  "APOIO_CULTURAL": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto ou Proposta"
+    ]
+  },
+  "CADASTRO_PONTO_CULTURA": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Currículo",
+      "Certificados",
+      "Portfólio"
+    ]
+  },
+  "LOCACAO_EQUIPAMENTO_CULTURAL": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto do Evento"
+    ]
+  },
+  "TOMBAMENTO_PATRIMONIO": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Documentação Histórica",
+      "Fotos",
+      "Laudo Técnico"
+    ]
+  },
+  "INSCRICAO_CURSO_FORMACAO": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Escolaridade"
+    ]
+  },
+  "CERTIDAO_BEM_TOMBADO": {
+    "file": "culture.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Endereço do Bem"
+    ]
+  },
+  "ALVARA_FUNCIONAMENTO": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Contrato Social",
+      "Comprovante de Endereço do Estabelecimento",
+      "Planta Baixa",
+      "Auto de Vistoria do Corpo de Bombeiros"
+    ]
+  },
+  "BAIXA_EMPRESA": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Último Alvará de Funcionamento",
+      "Certidões Negativas (Tributos Municipais, Estaduais e Federais)",
+      "Comprovante de Pagamento de Débitos (se houver)"
+    ]
+  },
+  "CADASTRO_MEI": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF",
+      "Comprovante de Residência",
+      "Comprovante de Renda",
+      "CNPJ (se MEI/Empresa)",
+      "Projeto ou Plano de Negócio Simples"
+    ]
+  },
+  "INSCRICAO_INCUBADORA": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "CPF e RG dos Sócios",
+      "Currículo dos Sócios",
+      "Plano de Negócio Completo",
+      "Pitch Deck (Apresentação)",
+      "CNPJ (se já constituída)"
+    ]
+  },
+  "PARTICIPACAO_FEIRAS": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Alvará de Funcionamento",
+      "Catálogo de Produtos/Serviços (se houver)"
+    ]
+  },
+  "CADASTRO_FORNECEDOR": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Contrato Social",
+      "Projeto Industrial",
+      "Certidões Negativas",
+      "Plano de Investimento"
+    ]
+  },
+  "CADASTRO_BALCAO_EMPREGOS": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "DAP (Declaração de Aptidão ao Pronaf)",
+      "Comprovante de Residência"
+    ]
+  },
+  "ORIENTACAO_ECONOMIA_CRIATIVA": {
+    "file": "economic-development.seed.ts",
+    "requiredDocuments": []
+  },
+  "MATRICULA_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Certidão de Nascimento",
+      "RG do Responsável",
+      "Comprovante de Residência",
+      "Cartão de Vacina"
+    ]
+  },
+  "TRANSFERENCIA_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Histórico Escolar",
+      "Comprovante de Residência",
+      "Declaração de Transferência"
+    ]
+  },
+  "TRANSPORTE_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Comprovante de Matrícula",
+      "Comprovante de Residência"
+    ]
+  },
+  "INSCRICAO_CURSO_LIVRE": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "SOLICITACAO_DOCUMENTO_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "Comprovante de Matrícula (se aplicável)"
+    ]
+  },
+  "CONSULTA_FREQUENCIA_NOTAS": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Diploma",
+      "Currículo",
+      "Comprovante de Residência"
+    ]
+  },
+  "CADASTRO_PROFESSOR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Certidão de Nascimento da Criança",
+      "RG do Responsável",
+      "CPF do Responsável",
+      "Comprovante de Residência",
+      "Comprovante de Trabalho dos Pais",
+      "Cartão de Vacina"
+    ]
+  },
+  "AEE": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Laudo Médico",
+      "Relatório Pedagógico",
+      "Comprovante de Matrícula"
+    ]
+  },
+  "UNIFORME_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Comprovante de Matrícula",
+      "Declaração de Baixa Renda (se aplicável)"
+    ]
+  },
+  "MATERIAL_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Comprovante de Matrícula",
+      "Declaração de Baixa Renda (se aplicável)"
+    ]
+  },
+  "MERENDA_ESPECIAL": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "Atestado Médico",
+      "Comprovante de Matrícula"
+    ]
+  },
+  "RECLAMACAO_TRANSPORTE_ESCOLAR": {
+    "file": "education.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "Histórico Escolar (se possuir)"
+    ]
+  },
+  "LICENCIAMENTO_AMBIENTAL": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "Projeto",
+      "Estudo de Impacto Ambiental",
+      "ART"
+    ]
+  },
+  "AUTORIZACAO_PODA_ARVORES": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Propriedade",
+      "Fotos do Local"
+    ]
+  },
+  "DENUNCIA_AMBIENTAL": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Propriedade"
+    ]
+  },
+  "LICENCA_AMBIENTAL_SIMPLIFICADA": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto Simplificado"
+    ]
+  },
+  "AUTORIZACAO_SUPRESSAO_VEGETAL": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Levantamento Topográfico",
+      "Fotos"
+    ]
+  },
+  "CADASTRO_GERADOR_RESIDUOS": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto de Manejo",
+      "ART"
+    ]
+  },
+  "CERTIDAO_USO_SOLO": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Matrícula do Imóvel"
+    ]
+  },
+  "LICENCA_ATIVIDADE_POLUIDORA": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Projeto Técnico",
+      "ART",
+      "Plano de Controle"
+    ]
+  },
+  "AUTORIZACAO_CAPTACAO_AGUA": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto Hidráulico",
+      "ART"
+    ]
+  },
+  "CADASTRO_VIVEIRO_MUDAS": {
+    "file": "environment.seed.ts",
+    "requiredDocuments": []
+  },
+  "PAGAMENTO_IPTU": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": [
+      "Escritura ou Contrato de Compra e Venda",
+      "RG e CPF do Comprador",
+      "Certidão de Matrícula do Imóvel"
+    ]
+  },
+  "PAGAMENTO_TAXA_LIXO": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": [
+      "Comprovante de Renda",
+      "RG e CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "ISENCAO_IPTU": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": [
+      "RG e CPF",
+      "Comprovante de Propriedade do Imóvel",
+      "Comprovante de Renda",
+      "Certidão de Nascimento ou Casamento",
+      "Comprovante de Aposentadoria (se aplicável)"
+    ]
+  },
+  "REVISAO_IPTU": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": [
+      "Carnê de IPTU",
+      "Fotos do Imóvel",
+      "Laudo de Avaliação (se houver)",
+      "Escritura do Imóvel"
+    ]
+  },
+  "ATUALIZACAO_CADASTRAL_IMOVEL": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": [
+      "Escritura ou Contrato de Compra e Venda",
+      "RG e CPF do Proprietário",
+      "Comprovante de Endereço",
+      "Carnê de IPTU"
+    ]
+  },
+  "ATUALIZACAO_CADASTRAL_EMPRESA": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": [
+      "Contrato Social Atualizado",
+      "CNPJ",
+      "RG e CPF do Responsável",
+      "Comprovante de Endereço Comercial"
+    ]
+  },
+  "CADASTRO_CONTRIBUINTE": {
+    "file": "finance.seed.ts",
+    "requiredDocuments": []
+  },
+  "AGENDAMENTO_CONSULTA": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "AGENDAMENTO_ODONTOLOGIA": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "SOLICITACAO_EXAMES": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Pedido Médico",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "MEDICAMENTOS_ALTO_CUSTO": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Receita Médica Especial",
+      "Laudo Médico",
+      "Exames Complementares",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "CONTROLE_MEDICAMENTOS": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Receita Médica",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "CAMPANHAS_VACINACAO": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Cartão de Vacina (se possuir)",
+      "RG ou CPF"
+    ]
+  },
+  "PROGRAMA_SAUDE_FAMILIA": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Laudo Médico (se aplicável)",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "AGENDAMENTO_CAPS": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Encaminhamento Médico (se houver)",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "TRANSPORTE_PACIENTES": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Atestado Médico",
+      "Comprovante de Endereço",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "ATENDIMENTO_DOMICILIAR": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Laudo Médico",
+      "Cartão SUS",
+      "Comprovante de Residência"
+    ]
+  },
+  "SOLICITACAO_FISIOTERAPIA": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "Pedido Médico",
+      "Cartão SUS",
+      "RG ou CPF"
+    ]
+  },
+  "CARTAO_SUS": {
+    "file": "health.seed.ts",
+    "requiredDocuments": [
+      "RG ou CNH",
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "SOLICITACAO_AMBULANCIA": {
+    "file": "health.seed.ts",
+    "requiredDocuments": []
+  },
+  "REGULARIZACAO_FUNDIARIA": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "Escritura (se possuir)",
+      "IPTU",
+      "Comprovante de Residência"
+    ]
+  },
+  "INSCRICAO_PROGRAMA_HABITACIONAL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "CadÚnico",
+      "Comprovante de Endereço"
+    ]
+  },
+  "SOLICITACAO_AUXILIO_ALUGUEL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Declaração de Vulnerabilidade"
+    ]
+  },
+  "AUTORIZACAO_CONSTRUCAO": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "Projeto Arquitetônico",
+      "ART (Anotação de Responsabilidade Técnica)",
+      "Matrícula do Imóvel"
+    ]
+  },
+  "VISTORIA_HABITACIONAL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Endereço"
+    ]
+  },
+  "INSCRICAO_MCMV_MUNICIPAL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "CadÚnico",
+      "Comprovante de Endereço",
+      "Certidão de Casamento (se aplicável)"
+    ]
+  },
+  "REGULARIZACAO_POSSE": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Ocupação",
+      "Declaração de Posse",
+      "Croqui do Terreno"
+    ]
+  },
+  "USUCAPIAO_URBANO": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Declaração de Posse Mansa e Pacífica",
+      "Comprovantes de Residência",
+      "Declaração de Testemunhas"
+    ]
+  },
+  "REURB": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Declaração de Posse",
+      "Levantamento Topográfico (se houver)"
+    ]
+  },
+  "CONCESSAO_USO_ESPECIAL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Declaração de Posse",
+      "Comprovantes de Residência",
+      "Declaração de Não Proprietário"
+    ]
+  },
+  "AUXILIO_CONSTRUCAO": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Matrícula do Terreno"
+    ]
+  },
+  "MATERIAL_CONSTRUCAO": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Comprovante de Propriedade"
+    ]
+  },
+  "PROJETO_ARQUITETONICO_SOCIAL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Escritura ou Matrícula do Terreno"
+    ]
+  },
+  "CADASTRO_DEFICIT_HABITACIONAL": {
+    "file": "housing.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Propriedade ou Posse",
+      "Fotos da Moradia"
+    ]
+  },
+  "REGISTRO_OCORRENCIA": {
+    "file": "public-safety.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF"
+    ]
+  },
+  "SOLICITACAO_PATRULHAMENTO": {
+    "file": "public-safety.seed.ts",
+    "requiredDocuments": [
+      "Justificativa",
+      "Abaixo-assinado",
+      "Fotos do Local"
+    ]
+  },
+  "DENUNCIA_ANONIMA": {
+    "file": "public-safety.seed.ts",
+    "requiredDocuments": [
+      "Projeto do Evento",
+      "Plano de Segurança",
+      "Seguro (opcional)"
+    ]
+  },
+  "LAUDO_VISTORIA_SEGURANCA": {
+    "file": "public-safety.seed.ts",
+    "requiredDocuments": [
+      "Alvará de Funcionamento",
+      "CNPJ"
+    ]
+  },
+  "CADASTRO_CAMERAS_BAIRRO": {
+    "file": "public-safety.seed.ts",
+    "requiredDocuments": [
+      "Justificativa",
+      "Projeto ou Memorial",
+      "Autorização do Responsável"
+    ]
+  },
+  "ILUMINACAO_PUBLICA": {
+    "file": "public-services.seed.ts",
+    "requiredDocuments": [
+      "Foto do Problema"
+    ]
+  },
+  "COLETA_ELETRONICO": {
+    "file": "public-services.seed.ts",
+    "requiredDocuments": []
+  },
+  "SOLICITACAO_REPARO_VIA": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Matrícula do Imóvel",
+      "Projeto de Demolição",
+      "ART"
+    ]
+  },
+  "AUTORIZACAO_INTERVENCAO_VIA": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "CNPJ (se empresa)",
+      "Projeto de Intervenção",
+      "ART"
+    ]
+  },
+  "APROVACAO_PROJETO": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "Projeto Arquitetônico",
+      "ART",
+      "Matrícula do Imóvel",
+      "Planta de Situação"
+    ]
+  },
+  "LICENCA_OBRA": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "Projeto Aprovado",
+      "ART",
+      "Matrícula do Imóvel",
+      "IPTU"
+    ]
+  },
+  "ALVARA_REFORMA": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "Projeto de Reforma",
+      "ART",
+      "Matrícula do Imóvel"
+    ]
+  },
+  "APROVACAO_LOTEAMENTO": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "Projeto de Loteamento",
+      "Memorial Descritivo",
+      "Matrícula do Terreno",
+      "ART",
+      "Licença Ambiental"
+    ]
+  },
+  "REGULARIZACAO_OBRA": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "Projeto As-Built",
+      "ART",
+      "Matrícula do Imóvel",
+      "Fotos da Edificação"
+    ]
+  },
+  "APROVACAO_DEMOLICAO_PARCIAL": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": [
+      "Projeto de Demolição",
+      "ART",
+      "Matrícula do Imóvel"
+    ]
+  },
+  "VISTORIA_TECNICA": {
+    "file": "public-works.seed.ts",
+    "requiredDocuments": []
+  },
+  "CADASTRO_UNICO": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CadÚnico",
+      "Documentos Pessoais",
+      "Comprovante de Renda"
+    ]
+  },
+  "ATENDIMENTO_CRAS": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "AUXILIO_EMERGENCIAL": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Endereço",
+      "Declaração de Vulnerabilidade (se aplicável)"
+    ]
+  },
+  "VISITA_DOMICILIAR": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "Comprovante de Endereço"
+    ]
+  },
+  "INSCRICAO_GRUPO_OFICINA": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Endereço"
+    ]
+  },
+  "INSCRICAO_PROGRAMA_SOCIAL": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CadÚnico",
+      "Documentos Pessoais"
+    ]
+  },
+  "BOLSA_FAMILIA_MUNICIPAL": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CadÚnico",
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Comprovante de Renda Familiar"
+    ]
+  },
+  "AUXILIO_ALUGUEL": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "Contrato de Aluguel",
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Declaração de Vulnerabilidade"
+    ]
+  },
+  "CESTA_BASICA": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "CASA_LAR_IDOSO": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Atestado Médico",
+      "Laudo Social (se houver)",
+      "Comprovante de Renda (se houver)"
+    ]
+  },
+  "ATENDIMENTO_CRAS_GERAL": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "Certidão de Nascimento da Criança",
+      "CPF dos Pais",
+      "Comprovante de Residência",
+      "Cartão de Vacina"
+    ]
+  },
+  "DOCUMENTACAO_CIVIL": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Documentos Comprobatórios (dependendo do tipo)"
+    ]
+  },
+  "TARIFA_SOCIAL_ENERGIA": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CadÚnico",
+      "CPF",
+      "Conta de Luz",
+      "Comprovante de Renda"
+    ]
+  },
+  "ISENCAO_TRANSPORTE": {
+    "file": "social.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Laudo Médico (se for por deficiência)",
+      "Comprovante de Renda"
+    ]
+  },
+  "RESERVA_ESPACO_ESPORTIVO": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico",
+      "Foto 3x4"
+    ]
+  },
+  "CADASTRO_ATLETA": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_ESCOLINHA_BASQUETE": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_ESCOLINHA_VOLEI": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_ESCOLINHA_NATACAO": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_ESCOLINHA_JUDO": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_ESCOLINHA_CAPOEIRA": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_ESCOLINHA_GINASTICA": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "INSCRICAO_CORRIDA_RUA": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ]
+  },
+  "EMPRESTIMO_MATERIAL_ESPORTIVO": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG"
+    ]
+  },
+  "CREDENCIAMENTO_INSTRUTOR": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "CREF",
+      "Currículo",
+      "Certificados"
+    ]
+  },
+  "USO_GINASIO": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Projeto do Evento"
+    ]
+  },
+  "CAMPEONATO_MUNICIPAL": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "Lista de Atletas",
+      "Documentos dos Atletas"
+    ]
+  },
+  "BOLSA_ATLETA": {
+    "file": "sports.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Histórico Esportivo",
+      "Cartas de Recomendação"
+    ]
+  },
+  "CADASTRO_LOGIN_UNICO": {
+    "file": "technology-innovation.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "CNPJ (para empresas)"
+    ]
+  },
+  "CURSO_INCLUSAO_DIGITAL": {
+    "file": "technology-innovation.seed.ts",
+    "requiredDocuments": [
+      "RG ou CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "CADASTRO_STARTUP": {
+    "file": "technology-innovation.seed.ts",
+    "requiredDocuments": [
+      "CNPJ da Empresa",
+      "Contrato Social",
+      "Termo de Uso e Responsabilidade",
+      "Documentação Técnica do Sistema"
+    ]
+  },
+  "SUPORTE_TECNICO": {
+    "file": "technology-innovation.seed.ts",
+    "requiredDocuments": []
+  },
+  "CADASTRO_ESTABELECIMENTO_TURISTICO": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Alvará de Funcionamento",
+      "Contrato Social"
+    ]
+  },
+  "CADASTRO_GUIA_TURISTICO": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "Projeto do Evento",
+      "Autorizações Necessárias"
+    ]
+  },
+  "LICENCA_ATIVIDADE_TURISTICA": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CPF ou CNPJ",
+      "RG",
+      "Contrato Social (se empresa)",
+      "Projeto da Atividade"
+    ]
+  },
+  "CREDENCIAMENTO_AGENCIA_TURISMO": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Contrato Social",
+      "Cadastur",
+      "Alvará de Funcionamento",
+      "Seguro de Responsabilidade Civil"
+    ]
+  },
+  "AUTORIZACAO_TRANSPORTE_TURISTICO": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "CNH Categoria D ou E",
+      "Documentos dos Veículos",
+      "Seguro dos Veículos"
+    ]
+  },
+  "CADASTRO_ATRACAO_TURISTICA": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CPF ou CNPJ",
+      "Fotos do Local",
+      "Autorização de Funcionamento"
+    ]
+  },
+  "APOIO_FEIRA_EXPOSICAO": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CPF ou CNPJ",
+      "Projeto do Evento",
+      "Cronograma"
+    ]
+  },
+  "INSCRICAO_CIRCUITO_TURISTICO": {
+    "file": "tourism.seed.ts",
+    "requiredDocuments": [
+      "CNPJ ou CPF",
+      "Alvará de Funcionamento",
+      "Cadastur (se aplicável)"
+    ]
+  },
+  "DEFESA_AUTUACAO": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "CNH",
+      "CRLV",
+      "Notificação de Autuação",
+      "Comprovantes (se houver)"
+    ]
+  },
+  "CREDENCIAMENTO_TAXI": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "CNH Categoria B (mínimo)",
+      "Certidão de Antecedentes Criminais",
+      "Comprovante de Residência",
+      "Curso de Formação de Taxista",
+      "Vistoria do Veículo"
+    ]
+  },
+  "CREDENCIAMENTO_MOTOTAXI": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "CNH Categoria A (mínimo)",
+      "Certidão de Antecedentes Criminais",
+      "Comprovante de Residência",
+      "Curso de Formação de Mototaxista",
+      "Vistoria da Motocicleta"
+    ]
+  },
+  "CREDENCIAMENTO_TRANSPORTE_ESCOLAR": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "CNH Categoria D",
+      "Certidão de Antecedentes Criminais",
+      "Curso de Transporte Escolar",
+      "Vistoria do Veículo",
+      "CRLV",
+      "Seguro Obrigatório"
+    ]
+  },
+  "VISTORIA_VEICULO": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "CRLV",
+      "Comprovante de Pagamento de Taxas"
+    ]
+  },
+  "AUTORIZACAO_EVENTO_VIA": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "Projeto do Evento",
+      "Seguro de Responsabilidade Civil",
+      "Alvará (se aplicável)"
+    ]
+  },
+  "CNH_SOCIAL": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "Comprovante de Renda Familiar"
+    ]
+  },
+  "RENOVACAO_CREDENCIAMENTO": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "CNH Atualizada",
+      "CRLV Atualizado",
+      "Vistoria em Dia",
+      "Certidão Negativa de Multas"
+    ]
+  },
+  "FAIXA_CARGA_DESCARGA": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "Alvará de Funcionamento",
+      "Planta de Localização"
+    ]
+  },
+  "TRANSFERENCIA_PONTO_TAXI": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "Credencial de Taxista",
+      "Certidão Negativa de Multas",
+      "Justificativa"
+    ]
+  },
+  "SINALIZACAO_TRANSITO": {
+    "file": "transport-transit.seed.ts",
+    "requiredDocuments": [
+      "Laudo Médico (PcD) ou Documento de Identidade (Idoso +60)",
+      "CRLV",
+      "Comprovante de Residência"
+    ]
+  },
+  "CARTAO_TRANSPORTE": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG ou CPF",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ]
+  },
+  "PASSE_LIVRE_INTERESTADUAL": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Laudo Médico (modelo específico)",
+      "Foto 3x4 recente",
+      "Comprovante de Residência",
+      "Declaração de Renda"
+    ]
+  },
+  "ISENCAO_IDOSO": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ]
+  },
+  "CARTAO_PCD": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Laudo Médico",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ]
+  },
+  "CARTAO_ESTUDANTE": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG ou CPF",
+      "Declaração de Matrícula",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ]
+  },
+  "VAGA_ESPECIAL_PCD": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "CNH (se condutor)",
+      "Laudo Médico",
+      "Documento do Veículo",
+      "Comprovante de Residência"
+    ]
+  },
+  "AUTORIZACAO_TRANSPORTE_ESCOLAR": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "CNH categoria D ou superior",
+      "Certidão de Antecedentes Criminais",
+      "Documento do Veículo",
+      "Vistoria do Veículo",
+      "Seguro do Veículo"
+    ]
+  },
+  "TRANSPORTE_ESCOLAR_GRATUITO": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": [
+      "RG ou Certidão de Nascimento",
+      "CPF",
+      "Declaração de Matrícula",
+      "Comprovante de Residência"
+    ]
+  },
+  "RECLAMACAO_TRANSPORTE_PUBLICO": {
+    "file": "urban-mobility.seed.ts",
+    "requiredDocuments": []
+  },
+  "PARCELAMENTO_SOLO": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "CNPJ (se empresa)",
+      "Matrícula do Imóvel",
+      "Projeto de Parcelamento",
+      "ART do Responsável Técnico"
+    ]
+  },
+  "VIABILIDADE_URBANISTICA": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Matrícula do Imóvel",
+      "Memorial Descritivo"
+    ]
+  },
+  "APROVACAO_PROJETO_ARQUITETONICO": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "Projeto Arquitetônico",
+      "ART",
+      "Documentação do Imóvel"
+    ]
+  },
+  "ALVARA_CONSTRUCAO": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "Projeto Aprovado",
+      "Matrícula do Imóvel",
+      "ART"
+    ]
+  },
+  "ALVARA_FUNCIONAMENTO_PLANEJAMENTO": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Contrato Social",
+      "Laudo Técnico",
+      "Comprovante de Endereço"
+    ]
+  },
+  "DENUNCIA_CONSTRUCAO_IRREGULAR": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "CPF",
+      "RG",
+      "Matrículas dos Lotes",
+      "Planta de Situação",
+      "ART"
+    ]
+  },
+  "ANALISE_VIABILIDADE_EMPREENDIMENTO": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "CNPJ",
+      "Projeto Preliminar",
+      "Estudo de Impacto",
+      "Matrícula do Terreno"
+    ]
+  },
+  "APROVACAO_PROJETO_URBANIZACAO": {
+    "file": "urban-planning.seed.ts",
+    "requiredDocuments": [
+      "Projeto de Urbanização",
+      "Memorial Descritivo",
+      "ART",
+      "Estudo Ambiental"
+    ]
+  },
+  "DENUNCIA_VIOLENCIA": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG ou CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "ACOLHIMENTO_CASA_ABRIGO": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Boletim de Ocorrência",
+      "Documentos dos Filhos (se houver)"
+    ]
+  },
+  "CURSOS_QUALIFICACAO": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "Comprovante de Escolaridade"
+    ]
+  },
+  "GERACAO_RENDA": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "Comprovante de Renda (se houver)"
+    ]
+  },
+  "GRUPOS_APOIO": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência"
+    ]
+  },
+  "DENUNCIA_ASSEDIO": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Boletim de Ocorrência",
+      "Provas (fotos, mensagens, se houver)"
+    ]
+  },
+  "PERICIA_PSICOSSOCIAL": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": [
+      "RG",
+      "CPF",
+      "Processo Judicial",
+      "Encaminhamento do Juizado"
+    ]
+  },
+  "CANAL_ESCUTA": {
+    "file": "women-policies.seed.ts",
+    "requiredDocuments": []
+  }
+}

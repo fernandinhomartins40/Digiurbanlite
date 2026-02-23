@@ -368,7 +368,7 @@ export function MessagesInterface({
   const isConversationClosed = selectedConversation?.status === 'CLOSED';
   const lastBotMessage = [...messages]
     .reverse()
-    .find((msg) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
+    .find((msg) => msg.senderId === 'DIGIBOT_SYSTEM' && msg.senderType === 'SYSTEM');
   const lastBotType = lastBotMessage?.metadata?.messageType;
   const botStructuredInput =
     mode === 'citizen' &&
@@ -620,7 +620,7 @@ export function MessagesInterface({
                 <div className="space-y-4">
                   {messages.map((message, index) => {
                     const isOwn = message.senderId === userId;
-                    const isBot = message.senderType === 'BOT' || message.senderType === 'SYSTEM';
+                    const isBot = message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';
 
                     return (
                       <div

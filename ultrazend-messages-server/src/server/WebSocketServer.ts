@@ -480,6 +480,25 @@ export class WebSocketServer {
     this.io.emit(event, data);
   }
 
+  /**
+   * ✅ NOVO: Broadcast para todos os servidores de um departamento
+   */
+  public async broadcastToDepartment(departmentId: string, event: string, data: any) {
+    // Buscar todos os usuários (servidores) do departamento
+    const users = await prisma.user.findMany({
+      where: {
+        departmentId,
+        isActive: true,
+      },
+      select: { id: true },
+    });
+
+    // Emitir para cada servidor
+    for (const user of users) {
+      this.io.to(`user:${user.id}:SERVER`).emit(event, data);
+    }
+  }
+
   public getIO(): SocketIOServer {
     return this.io;
   }

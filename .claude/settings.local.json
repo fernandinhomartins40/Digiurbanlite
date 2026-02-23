@@ -150,7 +150,19 @@
       "Bash(move:*)",
       "Bash(move \"docs\\\\INTEGRACAO-ESUS-PEC.md\" \"documentacao-desatualizada\\\\INTEGRACAO-ESUS-PEC.md\")",
       "Bash(move \"docs\\\\IMPLEMENTACAO-COMPLETA-ESUS.md\" \"documentacao-desatualizada\\\\IMPLEMENTACAO-COMPLETA-ESUS.md\")",
-      "WebFetch(domain:registro.br)"
+      "WebFetch(domain:registro.br)",
+      "Bash(for f in \"c:\\\\Projetos Cursor\\\\Digiurbanlite/digiurban/backend/src/routes\"/*.ts)",
+      "Bash(do grep -h \"router\\\\.\\\\\\(get\\\\|post\\\\|put\\\\|patch\\\\|delete\\\\\\)\" \"$f\")",
+      "Read(//c/Projetos Cursor/Digiurbanlite/**)",
+      "Bash(git status:*)",
+      "Bash(set \"PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=RESET COMPLETO limpa tudo e recria\")",
+      "Bash($env:PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"RESET COMPLETO \\(limpa tudo e recria\\)\")",
+      "Bash(export PRISMA_USER_CONSENT_FOR_DANGEROUS_AI_ACTION=\"RESET COMPLETO \\(limpa tudo e recria\\)\")",
+      "Bash(set:*)",
+      "Bash(while read dir)",
+      "Bash(do if [ ! -f \"$dir/migration.sql\" ])",
+      "Bash(then echo \"FALTANDO: $dir\")",
+      "Bash(if exist nul del nul)"
     ],
     "deny": [],
     "ask": []

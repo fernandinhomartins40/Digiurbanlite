@@ -103,6 +103,9 @@ export class ExpressServer {
     // Bot Flow routes
     this.app.use('/api/bot-flow', this.authMiddleware.bind(this), this.botFlowRoutes());
 
+    // ✅ NOVO: Handover routes (bot → humano)
+    this.app.use('/api/handover', this.authMiddleware.bind(this), this.handoverRoutes());
+
     // Admin routes
     this.app.use('/api/admin', this.authMiddleware.bind(this), this.adminRoutes());
 
@@ -1192,6 +1195,67 @@ export class ExpressServer {
         service: 'bot-flow',
         timestamp: new Date().toISOString(),
       });
+    });
+
+    return router;
+  }
+
+  /**
+   * ✅ NOVO: Rotas de Handover (bot → humano)
+   */
+  private handoverRoutes() {
+    const router = express.Router();
+
+    // GET /api/handover/queue - Fila de conversas aguardando atendimento
+    router.get('/queue', async (req: AuthRequest, res: Response) => {
+      try {
+        // Apenas servidores podem ver a fila
+        if (req.user!.userType !== 'SERVER') {
+          res.status(403).json({ error: 'Acesso negado. Apenas servidores podem ver a fila.' });
+          return;
+        }
+
+        const { departmentId } = req.query;
+        const handoverService = this.flowEngineService.getHandoverService();
+        const queue = await handoverService.getPendingHandoverQueue(departmentId as string);
+
+        res.json({
+          success: true,
+          total: queue.length,
+          queue,
+        });
+      } catch (error: any) {
+        logger.error('Erro ao buscar fila de handover', { error });
+        res.status(500).json({ error: error.message });
+      }
+    });
+
+    // POST /api/handover/takeover - Servidor assume conversa
+    router.post('/takeover', async (req: AuthRequest, res: Response) => {
+      try {
+        // Apenas servidores podem assumir conversas
+        if (req.user!.userType !== 'SERVER') {
+          res.status(403).json({ error: 'Acesso negado. Apenas servidores podem assumir conversas.' });
+          return;
+        }
+
+        const { conversationId } = req.body;
+        if (!conversationId) {
+          res.status(400).json({ error: 'conversationId é obrigatório' });
+          return;
+        }
+
+        const handoverService = this.flowEngineService.getHandoverService();
+        const result = await handoverService.takeoverConversation(
+          conversationId,
+          req.user!.userId
+        );
+
+        res.json(result);
+      } catch (error: any) {
+        logger.error('Erro ao assumir conversa', { error });
+        res.status(500).json({ error: error.message });
+      }
     });
 
     return router;

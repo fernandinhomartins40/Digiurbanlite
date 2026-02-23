@@ -1,0 +1,3857 @@
+[
+  {
+    "moduleType": "ENCAMINHAMENTOS_TFD",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Exames",
+      "Guia de Encaminhamento"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CADASTRO_PRODUTOR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "DAP - Declaração de Aptidão ao Pronaf (opcional)"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Propriedade ou Posse"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "DAP - Declaração de Aptidão ao Pronaf (opcional)",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "LICENCA_OBRA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART/RRT",
+      "Documento do Proprietário",
+      "Matrícula do Imóvel",
+      "Projeto Arquitetônico"
+    ],
+    "service_docs": [
+      "Projeto Aprovado",
+      "ART",
+      "Matrícula do Imóvel",
+      "IPTU"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Proprietário",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeto Arquitetônico",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CARTAO_SUS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "RG ou Certidão de Nascimento"
+    ],
+    "service_docs": [
+      "RG ou CNH",
+      "CPF",
+      "Comprovante de Residência"
+    ],
+    "service_file": "health.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "RG ou Certidão de Nascimento",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "MATRICULA_ESCOLAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF (se possuir)",
+      "Cartão de Vacina",
+      "Certidão de Nascimento",
+      "Comprovante de Residência",
+      "Histórico Escolar",
+      "RG (se possuir)"
+    ],
+    "service_docs": [
+      "Certidão de Nascimento",
+      "RG do Responsável",
+      "Comprovante de Residência",
+      "Cartão de Vacina"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF (se possuir)",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Histórico Escolar",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG (se possuir)",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ASSISTENCIA_TECNICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Propriedade"
+    ],
+    "service_docs": [
+      "Cadastro de Produtor Rural (opcional)",
+      "Documento da Propriedade (opcional)"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Propriedade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_PROPRIEDADE_RURAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CAR (Cadastro Ambiental Rural)",
+      "CPF",
+      "Documento da Propriedade"
+    ],
+    "service_docs": [
+      "Escritura ou Contrato",
+      "CAR - Cadastro Ambiental Rural (opcional)",
+      "ITR - Imposto Territorial Rural (opcional)"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CAR (Cadastro Ambiental Rural)",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento da Propriedade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_PROGRAMA_RURAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Cadastro de Produtor",
+      "DAP"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "FEIRA_PRODUTOR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "DAP ou Cadastro de Produtor"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Residência"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "DAP ou Cadastro de Produtor",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "LICENCA_EVENTOS_RURAIS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Autorização do Proprietário",
+      "CPF",
+      "Projeto do Evento"
+    ],
+    "service_docs": [
+      "CPF",
+      "CNPJ (se pessoa jurídica)",
+      "Projeto do Evento"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Autorização do Proprietário",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ANALISE_SOLO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Propriedade"
+    ],
+    "service_docs": [
+      "CPF",
+      "Cadastro de Produtor Rural (opcional)"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Propriedade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "SOLICITACAO_MAQUINAS",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Propriedade ou Posse"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "AUXILIO_EMERGENCIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Endereço",
+      "Declaração de Vulnerabilidade (se aplicável)"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_UNICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "RG",
+      "Título de Eleitor"
+    ],
+    "service_docs": [
+      "CadÚnico",
+      "Documentos Pessoais",
+      "Comprovante de Renda"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Título de Eleitor",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_GRUPO_OFICINA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Comprovante de Endereço"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_PROGRAMA_SOCIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CadÚnico",
+      "Documentos Pessoais"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "SOLICITACAO_BENEFICIO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CADASTRO_ARTISTA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Portfólio",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Projeto do Evento"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Portfólio",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_EVENTO_CULTURAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF/CNPJ Responsável",
+      "Projeto do Evento"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CADASTRO_GRUPO_ARTISTICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Estatuto ou Ata de Fundação",
+      "Lista de Integrantes",
+      "Portfólio"
+    ],
+    "service_docs": [
+      "Documentos dos Integrantes",
+      "Portfólio do Grupo",
+      "Estatuto (opcional)"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Estatuto ou Ata de Fundação",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Lista de Integrantes",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REGISTRO_MANIFESTACAO_CULTURAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Documentos do Responsável",
+      "Dossiê da Manifestação"
+    ],
+    "service_docs": [
+      "Documentação Histórica",
+      "Fotos",
+      "Depoimentos"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentos do Responsável",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Dossiê da Manifestação",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "RESERVA_ESPACO_CULTURAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Projeto do Evento"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "APOIO_CULTURAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Orçamento",
+      "Projeto Cultural"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Projeto ou Proposta"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Orçamento",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeto Cultural",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PROJETO_CULTURAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Cronograma",
+      "Orçamento",
+      "Projeto Detalhado"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Projeto Detalhado",
+      "Orçamento",
+      "Plano de Divulgação (opcional)"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Cronograma",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_PROFESSOR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Certificados de Pós-Graduação",
+      "Comprovante de Residência",
+      "Diploma",
+      "Histórico de Graduação",
+      "RG"
+    ],
+    "service_docs": [
+      "Certidão de Nascimento da Criança",
+      "RG do Responsável",
+      "CPF do Responsável",
+      "Comprovante de Residência",
+      "Comprovante de Trabalho dos Pais",
+      "Cartão de Vacina"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Certificados de Pós-Graduação",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Diploma",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Histórico de Graduação",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CONSULTA_FREQUENCIA_NOTAS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Documento de Identidade"
+    ],
+    "service_docs": [
+      "Diploma",
+      "Currículo",
+      "Comprovante de Residência"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento de Identidade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_CURSO_LIVRE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Escolaridade",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Escolaridade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "SOLICITACAO_DOCUMENTO_ESCOLAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Documento de Identidade"
+    ],
+    "service_docs": [
+      "RG",
+      "Comprovante de Matrícula (se aplicável)"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento de Identidade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_COMPETICAO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Ficha de Inscrição"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "PROGRAMA_AMBIENTAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Documento de Identidade"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "AUTORIZACAO_DEMOLICAO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "ART",
+      "Comprovante de Propriedade",
+      "Matrícula do Imóvel",
+      "Projeto de Demolição"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "AUTORIZACAO_INTERVENCAO_VIA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "Plano de Sinalização",
+      "Projeto"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "CNPJ (se empresa)",
+      "Projeto de Intervenção",
+      "ART"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Plano de Sinalização",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "APROVACAO_PROJETO_ARQUITETONICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART/RRT",
+      "Matrícula do Imóvel",
+      "Planta de Situação",
+      "Projeto Arquitetônico"
+    ],
+    "service_docs": [
+      "Projeto Arquitetônico",
+      "ART",
+      "Documentação do Imóvel"
+    ],
+    "service_file": "urban-planning.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Matrícula do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Planta de Situação",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "VIABILIDADE_URBANISTICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Matrícula do Imóvel",
+      "Planta de Situação"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Matrícula do Imóvel",
+      "Memorial Descritivo"
+    ],
+    "service_file": "urban-planning.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Planta de Situação",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ALVARA_CONSTRUCAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART de Execução",
+      "Certidão de Viabilidade",
+      "IPTU",
+      "Matrícula do Imóvel",
+      "Projeto Aprovado"
+    ],
+    "service_docs": [
+      "Projeto Aprovado",
+      "Matrícula do Imóvel",
+      "ART"
+    ],
+    "service_file": "urban-planning.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Certidão de Viabilidade",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "IPTU",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PROGRAMAS_SAUDE",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Cartão SUS",
+      "Comprovante de Residência"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "AUTORIZACAO_EVENTO_SEGURANCA",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CNPJ",
+      "CPF",
+      "Comprovante de Endereço",
+      "Projeto do Evento",
+      "Relatório de Vistoria"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "LAUDO_VISTORIA_SEGURANCA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Propriedade",
+      "Fotos",
+      "Relatório de Vistoria"
+    ],
+    "service_docs": [
+      "Alvará de Funcionamento",
+      "CNPJ"
+    ],
+    "service_file": "public-safety.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Propriedade",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Fotos",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Relatório de Vistoria",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "DESOBSTRUCAO_BUEIRO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Fotos"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "ILUMINACAO_PUBLICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Fotos"
+    ],
+    "service_docs": [
+      "Foto do Problema"
+    ],
+    "service_file": "public-services.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Fotos",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REGISTRO_PROBLEMA_FOTO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Fotos"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CAPINA_ROCAGEM",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Fotos"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CADASTRO_ESTABELECIMENTO_TURISTICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Alvará",
+      "CNPJ",
+      "Comprovante de Endereço",
+      "Comprovantes",
+      "Contrato Social",
+      "Fotos",
+      "Relatório de Vistoria"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Alvará de Funcionamento",
+      "Contrato Social"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Endereço",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovantes",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Fotos",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Relatório de Vistoria",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_GUIA_TURISTICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Certificado de Curso",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "Projeto do Evento",
+      "Autorizações Necessárias"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Certificado de Curso",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REGISTRO_EVENTO_TURISTICO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "CPF ou CNPJ",
+      "Comprovante de Escolaridade",
+      "Comprovante de Propriedade",
+      "Comprovante de Residência",
+      "Documento de Identidade",
+      "Documento de Identidade dos Membros",
+      "Escritura do Imóvel",
+      "Laudo Geotécnico",
+      "Projeto de Calçada",
+      "Projeto de Muro",
+      "Projeto de Terraplanagem",
+      "Projeto do Evento",
+      "Termo de Adesão"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "INSCRICAO_EJA",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_FUTEBOL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_VOLEI",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_BASQUETE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_NATACAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_JUDO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_GINASTICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_ESCOLINHA_CAPOEIRA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "BOLSA_ATLETA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "CPF",
+      "Comprovante de Residência",
+      "Histórico Esportivo",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Histórico Esportivo",
+      "Cartas de Recomendação"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado Médico",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_CRECHE",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF da Criança",
+      "Cartão de Vacina",
+      "Certidão de Nascimento",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "RG dos Pais"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "AGENDAMENTO_ESPECIALIZADO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Cartão SUS",
+      "Encaminhamento Médico"
+    ],
+    "service_docs": [
+      "RG e CPF",
+      "Documentos relacionados ao assunto do agendamento"
+    ],
+    "service_file": "administration.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Cartão SUS",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Encaminhamento Médico",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUTORIZACAO_SUPRESSAO_VEGETAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Inventário Florestal",
+      "Matrícula do Imóvel",
+      "Projeto"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Levantamento Topográfico",
+      "Fotos"
+    ],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Inventário Florestal",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Matrícula do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeto",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "LICENCA_AMBIENTAL_SIMPLIFICADA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Documentação do Imóvel",
+      "Memorial Descritivo",
+      "Projeto"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Projeto Simplificado"
+    ],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentação do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Memorial Descritivo",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUTORIZACAO_CAPTACAO_AGUA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Projeto Hidráulico"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Projeto Hidráulico",
+      "ART"
+    ],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AEE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Histórico Escolar",
+      "Laudo Médico"
+    ],
+    "service_docs": [
+      "Laudo Médico",
+      "Relatório Pedagógico",
+      "Comprovante de Matrícula"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Histórico Escolar",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AGENDAMENTO_CENTRO_REFERENCIA",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Cartão SUS",
+      "Encaminhamento Médico",
+      "Exames (se houver)"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "ALVARA_REFORMA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Fotos do Local",
+      "Projeto de Reforma"
+    ],
+    "service_docs": [
+      "Projeto de Reforma",
+      "ART",
+      "Matrícula do Imóvel"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Fotos do Local",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "APROVACAO_PROJETO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Matrícula do Imóvel",
+      "Memorial Descritivo",
+      "Planta de Situação",
+      "Projeto Arquitetônico"
+    ],
+    "service_docs": [
+      "Projeto Arquitetônico",
+      "ART",
+      "Matrícula do Imóvel",
+      "Planta de Situação"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Memorial Descritivo",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "APROVACAO_LOTEAMENTO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Certidões Negativas",
+      "Levantamento Topográfico",
+      "Licença Ambiental",
+      "Matrícula do Imóvel",
+      "Memorial Descritivo",
+      "Projeto de Loteamento"
+    ],
+    "service_docs": [
+      "Projeto de Loteamento",
+      "Memorial Descritivo",
+      "Matrícula do Terreno",
+      "ART",
+      "Licença Ambiental"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Certidões Negativas",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Levantamento Topográfico",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Matrícula do Imóvel",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CERTIDAO_USO_SOLO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Documento do Imóvel"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Matrícula do Imóvel"
+    ],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ANALISE_VIABILIDADE_EMPREENDIMENTO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Plano de Negócios",
+      "Projeção Financeira"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Projeto Preliminar",
+      "Estudo de Impacto",
+      "Matrícula do Terreno"
+    ],
+    "service_file": "urban-planning.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Plano de Negócios",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeção Financeira",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "API_INTEGRACAO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Documentação Técnica",
+      "Termo de Responsabilidade"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "APOIO_FEIRA_EXPOSICAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Orçamento",
+      "Projeto do Evento"
+    ],
+    "service_docs": [
+      "CPF ou CNPJ",
+      "Projeto do Evento",
+      "Cronograma"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Orçamento",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "APROVACAO_DEMOLICAO_PARCIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Fotos",
+      "Projeto de Demolição"
+    ],
+    "service_docs": [
+      "Projeto de Demolição",
+      "ART",
+      "Matrícula do Imóvel"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Fotos",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "APROVACAO_PROJETO_URBANIZACAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Levantamento Topográfico",
+      "Memorial Descritivo",
+      "Projeto de Urbanização"
+    ],
+    "service_docs": [
+      "Projeto de Urbanização",
+      "Memorial Descritivo",
+      "ART",
+      "Estudo Ambiental"
+    ],
+    "service_file": "urban-planning.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Levantamento Topográfico",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ATENDIMENTO_DOMICILIAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Cartão SUS",
+      "Encaminhamento Médico (se houver)"
+    ],
+    "service_docs": [
+      "Laudo Médico",
+      "Cartão SUS",
+      "Comprovante de Residência"
+    ],
+    "service_file": "health.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Encaminhamento Médico (se houver)",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ATUALIZACAO_CADASTRAL_EMPRESA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Comprovante de Endereço",
+      "Contrato Social Atualizado",
+      "Documentos dos Sócios"
+    ],
+    "service_docs": [
+      "Contrato Social Atualizado",
+      "CNPJ",
+      "RG e CPF do Responsável",
+      "Comprovante de Endereço Comercial"
+    ],
+    "service_file": "finance.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentos dos Sócios",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ATUALIZACAO_CADASTRAL_IMOVEL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Comprovante de Propriedade",
+      "Documento do Imóvel"
+    ],
+    "service_docs": [
+      "Escritura ou Contrato de Compra e Venda",
+      "RG e CPF do Proprietário",
+      "Comprovante de Endereço",
+      "Carnê de IPTU"
+    ],
+    "service_file": "finance.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Propriedade",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUTORIZACAO_EVENTO_VIA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Plano de Segurança",
+      "Projeto do Evento"
+    ],
+    "service_docs": [
+      "Projeto do Evento",
+      "Seguro de Responsabilidade Civil",
+      "Alvará (se aplicável)"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Plano de Segurança",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUTORIZACAO_MANEJO_FAUNA",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Projeto Técnico",
+      "Registro Profissional"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "AUTORIZACAO_TRANSPORTE_ESCOLAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado de Saúde Motorista",
+      "CPF/CNH",
+      "CRLV",
+      "Certidões Negativas",
+      "Seguro"
+    ],
+    "service_docs": [
+      "CNH categoria D ou superior",
+      "Certidão de Antecedentes Criminais",
+      "Documento do Veículo",
+      "Vistoria do Veículo",
+      "Seguro do Veículo"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado de Saúde Motorista",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF/CNH",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CRLV",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Certidões Negativas",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUTORIZACAO_TRANSPORTE_TURISTICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CNH Motorista",
+      "CNPJ",
+      "CRLV",
+      "Cadastur",
+      "Certidões",
+      "Seguro"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "CNH Categoria D ou E",
+      "Documentos dos Veículos",
+      "Seguro dos Veículos"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CNH Motorista",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CRLV",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Cadastur",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Certidões",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUXILIO_ALUGUEL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Documentos da Família",
+      "RG"
+    ],
+    "service_docs": [
+      "Contrato de Aluguel",
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Declaração de Vulnerabilidade"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documentos da Família",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "AUXILIO_CONSTRUCAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Documento do Terreno",
+      "Projeto Arquitetônico",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Matrícula do Terreno"
+    ],
+    "service_file": "housing.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Terreno",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeto Arquitetônico",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "BAIXA_EMPRESA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Certidões Negativas",
+      "Comprovante Encerramento CNPJ",
+      "Comprovante de Baixa na Junta",
+      "Distrato Social"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Último Alvará de Funcionamento",
+      "Certidões Negativas (Tributos Municipais, Estaduais e Federais)",
+      "Comprovante de Pagamento de Débitos (se houver)"
+    ],
+    "service_file": "economic-development.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Baixa na Junta",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Distrato Social",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "BENEFICIO_EVENTUAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "Documentos Específicos",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "BOLSA_FAMILIA_MUNICIPAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Documentos da Família",
+      "NIS",
+      "RG"
+    ],
+    "service_docs": [
+      "CadÚnico",
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Comprovante de Renda Familiar"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentos da Família",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "NIS",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_AGROINDUSTRIA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Alvará de Funcionamento",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Licença Sanitária"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Propriedade",
+      "Projeto Técnico"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Alvará de Funcionamento",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Licença Sanitária",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_ATRACAO_TURISTICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Autorização do Proprietário",
+      "CPF/CNPJ",
+      "Fotos"
+    ],
+    "service_docs": [
+      "CPF ou CNPJ",
+      "Fotos do Local",
+      "Autorização de Funcionamento"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Autorização do Proprietário",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_CONTRIBUINTE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Comprovante de Endereço",
+      "Documentos Específicos"
+    ],
+    "service_docs": [],
+    "service_file": "finance.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Endereço",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documentos Específicos",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_DEFICIT_HABITACIONAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Documentos da Família",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Propriedade ou Posse",
+      "Fotos da Moradia"
+    ],
+    "service_file": "housing.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documentos da Família",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_FORNECEDOR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Alvará de Funcionamento",
+      "CNPJ",
+      "Certidões Negativas",
+      "Comprovante de Endereço",
+      "Contrato Social"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Contrato Social",
+      "Projeto Industrial",
+      "Certidões Negativas",
+      "Plano de Investimento"
+    ],
+    "service_file": "economic-development.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Alvará de Funcionamento",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Endereço",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_GERADOR_RESIDUOS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CNPJ",
+      "Contrato com Transportador",
+      "Licença Ambiental",
+      "PGRS"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Projeto de Manejo",
+      "ART"
+    ],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Contrato com Transportador",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Licença Ambiental",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "PGRS",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_LOGIN_UNICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Foto",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "CNPJ (para empresas)"
+    ],
+    "service_file": "technology-innovation.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Foto",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_MEI",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CCMEI",
+      "CPF",
+      "Comprovante de Endereço",
+      "RG"
+    ],
+    "service_docs": [
+      "RG e CPF",
+      "Comprovante de Residência",
+      "Comprovante de Renda",
+      "CNPJ (se MEI/Empresa)",
+      "Projeto ou Plano de Negócio Simples"
+    ],
+    "service_file": "economic-development.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CCMEI",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Endereço",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_PISCICULTURA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Licença Ambiental",
+      "Outorga de Água"
+    ],
+    "service_docs": [
+      "CPF",
+      "CNPJ (se houver)",
+      "Licença Sanitária",
+      "Comprovante de Endereço da Agroindústria"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Licença Ambiental",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Outorga de Água",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_PONTO_CULTURA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Estatuto Social",
+      "Plano de Ação",
+      "Portfólio"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Currículo",
+      "Certificados",
+      "Portfólio"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Estatuto Social",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Plano de Ação",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_STARTUP",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CNPJ",
+      "Contrato Social",
+      "Pitch Deck",
+      "Plano de Negócios"
+    ],
+    "service_docs": [
+      "CNPJ da Empresa",
+      "Contrato Social",
+      "Termo de Uso e Responsabilidade",
+      "Documentação Técnica do Sistema"
+    ],
+    "service_file": "technology-innovation.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Pitch Deck",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Plano de Negócios",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_VIVEIRO_MUDAS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Registro no MAPA"
+    ],
+    "service_docs": [],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "ART",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Registro no MAPA",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CADASTRO_VOLUNTARIO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado de Antecedentes",
+      "CPF",
+      "Comprovante de Residência",
+      "Currículo",
+      "RG"
+    ],
+    "service_docs": [],
+    "service_file": "civil-defense.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado de Antecedentes",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Currículo",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CAMPEONATO_MUNICIPAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "Documentos dos Atletas",
+      "Ficha de Inscrição"
+    ],
+    "service_docs": [
+      "Lista de Atletas",
+      "Documentos dos Atletas"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado Médico",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Ficha de Inscrição",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CARTAO_ESTUDANTE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Matrícula",
+      "Foto 3x4",
+      "RG"
+    ],
+    "service_docs": [
+      "RG ou CPF",
+      "Declaração de Matrícula",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Matrícula",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CARTAO_TRANSPORTE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "Documentos Específicos",
+      "Foto 3x4",
+      "RG"
+    ],
+    "service_docs": [
+      "RG ou CPF",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentos Específicos",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CASA_LAR_IDOSO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Cartão SUS",
+      "Documentos da Família",
+      "Laudo Médico",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Atestado Médico",
+      "Laudo Social (se houver)",
+      "Comprovante de Renda (se houver)"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Cartão SUS",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documentos da Família",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Laudo Médico",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CERTIDAO_BEM_TOMBADO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Documento do Imóvel"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Endereço do Bem"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CERTIFICADO_DIGITAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Comprovante de Residência",
+      "Documentos Específicos",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CESTA_BASICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Residência"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CNH_SOCIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "NIS",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Comprovante de Residência",
+      "Comprovante de Renda Familiar"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "NIS",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "COMPRA_DIRETA_PRODUTOR",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Cadastro de Produtor",
+      "Certidões",
+      "DAP"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CONCESSAO_USO_ESPECIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Comprovantes de Ocupação",
+      "Fotos",
+      "Projeto de Uso"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Declaração de Posse",
+      "Comprovantes de Residência",
+      "Declaração de Não Proprietário"
+    ],
+    "service_file": "housing.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovantes de Ocupação",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Fotos",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeto de Uso",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "COPIA_PROCESSOS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Procuração (se aplicável)"
+    ],
+    "service_docs": [
+      "RG e CPF",
+      "Procuração (se representante legal)"
+    ],
+    "service_file": "administration.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Procuração (se aplicável)",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CREDENCIAMENTO_AGENCIA_TURISMO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Alvará",
+      "CNPJ",
+      "Cadastur",
+      "Certidões",
+      "Contrato Social"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Contrato Social",
+      "Cadastur",
+      "Alvará de Funcionamento",
+      "Seguro de Responsabilidade Civil"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Certidões",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CREDENCIAMENTO_INSTRUTOR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestados",
+      "CPF",
+      "Certificados",
+      "Currículo",
+      "Diplomas",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "CREF",
+      "Currículo",
+      "Certificados"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestados",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Diplomas",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CREDENCIAMENTO_MOTOTAXI",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado de Saúde",
+      "CNH Categoria A",
+      "CPF",
+      "CRLV",
+      "Certidões",
+      "RG",
+      "Seguro"
+    ],
+    "service_docs": [
+      "CNH Categoria A (mínimo)",
+      "Certidão de Antecedentes Criminais",
+      "Comprovante de Residência",
+      "Curso de Formação de Mototaxista",
+      "Vistoria da Motocicleta"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado de Saúde",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CRLV",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Certidões",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Seguro",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CREDENCIAMENTO_PROFESSOR_ARTE",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Certificados",
+      "Currículo",
+      "Portfólio",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "CREDENCIAMENTO_TAXI",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado de Antecedentes",
+      "Atestado de Saúde",
+      "CNH",
+      "CPF",
+      "CRLV",
+      "Certidões",
+      "RG",
+      "Seguro"
+    ],
+    "service_docs": [
+      "CNH Categoria B (mínimo)",
+      "Certidão de Antecedentes Criminais",
+      "Comprovante de Residência",
+      "Curso de Formação de Taxista",
+      "Vistoria do Veículo"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado de Antecedentes",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Atestado de Saúde",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CRLV",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Certidões",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Seguro",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "CREDENCIAMENTO_TRANSPORTE_ESCOLAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado de Saúde",
+      "CNH Categoria D",
+      "CPF",
+      "CRLV",
+      "Certidões",
+      "Curso Transporte Escolar",
+      "RG",
+      "Seguro"
+    ],
+    "service_docs": [
+      "CNH Categoria D",
+      "Certidão de Antecedentes Criminais",
+      "Curso de Transporte Escolar",
+      "Vistoria do Veículo",
+      "CRLV",
+      "Seguro Obrigatório"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Atestado de Saúde",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Certidões",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Curso Transporte Escolar",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "DAP_DIGITAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Propriedade/Posse",
+      "Comprovante de Renda",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Comprovante de Atividade Rural"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Propriedade/Posse",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "DECLARACOES",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Documentos Comprobatórios",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "DEFESA_AUTUACAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Auto de Infração",
+      "Defesa Escrita",
+      "Documentos Probatórios"
+    ],
+    "service_docs": [
+      "CNH",
+      "CRLV",
+      "Notificação de Autuação",
+      "Comprovantes (se houver)"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Auto de Infração",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Defesa Escrita",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documentos Probatórios",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "DISTRIBUICAO_MUDAS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Comprovante de Propriedade/Autorização"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Propriedade ou Posse"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Propriedade/Autorização",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "DISTRIBUICAO_SEMENTES",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Propriedade",
+      "DAP"
+    ],
+    "service_docs": [
+      "CPF",
+      "Cadastro de Produtor Rural"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Propriedade",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "DAP",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "EMPRESTIMO_MATERIAL_ESPORTIVO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Projeto do Evento"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Projeto do Evento",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "FAIXA_CARGA_DESCARGA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Alvará de Funcionamento",
+      "CNPJ",
+      "Contrato de Locação/Propriedade"
+    ],
+    "service_docs": [
+      "Alvará de Funcionamento",
+      "Planta de Localização"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Contrato de Locação/Propriedade",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "GUARDA_PATRIMONIAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Documentos do Bem",
+      "Fotos"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "INSCRICAO_CIRCUITO_TURISTICO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Cadastur",
+      "Fotos",
+      "Material Promocional"
+    ],
+    "service_docs": [
+      "CNPJ ou CPF",
+      "Alvará de Funcionamento",
+      "Cadastur (se aplicável)"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF/CNPJ",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Fotos",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Material Promocional",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_CONCURSO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Escolaridade",
+      "Comprovante de Pagamento",
+      "RG"
+    ],
+    "service_docs": [
+      "RG e CPF",
+      "Comprovante de Escolaridade",
+      "Foto 3x4",
+      "Comprovante de Residência",
+      "Certificados (se aplicável)"
+    ],
+    "service_file": "administration.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Pagamento",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_CORRIDA_RUA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Atestado Médico",
+      "CPF",
+      "Comprovante de Pagamento",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Atestado Médico"
+    ],
+    "service_file": "sports.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Pagamento",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_CURSO_FORMACAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Escolaridade",
+      "Comprovante de Residência",
+      "Currículo",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Escolaridade"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Currículo",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "INSCRICAO_INCUBADORA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CNPJ",
+      "Contrato Social",
+      "Pitch Deck",
+      "Plano de Negócios",
+      "Projeções Financeiras"
+    ],
+    "service_docs": [
+      "CPF e RG dos Sócios",
+      "Currículo dos Sócios",
+      "Plano de Negócio Completo",
+      "Pitch Deck (Apresentação)",
+      "CNPJ (se já constituída)"
+    ],
+    "service_file": "economic-development.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Contrato Social",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Plano de Negócios",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Projeções Financeiras",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ISENCAO_IDOSO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Foto 3x4 recente",
+      "Comprovante de Residência"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ISENCAO_IPTU",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Documento do Imóvel",
+      "RG"
+    ],
+    "service_docs": [
+      "RG e CPF",
+      "Comprovante de Propriedade do Imóvel",
+      "Comprovante de Renda",
+      "Certidão de Nascimento ou Casamento",
+      "Comprovante de Aposentadoria (se aplicável)"
+    ],
+    "service_file": "finance.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "ISENCAO_TRANSPORTE",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Residência",
+      "Documentos Específicos",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Laudo Médico (se for por deficiência)",
+      "Comprovante de Renda"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentos Específicos",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "LICENCA_ATIVIDADE_POLUIDORA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "ART",
+      "CNPJ",
+      "Documento do Imóvel",
+      "EIA/RIMA (se aplicável)",
+      "Projeto Técnico"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Projeto Técnico",
+      "ART",
+      "Plano de Controle"
+    ],
+    "service_file": "environment.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Imóvel",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "EIA/RIMA (se aplicável)",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "LICENCA_ATIVIDADE_TURISTICA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Alvará",
+      "CNPJ",
+      "Cadastur",
+      "Licenças Específicas",
+      "Seguro"
+    ],
+    "service_docs": [
+      "CPF ou CNPJ",
+      "RG",
+      "Contrato Social (se empresa)",
+      "Projeto da Atividade"
+    ],
+    "service_file": "tourism.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Alvará",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Cadastur",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Licenças Específicas",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Seguro",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "LICENCA_PERFURACAO_POCO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "ART",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Projeto Técnico"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "MATERIAL_CONSTRUCAO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Documento do Terreno",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Comprovante de Propriedade"
+    ],
+    "service_file": "housing.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Documento do Terreno",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "MATERIAL_ESCOLAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF do Responsável",
+      "Comprovante de Matrícula",
+      "Comprovante de Renda",
+      "RG do Aluno"
+    ],
+    "service_docs": [
+      "Comprovante de Matrícula",
+      "Declaração de Baixa Renda (se aplicável)"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF do Responsável",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG do Aluno",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "MELHORIA_HABITACIONAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Documento do Imóvel",
+      "Fotos",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "MERENDA_ESPECIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF do Responsável",
+      "Comprovante de Matrícula",
+      "Laudo Médico",
+      "Prescrição Nutricional"
+    ],
+    "service_docs": [
+      "Atestado Médico",
+      "Comprovante de Matrícula"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF do Responsável",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Laudo Médico",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Prescrição Nutricional",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PAGAMENTO_ITBI",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "Avaliação (se aplicável)",
+      "CPF/CNPJ",
+      "Documento do Imóvel",
+      "Escritura/Contrato"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "PARCELAMENTO_DEBITOS",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF/CNPJ",
+      "Certidões de Débito",
+      "Comprovante de Renda"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "PARTICIPACAO_FEIRAS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Cadastro de Produtor",
+      "DAP",
+      "Licenças Sanitárias"
+    ],
+    "service_docs": [
+      "CNPJ",
+      "Alvará de Funcionamento",
+      "Catálogo de Produtos/Serviços (se houver)"
+    ],
+    "service_file": "economic-development.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Cadastro de Produtor",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "DAP",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Licenças Sanitárias",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PASSE_LIVRE_INTERESTADUAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "Foto 3x4",
+      "Laudo Médico",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Laudo Médico (modelo específico)",
+      "Foto 3x4 recente",
+      "Comprovante de Residência",
+      "Declaração de Renda"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PERICIA_PSICOSSOCIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "Documentos do Solicitante",
+      "Solicitação Judicial (se houver)"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "Processo Judicial",
+      "Encaminhamento do Juizado"
+    ],
+    "service_file": "women-policies.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documentos do Solicitante",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Solicitação Judicial (se houver)",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PROGRAMA_HORTAS_COMUNITARIAS",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Comprovante de Residência",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "Comprovante de Residência"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Renda",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PROGRAMA_PRIMEIRA_INFANCIA",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF Responsável",
+      "Cartão SUS",
+      "Certidão de Nascimento",
+      "Comprovante de Renda",
+      "Comprovante de Residência"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "PROGRAMA_SAUDE_FAMILIA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Cartão SUS de todos",
+      "Comprovante de Residência"
+    ],
+    "service_docs": [
+      "Laudo Médico (se aplicável)",
+      "Cartão SUS",
+      "RG ou CPF"
+    ],
+    "service_file": "health.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Comprovante de Residência",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "PROJETO_ARQUITETONICO_SOCIAL",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "Comprovante de Renda",
+      "Documento do Terreno",
+      "Levantamento Topográfico",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Renda",
+      "Escritura ou Matrícula do Terreno"
+    ],
+    "service_file": "housing.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "Documento do Terreno",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "Levantamento Topográfico",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REGULARIZACAO_OBRA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "COMPROVANTE_RESIDENCIA",
+      "CPF",
+      "ESCRITURA_IMOVEL",
+      "LAUDO_TECNICO",
+      "RG"
+    ],
+    "service_docs": [
+      "Projeto As-Built",
+      "ART",
+      "Matrícula do Imóvel",
+      "Fotos da Edificação"
+    ],
+    "service_file": "public-works.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "COMPROVANTE_RESIDENCIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "ESCRITURA_IMOVEL",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "LAUDO_TECNICO",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REMEMBRAMENTO_LOTE",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "ESCRITURA_IMOVEL",
+      "PLANTA_LOTE",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "RENOVACAO_CREDENCIAMENTO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CERTIDAO_NEGATIVA",
+      "CPF",
+      "RG"
+    ],
+    "service_docs": [
+      "CNH Atualizada",
+      "CRLV Atualizado",
+      "Vistoria em Dia",
+      "Certidão Negativa de Multas"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CERTIDAO_NEGATIVA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REURB",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "COMPROVANTE_RESIDENCIA",
+      "CPF",
+      "LEVANTAMENTO_TOPOGRAFICO",
+      "PLANTA_AREA",
+      "PROJETO_REGULARIZACAO",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Comprovante de Residência",
+      "Declaração de Posse",
+      "Levantamento Topográfico (se houver)"
+    ],
+    "service_file": "housing.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "COMPROVANTE_RESIDENCIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "LEVANTAMENTO_TOPOGRAFICO",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "PLANTA_AREA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "PROJETO_REGULARIZACAO",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "REVISAO_IPTU",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CARNÊ_IPTU",
+      "CPF",
+      "RG"
+    ],
+    "service_docs": [
+      "Carnê de IPTU",
+      "Fotos do Imóvel",
+      "Laudo de Avaliação (se houver)",
+      "Escritura do Imóvel"
+    ],
+    "service_file": "finance.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CARNÊ_IPTU",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "SEGURO_SAFRA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "COMPROVANTE_CULTIVO",
+      "CPF",
+      "DAP",
+      "LAUDO_VISTORIA",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "DAP",
+      "Comprovante de Área Plantada"
+    ],
+    "service_file": "agriculture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "COMPROVANTE_CULTIVO",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "LAUDO_VISTORIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "SOLICITACAO_ABRIGO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "SOLICITACAO_FISIOTERAPIA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CARTAO_SUS",
+      "CPF",
+      "PEDIDO_MEDICO",
+      "RG"
+    ],
+    "service_docs": [
+      "Pedido Médico",
+      "Cartão SUS",
+      "RG ou CPF"
+    ],
+    "service_file": "health.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CARTAO_SUS",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "PEDIDO_MEDICO",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "SOLICITACAO_LOTE_DISTRITO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "COMPROVANTE_RENDA",
+      "COMPROVANTE_RESIDENCIA",
+      "CPF",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "SOLICITACAO_MICROCREDITO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "COMPROVANTE_RENDA",
+      "COMPROVANTE_RESIDENCIA",
+      "CONTRATO_ASSINADO",
+      "CPF",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "TARIFA_SOCIAL_ENERGIA",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "COMPROVANTE_RESIDENCIA",
+      "CONTA_ENERGIA",
+      "CPF",
+      "RG"
+    ],
+    "service_docs": [
+      "CadÚnico",
+      "CPF",
+      "Conta de Luz",
+      "Comprovante de Renda"
+    ],
+    "service_file": "social.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "COMPROVANTE_RESIDENCIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CONTA_ENERGIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "TOMBAMENTO_PATRIMONIO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "FOTOS_BEM",
+      "HISTORICO_BEM",
+      "LAUDO_TECNICO",
+      "PESQUISA_HISTORICA",
+      "RG"
+    ],
+    "service_docs": [
+      "CPF",
+      "RG",
+      "Documentação Histórica",
+      "Fotos",
+      "Laudo Técnico"
+    ],
+    "service_file": "culture.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "HISTORICO_BEM",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "LAUDO_TECNICO",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "PESQUISA_HISTORICA",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "TRANSFERENCIA_PONTO_TAXI",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CERTIDAO_NEGATIVA",
+      "CNH",
+      "CPF",
+      "RG"
+    ],
+    "service_docs": [
+      "Credencial de Taxista",
+      "Certidão Negativa de Multas",
+      "Justificativa"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CERTIDAO_NEGATIVA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CNH",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "TRANSPORTE_ESCOLAR_GRATUITO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "COMPROVANTE_RESIDENCIA",
+      "CPF",
+      "DECLARACAO_ESCOLAR",
+      "RG"
+    ],
+    "service_docs": [
+      "RG ou Certidão de Nascimento",
+      "CPF",
+      "Declaração de Matrícula",
+      "Comprovante de Residência"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "COMPROVANTE_RESIDENCIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "DECLARACAO_ESCOLAR",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "UNIFORME_ESCOLAR",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF_RESPONSAVEL",
+      "DECLARACAO_ESCOLAR",
+      "RG_RESPONSAVEL"
+    ],
+    "service_docs": [
+      "Comprovante de Matrícula",
+      "Declaração de Baixa Renda (se aplicável)"
+    ],
+    "service_file": "education.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CPF_RESPONSAVEL",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "DECLARACAO_ESCOLAR",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG_RESPONSAVEL",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "USO_ESPACO_PUBLICO",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CPF",
+      "PROJETO_EVENTO",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "VAGA_ESPECIAL",
+    "issue": "NO_SERVICE_FOUND",
+    "workflow_docs": [
+      "CNH",
+      "COMPROVANTE_RESIDENCIA",
+      "CPF",
+      "LAUDO_VISTORIA",
+      "RG"
+    ],
+    "service_docs": null
+  },
+  {
+    "moduleType": "VAGA_ESPECIAL_PCD",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CNH",
+      "COMPROVANTE_RESIDENCIA",
+      "CPF",
+      "LAUDO_MEDICO_PCD",
+      "LAUDO_VISTORIA",
+      "RG"
+    ],
+    "service_docs": [
+      "RG",
+      "CPF",
+      "CNH (se condutor)",
+      "Laudo Médico",
+      "Documento do Veículo",
+      "Comprovante de Residência"
+    ],
+    "service_file": "urban-mobility.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "COMPROVANTE_RESIDENCIA",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "LAUDO_MEDICO_PCD",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "LAUDO_VISTORIA",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "VISTORIA_AREA_RISCO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CPF",
+      "FOTOS",
+      "LAUDO_VISTORIA",
+      "RG"
+    ],
+    "service_docs": [
+      "Comprovante de Residência",
+      "RG ou CPF",
+      "Fotos do Local (se possível)"
+    ],
+    "service_file": "civil-defense.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "LAUDO_VISTORIA",
+        "similar_in_service": null
+      }
+    ]
+  },
+  {
+    "moduleType": "VISTORIA_VEICULO",
+    "issue": "MISSING_DOCUMENTS",
+    "workflow_docs": [
+      "CNH",
+      "CPF",
+      "CRLV",
+      "FOTOS_VEICULO",
+      "RG"
+    ],
+    "service_docs": [
+      "CRLV",
+      "Comprovante de Pagamento de Taxas"
+    ],
+    "service_file": "transport-transit.seed.ts",
+    "missing": [
+      {
+        "workflow_doc": "CNH",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "CPF",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "FOTOS_VEICULO",
+        "similar_in_service": null
+      },
+      {
+        "workflow_doc": "RG",
+        "similar_in_service": null
+      }
+    ]
+  }
+]

@@ -1,0 +1,1118 @@
+{
+  "ENCAMINHAMENTOS_TFD": [
+    "Atestado Médico",
+    "Exames",
+    "Guia de Encaminhamento"
+  ],
+  "TRANSPORTE_PACIENTES": [
+    "Atestado Médico",
+    "Cartão SUS",
+    "Comprovante de Endereço"
+  ],
+  "CADASTRO_PRODUTOR": [
+    "CPF",
+    "Comprovante de Residência",
+    "DAP - Declaração de Aptidão ao Pronaf (opcional)"
+  ],
+  "LICENCA_OBRA": [
+    "ART/RRT",
+    "Documento do Proprietário",
+    "Matrícula do Imóvel",
+    "Projeto Arquitetônico"
+  ],
+  "ALVARA_FUNCIONAMENTO": [
+    "CNPJ/CPF",
+    "Comprovante de Endereço",
+    "Contrato Social",
+    "Planta Baixa"
+  ],
+  "SOLICITACAO_EXAMES": [
+    "Cartão SUS",
+    "Pedido Médico"
+  ],
+  "CARTAO_SUS": [
+    "CPF",
+    "Comprovante de Residência",
+    "RG ou Certidão de Nascimento"
+  ],
+  "MATRICULA_ESCOLAR": [
+    "CPF (se possuir)",
+    "Cartão de Vacina",
+    "Certidão de Nascimento",
+    "Comprovante de Residência",
+    "Histórico Escolar",
+    "RG (se possuir)"
+  ],
+  "TRANSFERENCIA_ESCOLAR": [
+    "Declaração de Transferência",
+    "Histórico Escolar"
+  ],
+  "TRANSPORTE_ESCOLAR": [
+    "Comprovante de Matrícula",
+    "Comprovante de Residência"
+  ],
+  "ASSISTENCIA_TECNICA": [
+    "CPF",
+    "Comprovante de Propriedade"
+  ],
+  "CADASTRO_PROPRIEDADE_RURAL": [
+    "CAR (Cadastro Ambiental Rural)",
+    "CPF",
+    "Documento da Propriedade"
+  ],
+  "INSCRICAO_PROGRAMA_RURAL": [
+    "CPF",
+    "Cadastro de Produtor",
+    "DAP"
+  ],
+  "FEIRA_PRODUTOR": [
+    "CPF",
+    "DAP ou Cadastro de Produtor"
+  ],
+  "LICENCA_EVENTOS_RURAIS": [
+    "Autorização do Proprietário",
+    "CPF",
+    "Projeto do Evento"
+  ],
+  "ANALISE_SOLO": [
+    "CPF",
+    "Comprovante de Propriedade"
+  ],
+  "SOLICITACAO_MAQUINAS": [
+    "CPF",
+    "Comprovante de Propriedade ou Posse"
+  ],
+  "AUXILIO_EMERGENCIAL": [
+    "CPF",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "CADASTRO_UNICO": [
+    "CPF",
+    "Comprovante de Residência",
+    "RG",
+    "Título de Eleitor"
+  ],
+  "INSCRICAO_GRUPO_OFICINA": [
+    "CPF",
+    "Comprovante de Residência"
+  ],
+  "INSCRICAO_PROGRAMA_SOCIAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "SOLICITACAO_BENEFICIO": [
+    "CPF",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "CADASTRO_ARTISTA": [
+    "CPF",
+    "Portfólio",
+    "RG"
+  ],
+  "CADASTRO_EVENTO_CULTURAL": [
+    "CPF/CNPJ Responsável",
+    "Projeto do Evento"
+  ],
+  "CADASTRO_GRUPO_ARTISTICO": [
+    "Estatuto ou Ata de Fundação",
+    "Lista de Integrantes",
+    "Portfólio"
+  ],
+  "INSCRICAO_OFICINA": [
+    "CPF",
+    "Comprovante de Residência"
+  ],
+  "REGISTRO_MANIFESTACAO_CULTURAL": [
+    "Documentos do Responsável",
+    "Dossiê da Manifestação"
+  ],
+  "RESERVA_ESPACO_CULTURAL": [
+    "CPF/CNPJ",
+    "Projeto do Evento"
+  ],
+  "APOIO_CULTURAL": [
+    "CPF/CNPJ",
+    "Orçamento",
+    "Projeto Cultural"
+  ],
+  "PROJETO_CULTURAL": [
+    "Cronograma",
+    "Orçamento",
+    "Projeto Detalhado"
+  ],
+  "CADASTRO_PROFESSOR": [
+    "CPF",
+    "Certificados de Pós-Graduação",
+    "Comprovante de Residência",
+    "Diploma",
+    "Histórico de Graduação",
+    "RG"
+  ],
+  "CONSULTA_FREQUENCIA_NOTAS": [
+    "Documento de Identidade"
+  ],
+  "INSCRICAO_CURSO_LIVRE": [
+    "CPF",
+    "Comprovante de Escolaridade",
+    "RG"
+  ],
+  "SOLICITACAO_DOCUMENTO_ESCOLAR": [
+    "Documento de Identidade"
+  ],
+  "CADASTRO_ATLETA": [
+    "Atestado Médico",
+    "CPF",
+    "RG"
+  ],
+  "INSCRICAO_COMPETICAO": [
+    "Atestado Médico",
+    "Ficha de Inscrição"
+  ],
+  "INSCRICAO_ESCOLINHA": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "AUTORIZACAO_CONSTRUCAO": [
+    "ART (Anotação de Responsabilidade Técnica)",
+    "Matrícula do Imóvel",
+    "Projeto Arquitetônico"
+  ],
+  "INSCRICAO_PROGRAMA_HABITACIONAL": [
+    "CPF",
+    "CadÚnico",
+    "Comprovante de Endereço",
+    "Comprovante de Renda",
+    "RG"
+  ],
+  "REGULARIZACAO_FUNDIARIA": [
+    "Comprovante de Residência",
+    "Escritura (se possuir)",
+    "IPTU"
+  ],
+  "SOLICITACAO_AUXILIO_ALUGUEL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Declaração de Vulnerabilidade",
+    "RG"
+  ],
+  "AUTORIZACAO_PODA_ARVORES": [
+    "CPF",
+    "Comprovante de Propriedade",
+    "Fotos do Local"
+  ],
+  "PROGRAMA_AMBIENTAL": [
+    "Documento de Identidade"
+  ],
+  "LICENCIAMENTO_AMBIENTAL": [
+    "ART",
+    "Estudo de Impacto Ambiental",
+    "Projeto"
+  ],
+  "AUTORIZACAO_DEMOLICAO": [
+    "ART",
+    "Comprovante de Propriedade",
+    "Matrícula do Imóvel",
+    "Projeto de Demolição"
+  ],
+  "AUTORIZACAO_INTERVENCAO_VIA": [
+    "ART",
+    "Plano de Sinalização",
+    "Projeto"
+  ],
+  "PARCELAMENTO_SOLO": [
+    "ART do Responsável Técnico",
+    "CNPJ (se empresa)",
+    "CPF",
+    "Matrícula do Imóvel",
+    "Projeto de Parcelamento",
+    "RG"
+  ],
+  "APROVACAO_PROJETO_ARQUITETONICO": [
+    "ART/RRT",
+    "Matrícula do Imóvel",
+    "Planta de Situação",
+    "Projeto Arquitetônico"
+  ],
+  "VIABILIDADE_URBANISTICA": [
+    "Matrícula do Imóvel",
+    "Planta de Situação"
+  ],
+  "ALVARA_CONSTRUCAO": [
+    "ART de Execução",
+    "Certidão de Viabilidade",
+    "IPTU",
+    "Matrícula do Imóvel",
+    "Projeto Aprovado"
+  ],
+  "CONTROLE_MEDICAMENTOS": [
+    "CPF",
+    "Cartão SUS",
+    "Receita Médica"
+  ],
+  "PROGRAMAS_SAUDE": [
+    "CPF",
+    "Cartão SUS",
+    "Comprovante de Residência"
+  ],
+  "AUTORIZACAO_EVENTO_SEGURANCA": [
+    "CNPJ",
+    "CPF",
+    "Comprovante de Endereço",
+    "Projeto do Evento",
+    "Relatório de Vistoria"
+  ],
+  "LAUDO_VISTORIA_SEGURANCA": [
+    "CPF",
+    "Comprovante de Propriedade",
+    "Fotos",
+    "Relatório de Vistoria"
+  ],
+  "DESOBSTRUCAO_BUEIRO": [
+    "Fotos"
+  ],
+  "ILUMINACAO_PUBLICA": [
+    "Fotos"
+  ],
+  "REGISTRO_PROBLEMA_FOTO": [
+    "Fotos"
+  ],
+  "CAPINA_ROCAGEM": [
+    "Fotos"
+  ],
+  "CADASTRO_ESTABELECIMENTO_TURISTICO": [
+    "Alvará",
+    "CNPJ",
+    "Comprovante de Endereço",
+    "Comprovantes",
+    "Contrato Social",
+    "Fotos",
+    "Relatório de Vistoria"
+  ],
+  "CADASTRO_GUIA_TURISTICO": [
+    "CPF",
+    "Certificado de Curso",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "REGISTRO_EVENTO_TURISTICO": [
+    "CPF",
+    "CPF ou CNPJ",
+    "Comprovante de Escolaridade",
+    "Comprovante de Propriedade",
+    "Comprovante de Residência",
+    "Documento de Identidade",
+    "Documento de Identidade dos Membros",
+    "Escritura do Imóvel",
+    "Laudo Geotécnico",
+    "Projeto de Calçada",
+    "Projeto de Muro",
+    "Projeto de Terraplanagem",
+    "Projeto do Evento",
+    "Termo de Adesão"
+  ],
+  "INSCRICAO_EJA": [
+    "CPF",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "ALVARA_FUNCIONAMENTO_PLANEJAMENTO": [
+    "CNPJ",
+    "Comprovante de Endereço",
+    "Contrato Social",
+    "Laudo Técnico"
+  ],
+  "VISTORIA_HABITACIONAL": [
+    "CPF",
+    "Comprovante de Endereço",
+    "RG"
+  ],
+  "INSCRICAO_MCMV_MUNICIPAL": [
+    "CPF",
+    "CadÚnico",
+    "Certidão de Casamento (se aplicável)",
+    "Comprovante de Endereço",
+    "Comprovante de Renda",
+    "RG"
+  ],
+  "REGULARIZACAO_POSSE": [
+    "CPF",
+    "Comprovante de Ocupação",
+    "Croqui do Terreno",
+    "Declaração de Posse",
+    "RG"
+  ],
+  "USUCAPIAO_URBANO": [
+    "CPF",
+    "Comprovantes de Residência",
+    "Declaração de Posse Mansa e Pacífica",
+    "Declaração de Testemunhas",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_FUTEBOL": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_VOLEI": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_BASQUETE": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_NATACAO": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_JUDO": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_GINASTICA": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "INSCRICAO_ESCOLINHA_CAPOEIRA": [
+    "Atestado Médico",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "BOLSA_ATLETA": [
+    "Atestado Médico",
+    "CPF",
+    "Comprovante de Residência",
+    "Histórico Esportivo",
+    "RG"
+  ],
+  "INSCRICAO_CRECHE": [
+    "CPF da Criança",
+    "Cartão de Vacina",
+    "Certidão de Nascimento",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "RG dos Pais"
+  ],
+  "AGENDAMENTO_ESPECIALIZADO": [
+    "Cartão SUS",
+    "Encaminhamento Médico"
+  ],
+  "MEDICAMENTOS_ALTO_CUSTO": [
+    "CPF",
+    "Cartão SUS",
+    "Exames",
+    "Laudo Médico",
+    "RG",
+    "Receita Médica"
+  ],
+  "AUTORIZACAO_SUPRESSAO_VEGETAL": [
+    "CPF",
+    "Inventário Florestal",
+    "Matrícula do Imóvel",
+    "Projeto"
+  ],
+  "LICENCA_AMBIENTAL_SIMPLIFICADA": [
+    "CPF/CNPJ",
+    "Documentação do Imóvel",
+    "Memorial Descritivo",
+    "Projeto"
+  ],
+  "AUTORIZACAO_CAPTACAO_AGUA": [
+    "ART",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Projeto Hidráulico"
+  ],
+  "AEE": [
+    "Histórico Escolar",
+    "Laudo Médico"
+  ],
+  "AGENDAMENTO_CENTRO_REFERENCIA": [
+    "Cartão SUS",
+    "Encaminhamento Médico",
+    "Exames (se houver)"
+  ],
+  "ALVARA_REFORMA": [
+    "ART",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Fotos do Local",
+    "Projeto de Reforma"
+  ],
+  "APROVACAO_PROJETO": [
+    "ART",
+    "CPF/CNPJ",
+    "Matrícula do Imóvel",
+    "Memorial Descritivo",
+    "Planta de Situação",
+    "Projeto Arquitetônico"
+  ],
+  "APROVACAO_LOTEAMENTO": [
+    "ART",
+    "CPF/CNPJ",
+    "Certidões Negativas",
+    "Levantamento Topográfico",
+    "Licença Ambiental",
+    "Matrícula do Imóvel",
+    "Memorial Descritivo",
+    "Projeto de Loteamento"
+  ],
+  "CERTIDAO_USO_SOLO": [
+    "CPF/CNPJ",
+    "Documento do Imóvel"
+  ],
+  "ANALISE_VIABILIDADE_EMPREENDIMENTO": [
+    "CPF/CNPJ",
+    "Plano de Negócios",
+    "Projeção Financeira"
+  ],
+  "API_INTEGRACAO": [
+    "Documentação Técnica",
+    "Termo de Responsabilidade"
+  ],
+  "APOIO_FEIRA_EXPOSICAO": [
+    "CPF/CNPJ",
+    "Orçamento",
+    "Projeto do Evento"
+  ],
+  "APROVACAO_DEMOLICAO_PARCIAL": [
+    "ART",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Fotos",
+    "Projeto de Demolição"
+  ],
+  "APROVACAO_PROJETO_URBANIZACAO": [
+    "ART",
+    "CPF/CNPJ",
+    "Levantamento Topográfico",
+    "Memorial Descritivo",
+    "Projeto de Urbanização"
+  ],
+  "ATENDIMENTO_DOMICILIAR": [
+    "Cartão SUS",
+    "Encaminhamento Médico (se houver)"
+  ],
+  "ATUALIZACAO_CADASTRAL_EMPRESA": [
+    "Comprovante de Endereço",
+    "Contrato Social Atualizado",
+    "Documentos dos Sócios"
+  ],
+  "ATUALIZACAO_CADASTRAL_IMOVEL": [
+    "CPF/CNPJ",
+    "Comprovante de Propriedade",
+    "Documento do Imóvel"
+  ],
+  "AUTORIZACAO_EVENTO_VIA": [
+    "CPF/CNPJ",
+    "Plano de Segurança",
+    "Projeto do Evento"
+  ],
+  "AUTORIZACAO_MANEJO_FAUNA": [
+    "ART",
+    "CPF/CNPJ",
+    "Projeto Técnico",
+    "Registro Profissional"
+  ],
+  "AUTORIZACAO_TRANSPORTE_ESCOLAR": [
+    "Atestado de Saúde Motorista",
+    "CPF/CNH",
+    "CRLV",
+    "Certidões Negativas",
+    "Seguro"
+  ],
+  "AUTORIZACAO_TRANSPORTE_TURISTICO": [
+    "CNH Motorista",
+    "CNPJ",
+    "CRLV",
+    "Cadastur",
+    "Certidões",
+    "Seguro"
+  ],
+  "AUXILIO_ALUGUEL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Documentos da Família",
+    "RG"
+  ],
+  "AUXILIO_CONSTRUCAO": [
+    "CPF",
+    "Comprovante de Renda",
+    "Documento do Terreno",
+    "Projeto Arquitetônico",
+    "RG"
+  ],
+  "BAIXA_EMPRESA": [
+    "Certidões Negativas",
+    "Comprovante Encerramento CNPJ",
+    "Comprovante de Baixa na Junta",
+    "Distrato Social"
+  ],
+  "BENEFICIO_EVENTUAL": [
+    "CPF",
+    "Comprovante de Residência",
+    "Documentos Específicos",
+    "RG"
+  ],
+  "BOLSA_FAMILIA_MUNICIPAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Documentos da Família",
+    "NIS",
+    "RG"
+  ],
+  "CADASTRO_AGROINDUSTRIA": [
+    "Alvará de Funcionamento",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Licença Sanitária"
+  ],
+  "CADASTRO_ATRACAO_TURISTICA": [
+    "Autorização do Proprietário",
+    "CPF/CNPJ",
+    "Fotos"
+  ],
+  "CADASTRO_CONTRIBUINTE": [
+    "CPF/CNPJ",
+    "Comprovante de Endereço",
+    "Documentos Específicos"
+  ],
+  "CADASTRO_DEFICIT_HABITACIONAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Documentos da Família",
+    "RG"
+  ],
+  "CADASTRO_FORNECEDOR": [
+    "Alvará de Funcionamento",
+    "CNPJ",
+    "Certidões Negativas",
+    "Comprovante de Endereço",
+    "Contrato Social"
+  ],
+  "CADASTRO_GERADOR_RESIDUOS": [
+    "CNPJ",
+    "Contrato com Transportador",
+    "Licença Ambiental",
+    "PGRS"
+  ],
+  "CADASTRO_LOGIN_UNICO": [
+    "CPF",
+    "Foto",
+    "RG"
+  ],
+  "CADASTRO_MEI": [
+    "CCMEI",
+    "CPF",
+    "Comprovante de Endereço",
+    "RG"
+  ],
+  "CADASTRO_PISCICULTURA": [
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Licença Ambiental",
+    "Outorga de Água"
+  ],
+  "CADASTRO_PONTO_CULTURA": [
+    "CPF/CNPJ",
+    "Estatuto Social",
+    "Plano de Ação",
+    "Portfólio"
+  ],
+  "CADASTRO_STARTUP": [
+    "CNPJ",
+    "Contrato Social",
+    "Pitch Deck",
+    "Plano de Negócios"
+  ],
+  "CADASTRO_VIVEIRO_MUDAS": [
+    "ART",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Registro no MAPA"
+  ],
+  "CADASTRO_VOLUNTARIO": [
+    "Atestado de Antecedentes",
+    "CPF",
+    "Comprovante de Residência",
+    "Currículo",
+    "RG"
+  ],
+  "CAMPEONATO_MUNICIPAL": [
+    "Atestado Médico",
+    "Documentos dos Atletas",
+    "Ficha de Inscrição"
+  ],
+  "CARTAO_ESTUDANTE": [
+    "CPF",
+    "Comprovante de Matrícula",
+    "Foto 3x4",
+    "RG"
+  ],
+  "CARTAO_PCD": [
+    "CPF",
+    "Comprovante de Residência",
+    "Foto 3x4",
+    "Laudo Médico",
+    "RG"
+  ],
+  "CARTAO_TRANSPORTE": [
+    "CPF",
+    "Comprovante de Residência",
+    "Documentos Específicos",
+    "Foto 3x4",
+    "RG"
+  ],
+  "CASA_LAR_IDOSO": [
+    "CPF",
+    "Cartão SUS",
+    "Documentos da Família",
+    "Laudo Médico",
+    "RG"
+  ],
+  "CERTIDAO_BEM_TOMBADO": [
+    "CPF/CNPJ",
+    "Documento do Imóvel"
+  ],
+  "CERTIFICADO_DIGITAL": [
+    "CPF/CNPJ",
+    "Comprovante de Residência",
+    "Documentos Específicos",
+    "RG"
+  ],
+  "CESTA_BASICA": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência"
+  ],
+  "CNH_SOCIAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "NIS",
+    "RG"
+  ],
+  "COMPRA_DIRETA_PRODUTOR": [
+    "CPF",
+    "Cadastro de Produtor",
+    "Certidões",
+    "DAP"
+  ],
+  "CONCESSAO_USO_ESPECIAL": [
+    "CPF/CNPJ",
+    "Comprovantes de Ocupação",
+    "Fotos",
+    "Projeto de Uso"
+  ],
+  "COPIA_PROCESSOS": [
+    "CPF",
+    "Procuração (se aplicável)"
+  ],
+  "CREDENCIAMENTO_AGENCIA_TURISMO": [
+    "Alvará",
+    "CNPJ",
+    "Cadastur",
+    "Certidões",
+    "Contrato Social"
+  ],
+  "CREDENCIAMENTO_INSTRUTOR": [
+    "Atestados",
+    "CPF",
+    "Certificados",
+    "Currículo",
+    "Diplomas",
+    "RG"
+  ],
+  "CREDENCIAMENTO_MOTOTAXI": [
+    "Atestado de Saúde",
+    "CNH Categoria A",
+    "CPF",
+    "CRLV",
+    "Certidões",
+    "RG",
+    "Seguro"
+  ],
+  "CREDENCIAMENTO_PROFESSOR_ARTE": [
+    "CPF",
+    "Certificados",
+    "Currículo",
+    "Portfólio",
+    "RG"
+  ],
+  "CREDENCIAMENTO_TAXI": [
+    "Atestado de Antecedentes",
+    "Atestado de Saúde",
+    "CNH",
+    "CPF",
+    "CRLV",
+    "Certidões",
+    "RG",
+    "Seguro"
+  ],
+  "CREDENCIAMENTO_TRANSPORTE_ESCOLAR": [
+    "Atestado de Saúde",
+    "CNH Categoria D",
+    "CPF",
+    "CRLV",
+    "Certidões",
+    "Curso Transporte Escolar",
+    "RG",
+    "Seguro"
+  ],
+  "CURSOS_QUALIFICACAO": [
+    "CPF",
+    "Comprovante de Escolaridade",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "CURSO_INCLUSAO_DIGITAL": [
+    "CPF",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "DAP_DIGITAL": [
+    "CPF",
+    "Comprovante de Propriedade/Posse",
+    "Comprovante de Renda",
+    "RG"
+  ],
+  "DECLARACOES": [
+    "CPF",
+    "Documentos Comprobatórios",
+    "RG"
+  ],
+  "DEFESA_AUTUACAO": [
+    "Auto de Infração",
+    "Defesa Escrita",
+    "Documentos Probatórios"
+  ],
+  "DISTRIBUICAO_MUDAS": [
+    "Comprovante de Propriedade/Autorização"
+  ],
+  "DISTRIBUICAO_SEMENTES": [
+    "CPF",
+    "Comprovante de Propriedade",
+    "DAP"
+  ],
+  "EMPRESTIMO_MATERIAL_ESPORTIVO": [
+    "CPF/CNPJ",
+    "Projeto do Evento"
+  ],
+  "FAIXA_CARGA_DESCARGA": [
+    "Alvará de Funcionamento",
+    "CNPJ",
+    "Contrato de Locação/Propriedade"
+  ],
+  "GERACAO_RENDA": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "GUARDA_PATRIMONIAL": [
+    "Documentos do Bem",
+    "Fotos"
+  ],
+  "INSCRICAO_CIRCUITO_TURISTICO": [
+    "CPF/CNPJ",
+    "Cadastur",
+    "Fotos",
+    "Material Promocional"
+  ],
+  "INSCRICAO_CONCURSO": [
+    "CPF",
+    "Comprovante de Escolaridade",
+    "Comprovante de Pagamento",
+    "RG"
+  ],
+  "INSCRICAO_CORRIDA_RUA": [
+    "Atestado Médico",
+    "CPF",
+    "Comprovante de Pagamento",
+    "RG"
+  ],
+  "INSCRICAO_CURSO_FORMACAO": [
+    "CPF",
+    "Comprovante de Escolaridade",
+    "Comprovante de Residência",
+    "Currículo",
+    "RG"
+  ],
+  "INSCRICAO_INCUBADORA": [
+    "CNPJ",
+    "Contrato Social",
+    "Pitch Deck",
+    "Plano de Negócios",
+    "Projeções Financeiras"
+  ],
+  "ISENCAO_IDOSO": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "ISENCAO_IPTU": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Documento do Imóvel",
+    "RG"
+  ],
+  "ISENCAO_TRANSPORTE": [
+    "CPF",
+    "Comprovante de Residência",
+    "Documentos Específicos",
+    "RG"
+  ],
+  "LICENCA_ATIVIDADE_POLUIDORA": [
+    "ART",
+    "CNPJ",
+    "Documento do Imóvel",
+    "EIA/RIMA (se aplicável)",
+    "Projeto Técnico"
+  ],
+  "LICENCA_ATIVIDADE_TURISTICA": [
+    "Alvará",
+    "CNPJ",
+    "Cadastur",
+    "Licenças Específicas",
+    "Seguro"
+  ],
+  "LICENCA_PERFURACAO_POCO": [
+    "ART",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Projeto Técnico"
+  ],
+  "LOCACAO_EQUIPAMENTO_CULTURAL": [
+    "CPF/CNPJ",
+    "Projeto do Evento"
+  ],
+  "MATERIAL_CONSTRUCAO": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Documento do Terreno",
+    "RG"
+  ],
+  "MATERIAL_ESCOLAR": [
+    "CPF do Responsável",
+    "Comprovante de Matrícula",
+    "Comprovante de Renda",
+    "RG do Aluno"
+  ],
+  "MELHORIA_HABITACIONAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Documento do Imóvel",
+    "Fotos",
+    "RG"
+  ],
+  "MERENDA_ESPECIAL": [
+    "CPF do Responsável",
+    "Comprovante de Matrícula",
+    "Laudo Médico",
+    "Prescrição Nutricional"
+  ],
+  "PAGAMENTO_ITBI": [
+    "Avaliação (se aplicável)",
+    "CPF/CNPJ",
+    "Documento do Imóvel",
+    "Escritura/Contrato"
+  ],
+  "PARCELAMENTO_DEBITOS": [
+    "CPF/CNPJ",
+    "Certidões de Débito",
+    "Comprovante de Renda"
+  ],
+  "PARTICIPACAO_FEIRAS": [
+    "CPF",
+    "Cadastro de Produtor",
+    "DAP",
+    "Licenças Sanitárias"
+  ],
+  "PASSE_LIVRE_INTERESTADUAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "Foto 3x4",
+    "Laudo Médico",
+    "RG"
+  ],
+  "PERICIA_PSICOSSOCIAL": [
+    "Documentos do Solicitante",
+    "Solicitação Judicial (se houver)"
+  ],
+  "PROGRAMA_HORTAS_COMUNITARIAS": [
+    "CPF",
+    "Comprovante de Renda",
+    "Comprovante de Residência",
+    "RG"
+  ],
+  "PROGRAMA_PRIMEIRA_INFANCIA": [
+    "CPF Responsável",
+    "Cartão SUS",
+    "Certidão de Nascimento",
+    "Comprovante de Renda",
+    "Comprovante de Residência"
+  ],
+  "PROGRAMA_SAUDE_FAMILIA": [
+    "CPF",
+    "Cartão SUS de todos",
+    "Comprovante de Residência"
+  ],
+  "PROJETO_ARQUITETONICO_SOCIAL": [
+    "CPF",
+    "Comprovante de Renda",
+    "Documento do Terreno",
+    "Levantamento Topográfico",
+    "RG"
+  ],
+  "REGULARIZACAO_OBRA": [
+    "COMPROVANTE_RESIDENCIA",
+    "CPF",
+    "ESCRITURA_IMOVEL",
+    "LAUDO_TECNICO",
+    "RG"
+  ],
+  "REMEMBRAMENTO_LOTE": [
+    "CPF",
+    "ESCRITURA_IMOVEL",
+    "PLANTA_LOTE",
+    "RG"
+  ],
+  "RENOVACAO_CREDENCIAMENTO": [
+    "CERTIDAO_NEGATIVA",
+    "CPF",
+    "RG"
+  ],
+  "REURB": [
+    "COMPROVANTE_RESIDENCIA",
+    "CPF",
+    "LEVANTAMENTO_TOPOGRAFICO",
+    "PLANTA_AREA",
+    "PROJETO_REGULARIZACAO",
+    "RG"
+  ],
+  "REVISAO_IPTU": [
+    "CARNÊ_IPTU",
+    "CPF",
+    "RG"
+  ],
+  "SEGURO_SAFRA": [
+    "COMPROVANTE_CULTIVO",
+    "CPF",
+    "DAP",
+    "LAUDO_VISTORIA",
+    "RG"
+  ],
+  "SOLICITACAO_ABRIGO": [
+    "CPF",
+    "RG"
+  ],
+  "SOLICITACAO_FISIOTERAPIA": [
+    "CARTAO_SUS",
+    "CPF",
+    "PEDIDO_MEDICO",
+    "RG"
+  ],
+  "SOLICITACAO_LOTE_DISTRITO": [
+    "COMPROVANTE_RENDA",
+    "COMPROVANTE_RESIDENCIA",
+    "CPF",
+    "RG"
+  ],
+  "SOLICITACAO_MICROCREDITO": [
+    "COMPROVANTE_RENDA",
+    "COMPROVANTE_RESIDENCIA",
+    "CONTRATO_ASSINADO",
+    "CPF",
+    "RG"
+  ],
+  "TARIFA_SOCIAL_ENERGIA": [
+    "COMPROVANTE_RESIDENCIA",
+    "CONTA_ENERGIA",
+    "CPF",
+    "RG"
+  ],
+  "TOMBAMENTO_PATRIMONIO": [
+    "CPF",
+    "FOTOS_BEM",
+    "HISTORICO_BEM",
+    "LAUDO_TECNICO",
+    "PESQUISA_HISTORICA",
+    "RG"
+  ],
+  "TRANSFERENCIA_PONTO_TAXI": [
+    "CERTIDAO_NEGATIVA",
+    "CNH",
+    "CPF",
+    "RG"
+  ],
+  "TRANSPORTE_ESCOLAR_GRATUITO": [
+    "COMPROVANTE_RESIDENCIA",
+    "CPF",
+    "DECLARACAO_ESCOLAR",
+    "RG"
+  ],
+  "TREINAMENTO_DEFESA_CIVIL": [
+    "CPF",
+    "RG"
+  ],
+  "UNIFORME_ESCOLAR": [
+    "CPF_RESPONSAVEL",
+    "DECLARACAO_ESCOLAR",
+    "RG_RESPONSAVEL"
+  ],
+  "USO_ESPACO_PUBLICO": [
+    "CPF",
+    "PROJETO_EVENTO",
+    "RG"
+  ],
+  "USO_GINASIO": [
+    "CPF",
+    "RG"
+  ],
+  "VAGA_ESPECIAL": [
+    "CNH",
+    "COMPROVANTE_RESIDENCIA",
+    "CPF",
+    "LAUDO_VISTORIA",
+    "RG"
+  ],
+  "VAGA_ESPECIAL_PCD": [
+    "CNH",
+    "COMPROVANTE_RESIDENCIA",
+    "CPF",
+    "LAUDO_MEDICO_PCD",
+    "LAUDO_VISTORIA",
+    "RG"
+  ],
+  "VISTORIA_AREA_RISCO": [
+    "CPF",
+    "FOTOS",
+    "LAUDO_VISTORIA",
+    "RG"
+  ],
+  "VISTORIA_VEICULO": [
+    "CNH",
+    "CPF",
+    "CRLV",
+    "FOTOS_VEICULO",
+    "RG"
+  ]
+}

@@ -450,7 +450,7 @@ export default function CitizenDashboard() {
   const filteredConversations = filterConversations(conversations, searchQuery);
   const lastBotMessage = [...messages]
     .reverse()
-    .find((msg) => msg.senderType === 'BOT' || msg.senderType === 'SYSTEM');
+    .find((msg) => msg.senderId === 'DIGIBOT_SYSTEM' && msg.senderType === 'SYSTEM');
   const lastBotType = lastBotMessage?.metadata?.messageType;
   const botStructuredInput = Boolean(
     selectedConversation?.isBotConversation &&
@@ -785,7 +785,7 @@ export default function CitizenDashboard() {
                 <div className="space-y-4 max-w-4xl mx-auto">
                   {messages.map((message, index) => {
                     const isOwnMessage = message.senderId === citizen?.id;
-                    const isBot = message.senderType === 'BOT' || message.senderType === 'SYSTEM';
+                    const isBot = message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';
                     const showDate = index === 0 ||
                       new Date(messages[index - 1].sentAt).toDateString() !==
                       new Date(message.sentAt).toDateString();

@@ -4907,17 +4907,14 @@ model Conversation {
   updatedAt DateTime  @updatedAt
   closedAt  DateTime?
 
-  // Bot-specific fields
-  isBotConversation    Boolean   @default(false)
-  botFlowType          String?
-  botFlowStep          Int       @default(0)
-  botFlowData          Json?
-  botContext           Json?
-  botLastInteractionAt DateTime?
+  // Bot-specific fields (REFATORADO - source of truth é FlowExecution)
+  isBotConversation       Boolean  @default(false)
+  activeFlowExecutionId   String?  @unique // FK para execução ativa do bot
 
   // Relacionamentos
-  messageServer MessageServer @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
-  messages      Message[]
+  messageServer        MessageServer  @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  messages             Message[]
+  activeFlowExecution  FlowExecution? @relation("ActiveFlowExecution", fields: [activeFlowExecutionId], references: [id], onDelete: SetNull)
 
   @@unique([participant1Id, participant1Type, participant2Id, participant2Type, protocolId])
   @@index([participant1Id, participant1Type, status])
@@ -4984,6 +4981,14 @@ model Message {
 
   // Metadados
   metadata Json? // IP, user-agent, location, etc
+
+  // ✅ NOVO: Campos para mensagens de bot (analytics queryable)
+  isBotMessage          Boolean  @default(false) // Mensagem gerada pelo bot
+  botInteractionType    String? // 'menu', 'form', 'upload', 'location', 'flow_navigation'
+  botSelectedOption     String? // ID da opção selecionada (para menus)
+  botStructuredData     Json? // Dados estruturados originais (form, location, etc)
+  botFlowNodeId         String? // ID do nodo que gerou/processou esta mensagem
+  botFlowAction         String? // Action executada (se aplicável)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -6250,13 +6255,27 @@ model FlowExecution {
   history        Json // Histórico de navegação (array de node IDs)
   status         String // ACTIVE, COMPLETED, CANCELLED, ERROR
   errorMessage   String?   @db.Text
+
+  // ✅ NOVO: Campos de pausa (movidos de metadata para campos diretos)
+  isPaused       Boolean   @default(false)
+  pausedBy       String? // userId do servidor que pausou
+  pausedAt       DateTime?
+  pauseReason    String? // "citizen_request", "complex_case", "human_needed"
+  resumedAt      DateTime?
+  resumedBy      String? // userId do servidor que retomou
+
+  // ✅ NOVO: Retry e metadados
+  retryCount     Int       @default(0)
+  metadata       Json? // Outros metadados (não relacionados a pausa)
+
   startedAt      DateTime  @default(now())
   updatedAt      DateTime  @updatedAt
   completedAt    DateTime?
 
   // Relacionamentos
-  citizen Citizen        @relation(fields: [citizenId], references: [id], onDelete: Cascade)
-  flow    FlowDefinition @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  citizen                Citizen         @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  flow                   FlowDefinition  @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  activeInConversation   Conversation?   @relation("ActiveFlowExecution")
 
   @@index([citizenId])
   @@index([flowId])

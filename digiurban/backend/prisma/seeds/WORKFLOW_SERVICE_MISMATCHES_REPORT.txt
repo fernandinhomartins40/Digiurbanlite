@@ -1,0 +1,1051 @@
+====================================================================================================
+WORKFLOW <-> SERVICE DOCUMENT MISMATCH REPORT
+====================================================================================================
+
+SUMMARY:
+   Total workflows analyzed: 193
+   Workflows with issues: 165 (85%)
+   |- Missing service definition: 39
+   +- Document mismatches: 126
+
+====================================================================================================
+CRITICAL: WORKFLOWS WITHOUT SERVICE DEFINITION (39)
+====================================================================================================
+
+1. ENCAMINHAMENTOS_TFD
+   Workflow requires: Atestado Médico, Exames, Guia de Encaminhamento
+
+2. INSCRICAO_PROGRAMA_RURAL
+   Workflow requires: CPF, Cadastro de Produtor, DAP
+
+3. SOLICITACAO_MAQUINAS
+   Workflow requires: CPF, Comprovante de Propriedade ou Posse
+
+4. SOLICITACAO_BENEFICIO
+   Workflow requires: CPF, Comprovante de Residência, RG
+
+5. CADASTRO_EVENTO_CULTURAL
+   Workflow requires: CPF/CNPJ Responsável, Projeto do Evento
+
+6. RESERVA_ESPACO_CULTURAL
+   Workflow requires: CPF/CNPJ, Projeto do Evento
+
+7. INSCRICAO_COMPETICAO
+   Workflow requires: Atestado Médico, Ficha de Inscrição
+
+8. INSCRICAO_ESCOLINHA
+   Workflow requires: Atestado Médico, Comprovante de Residência, RG
+
+9. PROGRAMA_AMBIENTAL
+   Workflow requires: Documento de Identidade
+
+10. AUTORIZACAO_DEMOLICAO
+   Workflow requires: ART, Comprovante de Propriedade, Matrícula do Imóvel, Projeto de Demolição
+
+11. PROGRAMAS_SAUDE
+   Workflow requires: CPF, Cartão SUS, Comprovante de Residência
+
+12. AUTORIZACAO_EVENTO_SEGURANCA
+   Workflow requires: CNPJ, CPF, Comprovante de Endereço, Projeto do Evento, Relatório de Vistoria
+
+13. DESOBSTRUCAO_BUEIRO
+   Workflow requires: Fotos
+
+14. REGISTRO_PROBLEMA_FOTO
+   Workflow requires: Fotos
+
+15. CAPINA_ROCAGEM
+   Workflow requires: Fotos
+
+16. REGISTRO_EVENTO_TURISTICO
+   Workflow requires: CPF, CPF ou CNPJ, Comprovante de Escolaridade, Comprovante de Propriedade, Comprovante de Residência, Documento de Identidade, Documento de Identidade dos Membros, Escritura do Imóvel, Laudo Geotécnico, Projeto de Calçada, Projeto de Muro, Projeto de Terraplanagem, Projeto do Evento, Termo de Adesão
+
+17. INSCRICAO_EJA
+   Workflow requires: CPF, Comprovante de Residência, RG
+
+18. INSCRICAO_ESCOLINHA_FUTEBOL
+   Workflow requires: Atestado Médico, Comprovante de Residência, RG
+
+19. INSCRICAO_CRECHE
+   Workflow requires: CPF da Criança, Cartão de Vacina, Certidão de Nascimento, Comprovante de Renda, Comprovante de Residência, RG dos Pais
+
+20. AGENDAMENTO_CENTRO_REFERENCIA
+   Workflow requires: Cartão SUS, Encaminhamento Médico, Exames (se houver)
+
+21. API_INTEGRACAO
+   Workflow requires: Documentação Técnica, Termo de Responsabilidade
+
+22. AUTORIZACAO_MANEJO_FAUNA
+   Workflow requires: ART, CPF/CNPJ, Projeto Técnico, Registro Profissional
+
+23. BENEFICIO_EVENTUAL
+   Workflow requires: CPF, Comprovante de Residência, Documentos Específicos, RG
+
+24. CERTIFICADO_DIGITAL
+   Workflow requires: CPF/CNPJ, Comprovante de Residência, Documentos Específicos, RG
+
+25. COMPRA_DIRETA_PRODUTOR
+   Workflow requires: CPF, Cadastro de Produtor, Certidões, DAP
+
+26. CREDENCIAMENTO_PROFESSOR_ARTE
+   Workflow requires: CPF, Certificados, Currículo, Portfólio, RG
+
+27. DECLARACOES
+   Workflow requires: CPF, Documentos Comprobatórios, RG
+
+28. GUARDA_PATRIMONIAL
+   Workflow requires: Documentos do Bem, Fotos
+
+29. LICENCA_PERFURACAO_POCO
+   Workflow requires: ART, CPF/CNPJ, Documento do Imóvel, Projeto Técnico
+
+30. MELHORIA_HABITACIONAL
+   Workflow requires: CPF, Comprovante de Renda, Comprovante de Residência, Documento do Imóvel, Fotos, RG
+
+31. PAGAMENTO_ITBI
+   Workflow requires: Avaliação (se aplicável), CPF/CNPJ, Documento do Imóvel, Escritura/Contrato
+
+32. PARCELAMENTO_DEBITOS
+   Workflow requires: CPF/CNPJ, Certidões de Débito, Comprovante de Renda
+
+33. PROGRAMA_PRIMEIRA_INFANCIA
+   Workflow requires: CPF Responsável, Cartão SUS, Certidão de Nascimento, Comprovante de Renda, Comprovante de Residência
+
+34. REMEMBRAMENTO_LOTE
+   Workflow requires: CPF, ESCRITURA_IMOVEL, PLANTA_LOTE, RG
+
+35. SOLICITACAO_ABRIGO
+   Workflow requires: CPF, RG
+
+36. SOLICITACAO_LOTE_DISTRITO
+   Workflow requires: COMPROVANTE_RENDA, COMPROVANTE_RESIDENCIA, CPF, RG
+
+37. SOLICITACAO_MICROCREDITO
+   Workflow requires: COMPROVANTE_RENDA, COMPROVANTE_RESIDENCIA, CONTRATO_ASSINADO, CPF, RG
+
+38. USO_ESPACO_PUBLICO
+   Workflow requires: CPF, PROJETO_EVENTO, RG
+
+39. VAGA_ESPECIAL
+   Workflow requires: CNH, COMPROVANTE_RESIDENCIA, CPF, LAUDO_VISTORIA, RG
+
+====================================================================================================
+DOCUMENT MISMATCHES (126 workflows)
+====================================================================================================
+
+1. CREDENCIAMENTO_TAXI -> Service: transport-transit.seed.ts
+   Service requires: ['CNH Categoria B (mínimo)', 'Certidão de Antecedentes Criminais', 'Comprovante de Residência', 'Curso de Formação de Taxista', 'Vistoria do Veículo']
+   Workflow requires: ['Atestado de Antecedentes', 'Atestado de Saúde', 'CNH', 'CPF', 'CRLV', 'Certidões', 'RG', 'Seguro']
+   MISSING IN SERVICE (7 docs):
+      - "Atestado de Antecedentes"
+      - "Atestado de Saúde"
+      - "CPF"
+      - "CRLV"
+      - "Certidões"
+      - "RG"
+      - "Seguro"
+
+2. CREDENCIAMENTO_MOTOTAXI -> Service: transport-transit.seed.ts
+   Service requires: ['CNH Categoria A (mínimo)', 'Certidão de Antecedentes Criminais', 'Comprovante de Residência', 'Curso de Formação de Mototaxista', 'Vistoria da Motocicleta']
+   Workflow requires: ['Atestado de Saúde', 'CNH Categoria A', 'CPF', 'CRLV', 'Certidões', 'RG', 'Seguro']
+   MISSING IN SERVICE (6 docs):
+      - "Atestado de Saúde"
+      - "CPF"
+      - "CRLV"
+      - "Certidões"
+      - "RG"
+      - "Seguro"
+
+3. CADASTRO_VOLUNTARIO -> Service: civil-defense.seed.ts
+   Service requires: []
+   Workflow requires: ['Atestado de Antecedentes', 'CPF', 'Comprovante de Residência', 'Currículo', 'RG']
+   MISSING IN SERVICE (5 docs):
+      - "Atestado de Antecedentes"
+      - "CPF"
+      - "Comprovante de Residência"
+      - "Currículo"
+      - "RG"
+
+4. CREDENCIAMENTO_TRANSPORTE_ESCOLAR -> Service: transport-transit.seed.ts
+   Service requires: ['CNH Categoria D', 'Certidão de Antecedentes Criminais', 'Curso de Transporte Escolar', 'Vistoria do Veículo', 'CRLV', 'Seguro Obrigatório']
+   Workflow requires: ['Atestado de Saúde', 'CNH Categoria D', 'CPF', 'CRLV', 'Certidões', 'Curso Transporte Escolar', 'RG', 'Seguro']
+   MISSING IN SERVICE (5 docs):
+      - "Atestado de Saúde"
+      - "CPF"
+      - "Certidões"
+      - "Curso Transporte Escolar"
+      - "RG"
+
+5. REGULARIZACAO_OBRA -> Service: public-works.seed.ts
+   Service requires: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação']
+   Workflow requires: ['COMPROVANTE_RESIDENCIA', 'CPF', 'ESCRITURA_IMOVEL', 'LAUDO_TECNICO', 'RG']
+   MISSING IN SERVICE (5 docs):
+      - "COMPROVANTE_RESIDENCIA"
+      - "CPF"
+      - "ESCRITURA_IMOVEL"
+      - "LAUDO_TECNICO"
+      - "RG"
+
+6. CADASTRO_UNICO -> Service: social.seed.ts
+   Service requires: ['CadÚnico', 'Documentos Pessoais', 'Comprovante de Renda']
+   Workflow requires: ['CPF', 'Comprovante de Residência', 'RG', 'Título de Eleitor']
+   MISSING IN SERVICE (4 docs):
+      - "CPF"
+      - "Comprovante de Residência"
+      - "RG"
+      - "Título de Eleitor"
+
+7. INSCRICAO_PROGRAMA_SOCIAL -> Service: social.seed.ts
+   Service requires: ['CadÚnico', 'Documentos Pessoais']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (4 docs):
+      - "CPF"
+      - "Comprovante de Renda"
+      - "Comprovante de Residência"
+      - "RG"
+
+8. LAUDO_VISTORIA_SEGURANCA -> Service: public-safety.seed.ts
+   Service requires: ['Alvará de Funcionamento', 'CNPJ']
+   Workflow requires: ['CPF', 'Comprovante de Propriedade', 'Fotos', 'Relatório de Vistoria']
+   MISSING IN SERVICE (4 docs):
+      - "CPF"
+      - "Comprovante de Propriedade"
+      - "Fotos"
+      - "Relatório de Vistoria"
+
+9. CADASTRO_ESTABELECIMENTO_TURISTICO -> Service: tourism.seed.ts
+   Service requires: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social']
+   Workflow requires: ['Alvará', 'CNPJ', 'Comprovante de Endereço', 'Comprovantes', 'Contrato Social', 'Fotos', 'Relatório de Vistoria']
+   MISSING IN SERVICE (4 docs):
+      - "Comprovante de Endereço"
+      - "Comprovantes"
+      - "Fotos"
+      - "Relatório de Vistoria"
+
+10. APROVACAO_LOTEAMENTO -> Service: public-works.seed.ts
+   Service requires: ['Projeto de Loteamento', 'Memorial Descritivo', 'Matrícula do Terreno', 'ART', 'Licença Ambiental']
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Certidões Negativas', 'Levantamento Topográfico', 'Licença Ambiental', 'Matrícula do Imóvel', 'Memorial Descritivo', 'Projeto de Loteamento']
+   MISSING IN SERVICE (4 docs):
+      - "CPF/CNPJ"
+      - "Certidões Negativas"
+      - "Levantamento Topográfico"
+      - "Matrícula do Imóvel"
+
+11. AUTORIZACAO_TRANSPORTE_ESCOLAR -> Service: urban-mobility.seed.ts
+   Service requires: ['CNH categoria D ou superior', 'Certidão de Antecedentes Criminais', 'Documento do Veículo', 'Vistoria do Veículo', 'Seguro do Veículo']
+   Workflow requires: ['Atestado de Saúde Motorista', 'CPF/CNH', 'CRLV', 'Certidões Negativas', 'Seguro']
+   MISSING IN SERVICE (4 docs):
+      - "Atestado de Saúde Motorista"
+      - "CPF/CNH"
+      - "CRLV"
+      - "Certidões Negativas"
+
+12. AUTORIZACAO_TRANSPORTE_TURISTICO -> Service: tourism.seed.ts
+   Service requires: ['CNPJ', 'CNH Categoria D ou E', 'Documentos dos Veículos', 'Seguro dos Veículos']
+   Workflow requires: ['CNH Motorista', 'CNPJ', 'CRLV', 'Cadastur', 'Certidões', 'Seguro']
+   MISSING IN SERVICE (4 docs):
+      - "CNH Motorista"
+      - "CRLV"
+      - "Cadastur"
+      - "Certidões"
+
+13. CADASTRO_GERADOR_RESIDUOS -> Service: environment.seed.ts
+   Service requires: ['CPF', 'RG', 'Projeto de Manejo', 'ART']
+   Workflow requires: ['CNPJ', 'Contrato com Transportador', 'Licença Ambiental', 'PGRS']
+   MISSING IN SERVICE (4 docs):
+      - "CNPJ"
+      - "Contrato com Transportador"
+      - "Licença Ambiental"
+      - "PGRS"
+
+14. CADASTRO_VIVEIRO_MUDAS -> Service: environment.seed.ts
+   Service requires: []
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Documento do Imóvel', 'Registro no MAPA']
+   MISSING IN SERVICE (4 docs):
+      - "ART"
+      - "CPF/CNPJ"
+      - "Documento do Imóvel"
+      - "Registro no MAPA"
+
+15. LICENCA_ATIVIDADE_TURISTICA -> Service: tourism.seed.ts
+   Service requires: ['CPF ou CNPJ', 'RG', 'Contrato Social (se empresa)', 'Projeto da Atividade']
+   Workflow requires: ['Alvará', 'CNPJ', 'Cadastur', 'Licenças Específicas', 'Seguro']
+   MISSING IN SERVICE (4 docs):
+      - "Alvará"
+      - "Cadastur"
+      - "Licenças Específicas"
+      - "Seguro"
+
+16. PARTICIPACAO_FEIRAS -> Service: economic-development.seed.ts
+   Service requires: ['CNPJ', 'Alvará de Funcionamento', 'Catálogo de Produtos/Serviços (se houver)']
+   Workflow requires: ['CPF', 'Cadastro de Produtor', 'DAP', 'Licenças Sanitárias']
+   MISSING IN SERVICE (4 docs):
+      - "CPF"
+      - "Cadastro de Produtor"
+      - "DAP"
+      - "Licenças Sanitárias"
+
+17. REURB -> Service: housing.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)']
+   Workflow requires: ['COMPROVANTE_RESIDENCIA', 'CPF', 'LEVANTAMENTO_TOPOGRAFICO', 'PLANTA_AREA', 'PROJETO_REGULARIZACAO', 'RG']
+   MISSING IN SERVICE (4 docs):
+      - "COMPROVANTE_RESIDENCIA"
+      - "LEVANTAMENTO_TOPOGRAFICO"
+      - "PLANTA_AREA"
+      - "PROJETO_REGULARIZACAO"
+
+18. TRANSFERENCIA_PONTO_TAXI -> Service: transport-transit.seed.ts
+   Service requires: ['Credencial de Taxista', 'Certidão Negativa de Multas', 'Justificativa']
+   Workflow requires: ['CERTIDAO_NEGATIVA', 'CNH', 'CPF', 'RG']
+   MISSING IN SERVICE (4 docs):
+      - "CERTIDAO_NEGATIVA"
+      - "CNH"
+      - "CPF"
+      - "RG"
+
+19. VISTORIA_VEICULO -> Service: transport-transit.seed.ts
+   Service requires: ['CRLV', 'Comprovante de Pagamento de Taxas']
+   Workflow requires: ['CNH', 'CPF', 'CRLV', 'FOTOS_VEICULO', 'RG']
+   MISSING IN SERVICE (4 docs):
+      - "CNH"
+      - "CPF"
+      - "FOTOS_VEICULO"
+      - "RG"
+
+20. MATRICULA_ESCOLAR -> Service: education.seed.ts
+   Service requires: ['Certidão de Nascimento', 'RG do Responsável', 'Comprovante de Residência', 'Cartão de Vacina']
+   Workflow requires: ['CPF (se possuir)', 'Cartão de Vacina', 'Certidão de Nascimento', 'Comprovante de Residência', 'Histórico Escolar', 'RG (se possuir)']
+   MISSING IN SERVICE (3 docs):
+      - "CPF (se possuir)"
+      - "Histórico Escolar"
+      - "RG (se possuir)"
+
+21. CADASTRO_PROPRIEDADE_RURAL -> Service: agriculture.seed.ts
+   Service requires: ['Escritura ou Contrato', 'CAR - Cadastro Ambiental Rural (opcional)', 'ITR - Imposto Territorial Rural (opcional)']
+   Workflow requires: ['CAR (Cadastro Ambiental Rural)', 'CPF', 'Documento da Propriedade']
+   MISSING IN SERVICE (3 docs):
+      - "CAR (Cadastro Ambiental Rural)"
+      - "CPF"
+      - "Documento da Propriedade"
+
+22. CADASTRO_PROFESSOR -> Service: education.seed.ts
+   Service requires: ['Certidão de Nascimento da Criança', 'RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência', 'Comprovante de Trabalho dos Pais', 'Cartão de Vacina']
+   Workflow requires: ['CPF', 'Certificados de Pós-Graduação', 'Comprovante de Residência', 'Diploma', 'Histórico de Graduação', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "Certificados de Pós-Graduação"
+      - "Diploma"
+      - "Histórico de Graduação"
+
+23. CADASTRO_GUIA_TURISTICO -> Service: tourism.seed.ts
+   Service requires: ['CPF', 'Projeto do Evento', 'Autorizações Necessárias']
+   Workflow requires: ['CPF', 'Certificado de Curso', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "Certificado de Curso"
+      - "Comprovante de Residência"
+      - "RG"
+
+24. AUTORIZACAO_SUPRESSAO_VEGETAL -> Service: environment.seed.ts
+   Service requires: ['CPF', 'RG', 'Levantamento Topográfico', 'Fotos']
+   Workflow requires: ['CPF', 'Inventário Florestal', 'Matrícula do Imóvel', 'Projeto']
+   MISSING IN SERVICE (3 docs):
+      - "Inventário Florestal"
+      - "Matrícula do Imóvel"
+      - "Projeto"
+
+25. ALVARA_REFORMA -> Service: public-works.seed.ts
+   Service requires: ['Projeto de Reforma', 'ART', 'Matrícula do Imóvel']
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Documento do Imóvel', 'Fotos do Local', 'Projeto de Reforma']
+   MISSING IN SERVICE (3 docs):
+      - "CPF/CNPJ"
+      - "Documento do Imóvel"
+      - "Fotos do Local"
+
+26. APROVACAO_DEMOLICAO_PARCIAL -> Service: public-works.seed.ts
+   Service requires: ['Projeto de Demolição', 'ART', 'Matrícula do Imóvel']
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Documento do Imóvel', 'Fotos', 'Projeto de Demolição']
+   MISSING IN SERVICE (3 docs):
+      - "CPF/CNPJ"
+      - "Documento do Imóvel"
+      - "Fotos"
+
+27. ATUALIZACAO_CADASTRAL_IMOVEL -> Service: finance.seed.ts
+   Service requires: ['Escritura ou Contrato de Compra e Venda', 'RG e CPF do Proprietário', 'Comprovante de Endereço', 'Carnê de IPTU']
+   Workflow requires: ['CPF/CNPJ', 'Comprovante de Propriedade', 'Documento do Imóvel']
+   MISSING IN SERVICE (3 docs):
+      - "CPF/CNPJ"
+      - "Comprovante de Propriedade"
+      - "Documento do Imóvel"
+
+28. CADASTRO_AGROINDUSTRIA -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Comprovante de Propriedade', 'Projeto Técnico']
+   Workflow requires: ['Alvará de Funcionamento', 'CPF/CNPJ', 'Documento do Imóvel', 'Licença Sanitária']
+   MISSING IN SERVICE (3 docs):
+      - "Alvará de Funcionamento"
+      - "Documento do Imóvel"
+      - "Licença Sanitária"
+
+29. CADASTRO_CONTRIBUINTE -> Service: finance.seed.ts
+   Service requires: []
+   Workflow requires: ['CPF/CNPJ', 'Comprovante de Endereço', 'Documentos Específicos']
+   MISSING IN SERVICE (3 docs):
+      - "CPF/CNPJ"
+      - "Comprovante de Endereço"
+      - "Documentos Específicos"
+
+30. CADASTRO_DEFICIT_HABITACIONAL -> Service: housing.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Propriedade ou Posse', 'Fotos da Moradia']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Documentos da Família', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "Comprovante de Renda"
+      - "Comprovante de Residência"
+      - "Documentos da Família"
+
+31. CADASTRO_PISCICULTURA -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'CNPJ (se houver)', 'Licença Sanitária', 'Comprovante de Endereço da Agroindústria']
+   Workflow requires: ['CPF/CNPJ', 'Documento do Imóvel', 'Licença Ambiental', 'Outorga de Água']
+   MISSING IN SERVICE (3 docs):
+      - "Documento do Imóvel"
+      - "Licença Ambiental"
+      - "Outorga de Água"
+
+32. CASA_LAR_IDOSO -> Service: social.seed.ts
+   Service requires: ['RG', 'CPF', 'Atestado Médico', 'Laudo Social (se houver)', 'Comprovante de Renda (se houver)']
+   Workflow requires: ['CPF', 'Cartão SUS', 'Documentos da Família', 'Laudo Médico', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "Cartão SUS"
+      - "Documentos da Família"
+      - "Laudo Médico"
+
+33. CONCESSAO_USO_ESPECIAL -> Service: housing.seed.ts
+   Service requires: ['CPF', 'RG', 'Declaração de Posse', 'Comprovantes de Residência', 'Declaração de Não Proprietário']
+   Workflow requires: ['CPF/CNPJ', 'Comprovantes de Ocupação', 'Fotos', 'Projeto de Uso']
+   MISSING IN SERVICE (3 docs):
+      - "Comprovantes de Ocupação"
+      - "Fotos"
+      - "Projeto de Uso"
+
+34. DEFESA_AUTUACAO -> Service: transport-transit.seed.ts
+   Service requires: ['CNH', 'CRLV', 'Notificação de Autuação', 'Comprovantes (se houver)']
+   Workflow requires: ['Auto de Infração', 'Defesa Escrita', 'Documentos Probatórios']
+   MISSING IN SERVICE (3 docs):
+      - "Auto de Infração"
+      - "Defesa Escrita"
+      - "Documentos Probatórios"
+
+35. INSCRICAO_CIRCUITO_TURISTICO -> Service: tourism.seed.ts
+   Service requires: ['CNPJ ou CPF', 'Alvará de Funcionamento', 'Cadastur (se aplicável)']
+   Workflow requires: ['CPF/CNPJ', 'Cadastur', 'Fotos', 'Material Promocional']
+   MISSING IN SERVICE (3 docs):
+      - "CPF/CNPJ"
+      - "Fotos"
+      - "Material Promocional"
+
+36. INSCRICAO_INCUBADORA -> Service: economic-development.seed.ts
+   Service requires: ['CPF e RG dos Sócios', 'Currículo dos Sócios', 'Plano de Negócio Completo', 'Pitch Deck (Apresentação)', 'CNPJ (se já constituída)']
+   Workflow requires: ['CNPJ', 'Contrato Social', 'Pitch Deck', 'Plano de Negócios', 'Projeções Financeiras']
+   MISSING IN SERVICE (3 docs):
+      - "Contrato Social"
+      - "Plano de Negócios"
+      - "Projeções Financeiras"
+
+37. MATERIAL_ESCOLAR -> Service: education.seed.ts
+   Service requires: ['Comprovante de Matrícula', 'Declaração de Baixa Renda (se aplicável)']
+   Workflow requires: ['CPF do Responsável', 'Comprovante de Matrícula', 'Comprovante de Renda', 'RG do Aluno']
+   MISSING IN SERVICE (3 docs):
+      - "CPF do Responsável"
+      - "Comprovante de Renda"
+      - "RG do Aluno"
+
+38. MERENDA_ESPECIAL -> Service: education.seed.ts
+   Service requires: ['Atestado Médico', 'Comprovante de Matrícula']
+   Workflow requires: ['CPF do Responsável', 'Comprovante de Matrícula', 'Laudo Médico', 'Prescrição Nutricional']
+   MISSING IN SERVICE (3 docs):
+      - "CPF do Responsável"
+      - "Laudo Médico"
+      - "Prescrição Nutricional"
+
+39. RENOVACAO_CREDENCIAMENTO -> Service: transport-transit.seed.ts
+   Service requires: ['CNH Atualizada', 'CRLV Atualizado', 'Vistoria em Dia', 'Certidão Negativa de Multas']
+   Workflow requires: ['CERTIDAO_NEGATIVA', 'CPF', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "CERTIDAO_NEGATIVA"
+      - "CPF"
+      - "RG"
+
+40. REVISAO_IPTU -> Service: finance.seed.ts
+   Service requires: ['Carnê de IPTU', 'Fotos do Imóvel', 'Laudo de Avaliação (se houver)', 'Escritura do Imóvel']
+   Workflow requires: ['CARNÊ_IPTU', 'CPF', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "CARNÊ_IPTU"
+      - "CPF"
+      - "RG"
+
+41. SEGURO_SAFRA -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'DAP', 'Comprovante de Área Plantada']
+   Workflow requires: ['COMPROVANTE_CULTIVO', 'CPF', 'DAP', 'LAUDO_VISTORIA', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "COMPROVANTE_CULTIVO"
+      - "LAUDO_VISTORIA"
+      - "RG"
+
+42. TARIFA_SOCIAL_ENERGIA -> Service: social.seed.ts
+   Service requires: ['CadÚnico', 'CPF', 'Conta de Luz', 'Comprovante de Renda']
+   Workflow requires: ['COMPROVANTE_RESIDENCIA', 'CONTA_ENERGIA', 'CPF', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "COMPROVANTE_RESIDENCIA"
+      - "CONTA_ENERGIA"
+      - "RG"
+
+43. TOMBAMENTO_PATRIMONIO -> Service: culture.seed.ts
+   Service requires: ['CPF', 'RG', 'Documentação Histórica', 'Fotos', 'Laudo Técnico']
+   Workflow requires: ['CPF', 'FOTOS_BEM', 'HISTORICO_BEM', 'LAUDO_TECNICO', 'PESQUISA_HISTORICA', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "HISTORICO_BEM"
+      - "LAUDO_TECNICO"
+      - "PESQUISA_HISTORICA"
+
+44. UNIFORME_ESCOLAR -> Service: education.seed.ts
+   Service requires: ['Comprovante de Matrícula', 'Declaração de Baixa Renda (se aplicável)']
+   Workflow requires: ['CPF_RESPONSAVEL', 'DECLARACAO_ESCOLAR', 'RG_RESPONSAVEL']
+   MISSING IN SERVICE (3 docs):
+      - "CPF_RESPONSAVEL"
+      - "DECLARACAO_ESCOLAR"
+      - "RG_RESPONSAVEL"
+
+45. VAGA_ESPECIAL_PCD -> Service: urban-mobility.seed.ts
+   Service requires: ['RG', 'CPF', 'CNH (se condutor)', 'Laudo Médico', 'Documento do Veículo', 'Comprovante de Residência']
+   Workflow requires: ['CNH', 'COMPROVANTE_RESIDENCIA', 'CPF', 'LAUDO_MEDICO_PCD', 'LAUDO_VISTORIA', 'RG']
+   MISSING IN SERVICE (3 docs):
+      - "COMPROVANTE_RESIDENCIA"
+      - "LAUDO_MEDICO_PCD"
+      - "LAUDO_VISTORIA"
+
+46. CADASTRO_PRODUTOR -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Comprovante de Propriedade ou Posse']
+   Workflow requires: ['CPF', 'Comprovante de Residência', 'DAP - Declaração de Aptidão ao Pronaf (opcional)']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Residência"
+      - "DAP - Declaração de Aptidão ao Pronaf (opcional)"
+
+47. LICENCA_OBRA -> Service: public-works.seed.ts
+   Service requires: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel', 'IPTU']
+   Workflow requires: ['ART/RRT', 'Documento do Proprietário', 'Matrícula do Imóvel', 'Projeto Arquitetônico']
+   MISSING IN SERVICE (2 docs):
+      - "Documento do Proprietário"
+      - "Projeto Arquitetônico"
+
+48. ASSISTENCIA_TECNICA -> Service: agriculture.seed.ts
+   Service requires: ['Cadastro de Produtor Rural (opcional)', 'Documento da Propriedade (opcional)']
+   Workflow requires: ['CPF', 'Comprovante de Propriedade']
+   MISSING IN SERVICE (2 docs):
+      - "CPF"
+      - "Comprovante de Propriedade"
+
+49. AUXILIO_EMERGENCIAL -> Service: social.seed.ts
+   Service requires: ['CPF', 'Comprovante de Endereço', 'Declaração de Vulnerabilidade (se aplicável)']
+   Workflow requires: ['CPF', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Residência"
+      - "RG"
+
+50. CADASTRO_GRUPO_ARTISTICO -> Service: culture.seed.ts
+   Service requires: ['Documentos dos Integrantes', 'Portfólio do Grupo', 'Estatuto (opcional)']
+   Workflow requires: ['Estatuto ou Ata de Fundação', 'Lista de Integrantes', 'Portfólio']
+   MISSING IN SERVICE (2 docs):
+      - "Estatuto ou Ata de Fundação"
+      - "Lista de Integrantes"
+
+51. REGISTRO_MANIFESTACAO_CULTURAL -> Service: culture.seed.ts
+   Service requires: ['Documentação Histórica', 'Fotos', 'Depoimentos']
+   Workflow requires: ['Documentos do Responsável', 'Dossiê da Manifestação']
+   MISSING IN SERVICE (2 docs):
+      - "Documentos do Responsável"
+      - "Dossiê da Manifestação"
+
+52. APOIO_CULTURAL -> Service: culture.seed.ts
+   Service requires: ['CPF', 'RG', 'Projeto ou Proposta']
+   Workflow requires: ['CPF/CNPJ', 'Orçamento', 'Projeto Cultural']
+   MISSING IN SERVICE (2 docs):
+      - "Orçamento"
+      - "Projeto Cultural"
+
+53. APROVACAO_PROJETO_ARQUITETONICO -> Service: urban-planning.seed.ts
+   Service requires: ['Projeto Arquitetônico', 'ART', 'Documentação do Imóvel']
+   Workflow requires: ['ART/RRT', 'Matrícula do Imóvel', 'Planta de Situação', 'Projeto Arquitetônico']
+   MISSING IN SERVICE (2 docs):
+      - "Matrícula do Imóvel"
+      - "Planta de Situação"
+
+54. ALVARA_CONSTRUCAO -> Service: urban-planning.seed.ts
+   Service requires: ['Projeto Aprovado', 'Matrícula do Imóvel', 'ART']
+   Workflow requires: ['ART de Execução', 'Certidão de Viabilidade', 'IPTU', 'Matrícula do Imóvel', 'Projeto Aprovado']
+   MISSING IN SERVICE (2 docs):
+      - "Certidão de Viabilidade"
+      - "IPTU"
+
+55. BOLSA_ATLETA -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Renda', 'Histórico Esportivo', 'Cartas de Recomendação']
+   Workflow requires: ['Atestado Médico', 'CPF', 'Comprovante de Residência', 'Histórico Esportivo', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Atestado Médico"
+      - "Comprovante de Residência"
+
+56. AGENDAMENTO_ESPECIALIZADO -> Service: administration.seed.ts
+   Service requires: ['RG e CPF', 'Documentos relacionados ao assunto do agendamento']
+   Workflow requires: ['Cartão SUS', 'Encaminhamento Médico']
+   MISSING IN SERVICE (2 docs):
+      - "Cartão SUS"
+      - "Encaminhamento Médico"
+
+57. LICENCA_AMBIENTAL_SIMPLIFICADA -> Service: environment.seed.ts
+   Service requires: ['CPF', 'RG', 'Projeto Simplificado']
+   Workflow requires: ['CPF/CNPJ', 'Documentação do Imóvel', 'Memorial Descritivo', 'Projeto']
+   MISSING IN SERVICE (2 docs):
+      - "Documentação do Imóvel"
+      - "Memorial Descritivo"
+
+58. APROVACAO_PROJETO -> Service: public-works.seed.ts
+   Service requires: ['Projeto Arquitetônico', 'ART', 'Matrícula do Imóvel', 'Planta de Situação']
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Matrícula do Imóvel', 'Memorial Descritivo', 'Planta de Situação', 'Projeto Arquitetônico']
+   MISSING IN SERVICE (2 docs):
+      - "CPF/CNPJ"
+      - "Memorial Descritivo"
+
+59. ANALISE_VIABILIDADE_EMPREENDIMENTO -> Service: urban-planning.seed.ts
+   Service requires: ['CNPJ', 'Projeto Preliminar', 'Estudo de Impacto', 'Matrícula do Terreno']
+   Workflow requires: ['CPF/CNPJ', 'Plano de Negócios', 'Projeção Financeira']
+   MISSING IN SERVICE (2 docs):
+      - "Plano de Negócios"
+      - "Projeção Financeira"
+
+60. APOIO_FEIRA_EXPOSICAO -> Service: tourism.seed.ts
+   Service requires: ['CPF ou CNPJ', 'Projeto do Evento', 'Cronograma']
+   Workflow requires: ['CPF/CNPJ', 'Orçamento', 'Projeto do Evento']
+   MISSING IN SERVICE (2 docs):
+      - "CPF/CNPJ"
+      - "Orçamento"
+
+61. APROVACAO_PROJETO_URBANIZACAO -> Service: urban-planning.seed.ts
+   Service requires: ['Projeto de Urbanização', 'Memorial Descritivo', 'ART', 'Estudo Ambiental']
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Levantamento Topográfico', 'Memorial Descritivo', 'Projeto de Urbanização']
+   MISSING IN SERVICE (2 docs):
+      - "CPF/CNPJ"
+      - "Levantamento Topográfico"
+
+62. AUTORIZACAO_EVENTO_VIA -> Service: transport-transit.seed.ts
+   Service requires: ['Projeto do Evento', 'Seguro de Responsabilidade Civil', 'Alvará (se aplicável)']
+   Workflow requires: ['CPF/CNPJ', 'Plano de Segurança', 'Projeto do Evento']
+   MISSING IN SERVICE (2 docs):
+      - "CPF/CNPJ"
+      - "Plano de Segurança"
+
+63. AUXILIO_ALUGUEL -> Service: social.seed.ts
+   Service requires: ['Contrato de Aluguel', 'CPF', 'RG', 'Comprovante de Renda', 'Declaração de Vulnerabilidade']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Documentos da Família', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Residência"
+      - "Documentos da Família"
+
+64. AUXILIO_CONSTRUCAO -> Service: housing.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Renda', 'Matrícula do Terreno']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Documento do Terreno', 'Projeto Arquitetônico', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Documento do Terreno"
+      - "Projeto Arquitetônico"
+
+65. BAIXA_EMPRESA -> Service: economic-development.seed.ts
+   Service requires: ['CNPJ', 'Último Alvará de Funcionamento', 'Certidões Negativas (Tributos Municipais, Estaduais e Federais)', 'Comprovante de Pagamento de Débitos (se houver)']
+   Workflow requires: ['Certidões Negativas', 'Comprovante Encerramento CNPJ', 'Comprovante de Baixa na Junta', 'Distrato Social']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Baixa na Junta"
+      - "Distrato Social"
+
+66. BOLSA_FAMILIA_MUNICIPAL -> Service: social.seed.ts
+   Service requires: ['CadÚnico', 'CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Renda Familiar']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Documentos da Família', 'NIS', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Documentos da Família"
+      - "NIS"
+
+67. CADASTRO_ATRACAO_TURISTICA -> Service: tourism.seed.ts
+   Service requires: ['CPF ou CNPJ', 'Fotos do Local', 'Autorização de Funcionamento']
+   Workflow requires: ['Autorização do Proprietário', 'CPF/CNPJ', 'Fotos']
+   MISSING IN SERVICE (2 docs):
+      - "Autorização do Proprietário"
+      - "CPF/CNPJ"
+
+68. CADASTRO_FORNECEDOR -> Service: economic-development.seed.ts
+   Service requires: ['CNPJ', 'Contrato Social', 'Projeto Industrial', 'Certidões Negativas', 'Plano de Investimento']
+   Workflow requires: ['Alvará de Funcionamento', 'CNPJ', 'Certidões Negativas', 'Comprovante de Endereço', 'Contrato Social']
+   MISSING IN SERVICE (2 docs):
+      - "Alvará de Funcionamento"
+      - "Comprovante de Endereço"
+
+69. CADASTRO_MEI -> Service: economic-development.seed.ts
+   Service requires: ['RG e CPF', 'Comprovante de Residência', 'Comprovante de Renda', 'CNPJ (se MEI/Empresa)', 'Projeto ou Plano de Negócio Simples']
+   Workflow requires: ['CCMEI', 'CPF', 'Comprovante de Endereço', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "CCMEI"
+      - "Comprovante de Endereço"
+
+70. CADASTRO_PONTO_CULTURA -> Service: culture.seed.ts
+   Service requires: ['CPF', 'RG', 'Currículo', 'Certificados', 'Portfólio']
+   Workflow requires: ['CPF/CNPJ', 'Estatuto Social', 'Plano de Ação', 'Portfólio']
+   MISSING IN SERVICE (2 docs):
+      - "Estatuto Social"
+      - "Plano de Ação"
+
+71. CADASTRO_STARTUP -> Service: technology-innovation.seed.ts
+   Service requires: ['CNPJ da Empresa', 'Contrato Social', 'Termo de Uso e Responsabilidade', 'Documentação Técnica do Sistema']
+   Workflow requires: ['CNPJ', 'Contrato Social', 'Pitch Deck', 'Plano de Negócios']
+   MISSING IN SERVICE (2 docs):
+      - "Pitch Deck"
+      - "Plano de Negócios"
+
+72. CAMPEONATO_MUNICIPAL -> Service: sports.seed.ts
+   Service requires: ['Lista de Atletas', 'Documentos dos Atletas']
+   Workflow requires: ['Atestado Médico', 'Documentos dos Atletas', 'Ficha de Inscrição']
+   MISSING IN SERVICE (2 docs):
+      - "Atestado Médico"
+      - "Ficha de Inscrição"
+
+73. CREDENCIAMENTO_INSTRUTOR -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'CREF', 'Currículo', 'Certificados']
+   Workflow requires: ['Atestados', 'CPF', 'Certificados', 'Currículo', 'Diplomas', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Atestados"
+      - "Diplomas"
+
+74. DAP_DIGITAL -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Residência', 'Comprovante de Atividade Rural']
+   Workflow requires: ['CPF', 'Comprovante de Propriedade/Posse', 'Comprovante de Renda', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Propriedade/Posse"
+      - "Comprovante de Renda"
+
+75. DISTRIBUICAO_SEMENTES -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Cadastro de Produtor Rural']
+   Workflow requires: ['CPF', 'Comprovante de Propriedade', 'DAP']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Propriedade"
+      - "DAP"
+
+76. FAIXA_CARGA_DESCARGA -> Service: transport-transit.seed.ts
+   Service requires: ['Alvará de Funcionamento', 'Planta de Localização']
+   Workflow requires: ['Alvará de Funcionamento', 'CNPJ', 'Contrato de Locação/Propriedade']
+   MISSING IN SERVICE (2 docs):
+      - "CNPJ"
+      - "Contrato de Locação/Propriedade"
+
+77. INSCRICAO_CURSO_FORMACAO -> Service: culture.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Escolaridade']
+   Workflow requires: ['CPF', 'Comprovante de Escolaridade', 'Comprovante de Residência', 'Currículo', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Residência"
+      - "Currículo"
+
+78. ISENCAO_IPTU -> Service: finance.seed.ts
+   Service requires: ['RG e CPF', 'Comprovante de Propriedade do Imóvel', 'Comprovante de Renda', 'Certidão de Nascimento ou Casamento', 'Comprovante de Aposentadoria (se aplicável)']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Documento do Imóvel', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Residência"
+      - "Documento do Imóvel"
+
+79. LICENCA_ATIVIDADE_POLUIDORA -> Service: environment.seed.ts
+   Service requires: ['CNPJ', 'Projeto Técnico', 'ART', 'Plano de Controle']
+   Workflow requires: ['ART', 'CNPJ', 'Documento do Imóvel', 'EIA/RIMA (se aplicável)', 'Projeto Técnico']
+   MISSING IN SERVICE (2 docs):
+      - "Documento do Imóvel"
+      - "EIA/RIMA (se aplicável)"
+
+80. MATERIAL_CONSTRUCAO -> Service: housing.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Renda', 'Comprovante de Propriedade']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Documento do Terreno', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Residência"
+      - "Documento do Terreno"
+
+81. PERICIA_PSICOSSOCIAL -> Service: women-policies.seed.ts
+   Service requires: ['RG', 'CPF', 'Processo Judicial', 'Encaminhamento do Juizado']
+   Workflow requires: ['Documentos do Solicitante', 'Solicitação Judicial (se houver)']
+   MISSING IN SERVICE (2 docs):
+      - "Documentos do Solicitante"
+      - "Solicitação Judicial (se houver)"
+
+82. PROGRAMA_HORTAS_COMUNITARIAS -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Comprovante de Renda"
+      - "RG"
+
+83. PROJETO_ARQUITETONICO_SOCIAL -> Service: housing.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Renda', 'Escritura ou Matrícula do Terreno']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Documento do Terreno', 'Levantamento Topográfico', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "Documento do Terreno"
+      - "Levantamento Topográfico"
+
+84. SOLICITACAO_FISIOTERAPIA -> Service: health.seed.ts
+   Service requires: ['Pedido Médico', 'Cartão SUS', 'RG ou CPF']
+   Workflow requires: ['CARTAO_SUS', 'CPF', 'PEDIDO_MEDICO', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "CARTAO_SUS"
+      - "PEDIDO_MEDICO"
+
+85. TRANSPORTE_ESCOLAR_GRATUITO -> Service: urban-mobility.seed.ts
+   Service requires: ['RG ou Certidão de Nascimento', 'CPF', 'Declaração de Matrícula', 'Comprovante de Residência']
+   Workflow requires: ['COMPROVANTE_RESIDENCIA', 'CPF', 'DECLARACAO_ESCOLAR', 'RG']
+   MISSING IN SERVICE (2 docs):
+      - "COMPROVANTE_RESIDENCIA"
+      - "DECLARACAO_ESCOLAR"
+
+86. CARTAO_SUS -> Service: health.seed.ts
+   Service requires: ['RG ou CNH', 'CPF', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Residência', 'RG ou Certidão de Nascimento']
+   MISSING IN SERVICE (1 docs):
+      - "RG ou Certidão de Nascimento"
+
+87. FEIRA_PRODUTOR -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'DAP ou Cadastro de Produtor']
+   MISSING IN SERVICE (1 docs):
+      - "DAP ou Cadastro de Produtor"
+
+88. LICENCA_EVENTOS_RURAIS -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'CNPJ (se pessoa jurídica)', 'Projeto do Evento']
+   Workflow requires: ['Autorização do Proprietário', 'CPF', 'Projeto do Evento']
+   MISSING IN SERVICE (1 docs):
+      - "Autorização do Proprietário"
+
+89. ANALISE_SOLO -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Cadastro de Produtor Rural (opcional)']
+   Workflow requires: ['CPF', 'Comprovante de Propriedade']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Propriedade"
+
+90. INSCRICAO_GRUPO_OFICINA -> Service: social.seed.ts
+   Service requires: ['RG', 'CPF', 'Comprovante de Endereço']
+   Workflow requires: ['CPF', 'Comprovante de Residência']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+91. CADASTRO_ARTISTA -> Service: culture.seed.ts
+   Service requires: ['RG', 'CPF', 'Projeto do Evento']
+   Workflow requires: ['CPF', 'Portfólio', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Portfólio"
+
+92. PROJETO_CULTURAL -> Service: culture.seed.ts
+   Service requires: ['CPF', 'RG', 'Projeto Detalhado', 'Orçamento', 'Plano de Divulgação (opcional)']
+   Workflow requires: ['Cronograma', 'Orçamento', 'Projeto Detalhado']
+   MISSING IN SERVICE (1 docs):
+      - "Cronograma"
+
+93. CONSULTA_FREQUENCIA_NOTAS -> Service: education.seed.ts
+   Service requires: ['Diploma', 'Currículo', 'Comprovante de Residência']
+   Workflow requires: ['Documento de Identidade']
+   MISSING IN SERVICE (1 docs):
+      - "Documento de Identidade"
+
+94. INSCRICAO_CURSO_LIVRE -> Service: education.seed.ts
+   Service requires: ['RG', 'CPF', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Escolaridade', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Escolaridade"
+
+95. SOLICITACAO_DOCUMENTO_ESCOLAR -> Service: education.seed.ts
+   Service requires: ['RG', 'Comprovante de Matrícula (se aplicável)']
+   Workflow requires: ['Documento de Identidade']
+   MISSING IN SERVICE (1 docs):
+      - "Documento de Identidade"
+
+96. AUTORIZACAO_INTERVENCAO_VIA -> Service: public-works.seed.ts
+   Service requires: ['CPF', 'RG', 'CNPJ (se empresa)', 'Projeto de Intervenção', 'ART']
+   Workflow requires: ['ART', 'Plano de Sinalização', 'Projeto']
+   MISSING IN SERVICE (1 docs):
+      - "Plano de Sinalização"
+
+97. VIABILIDADE_URBANISTICA -> Service: urban-planning.seed.ts
+   Service requires: ['CPF', 'RG', 'Matrícula do Imóvel', 'Memorial Descritivo']
+   Workflow requires: ['Matrícula do Imóvel', 'Planta de Situação']
+   MISSING IN SERVICE (1 docs):
+      - "Planta de Situação"
+
+98. ILUMINACAO_PUBLICA -> Service: public-services.seed.ts
+   Service requires: ['Foto do Problema']
+   Workflow requires: ['Fotos']
+   MISSING IN SERVICE (1 docs):
+      - "Fotos"
+
+99. INSCRICAO_ESCOLINHA_VOLEI -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+100. INSCRICAO_ESCOLINHA_BASQUETE -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+101. INSCRICAO_ESCOLINHA_NATACAO -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+102. INSCRICAO_ESCOLINHA_JUDO -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+103. INSCRICAO_ESCOLINHA_GINASTICA -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+104. INSCRICAO_ESCOLINHA_CAPOEIRA -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+105. AUTORIZACAO_CAPTACAO_AGUA -> Service: environment.seed.ts
+   Service requires: ['CPF', 'RG', 'Projeto Hidráulico', 'ART']
+   Workflow requires: ['ART', 'CPF/CNPJ', 'Documento do Imóvel', 'Projeto Hidráulico']
+   MISSING IN SERVICE (1 docs):
+      - "Documento do Imóvel"
+
+106. AEE -> Service: education.seed.ts
+   Service requires: ['Laudo Médico', 'Relatório Pedagógico', 'Comprovante de Matrícula']
+   Workflow requires: ['Histórico Escolar', 'Laudo Médico']
+   MISSING IN SERVICE (1 docs):
+      - "Histórico Escolar"
+
+107. CERTIDAO_USO_SOLO -> Service: environment.seed.ts
+   Service requires: ['CPF', 'RG', 'Matrícula do Imóvel']
+   Workflow requires: ['CPF/CNPJ', 'Documento do Imóvel']
+   MISSING IN SERVICE (1 docs):
+      - "Documento do Imóvel"
+
+108. ATENDIMENTO_DOMICILIAR -> Service: health.seed.ts
+   Service requires: ['Laudo Médico', 'Cartão SUS', 'Comprovante de Residência']
+   Workflow requires: ['Cartão SUS', 'Encaminhamento Médico (se houver)']
+   MISSING IN SERVICE (1 docs):
+      - "Encaminhamento Médico (se houver)"
+
+109. ATUALIZACAO_CADASTRAL_EMPRESA -> Service: finance.seed.ts
+   Service requires: ['Contrato Social Atualizado', 'CNPJ', 'RG e CPF do Responsável', 'Comprovante de Endereço Comercial']
+   Workflow requires: ['Comprovante de Endereço', 'Contrato Social Atualizado', 'Documentos dos Sócios']
+   MISSING IN SERVICE (1 docs):
+      - "Documentos dos Sócios"
+
+110. CADASTRO_LOGIN_UNICO -> Service: technology-innovation.seed.ts
+   Service requires: ['RG', 'CPF', 'Comprovante de Residência', 'CNPJ (para empresas)']
+   Workflow requires: ['CPF', 'Foto', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Foto"
+
+111. CARTAO_ESTUDANTE -> Service: urban-mobility.seed.ts
+   Service requires: ['RG ou CPF', 'Declaração de Matrícula', 'Foto 3x4 recente', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Matrícula', 'Foto 3x4', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Matrícula"
+
+112. CARTAO_TRANSPORTE -> Service: urban-mobility.seed.ts
+   Service requires: ['RG ou CPF', 'Foto 3x4 recente', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Residência', 'Documentos Específicos', 'Foto 3x4', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Documentos Específicos"
+
+113. CERTIDAO_BEM_TOMBADO -> Service: culture.seed.ts
+   Service requires: ['CPF', 'RG', 'Endereço do Bem']
+   Workflow requires: ['CPF/CNPJ', 'Documento do Imóvel']
+   MISSING IN SERVICE (1 docs):
+      - "Documento do Imóvel"
+
+114. CESTA_BASICA -> Service: social.seed.ts
+   Service requires: ['CPF', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Renda"
+
+115. CNH_SOCIAL -> Service: transport-transit.seed.ts
+   Service requires: ['RG', 'CPF', 'Comprovante de Residência', 'Comprovante de Renda Familiar']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'NIS', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "NIS"
+
+116. COPIA_PROCESSOS -> Service: administration.seed.ts
+   Service requires: ['RG e CPF', 'Procuração (se representante legal)']
+   Workflow requires: ['CPF', 'Procuração (se aplicável)']
+   MISSING IN SERVICE (1 docs):
+      - "Procuração (se aplicável)"
+
+117. CREDENCIAMENTO_AGENCIA_TURISMO -> Service: tourism.seed.ts
+   Service requires: ['CNPJ', 'Contrato Social', 'Cadastur', 'Alvará de Funcionamento', 'Seguro de Responsabilidade Civil']
+   Workflow requires: ['Alvará', 'CNPJ', 'Cadastur', 'Certidões', 'Contrato Social']
+   MISSING IN SERVICE (1 docs):
+      - "Certidões"
+
+118. DISTRIBUICAO_MUDAS -> Service: agriculture.seed.ts
+   Service requires: ['CPF', 'Comprovante de Propriedade ou Posse']
+   Workflow requires: ['Comprovante de Propriedade/Autorização']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Propriedade/Autorização"
+
+119. EMPRESTIMO_MATERIAL_ESPORTIVO -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG']
+   Workflow requires: ['CPF/CNPJ', 'Projeto do Evento']
+   MISSING IN SERVICE (1 docs):
+      - "Projeto do Evento"
+
+120. INSCRICAO_CONCURSO -> Service: administration.seed.ts
+   Service requires: ['RG e CPF', 'Comprovante de Escolaridade', 'Foto 3x4', 'Comprovante de Residência', 'Certificados (se aplicável)']
+   Workflow requires: ['CPF', 'Comprovante de Escolaridade', 'Comprovante de Pagamento', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Pagamento"
+
+121. INSCRICAO_CORRIDA_RUA -> Service: sports.seed.ts
+   Service requires: ['CPF', 'RG', 'Atestado Médico']
+   Workflow requires: ['Atestado Médico', 'CPF', 'Comprovante de Pagamento', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Pagamento"
+
+122. ISENCAO_IDOSO -> Service: urban-mobility.seed.ts
+   Service requires: ['RG', 'CPF', 'Foto 3x4 recente', 'Comprovante de Residência']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Renda"
+
+123. ISENCAO_TRANSPORTE -> Service: social.seed.ts
+   Service requires: ['CPF', 'RG', 'Comprovante de Residência', 'Laudo Médico (se for por deficiência)', 'Comprovante de Renda']
+   Workflow requires: ['CPF', 'Comprovante de Residência', 'Documentos Específicos', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Documentos Específicos"
+
+124. PASSE_LIVRE_INTERESTADUAL -> Service: urban-mobility.seed.ts
+   Service requires: ['RG', 'CPF', 'Laudo Médico (modelo específico)', 'Foto 3x4 recente', 'Comprovante de Residência', 'Declaração de Renda']
+   Workflow requires: ['CPF', 'Comprovante de Renda', 'Comprovante de Residência', 'Foto 3x4', 'Laudo Médico', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Renda"
+
+125. PROGRAMA_SAUDE_FAMILIA -> Service: health.seed.ts
+   Service requires: ['Laudo Médico (se aplicável)', 'Cartão SUS', 'RG ou CPF']
+   Workflow requires: ['CPF', 'Cartão SUS de todos', 'Comprovante de Residência']
+   MISSING IN SERVICE (1 docs):
+      - "Comprovante de Residência"
+
+126. VISTORIA_AREA_RISCO -> Service: civil-defense.seed.ts
+   Service requires: ['Comprovante de Residência', 'RG ou CPF', 'Fotos do Local (se possível)']
+   Workflow requires: ['CPF', 'FOTOS', 'LAUDO_VISTORIA', 'RG']
+   MISSING IN SERVICE (1 docs):
+      - "LAUDO_VISTORIA"
+
+====================================================================================================
+END OF REPORT
+====================================================================================================
