@@ -237,11 +237,18 @@ export function useConversations({
         };
       }
 
-      // Para outras conversas, usar ID do participante como nome temporário
-      // O backend deve retornar os nomes já enriquecidos via metadata
-      const participantName = conv.metadata?.citizenName ||
-                             conv.metadata?.serverName ||
-                             `${otherParticipantType === 'CITIZEN' ? 'Cidadão' : 'Servidor'} ${otherParticipantId.substring(0, 8)}`;
+      // ✅ CORRIGIDO: Identificar o nome correto do OUTRO participante
+      // Se o outro participante é CITIZEN, pegar citizenName do metadata
+      // Se o outro participante é SERVER, pegar serverName do metadata
+      let participantName: string;
+
+      if (otherParticipantType === 'CITIZEN') {
+        participantName = conv.metadata?.citizenName || `Cidadão ${otherParticipantId.substring(0, 8)}`;
+      } else if (otherParticipantType === 'SERVER') {
+        participantName = conv.metadata?.serverName || `Servidor ${otherParticipantId.substring(0, 8)}`;
+      } else {
+        participantName = `${otherParticipantType} ${otherParticipantId.substring(0, 8)}`;
+      }
 
       return {
         ...conv,

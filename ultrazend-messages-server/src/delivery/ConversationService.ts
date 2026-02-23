@@ -51,20 +51,12 @@ export class ConversationService {
         }
       }
 
-      // Para compatibilidade com código existente
-      if (conversation.participant1Type === 'CITIZEN') {
-        metadata.citizenName = metadata.citizen1Name;
-        metadata.avatar = metadata.citizen1Avatar;
-      } else if (conversation.participant2Type === 'CITIZEN') {
-        metadata.citizenName = metadata.citizen2Name;
-        metadata.avatar = metadata.citizen2Avatar;
-      }
-
-      if (conversation.participant1Type === 'SERVER') {
-        metadata.serverName = metadata.server1Name;
-      } else if (conversation.participant2Type === 'SERVER') {
-        metadata.serverName = metadata.server2Name;
-      }
+      // ✅ CORRIGIDO: Para compatibilidade com código existente
+      // SEMPRE colocar os nomes de AMBOS os participantes, não só de um tipo
+      // O frontend vai decidir qual nome mostrar baseado em quem está logado
+      metadata.citizenName = metadata.citizen1Name || metadata.citizen2Name;
+      metadata.serverName = metadata.server1Name || metadata.server2Name;
+      metadata.avatar = metadata.citizen1Avatar || metadata.citizen2Avatar;
 
       return {
         ...conversation,
