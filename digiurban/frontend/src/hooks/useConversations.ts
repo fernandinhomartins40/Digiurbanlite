@@ -755,15 +755,30 @@ export function useConversations({
   }, [userId, loadConversations]);
 
   /**
-   * Entrar automaticamente nas salas de conversas existentes
+   * ✅ CORRIGIDO: Entrar automaticamente nas salas de conversas existentes
+   * Rastreia quais conversas já foram joined para evitar loops
    */
+  const joinedConversationsRef = useRef<Set<string>>(new Set());
+
   useEffect(() => {
     if (socket && isConnected && conversations.length > 0) {
       conversations.forEach(conv => {
-        socket.emit('conversation:join', { conversationId: conv.id });
+        // Só entrar se ainda não entrou nesta conversa
+        if (!joinedConversationsRef.current.has(conv.id)) {
+          console.log('[useConversations] Entrando na sala da conversa:', conv.id);
+          socket.emit('conversation:join', { conversationId: conv.id });
+          joinedConversationsRef.current.add(conv.id);
+        }
       });
     }
   }, [socket, isConnected, conversations]);
+
+  // Limpar joined conversations quando desconectar
+  useEffect(() => {
+    if (!isConnected) {
+      joinedConversationsRef.current.clear();
+    }
+  }, [isConnected]);
 
   /**
    * ✅ NOVO: Auto-refresh da fila de handover a cada 30s (só para SERVER)
