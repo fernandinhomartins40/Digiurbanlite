@@ -54,6 +54,7 @@ npx prisma migrate deploy || {
 
 # Gerar Prisma Client APÓS migrations (para garantir sincronização)
 echo "🔧 Gerando Prisma Client..."
+rm -rf /app/backend/node_modules/.prisma || true
 npx prisma generate || {
   echo "❌ Prisma generate falhou"
   exit 1

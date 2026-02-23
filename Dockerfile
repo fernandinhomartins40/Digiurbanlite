@@ -38,10 +38,12 @@ RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 # Copiar código do backend
 COPY digiurban/backend ./
 
-# Gerar Prisma Client (sem criar banco - apenas gerar tipos)
+# Gerar Prisma Client (sem criar banco - apenas gerar tipos baseados no schema.prisma)
+# IMPORTANTE: Limpar cache antigo ANTES de gerar para evitar tipos desatualizados
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
-RUN npx prisma generate
+RUN rm -rf node_modules/.prisma && \
+    npx prisma generate
 
 # Build TypeScript com validação integrada
 RUN rm -rf dist/.tsbuildinfo dist/* && \

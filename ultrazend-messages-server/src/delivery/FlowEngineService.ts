@@ -128,6 +128,7 @@ export class FlowEngineService {
 
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
+    const isParticipant2 = !isParticipant1;
 
     // 2. Iniciar fluxo
     const response = await this.flowEngine.startFlow(citizenId, flowName, conversationId);
@@ -164,7 +165,7 @@ export class FlowEngineService {
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
-        botStructuredData: response.data || null,
+        botStructuredData: (response.data || null) as any,
       },
     });
 
@@ -239,6 +240,7 @@ export class FlowEngineService {
 
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
+    const isCitizenSecond = !isParticipant1;
 
     // 2. Salvar mensagem do cidadão (✅ REFATORADO com campos queryable)
     const userMessageMetadata: any = {};
@@ -302,7 +304,7 @@ export class FlowEngineService {
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
-        botStructuredData: response.data || null,
+        botStructuredData: (response.data || null) as any,
       },
     });
 
@@ -317,7 +319,7 @@ export class FlowEngineService {
           botStatus,
           botStatusUpdatedAt: new Date().toISOString(),
         },
-        ...(isParticipant2
+        ...(isCitizenSecond
           ? { unreadCount1: { increment: 1 } }
           : { unreadCount2: { increment: 1 } }),
       },
@@ -511,19 +513,6 @@ export class FlowEngineService {
       conversationId = conversation.id;
     }
 
-    const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
-      select: {
-        participant1Id: true,
-        participant1Type: true,
-        participant2Id: true,
-        participant2Type: true,
-      },
-    });
-
-    const isParticipant1 = conversation?.participant1Id === citizenId &&
-      conversation?.participant1Type === 'CITIZEN';
-
     // Mover arquivos de temp para armazenamento permanente
     const uploadedFiles = await Promise.all(
       files.map(async (file: any) => {
@@ -548,7 +537,7 @@ export class FlowEngineService {
         senderId: citizenId,
         senderType: 'CITIZEN',
         content: `Arquivos enviados (${uploadedFiles.length})`,
-        contentType: 'FILE',
+        contentType: 'DOCUMENT',
         attachments: uploadedFiles as any,
         status: 'SENT',
         sentAt: new Date(),
@@ -573,7 +562,7 @@ export class FlowEngineService {
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
-        botStructuredData: response.data || null,
+        botStructuredData: (response.data || null) as any,
       },
     });
 
@@ -586,7 +575,7 @@ export class FlowEngineService {
       },
     });
 
-    const isParticipant2 = conv2?.participant1Id === citizenId &&
+    const isFileThird = conv2?.participant1Id === citizenId &&
       conv2?.participant1Type === 'CITIZEN';
 
     await prisma.conversation.update({
@@ -599,7 +588,7 @@ export class FlowEngineService {
           botStatus,
           botStatusUpdatedAt: new Date().toISOString(),
         },
-        ...(isParticipant2
+        ...(isFileThird
           ? { unreadCount1: { increment: 1 } }
           : { unreadCount2: { increment: 1 } }),
       },
