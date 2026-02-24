@@ -1,7 +1,7 @@
 {
   "name": "solicitar_servico",
-  "description": "Fluxo completo para solicitar um serviço municipal",
-  "version": "1.0.0",
+  "description": "Fluxo completo para solicitar um serviço municipal por secretaria",
+  "version": "2.0.0",
   "metadata": {
     "icon": "📝",
     "color": "#2196F3",
@@ -12,177 +12,130 @@
       "id": "start",
       "type": "message",
       "config": {
-        "text": "📝 **Solicitar Serviço**\n\nVou te ajudar a solicitar um serviço da prefeitura.\n\nPrimeiro, vamos encontrar o serviço que você precisa."
+        "text": "📝 **Solicitar Serviço**\n\nVou te ajudar a solicitar um serviço da prefeitura.\n\nPrimeiro, selecione a secretaria responsável pelo serviço que você precisa."
       },
       "transitions": [
-        { "to": "search_method" }
+        { "to": "load_departments" }
       ]
     },
     {
-      "id": "search_method",
-      "type": "menu",
-      "config": {
-        "text": "Como você quer encontrar o serviço?",
-        "options": [
-          {
-            "id": "buscar",
-            "label": "🔍 Buscar por nome",
-            "description": "Digite palavras-chave"
-          },
-          {
-            "id": "listar",
-            "label": "📋 Ver todos os serviços",
-            "description": "Lista completa"
-          },
-          {
-            "id": "categorias",
-            "label": "📁 Buscar por categoria",
-            "description": "Filtrar por área"
-          },
-          {
-            "id": "voltar",
-            "label": "🔙 Voltar ao menu principal",
-            "description": "Cancelar"
-          }
-        ]
-      },
-      "transitions": [
-        { "when": "buscar", "to": "search_input" },
-        { "when": "listar", "to": "list_services" },
-        { "when": "categorias", "to": "list_categories" },
-        { "when": "voltar", "to": "end" }
-      ]
-    },
-    {
-      "id": "search_input",
-      "type": "question",
-      "config": {
-        "text": "🔍 Digite o nome ou palavras-chave do serviço que você procura:",
-        "placeholder": "Ex: alvará, licença, certidão...",
-        "validation": {
-          "type": "text",
-          "minLength": 3,
-          "errorMessage": "Digite pelo menos 3 caracteres"
-        },
-        "saveAs": "searchQuery"
-      },
-      "transitions": [
-        { "to": "search_services_action" }
-      ]
-    },
-    {
-      "id": "search_services_action",
+      "id": "load_departments",
       "type": "action",
       "config": {
-        "action": "searchServices",
-        "params": {
-          "query": "{{searchQuery}}",
-          "limit": 10
-        },
-        "saveResultAs": "searchResult"
+        "action": "getDepartments",
+        "saveResultAs": "departmentsData"
       },
       "transitions": [
-        { "to": "check_search_results" }
+        { "to": "check_departments" }
       ]
     },
     {
-      "id": "check_search_results",
+      "id": "check_departments",
       "type": "condition",
       "config": {
         "conditions": [
           {
-            "field": "searchResult.count",
+            "field": "departmentsData.count",
             "operator": "gt",
             "value": 0,
-            "goto": "show_search_results"
+            "goto": "select_department"
           }
         ],
-        "defaultGoto": "no_results"
+        "defaultGoto": "no_departments"
       }
     },
     {
-      "id": "no_results",
+      "id": "no_departments",
       "type": "message",
       "config": {
-        "text": "😕 Não encontrei serviços com essa busca.\n\nTente usar outras palavras-chave ou veja todos os serviços disponíveis."
+        "text": "😕 Não há secretarias com serviços disponíveis no momento.\n\nTente novamente mais tarde."
       },
       "transitions": [
-        { "to": "search_method" }
+        { "to": "end" }
       ]
     },
     {
-      "id": "show_search_results",
+      "id": "select_department",
       "type": "menu",
       "config": {
-        "text": "📋 Encontrei estes serviços:",
-        "options": "{{searchResult.services}}",
+        "text": "🏢 **Selecione a Secretaria:**\n\nEscolha o departamento que oferece o serviço que você precisa:",
+        "options": "{{departmentsData.departments}}",
+        "saveAs": "selectedDept"
+      },
+      "transitions": [
+        { "to": "load_dept_services" }
+      ]
+    },
+    {
+      "id": "load_dept_services",
+      "type": "action",
+      "config": {
+        "action": "getServicesByDepartment",
+        "params": {
+          "departmentId": "{{selectedDept}}"
+        },
+        "saveResultAs": "deptServicesData"
+      },
+      "transitions": [
+        { "to": "check_dept_services" }
+      ]
+    },
+    {
+      "id": "check_dept_services",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "deptServicesData.count",
+            "operator": "gt",
+            "value": 0,
+            "goto": "show_dept_catalog"
+          }
+        ],
+        "defaultGoto": "no_dept_services"
+      }
+    },
+    {
+      "id": "no_dept_services",
+      "type": "message",
+      "config": {
+        "text": "📭 Esta secretaria não possui serviços disponíveis no momento.\n\nSelecione outra secretaria."
+      },
+      "transitions": [
+        { "to": "select_department" }
+      ]
+    },
+    {
+      "id": "show_dept_catalog",
+      "type": "message",
+      "config": {
+        "text": "{{deptServicesData.catalogText}}"
+      },
+      "transitions": [
+        { "to": "select_service_from_dept" }
+      ]
+    },
+    {
+      "id": "select_service_from_dept",
+      "type": "menu",
+      "config": {
+        "text": "📋 Selecione o serviço desejado:",
+        "options": "{{deptServicesData.services}}",
         "saveAs": "selectedServiceId"
       },
       "transitions": [
-        { "to": "load_service_details" }
+        { "to": "load_form_schema" }
       ]
     },
     {
-      "id": "list_categories",
+      "id": "load_form_schema",
       "type": "action",
       "config": {
-        "action": "listServiceCategories",
-        "saveResultAs": "categoriesResult"
-      },
-      "transitions": [
-        { "to": "show_categories" }
-      ]
-    },
-    {
-      "id": "show_categories",
-      "type": "menu",
-      "config": {
-        "text": "📁 Escolha uma categoria:",
-        "options": "{{categoriesResult.categories}}",
-        "saveAs": "selectedCategory"
-      },
-      "transitions": [
-        { "to": "list_services_by_category" }
-      ]
-    },
-    {
-      "id": "list_services_by_category",
-      "type": "action",
-      "config": {
-        "action": "searchServices",
-        "params": {
-          "category": "{{selectedCategory}}",
-          "limit": 20
-        },
-        "saveResultAs": "searchResult"
-      },
-      "transitions": [
-        { "to": "check_search_results" }
-      ]
-    },
-    {
-      "id": "list_services",
-      "type": "action",
-      "config": {
-        "action": "listServices",
-        "params": {
-          "limit": 20
-        },
-        "saveResultAs": "searchResult"
-      },
-      "transitions": [
-        { "to": "check_search_results" }
-      ]
-    },
-    {
-      "id": "load_service_details",
-      "type": "action",
-      "config": {
-        "action": "getService",
+        "action": "processFormSchema",
         "params": {
           "serviceId": "{{selectedServiceId}}"
         },
-        "saveResultAs": "selectedService"
+        "saveResultAs": "formSchemaData"
       },
       "transitions": [
         { "to": "show_service_details" }
@@ -192,7 +145,7 @@
       "id": "show_service_details",
       "type": "message",
       "config": {
-        "text": "📋 **{{selectedService.service.name}}**\n\n{{selectedService.service.description}}\n\n⏱️ **Prazo estimado:** {{selectedService.service.estimatedDays}} dias úteis\n🏢 **Departamento:** {{selectedService.service.department.name}}"
+        "text": "📋 **{{formSchemaData.service.name}}**\n\n{{formSchemaData.service.description}}\n\n⏱️ **Prazo estimado:** {{formSchemaData.service.estimatedDays}} dias úteis\n🏢 **Secretaria:** {{formSchemaData.service.department.name}}"
       },
       "transitions": [
         { "to": "confirm_service" }
@@ -210,9 +163,14 @@
             "description": "Continuar com a solicitação"
           },
           {
-            "id": "nao",
-            "label": "🔙 Buscar outro serviço",
-            "description": "Voltar à busca"
+            "id": "outro_servico",
+            "label": "🔍 Escolher outro serviço",
+            "description": "Voltar à lista de serviços"
+          },
+          {
+            "id": "outra_secretaria",
+            "label": "🏢 Outra secretaria",
+            "description": "Voltar à seleção de secretaria"
           },
           {
             "id": "cancelar",
@@ -222,36 +180,38 @@
         ]
       },
       "transitions": [
-        { "when": "sim", "to": "check_form_schema" },
-        { "when": "nao", "to": "search_method" },
+        { "when": "sim", "to": "check_has_form" },
+        { "when": "outro_servico", "to": "select_service_from_dept" },
+        { "when": "outra_secretaria", "to": "select_department" },
         { "when": "cancelar", "to": "end" }
       ]
     },
     {
-      "id": "check_form_schema",
+      "id": "check_has_form",
       "type": "condition",
       "config": {
         "conditions": [
           {
-            "field": "selectedService.service.formSchema",
-            "operator": "exists",
-            "goto": "load_form"
+            "field": "formSchemaData.hasForm",
+            "operator": "eq",
+            "value": true,
+            "goto": "fill_form"
           }
         ],
         "defaultGoto": "ask_description"
       }
     },
     {
-      "id": "load_form",
+      "id": "fill_form",
       "type": "form",
       "config": {
-        "text": "📝 Por favor, preencha os dados necessários:",
-        "fields": "{{selectedService.service.formSchema}}",
+        "text": "📝 **Preencha os dados necessários:**\n\nOs campos marcados com * são obrigatórios.",
+        "fields": "{{formSchemaData.questions}}",
         "dynamicFields": true,
-        "saveAs": "formData"
+        "saveAs": "collectedFormData"
       },
       "transitions": [
-        { "to": "ask_documents" }
+        { "to": "check_needs_documents" }
       ]
     },
     {
@@ -265,17 +225,32 @@
           "maxLength": 1000,
           "errorMessage": "A descrição deve ter entre 10 e 1000 caracteres"
         },
-        "saveAs": "formData.description"
+        "saveAs": "description"
       },
       "transitions": [
-        { "to": "ask_documents" }
+        { "to": "check_needs_documents" }
       ]
     },
     {
-      "id": "ask_documents",
+      "id": "check_needs_documents",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "formSchemaData.requiresDocuments",
+            "operator": "eq",
+            "value": true,
+            "goto": "show_required_docs"
+          }
+        ],
+        "defaultGoto": "format_review"
+      }
+    },
+    {
+      "id": "show_required_docs",
       "type": "message",
       "config": {
-        "text": "📎 Agora você pode enviar documentos necessários para sua solicitação."
+        "text": "📎 **Documentos necessários:**\n\nEste serviço requer documentos. Você pode enviar agora ou adicionar depois pelo painel web."
       },
       "transitions": [
         { "to": "upload_documents" }
@@ -285,7 +260,7 @@
       "id": "upload_documents",
       "type": "upload",
       "config": {
-        "text": "📤 Envie os documentos (opcional):\n\nVocê pode enviar até 5 arquivos.\nFormatos aceitos: PDF, imagens, documentos Office.",
+        "text": "📤 Envie os documentos (opcional):\n\nVocê pode enviar até 5 arquivos.\nFormatos aceitos: PDF, imagens, documentos Office.\n\n💡 Se preferir, envie \"pular\" para continuar sem documentos.",
         "multiple": true,
         "maxFiles": 5,
         "maxFileSize": 10,
@@ -304,7 +279,8 @@
         "action": "formatProtocolReview",
         "params": {
           "serviceId": "{{selectedServiceId}}",
-          "formData": "{{formData}}",
+          "formData": "{{collectedFormData}}",
+          "description": "{{description}}",
           "documents": "{{uploadedDocuments}}"
         },
         "saveResultAs": "reviewData"
@@ -317,7 +293,7 @@
       "id": "review_data",
       "type": "message",
       "config": {
-        "text": "📋 **Revise seus dados:**\n\n{{reviewData.reviewText}}"
+        "text": "{{reviewData.reviewText}}"
       },
       "transitions": [
         { "to": "confirm_submit" }
@@ -348,7 +324,7 @@
       },
       "transitions": [
         { "when": "confirmar", "to": "create_protocol" },
-        { "when": "corrigir", "to": "check_form_schema" },
+        { "when": "corrigir", "to": "check_has_form" },
         { "when": "cancelar", "to": "cancelled" }
       ]
     },
@@ -359,20 +335,68 @@
         "action": "createProtocol",
         "params": {
           "serviceId": "{{selectedServiceId}}",
-          "formData": "{{formData}}",
+          "description": "{{description}}",
+          "customData": "{{collectedFormData}}",
           "documents": "{{uploadedDocuments}}"
         },
         "saveResultAs": "createdProtocol"
       },
       "transitions": [
-        { "to": "success" }
+        { "to": "check_protocol_created" }
+      ]
+    },
+    {
+      "id": "check_protocol_created",
+      "type": "condition",
+      "config": {
+        "conditions": [
+          {
+            "field": "createdProtocol.protocol",
+            "operator": "exists",
+            "goto": "success"
+          }
+        ],
+        "defaultGoto": "creation_error"
+      }
+    },
+    {
+      "id": "creation_error",
+      "type": "message",
+      "config": {
+        "text": "❌ **Não foi possível criar o protocolo.**\n\nOcorreu um erro ao processar sua solicitação. Por favor, tente novamente ou entre em contato com a prefeitura."
+      },
+      "transitions": [
+        { "to": "ask_retry" }
+      ]
+    },
+    {
+      "id": "ask_retry",
+      "type": "menu",
+      "config": {
+        "text": "O que deseja fazer?",
+        "options": [
+          {
+            "id": "tentar",
+            "label": "🔄 Tentar novamente",
+            "description": "Reenviar solicitação"
+          },
+          {
+            "id": "menu",
+            "label": "🏠 Menu principal",
+            "description": "Voltar ao início"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "tentar", "to": "create_protocol" },
+        { "when": "menu", "to": "end" }
       ]
     },
     {
       "id": "success",
       "type": "message",
       "config": {
-        "text": "✅ **Protocolo criado com sucesso!**\n\n📋 **Número:** {{createdProtocol.protocol.number}}\n📅 **Data:** {{createdProtocol.protocol.createdAt}}\n⏱️ **Prazo estimado:** {{createdProtocol.protocol.service.estimatedDays}} dias úteis\n\nVocê pode acompanhar seu protocolo pelo menu **\"Consultar Protocolo\"**.\n\nGuarde o número do seu protocolo para futuras consultas."
+        "text": "✅ **Protocolo criado com sucesso!**\n\n📋 **Número:** {{createdProtocol.protocol.number}}\n📅 **Data:** {{createdProtocol.protocol.createdAt}}\n🏢 **Secretaria:** {{createdProtocol.protocol.department.name}}\n⏱️ **Prazo estimado:** {{createdProtocol.protocol.service.estimatedDays}} dias úteis\n\nVocê pode acompanhar seu protocolo pelo menu **\"Consultar Protocolo\"**.\n\n📌 Guarde o número do seu protocolo para futuras consultas."
       },
       "transitions": [
         { "to": "ask_new_request" }
@@ -397,7 +421,7 @@
         ]
       },
       "transitions": [
-        { "when": "nova", "to": "search_method" },
+        { "when": "nova", "to": "select_department" },
         { "when": "menu", "to": "end" }
       ]
     },
@@ -421,4 +445,3 @@
     }
   ]
 }
-

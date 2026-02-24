@@ -248,10 +248,18 @@ export class DigiUrbanIntegration {
   }
 
   /**
-   * Listar departamentos
+   * Listar departamentos (apenas os que têm serviços ativos)
    */
   async getDepartments() {
     const response = await this.api.get('/internal/departments');
+    return response.data;
+  }
+
+  /**
+   * Listar serviços de um departamento agrupados por categoria
+   */
+  async getServicesByDepartment(departmentId: string) {
+    const response = await this.api.get(`/internal/departments/${departmentId}/services`);
     return response.data;
   }
 
@@ -312,13 +320,21 @@ export class DigiUrbanIntegration {
    * Formatar dados do protocolo para revisão
    */
   formatProtocolReview(state: any): string {
-    const service = state.selectedService?.service;
-    const formData = state.formData || {};
-    const description = state.description;
+    const service = state.selectedService?.service || state.serviceDetails;
+    const formData = state.formData || state.collectedFormData || {};
+    const description = state.description || formData.description;
     const documents = state.uploadedDocuments || [];
+    const department = state.selectedDept_data || service?.department;
 
     let review = `**📝 Revisão da Solicitação**\n\n`;
-    review += `**Serviço:** ${service?.name || 'N/A'}\n\n`;
+    review += `**Serviço:** ${service?.name || 'N/A'}\n`;
+    if (department?.label || department?.name) {
+      review += `**Secretaria:** ${department.label || department.name}\n`;
+    }
+    if (service?.estimatedDays) {
+      review += `**Prazo estimado:** ${service.estimatedDays} dias úteis\n`;
+    }
+    review += `\n`;
 
     if (description) {
       review += `**Descrição:**\n${description}\n\n`;
@@ -327,7 +343,10 @@ export class DigiUrbanIntegration {
     if (Object.keys(formData).length > 0) {
       review += `**Dados do Formulário:**\n`;
       for (const [key, value] of Object.entries(formData)) {
-        review += `• ${key}: ${value}\n`;
+        if (key === 'description' || key === 'descricao') continue;
+        // Formatar label mais legível
+        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
+        review += `• ${label}: ${value}\n`;
       }
       review += `\n`;
     }
@@ -335,7 +354,7 @@ export class DigiUrbanIntegration {
     if (documents.length > 0) {
       review += `**Documentos Anexados:** ${documents.length} arquivo(s)\n`;
       documents.forEach((doc: any, index: number) => {
-        review += `  ${index + 1}. ${doc.fileName || 'Documento'}\n`;
+        review += `  ${index + 1}. ${doc.fileName || doc.originalName || 'Documento'}\n`;
       });
     }
 

@@ -920,22 +920,101 @@ router.post('/evaluations', async (req: Request, res: Response) => {
 // DEPARTMENTS
 // ========================================
 
-// GET /api/internal/departments - Listar departamentos
+// GET /api/internal/departments - Listar departamentos (apenas os que têm serviços ativos)
 router.get('/departments', async (req: Request, res: Response) => {
   try {
     const departments = await prisma.department.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        servicesSimplified: {
+          some: { isActive: true },
+        },
+      },
       orderBy: { name: 'asc' },
       select: {
         id: true,
         name: true,
         description: true,
+        _count: {
+          select: {
+            servicesSimplified: true,
+          },
+        },
       },
     });
 
     res.json(departments);
   } catch (error) {
     console.error('[internal.routes] Error in GET /departments', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/internal/departments/:deptId/services - Serviços de um departamento agrupados por categoria
+router.get('/departments/:deptId/services', async (req: Request, res: Response) => {
+  try {
+    const { deptId } = req.params;
+
+    const department = await prisma.department.findUnique({
+      where: { id: deptId },
+      select: { id: true, name: true, description: true },
+    });
+
+    if (!department) {
+      return res.status(404).json({ error: 'Department not found' });
+    }
+
+    const services = await prisma.serviceSimplified.findMany({
+      where: {
+        departmentId: deptId,
+        isActive: true,
+      },
+      orderBy: [
+        { category: 'asc' },
+        { priority: 'desc' },
+        { name: 'asc' },
+      ],
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        category: true,
+        estimatedDays: true,
+        requiresDocuments: true,
+        requiredDocuments: true,
+        formSchema: true,
+        formFieldsConfig: true,
+        enabledFields: true,
+        moduleType: true,
+        serviceType: true,
+        icon: true,
+        color: true,
+        requiresSpecificLocation: true,
+        locationLabel: true,
+      },
+    });
+
+    // Agrupar por categoria
+    const grouped: Record<string, any[]> = {};
+    for (const service of services) {
+      const cat = service.category || 'Geral';
+      if (!grouped[cat]) grouped[cat] = [];
+      grouped[cat].push(service);
+    }
+
+    const categories = Object.entries(grouped).map(([name, items]) => ({
+      name,
+      count: items.length,
+      services: items,
+    }));
+
+    res.json({
+      department,
+      totalServices: services.length,
+      categories,
+    });
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /departments/:deptId/services', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

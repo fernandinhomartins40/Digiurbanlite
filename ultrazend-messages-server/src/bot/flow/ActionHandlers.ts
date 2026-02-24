@@ -545,6 +545,244 @@ export const formatProtocolReview: ActionHandler = async (_params, context) => {
 };
 
 // ====================================================
+// DEPARTAMENTOS E SERVIÇOS POR SECRETARIA
+// ====================================================
+
+/**
+ * Lista departamentos que têm serviços ativos (para menu de secretarias)
+ */
+export const getDepartments: ActionHandler = async (_params, _context) => {
+  try {
+    const result = ensureArray(await integration.getDepartments());
+
+    if (result.length === 0) {
+      return { count: 0, departments: [], raw: [] };
+    }
+
+    const options = result.map((dept: any) => ({
+      id: dept.id,
+      label: `🏢 ${dept.name}`,
+      description: dept._count?.services
+        ? `${dept._count.services} serviço(s)`
+        : dept.description || 'Secretaria',
+    }));
+
+    return { count: options.length, departments: options, raw: result };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getDepartments] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar as secretarias.') };
+  }
+};
+
+/**
+ * Lista serviços de um departamento agrupados por categoria
+ * Retorna texto formatado com subcategorias + opções para menu
+ */
+export const getServicesByDepartment: ActionHandler = async (params, _context) => {
+  const { departmentId } = params;
+  if (!departmentId) {
+    return { success: false, error: '❌ Departamento não selecionado.' };
+  }
+  try {
+    const result = await integration.getServicesByDepartment(departmentId);
+
+    if (!result || result.totalServices === 0) {
+      return { count: 0, services: [], categories: [], department: result?.department, raw: [] };
+    }
+
+    // Montar opções planas de serviços com label contendo a categoria
+    const allServices: any[] = [];
+    for (const cat of result.categories || []) {
+      for (const svc of cat.services || []) {
+        allServices.push({
+          id: svc.id,
+          label: svc.name,
+          description: `${cat.name} • ${svc.estimatedDays ? svc.estimatedDays + ' dias' : 'Prazo variável'}`,
+          metadata: {
+            category: cat.name,
+            estimatedDays: svc.estimatedDays,
+            requiresDocuments: svc.requiresDocuments,
+            serviceType: svc.serviceType,
+            requiresSpecificLocation: svc.requiresSpecificLocation,
+          },
+        });
+      }
+    }
+
+    // Montar texto descritivo com categorias
+    let catalogText = `🏢 **${result.department.name}**\n`;
+    catalogText += `📋 ${result.totalServices} serviço(s) disponível(is)\n\n`;
+    for (const cat of result.categories || []) {
+      catalogText += `📁 **${cat.name}** (${cat.count})\n`;
+      for (const svc of cat.services || []) {
+        catalogText += `  • ${svc.name}\n`;
+      }
+      catalogText += `\n`;
+    }
+
+    return {
+      count: allServices.length,
+      services: allServices,
+      catalogText,
+      department: result.department,
+      categories: result.categories,
+      raw: result,
+    };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getServicesByDepartment] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível listar os serviços desta secretaria.') };
+  }
+};
+
+/**
+ * Processa o formSchema de um serviço e retorna as perguntas que o bot deve fazer
+ * Filtra campos citizen_* (preenchidos automaticamente pelo backend)
+ * Retorna array de perguntas para o FlowEngine processar campo por campo
+ */
+export const processFormSchema: ActionHandler = async (params, _context) => {
+  const { serviceId } = params;
+  if (!serviceId) {
+    return { success: false, error: '❌ Serviço não selecionado.' };
+  }
+  try {
+    const service = await integration.getService(serviceId);
+    if (!service) {
+      return { success: false, error: '❌ Serviço não encontrado.' };
+    }
+
+    const formSchema = service.formSchema;
+    const questions: any[] = [];
+
+    if (!formSchema) {
+      // Serviço sem formulário — apenas descrição
+      return {
+        hasForm: false,
+        questions: [],
+        service,
+        requiresDocuments: service.requiresDocuments,
+        requiredDocuments: service.requiredDocuments,
+      };
+    }
+
+    // JSON Schema format (properties)
+    if (formSchema.properties && typeof formSchema.properties === 'object') {
+      const requiredFields = Array.isArray(formSchema.required) ? formSchema.required : [];
+
+      for (const [fieldId, schema] of Object.entries(formSchema.properties) as [string, any][]) {
+        // Pular campos citizen_* (preenchidos pelo backend via JWT)
+        if (fieldId.startsWith('citizen_')) continue;
+
+        const question: any = {
+          id: fieldId,
+          label: schema.title || fieldId,
+          required: requiredFields.includes(fieldId),
+          type: 'text',
+        };
+
+        if (schema.description) {
+          question.placeholder = schema.description;
+        }
+
+        // Determinar tipo
+        if (schema.enum && Array.isArray(schema.enum)) {
+          question.type = 'select';
+          question.options = schema.enum.map((val: any) => ({
+            id: String(val),
+            label: String(val),
+          }));
+        } else if (schema.format === 'date') {
+          question.type = 'date';
+          question.validation = { type: 'text', minLength: 8, maxLength: 10, errorMessage: 'Data inválida. Use o formato DD/MM/AAAA' };
+        } else if (schema.format === 'email') {
+          question.type = 'email';
+          question.validation = { type: 'email', errorMessage: 'Email inválido' };
+        } else if (schema.type === 'integer' || schema.type === 'number') {
+          question.type = 'number';
+          question.validation = { type: 'number', errorMessage: 'Número inválido' };
+        } else if (schema.type === 'boolean') {
+          question.type = 'boolean';
+          question.options = [
+            { id: 'true', label: 'Sim' },
+            { id: 'false', label: 'Não' },
+          ];
+        } else {
+          // text com validações
+          if (schema.minLength || schema.maxLength) {
+            question.validation = {
+              type: 'text',
+              minLength: schema.minLength,
+              maxLength: schema.maxLength,
+            };
+          }
+        }
+
+        questions.push(question);
+      }
+    }
+    // Formato legado (fields array)
+    else if (formSchema.fields && Array.isArray(formSchema.fields)) {
+      for (const field of formSchema.fields) {
+        if (field.id?.startsWith('citizen_')) continue;
+
+        const question: any = {
+          id: field.id || field.name,
+          label: field.label || field.title || field.id,
+          required: field.required || false,
+          type: field.type || 'text',
+        };
+
+        if (field.placeholder) question.placeholder = field.placeholder;
+
+        if (field.options && Array.isArray(field.options)) {
+          question.type = 'select';
+          question.options = field.options.map((opt: any) =>
+            typeof opt === 'string' ? { id: opt, label: opt } : opt
+          );
+        }
+
+        if (field.validation) {
+          question.validation = field.validation;
+        }
+
+        questions.push(question);
+      }
+    }
+
+    // Preparar info de documentos obrigatórios
+    let requiredDocs: any[] = [];
+    if (service.requiresDocuments && service.requiredDocuments) {
+      const docs = typeof service.requiredDocuments === 'string'
+        ? JSON.parse(service.requiredDocuments)
+        : service.requiredDocuments;
+      if (Array.isArray(docs)) {
+        requiredDocs = docs;
+      }
+    }
+
+    return {
+      hasForm: questions.length > 0,
+      questions,
+      totalQuestions: questions.length,
+      service: {
+        id: service.id,
+        name: service.name,
+        description: service.description,
+        estimatedDays: service.estimatedDays,
+        requiresDocuments: service.requiresDocuments,
+        requiresSpecificLocation: service.requiresSpecificLocation,
+        locationLabel: service.locationLabel,
+        department: service.department,
+      },
+      requiresDocuments: service.requiresDocuments,
+      requiredDocuments: requiredDocs,
+    };
+  } catch (error: any) {
+    console.error('[ActionHandlers.processFormSchema] Erro:', error?.message);
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível carregar o formulário do serviço.') };
+  }
+};
+
+// ====================================================
 // MAPA DE HANDLERS
 // ====================================================
 
@@ -568,6 +806,9 @@ export const actionHandlers: Record<string, ActionHandler> = {
   getPendingEvaluations,
   submitEvaluation,
   formatProtocolReview,
+  getDepartments,
+  getServicesByDepartment,
+  processFormSchema,
 };
 
 export default actionHandlers;
