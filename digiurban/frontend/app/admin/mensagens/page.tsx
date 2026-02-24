@@ -29,7 +29,10 @@ import {
   Video,
   Smile,
   Paperclip,
-  Mic
+  Mic,
+  Archive,
+  Trash2,
+  Eraser,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -38,6 +41,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -80,6 +100,11 @@ export default function AdminMessagesPage() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showStats, setShowStats] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'clear' | 'archive' | 'delete';
+    conversationId: string;
+    title: string;
+  } | null>(null);
   const [stats, setStats] = useState<Stats>({
     totalConversations: 0,
     activeConversations: 0,
@@ -325,6 +350,76 @@ export default function AdminMessagesPage() {
       messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
     }, 100);
   };
+
+  // === Gerenciamento de conversas (limpar, arquivar, deletar) ===
+  const handleClearMessages = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao limpar mensagens');
+      }
+      setMessages([]);
+      toast({ title: 'Mensagens limpas', description: 'Todas as mensagens foram removidas.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const handleArchiveConversation = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/archive`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao arquivar conversa');
+      }
+      setSelectedConversation(null);
+      setMessages([]);
+      await loadConversations();
+      toast({ title: 'Conversa arquivada', description: 'A conversa foi movida para Arquivadas.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível arquivar a conversa', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao excluir conversa');
+      }
+      setSelectedConversation(null);
+      setMessages([]);
+      await loadConversations();
+      toast({ title: 'Conversa excluída', description: 'A conversa foi excluída definitivamente.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível excluir a conversa', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const executeConfirmAction = () => {
+    if (!confirmAction) return;
+    switch (confirmAction.type) {
+      case 'clear': handleClearMessages(confirmAction.conversationId); break;
+      case 'archive': handleArchiveConversation(confirmAction.conversationId); break;
+      case 'delete': handleDeleteConversation(confirmAction.conversationId); break;
+    }
+  };
+
+  const isProtectedConversation = selectedConversation?.isBotConversation;
 
   /**
    * Voltar para lista (mobile)
@@ -849,9 +944,57 @@ export default function AdminMessagesPage() {
                   </Button>
                 ) : null}
 
-                <Button variant="ghost" size="icon" className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}>
-                  <MoreVertical className="w-5 h-5" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}>
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setConfirmAction({
+                          type: 'clear',
+                          conversationId: selectedConversation.id,
+                          title: 'Limpar mensagens?',
+                        })
+                      }
+                    >
+                      <Eraser className="w-4 h-4 mr-2" />
+                      Limpar conversa
+                    </DropdownMenuItem>
+                    {!isProtectedConversation && (
+                      <>
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setConfirmAction({
+                              type: 'archive',
+                              conversationId: selectedConversation.id,
+                              title: 'Arquivar conversa?',
+                            })
+                          }
+                        >
+                          <Archive className="w-4 h-4 mr-2" />
+                          Arquivar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() =>
+                            setConfirmAction({
+                              type: 'delete',
+                              conversationId: selectedConversation.id,
+                              title: 'Excluir conversa?',
+                            })
+                          }
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Excluir conversa
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -1019,6 +1162,36 @@ export default function AdminMessagesPage() {
           }}
         />
       )}
+
+      {/* Dialog de confirmação para ações destrutivas */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === 'clear' &&
+                'Todas as mensagens desta conversa serão removidas. A conversa continuará existindo.'}
+              {confirmAction?.type === 'archive' &&
+                'A conversa será movida para a aba Arquivadas. Você poderá acessá-la novamente quando quiser.'}
+              {confirmAction?.type === 'delete' &&
+                'A conversa e todas as suas mensagens serão excluídas definitivamente. Esta ação não pode ser desfeita.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeConfirmAction}
+              className={cn(
+                confirmAction?.type === 'delete' && 'bg-red-600 hover:bg-red-700'
+              )}
+            >
+              {confirmAction?.type === 'clear' && 'Limpar'}
+              {confirmAction?.type === 'archive' && 'Arquivar'}
+              {confirmAction?.type === 'delete' && 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
