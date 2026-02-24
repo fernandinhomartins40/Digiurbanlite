@@ -37,7 +37,11 @@ export class TemplateEngine {
 
       // Se não tem . ou [, retorna direto
       if (!path.includes('.') && !path.includes('[')) {
-        return state[path];
+        const value = state[path];
+        if (value === undefined || value === null) {
+          console.warn('[TemplateEngine.resolve] Variável não encontrada no estado:', path, 'Estado disponível:', Object.keys(state));
+        }
+        return value;
       }
 
       // Divide por . e processa [índice]
@@ -46,6 +50,7 @@ export class TemplateEngine {
 
       for (const key of keys) {
         if (value === undefined || value === null) {
+          console.warn('[TemplateEngine.resolve] Caminho inválido:', path, 'Parou em:', key);
           return undefined;
         }
 
@@ -63,8 +68,13 @@ export class TemplateEngine {
         }
       }
 
+      if (value === undefined || value === null) {
+        console.warn('[TemplateEngine.resolve] Valor final é undefined/null para:', path);
+      }
+
       return value;
     } catch (error) {
+      console.error('[TemplateEngine.resolve] Erro ao resolver:', path, error);
       return undefined;
     }
   }

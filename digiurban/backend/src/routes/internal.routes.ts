@@ -507,6 +507,8 @@ router.get('/protocols', async (req: Request, res: Response) => {
     const { citizenId, limit = '10' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
+    console.log('[internal.routes] GET /protocols - citizenId:', citizenId, 'limit:', limitNum);
+
     if (!citizenId) {
       return res.status(400).json({ error: 'citizenId is required' });
     }
@@ -532,6 +534,12 @@ router.get('/protocols', async (req: Request, res: Response) => {
         },
       },
     });
+
+    console.log('[internal.routes] GET /protocols - found:', protocols.length, 'protocols');
+
+    if (protocols.length === 0) {
+      console.warn('[internal.routes] GET /protocols - AVISO: Nenhum protocolo encontrado para o cidadão');
+    }
 
     res.json(protocols);
   } catch (error) {
@@ -751,6 +759,8 @@ router.get('/citizens/:citizenId/documents', async (req: Request, res: Response)
     const { limit = '20' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
+    console.log('[internal.routes] GET /citizens/:citizenId/documents - citizenId:', citizenId, 'limit:', limitNum);
+
     const documents = await prisma.protocolDocument.findMany({
       where: {
         protocol: {
@@ -769,6 +779,12 @@ router.get('/citizens/:citizenId/documents', async (req: Request, res: Response)
       orderBy: { uploadedAt: 'desc' },
       take: limitNum,
     });
+
+    console.log('[internal.routes] GET /citizens/:citizenId/documents - found:', documents.length, 'documents');
+
+    if (documents.length === 0) {
+      console.warn('[internal.routes] GET /citizens/:citizenId/documents - AVISO: Nenhum documento encontrado para o cidadão');
+    }
 
     res.json(documents);
   } catch (error) {

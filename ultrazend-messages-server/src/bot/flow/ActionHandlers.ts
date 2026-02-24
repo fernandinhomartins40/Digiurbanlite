@@ -58,17 +58,26 @@ const buildCategoryOptions = (categories: string[]) =>
   }));
 
 const buildProtocolOptions = (protocols: any[]) =>
-  protocols.map((protocol: any) => ({
-    id: protocol.id,
-    label: `#${protocol.number} - ${protocol.title}`,
-    description: protocol.status || 'Protocolo',
-    metadata: {
-      number: protocol.number,
-      status: protocol.status,
-      service: protocol.service,
-      department: protocol.department,
-    },
-  }));
+  protocols
+    .filter((protocol: any) => {
+      // ✅ CRÍTICO: Validar se o protocolo tem dados mínimos necessários
+      if (!protocol?.id || !protocol?.number) {
+        console.warn('[ActionHandlers] Protocolo inválido ignorado:', protocol);
+        return false;
+      }
+      return true;
+    })
+    .map((protocol: any) => ({
+      id: protocol.id,
+      label: `#${protocol.number} - ${protocol.title || 'Sem título'}`,
+      description: protocol.status || 'Protocolo',
+      metadata: {
+        number: protocol.number,
+        status: protocol.status,
+        service: protocol.service,
+        department: protocol.department,
+      },
+    }));
 
 const buildFamilyOptions = (members: any[]) =>
   members.map((member: any) => ({
@@ -98,20 +107,29 @@ const buildNotificationOptions = (notifications: any[]) =>
   }));
 
 const buildDocumentOptions = (documents: any[]) =>
-  documents.map((doc: any) => ({
-    id: doc.id,
-    label: doc.documentType || doc.name || doc.fileName || 'Documento',
-    description: doc.fileName || doc.mimeType || doc.type || doc.category || 'Arquivo',
-    metadata: {
-      documentType: doc.documentType,
-      name: doc.name || doc.fileName,
-      type: doc.mimeType || doc.type,
-      size: doc.size || doc.fileSize,
-      uploadedAt: doc.uploadedAt || doc.createdAt,
-      url: doc.fileUrl || doc.url || doc.filePath,
-      protocolNumber: doc.protocol?.number,
-    },
-  }));
+  documents
+    .filter((doc: any) => {
+      // ✅ CRÍTICO: Validar se o documento tem dados mínimos necessários
+      if (!doc?.id) {
+        console.warn('[ActionHandlers] Documento inválido ignorado:', doc);
+        return false;
+      }
+      return true;
+    })
+    .map((doc: any) => ({
+      id: doc.id,
+      label: doc.documentType || doc.name || doc.fileName || 'Documento',
+      description: doc.fileName || doc.mimeType || doc.type || doc.category || 'Arquivo',
+      metadata: {
+        documentType: doc.documentType,
+        name: doc.name || doc.fileName,
+        type: doc.mimeType || doc.type,
+        size: doc.size || doc.fileSize,
+        uploadedAt: doc.uploadedAt || doc.createdAt,
+        url: doc.fileUrl || doc.url || doc.filePath,
+        protocolNumber: doc.protocol?.number,
+      },
+    }));
 
 const buildInteractionOptions = (interactions: any[]) =>
   interactions.map((interaction: any, index: number) => ({
@@ -226,10 +244,26 @@ export const createProtocol: ActionHandler = async (params, context) => {
 export const getProtocols: ActionHandler = async (params, context) => {
   const { limit = 10 } = params;
   try {
+    console.log('[ActionHandlers.getProtocols] Buscando protocolos, citizenId:', context.citizenId, 'limit:', limit);
     const result = ensureArray(await integration.getProtocols(context.citizenId, limit));
-    return { count: result.length, protocols: buildProtocolOptions(result), raw: result };
+    console.log('[ActionHandlers.getProtocols] Protocolos retornados:', result.length);
+
+    if (result.length === 0) {
+      console.warn('[ActionHandlers.getProtocols] Nenhum protocolo encontrado para o cidadão');
+      return { success: false, error: '❌ Você ainda não possui protocolos cadastrados.' };
+    }
+
+    const options = buildProtocolOptions(result);
+    console.log('[ActionHandlers.getProtocols] Opções construídas:', options.length);
+
+    if (options.length === 0) {
+      console.error('[ActionHandlers.getProtocols] CRÍTICO: buildProtocolOptions retornou array vazio!');
+      return { success: false, error: '❌ Erro ao processar protocolos. Dados inválidos retornados pela API.' };
+    }
+
+    return { count: options.length, protocols: options, raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.getProtocols] Erro:', error?.message);
+    console.error('[ActionHandlers.getProtocols] Erro:', error?.message, error?.response?.data);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível listar seus protocolos.') };
   }
 };
@@ -386,10 +420,26 @@ export const markNotificationsAsRead: ActionHandler = async (params, context) =>
 export const getDocuments: ActionHandler = async (params, context) => {
   const { limit = 20 } = params;
   try {
+    console.log('[ActionHandlers.getDocuments] Buscando documentos, citizenId:', context.citizenId, 'limit:', limit);
     const result = ensureArray(await integration.getDocuments(context.citizenId, limit));
-    return { count: result.length, documents: buildDocumentOptions(result), raw: result };
+    console.log('[ActionHandlers.getDocuments] Documentos retornados:', result.length);
+
+    if (result.length === 0) {
+      console.warn('[ActionHandlers.getDocuments] Nenhum documento encontrado para o cidadão');
+      return { success: false, error: '❌ Você ainda não possui documentos enviados.' };
+    }
+
+    const options = buildDocumentOptions(result);
+    console.log('[ActionHandlers.getDocuments] Opções construídas:', options.length);
+
+    if (options.length === 0) {
+      console.error('[ActionHandlers.getDocuments] CRÍTICO: buildDocumentOptions retornou array vazio!');
+      return { success: false, error: '❌ Erro ao processar documentos. Dados inválidos retornados pela API.' };
+    }
+
+    return { count: options.length, documents: options, raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.getDocuments] Erro:', error?.message);
+    console.error('[ActionHandlers.getDocuments] Erro:', error?.message, error?.response?.data);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível listar seus documentos.') };
   }
 };
