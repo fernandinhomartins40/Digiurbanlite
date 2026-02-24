@@ -325,9 +325,18 @@ export class FlowEngine {
 
     // Atualiza estado
     if (result.stateUpdates) {
+      console.log('[FlowEngine.executeCurrentNode] Atualizando estado:', JSON.stringify(result.stateUpdates, null, 2));
       await this.stateManager.updateExecution(execution.id, {
         stateUpdates: result.stateUpdates,
       });
+
+      // ✅ CRÍTICO: Recarregar execution do banco após atualizar estado
+      // Mesmo bug que em processMessage - sem isso próximo nodo usa estado ANTIGO
+      const reloadedExecution = await this.stateManager.getExecution(execution.id);
+      if (reloadedExecution) {
+        execution = reloadedExecution;
+        console.log('[FlowEngine.executeCurrentNode] Estado recarregado do banco:', JSON.stringify(execution.state, null, 2));
+      }
     }
 
     // Caso especial: startFlow action
