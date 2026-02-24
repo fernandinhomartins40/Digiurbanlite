@@ -97,7 +97,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
         const selectOptions = (field.options || []).map(normalizeOption);
         return (
           <Select
-            value={formData[field.id] || undefined}
+            value={formData[field.id] ?? ''}
             onValueChange={(value) => handleChange(field.id, value)}
           >
             <SelectTrigger>

@@ -304,6 +304,7 @@ export class FlowEngineService {
     const response = await this.flowEngine.processMessage(citizenId, message, conversationId);
     const botMetadata = this.buildBotMetadata(response);
     const botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
+    const botContent = response.message || 'Ocorreu um erro ao processar sua solicitação.';
 
     // 4. Salvar resposta do bot (✅ REFATORADO)
     const botMessage = await prisma.message.create({
@@ -311,7 +312,7 @@ export class FlowEngineService {
         conversationId,
         senderId: 'DIGIBOT_SYSTEM',
         senderType: 'SYSTEM',
-        content: response.message,
+        content: botContent,
         contentType: 'TEXT',
         status: 'SENT',
         sentAt: new Date(),
@@ -319,7 +320,7 @@ export class FlowEngineService {
         // ✅ CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
-        botFlowNodeId: response.metadata?.nodeId,
+        botFlowNodeId: response.metadata?.nodeId || null,
         botStructuredData: (response.data || null) as any,
       },
     });
@@ -329,7 +330,7 @@ export class FlowEngineService {
       where: { id: conversationId },
       data: {
         lastMessageAt: new Date(),
-        lastMessagePreview: response.message.substring(0, 100),
+        lastMessagePreview: botContent.substring(0, 100),
         totalMessages: { increment: 2 },
         metadata: {
           botStatus,

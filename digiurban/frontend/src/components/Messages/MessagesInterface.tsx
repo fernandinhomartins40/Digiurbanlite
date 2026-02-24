@@ -279,7 +279,8 @@ export function MessagesInterface({
 
       if (interaction && typeof interaction === 'object' && !Array.isArray(interaction)) {
         if (interaction.label && interaction.id) {
-          await handleBotMessage(interaction.label);
+          // Envia objeto com optionId para matching exato no backend
+          await handleBotMessage({ optionId: interaction.id, label: interaction.label });
           return;
         }
       }
