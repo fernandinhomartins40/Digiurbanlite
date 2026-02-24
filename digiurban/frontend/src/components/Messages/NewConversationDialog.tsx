@@ -18,7 +18,7 @@ interface Contact {
   avatar?: string;
   cpf?: string;
   role?: string;
-  department?: string;
+  department?: { id: string; name: string } | string;
 }
 
 interface NewConversationDialogProps {
@@ -215,7 +215,7 @@ export function NewConversationDialog({
                         </p>
                         {activeTab === 'servers' && contact.department && (
                           <p className="text-xs text-gray-500 truncate mt-0.5">
-                            {contact.department}
+                            {typeof contact.department === 'string' ? contact.department : contact.department.name}
                           </p>
                         )}
                         {activeTab === 'citizens' && contact.phone && (

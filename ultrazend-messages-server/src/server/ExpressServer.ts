@@ -357,7 +357,9 @@ export class ExpressServer {
         const messages = await conversationService.getConversationMessages(
           conversationId,
           limit,
-          offset
+          offset,
+          req.user!.userId,
+          req.user!.userType
         );
 
         res.json(messages);
@@ -367,7 +369,25 @@ export class ExpressServer {
       }
     });
 
-    // Limpar mensagens da conversa
+    // Limpar mensagens para mim (oculta mensagens só para o usuário atual)
+    router.post('/:conversationId/clear-for-me', async (req: AuthRequest, res: Response) => {
+      try {
+        const { conversationId } = req.params;
+
+        await conversationService.clearMessagesForMe(
+          conversationId,
+          req.user!.userId,
+          req.user!.userType
+        );
+
+        res.json({ success: true });
+      } catch (error: any) {
+        logger.error('Error in POST /conversations/:id/clear-for-me', { error });
+        res.status(500).json({ error: error.message || 'Internal server error' });
+      }
+    });
+
+    // Limpar mensagens da conversa (para todos)
     router.post('/:conversationId/clear', async (req: AuthRequest, res: Response) => {
       try {
         const { conversationId } = req.params;

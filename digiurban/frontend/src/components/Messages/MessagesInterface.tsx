@@ -85,7 +85,7 @@ export function MessagesInterface({
   const [showConversationsList, setShowConversationsList] = useState(true);
   const [loadingMessages, setLoadingMessages] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
-    type: 'clear' | 'archive' | 'delete';
+    type: 'clear-for-me' | 'clear' | 'archive' | 'delete';
     conversationId: string;
     title: string;
   } | null>(null);
@@ -383,7 +383,27 @@ export function MessagesInterface({
     }
   };
 
-  // === Gerenciamento de conversas (limpar, arquivar, deletar) ===
+  // === Gerenciamento de conversas (limpar para mim, limpar para todos, arquivar, deletar) ===
+  const handleClearForMe = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear-for-me`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao limpar mensagens');
+      }
+
+      setMessages([]);
+      toast({ title: 'Mensagens limpas', description: 'As mensagens foram apagadas para você.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
   const handleClearMessages = async (conversationId: string) => {
     try {
       const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear`, {
@@ -451,6 +471,9 @@ export function MessagesInterface({
   const executeConfirmAction = () => {
     if (!confirmAction) return;
     switch (confirmAction.type) {
+      case 'clear-for-me':
+        handleClearForMe(confirmAction.conversationId);
+        break;
       case 'clear':
         handleClearMessages(confirmAction.conversationId);
         break;
@@ -710,21 +733,34 @@ export function MessagesInterface({
                       <MoreVertical className="w-4 h-4" />
                     </Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setConfirmAction({
+                          type: 'clear-for-me',
+                          conversationId: selectedConversation.id,
+                          title: 'Apagar para mim?',
+                        })
+                      }
+                    >
+                      <Eraser className="w-4 h-4 mr-2" />
+                      Apagar para mim
+                    </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={() =>
                         setConfirmAction({
                           type: 'clear',
                           conversationId: selectedConversation.id,
-                          title: 'Limpar mensagens?',
+                          title: 'Apagar para todos?',
                         })
                       }
                     >
-                      <Eraser className="w-4 h-4 mr-2" />
-                      Limpar conversa
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Apagar para todos
                     </DropdownMenuItem>
                     {!isProtectedConversation && (
                       <>
+                        <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() =>
                             setConfirmAction({
@@ -915,8 +951,10 @@ export function MessagesInterface({
           <AlertDialogHeader>
             <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
             <AlertDialogDescription>
+              {confirmAction?.type === 'clear-for-me' &&
+                'As mensagens serão removidas apenas para você. O outro participante continuará vendo as mensagens.'}
               {confirmAction?.type === 'clear' &&
-                'Todas as mensagens desta conversa serão removidas. A conversa continuará existindo.'}
+                'Todas as mensagens desta conversa serão removidas para todos os participantes.'}
               {confirmAction?.type === 'archive' &&
                 'A conversa será movida para a aba Arquivadas. Você poderá acessá-la novamente quando quiser.'}
               {confirmAction?.type === 'delete' &&
@@ -928,10 +966,11 @@ export function MessagesInterface({
             <AlertDialogAction
               onClick={executeConfirmAction}
               className={cn(
-                confirmAction?.type === 'delete' && 'bg-red-600 hover:bg-red-700'
+                (confirmAction?.type === 'delete' || confirmAction?.type === 'clear') && 'bg-red-600 hover:bg-red-700'
               )}
             >
-              {confirmAction?.type === 'clear' && 'Limpar'}
+              {confirmAction?.type === 'clear-for-me' && 'Apagar para mim'}
+              {confirmAction?.type === 'clear' && 'Apagar para todos'}
               {confirmAction?.type === 'archive' && 'Arquivar'}
               {confirmAction?.type === 'delete' && 'Excluir'}
             </AlertDialogAction>

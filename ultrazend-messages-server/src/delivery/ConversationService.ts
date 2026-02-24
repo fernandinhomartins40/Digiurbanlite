@@ -200,13 +200,33 @@ export class ConversationService {
     }
   }
 
-  async getConversationMessages(conversationId: string, limit = 50, offset = 0) {
+  async getConversationMessages(conversationId: string, limit = 50, offset = 0, userId?: string, userType?: ParticipantType) {
     try {
+      // Construir filtro base
+      const where: any = {
+        conversationId,
+        isDeleted: false,
+      };
+
+      // Se temos userId, verificar clearedAt para filtrar mensagens "apagadas para mim"
+      if (userId && userType) {
+        const conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          select: { participant1Id: true, participant1Type: true, clearedAt1: true, clearedAt2: true },
+        });
+
+        if (conversation) {
+          const isParticipant1 = conversation.participant1Id === userId && conversation.participant1Type === userType;
+          const clearedAt = isParticipant1 ? conversation.clearedAt1 : conversation.clearedAt2;
+
+          if (clearedAt) {
+            where.sentAt = { gt: clearedAt };
+          }
+        }
+      }
+
       const messages = await prisma.message.findMany({
-        where: {
-          conversationId,
-          isDeleted: false,
-        },
+        where,
         orderBy: {
           sentAt: 'desc',
         },
@@ -290,6 +310,40 @@ export class ConversationService {
       logger.info('Conversation messages cleared', { conversationId, userId });
     } catch (error) {
       logger.error('Error clearing conversation messages', { error, conversationId });
+      throw error;
+    }
+  }
+
+  async clearMessagesForMe(conversationId: string, userId: string, userType: ParticipantType) {
+    try {
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+      });
+
+      if (!conversation) {
+        throw new Error('Conversation not found');
+      }
+
+      const isParticipant1 =
+        conversation.participant1Id === userId && conversation.participant1Type === userType;
+      const isParticipant2 =
+        conversation.participant2Id === userId && conversation.participant2Type === userType;
+
+      if (!isParticipant1 && !isParticipant2) {
+        throw new Error('Unauthorized');
+      }
+
+      // Marca o timestamp de "apagar para mim" — mensagens anteriores ficam ocultas
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: isParticipant1
+          ? { clearedAt1: new Date() }
+          : { clearedAt2: new Date() },
+      });
+
+      logger.info('Conversation cleared for user', { conversationId, userId });
+    } catch (error) {
+      logger.error('Error clearing conversation for user', { error, conversationId });
       throw error;
     }
   }
