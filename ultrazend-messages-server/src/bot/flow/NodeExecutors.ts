@@ -223,7 +223,28 @@ export class NodeExecutors {
         config.options,
         context.execution.state
       );
+
+      // ✅ CRÍTICO: Validar se a resolução retornou dados válidos
+      if (!optionsData) {
+        console.error('[NodeExecutors.executeMenu] Template resolution returned null/undefined:', config.options);
+        return {
+          success: false,
+          error: '⚠️ Não foi possível carregar as opções. Verifique se a ação anterior foi bem-sucedida.',
+          waitingForInput: false,
+        };
+      }
+
       options = Array.isArray(optionsData) ? optionsData : [];
+
+      // ✅ CRÍTICO: Validar se o array de opções está vazio
+      if (options.length === 0) {
+        console.warn('[NodeExecutors.executeMenu] Options array is empty for:', config.options);
+        return {
+          success: false,
+          error: '❌ Nenhuma opção disponível no momento. A operação anterior pode ter falhado ou não retornou dados.',
+          waitingForInput: false,
+        };
+      }
     } else {
       options = config.options;
     }

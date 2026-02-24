@@ -34,12 +34,21 @@ const formatFriendlyError = (error: any, fallback: string): string => {
 };
 
 const buildServiceOptions = (services: any[]) =>
-  services.map((service: any) => ({
-    id: service.id,
-    label: service.name,
-    description: service.description || service.category || 'Serviço',
-    metadata: { service },
-  }));
+  services
+    .filter((service: any) => {
+      // ✅ CRÍTICO: Validar se o serviço tem dados mínimos necessários
+      if (!service?.id || !service?.name) {
+        console.warn('[ActionHandlers] Serviço inválido ignorado:', service);
+        return false;
+      }
+      return true;
+    })
+    .map((service: any) => ({
+      id: service.id,
+      label: service.name,
+      description: service.description || service.category || 'Serviço municipal',
+      metadata: { service },
+    }));
 
 const buildCategoryOptions = (categories: string[]) =>
   categories.map((category) => ({
@@ -137,10 +146,26 @@ export const searchServices: ActionHandler = async (params, _context) => {
 export const listServices: ActionHandler = async (params, _context) => {
   const { limit = 50 } = params;
   try {
+    console.log('[ActionHandlers.listServices] Buscando serviços, limit:', limit);
     const result = ensureArray(await integration.listServices(limit));
-    return { count: result.length, services: buildServiceOptions(result), raw: result };
+    console.log('[ActionHandlers.listServices] Serviços retornados:', result.length);
+
+    if (result.length === 0) {
+      console.warn('[ActionHandlers.listServices] Nenhum serviço ativo encontrado no banco');
+      return { success: false, error: '❌ Nenhum serviço está disponível no momento. Contate o suporte.' };
+    }
+
+    const options = buildServiceOptions(result);
+    console.log('[ActionHandlers.listServices] Opções construídas:', options.length);
+
+    if (options.length === 0) {
+      console.error('[ActionHandlers.listServices] CRÍTICO: buildServiceOptions retornou array vazio!');
+      return { success: false, error: '❌ Erro ao processar serviços. Dados inválidos retornados pela API.' };
+    }
+
+    return { count: options.length, services: options, raw: result };
   } catch (error: any) {
-    console.error('[ActionHandlers.listServices] Erro:', error?.message);
+    console.error('[ActionHandlers.listServices] Erro:', error?.message, error?.response?.data);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível listar serviços. Tente novamente.') };
   }
 };

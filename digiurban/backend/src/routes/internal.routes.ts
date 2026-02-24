@@ -254,6 +254,8 @@ router.get('/services', async (req: Request, res: Response) => {
     const { limit = '50' } = req.query;
     const limitNum = parseInt(limit as string, 10);
 
+    console.log('[internal.routes] GET /services - limit:', limitNum);
+
     const services = await prisma.serviceSimplified.findMany({
       where: { isActive: true },
       take: limitNum,
@@ -278,6 +280,12 @@ router.get('/services', async (req: Request, res: Response) => {
         },
       },
     });
+
+    console.log('[internal.routes] GET /services - found:', services.length, 'services');
+
+    if (services.length === 0) {
+      console.warn('[internal.routes] GET /services - AVISO: Nenhum serviço ativo encontrado no banco!');
+    }
 
     res.json(services);
   } catch (error) {
