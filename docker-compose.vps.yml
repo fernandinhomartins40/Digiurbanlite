@@ -115,6 +115,7 @@ services:
       # MESSAGE_SERVER_ID removido - busca dinâmica no código
       - MESSAGES_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
+      - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - BASE_URL=https://digiurban.com.br
       - UPLOAD_DIR=/app/uploads
@@ -190,6 +191,9 @@ services:
 
       # Tenants
       - DEFAULT_TENANT=demo
+
+      # Service Token (para Messages Server)
+      - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
 
       # Logs
       - LOG_LEVEL=info
