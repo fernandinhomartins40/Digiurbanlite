@@ -218,11 +218,14 @@ export class NodeExecutors {
     // Resolve opções (pode ser array direto ou template)
     let options: MenuOption[];
     if (typeof config.options === 'string') {
-      // Template: busca do estado
-      const optionsData = this.templateEngine.resolve(
+      // ✅ CORRIGIDO: Usar renderObject ao invés de resolve
+      // renderObject detecta {{template}} e extrai o caminho corretamente
+      const optionsData = this.templateEngine.renderObject(
         config.options,
         context.execution.state
       );
+
+      console.log('[NodeExecutors.executeMenu] Opções resolvidas:', Array.isArray(optionsData) ? `Array com ${optionsData.length} itens` : typeof optionsData);
 
       // ✅ CRÍTICO: Validar se a resolução retornou dados válidos
       if (!optionsData) {
