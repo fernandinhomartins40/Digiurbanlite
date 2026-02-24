@@ -12,3 +12,6 @@ export { MessageCard } from './MessageCard';
 export { InteractiveCard } from './InteractiveCard';
 export { QuickReplies } from './QuickReplies';
 export { TypingIndicator } from './TypingIndicator';
+export { DepartmentCarousel } from './DepartmentCarousel';
+export { ServiceCarousel } from './ServiceCarousel';
+export { BotDocumentUpload } from './BotDocumentUpload';

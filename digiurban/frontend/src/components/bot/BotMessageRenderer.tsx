@@ -16,6 +16,7 @@ import { QuickReplies } from './QuickReplies';
 import { FormCard } from './FormCard';
 import { DepartmentCarousel } from './DepartmentCarousel';
 import { ServiceCarousel } from './ServiceCarousel';
+import { BotDocumentUpload } from './BotDocumentUpload';
 
 interface BotMessageRendererProps {
   message: any;
@@ -179,6 +180,22 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
 
     if (messageType === 'upload') {
       const uploadConfig = metadata.uploadConfig || {};
+      const requiredDocs = metadata.requiredDocuments;
+
+      // Se tem lista de documentos obrigatórios, usa componente rico (com scanner)
+      if (Array.isArray(requiredDocs) && requiredDocs.length > 0) {
+        return (
+          <BotDocumentUpload
+            requiredDocuments={requiredDocs}
+            allowSkip={uploadConfig.allowSkip !== false}
+            maxFiles={uploadConfig.maxFiles || 5}
+            onSubmit={(files) => onInteraction(files)}
+            onSkip={() => onInteraction('pular')}
+          />
+        );
+      }
+
+      // Fallback: upload genérico sem documentos específicos
       const accept = Array.isArray(uploadConfig.allowedTypes)
         ? uploadConfig.allowedTypes.join(',')
         : undefined;

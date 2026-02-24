@@ -75,6 +75,11 @@ export class FlowEngineService {
       metadata.departmentName = response.data.departmentName;
     }
 
+    // Documentos obrigatórios para upload rico no bot
+    if (response.data?.requiredDocuments) {
+      metadata.requiredDocuments = response.data.requiredDocuments;
+    }
+
     return metadata;
   }
 

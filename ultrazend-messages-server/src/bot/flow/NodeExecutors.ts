@@ -733,12 +733,24 @@ export class NodeExecutors {
     }
 
     // Primeira vez: solicita upload
+    // Resolver requiredDocuments do config (pode ser template como "{{formSchemaData.requiredDocuments}}")
+    const cfg = config as any;
+    let requiredDocuments: any[] | undefined;
+    if (cfg.requiredDocuments) {
+      if (typeof cfg.requiredDocuments === 'string' && cfg.requiredDocuments.includes('{{')) {
+        requiredDocuments = this.templateEngine.renderObject(cfg.requiredDocuments, context.execution.state);
+      } else {
+        requiredDocuments = cfg.requiredDocuments;
+      }
+    }
+
     return {
       success: true,
       message: text,
       waitingForInput: true,
       data: {
         uploadConfig: config,
+        ...(Array.isArray(requiredDocuments) && requiredDocuments.length > 0 && { requiredDocuments }),
       },
     };
   }

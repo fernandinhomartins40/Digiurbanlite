@@ -264,12 +264,13 @@
       "id": "upload_documents",
       "type": "upload",
       "config": {
-        "text": "📤 Envie os documentos (opcional):\n\nVocê pode enviar até 5 arquivos.\nFormatos aceitos: PDF, imagens, documentos Office.\n\n💡 Se preferir, envie \"pular\" para continuar sem documentos.",
+        "text": "📤 Envie os documentos necessários:\n\nVocê pode enviar arquivos ou usar a câmera para digitalizar.\n\n💡 Se preferir, pule para enviar depois pelo portal web.",
         "multiple": true,
         "maxFiles": 5,
         "maxFileSize": 10,
         "allowedTypes": ["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
         "allowSkip": true,
+        "requiredDocuments": "{{formSchemaData.requiredDocuments}}",
         "saveAs": "uploadedDocuments"
       },
       "transitions": [
