@@ -257,6 +257,43 @@ export class ConversationService {
     }
   }
 
+  async clearMessages(conversationId: string, userId: string, userType: ParticipantType) {
+    try {
+      const conversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+      });
+
+      if (!conversation) {
+        throw new Error('Conversation not found');
+      }
+
+      const isParticipant =
+        (conversation.participant1Id === userId && conversation.participant1Type === userType) ||
+        (conversation.participant2Id === userId && conversation.participant2Type === userType);
+
+      if (!isParticipant) {
+        throw new Error('Unauthorized');
+      }
+
+      // Soft delete de todas as mensagens
+      await prisma.message.updateMany({
+        where: { conversationId },
+        data: { isDeleted: true, deletedAt: new Date(), deletedBy: userId },
+      });
+
+      // Limpar preview
+      await prisma.conversation.update({
+        where: { id: conversationId },
+        data: { lastMessagePreview: null, totalMessages: 0 },
+      });
+
+      logger.info('Conversation messages cleared', { conversationId, userId });
+    } catch (error) {
+      logger.error('Error clearing conversation messages', { error, conversationId });
+      throw error;
+    }
+  }
+
   async deleteConversation(conversationId: string, userId: string, userType: ParticipantType) {
     try {
       const conversation = await prisma.conversation.findUnique({

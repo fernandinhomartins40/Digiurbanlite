@@ -367,6 +367,24 @@ export class ExpressServer {
       }
     });
 
+    // Limpar mensagens da conversa
+    router.post('/:conversationId/clear', async (req: AuthRequest, res: Response) => {
+      try {
+        const { conversationId } = req.params;
+
+        await conversationService.clearMessages(
+          conversationId,
+          req.user!.userId,
+          req.user!.userType
+        );
+
+        res.json({ success: true });
+      } catch (error) {
+        logger.error('Error in POST /conversations/:id/clear', { error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
     // Arquivar conversa
     router.post('/:conversationId/archive', async (req: AuthRequest, res: Response) => {
       try {
