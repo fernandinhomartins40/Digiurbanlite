@@ -303,29 +303,9 @@ export class WebSocketServer {
         },
       });
 
-      // Emitir para a sala da conversa
+      // ✅ CORRIGIDO: Emitir APENAS UMA VEZ para a sala da conversa
+      // Todos os participantes já estão joined automaticamente (useConversations.ts:757-779)
       this.io.to(`conversation:${conversationId}`).emit('message:new', {
-        conversationId,
-        message,
-      });
-
-      // CRÍTICO: Emitir também para sala pessoal do destinatário (estilo WhatsApp)
-      // Isso garante que o destinatário receba mesmo que ainda não tenha entrado na sala da conversa
-      const recipientId = conversation.participant1Id === socket.userId
-        ? conversation.participant2Id
-        : conversation.participant1Id;
-
-      const recipientType = conversation.participant1Id === socket.userId
-        ? conversation.participant2Type
-        : conversation.participant1Type;
-
-      // Emitir na sala pessoal do destinatário (específica e genérica)
-      this.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', {
-        conversationId,
-        message,
-      });
-
-      this.io.to(`user:${recipientId}`).emit('message:new', {
         conversationId,
         message,
       });

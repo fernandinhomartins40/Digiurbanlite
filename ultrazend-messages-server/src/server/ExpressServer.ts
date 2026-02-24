@@ -501,16 +501,10 @@ export class ExpressServer {
           },
         });
 
+        // ✅ CORRIGIDO: Emitir APENAS UMA VEZ para sala da conversa
         if (this.wsServer) {
           const messagePayload = { conversationId, message };
           this.wsServer.io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
-          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
-          this.wsServer.io.to(`user:${recipientId}`).emit('message:new', messagePayload);
-
-          const conversationWithDetails = await conversationService.getConversationById(conversationId);
-          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('conversation:new', {
-            conversation: conversationWithDetails,
-          });
         }
 
         res.json(message);
@@ -584,17 +578,11 @@ export class ExpressServer {
             message,
           };
 
-          // 4a. Emitir para sala da conversa
+          // ✅ CORRIGIDO: Emitir mensagem APENAS UMA VEZ para sala da conversa
           this.wsServer.io.to(`conversation:${conversation.id}`).emit('message:new', messagePayload);
 
-          // 4b. Emitir para sala pessoal do destinatário
-          this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('message:new', messagePayload);
-          this.wsServer.io.to(`user:${actualRecipientId}`).emit('message:new', messagePayload);
-
-          // 4d. Notificar nova conversa para o destinatário (se necessário)
-          // Buscar conversa completa com informações do remetente
+          // Notificar nova conversa para o destinatário (sala pessoal)
           const conversationWithDetails = await conversationService.getConversationById(conversation.id);
-
           this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('conversation:new', {
             conversation: conversationWithDetails,
           });
