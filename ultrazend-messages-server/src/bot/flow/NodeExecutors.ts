@@ -345,6 +345,25 @@ export class NodeExecutors {
     }
 
     // Primeira vez: exibe menu e aguarda seleção
+    const extraData: Record<string, any> = {};
+    const cfg = config as any;
+
+    // Passa campos extras do config para a metadata (displayMode, categories, etc.)
+    if (cfg.displayMode) {
+      extraData.displayMode = cfg.displayMode;
+    }
+
+    // Resolve campos extras que podem ser templates (e.g. "{{deptServicesData.categories}}")
+    for (const extraKey of ['categories', 'departmentName'] as const) {
+      if (cfg[extraKey]) {
+        if (typeof cfg[extraKey] === 'string' && cfg[extraKey].includes('{{')) {
+          extraData[extraKey] = this.templateEngine.renderObject(cfg[extraKey], context.execution.state);
+        } else {
+          extraData[extraKey] = cfg[extraKey];
+        }
+      }
+    }
+
     return {
       success: true,
       message: text,
@@ -352,6 +371,7 @@ export class NodeExecutors {
       data: {
         options,
         multiSelect: config.multiSelect,
+        ...extraData,
       },
     };
   }

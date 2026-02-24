@@ -562,9 +562,11 @@ export const getDepartments: ActionHandler = async (_params, _context) => {
     const options = result.map((dept: any) => ({
       id: dept.id,
       label: `🏢 ${dept.name}`,
-      description: dept._count?.services
-        ? `${dept._count.services} serviço(s)`
+      name: dept.name,
+      description: dept._count?.servicesSimplified
+        ? `${dept._count.servicesSimplified} serviço(s)`
         : dept.description || 'Secretaria',
+      serviceCount: dept._count?.servicesSimplified || 0,
     }));
 
     return { count: options.length, departments: options, raw: result };
@@ -590,11 +592,14 @@ export const getServicesByDepartment: ActionHandler = async (params, _context) =
       return { count: 0, services: [], categories: [], department: result?.department, raw: [] };
     }
 
-    // Montar opções planas de serviços com label contendo a categoria
+    // Montar opções planas de serviços + categorias formatadas para carrossel
     const allServices: any[] = [];
+    const formattedCategories: any[] = [];
+
     for (const cat of result.categories || []) {
+      const catServices: any[] = [];
       for (const svc of cat.services || []) {
-        allServices.push({
+        const formatted = {
           id: svc.id,
           label: svc.name,
           description: `${cat.name} • ${svc.estimatedDays ? svc.estimatedDays + ' dias' : 'Prazo variável'}`,
@@ -605,8 +610,15 @@ export const getServicesByDepartment: ActionHandler = async (params, _context) =
             serviceType: svc.serviceType,
             requiresSpecificLocation: svc.requiresSpecificLocation,
           },
-        });
+        };
+        allServices.push(formatted);
+        catServices.push(formatted);
       }
+      formattedCategories.push({
+        name: cat.name,
+        count: cat.count,
+        services: catServices,
+      });
     }
 
     // Montar texto descritivo com categorias
@@ -623,9 +635,9 @@ export const getServicesByDepartment: ActionHandler = async (params, _context) =
     return {
       count: allServices.length,
       services: allServices,
+      categories: formattedCategories,
       catalogText,
       department: result.department,
-      categories: result.categories,
       raw: result,
     };
   } catch (error: any) {

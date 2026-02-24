@@ -15,8 +15,17 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 
 interface FormFieldOption {
-  value: string;
+  value?: string;
+  id?: string;
   label: string;
+}
+
+/** Normaliza option para sempre ter 'value' */
+function normalizeOption(opt: FormFieldOption): { value: string; label: string } {
+  return {
+    value: opt.value || opt.id || opt.label,
+    label: opt.label,
+  };
 }
 
 interface FormField {
@@ -84,17 +93,18 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
           />
         );
 
-      case 'select':
+      case 'select': {
+        const selectOptions = (field.options || []).map(normalizeOption);
         return (
           <Select
-            value={formData[field.id] || ''}
+            value={formData[field.id] || undefined}
             onValueChange={(value) => handleChange(field.id, value)}
           >
             <SelectTrigger>
               <SelectValue placeholder={field.placeholder || 'Selecione'} />
             </SelectTrigger>
             <SelectContent>
-              {(field.options || []).map((option) => (
+              {selectOptions.map((option) => (
                 <SelectItem key={option.value} value={option.value}>
                   {option.label}
                 </SelectItem>
@@ -102,11 +112,13 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             </SelectContent>
           </Select>
         );
+      }
 
-      case 'multiselect':
+      case 'multiselect': {
+        const multiOptions = (field.options || []).map(normalizeOption);
         return (
           <div className="space-y-2">
-            {(field.options || []).map((option) => {
+            {multiOptions.map((option) => {
               const currentValues = Array.isArray(formData[field.id])
                 ? formData[field.id]
                 : [];
@@ -116,8 +128,8 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
                   <Checkbox
                     id={`${field.id}-${option.value}`}
                     checked={checked}
-                    onCheckedChange={(value) => {
-                      const nextValues = value
+                    onCheckedChange={(val) => {
+                      const nextValues = val
                         ? [...currentValues, option.value]
                         : currentValues.filter((item: string) => item !== option.value);
                       handleChange(field.id, nextValues);
@@ -134,21 +146,53 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             })}
           </div>
         );
+      }
 
       case 'checkbox':
-      case 'boolean':
+      case 'boolean': {
+        const boolOptions = (field.options || []).map(normalizeOption);
+        // Se tem opções (Sim/Não vindas do backend), renderiza botões selecionáveis
+        if (boolOptions.length >= 2) {
+          const currentVal = formData[field.id];
+          return (
+            <div className="grid grid-cols-2 gap-2">
+              {boolOptions.map((opt) => {
+                const isSelected = currentVal === opt.value;
+                return (
+                  <Button
+                    key={opt.value}
+                    type="button"
+                    variant={isSelected ? 'default' : 'outline'}
+                    className={`h-auto py-3 transition-all ${
+                      isSelected
+                        ? opt.value === 'true'
+                          ? 'bg-green-600 hover:bg-green-700 text-white'
+                          : 'bg-red-600 hover:bg-red-700 text-white'
+                        : 'hover:bg-gray-50'
+                    }`}
+                    onClick={() => handleChange(field.id, opt.value)}
+                  >
+                    {opt.label}
+                  </Button>
+                );
+              })}
+            </div>
+          );
+        }
+        // Fallback: checkbox simples
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
               id={field.id}
               checked={Boolean(formData[field.id])}
-              onCheckedChange={(value) => handleChange(field.id, value)}
+              onCheckedChange={(val) => handleChange(field.id, val)}
             />
             <label htmlFor={field.id} className="text-sm text-gray-700">
               {field.label}
             </label>
           </div>
         );
+      }
 
       case 'number':
         return (

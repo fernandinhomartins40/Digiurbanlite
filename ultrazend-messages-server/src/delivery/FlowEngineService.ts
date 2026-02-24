@@ -64,6 +64,17 @@ export class FlowEngineService {
       metadata.media = response.data.media;
     }
 
+    // Passa campos extras de display para o frontend (carrosséis, categorias, etc.)
+    if (response.data?.displayMode) {
+      metadata.displayMode = response.data.displayMode;
+    }
+    if (response.data?.categories) {
+      metadata.categories = response.data.categories;
+    }
+    if (response.data?.departmentName) {
+      metadata.departmentName = response.data.departmentName;
+    }
+
     return metadata;
   }
 

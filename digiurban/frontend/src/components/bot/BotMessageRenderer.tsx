@@ -14,6 +14,8 @@ import { MessageCard } from './MessageCard';
 import { InteractiveCard } from './InteractiveCard';
 import { QuickReplies } from './QuickReplies';
 import { FormCard } from './FormCard';
+import { DepartmentCarousel } from './DepartmentCarousel';
+import { ServiceCarousel } from './ServiceCarousel';
 
 interface BotMessageRendererProps {
   message: any;
@@ -123,6 +125,31 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
 
   const renderStructuredInput = () => {
     if (messageType === 'menu' && options.length > 0) {
+      const displayMode = metadata?.displayMode;
+
+      // Carrossel de secretarias
+      if (displayMode === 'department_carousel') {
+        return (
+          <DepartmentCarousel
+            options={options}
+            onSelect={(option) => onInteraction(option)}
+          />
+        );
+      }
+
+      // Carrossel de serviços por subcategoria
+      if (displayMode === 'service_carousel') {
+        return (
+          <ServiceCarousel
+            options={options}
+            categories={metadata?.categories}
+            departmentName={metadata?.departmentName}
+            onSelect={(option) => onInteraction(option)}
+          />
+        );
+      }
+
+      // Menu padrão (botões em coluna)
       return (
         <div className="flex flex-col gap-2">
           {options.map((option: any) => (

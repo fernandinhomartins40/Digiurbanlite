@@ -58,9 +58,10 @@
       "id": "select_department",
       "type": "menu",
       "config": {
-        "text": "🏢 **Selecione a Secretaria:**\n\nEscolha o departamento que oferece o serviço que você precisa:",
+        "text": "🏢 **Selecione a Secretaria:**",
         "options": "{{departmentsData.departments}}",
-        "saveAs": "selectedDept"
+        "saveAs": "selectedDept",
+        "displayMode": "department_carousel"
       },
       "transitions": [
         { "to": "load_dept_services" }
@@ -121,7 +122,10 @@
       "config": {
         "text": "📋 Selecione o serviço desejado:",
         "options": "{{deptServicesData.services}}",
-        "saveAs": "selectedServiceId"
+        "saveAs": "selectedServiceId",
+        "displayMode": "service_carousel",
+        "categories": "{{deptServicesData.categories}}",
+        "departmentName": "{{deptServicesData.department.name}}"
       },
       "transitions": [
         { "to": "load_form_schema" }
