@@ -114,6 +114,7 @@ services:
       - JWT_EXPIRES_IN=7d
       # MESSAGE_SERVER_ID removido - busca dinâmica no código
       - MESSAGES_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - BASE_URL=https://digiurban.com.br
       - UPLOAD_DIR=/app/uploads
