@@ -153,8 +153,16 @@ const buildInteractionOptions = (interactions: any[]) =>
 export const searchServices: ActionHandler = async (params, _context) => {
   const { query, category, limit = 10 } = params;
   try {
+    console.log('[ActionHandlers.searchServices] Buscando serviços, query:', query, 'category:', category, 'limit:', limit);
     const result = ensureArray(await integration.searchServices(query, category, limit));
-    return { count: result.length, services: buildServiceOptions(result), raw: result };
+    console.log('[ActionHandlers.searchServices] Serviços retornados:', result.length);
+
+    const options = buildServiceOptions(result);
+    console.log('[ActionHandlers.searchServices] Opções construídas:', options.length);
+
+    // ✅ CRÍTICO: Sempre retornar count/services, mesmo vazio
+    // Deixar o nodo condition validar se count === 0
+    return { count: options.length, services: options, raw: result };
   } catch (error: any) {
     console.error('[ActionHandlers.searchServices] Erro:', error?.message);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível buscar serviços. Tente novamente.') };
@@ -168,17 +176,20 @@ export const listServices: ActionHandler = async (params, _context) => {
     const result = ensureArray(await integration.listServices(limit));
     console.log('[ActionHandlers.listServices] Serviços retornados:', result.length);
 
+    // ✅ CRÍTICO: NÃO retornar success=false quando não há dados
+    // Deixar o nodo condition fazer a validação de count === 0
     if (result.length === 0) {
       console.warn('[ActionHandlers.listServices] Nenhum serviço ativo encontrado no banco');
-      return { success: false, error: '❌ Nenhum serviço está disponível no momento. Contate o suporte.' };
+      return { count: 0, services: [], raw: [] };
     }
 
     const options = buildServiceOptions(result);
     console.log('[ActionHandlers.listServices] Opções construídas:', options.length);
 
+    // ✅ CRÍTICO: Se buildServiceOptions filtrou tudo, retornar array vazio
     if (options.length === 0) {
       console.error('[ActionHandlers.listServices] CRÍTICO: buildServiceOptions retornou array vazio!');
-      return { success: false, error: '❌ Erro ao processar serviços. Dados inválidos retornados pela API.' };
+      return { count: 0, services: [], raw: result };
     }
 
     return { count: options.length, services: options, raw: result };
@@ -248,17 +259,20 @@ export const getProtocols: ActionHandler = async (params, context) => {
     const result = ensureArray(await integration.getProtocols(context.citizenId, limit));
     console.log('[ActionHandlers.getProtocols] Protocolos retornados:', result.length);
 
+    // ✅ CRÍTICO: NÃO retornar success=false quando não há dados
+    // Deixar o nodo condition fazer a validação de count === 0
     if (result.length === 0) {
       console.warn('[ActionHandlers.getProtocols] Nenhum protocolo encontrado para o cidadão');
-      return { success: false, error: '❌ Você ainda não possui protocolos cadastrados.' };
+      return { count: 0, protocols: [], raw: [] };
     }
 
     const options = buildProtocolOptions(result);
     console.log('[ActionHandlers.getProtocols] Opções construídas:', options.length);
 
+    // ✅ CRÍTICO: Se buildProtocolOptions filtrou tudo, retornar array vazio
     if (options.length === 0) {
       console.error('[ActionHandlers.getProtocols] CRÍTICO: buildProtocolOptions retornou array vazio!');
-      return { success: false, error: '❌ Erro ao processar protocolos. Dados inválidos retornados pela API.' };
+      return { count: 0, protocols: [], raw: result };
     }
 
     return { count: options.length, protocols: options, raw: result };
@@ -424,17 +438,20 @@ export const getDocuments: ActionHandler = async (params, context) => {
     const result = ensureArray(await integration.getDocuments(context.citizenId, limit));
     console.log('[ActionHandlers.getDocuments] Documentos retornados:', result.length);
 
+    // ✅ CRÍTICO: NÃO retornar success=false quando não há dados
+    // Deixar o nodo condition fazer a validação de count === 0
     if (result.length === 0) {
       console.warn('[ActionHandlers.getDocuments] Nenhum documento encontrado para o cidadão');
-      return { success: false, error: '❌ Você ainda não possui documentos enviados.' };
+      return { count: 0, documents: [], raw: [] };
     }
 
     const options = buildDocumentOptions(result);
     console.log('[ActionHandlers.getDocuments] Opções construídas:', options.length);
 
+    // ✅ CRÍTICO: Se buildDocumentOptions filtrou tudo, retornar array vazio
     if (options.length === 0) {
       console.error('[ActionHandlers.getDocuments] CRÍTICO: buildDocumentOptions retornou array vazio!');
-      return { success: false, error: '❌ Erro ao processar documentos. Dados inválidos retornados pela API.' };
+      return { count: 0, documents: [], raw: result };
     }
 
     return { count: options.length, documents: options, raw: result };
