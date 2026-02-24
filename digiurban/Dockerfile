@@ -24,10 +24,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
-# ⚡ CACHE BUSTER: Força invalidação de cache antes de copiar código
-RUN echo "Backend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}" && \
-    echo "Additional cache bust: ${CACHE_BUST:-none}"
-
 # Copiar package files do backend
 COPY digiurban/backend/package.json digiurban/backend/package-lock.json ./
 RUN npm install --legacy-peer-deps
