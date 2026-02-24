@@ -471,8 +471,6 @@ export class ExpressServer {
           return;
         }
 
-        const recipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
-        const recipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
         const now = new Date();
 
         const message = await prisma.message.create({
