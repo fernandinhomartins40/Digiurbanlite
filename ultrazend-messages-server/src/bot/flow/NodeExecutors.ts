@@ -588,7 +588,10 @@ export class NodeExecutors {
     // Resolve fields (pode ser array ou path para schema dinâmico)
     let fieldsData: any;
     if (typeof config.fields === 'string') {
-      fieldsData = this.templateEngine.resolve(
+      // ✅ CORRIGIDO: Usar renderObject ao invés de resolve
+      // renderObject detecta {{template}} e extrai o caminho corretamente
+      // resolve() falha com strings tipo "{{selectedService.service.formSchema}}"
+      fieldsData = this.templateEngine.renderObject(
         config.fields,
         context.execution.state
       );

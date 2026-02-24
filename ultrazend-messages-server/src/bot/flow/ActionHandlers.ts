@@ -414,10 +414,12 @@ export const getNotifications: ActionHandler = async (params, context) => {
 };
 
 export const markNotificationsAsRead: ActionHandler = async (params, context) => {
-  const { notificationIds } = params;
+  const { notificationIds, markAll } = params;
   try {
-    const result = await integration.markNotificationsAsRead(context.citizenId, notificationIds);
-    return { result };
+    // Se markAll=true, passa undefined para notificationIds (backend marca todas)
+    const idsToMark = markAll ? undefined : notificationIds;
+    const result = await integration.markNotificationsAsRead(context.citizenId, idsToMark);
+    return { marked: true, result };
   } catch (error: any) {
     console.error('[ActionHandlers.markNotificationsAsRead] Erro:', error?.message);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível marcar as notificações como lidas.') };
@@ -513,7 +515,14 @@ export const submitEvaluation: ActionHandler = async (params, context) => {
     return { success: false, error: '❌ Protocolo e nota são obrigatórios para a avaliação.' };
   }
   try {
-    const result = await integration.submitEvaluation(protocolId, context.citizenId, rating, comment);
+    // ✅ CRÍTICO: Converter rating para número inteiro
+    // Menu nodes salvam o id como string ("1", "2", etc.)
+    // mas a API espera Int
+    const numericRating = typeof rating === 'string' ? parseInt(rating, 10) : Number(rating);
+    if (isNaN(numericRating) || numericRating < 1 || numericRating > 5) {
+      return { success: false, error: '❌ Nota inválida. A nota deve ser um número entre 1 e 5.' };
+    }
+    const result = await integration.submitEvaluation(protocolId, context.citizenId, numericRating, comment);
     return { evaluation: result };
   } catch (error: any) {
     console.error('[ActionHandlers.submitEvaluation] Erro:', error?.message);

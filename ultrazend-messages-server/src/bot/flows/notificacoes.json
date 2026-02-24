@@ -159,7 +159,7 @@
       "id": "show_notification_details",
       "type": "message",
       "config": {
-        "text": "📬 **{{selectedNotification_data.title}}**\n\n{{selectedNotification_data.message}}\n\n📅 {{selectedNotification_data.createdAt}}\n🏷️ Tipo: {{selectedNotification_data.type}}\n✅ Lida: {{selectedNotification_data.isRead}}"
+        "text": "📬 **{{selectedNotification_data.metadata.title}}**\n\n{{selectedNotification_data.metadata.message}}\n\n📅 {{selectedNotification_data.metadata.createdAt}}\n🏷️ Tipo: {{selectedNotification_data.metadata.type}}\n✅ Lida: {{selectedNotification_data.metadata.isRead}}"
       },
       "transitions": [
         { "to": "notification_actions" }
@@ -199,7 +199,10 @@
       "type": "action",
       "config": {
         "action": "markNotificationsAsRead",
-        "params": {}
+        "params": {
+          "markAll": true
+        },
+        "saveResultAs": "markReadResult"
       },
       "transitions": [
         { "to": "mark_read_success" }

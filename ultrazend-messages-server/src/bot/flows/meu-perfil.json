@@ -300,7 +300,8 @@
         "action": "updateCitizenProfile",
         "params": {
           "address": "{{addressData}}"
-        }
+        },
+        "saveResultAs": "updateResult"
       },
       "transitions": [
         { "to": "update_success" }
@@ -311,7 +312,8 @@
       "type": "action",
       "config": {
         "action": "updateCitizenProfile",
-        "params": "{{updateData}}"
+        "params": "{{updateData}}",
+        "saveResultAs": "updateResult"
       },
       "transitions": [
         { "to": "update_success" }

@@ -376,7 +376,8 @@
         "params": {
           "protocolId": "{{protocolDetails.protocol.id}}",
           "comment": "{{comment}}"
-        }
+        },
+        "saveResultAs": "commentResult"
       },
       "transitions": [
         { "to": "comment_success" }
