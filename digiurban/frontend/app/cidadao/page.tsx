@@ -107,6 +107,7 @@ export default function CitizenDashboard() {
     sendMessage,
     markConversationAsRead,
     findOrCreateConversation,
+    loadConversations,
     ensureBotConversation, // ✅ NOVO
   } = useConversations({
     userId: citizen?.id || '',
@@ -456,7 +457,10 @@ export default function CitizenDashboard() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Erro ao limpar mensagens');
       }
-      setMessages([]);
+      if (selectedConversation?.id === conversationId) {
+        setMessages([]);
+      }
+      await loadConversations();
       toast({ title: 'Mensagens limpas', description: 'As mensagens foram apagadas para você.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
@@ -474,7 +478,10 @@ export default function CitizenDashboard() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Erro ao limpar mensagens');
       }
-      setMessages([]);
+      if (selectedConversation?.id === conversationId) {
+        setMessages([]);
+      }
+      await loadConversations();
       toast({ title: 'Mensagens limpas', description: 'Todas as mensagens foram removidas.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
@@ -494,6 +501,7 @@ export default function CitizenDashboard() {
       }
       setSelectedConversation(null);
       setMessages([]);
+      await loadConversations();
       toast({ title: 'Conversa arquivada', description: 'A conversa foi movida para Arquivadas.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível arquivar a conversa', variant: 'destructive' });
@@ -513,6 +521,7 @@ export default function CitizenDashboard() {
       }
       setSelectedConversation(null);
       setMessages([]);
+      await loadConversations();
       toast({ title: 'Conversa excluída', description: 'A conversa foi excluída definitivamente.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível excluir a conversa', variant: 'destructive' });

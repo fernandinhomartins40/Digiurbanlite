@@ -396,7 +396,10 @@ export function MessagesInterface({
         throw new Error(data.error || 'Erro ao limpar mensagens');
       }
 
-      setMessages([]);
+      if (selectedConversation?.id === conversationId) {
+        setMessages([]);
+      }
+      await loadConversations();
       toast({ title: 'Mensagens limpas', description: 'As mensagens foram apagadas para você.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
@@ -416,7 +419,10 @@ export function MessagesInterface({
         throw new Error(data.error || 'Erro ao limpar mensagens');
       }
 
-      setMessages([]);
+      if (selectedConversation?.id === conversationId) {
+        setMessages([]);
+      }
+      await loadConversations();
       toast({ title: 'Mensagens limpas', description: 'Todas as mensagens foram removidas.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
