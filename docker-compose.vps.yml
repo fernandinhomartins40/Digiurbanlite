@@ -154,7 +154,8 @@ services:
       - discovery.type=single-node
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
       - plugins.security.disabled=true
-      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-Admin@12345!}
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-D1g1Urb@nPr1c3s!2026}
     volumes:
       - opensearch_data:/usr/share/opensearch/data
     restart: unless-stopped
@@ -208,6 +209,52 @@ services:
       timeout: 10s
       retries: 3
       start_period: 90s
+
+  # ─────────────────────────────────────────────────────────────
+  # MÓDULO: digiurban-flow — Motor de Processos Internos
+  # ─────────────────────────────────────────────────────────────
+  digiurban-flow:
+    build:
+      context: ./digiurban-flow
+      dockerfile: Dockerfile
+    container_name: digiurban-flow
+    ports:
+      - "9003:9003"
+    environment:
+      - NODE_ENV=production
+      - PORT=9003
+      - HOST=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
+      - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:-digiurban-flow-service-token}
+      - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
+      - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - UPLOAD_DIR=/app/uploads
+      - MAX_FILE_SIZE=10485760
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=100
+      - SLA_CHECK_INTERVAL_MS=300000
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+      - LOG_LEVEL=info
+    volumes:
+      - flow_uploads:/app/uploads
+      - flow_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9003/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
 
   digiurban:
     build:
@@ -285,6 +332,10 @@ services:
       - PRICES_API_URL=http://digiurban-prices:9002/api/v1
       - DIGIURBAN_API_KEY=${DIGIURBAN_API_KEY:-digiurban-prices-api-key-change-me}
 
+      # Módulo de Processos Internos (proxy interno)
+      - FLOW_API_URL=http://digiurban-flow:9003/api/v1
+      - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:-digiurban-flow-service-token}
+
     volumes:
       - digiurban_uploads:/app/uploads
       - digiurban_logs:/app/logs
@@ -302,6 +353,8 @@ services:
       ollama:
         condition: service_healthy
       digiurban-prices:
+        condition: service_healthy
+      digiurban-flow:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
