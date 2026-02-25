@@ -19,10 +19,10 @@ echo "Database is reachable."
 # Aguardar mais 2s para o PostgreSQL aceitar conexões
 sleep 2
 
-# Executar migrations Prisma
-echo "Running Prisma migrations..."
-npx prisma migrate deploy
-echo "Migrations completed."
+# Gerar Prisma Client (migrations são gerenciadas pelo backend principal)
+echo "Generating Prisma Client..."
+npx prisma generate
+echo "Prisma Client ready."
 
 # Iniciar servidor
 echo "Starting DigiUrban Flow Server..."

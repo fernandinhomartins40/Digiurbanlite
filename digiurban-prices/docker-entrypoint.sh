@@ -1,8 +1,8 @@
 #!/bin/sh
 set -e
 
-echo "[entrypoint] Running Prisma migrations..."
-npx prisma migrate deploy
+echo "[entrypoint] Generating Prisma Client..."
+npx prisma generate
 
 echo "[entrypoint] Starting digiurban-prices API..."
 exec node dist/index.js
