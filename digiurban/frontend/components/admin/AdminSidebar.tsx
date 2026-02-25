@@ -180,6 +180,13 @@ export function AdminSidebar() {
           href: '/admin/templates-documentos',
           icon: ScrollText,
           minRole: 'ADMIN'
+        },
+        {
+          title: 'Processos Internos',
+          href: '/admin/processos-internos',
+          icon: ArrowRightLeft,
+          minRole: 'COORDINATOR',
+          badge: 'NOVO'
         }
       ]
     },
