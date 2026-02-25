@@ -289,6 +289,11 @@ export class ConversationService {
         throw new Error('Conversation not found');
       }
 
+      // Proteger conversas do bot: apenas "apagar para mim" é permitido
+      if (conversation.isBotConversation) {
+        throw new Error('Bot conversations cannot have messages cleared for all. Use clear for me instead.');
+      }
+
       const isParticipant =
         (conversation.participant1Id === userId && conversation.participant1Type === userType) ||
         (conversation.participant2Id === userId && conversation.participant2Type === userType);

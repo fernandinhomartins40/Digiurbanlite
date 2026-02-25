@@ -192,7 +192,8 @@ export class FlowEngine {
       }
 
       // Erro: retorna mensagem de erro e mantém no mesmo nodo
-      return {
+      // Preserva messageType e dados do nodo para que o frontend renderize corretamente
+      const retryResponse: BotResponse = {
         message: result.error || result.message || 'Erro ao processar',
         messageType: 'text',
         metadata: {
@@ -203,6 +204,23 @@ export class FlowEngine {
           retryCount,
         },
       };
+
+      // Para menus: preserva messageType 'menu' e inclui opções para re-render dos botões
+      if (currentNode.type === 'menu') {
+        retryResponse.messageType = 'menu';
+        const menuConfig = currentNode.config as any;
+        if (Array.isArray(menuConfig.options)) {
+          retryResponse.data = { options: menuConfig.options };
+        }
+      } else if (currentNode.type === 'form') {
+        retryResponse.messageType = 'form';
+        const formConfig = currentNode.config as any;
+        if (Array.isArray(formConfig.fields)) {
+          retryResponse.data = { fields: formConfig.fields };
+        }
+      }
+
+      return retryResponse;
     }
 
     // Reseta contador de retry em caso de sucesso

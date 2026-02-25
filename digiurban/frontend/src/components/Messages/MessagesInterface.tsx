@@ -752,18 +752,20 @@ export function MessagesInterface({
                       <Eraser className="w-4 h-4 mr-2" />
                       Apagar para mim
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() =>
-                        setConfirmAction({
-                          type: 'clear',
-                          conversationId: selectedConversation.id,
-                          title: 'Apagar para todos?',
-                        })
-                      }
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Apagar para todos
-                    </DropdownMenuItem>
+                    {!isProtectedConversation && (
+                      <DropdownMenuItem
+                        onClick={() =>
+                          setConfirmAction({
+                            type: 'clear',
+                            conversationId: selectedConversation.id,
+                            title: 'Apagar para todos?',
+                          })
+                        }
+                      >
+                        <Trash2 className="w-4 h-4 mr-2" />
+                        Apagar para todos
+                      </DropdownMenuItem>
+                    )}
                     {!isProtectedConversation && (
                       <>
                         <DropdownMenuSeparator />
