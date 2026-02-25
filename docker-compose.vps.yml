@@ -142,6 +142,73 @@ services:
       retries: 3
       start_period: 60s
 
+  # ─────────────────────────────────────────────────────────────
+  # MÓDULO: digiurban-prices — Pesquisa de Preços Públicos
+  # ─────────────────────────────────────────────────────────────
+  digiurban-opensearch:
+    image: opensearchproject/opensearch:2.17.0
+    container_name: digiurban-opensearch
+    environment:
+      - cluster.name=digiurban-prices-cluster
+      - node.name=prices-node
+      - discovery.type=single-node
+      - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - plugins.security.disabled=true
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-Admin@12345!}
+    volumes:
+      - opensearch_data:/usr/share/opensearch/data
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+
+  digiurban-prices:
+    build:
+      context: ./digiurban-prices
+      dockerfile: Dockerfile
+    container_name: digiurban-prices
+    ports:
+      - "9002:9002"
+    environment:
+      - NODE_ENV=production
+      - PORT=9002
+      - DATABASE_URL=${DATABASE_URL}
+      - OPENSEARCH_URL=http://digiurban-opensearch:9200
+      - OPENSEARCH_USERNAME=admin
+      - OPENSEARCH_PASSWORD=admin
+      - REDIS_URL=redis://redis:6379
+      - DIGIURBAN_API_KEY=${DIGIURBAN_API_KEY:-digiurban-prices-api-key-change-me}
+      - PNCP_BASE_URL=https://pncp.gov.br/api/consulta/v1
+      - INGEST_SINCE_DAYS=365
+      - INGEST_CRON=0 2 * * *
+      - OUTLIER_METHOD=IQR
+      - OUTLIER_IQR_K=1.5
+      - LOG_LEVEL=info
+      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+    volumes:
+      - prices_uploads:/app/uploads
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      digiurban-opensearch:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9002/api/v1/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
   digiurban:
     build:
       context: .
@@ -214,6 +281,10 @@ services:
       - OLLAMA_MODEL=digibot-qwen2.5
       - OLLAMA_TIMEOUT=15000
 
+      # Módulo de Preços (proxy interno)
+      - PRICES_API_URL=http://digiurban-prices:9002/api/v1
+      - DIGIURBAN_API_KEY=${DIGIURBAN_API_KEY:-digiurban-prices-api-key-change-me}
+
     volumes:
       - digiurban_uploads:/app/uploads
       - digiurban_logs:/app/logs
@@ -229,6 +300,8 @@ services:
       ultrazend-messages:
         condition: service_healthy
       ollama:
+        condition: service_healthy
+      digiurban-prices:
         condition: service_healthy
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
@@ -259,6 +332,10 @@ volumes:
   messages_uploads:
     driver: local
   messages_logs:
+    driver: local
+  opensearch_data:
+    driver: local
+  prices_uploads:
     driver: local
 
 networks:

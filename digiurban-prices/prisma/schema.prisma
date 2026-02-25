@@ -1,0 +1,204 @@
+// DigiUrban Prices Module — Schema Prisma
+// Banco isolado no mesmo PostgreSQL do DigiUrban (schema: prices)
+// Para usar schema separado: DATABASE_URL=...?schema=prices
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// ÓRGÃOS PÚBLICOS
+// ─────────────────────────────────────────────
+model Organization {
+  id         String   @id @default(cuid())
+  cnpj       String?  @unique
+  name       String
+  shortName  String?
+  uf         String?
+  city       String?
+  sphere     String?  // federal, estadual, municipal
+  pncpCode   String?  @unique
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  contracts  Contract[]
+  lineItems  LineItem[]
+
+  @@map("prices_organizations")
+}
+
+// ─────────────────────────────────────────────
+// FORNECEDORES
+// ─────────────────────────────────────────────
+model Supplier {
+  id        String   @id @default(cuid())
+  cnpj      String?  @unique
+  cpf       String?  @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  contracts Contract[]
+  lineItems LineItem[]
+
+  @@map("prices_suppliers")
+}
+
+// ─────────────────────────────────────────────
+// CONTRATOS / PROCESSOS
+// ─────────────────────────────────────────────
+model Contract {
+  id               String       @id @default(cuid())
+  pncpId           String?      @unique
+  processNumber    String?
+  year             Int?
+  modality         String?      // pregao, concorrencia, etc
+  modalityCode     Int?
+  description      String?      @db.Text
+  totalValue       Float?
+  contractDate     DateTime?
+  publicationDate  DateTime?
+  uf               String?
+  city             String?
+  status           String?
+
+  organizationId   String
+  organization     Organization @relation(fields: [organizationId], references: [id])
+
+  supplierId       String?
+  supplier         Supplier?    @relation(fields: [supplierId], references: [id])
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  lineItems        LineItem[]
+
+  @@map("prices_contracts")
+}
+
+// ─────────────────────────────────────────────
+// ITENS / SERVIÇOS (coração do sistema)
+// ─────────────────────────────────────────────
+model LineItem {
+  id                    String      @id @default(cuid())
+  pncpId                String?
+
+  // Descrição original e normalizada
+  description           String      @db.Text
+  normalizedDescription String      @db.Text
+
+  // Quantidade e valores
+  quantity              Float?
+  unit                  String?
+  unitPrice             Float?
+  totalPrice            Float?
+  calculatedUnitPrice   Float?      // totalPrice / quantity quando não fornecido
+
+  // Classificação
+  catmatCode            String?     // código CATMAT
+  catserCode            String?     // código CATSER
+  itemCategory          String?
+
+  // Metadados
+  contractDate          DateTime?
+  uf                    String?
+  city                  String?
+
+  // Qualidade do dado
+  isValid               Boolean     @default(true)
+  invalidReason         String?
+  isOutlier             Boolean     @default(false)
+  outlierReason         String?
+
+  // Relações
+  organizationId        String
+  organization          Organization @relation(fields: [organizationId], references: [id])
+
+  supplierId            String?
+  supplier              Supplier?   @relation(fields: [supplierId], references: [id])
+
+  contractId            String?
+  contract              Contract?   @relation(fields: [contractId], references: [id])
+
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+
+  @@index([normalizedDescription])
+  @@index([catmatCode])
+  @@index([catserCode])
+  @@index([contractDate])
+  @@index([uf])
+  @@index([isValid, isOutlier])
+  @@map("prices_line_items")
+}
+
+// ─────────────────────────────────────────────
+// PAYLOADS BRUTOS (auditoria)
+// ─────────────────────────────────────────────
+model RawPayload {
+  id          String   @id @default(cuid())
+  source      String   // pncp, compras_gov, etc
+  endpoint    String
+  payload     Json
+  processedAt DateTime?
+  ingestRunId String?
+  createdAt   DateTime @default(now())
+
+  @@map("prices_raw_payloads")
+}
+
+// ─────────────────────────────────────────────
+// EXECUÇÕES DE INGESTÃO
+// ─────────────────────────────────────────────
+model IngestRun {
+  id               String    @id @default(cuid())
+  source           String    @default("pncp")
+  startedAt        DateTime  @default(now())
+  finishedAt       DateTime?
+  status           String    @default("running") // running, completed, failed
+  itemsIngested    Int       @default(0)
+  itemsUpdated     Int       @default(0)
+  itemsSkipped     Int       @default(0)
+  errors           Int       @default(0)
+  errorDetails     Json?
+  triggeredBy      String?   // scheduled, manual, api
+  sinceDays        Int       @default(365)
+
+  @@map("prices_ingest_runs")
+}
+
+// ─────────────────────────────────────────────
+// AUDITORIAS DE CONSULTAS
+// ─────────────────────────────────────────────
+model SearchAudit {
+  id               String   @id @default(cuid())
+  userId           String?
+  query            String   @db.Text
+  filters          Json?
+  periodFrom       DateTime?
+  periodTo         DateTime?
+  resultsCount     Int      @default(0)
+  excludedCount    Int      @default(0)
+  avgPrice         Float?
+  medianPrice      Float?
+  minPrice         Float?
+  maxPrice         Float?
+  algorithmVersion String   @default("1.0")
+  outlierMethod    String   @default("IQR")
+  outlierK         Float    @default(1.5)
+  isBatchSearch    Boolean  @default(false)
+  reportGenerated  Boolean  @default(false)
+  ipAddress        String?
+  userAgent        String?
+  durationMs       Int?
+  createdAt        DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("prices_search_audits")
+}

@@ -155,6 +155,9 @@ function loadRoute(prefix: string, modulePath: string) {
 // Rotas internas (Messages Server)
 loadRoute('/api/internal', './routes/internal.routes');
 
+// Módulo de Pesquisa de Preços Públicos (proxy → digiurban-prices)
+loadRoute('/api/prices', './routes/prices-proxy.routes');
+
 // Administração de fluxos do bot
 loadRoute('/api/admin/flows', './routes/admin-flows.routes');
 
