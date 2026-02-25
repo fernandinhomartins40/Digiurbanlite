@@ -1,0 +1,328 @@
+// ============================================================================
+// DIGIURBAN FLOW — Motor de Processos Internos
+// ============================================================================
+// Schema isolado para o módulo de processos internos administrativos.
+// Compartilha o mesmo PostgreSQL do DigiUrban principal.
+// ============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum ProcessStatus {
+  RASCUNHO       // Rascunho (não tramitado)
+  ABERTO         // Aberto/protocolado
+  EM_TRAMITACAO  // Em tramitação entre setores
+  PENDENTE       // Aguardando ação
+  CONCLUIDO      // Concluído
+  ARQUIVADO      // Arquivado
+  CANCELADO      // Cancelado
+}
+
+enum SigiloLevel {
+  PUBLICO        // Público interno (qualquer servidor pode ver)
+  RESTRITO       // Restrito ao setor
+  CONFIDENCIAL   // Apenas envolvidos diretos
+}
+
+enum DispatchAction {
+  ENCAMINHADO    // Encaminhado a outro setor
+  DEVOLVIDO      // Devolvido ao setor anterior
+  REDISTRIBUIDO  // Redistribuído dentro do setor
+  PARECER        // Parecer emitido
+  DESPACHO       // Despacho
+  ASSINATURA     // Assinatura
+  ARQUIVAMENTO   // Arquivamento
+  CONCLUSAO      // Conclusão
+  CANCELAMENTO   // Cancelamento
+}
+
+enum StepStatus {
+  PENDENTE
+  EM_ANDAMENTO
+  CONCLUIDO
+  PULADO
+}
+
+enum WorkflowStatus {
+  ATIVO
+  CONCLUIDO
+  CANCELADO
+}
+
+// ============================================================================
+// TIPOS DE PROCESSO
+// ============================================================================
+
+model InternalProcessType {
+  id               String   @id @default(cuid())
+  name             String   // Ex: "Memorando", "Ofício", "Processo Administrativo"
+  prefix           String   @unique // Ex: "MEM", "OFI", "PAD"
+  description      String?
+  defaultSlaHours  Int      @default(168) // 7 dias padrão
+  sigiloDefault    SigiloLevel @default(PUBLICO)
+  isActive         Boolean  @default(true)
+
+  // Fluxo padrão (opcional)
+  defaultWorkflowTemplateId String?
+  defaultWorkflowTemplate   WorkflowTemplate? @relation(fields: [defaultWorkflowTemplateId], references: [id])
+
+  // Relações
+  processes        InternalProcess[]
+
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("flow_process_types")
+}
+
+// ============================================================================
+// PROCESSO INTERNO (coração do módulo)
+// ============================================================================
+
+model InternalProcess {
+  id               String         @id @default(cuid())
+  number           String         @unique // INT-2026-00001
+
+  // Tipo e classificação
+  typeId           String
+  type             InternalProcessType @relation(fields: [typeId], references: [id])
+  subject          String         // Assunto
+  description      String?        @db.Text
+  sigilo           SigiloLevel    @default(PUBLICO)
+
+  // Status e prioridade
+  status           ProcessStatus  @default(ABERTO)
+  priority         Int            @default(0) // 0=normal, 1=urgente, 2=urgentíssimo
+
+  // Setores
+  originSectorId   String         // Setor que abriu
+  originSectorName String         // Nome do setor (snapshot)
+  currentSectorId  String         // Setor atual
+  currentSectorName String        // Nome do setor atual (snapshot)
+
+  // Responsáveis
+  createdById      String         // Quem abriu (userId do backend)
+  createdByName    String         // Nome de quem abriu (snapshot)
+  currentUserId    String?        // Servidor responsável atual
+  currentUserName  String?        // Nome do responsável (snapshot)
+
+  // Vínculo com protocolo cidadão (PONTE entre os dois motores)
+  citizenProtocolId String?       // FK para ProtocolSimplified do backend
+
+  // Prazos
+  dueAt            DateTime?      // Prazo de conclusão
+  concludedAt      DateTime?      // Data de conclusão efetiva
+  archivedAt       DateTime?      // Data de arquivamento
+
+  // Metadados
+  metadata         Json?          // Dados extras flexíveis
+  tags             String[]       @default([])
+
+  // Relações
+  history          InternalProcessHistory[]
+  dispatches       ProcessDispatch[]
+  documents        ProcessDocument[]
+  workflowInstance WorkflowInstance?
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([status])
+  @@index([currentSectorId])
+  @@index([currentUserId])
+  @@index([typeId])
+  @@index([citizenProtocolId])
+  @@index([createdAt])
+  @@map("flow_processes")
+}
+
+// ============================================================================
+// HISTÓRICO DE MOVIMENTAÇÕES
+// ============================================================================
+
+model InternalProcessHistory {
+  id               String         @id @default(cuid())
+
+  processId        String
+  process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  action           DispatchAction
+  description      String         // Ex: "Encaminhado ao Departamento de Urbanismo"
+  note             String?        @db.Text  // Observação/anotação
+  fromSectorId     String?
+  fromSectorName   String?
+  toSectorId       String?
+  toSectorName     String?
+  userId           String         // Quem fez a ação
+  userName         String         // Nome (snapshot)
+
+  createdAt        DateTime       @default(now())
+
+  @@index([processId])
+  @@index([createdAt])
+  @@map("flow_process_history")
+}
+
+// ============================================================================
+// DESPACHOS / TRAMITAÇÃO
+// ============================================================================
+
+model ProcessDispatch {
+  id               String         @id @default(cuid())
+
+  processId        String
+  process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  action           DispatchAction
+  fromSectorId     String
+  fromSectorName   String
+  toSectorId       String
+  toSectorName     String
+  fromUserId       String
+  fromUserName     String
+  toUserId         String?        // Se redistribuir para servidor específico
+  toUserName       String?
+
+  note             String?        @db.Text  // Despacho/parecer
+  isRead           Boolean        @default(false)
+  readAt           DateTime?
+
+  createdAt        DateTime       @default(now())
+
+  @@index([processId])
+  @@index([toSectorId])
+  @@index([isRead])
+  @@map("flow_dispatches")
+}
+
+// ============================================================================
+// DOCUMENTOS DO PROCESSO
+// ============================================================================
+
+model ProcessDocument {
+  id               String         @id @default(cuid())
+
+  processId        String
+  process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  // Tipo
+  documentType     String         // "despacho", "memorando", "oficio", "anexo", "parecer"
+  name             String         // Nome descritivo
+  description      String?
+
+  // Arquivo
+  fileName         String
+  filePath         String
+  fileSize         Int
+  mimeType         String
+
+  // Geração
+  isGenerated      Boolean        @default(false) // true = gerado via Playwright
+  templateUsed     String?        // Qual template HTML foi usado
+  generatedBy      String?        // userId que gerou
+  documentHash     String?        // SHA-256 para integridade
+
+  // Versionamento
+  version          Int            @default(1)
+  parentDocumentId String?        // Documento anterior (se for nova versão)
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([processId])
+  @@index([documentType])
+  @@map("flow_documents")
+}
+
+// ============================================================================
+// TEMPLATES DE WORKFLOW
+// ============================================================================
+
+model WorkflowTemplate {
+  id               String         @id @default(cuid())
+  name             String         // Ex: "Fluxo de Memorando Padrão"
+  description      String?
+  version          Int            @default(1)
+  isActive         Boolean        @default(true)
+
+  // Steps configurados como JSON array
+  // [{ id, name, sectorId, sectorName, slaHours, order, actions: ["aprovar","rejeitar","despachar"] }]
+  steps            Json           @default("[]")
+
+  // Transições como JSON array
+  // [{ fromStepId, toStepId, condition?, label }]
+  transitions      Json           @default("[]")
+
+  // Relações
+  instances        WorkflowInstance[]
+  processTypes     InternalProcessType[]
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@map("flow_workflow_templates")
+}
+
+// ============================================================================
+// INSTÂNCIA DE WORKFLOW (por processo)
+// ============================================================================
+
+model WorkflowInstance {
+  id               String         @id @default(cuid())
+
+  processId        String         @unique
+  process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  templateId       String
+  template         WorkflowTemplate @relation(fields: [templateId], references: [id])
+
+  currentStepId    String         // ID do step atual (referencia steps[].id do template)
+  currentStepName  String         // Nome do step atual (snapshot)
+  status           WorkflowStatus @default(ATIVO)
+
+  startedAt        DateTime       @default(now())
+  completedAt      DateTime?
+
+  // Relações
+  stepHistory      WorkflowStepHistory[]
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([status])
+  @@map("flow_workflow_instances")
+}
+
+// ============================================================================
+// HISTÓRICO DE ETAPAS DO WORKFLOW
+// ============================================================================
+
+model WorkflowStepHistory {
+  id               String         @id @default(cuid())
+
+  instanceId       String
+  instance         WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  stepId           String         // ID do step
+  stepName         String         // Nome do step (snapshot)
+  action           String         // "aprovado", "rejeitado", "despachado"
+  note             String?        @db.Text
+  userId           String
+  userName         String
+
+  enteredAt        DateTime       @default(now())
+  completedAt      DateTime?
+
+  @@index([instanceId])
+  @@map("flow_workflow_step_history")
+}

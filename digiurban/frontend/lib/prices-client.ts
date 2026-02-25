@@ -151,6 +151,7 @@ export class PricesClient {
   /** Busca por item (texto livre) */
   async search(params: PriceSearchRequest): Promise<PriceSearchResponse> {
     const { data } = await api.post<PriceSearchResponse>(`${this.baseUrl}/search`, params);
+    if (!data) throw new Error('Erro ao buscar preços');
     return data;
   }
 
@@ -165,15 +166,20 @@ export class PricesClient {
       filters,
       period,
     });
+    if (!data) throw new Error('Erro ao realizar busca em lote');
     return data;
   }
 
-  /** Gera relatório PDF (retorna Blob) */
+  /** Gera relatório PDF — usa fetch direto para suportar responseType blob */
   async generateReport(params: ReportRequest): Promise<Blob> {
-    const response = await api.post(`${this.baseUrl}/reports/price-research`, params, {
-      responseType: 'blob',
+    const response = await fetch(`${this.baseUrl}/reports/price-research`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify(params),
     });
-    return response.data as Blob;
+    if (!response.ok) throw new Error('Erro ao gerar relatório');
+    return response.blob();
   }
 
   /** Download de relatório — abre no browser ou força download */
@@ -190,12 +196,14 @@ export class PricesClient {
   /** Status da ingestão */
   async getIngestStatus(): Promise<IngestStatus> {
     const { data } = await api.get<IngestStatus>(`${this.baseUrl}/ingest/status`);
+    if (!data) throw new Error('Erro ao obter status de ingestão');
     return data;
   }
 
   /** Trigger ingestão manual */
   async triggerIngest(options?: { since_days?: number; uf?: string }): Promise<{ jobId: string }> {
     const { data } = await api.post<{ jobId: string }>(`${this.baseUrl}/ingest/run`, options ?? {});
+    if (!data) throw new Error('Erro ao iniciar ingestão');
     return data;
   }
 
@@ -206,13 +214,15 @@ export class PricesClient {
     page?: number;
     page_size?: number;
   }): Promise<AuditListResponse> {
-    const { data } = await api.get<AuditListResponse>(`${this.baseUrl}/audits`, { params });
+    const { data } = await api.get<AuditListResponse>(`${this.baseUrl}/audits`, params);
+    if (!data) throw new Error('Erro ao listar auditorias');
     return data;
   }
 
   /** Health check do módulo */
   async health(): Promise<{ status: string }> {
     const { data } = await api.get<{ status: string }>(`${this.baseUrl}/health`);
+    if (!data) throw new Error('Módulo de preços indisponível');
     return data;
   }
 }

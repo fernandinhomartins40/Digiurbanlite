@@ -1,0 +1,112 @@
+<div style="text-align: center; margin-bottom: 24px;">
+  <h2 style="margin: 0; font-size: 16pt; text-transform: uppercase; letter-spacing: 2px; color: #1a365d;">
+    Prefeitura Municipal
+  </h2>
+  <p style="margin: 4px 0 0; font-size: 10pt; color: #4a5568;">
+    Sistema de Processos Internos — DigiUrban
+  </p>
+  <hr style="border: none; border-top: 2px solid #1a365d; margin-top: 12px;" />
+</div>
+
+<div style="text-align: center; margin-bottom: 20px;">
+  <h3 style="margin: 0; font-size: 14pt; font-weight: bold; color: #2d3748;">
+    DESPACHO
+  </h3>
+  <p style="margin: 4px 0; font-size: 10pt; color: #718096;">
+    Processo nº {{processNumber}} | {{processType}}
+  </p>
+</div>
+
+<table style="width: 100%; margin-bottom: 16px; border: 1px solid #e2e8f0;">
+  <tr style="background: #f7fafc;">
+    <td style="padding: 8px 12px; font-weight: bold; width: 35%; border-right: 1px solid #e2e8f0;">Processo</td>
+    <td style="padding: 8px 12px;">{{processNumber}}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Tipo</td>
+    <td style="padding: 8px 12px;">{{processType}}</td>
+  </tr>
+  <tr style="background: #f7fafc;">
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Assunto</td>
+    <td style="padding: 8px 12px;">{{processSubject}}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Data de Abertura</td>
+    <td style="padding: 8px 12px;">{{processCreatedAt}}</td>
+  </tr>
+  <tr style="background: #f7fafc;">
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Setor de Origem</td>
+    <td style="padding: 8px 12px;">{{originSectorName}}</td>
+  </tr>
+  <tr>
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Setor Atual</td>
+    <td style="padding: 8px 12px;">{{currentSectorName}}</td>
+  </tr>
+  <tr style="background: #f7fafc;">
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Responsável</td>
+    <td style="padding: 8px 12px;">{{currentUserName}}</td>
+  </tr>
+  {{#if processDueAt}}
+  <tr>
+    <td style="padding: 8px 12px; font-weight: bold; border-right: 1px solid #e2e8f0;">Prazo</td>
+    <td style="padding: 8px 12px;">{{processDueAt}}</td>
+  </tr>
+  {{/if}}
+</table>
+
+{{#if processDescription}}
+<div style="margin-bottom: 16px;">
+  <h4 style="margin: 0 0 8px; font-size: 11pt; color: #2d3748;">Descrição</h4>
+  <p style="text-align: justify; line-height: 1.8;">{{processDescription}}</p>
+</div>
+{{/if}}
+
+{{#if despachoText}}
+<div style="margin: 24px 0; padding: 16px; background: #f7fafc; border-left: 4px solid #3182ce;">
+  <h4 style="margin: 0 0 8px; font-size: 11pt; color: #2d3748;">Despacho</h4>
+  <p style="text-align: justify; line-height: 1.8;">{{despachoText}}</p>
+</div>
+{{/if}}
+
+{{#if hasDispatches}}
+<div style="margin-top: 24px;">
+  <h4 style="margin: 0 0 12px; font-size: 11pt; color: #2d3748;">Histórico de Tramitação</h4>
+  <table style="width: 100%; border: 1px solid #e2e8f0; font-size: 9pt;">
+    <thead>
+      <tr style="background: #edf2f7;">
+        <th style="padding: 6px 8px; text-align: left;">Data</th>
+        <th style="padding: 6px 8px; text-align: left;">Ação</th>
+        <th style="padding: 6px 8px; text-align: left;">De</th>
+        <th style="padding: 6px 8px; text-align: left;">Para</th>
+        <th style="padding: 6px 8px; text-align: left;">Servidor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {{#each dispatches}}
+      <tr>
+        <td style="padding: 6px 8px;">{{this.date}}</td>
+        <td style="padding: 6px 8px;">{{this.action}}</td>
+        <td style="padding: 6px 8px;">{{this.fromSectorName}}</td>
+        <td style="padding: 6px 8px;">{{this.toSectorName}}</td>
+        <td style="padding: 6px 8px;">{{this.fromUserName}}</td>
+      </tr>
+      {{/each}}
+    </tbody>
+  </table>
+</div>
+{{/if}}
+
+<div style="margin-top: 48px; text-align: center;">
+  <p style="margin: 0; font-size: 10pt; color: #718096;">
+    {{currentSectorName}}, {{generatedAtDate}}
+  </p>
+  <div style="margin-top: 48px; border-top: 1px solid #333; width: 250px; display: inline-block;">
+    <p style="margin: 4px 0 0; font-size: 10pt; font-weight: bold;">{{generatedByName}}</p>
+    <p style="margin: 0; font-size: 9pt; color: #718096;">{{currentSectorName}}</p>
+  </div>
+</div>
+
+<div style="margin-top: 32px; text-align: center; font-size: 7pt; color: #a0aec0;">
+  <p>Documento gerado automaticamente pelo Sistema DigiUrban em {{generatedAt}}</p>
+  <p>Processo nº {{processNumber}}</p>
+</div>

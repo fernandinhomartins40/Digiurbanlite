@@ -158,6 +158,9 @@ loadRoute('/api/internal', './routes/internal.routes');
 // Módulo de Pesquisa de Preços Públicos (proxy → digiurban-prices)
 loadRoute('/api/prices', './routes/prices-proxy.routes');
 
+// Módulo de Processos Internos (proxy → digiurban-flow)
+loadRoute('/api/flow', './routes/flow-proxy.routes');
+
 // Administração de fluxos do bot
 loadRoute('/api/admin/flows', './routes/admin-flows.routes');
 

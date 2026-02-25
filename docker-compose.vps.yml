@@ -236,7 +236,6 @@ services:
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX_REQUESTS=100
       - SLA_CHECK_INTERVAL_MS=300000
-      - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
       - LOG_LEVEL=info
     volumes:
       - flow_uploads:/app/uploads
@@ -254,7 +253,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 60s
+      start_period: 90s
 
   digiurban:
     build:
@@ -389,6 +388,10 @@ volumes:
   opensearch_data:
     driver: local
   prices_uploads:
+    driver: local
+  flow_uploads:
+    driver: local
+  flow_logs:
     driver: local
 
 networks:

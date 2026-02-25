@@ -1,0 +1,66 @@
+<div style="text-align: center; margin-bottom: 24px;">
+  <h2 style="margin: 0; font-size: 16pt; text-transform: uppercase; letter-spacing: 2px; color: #1a365d;">
+    Prefeitura Municipal
+  </h2>
+  <p style="margin: 4px 0 0; font-size: 10pt; color: #4a5568;">
+    {{originSectorName}}
+  </p>
+  <hr style="border: none; border-top: 2px solid #1a365d; margin-top: 12px;" />
+</div>
+
+<div style="margin-bottom: 24px;">
+  <h3 style="margin: 0; font-size: 14pt; font-weight: bold; color: #2d3748; text-align: center;">
+    OFÍCIO Nº {{processNumber}}
+  </h3>
+</div>
+
+<div style="text-align: right; margin-bottom: 24px; font-size: 11pt;">
+  <p style="margin: 0;">{{generatedAtDate}}</p>
+</div>
+
+<div style="margin-bottom: 20px; font-size: 11pt;">
+  {{#if destinatarioNome}}
+  <p style="margin: 0; font-weight: bold;">{{destinatarioNome}}</p>
+  {{/if}}
+  {{#if destinatarioCargo}}
+  <p style="margin: 0;">{{destinatarioCargo}}</p>
+  {{/if}}
+  {{#if destinatarioOrgao}}
+  <p style="margin: 0;">{{destinatarioOrgao}}</p>
+  {{/if}}
+  {{#if destinatarioCidade}}
+  <p style="margin: 0;">{{destinatarioCidade}}</p>
+  {{/if}}
+</div>
+
+<div style="margin-bottom: 16px; font-size: 11pt;">
+  <p style="margin: 0; font-weight: bold;">Assunto: {{processSubject}}</p>
+  <p style="margin: 4px 0 0; font-size: 10pt; color: #718096;">Ref.: Processo nº {{processNumber}}</p>
+</div>
+
+<hr style="border: none; border-top: 1px solid #cbd5e0; margin: 16px 0;" />
+
+<div style="text-align: justify; line-height: 2; font-size: 12pt;">
+  <p style="text-indent: 40px;">Senhor(a),</p>
+
+  {{#if processDescription}}
+  <p style="text-indent: 40px;">{{processDescription}}</p>
+  {{/if}}
+
+  {{#if oficioBody}}
+  <p style="text-indent: 40px;">{{oficioBody}}</p>
+  {{/if}}
+
+  <p style="text-indent: 40px; margin-top: 16px;">Atenciosamente,</p>
+</div>
+
+<div style="margin-top: 48px; text-align: center;">
+  <div style="margin-top: 48px; border-top: 1px solid #333; width: 300px; display: inline-block;">
+    <p style="margin: 4px 0 0; font-size: 11pt; font-weight: bold;">{{createdByName}}</p>
+    <p style="margin: 0; font-size: 10pt; color: #718096;">{{originSectorName}}</p>
+  </div>
+</div>
+
+<div style="margin-top: 32px; text-align: center; font-size: 7pt; color: #a0aec0;">
+  <p>Documento gerado pelo Sistema DigiUrban em {{generatedAt}}</p>
+</div>

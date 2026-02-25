@@ -52,7 +52,8 @@ import {
   FolderTree,
   Briefcase,
   UserCog,
-  Link2
+  Link2,
+  ArrowRightLeft
 } from 'lucide-react'
 
 interface NavItem {
@@ -300,6 +301,18 @@ export function AdminSidebar() {
           href: '/admin/email-accounts',
           icon: UserCircle,
           minRole: 'ADMIN'
+        }
+      ]
+    },
+    {
+      title: 'Processos Internos',
+      items: [
+        {
+          title: 'Processos Internos',
+          href: '/admin/processos-internos',
+          icon: ArrowRightLeft,
+          minRole: 'COORDINATOR',
+          badge: 'NOVO'
         }
       ]
     },
