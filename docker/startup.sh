@@ -49,7 +49,7 @@ PRISMA_BIN="./node_modules/.bin/prisma"
 echo "📦 Executando migrations do Prisma..."
 $PRISMA_BIN migrate deploy || {
   echo "⚠️ Migrations falharam, tentando db push..."
-  $PRISMA_BIN db push --skip-generate || {
+  $PRISMA_BIN db push --skip-generate --accept-data-loss || {
     echo "❌ db push falhou"
     exit 1
   }
