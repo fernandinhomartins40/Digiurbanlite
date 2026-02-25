@@ -1,4 +1,5 @@
 import { prisma } from '../models/prisma';
+import { Prisma } from '@prisma/client';
 import { SearchResponse } from './search.service';
 import { SearchFilters, SearchPeriod } from '../search_index/opensearch.queries';
 import { config } from '../config/config';
@@ -20,7 +21,7 @@ export async function recordSearchAudit(
     data: {
       userId: req.userId ?? null,
       query: searchResult.query,
-      filters: (req.filters as Record<string, unknown> | undefined) ?? null,
+      filters: req.filters ? (req.filters as Prisma.InputJsonValue) : Prisma.JsonNull,
       periodFrom: period?.from ? new Date(period.from) : null,
       periodTo: period?.to ? new Date(period.to) : null,
       resultsCount: searchResult.total,

@@ -1,4 +1,5 @@
 import { prisma } from '../models/prisma';
+import { Prisma } from '@prisma/client';
 import { getPncpClient } from '../connectors/pncp/pncp.client';
 import { getOpenSearchClient } from '../search_index/opensearch.client';
 import { config } from '../config/config';
@@ -68,7 +69,7 @@ export async function runIngestJob(options: IngestJobOptions = {}): Promise<Inge
           data: {
             source: 'pncp',
             endpoint: 'contratacoes/publicacoes',
-            payload: contratacao as unknown as Record<string, unknown>,
+            payload: contratacao as unknown as Prisma.InputJsonValue,
             processedAt: new Date(),
             ingestRunId: run.id,
           },
@@ -226,7 +227,7 @@ export async function runIngestJob(options: IngestJobOptions = {}): Promise<Inge
         itemsUpdated,
         itemsSkipped,
         errors,
-        errorDetails: errorDetails.length > 0 ? errorDetails : undefined,
+        errorDetails: errorDetails.length > 0 ? (errorDetails as Prisma.InputJsonValue) : undefined,
       },
     });
 
@@ -247,7 +248,7 @@ export async function runIngestJob(options: IngestJobOptions = {}): Promise<Inge
         finishedAt: new Date(),
         itemsIngested,
         errors: errors + 1,
-        errorDetails: [{ fatal: (fatalErr as Error).message }],
+        errorDetails: [{ fatal: (fatalErr as Error).message }] as Prisma.InputJsonValue,
       },
     });
 
