@@ -4903,6 +4903,14 @@ model Conversation {
   // Metadados
   metadata Json?
 
+  // "Apagar para mim" — mensagens com sentAt < clearedAtN ficam ocultas para participante N
+  clearedAt1 DateTime? // Timestamp de "apagar para mim" do participant1
+  clearedAt2 DateTime? // Timestamp de "apagar para mim" do participant2
+
+  // "Excluir conversa" por participante — oculta a conversa inteira para quem excluiu
+  deletedAt1 DateTime? // Timestamp de exclusão pelo participant1
+  deletedAt2 DateTime? // Timestamp de exclusão pelo participant2
+
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   closedAt  DateTime?
