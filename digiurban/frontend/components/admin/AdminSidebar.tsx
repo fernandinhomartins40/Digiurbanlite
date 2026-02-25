@@ -53,7 +53,8 @@ import {
   Briefcase,
   UserCog,
   Link2,
-  ArrowRightLeft
+  ArrowRightLeft,
+  Search
 } from 'lucide-react'
 
 interface NavItem {
@@ -337,6 +338,12 @@ export function AdminSidebar() {
           href: '/admin/relatorios',
           icon: FileText,
           permissions: ['reports:department', 'reports:full']
+        },
+        {
+          title: 'Pesquisa de Preços',
+          href: '/admin/pesquisa-precos',
+          icon: Search,
+          minRole: 'COORDINATOR'
         }
       ]
     },
