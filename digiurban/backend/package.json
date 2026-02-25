@@ -61,7 +61,7 @@
     "train-phi4:all": "tsx ../../scripts/train-phi4.ts all"
   },
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "~6.19.0",
     "@types/handlebars": "^4.0.40",
     "@types/ioredis": "^4.28.10",
     "@types/joi": "^17.2.2",
@@ -144,7 +144,7 @@
     "lint-staged": "^16.2.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",
-    "prisma": "^6.19.0",
+    "prisma": "~6.19.0",
     "supertest": "^7.1.4",
     "ts-jest": "^29.4.5",
     "ts-migrate": "^0.1.35",

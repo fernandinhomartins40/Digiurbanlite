@@ -78,9 +78,12 @@ EXPOSE 9001
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
   CMD node -e "require('http').get('http://localhost:9001/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
+# Copiar script de startup
+COPY docker-entrypoint.sh /app/docker-entrypoint.sh
+RUN chmod +x /app/docker-entrypoint.sh
+
 # Usar dumb-init para gerenciar processos
 ENTRYPOINT ["dumb-init", "--"]
 
-# Comando padrão: iniciar o servidor
-# Nota: Migrations são executadas pelo container principal (digiurban)
-CMD ["node", "dist/index.js"]
+# Startup: migrations + servidor
+CMD ["/app/docker-entrypoint.sh"]

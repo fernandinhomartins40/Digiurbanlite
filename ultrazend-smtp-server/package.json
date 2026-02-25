@@ -30,7 +30,7 @@
   "author": "UltraZend Team",
   "license": "MIT",
   "dependencies": {
-    "@prisma/client": "^6.19.0",
+    "@prisma/client": "~6.19.0",
     "smtp-server": "^3.14.0",
     "mailparser": "^3.7.4",
     "nodemailer": "^6.9.14",
@@ -44,7 +44,7 @@
     "@types/bcrypt": "^5.0.2",
     "@types/smtp-server": "^3.5.12",
     "@types/mailparser": "^3.4.6",
-    "prisma": "^6.19.0",
+    "prisma": "~6.19.0",
     "typescript": "^5.6.2",
     "jest": "^29.7.0",
     "@types/jest": "^29.5.12"
