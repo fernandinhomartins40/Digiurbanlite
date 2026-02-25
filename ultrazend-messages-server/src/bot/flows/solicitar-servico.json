@@ -1,7 +1,7 @@
 {
   "name": "solicitar_servico",
   "description": "Fluxo completo para solicitar um serviço municipal por secretaria",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "metadata": {
     "icon": "📝",
     "color": "#2196F3",
@@ -254,7 +254,7 @@
       "id": "show_required_docs",
       "type": "message",
       "config": {
-        "text": "📎 **Documentos necessários:**\n\nEste serviço requer documentos. Você pode enviar agora ou adicionar depois pelo painel web."
+        "text": "📎 **Documentos necessários:**\n\nEste serviço exige documentos obrigatórios. Envie todos os documentos solicitados para que sua solicitação seja processada."
       },
       "transitions": [
         { "to": "upload_documents" }
@@ -264,12 +264,12 @@
       "id": "upload_documents",
       "type": "upload",
       "config": {
-        "text": "📤 Envie os documentos necessários:\n\nVocê pode enviar arquivos ou usar a câmera para digitalizar.\n\n💡 Se preferir, pule para enviar depois pelo portal web.",
+        "text": "📤 **Envie os documentos necessários:**\n\nVocê pode enviar arquivos do dispositivo ou usar a câmera para digitalizar os documentos.",
         "multiple": true,
         "maxFiles": 5,
         "maxFileSize": 10,
         "allowedTypes": ["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-        "allowSkip": true,
+        "allowSkip": false,
         "requiredDocuments": "{{formSchemaData.requiredDocuments}}",
         "saveAs": "uploadedDocuments"
       },

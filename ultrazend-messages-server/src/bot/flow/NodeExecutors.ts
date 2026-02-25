@@ -697,17 +697,43 @@ export class NodeExecutors {
     const config = node.config as UploadNodeConfig;
     const text = this.templateEngine.render(config.text, context.execution.state);
 
-    // Se há arquivos, salva no estado
+    // Se há input do usuário, processa upload ou skip
     if (context.userInput !== undefined) {
-      // Validações
+      // Detectar skip: "pular", string vazia ou array vazio
+      const isSkipInput =
+        context.userInput === 'pular' ||
+        context.userInput === 'skip' ||
+        context.userInput === '' ||
+        (Array.isArray(context.userInput) && context.userInput.length === 0);
+
+      if (isSkipInput) {
+        if (!config.allowSkip) {
+          return {
+            success: false,
+            message: '📎 É necessário enviar os documentos obrigatórios para continuar.',
+            waitingForInput: true,
+          };
+        }
+        // Skip permitido: avança sem documentos
+        const saveAs = config.saveAs || node.id;
+        const stateUpdates = this.buildStateUpdates(saveAs, [], context.execution.state as any);
+        return {
+          success: true,
+          nextNodeId: node.transitions[0]?.to,
+          waitingForInput: false,
+          stateUpdates,
+        };
+      }
+
+      // Validações de arquivos
       const files = Array.isArray(context.userInput)
-        ? context.userInput
+        ? context.userInput.filter((f: any) => f && typeof f === 'object' && f.fileName)
         : [context.userInput];
 
-      if (!config.allowSkip && files.length === 0) {
+      if (files.length === 0) {
         return {
           success: false,
-          message: 'É necessário enviar ao menos um arquivo.',
+          message: '📎 É necessário enviar ao menos um arquivo.',
           waitingForInput: true,
         };
       }

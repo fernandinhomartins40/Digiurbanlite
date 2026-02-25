@@ -841,6 +841,9 @@ export const processFormSchema: ActionHandler = async (params, _context) => {
       }
     }
 
+    // Verificar se há documentos marcados como obrigatórios
+    const hasRequiredDocuments = requiredDocs.some((doc: any) => doc.required !== false);
+
     return {
       hasForm: questions.length > 0,
       questions,
@@ -857,6 +860,7 @@ export const processFormSchema: ActionHandler = async (params, _context) => {
       },
       requiresDocuments: service.requiresDocuments,
       requiredDocuments: requiredDocs,
+      hasRequiredDocuments,
     };
   } catch (error: any) {
     console.error('[ActionHandlers.processFormSchema] Erro:', error?.message);
