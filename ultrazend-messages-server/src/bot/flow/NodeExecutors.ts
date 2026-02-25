@@ -137,12 +137,19 @@ export class NodeExecutors {
     // Avança automaticamente para o próximo nodo
     const nextNodeId = node.transitions[0]?.to;
 
+    // Verificar se há protocolDetailCard no state (set by getProtocolDetails action)
+    let data: any = config.media ? { media: config.media } : undefined;
+    const state = context.execution.state as any;
+    if (state?.protocolDetails?.protocolDetailCard) {
+      data = { ...data, protocolDetailCard: state.protocolDetails.protocolDetailCard };
+    }
+
     return {
       success: true,
       message: text,
       nextNodeId,
       waitingForInput: false,
-      data: config.media ? { media: config.media } : undefined,
+      data,
     };
   }
 

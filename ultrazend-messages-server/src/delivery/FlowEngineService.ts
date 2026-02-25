@@ -80,6 +80,11 @@ export class FlowEngineService {
       metadata.requiredDocuments = response.data.requiredDocuments;
     }
 
+    // Card rico de detalhes do protocolo
+    if (response.data?.protocolDetailCard) {
+      metadata.protocolDetailCard = response.data.protocolDetailCard;
+    }
+
     return metadata;
   }
 

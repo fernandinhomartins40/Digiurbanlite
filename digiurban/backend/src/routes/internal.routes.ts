@@ -578,6 +578,29 @@ router.get('/protocols/number/:protocolNumber', async (req: Request, res: Respon
             name: true,
           },
         },
+        stages: {
+          orderBy: { stageOrder: 'asc' },
+          select: {
+            id: true,
+            stageName: true,
+            stageOrder: true,
+            status: true,
+            startedAt: true,
+            completedAt: true,
+          },
+        },
+        sla: {
+          select: {
+            expectedEndDate: true,
+            isOverdue: true,
+            daysOverdue: true,
+          },
+        },
+        _count: {
+          select: {
+            pendings: { where: { status: 'OPEN' } },
+          },
+        },
       },
     });
 

@@ -299,6 +299,76 @@ export const getProtocolByNumber: ActionHandler = async (params, context) => {
   }
 };
 
+export const getProtocolDetails: ActionHandler = async (params, context) => {
+  const { protocolNumber } = params;
+  if (!protocolNumber) {
+    return { success: false, error: '❌ Número do protocolo não fornecido. Digite o número do protocolo.' };
+  }
+  try {
+    const result = await integration.getProtocolByNumber(protocolNumber, context.citizenId);
+
+    // Estruturar stages para o card
+    const stages = (result.stages || []).map((stage: any) => ({
+      id: stage.id,
+      name: stage.stageName,
+      order: stage.stageOrder,
+      status: stage.status,
+      startedAt: stage.startedAt,
+      completedAt: stage.completedAt,
+    }));
+
+    const completedStages = stages.filter((s: any) => s.status === 'COMPLETED').length;
+    const totalStages = stages.length;
+    const isProtocolCompleted = result.status === 'CONCLUIDO';
+    const progressPercent = isProtocolCompleted
+      ? 100
+      : totalStages > 0 ? Math.round((completedStages / totalStages) * 100) : 0;
+
+    const protocolDetailCard = {
+      type: 'protocol_detail',
+      protocol: {
+        id: result.id,
+        number: result.number,
+        title: result.title,
+        status: result.status,
+        priority: result.priority,
+        createdAt: result.createdAt,
+        concludedAt: result.concludedAt,
+      },
+      service: {
+        name: result.service?.name,
+        estimatedDays: result.service?.estimatedDays,
+        category: result.service?.category,
+      },
+      department: {
+        name: result.department?.name,
+      },
+      stages: isProtocolCompleted
+        ? stages.map((s: any) => ({ ...s, status: 'COMPLETED' }))
+        : stages,
+      progress: {
+        completed: isProtocolCompleted ? totalStages : completedStages,
+        total: totalStages,
+        percent: progressPercent,
+      },
+      sla: result.sla ? {
+        expectedEndDate: result.sla.expectedEndDate,
+        isOverdue: result.sla.isOverdue,
+        daysOverdue: result.sla.daysOverdue,
+      } : null,
+      openPendingsCount: result._count?.pendings || 0,
+    };
+
+    return { protocol: result, protocolDetailCard };
+  } catch (error: any) {
+    console.error('[ActionHandlers.getProtocolDetails] Erro:', error?.message);
+    if (error?.response?.status === 404) {
+      return { success: false, error: `🔍 Protocolo "${protocolNumber}" não encontrado. Verifique o número e tente novamente.` };
+    }
+    return { success: false, error: formatFriendlyError(error, 'Não foi possível buscar o protocolo.') };
+  }
+};
+
 export const addProtocolComment: ActionHandler = async (params, context) => {
   const { protocolId, comment, message } = params;
   const resolvedComment = comment || message;
@@ -806,6 +876,7 @@ export const actionHandlers: Record<string, ActionHandler> = {
   createProtocol,
   getProtocols,
   getProtocolByNumber,
+  getProtocolDetails,
   addProtocolComment,
   getProtocolInteractions,
   getCitizenProfile,

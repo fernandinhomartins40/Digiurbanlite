@@ -1,7 +1,7 @@
 {
   "name": "consultar_protocolo",
   "description": "Fluxo para consultar e gerenciar protocolos",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "metadata": {
     "icon": "🔍",
     "color": "#FF9800",
@@ -67,7 +67,7 @@
       "id": "get_protocol_by_number",
       "type": "action",
       "config": {
-        "action": "getProtocolByNumber",
+        "action": "getProtocolDetails",
         "params": {
           "protocolNumber": "{{protocolNumber}}"
         },
@@ -168,7 +168,7 @@
       "id": "load_protocol_details",
       "type": "action",
       "config": {
-        "action": "getProtocolByNumber",
+        "action": "getProtocolDetails",
         "params": {
           "protocolNumber": "{{selectedProtocolId_data.metadata.number}}"
         },

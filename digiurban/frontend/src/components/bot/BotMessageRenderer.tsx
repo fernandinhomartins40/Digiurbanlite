@@ -11,6 +11,7 @@ import { RatingCard } from './RatingCard';
 import { DocumentUploadCard } from './DocumentUploadCard';
 import { SearchableSelect } from './SearchableSelect';
 import { MessageCard } from './MessageCard';
+import { ProtocolDetailCard } from './ProtocolDetailCard';
 import { InteractiveCard } from './InteractiveCard';
 import { QuickReplies } from './QuickReplies';
 import { FormCard } from './FormCard';
@@ -237,6 +238,10 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         <div className="bg-white rounded-lg p-4 shadow-sm">
           <p className="text-gray-900 whitespace-pre-wrap">{message.content}</p>
         </div>
+      )}
+
+      {metadata?.protocolDetailCard && (
+        <ProtocolDetailCard data={metadata.protocolDetailCard} />
       )}
 
       {messageType === 'card' && metadata?.cards && (
