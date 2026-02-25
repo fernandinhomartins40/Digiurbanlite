@@ -7,6 +7,9 @@ echo "========================================="
 
 cd /app
 
+# Usar prisma local (evita npx baixar versao 7.x incompativel)
+PRISMA_BIN="./node_modules/.bin/prisma"
+
 # Aguardar PostgreSQL estar pronto
 echo "Aguardando PostgreSQL..."
 max_attempts=30
@@ -34,7 +37,7 @@ fi
 
 # Executar migrations
 echo "Executando migrations..."
-npx prisma migrate deploy 2>&1 || {
+$PRISMA_BIN migrate deploy 2>&1 || {
   echo "AVISO: prisma migrate deploy falhou, tentando aplicar SQL manualmente..."
   # Fallback: aplicar migrations SQL diretamente
   for migration_dir in prisma/migrations/*/; do

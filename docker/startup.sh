@@ -42,11 +42,14 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
   echo "⚠️ Aviso: Erro ao corrigir enum SubscriptionStatus"
 }
 
+# Usar prisma local (evita npx baixar versao 7.x incompativel)
+PRISMA_BIN="./node_modules/.bin/prisma"
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
-npx prisma migrate deploy || {
+$PRISMA_BIN migrate deploy || {
   echo "⚠️ Migrations falharam, tentando db push..."
-  npx prisma db push --skip-generate || {
+  $PRISMA_BIN db push --skip-generate || {
     echo "❌ db push falhou"
     exit 1
   }
@@ -55,7 +58,7 @@ npx prisma migrate deploy || {
 # Gerar Prisma Client APÓS migrations (para garantir sincronização)
 echo "🔧 Gerando Prisma Client..."
 rm -rf /app/backend/node_modules/.prisma || true
-npx prisma generate || {
+$PRISMA_BIN generate || {
   echo "❌ Prisma generate falhou"
   exit 1
 }

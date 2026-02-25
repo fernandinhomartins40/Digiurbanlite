@@ -23,7 +23,7 @@ COPY src ./src
 
 # Gerar Prisma Client (com DATABASE_URL dummy para build)
 ENV DATABASE_URL="postgresql://dummy:dummy@localhost:5432/dummy"
-RUN npx prisma generate
+RUN ./node_modules/.bin/prisma generate
 
 # Compilar TypeScript (arquivos Prisma)
 RUN npm run build:prisma

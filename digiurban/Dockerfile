@@ -38,7 +38,7 @@ COPY digiurban/shared ./src/shared
 # Gerar Prisma Client e Build TypeScript
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
-RUN npx prisma generate && \
+RUN ./node_modules/.bin/prisma generate && \
     rm -rf dist/.tsbuildinfo dist/* && \
     npx tsc -p tsconfig.docker.json && \
     ls -la dist && \
