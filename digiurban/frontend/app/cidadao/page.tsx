@@ -27,7 +27,10 @@ import {
   Settings,
   Sparkles,
   Users,
-  UserCheck
+  UserCheck,
+  Archive,
+  Trash2,
+  Eraser,
 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -35,6 +38,23 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
@@ -69,6 +89,11 @@ export default function CitizenDashboard() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<{
+    type: 'clear-for-me' | 'clear' | 'archive' | 'delete';
+    conversationId: string;
+    title: string;
+  } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
@@ -420,6 +445,93 @@ export default function CitizenDashboard() {
     }, 100);
   };
 
+  // === Gerenciamento de conversas (limpar para mim, limpar para todos, arquivar, deletar) ===
+  const handleClearForMe = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear-for-me`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao limpar mensagens');
+      }
+      setMessages([]);
+      toast({ title: 'Mensagens limpas', description: 'As mensagens foram apagadas para você.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const handleClearMessages = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/clear`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao limpar mensagens');
+      }
+      setMessages([]);
+      toast({ title: 'Mensagens limpas', description: 'Todas as mensagens foram removidas.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const handleArchiveConversation = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}/archive`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao arquivar conversa');
+      }
+      setSelectedConversation(null);
+      setMessages([]);
+      toast({ title: 'Conversa arquivada', description: 'A conversa foi movida para Arquivadas.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível arquivar a conversa', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const handleDeleteConversation = async (conversationId: string) => {
+    try {
+      const response = await fetch(`${MESSAGES_API_URL}/conversations/${conversationId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Erro ao excluir conversa');
+      }
+      setSelectedConversation(null);
+      setMessages([]);
+      toast({ title: 'Conversa excluída', description: 'A conversa foi excluída definitivamente.' });
+    } catch (err: any) {
+      toast({ title: 'Erro', description: err.message || 'Não foi possível excluir a conversa', variant: 'destructive' });
+    }
+    setConfirmAction(null);
+  };
+
+  const executeConfirmAction = () => {
+    if (!confirmAction) return;
+    switch (confirmAction.type) {
+      case 'clear-for-me': handleClearForMe(confirmAction.conversationId); break;
+      case 'clear': handleClearMessages(confirmAction.conversationId); break;
+      case 'archive': handleArchiveConversation(confirmAction.conversationId); break;
+      case 'delete': handleDeleteConversation(confirmAction.conversationId); break;
+    }
+  };
+
+  const isProtectedConversation = selectedConversation?.isBotConversation;
+
   /**
    * Voltar para lista (mobile)
    */
@@ -754,9 +866,70 @@ export default function CitizenDashboard() {
                     </Button>
                   </>
                 )}
-                <Button variant="ghost" size="icon" className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}>
-                  <MoreVertical className="w-5 h-5" />
-                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}>
+                      <MoreVertical className="w-5 h-5" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setConfirmAction({
+                          type: 'clear-for-me',
+                          conversationId: selectedConversation.id,
+                          title: 'Apagar para mim?',
+                        })
+                      }
+                    >
+                      <Eraser className="w-4 h-4 mr-2" />
+                      Apagar para mim
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={() =>
+                        setConfirmAction({
+                          type: 'clear',
+                          conversationId: selectedConversation.id,
+                          title: 'Apagar para todos?',
+                        })
+                      }
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Apagar para todos
+                    </DropdownMenuItem>
+                    {!isProtectedConversation && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() =>
+                            setConfirmAction({
+                              type: 'archive',
+                              conversationId: selectedConversation.id,
+                              title: 'Arquivar conversa?',
+                            })
+                          }
+                        >
+                          <Archive className="w-4 h-4 mr-2" />
+                          Arquivar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600"
+                          onClick={() =>
+                            setConfirmAction({
+                              type: 'delete',
+                              conversationId: selectedConversation.id,
+                              title: 'Excluir conversa?',
+                            })
+                          }
+                        >
+                          <Trash2 className="w-4 h-4 mr-2" />
+                          Excluir conversa
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </div>
 
@@ -984,6 +1157,39 @@ export default function CitizenDashboard() {
           }}
         />
       )}
+
+      {/* Dialog de confirmação para ações destrutivas */}
+      <AlertDialog open={!!confirmAction} onOpenChange={(open) => !open && setConfirmAction(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{confirmAction?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmAction?.type === 'clear-for-me' &&
+                'As mensagens serão removidas apenas para você. O outro participante continuará vendo as mensagens.'}
+              {confirmAction?.type === 'clear' &&
+                'Todas as mensagens desta conversa serão removidas para todos os participantes.'}
+              {confirmAction?.type === 'archive' &&
+                'A conversa será movida para a aba Arquivadas. Você poderá acessá-la novamente quando quiser.'}
+              {confirmAction?.type === 'delete' &&
+                'A conversa e todas as suas mensagens serão excluídas definitivamente. Esta ação não pode ser desfeita.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={executeConfirmAction}
+              className={cn(
+                (confirmAction?.type === 'delete' || confirmAction?.type === 'clear') && 'bg-red-600 hover:bg-red-700'
+              )}
+            >
+              {confirmAction?.type === 'clear-for-me' && 'Apagar para mim'}
+              {confirmAction?.type === 'clear' && 'Apagar para todos'}
+              {confirmAction?.type === 'archive' && 'Arquivar'}
+              {confirmAction?.type === 'delete' && 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
