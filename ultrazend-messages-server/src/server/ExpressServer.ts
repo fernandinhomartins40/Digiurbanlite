@@ -524,7 +524,7 @@ export class ExpressServer {
           },
         });
 
-        // Atualizar conversa
+        // Atualizar conversa (limpar deletedAt do destinatário para ressurgir conversa)
         await prisma.conversation.update({
           where: { id: conversationId },
           data: {
@@ -532,15 +532,19 @@ export class ExpressServer {
             lastMessagePreview: content.substring(0, 100),
             totalMessages: { increment: 1 },
             ...(isParticipant1
-              ? { unreadCount2: { increment: 1 } }
-              : { unreadCount1: { increment: 1 } }),
+              ? { unreadCount2: { increment: 1 }, deletedAt2: null }
+              : { unreadCount1: { increment: 1 }, deletedAt1: null }),
           },
         });
 
-        // ✅ CORRIGIDO: Emitir APENAS UMA VEZ para sala da conversa
+        // Emitir para sala da conversa + sala pessoal do destinatário
         if (this.wsServer) {
           const messagePayload = { conversationId, message };
           this.wsServer.io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
+
+          const recipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
+          const recipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
+          this.wsServer.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
         }
 
         res.json(message);
@@ -594,7 +598,7 @@ export class ExpressServer {
         const actualRecipientId = isParticipant1 ? conversation.participant2Id : conversation.participant1Id;
         const actualRecipientType = isParticipant1 ? conversation.participant2Type : conversation.participant1Type;
 
-        // 3. Atualizar conversa
+        // 3. Atualizar conversa (limpar deletedAt do destinatário para ressurgir conversa)
         await prisma.conversation.update({
           where: { id: conversation.id },
           data: {
@@ -602,8 +606,8 @@ export class ExpressServer {
             lastMessagePreview: content.substring(0, 100),
             totalMessages: { increment: 1 },
             ...(isParticipant1
-              ? { unreadCount2: { increment: 1 } }
-              : { unreadCount1: { increment: 1 } }),
+              ? { unreadCount2: { increment: 1 }, deletedAt2: null }
+              : { unreadCount1: { increment: 1 }, deletedAt1: null }),
           },
         });
 
@@ -614,8 +618,9 @@ export class ExpressServer {
             message,
           };
 
-          // ✅ CORRIGIDO: Emitir mensagem APENAS UMA VEZ para sala da conversa
+          // Emitir para sala da conversa + sala pessoal do destinatário
           this.wsServer.io.to(`conversation:${conversation.id}`).emit('message:new', messagePayload);
+          this.wsServer.io.to(`user:${actualRecipientId}:${actualRecipientType}`).emit('message:new', messagePayload);
 
           // Notificar nova conversa para o destinatário (sala pessoal)
           const conversationWithDetails = await conversationService.getConversationById(conversation.id);

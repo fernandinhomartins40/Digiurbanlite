@@ -172,8 +172,10 @@ export class ConversationService {
       const conversations = await prisma.conversation.findMany({
         where: {
           OR: [
-            { participant1Id: userId, participant1Type: userType },
-            { participant2Id: userId, participant2Type: userType },
+            // Participante 1: mostrar se não excluiu (deletedAt1 = null)
+            { participant1Id: userId, participant1Type: userType, deletedAt1: null },
+            // Participante 2: mostrar se não excluiu (deletedAt2 = null)
+            { participant2Id: userId, participant2Type: userType, deletedAt2: null },
           ],
           status: { in: ['ACTIVE', 'ARCHIVED'] },
         },
@@ -363,27 +365,24 @@ export class ConversationService {
         throw new Error('A conversa com o DigiBot não pode ser excluída');
       }
 
-      const isParticipant =
-        (conversation.participant1Id === userId && conversation.participant1Type === userType) ||
-        (conversation.participant2Id === userId && conversation.participant2Type === userType);
+      const isParticipant1 =
+        conversation.participant1Id === userId && conversation.participant1Type === userType;
+      const isParticipant2 =
+        conversation.participant2Id === userId && conversation.participant2Type === userType;
 
-      if (!isParticipant) {
+      if (!isParticipant1 && !isParticipant2) {
         throw new Error('Unauthorized');
       }
 
-      // Soft delete das mensagens
-      await prisma.message.updateMany({
-        where: { conversationId },
-        data: { isDeleted: true, deletedAt: new Date(), deletedBy: userId },
-      });
-
-      // Fechar conversa
+      // Marcar exclusão apenas para este participante (não afeta o outro)
       await prisma.conversation.update({
         where: { id: conversationId },
-        data: { status: 'CLOSED', closedAt: new Date() },
+        data: isParticipant1
+          ? { deletedAt1: new Date() }
+          : { deletedAt2: new Date() },
       });
 
-      logger.info('Conversation deleted', { conversationId, userId });
+      logger.info('Conversation deleted for participant', { conversationId, userId, position: isParticipant1 ? 1 : 2 });
     } catch (error) {
       logger.error('Error deleting conversation', { error, conversationId });
       throw error;

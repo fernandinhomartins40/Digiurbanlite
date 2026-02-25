@@ -290,6 +290,7 @@ export class WebSocketServer {
       });
 
       // Atualizar conversa
+      const isP1Sender = conversation.participant1Id === socket.userId && conversation.participant1Type === socket.userType;
       await prisma.conversation.update({
         where: { id: conversationId },
         data: {
@@ -297,18 +298,22 @@ export class WebSocketServer {
           lastMessagePreview: content.substring(0, 100),
           totalMessages: { increment: 1 },
           // Incrementar unread para o outro participante
-          ...(conversation.participant1Id === socket.userId
-            ? { unreadCount2: { increment: 1 } }
-            : { unreadCount1: { increment: 1 } }),
+          ...(isP1Sender
+            ? { unreadCount2: { increment: 1 }, deletedAt2: null }
+            : { unreadCount1: { increment: 1 }, deletedAt1: null }),
         },
       });
 
-      // ✅ CORRIGIDO: Emitir APENAS UMA VEZ para a sala da conversa
-      // Todos os participantes já estão joined automaticamente (useConversations.ts:757-779)
-      this.io.to(`conversation:${conversationId}`).emit('message:new', {
-        conversationId,
-        message,
-      });
+      // Emitir para a sala da conversa
+      const messagePayload = { conversationId, message };
+      this.io.to(`conversation:${conversationId}`).emit('message:new', messagePayload);
+
+      // Também emitir para a sala pessoal do destinatário
+      // (garante entrega quando ele ainda não entrou na sala da conversa, ex: conversa recém-criada)
+      const isP1 = conversation.participant1Id === socket.userId && conversation.participant1Type === socket.userType;
+      const recipientId = isP1 ? conversation.participant2Id : conversation.participant1Id;
+      const recipientType = isP1 ? conversation.participant2Type : conversation.participant1Type;
+      this.io.to(`user:${recipientId}:${recipientType}`).emit('message:new', messagePayload);
 
       // Log
       await prisma.messageLog.create({

@@ -237,25 +237,38 @@ export function useConversations({
         };
       }
 
-      // ✅ CORRIGIDO: Identificar o nome correto do OUTRO participante
-      // Se o outro participante é CITIZEN, pegar citizenName do metadata
-      // Se o outro participante é SERVER, pegar serverName do metadata
+      // Identificar o nome correto do OUTRO participante
+      // Usar citizen1Name/citizen2Name e server1Name/server2Name específicos,
+      // pois citizenName genérico sempre pega o participant1 (que é o usuário logado)
       let participantName: string;
+      const meta = conv.metadata as any;
 
       if (otherParticipantType === 'CITIZEN') {
-        participantName = conv.metadata?.citizenName || `Cidadão ${otherParticipantId.substring(0, 8)}`;
+        // O outro participante é cidadão — qual posição ele ocupa?
+        const otherName = isParticipant1
+          ? (meta?.citizen2Name || meta?.citizenName)   // eu sou p1, outro é p2
+          : (meta?.citizen1Name || meta?.citizenName);   // eu sou p2, outro é p1
+        participantName = otherName || `Cidadão ${otherParticipantId.substring(0, 8)}`;
       } else if (otherParticipantType === 'SERVER') {
-        participantName = conv.metadata?.serverName || `Servidor ${otherParticipantId.substring(0, 8)}`;
+        const otherName = isParticipant1
+          ? (meta?.server2Name || meta?.serverName)
+          : (meta?.server1Name || meta?.serverName);
+        participantName = otherName || `Servidor ${otherParticipantId.substring(0, 8)}`;
       } else {
         participantName = `${otherParticipantType} ${otherParticipantId.substring(0, 8)}`;
       }
+
+      // Avatar do outro participante (não do logado)
+      const otherAvatar = isParticipant1
+        ? (meta?.citizen2Avatar || meta?.avatar)
+        : (meta?.citizen1Avatar || meta?.avatar);
 
       return {
         ...conv,
         title: participantName,
         citizenName: participantName,
         serverName: participantName,
-        avatar: conv.metadata?.avatar,
+        avatar: otherAvatar,
         isBot: false,
         isPinned: false,
         conversationStatus: conv.status === 'CLOSED' ? 'closed' : 'human',
