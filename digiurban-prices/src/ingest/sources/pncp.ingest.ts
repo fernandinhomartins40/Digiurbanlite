@@ -72,8 +72,9 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
     for (const contrato of contratos) {
       try {
         const org = await upsertOrganizationFromContrato(contrato);
+        const supplierName = contrato.nomeRazaoSocialFornecedor ?? contrato.nomeFornecedor ?? '';
         const supplier = contrato.niFornecedor
-          ? await upsertSupplier(contrato.niFornecedor, contrato.nomeFornecedor ?? '', contrato.tipoPessoa)
+          ? await upsertSupplier(contrato.niFornecedor, supplierName, contrato.tipoPessoa)
           : null;
 
         if (contrato.itens?.length) {
@@ -241,7 +242,7 @@ async function processContractItem(
     source: 'pncp',
     sourceId,
     supplierId,
-    supplierName: contrato.nomeFornecedor,
+    supplierName: contrato.nomeRazaoSocialFornecedor ?? contrato.nomeFornecedor,
     supplierCnpj: contrato.tipoPessoa === 'PJ' ? contrato.niFornecedor : null,
     confidenceScore,
     yearMonth,

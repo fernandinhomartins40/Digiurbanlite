@@ -153,12 +153,10 @@ COPY digiurban/backend/fix-categorization-migrations.js ./fix-categorization-mig
 COPY digiurban/backend/apply-uniqueness-migration.js ./apply-uniqueness-migration.js
 COPY digiurban/backend/update-service-uniqueness.js ./update-service-uniqueness.js
 
-# Copiar Playwright do builder e instalar browsers
-COPY --from=backend-builder /app/backend/node_modules/playwright ./node_modules/playwright
-
-# Playwright: definir path e instalar browsers
+# Playwright: instalar Chromium usando binário local dos node_modules copiados acima
+# IMPORTANTE: usar ./node_modules/.bin/playwright (não npx) para garantir versão correta
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx playwright install chromium --with-deps
+RUN node_modules/.bin/playwright install chromium --with-deps
 
 # Criar diretórios de dados e uploads
 RUN mkdir -p /app/data /app/uploads /app/logs && \
@@ -166,13 +164,20 @@ RUN mkdir -p /app/data /app/uploads /app/logs && \
     ln -sf /app/uploads /app/backend/uploads
 
 # ===== Frontend =====
+# output: 'standalone' → servidor é .next/standalone/server.js (não `next start`)
+# Estrutura final em /app/frontend:
+#   server.js              ← ponto de entrada (copiado do standalone)
+#   node_modules/          ← dependências mínimas do standalone
+#   .next/static/          ← assets JS/CSS
+#   public/                ← arquivos estáticos públicos
 WORKDIR /app/frontend
 
-# Copiar build do Next.js
-COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next ./.next
+# 1. Copiar o conteúdo do standalone (server.js + node_modules mínimos)
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next/standalone ./
+# 2. Copiar static assets para o lugar que o server.js espera
+COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/.next/static ./.next/static
+# 3. Copiar public para o lugar que o server.js espera
 COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/public ./public
-COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/node_modules ./node_modules
-COPY --from=frontend-builder --chown=frontend:nodejs /app/frontend/package.json ./package.json
 
 # ===== Nginx =====
 COPY docker/nginx.conf /etc/nginx/nginx.conf

@@ -53,6 +53,7 @@ export interface PncpItem {
 
 export interface PncpContrato {
   numeroControlePNCP?: string;
+  numeroControlePncpCompra?: string;
   orgaoEntidade: {
     cnpj: string;
     razaoSocial: string;
@@ -62,20 +63,24 @@ export interface PncpContrato {
     nomeUnidade: string;
     municipioNome?: string;
     ufSigla?: string;
+    ufNome?: string;
   };
   numeroContratoEmpenho?: string;
   anoContrato?: number;
   objetoContrato?: string;
   valorInicial?: number;
   valorGlobal?: number;
+  valorParcela?: number;
   dataAssinatura?: string;
   dataPublicacaoPncp?: string;
   dataVigenciaInicio?: string;
   dataVigenciaFim?: string;
   niFornecedor?: string;
-  nomeFornecedor?: string;
+  nomeFornecedor?: string;                // alias local para compatibilidade
+  nomeRazaoSocialFornecedor?: string;     // nome real retornado pela API
   tipoPessoa?: string;
   receita?: boolean;
+  categoriaProcesso?: { id: number; nome: string };
   categoriaProcessoId?: number;
   categoriaProcessoNome?: string;
   modalidadeId?: number;

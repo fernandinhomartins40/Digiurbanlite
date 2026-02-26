@@ -105,6 +105,7 @@ export class PncpClient {
 
   // Busca todos os itens de uma contratação
   // Usa o base path /pncp-api/v1 (distinto do /api/consulta/v1)
+  // Retorna array direto (não wrappado em { data: [] })
   async fetchItensContratacao(
     cnpjOrgao: string,
     anoCompra: number,
@@ -113,11 +114,15 @@ export class PncpClient {
     await this.throttle();
 
     try {
-      const response = await this.httpItems.get<{ data: PncpContratacao['itens'] }>(
+      const response = await this.httpItems.get<PncpContratacao['itens']>(
         `/orgaos/${cnpjOrgao}/compras/${anoCompra}/${sequencialCompra}/itens`,
         { params: { pagina: 1, tamanhoPagina: 500 } },
       );
-      return response.data?.data ?? [];
+      // API retorna array direto ou { data: [] } dependendo da versão
+      const body = response.data;
+      if (Array.isArray(body)) return body;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return (body as any)?.data ?? [];
     } catch (error: unknown) {
       logger.warn('[PNCP] Error fetching itens', {
         cnpj: cnpjOrgao,
@@ -130,7 +135,7 @@ export class PncpClient {
   }
 
   // Busca contratos (não compras)
-  // Endpoint correto: /contratos/publicacoes (tamanhoPagina mínimo: 10)
+  // Endpoint correto: /contratos (tamanhoPagina mínimo: 10, formato data: yyyyMMdd)
   async fetchContratos(options: PncpFetchOptions = {}): Promise<PncpContrato[]> {
     const { sinceDays = config.ingest.sinceDays, page = 1 } = options;
     const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
@@ -152,7 +157,7 @@ export class PncpClient {
 
     try {
       const response = await this.http.get<PncpListResponse<PncpContrato>>(
-        '/contratos/publicacoes',
+        '/contratos',
         { params },
       );
       return response.data?.data ?? [];
@@ -203,8 +208,12 @@ export class PncpClient {
     }
   }
 
+  // PNCP exige formato yyyyMMdd (sem hífens), ex: 20260226
   private formatDate(date: Date): string {
-    return date.toISOString().split('T')[0];
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}${m}${d}`;
   }
 }
 
