@@ -45,6 +45,10 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
 # Usar prisma local (evita npx baixar versao 7.x incompativel)
 PRISMA_BIN="./node_modules/.bin/prisma"
 
+# Resolver migrations com falha registrada no banco (evita P3009 bloqueando deploy)
+echo "🔧 Resolvendo migrations com falha conhecida..."
+$PRISMA_BIN migrate resolve --rolled-back 20260121_add_flow_models 2>/dev/null || true
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 $PRISMA_BIN migrate deploy || {

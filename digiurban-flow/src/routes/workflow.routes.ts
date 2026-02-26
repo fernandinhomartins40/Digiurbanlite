@@ -92,6 +92,15 @@ router.put('/templates/:id', async (req: Request, res: Response) => {
   }
 });
 
+router.delete('/templates/:id', async (req: Request, res: Response) => {
+  try {
+    await workflowService.deleteWorkflowTemplate(req.params.id as string);
+    res.json({ message: 'Template desativado com sucesso' });
+  } catch (error: unknown) {
+    res.status(400).json({ error: (error as Error).message });
+  }
+});
+
 // ============================================================================
 // Instanciar workflow para um processo
 // ============================================================================

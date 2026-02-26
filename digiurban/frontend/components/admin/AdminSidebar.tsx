@@ -188,6 +188,12 @@ export function AdminSidebar() {
           icon: ArrowRightLeft,
           minRole: 'COORDINATOR',
           badge: 'NOVO'
+        },
+        {
+          title: 'Fluxos de Tramitação',
+          href: '/admin/processos-internos/fluxos',
+          icon: GitBranch,
+          minRole: 'COORDINATOR',
         }
       ]
     },

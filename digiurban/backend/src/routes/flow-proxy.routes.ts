@@ -135,6 +135,8 @@ router.get('/workflows/templates/:id', (req, res, next) =>
   proxyRequest(req, res, next, `/workflows/templates/${req.params.id}`));
 router.put('/workflows/templates/:id', (req, res, next) =>
   proxyRequest(req, res, next, `/workflows/templates/${req.params.id}`));
+router.delete('/workflows/templates/:id', (req, res, next) =>
+  proxyRequest(req, res, next, `/workflows/templates/${req.params.id}`));
 router.post('/workflows/instances', (req, res, next) =>
   proxyRequest(req, res, next, '/workflows/instances'));
 router.post('/workflows/instances/:id/advance', (req, res, next) =>

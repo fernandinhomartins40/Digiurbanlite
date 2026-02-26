@@ -104,6 +104,29 @@ export async function updateWorkflowTemplate(
 }
 
 // ============================================================================
+// DESATIVAR (SOFT-DELETE) WORKFLOW TEMPLATE
+// ============================================================================
+
+export async function deleteWorkflowTemplate(id: string) {
+  const existing = await prisma.workflowTemplate.findUnique({ where: { id } });
+  if (!existing) throw new Error('Workflow template não encontrado');
+
+  const activeInstances = await prisma.workflowInstance.count({
+    where: { templateId: id, status: 'ATIVO' },
+  });
+  if (activeInstances > 0) {
+    throw new Error(`Não é possível desativar: ${activeInstances} processo(s) usando este fluxo ativamente`);
+  }
+
+  await prisma.workflowTemplate.update({
+    where: { id },
+    data: { isActive: false },
+  });
+
+  logger.info(`Workflow template desativado: ${existing.name}`);
+}
+
+// ============================================================================
 // INSTANCIAR WORKFLOW PARA UM PROCESSO
 // ============================================================================
 

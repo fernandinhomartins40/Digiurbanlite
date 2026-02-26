@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -58,6 +59,9 @@ import {
   Hash,
   Flag,
   Lock,
+  GitBranch,
+  ChevronRight,
+  Zap,
 } from 'lucide-react'
 import {
   flowClient,
@@ -65,6 +69,8 @@ import {
   ProcessDetail,
   ProcessType,
   DashboardData,
+  WorkflowInstanceDetail,
+  WorkflowStep,
 } from '@/lib/flow-client'
 
 // ============================================================================
@@ -158,6 +164,7 @@ function CreateProcessDialog({
 }) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [iniciarFluxo, setIniciarFluxo] = useState(false)
   const [form, setForm] = useState({
     typeId: '',
     subject: '',
@@ -169,6 +176,9 @@ function CreateProcessDialog({
     tags: '',
   })
 
+  const selectedType = processTypes.find(t => t.id === form.typeId)
+  const hasDefaultFlow = !!selectedType?.defaultWorkflowTemplateId
+
   const handleSubmit = async () => {
     if (!form.typeId || !form.subject || !form.originSectorName) {
       toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
@@ -176,7 +186,7 @@ function CreateProcessDialog({
     }
     setLoading(true)
     try {
-      await flowClient.createProcess({
+      const created = await flowClient.createProcess({
         typeId: form.typeId,
         subject: form.subject,
         description: form.description || undefined,
@@ -187,10 +197,21 @@ function CreateProcessDialog({
         dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : undefined,
         tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
       })
+
+      // Iniciar fluxo automático se solicitado
+      if (iniciarFluxo && selectedType?.defaultWorkflowTemplateId) {
+        try {
+          await flowClient.instantiateWorkflow(created.id, selectedType.defaultWorkflowTemplateId)
+        } catch {
+          toast({ title: 'Processo criado, mas falha ao iniciar fluxo', variant: 'destructive' })
+        }
+      }
+
       toast({ title: 'Processo criado com sucesso!' })
       onCreated()
       onClose()
       setForm({ typeId: '', subject: '', description: '', sigilo: 'PUBLICO', priority: '0', originSectorName: '', dueAt: '', tags: '' })
+      setIniciarFluxo(false)
     } catch (error) {
       toast({ title: 'Erro ao criar processo', description: (error as Error).message, variant: 'destructive' })
     } finally {
@@ -284,6 +305,27 @@ function CreateProcessDialog({
               placeholder="Ex: urgente, financeiro, recurso"
             />
           </div>
+
+          {/* Iniciar fluxo automático — só aparece se o tipo tem fluxo padrão */}
+          {hasDefaultFlow && (
+            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+              <input
+                type="checkbox"
+                id="iniciarFluxo"
+                checked={iniciarFluxo}
+                onChange={e => setIniciarFluxo(e.target.checked)}
+                className="w-4 h-4 accent-blue-600"
+              />
+              <label htmlFor="iniciarFluxo" className="text-sm text-blue-800 cursor-pointer">
+                <span className="font-medium flex items-center gap-1">
+                  <GitBranch className="w-3.5 h-3.5 inline" /> Iniciar fluxo automático
+                </span>
+                <span className="text-xs text-blue-600 block">
+                  Usará o fluxo: <strong>{selectedType?.defaultWorkflowTemplate?.name || 'Fluxo padrão do tipo'}</strong>
+                </span>
+              </label>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
@@ -297,23 +339,67 @@ function CreateProcessDialog({
 }
 
 // ============================================================================
-// DIALOG: DESPACHAR PROCESSO
+// DIALOG: DESPACHAR PROCESSO (dois modos: livre ou seguir fluxo)
 // ============================================================================
+
+const ACTION_LABELS: Record<string, string> = {
+  ENCAMINHADO: 'Encaminhar',
+  DESPACHO: 'Despacho',
+  PARECER: 'Parecer',
+  ASSINATURA: 'Para Assinatura',
+  DEVOLVIDO: 'Devolver',
+  CONCLUSAO: 'Concluir',
+  REDISTRIBUIDO: 'Redistribuir',
+  ARQUIVAMENTO: 'Arquivar',
+}
 
 function DispatchDialog({
   process,
+  workflowInstance,
   onClose,
   onDone,
 }: {
   process: InternalProcess | null
+  workflowInstance?: WorkflowInstanceDetail
   onClose: () => void
   onDone: () => void
 }) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [mode, setMode] = useState<'livre' | 'fluxo'>('livre')
   const [toSectorName, setToSectorName] = useState('')
   const [note, setNote] = useState('')
   const [action, setAction] = useState('ENCAMINHADO')
+
+  // Dados do fluxo (calculados a partir do workflowInstance)
+  const hasActiveFlow = workflowInstance?.status === 'ATIVO'
+  const flowSteps = (workflowInstance?.template?.steps || []) as WorkflowStep[]
+  const sortedSteps = [...flowSteps].sort((a, b) => a.order - b.order)
+  const currentStepIdx = sortedSteps.findIndex(s => s.id === workflowInstance?.currentStepId)
+  const currentStep = sortedSteps[currentStepIdx]
+  const nextStep = sortedSteps[currentStepIdx + 1]
+
+  // Quando muda para modo fluxo, pré-preenche campos
+  useEffect(() => {
+    if (mode === 'fluxo' && nextStep) {
+      setToSectorName(nextStep.sectorName || '')
+      setAction(nextStep.actions[0] || 'ENCAMINHADO')
+    }
+    if (mode === 'livre') {
+      setToSectorName('')
+      setAction('ENCAMINHADO')
+    }
+  }, [mode, nextStep])
+
+  // Reset ao fechar
+  useEffect(() => {
+    if (!process) {
+      setMode('livre')
+      setToSectorName('')
+      setNote('')
+      setAction('ENCAMINHADO')
+    }
+  }, [process])
 
   const handleDispatch = async () => {
     if (!process || !toSectorName) {
@@ -322,15 +408,24 @@ function DispatchDialog({
     }
     setLoading(true)
     try {
+      // Despachar o processo
       await flowClient.dispatchProcess(process.id, {
         toSectorId: toSectorName,
         toSectorName,
         note: note || undefined,
         action,
       })
+
+      // Se modo fluxo, avançar a instância de workflow também
+      if (mode === 'fluxo' && workflowInstance?.id) {
+        try {
+          await flowClient.advanceWorkflow(workflowInstance.id, action, note || undefined)
+        } catch {
+          // Avançar workflow é best-effort — despacho já foi feito
+        }
+      }
+
       toast({ title: `Processo ${process.number} encaminhado para ${toSectorName}` })
-      setToSectorName('')
-      setNote('')
       onDone()
       onClose()
     } catch (error) {
@@ -349,40 +444,161 @@ function DispatchDialog({
             {process?.number} — {process?.subject}
           </DialogDescription>
         </DialogHeader>
+
         <div className="space-y-4 py-2">
-          <div>
-            <Label>Tipo de Ação</Label>
-            <Select value={action} onValueChange={setAction}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ENCAMINHADO">Encaminhar</SelectItem>
-                <SelectItem value="DESPACHO">Despacho</SelectItem>
-                <SelectItem value="PARECER">Parecer</SelectItem>
-                <SelectItem value="ASSINATURA">Para Assinatura</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Setor / Secretaria de Destino *</Label>
-            <Input
-              value={toSectorName}
-              onChange={e => setToSectorName(e.target.value)}
-              placeholder="Ex: Secretaria de Finanças"
-            />
-          </div>
-          <div>
-            <Label>Despacho / Observação</Label>
-            <Textarea
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              placeholder="Texto do despacho ou parecer..."
-              rows={4}
-            />
-          </div>
+          {/* Toggle de modo — só aparece se há fluxo ativo */}
+          {hasActiveFlow && (
+            <div className="flex rounded-lg border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setMode('livre')}
+                className={`flex-1 py-2 px-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors ${
+                  mode === 'livre'
+                    ? 'bg-gray-900 text-white'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <Send className="w-3.5 h-3.5" />
+                Destinatário livre
+              </button>
+              <button
+                type="button"
+                onClick={() => setMode('fluxo')}
+                className={`flex-1 py-2 px-3 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors border-l ${
+                  mode === 'fluxo'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                <GitBranch className="w-3.5 h-3.5" />
+                Seguir fluxo
+              </button>
+            </div>
+          )}
+
+          {/* Modo: Seguir Fluxo */}
+          {mode === 'fluxo' && hasActiveFlow && (
+            <div className="space-y-3">
+              {/* Progresso do fluxo */}
+              <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
+                <p className="text-xs font-semibold text-blue-700 flex items-center gap-1">
+                  <GitBranch className="w-3.5 h-3.5" />
+                  {workflowInstance?.template?.name}
+                </p>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {sortedSteps.map((step, idx) => (
+                    <div key={step.id} className="flex items-center gap-1">
+                      <span className={`text-xs px-2 py-0.5 rounded-full ${
+                        idx < currentStepIdx
+                          ? 'bg-green-100 text-green-700'
+                          : idx === currentStepIdx
+                            ? 'bg-blue-600 text-white font-medium'
+                            : idx === currentStepIdx + 1
+                              ? 'bg-amber-100 text-amber-700 font-medium'
+                              : 'bg-gray-100 text-gray-400'
+                      }`}>
+                        {idx + 1}. {step.name}
+                      </span>
+                      {idx < sortedSteps.length - 1 && (
+                        <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {nextStep ? (
+                <>
+                  <div>
+                    <Label className="text-xs text-gray-500">Próxima etapa: <strong>{nextStep.name}</strong></Label>
+                    <Input
+                      value={toSectorName}
+                      onChange={e => setToSectorName(e.target.value)}
+                      placeholder="Setor de destino"
+                      className="mt-1"
+                    />
+                    {nextStep.sectorName && toSectorName !== nextStep.sectorName && (
+                      <button
+                        type="button"
+                        className="text-xs text-blue-600 mt-1"
+                        onClick={() => setToSectorName(nextStep.sectorName || '')}
+                      >
+                        Usar setor padrão: {nextStep.sectorName}
+                      </button>
+                    )}
+                  </div>
+
+                  {nextStep.documentRequired && (
+                    <div className="flex items-center gap-2 p-2 bg-amber-50 border border-amber-200 rounded text-xs text-amber-800">
+                      <FileText className="w-3.5 h-3.5 flex-shrink-0" />
+                      Esta etapa requer documento: <strong>{nextStep.documentRequired}</strong>
+                    </div>
+                  )}
+
+                  <div>
+                    <Label>Ação</Label>
+                    <Select value={action} onValueChange={setAction}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {nextStep.actions.map(a => (
+                          <SelectItem key={a} value={a}>{ACTION_LABELS[a] || a}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </>
+              ) : (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800 flex items-center gap-2">
+                  <CheckCircle className="w-4 h-4" />
+                  Última etapa do fluxo. Use "Concluir Processo" para encerrar.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modo: Livre */}
+          {(mode === 'livre' || !hasActiveFlow) && (
+            <>
+              <div>
+                <Label>Tipo de Ação</Label>
+                <Select value={action} onValueChange={setAction}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ENCAMINHADO">Encaminhar</SelectItem>
+                    <SelectItem value="DESPACHO">Despacho</SelectItem>
+                    <SelectItem value="PARECER">Parecer</SelectItem>
+                    <SelectItem value="ASSINATURA">Para Assinatura</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label>Setor / Secretaria de Destino *</Label>
+                <Input
+                  value={toSectorName}
+                  onChange={e => setToSectorName(e.target.value)}
+                  placeholder="Ex: Secretaria de Finanças"
+                />
+              </div>
+            </>
+          )}
+
+          {/* Observação — sempre */}
+          {(mode === 'livre' || (mode === 'fluxo' && nextStep)) && (
+            <div>
+              <Label>Despacho / Observação</Label>
+              <Textarea
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                placeholder="Texto do despacho ou parecer..."
+                rows={3}
+              />
+            </div>
+          )}
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleDispatch} disabled={loading}>
+          <Button onClick={handleDispatch} disabled={loading || (mode === 'fluxo' && !nextStep)}>
             <Send className="w-4 h-4 mr-2" />
             {loading ? 'Despachando...' : 'Despachar'}
           </Button>
@@ -690,6 +906,63 @@ function ProcessDetailPanel({
             <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
               {/* Tramitação */}
               <TabsContent value="tramitacao" className="mt-0 space-y-3">
+                {/* Progresso do Fluxo (se houver instância ativa) */}
+                {process?.workflowInstance && (
+                  <div className={`p-3 rounded-lg border mt-2 ${
+                    process.workflowInstance.status === 'ATIVO'
+                      ? 'bg-blue-50 border-blue-200'
+                      : process.workflowInstance.status === 'CONCLUIDO'
+                        ? 'bg-green-50 border-green-200'
+                        : 'bg-gray-50 border-gray-200'
+                  }`}>
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="text-xs font-semibold flex items-center gap-1 text-blue-700">
+                        <GitBranch className="w-3.5 h-3.5" />
+                        {process.workflowInstance.template?.name}
+                      </p>
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                        process.workflowInstance.status === 'ATIVO' ? 'bg-blue-100 text-blue-700' :
+                        process.workflowInstance.status === 'CONCLUIDO' ? 'bg-green-100 text-green-700' :
+                        'bg-gray-100 text-gray-600'
+                      }`}>
+                        {process.workflowInstance.status === 'ATIVO' ? 'Em andamento' :
+                         process.workflowInstance.status === 'CONCLUIDO' ? 'Concluído' : 'Cancelado'}
+                      </span>
+                    </div>
+                    {/* Barra de etapas */}
+                    {(() => {
+                      const steps = [...(process.workflowInstance.template?.steps || [])].sort((a, b) => (a as WorkflowStep).order - (b as WorkflowStep).order) as WorkflowStep[]
+                      const currentIdx = steps.findIndex(s => s.id === process.workflowInstance!.currentStepId)
+                      const pct = steps.length > 0 ? Math.round(((currentIdx) / steps.length) * 100) : 0
+                      return (
+                        <>
+                          <div className="flex items-center gap-1 flex-wrap mb-2">
+                            {steps.map((step, idx) => (
+                              <div key={step.id} className="flex items-center gap-1">
+                                <span className={`text-xs px-1.5 py-0.5 rounded ${
+                                  idx < currentIdx ? 'bg-green-100 text-green-700' :
+                                  idx === currentIdx ? 'bg-blue-600 text-white font-medium' :
+                                  'bg-gray-100 text-gray-400'
+                                }`}>
+                                  {idx + 1}. {step.name}
+                                </span>
+                                {idx < steps.length - 1 && <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="h-1.5 bg-white rounded-full overflow-hidden">
+                            <div className="h-full bg-blue-500 rounded-full transition-all" style={{ width: `${pct}%` }} />
+                          </div>
+                          <p className="text-xs text-blue-600 mt-1">
+                            Etapa atual: <strong>{process.workflowInstance!.currentStepName}</strong>
+                            {steps.length > 0 && ` (${currentIdx + 1} de ${steps.length})`}
+                          </p>
+                        </>
+                      )
+                    })()}
+                  </div>
+                )}
+
                 <h3 className="text-sm font-medium text-gray-700 mt-2">Histórico de Movimentações</h3>
                 {loading ? (
                   <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 bg-gray-100 animate-pulse rounded" />)}</div>
@@ -885,7 +1158,7 @@ function ProcessDetailPanel({
 
       {process && (
         <>
-          <DispatchDialog process={dispatchOpen ? process : null} onClose={() => setDispatchOpen(false)} onDone={() => { loadProcess(); onRefresh() }} />
+          <DispatchDialog process={dispatchOpen ? process : null} workflowInstance={process?.workflowInstance} onClose={() => setDispatchOpen(false)} onDone={() => { loadProcess(); onRefresh() }} />
           <ReturnDialog process={returnOpen ? process : null} onClose={() => setReturnOpen(false)} onDone={() => { loadProcess(); onRefresh() }} />
           <ActionDialog process={actionType ? process : null} actionType={actionType} onClose={() => setActionType(null)} onDone={() => { loadProcess(); onRefresh() }} />
         </>
@@ -1479,6 +1752,35 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
                 </div>
               </div>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Card: Fluxos de Tramitação */}
+      <Card className="border-blue-100">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle className="text-base flex items-center gap-2">
+                <GitBranch className="w-4 h-4 text-blue-600" />
+                Fluxos de Tramitação
+              </CardTitle>
+              <CardDescription>Defina sequências automáticas de etapas para os tipos de processo</CardDescription>
+            </div>
+            <Link href="/admin/processos-internos/fluxos">
+              <Button size="sm">
+                <GitBranch className="w-4 h-4 mr-1" /> Gerenciar Fluxos
+              </Button>
+            </Link>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
+            <Zap className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
+            <div className="space-y-1">
+              <p>Crie fluxos com etapas (setor → documento → SLA) e vincule aos tipos de processo.</p>
+              <p>Ao despachar, escolha entre <strong>destinatário livre</strong> ou <strong>seguir o fluxo</strong> definido.</p>
+            </div>
           </div>
         </CardContent>
       </Card>

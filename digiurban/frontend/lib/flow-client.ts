@@ -16,6 +16,8 @@ export interface ProcessType {
   defaultSlaHours: number
   sigiloDefault: string
   defaultDocumentTemplate?: string
+  defaultWorkflowTemplateId?: string
+  defaultWorkflowTemplate?: { id: string; name: string }
   isActive: boolean
   _count?: { processes: number }
 }
@@ -136,16 +138,21 @@ export interface ProcessSignature {
 
 export interface WorkflowInstanceDetail {
   id: string
+  templateId: string
   currentStepId: string
   currentStepName: string
   status: string
+  startedAt: string
+  completedAt?: string
   template: {
+    id: string
     name: string
-    steps: unknown[]
-    transitions: unknown[]
+    steps: WorkflowStep[]
+    transitions: WorkflowTransition[]
   }
   stepHistory: {
     id: string
+    stepId: string
     stepName: string
     action: string
     note?: string
@@ -155,14 +162,32 @@ export interface WorkflowInstanceDetail {
   }[]
 }
 
+export interface WorkflowStep {
+  id: string
+  name: string
+  order: number
+  sectorId?: string
+  sectorName?: string
+  slaHours?: number
+  documentRequired?: string
+  actions: string[]
+}
+
+export interface WorkflowTransition {
+  fromStepId: string
+  toStepId: string
+  condition?: string
+  label: string
+}
+
 export interface WorkflowTemplate {
   id: string
   name: string
   description?: string
   version: number
   isActive: boolean
-  steps: unknown[]
-  transitions: unknown[]
+  steps: WorkflowStep[]
+  transitions: WorkflowTransition[]
   createdAt: string
   updatedAt: string
 }
@@ -417,15 +442,42 @@ class FlowClient {
     return data || []
   }
 
-  async createWorkflowTemplate(input: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
+  async getWorkflowTemplate(id: string): Promise<WorkflowTemplate> {
+    const { data } = await api.get<WorkflowTemplate>(`${this.baseUrl}/workflows/templates/${id}`)
+    if (!data) throw new Error('Template não encontrado')
+    return data
+  }
+
+  async createWorkflowTemplate(input: {
+    name: string
+    description?: string
+    steps: WorkflowStep[]
+    transitions: WorkflowTransition[]
+  }): Promise<WorkflowTemplate> {
     const { data } = await api.post<WorkflowTemplate>(`${this.baseUrl}/workflows/templates`, input)
     if (!data) throw new Error('Erro ao criar template de workflow')
     return data
   }
 
-  async updateWorkflowTemplate(id: string, input: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
+  async updateWorkflowTemplate(id: string, input: {
+    name?: string
+    description?: string
+    steps?: WorkflowStep[]
+    transitions?: WorkflowTransition[]
+    isActive?: boolean
+  }): Promise<WorkflowTemplate> {
     const { data } = await api.put<WorkflowTemplate>(`${this.baseUrl}/workflows/templates/${id}`, input)
     if (!data) throw new Error('Erro ao atualizar template de workflow')
+    return data
+  }
+
+  async deleteWorkflowTemplate(id: string): Promise<void> {
+    await api.delete(`${this.baseUrl}/workflows/templates/${id}`)
+  }
+
+  async instantiateWorkflow(processId: string, templateId: string): Promise<WorkflowInstanceDetail> {
+    const { data } = await api.post<WorkflowInstanceDetail>(`${this.baseUrl}/workflows/instances`, { processId, templateId })
+    if (!data) throw new Error('Erro ao iniciar fluxo')
     return data
   }
 
