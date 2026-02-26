@@ -15,6 +15,7 @@ export interface ProcessType {
   description?: string
   defaultSlaHours: number
   sigiloDefault: string
+  defaultDocumentTemplate?: string
   isActive: boolean
   _count?: { processes: number }
 }
@@ -26,6 +27,7 @@ export interface InternalProcess {
   type: { name: string; prefix: string }
   subject: string
   description?: string
+  bodyContent?: string
   sigilo: string
   status: string
   priority: number
@@ -40,16 +42,19 @@ export interface InternalProcess {
   citizenProtocolId?: string
   dueAt?: string
   concludedAt?: string
+  archivedAt?: string
   tags: string[]
   createdAt: string
   updatedAt: string
-  _count?: { dispatches: number; documents: number; history: number }
+  _count?: { dispatches: number; documents: number; history: number; comments?: number }
 }
 
 export interface ProcessDetail extends InternalProcess {
   history: ProcessHistoryItem[]
   dispatches: DispatchItem[]
   documents: ProcessDocument[]
+  comments?: ProcessComment[]
+  signatures?: ProcessSignature[]
   workflowInstance?: WorkflowInstanceDetail
 }
 
@@ -67,12 +72,17 @@ export interface ProcessHistoryItem {
 export interface DispatchItem {
   id: string
   action: string
+  fromSectorId: string
   fromSectorName: string
+  toSectorId: string
   toSectorName: string
+  fromUserId: string
   fromUserName: string
+  toUserId?: string
   toUserName?: string
   note?: string
   isRead: boolean
+  readAt?: string
   createdAt: string
 }
 
@@ -80,12 +90,47 @@ export interface ProcessDocument {
   id: string
   documentType: string
   name: string
+  description?: string
   fileName: string
   filePath: string
   fileSize: number
   mimeType: string
   isGenerated: boolean
   templateUsed?: string
+  isSigned: boolean
+  signedAt?: string
+  signedById?: string
+  version: number
+  createdAt: string
+}
+
+export interface ProcessComment {
+  id: string
+  processId: string
+  userId: string
+  userName: string
+  content: string
+  isInternal: boolean
+  editedAt?: string
+  isDeleted: boolean
+  createdAt: string
+}
+
+export interface ProcessSignature {
+  id: string
+  processId: string
+  documentId?: string
+  requestedById: string
+  requestedByName: string
+  signerId?: string
+  signerName?: string
+  signerEmail?: string
+  status: 'PENDENTE' | 'ASSINADO' | 'REJEITADO' | 'EXPIRADO'
+  signedAt?: string
+  rejectedAt?: string
+  rejectionReason?: string
+  expiresAt?: string
+  documentHash?: string
   createdAt: string
 }
 
@@ -108,6 +153,18 @@ export interface WorkflowInstanceDetail {
     enteredAt: string
     completedAt?: string
   }[]
+}
+
+export interface WorkflowTemplate {
+  id: string
+  name: string
+  description?: string
+  version: number
+  isActive: boolean
+  steps: unknown[]
+  transitions: unknown[]
+  createdAt: string
+  updatedAt: string
 }
 
 export interface ProcessListResponse {
@@ -152,6 +209,7 @@ export interface CreateProcessInput {
   typeId: string
   subject: string
   description?: string
+  bodyContent?: string
   sigilo?: string
   priority?: number
   originSectorId: string
@@ -177,7 +235,7 @@ export interface DispatchInput {
 // ============================================================================
 
 class FlowClient {
-  private readonly baseUrl = '/api/flow'
+  private readonly baseUrl = '/flow'
 
   // ─── Processos ───
 
@@ -254,6 +312,73 @@ class FlowClient {
     return data || []
   }
 
+  // ─── Comentários ───
+
+  async listComments(processId: string): Promise<ProcessComment[]> {
+    const { data } = await api.get<ProcessComment[]>(`${this.baseUrl}/processes/${processId}/comments`)
+    return data || []
+  }
+
+  async addComment(processId: string, content: string, isInternal = true): Promise<ProcessComment> {
+    const { data } = await api.post<ProcessComment>(`${this.baseUrl}/processes/${processId}/comments`, {
+      content,
+      isInternal,
+    })
+    if (!data) throw new Error('Erro ao adicionar comentário')
+    return data
+  }
+
+  async editComment(commentId: string, content: string): Promise<ProcessComment> {
+    const { data } = await api.patch<ProcessComment>(`${this.baseUrl}/comments/${commentId}`, { content })
+    if (!data) throw new Error('Erro ao editar comentário')
+    return data
+  }
+
+  async deleteComment(commentId: string): Promise<void> {
+    await api.delete(`${this.baseUrl}/comments/${commentId}`)
+  }
+
+  // ─── Assinaturas ───
+
+  async listSignatures(processId: string): Promise<ProcessSignature[]> {
+    const { data } = await api.get<ProcessSignature[]>(`${this.baseUrl}/processes/${processId}/signatures`)
+    return data || []
+  }
+
+  async requestSignature(processId: string, input: {
+    documentId?: string
+    signerId?: string
+    signerName?: string
+    signerEmail?: string
+    expiresInHours?: number
+  }): Promise<ProcessSignature> {
+    const { data } = await api.post<ProcessSignature>(`${this.baseUrl}/processes/${processId}/signatures`, input)
+    if (!data) throw new Error('Erro ao solicitar assinatura')
+    return data
+  }
+
+  async confirmSignature(signatureId: string): Promise<ProcessSignature> {
+    const { data } = await api.post<ProcessSignature>(`${this.baseUrl}/signatures/${signatureId}/confirm`, {})
+    if (!data) throw new Error('Erro ao confirmar assinatura')
+    return data
+  }
+
+  async rejectSignature(signatureId: string, reason: string): Promise<ProcessSignature> {
+    const { data } = await api.post<ProcessSignature>(`${this.baseUrl}/signatures/${signatureId}/reject`, { reason })
+    if (!data) throw new Error('Erro ao rejeitar assinatura')
+    return data
+  }
+
+  // ─── Leitura de despachos ───
+
+  async markDispatchRead(dispatchId: string): Promise<void> {
+    await api.post(`${this.baseUrl}/dispatches/${dispatchId}/read`, {})
+  }
+
+  async markAllDispatchesRead(sectorId: string): Promise<void> {
+    await api.post(`${this.baseUrl}/inbox/read-all`, { sectorId })
+  }
+
   // ─── Caixa de Entrada ───
 
   async getInbox(sectorId: string, userId?: string): Promise<InternalProcess[]> {
@@ -279,6 +404,36 @@ class FlowClient {
     return data
   }
 
+  async updateProcessType(id: string, input: Partial<ProcessType>): Promise<ProcessType> {
+    const { data } = await api.put<ProcessType>(`${this.baseUrl}/process-types/${id}`, input)
+    if (!data) throw new Error('Erro ao atualizar tipo de processo')
+    return data
+  }
+
+  // ─── Workflow Templates ───
+
+  async listWorkflowTemplates(): Promise<WorkflowTemplate[]> {
+    const { data } = await api.get<WorkflowTemplate[]>(`${this.baseUrl}/workflows/templates`)
+    return data || []
+  }
+
+  async createWorkflowTemplate(input: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
+    const { data } = await api.post<WorkflowTemplate>(`${this.baseUrl}/workflows/templates`, input)
+    if (!data) throw new Error('Erro ao criar template de workflow')
+    return data
+  }
+
+  async updateWorkflowTemplate(id: string, input: Partial<WorkflowTemplate>): Promise<WorkflowTemplate> {
+    const { data } = await api.put<WorkflowTemplate>(`${this.baseUrl}/workflows/templates/${id}`, input)
+    if (!data) throw new Error('Erro ao atualizar template de workflow')
+    return data
+  }
+
+  async advanceWorkflow(instanceId: string, action: string, note?: string): Promise<unknown> {
+    const { data } = await api.post(`${this.baseUrl}/workflows/instances/${instanceId}/advance`, { action, note })
+    return data
+  }
+
   // ─── Analytics ───
 
   async getDashboard(): Promise<DashboardData> {
@@ -293,8 +448,28 @@ class FlowClient {
   }
 
   async getBottlenecks(): Promise<{ sectorId: string; sectorName: string; count: number; oldestDays: number }[]> {
-    const { data } = await api.get<{ sectorId: string; sectorName: string; count: number; oldestDays: number }[]>(`${this.baseUrl}/analytics/bottlenecks`)
+    const { data } = await api.get<{ sectorId: string; sectorName: string; count: number; oldestDays: number }[]>(
+      `${this.baseUrl}/analytics/bottlenecks`
+    )
     return data || []
+  }
+
+  async exportCSV(params?: { status?: string; typeId?: string }): Promise<void> {
+    const query = new URLSearchParams()
+    if (params?.status) query.set('status', params.status)
+    if (params?.typeId) query.set('typeId', params.typeId)
+
+    const url = `/api${this.baseUrl}/analytics/export/csv${query.toString() ? '?' + query.toString() : ''}`
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `processos_internos_${new Date().toISOString().split('T')[0]}.csv`
+    a.click()
+  }
+
+  async health(): Promise<{ status: string }> {
+    const { data } = await api.get<{ status: string }>(`${this.baseUrl}/health`)
+    if (!data) throw new Error('Módulo de processos indisponível')
+    return data
   }
 }
 

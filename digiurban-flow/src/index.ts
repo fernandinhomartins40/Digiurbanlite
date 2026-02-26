@@ -29,6 +29,8 @@ import workflowRoutes from './routes/workflow.routes';
 import documentRoutes from './routes/document.routes';
 import analyticsRoutes from './routes/analytics.routes';
 import processTypeRoutes from './routes/process-type.routes';
+import commentRoutes from './routes/comment.routes';
+import signatureRoutes from './routes/signature.routes';
 
 // Workers
 import { startSLAWorker } from './workers/sla-checker.worker';
@@ -109,6 +111,8 @@ class DigiUrbanFlowServer {
     app.use('/api/v1/workflows', workflowRoutes);
     app.use('/api/v1/analytics', analyticsRoutes);
     app.use('/api/v1/process-types', processTypeRoutes);
+    app.use('/api/v1/processes', commentRoutes);
+    app.use('/api/v1', signatureRoutes);
 
     // Health check raiz (para Docker healthcheck)
     app.get('/health', (_req, res) => {

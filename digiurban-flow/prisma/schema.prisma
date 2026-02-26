@@ -59,6 +59,13 @@ enum WorkflowStatus {
   CANCELADO
 }
 
+enum SignatureStatus {
+  PENDENTE
+  ASSINADO
+  REJEITADO
+  EXPIRADO
+}
+
 // ============================================================================
 // TIPOS DE PROCESSO
 // ============================================================================
@@ -71,6 +78,9 @@ model InternalProcessType {
   defaultSlaHours  Int      @default(168) // 7 dias padrão
   sigiloDefault    SigiloLevel @default(PUBLICO)
   isActive         Boolean  @default(true)
+
+  // Template padrão de documento para esse tipo (gerado automaticamente)
+  defaultDocumentTemplate String? // "memorando", "oficio", "despacho", etc.
 
   // Fluxo padrão (opcional)
   defaultWorkflowTemplateId String?
@@ -86,6 +96,20 @@ model InternalProcessType {
 }
 
 // ============================================================================
+// SEQUÊNCIA DE NUMERAÇÃO (thread-safe)
+// ============================================================================
+
+model ProcessNumberSequence {
+  id               String   @id @default(cuid())
+  prefix           String   // Ex: "MEM"
+  year             Int      // Ex: 2026
+  lastSequential   Int      @default(0)
+
+  @@unique([prefix, year])
+  @@map("flow_number_sequences")
+}
+
+// ============================================================================
 // PROCESSO INTERNO (coração do módulo)
 // ============================================================================
 
@@ -98,6 +122,7 @@ model InternalProcess {
   type             InternalProcessType @relation(fields: [typeId], references: [id])
   subject          String         // Assunto
   description      String?        @db.Text
+  bodyContent      String?        @db.Text // Conteúdo HTML rico (editor WYSIWYG)
   sigilo           SigiloLevel    @default(PUBLICO)
 
   // Status e prioridade
@@ -132,6 +157,8 @@ model InternalProcess {
   history          InternalProcessHistory[]
   dispatches       ProcessDispatch[]
   documents        ProcessDocument[]
+  comments         ProcessComment[]
+  signatures       ProcessSignature[]
   workflowInstance WorkflowInstance?
 
   createdAt        DateTime       @default(now())
@@ -144,6 +171,69 @@ model InternalProcess {
   @@index([citizenProtocolId])
   @@index([createdAt])
   @@map("flow_processes")
+}
+
+// ============================================================================
+// COMENTÁRIOS / ANOTAÇÕES DO PROCESSO
+// ============================================================================
+
+model ProcessComment {
+  id               String         @id @default(cuid())
+
+  processId        String
+  process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  userId           String         // Autor do comentário
+  userName         String         // Nome (snapshot)
+  content          String         @db.Text
+  isInternal       Boolean        @default(true) // false = visível para o cidadão vinculado
+
+  // Editabilidade
+  editedAt         DateTime?
+  isDeleted        Boolean        @default(false)
+
+  createdAt        DateTime       @default(now())
+
+  @@index([processId])
+  @@index([createdAt])
+  @@map("flow_comments")
+}
+
+// ============================================================================
+// ASSINATURAS DIGITAIS DO PROCESSO
+// ============================================================================
+
+model ProcessSignature {
+  id               String         @id @default(cuid())
+
+  processId        String
+  process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
+
+  documentId       String?        // Documento a assinar (null = assinar processo inteiro)
+
+  requestedById    String         // Quem solicitou a assinatura
+  requestedByName  String
+  signerId         String?        // Quem deve assinar (null = qualquer)
+  signerName       String?
+  signerEmail      String?
+
+  status           SignatureStatus @default(PENDENTE)
+  signedAt         DateTime?
+  rejectedAt       DateTime?
+  rejectionReason  String?
+  expiresAt        DateTime?      // Prazo para assinar
+
+  // Hash do documento no momento da assinatura
+  documentHash     String?
+  signatureHash    String?        // Hash da assinatura digital
+
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  @@index([processId])
+  @@index([status])
+  @@index([signerId])
+  @@map("flow_signatures")
 }
 
 // ============================================================================
@@ -231,6 +321,11 @@ model ProcessDocument {
   templateUsed     String?        // Qual template HTML foi usado
   generatedBy      String?        // userId que gerou
   documentHash     String?        // SHA-256 para integridade
+
+  // Assinatura
+  isSigned         Boolean        @default(false)
+  signedAt         DateTime?
+  signedById       String?
 
   // Versionamento
   version          Int            @default(1)

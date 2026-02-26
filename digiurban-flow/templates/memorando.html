@@ -1,61 +1,91 @@
-<div style="text-align: center; margin-bottom: 24px;">
-  <h2 style="margin: 0; font-size: 16pt; text-transform: uppercase; letter-spacing: 2px; color: #1a365d;">
-    Prefeitura Municipal
-  </h2>
-  <p style="margin: 4px 0 0; font-size: 10pt; color: #4a5568;">
-    {{originSectorName}}
-  </p>
-  <hr style="border: none; border-top: 2px solid #1a365d; margin-top: 12px;" />
-</div>
+<!-- MEMORANDO — DigiUrban Flow -->
+<div style="font-family: 'Times New Roman', Times, serif;">
 
-<div style="margin-bottom: 24px;">
-  <h3 style="margin: 0; font-size: 14pt; font-weight: bold; color: #2d3748; text-align: center;">
-    MEMORANDO Nº {{processNumber}}
-  </h3>
-</div>
-
-<table style="width: 100%; margin-bottom: 20px; font-size: 11pt;">
-  <tr>
-    <td style="padding: 4px 0; font-weight: bold; width: 80px;">DE:</td>
-    <td style="padding: 4px 0;">{{originSectorName}}</td>
-  </tr>
-  <tr>
-    <td style="padding: 4px 0; font-weight: bold;">PARA:</td>
-    <td style="padding: 4px 0;">{{currentSectorName}}</td>
-  </tr>
-  <tr>
-    <td style="padding: 4px 0; font-weight: bold;">DATA:</td>
-    <td style="padding: 4px 0;">{{processCreatedAt}}</td>
-  </tr>
-  <tr>
-    <td style="padding: 4px 0; font-weight: bold;">ASSUNTO:</td>
-    <td style="padding: 4px 0; font-weight: bold;">{{processSubject}}</td>
-  </tr>
-</table>
-
-<hr style="border: none; border-top: 1px solid #cbd5e0; margin: 16px 0;" />
-
-<div style="text-align: justify; line-height: 2; font-size: 12pt; margin-top: 20px;">
-  {{#if processDescription}}
-  <p style="text-indent: 40px;">{{processDescription}}</p>
-  {{/if}}
-
-  {{#if memorandoBody}}
-  <p style="text-indent: 40px;">{{memorandoBody}}</p>
-  {{/if}}
-</div>
-
-<div style="margin-top: 24px; text-align: justify; line-height: 2; font-size: 12pt;">
-  <p style="text-indent: 40px;">Atenciosamente,</p>
-</div>
-
-<div style="margin-top: 48px; text-align: center;">
-  <div style="margin-top: 48px; border-top: 1px solid #333; width: 300px; display: inline-block;">
-    <p style="margin: 4px 0 0; font-size: 11pt; font-weight: bold;">{{createdByName}}</p>
-    <p style="margin: 0; font-size: 10pt; color: #718096;">{{originSectorName}}</p>
+  <!-- Cabeçalho institucional -->
+  <div style="text-align: center; margin-bottom: 8px; border-bottom: 3px solid #1a365d; padding-bottom: 12px;">
+    <p style="margin: 0; font-size: 10pt; font-weight: bold; color: #2d3748; text-transform: uppercase; letter-spacing: 1px;">
+      Prefeitura Municipal
+    </p>
+    <p style="margin: 2px 0 0; font-size: 9pt; color: #4a5568;">
+      {{originSectorName}}
+    </p>
   </div>
-</div>
 
-<div style="margin-top: 32px; text-align: center; font-size: 7pt; color: #a0aec0;">
-  <p>Documento gerado pelo Sistema DigiUrban em {{generatedAt}}</p>
+  <!-- Título -->
+  <div style="text-align: center; margin: 20px 0 16px;">
+    <h3 style="margin: 0; font-size: 13pt; font-weight: bold; text-transform: uppercase; letter-spacing: 1px;">
+      MEMORANDO Nº {{processNumber}}
+    </h3>
+    {{#if processSigilo}}{{#eq processSigilo "CONFIDENCIAL"}}
+    <p style="margin: 4px 0 0; font-size: 9pt; font-weight: bold; color: #c53030; text-transform: uppercase;">
+      ⚠ CONFIDENCIAL — ACESSO RESTRITO
+    </p>
+    {{/eq}}{{#eq processSigilo "RESTRITO"}}
+    <p style="margin: 4px 0 0; font-size: 9pt; font-weight: bold; color: #b7791f; text-transform: uppercase;">
+      RESTRITO
+    </p>
+    {{/eq}}{{/if}}
+  </div>
+
+  <!-- Cabeçalho do memorando -->
+  <table style="width: 100%; margin-bottom: 16px; font-size: 11pt; border-collapse: collapse;">
+    <tr>
+      <td style="padding: 3px 8px 3px 0; font-weight: bold; white-space: nowrap; width: 90px;">DE:</td>
+      <td style="padding: 3px 0; border-bottom: 1px dotted #cbd5e0;">{{createdByName}} / {{originSectorName}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 3px 8px 3px 0; font-weight: bold;">PARA:</td>
+      <td style="padding: 3px 0; border-bottom: 1px dotted #cbd5e0;">{{currentSectorName}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 3px 8px 3px 0; font-weight: bold;">DATA:</td>
+      <td style="padding: 3px 0; border-bottom: 1px dotted #cbd5e0;">{{processCreatedAt}}</td>
+    </tr>
+    <tr>
+      <td style="padding: 3px 8px 3px 0; font-weight: bold;">ASSUNTO:</td>
+      <td style="padding: 3px 0; font-weight: bold;">{{processSubject}}</td>
+    </tr>
+  </table>
+
+  <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 16px 0;" />
+
+  <!-- Corpo -->
+  <div style="text-align: justify; line-height: 1.8; font-size: 12pt; margin-top: 16px;">
+    {{#if processDescription}}
+    <p style="text-indent: 40px; margin: 0 0 12px 0;">{{processDescription}}</p>
+    {{/if}}
+    {{#if bodyContent}}
+    <div>{{{bodyContent}}}</div>
+    {{/if}}
+    {{#unless processDescription}}{{#unless bodyContent}}
+    <p style="text-indent: 40px; margin: 0 0 12px 0;">
+      Em atenção ao processo de número {{processNumber}}, encaminhamos para conhecimento e providências que se fizerem necessárias.
+    </p>
+    {{/unless}}{{/unless}}
+  </div>
+
+  <!-- Saudação -->
+  <div style="margin-top: 24px; font-size: 12pt; line-height: 1.8;">
+    <p style="text-indent: 40px; margin: 0;">Atenciosamente,</p>
+  </div>
+
+  <!-- Assinatura -->
+  <div style="margin-top: 48px; text-align: center;">
+    <div style="display: inline-block; min-width: 280px; border-top: 1px solid #2d3748; padding-top: 6px;">
+      <p style="margin: 0; font-size: 11pt; font-weight: bold; text-transform: uppercase;">{{createdByName}}</p>
+      <p style="margin: 2px 0 0; font-size: 10pt; color: #4a5568;">{{originSectorName}}</p>
+    </div>
+  </div>
+
+  {{#if hasTags}}
+  <div style="margin-top: 24px; font-size: 8pt; color: #718096;">
+    <strong>Tags:</strong> {{#each tags}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
+  </div>
+  {{/if}}
+
+  <!-- Rodapé -->
+  <div style="margin-top: 32px; padding-top: 8px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 7pt; color: #a0aec0;">
+    <p style="margin: 0;">Documento gerado pelo Sistema DigiUrban · {{generatedAt}} · Processo: {{processNumber}}</p>
+  </div>
+
 </div>

@@ -151,6 +151,62 @@ router.put('/process-types/:id', (req, res, next) =>
   proxyRequest(req, res, next, `/process-types/${req.params.id}`));
 
 // ─────────────────────────────────────────────
+// Comentários
+// ─────────────────────────────────────────────
+router.get('/processes/:id/comments', (req, res, next) =>
+  proxyRequest(req, res, next, `/processes/${req.params.id}/comments`));
+router.post('/processes/:id/comments', (req, res, next) =>
+  proxyRequest(req, res, next, `/processes/${req.params.id}/comments`));
+router.patch('/comments/:commentId', (req, res, next) =>
+  proxyRequest(req, res, next, `/comments/${req.params.commentId}`));
+router.delete('/comments/:commentId', (req, res, next) =>
+  proxyRequest(req, res, next, `/comments/${req.params.commentId}`));
+
+// ─────────────────────────────────────────────
+// Assinaturas
+// ─────────────────────────────────────────────
+router.get('/processes/:id/signatures', (req, res, next) =>
+  proxyRequest(req, res, next, `/processes/${req.params.id}/signatures`));
+router.post('/processes/:id/signatures', (req, res, next) =>
+  proxyRequest(req, res, next, `/processes/${req.params.id}/signatures`));
+router.post('/signatures/:signatureId/confirm', (req, res, next) =>
+  proxyRequest(req, res, next, `/signatures/${req.params.signatureId}/confirm`));
+router.post('/signatures/:signatureId/reject', (req, res, next) =>
+  proxyRequest(req, res, next, `/signatures/${req.params.signatureId}/reject`));
+router.post('/dispatches/:dispatchId/read', (req, res, next) =>
+  proxyRequest(req, res, next, `/dispatches/${req.params.dispatchId}/read`));
+router.post('/inbox/read-all', (req, res, next) =>
+  proxyRequest(req, res, next, '/inbox/read-all'));
+
+// Upload de documento (proxy multipart)
+router.post('/processes/:id/documents/upload', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const auth = req as AuthenticatedRequest;
+    const FormData = (await import('form-data')).default;
+    // Para upload, repassamos como stream — mas como o proxy já recebeu o JSON,
+    // redirecionar via buffer raw é necessário somente se o frontend chamar aqui.
+    // Para simplificar, use o upload direto no flow (via URL interna não exposta ao frontend).
+    // Esta rota aceita JSON com base64 como alternativa.
+    const upstream = await flowClient.request({
+      method: 'POST',
+      url: `/processes/${req.params.id}/documents/upload`,
+      data: req.body,
+      headers: {
+        ...(auth.userId ? { 'x-user-id': auth.userId } : {}),
+        ...(auth.user?.name ? { 'x-user-name': auth.user.name } : {}),
+      },
+    });
+    res.status(upstream.status).json(upstream.data);
+  } catch (err: unknown) {
+    if (axios.isAxiosError(err) && err.response) {
+      res.status(err.response.status).json(err.response.data);
+    } else {
+      next(err);
+    }
+  }
+});
+
+// ─────────────────────────────────────────────
 // Analytics
 // ─────────────────────────────────────────────
 router.get('/analytics/dashboard', (req, res, next) =>
