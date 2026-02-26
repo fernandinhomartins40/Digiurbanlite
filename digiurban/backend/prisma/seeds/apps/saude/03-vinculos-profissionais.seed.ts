@@ -233,7 +233,7 @@ export async function seed03VinculosProfissionais() {
     // Dr. João Pedro Silva - Clínico Geral - UBS Central (40h)
     {
       userEmail: 'joao.silva@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-CLINICO')?.id,
+      cargoId: cargosCriados.get('Médico - Clínico Geral')?.id,
       unidadeOrgId: ubsCentral?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -248,7 +248,7 @@ export async function seed03VinculosProfissionais() {
     // Dra. Maria Santos Costa - Pediatra - UBS Norte (40h)
     {
       userEmail: 'maria.costa@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-PEDIATRA')?.id,
+      cargoId: cargosCriados.get('Médico - Pediatra')?.id,
       unidadeOrgId: ubsNorte?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -263,7 +263,7 @@ export async function seed03VinculosProfissionais() {
     // Dr. Carlos Eduardo Oliveira - Ginecologista - UBS Central (30h) + Policlínica (10h)
     {
       userEmail: 'carlos.oliveira@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-GINECO')?.id,
+      cargoId: cargosCriados.get('Médico - Ginecologista')?.id,
       unidadeOrgId: ubsCentral?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -276,7 +276,7 @@ export async function seed03VinculosProfissionais() {
     },
     {
       userEmail: 'carlos.oliveira@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-GINECO')?.id,
+      cargoId: cargosCriados.get('Médico - Ginecologista')?.id,
       unidadeOrgId: policlinica?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -291,7 +291,7 @@ export async function seed03VinculosProfissionais() {
     // Dr. Ricardo Almeida Ferreira - Cardiologista - Hospital (30h) + Policlínica (10h)
     {
       userEmail: 'ricardo.ferreira@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-CARDIO')?.id,
+      cargoId: cargosCriados.get('Médico - Cardiologista')?.id,
       unidadeOrgId: hospital?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -304,7 +304,7 @@ export async function seed03VinculosProfissionais() {
     },
     {
       userEmail: 'ricardo.ferreira@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-CARDIO')?.id,
+      cargoId: cargosCriados.get('Médico - Cardiologista')?.id,
       unidadeOrgId: policlinica?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -319,7 +319,7 @@ export async function seed03VinculosProfissionais() {
     // Dra. Ana Paula Rodrigues - Psiquiatra - CAPS (40h)
     {
       userEmail: 'ana.rodrigues@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-PSIQ')?.id,
+      cargoId: cargosCriados.get('Médico - Psiquiatra')?.id,
       unidadeOrgId: caps?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -334,7 +334,7 @@ export async function seed03VinculosProfissionais() {
     // Dr. Fernando Lima Souza - Ortopedista - UPA Centro (24h) + Hospital (16h)
     {
       userEmail: 'fernando.souza@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-ORTO')?.id,
+      cargoId: cargosCriados.get('Médico - Ortopedista')?.id,
       unidadeOrgId: upaCentro?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -347,7 +347,7 @@ export async function seed03VinculosProfissionais() {
     },
     {
       userEmail: 'fernando.souza@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-ORTO')?.id,
+      cargoId: cargosCriados.get('Médico - Ortopedista')?.id,
       unidadeOrgId: hospital?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -362,7 +362,7 @@ export async function seed03VinculosProfissionais() {
     // Dra. Juliana Mendes Barbosa - Dermatologista - Policlínica (40h)
     {
       userEmail: 'juliana.barbosa@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-DERMA')?.id,
+      cargoId: cargosCriados.get('Médico - Dermatologista')?.id,
       unidadeOrgId: policlinica?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -377,7 +377,7 @@ export async function seed03VinculosProfissionais() {
     // Dr. Roberto Castro Nunes - Neurologista - Hospital (40h)
     {
       userEmail: 'roberto.nunes@saude.sp.gov.br',
-      cargoId: cargosCriados.get('MED-NEURO')?.id,
+      cargoId: cargosCriados.get('Médico - Neurologista')?.id,
       unidadeOrgId: hospital?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -394,7 +394,7 @@ export async function seed03VinculosProfissionais() {
     // Enf. Patrícia Lima Santos - UBS Central (40h)
     {
       userEmail: 'patricia.santos@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: ubsCentral?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -409,7 +409,7 @@ export async function seed03VinculosProfissionais() {
     // Enf. Marcos Vieira Lopes - UPA Centro (40h)
     {
       userEmail: 'marcos.lopes@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: upaCentro?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -424,7 +424,7 @@ export async function seed03VinculosProfissionais() {
     // Enf. Camila Ferreira Costa - UBS Norte (30h) + UBS Sul (10h)
     {
       userEmail: 'camila.costa@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: ubsNorte?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -437,7 +437,7 @@ export async function seed03VinculosProfissionais() {
     },
     {
       userEmail: 'camila.costa@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: ubsSul?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -452,7 +452,7 @@ export async function seed03VinculosProfissionais() {
     // Enf. Rafael Souza Martins - CAPS (40h)
     {
       userEmail: 'rafael.martins@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: caps?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -467,7 +467,7 @@ export async function seed03VinculosProfissionais() {
     // Enf. Luciana Alves Pereira - UBS Sul (40h)
     {
       userEmail: 'luciana.pereira@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: ubsSul?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -482,7 +482,7 @@ export async function seed03VinculosProfissionais() {
     // Enf. André Oliveira Silva - Hospital (40h)
     {
       userEmail: 'andre.silva@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ENFERMEIRO')?.id,
+      cargoId: cargosCriados.get('Enfermeiro')?.id,
       unidadeOrgId: hospital?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -499,7 +499,7 @@ export async function seed03VinculosProfissionais() {
     // Téc. Enf. Sandra Regina Dias - UBS Central (40h)
     {
       userEmail: 'sandra.dias@saude.sp.gov.br',
-      cargoId: cargosCriados.get('TEC-ENFERMAGEM')?.id,
+      cargoId: cargosCriados.get('Técnico de Enfermagem')?.id,
       unidadeOrgId: ubsCentral?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -514,7 +514,7 @@ export async function seed03VinculosProfissionais() {
     // Téc. Enf. Paulo Roberto Gomes - UPA Centro (40h)
     {
       userEmail: 'paulo.gomes@saude.sp.gov.br',
-      cargoId: cargosCriados.get('TEC-ENFERMAGEM')?.id,
+      cargoId: cargosCriados.get('Técnico de Enfermagem')?.id,
       unidadeOrgId: upaCentro?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -529,7 +529,7 @@ export async function seed03VinculosProfissionais() {
     // Téc. Enf. Mariana Silva Santos - UBS Norte (40h)
     {
       userEmail: 'mariana.santos@saude.sp.gov.br',
-      cargoId: cargosCriados.get('TEC-ENFERMAGEM')?.id,
+      cargoId: cargosCriados.get('Técnico de Enfermagem')?.id,
       unidadeOrgId: ubsNorte?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -544,7 +544,7 @@ export async function seed03VinculosProfissionais() {
     // Téc. Enf. Diego Ferreira Lima - Hospital (40h)
     {
       userEmail: 'diego.lima@saude.sp.gov.br',
-      cargoId: cargosCriados.get('TEC-ENFERMAGEM')?.id,
+      cargoId: cargosCriados.get('Técnico de Enfermagem')?.id,
       unidadeOrgId: hospital?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -561,7 +561,7 @@ export async function seed03VinculosProfissionais() {
     // Dra. Fabiana Costa Ribeiro - UBS Central (40h)
     {
       userEmail: 'fabiana.ribeiro@saude.sp.gov.br',
-      cargoId: cargosCriados.get('DENTISTA')?.id,
+      cargoId: cargosCriados.get('Cirurgião-Dentista')?.id,
       unidadeOrgId: ubsCentral?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -576,7 +576,7 @@ export async function seed03VinculosProfissionais() {
     // Dr. Thiago Almeida Rocha - UBS Norte (40h)
     {
       userEmail: 'thiago.rocha@saude.sp.gov.br',
-      cargoId: cargosCriados.get('DENTISTA')?.id,
+      cargoId: cargosCriados.get('Cirurgião-Dentista')?.id,
       unidadeOrgId: ubsNorte?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -591,7 +591,7 @@ export async function seed03VinculosProfissionais() {
     // Dra. Renata Oliveira Campos - UBS Vila Nova (40h)
     {
       userEmail: 'renata.campos@saude.sp.gov.br',
-      cargoId: cargosCriados.get('DENTISTA')?.id,
+      cargoId: cargosCriados.get('Cirurgião-Dentista')?.id,
       unidadeOrgId: ubsVilaNova?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -608,7 +608,7 @@ export async function seed03VinculosProfissionais() {
     // Psic. Beatriz Mendes Lima - CAPS (40h)
     {
       userEmail: 'beatriz.lima@saude.sp.gov.br',
-      cargoId: cargosCriados.get('PSICOLOGO')?.id,
+      cargoId: cargosCriados.get('Psicólogo')?.id,
       unidadeOrgId: caps?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -623,7 +623,7 @@ export async function seed03VinculosProfissionais() {
     // Psic. Gustavo Henrique Dias - CER (40h)
     {
       userEmail: 'gustavo.dias@saude.sp.gov.br',
-      cargoId: cargosCriados.get('PSICOLOGO')?.id,
+      cargoId: cargosCriados.get('Psicólogo')?.id,
       unidadeOrgId: cer?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -640,7 +640,7 @@ export async function seed03VinculosProfissionais() {
     // Josefa Maria da Silva - ESF Jardim Esperança (40h)
     {
       userEmail: 'josefa.silva@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ACS')?.id,
+      cargoId: cargosCriados.get('Agente Comunitário de Saúde')?.id,
       unidadeOrgId: esfJardim?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,
@@ -655,7 +655,7 @@ export async function seed03VinculosProfissionais() {
     // Antonio Carlos Souza - ESF Parque das Flores (40h)
     {
       userEmail: 'antonio.souza@saude.sp.gov.br',
-      cargoId: cargosCriados.get('ACS')?.id,
+      cargoId: cargosCriados.get('Agente Comunitário de Saúde')?.id,
       unidadeOrgId: esfParque?.id,
       tipo: 'LOTACAO' as const,
       situacao: 'ATIVO' as const,

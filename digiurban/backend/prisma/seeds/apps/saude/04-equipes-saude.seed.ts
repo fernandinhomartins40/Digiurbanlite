@@ -102,7 +102,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE ESF 01 - JARDIM ESPERANÇA ===============
 
-  if (esfJardim?.UnidadeSaude) {
+  if (esfJardim?.unidadeSaude) {
     const drJoao = getServidor('joao.silva@saude.sp.gov.br');
     const enfPatricia = getServidor('patricia.santos@saude.sp.gov.br');
     const tecSandra = getServidor('sandra.dias@saude.sp.gov.br');
@@ -130,7 +130,7 @@ export async function seed04EquipesSaude() {
         ine: '0001234567', // INE fictício mas realista (10 dígitos)
         nome: 'ESF 01 - Jardim Esperança',
         tipo: 'eSF',
-        unidadeId: esfJardim.UnidadeSaude.id,
+        unidadeId: esfJardim.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -191,7 +191,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE ESF 02 - PARQUE DAS FLORES ===============
 
-  if (esfParque?.UnidadeSaude) {
+  if (esfParque?.unidadeSaude) {
     const draMaria = getServidor('maria.costa@saude.sp.gov.br');
     const enfMarcos = getServidor('marcos.lopes@saude.sp.gov.br');
     const tecPaulo = getServidor('paulo.gomes@saude.sp.gov.br');
@@ -217,7 +217,7 @@ export async function seed04EquipesSaude() {
         ine: '0002345678',
         nome: 'ESF 02 - Parque das Flores',
         tipo: 'eSF',
-        unidadeId: esfParque.UnidadeSaude.id,
+        unidadeId: esfParque.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -275,7 +275,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE ESF 03 - UBS CENTRAL (MISTA) ===============
 
-  if (ubsCentral?.UnidadeSaude) {
+  if (ubsCentral?.unidadeSaude) {
     const drCarlos = getServidor('carlos.oliveira@saude.sp.gov.br');
     const enfCamila = getServidor('camila.costa@saude.sp.gov.br');
     const tecMariana = getServidor('mariana.santos@saude.sp.gov.br');
@@ -299,7 +299,7 @@ export async function seed04EquipesSaude() {
         ine: '0003456789',
         nome: 'ESF 03 - UBS Central',
         tipo: 'eSF',
-        unidadeId: ubsCentral.UnidadeSaude.id,
+        unidadeId: ubsCentral.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -343,7 +343,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE ESF 04 - UBS NORTE ===============
 
-  if (ubsNorte?.UnidadeSaude) {
+  if (ubsNorte?.unidadeSaude) {
     const enfLuciana = getServidor('luciana.pereira@saude.sp.gov.br');
     const draRenata = getServidor('renata.campos@saude.sp.gov.br');
 
@@ -366,7 +366,7 @@ export async function seed04EquipesSaude() {
         ine: '0004567890',
         nome: 'ESF 04 - UBS Norte',
         tipo: 'eSF',
-        unidadeId: ubsNorte.UnidadeSaude.id,
+        unidadeId: ubsNorte.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -409,7 +409,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE NASF 01 ===============
 
-  if (ubsCentral?.UnidadeSaude) {
+  if (ubsCentral?.unidadeSaude) {
     const drRicardo = getServidor('ricardo.ferreira@saude.sp.gov.br');
     const psiBeatriz = getServidor('beatriz.lima@saude.sp.gov.br');
 
@@ -432,7 +432,7 @@ export async function seed04EquipesSaude() {
         ine: '0005678901',
         nome: 'NASF 01',
         tipo: 'NASF',
-        unidadeId: ubsCentral.UnidadeSaude.id,
+        unidadeId: ubsCentral.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -475,7 +475,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE NASF 02 ===============
 
-  if (ubsNorte?.UnidadeSaude) {
+  if (ubsNorte?.unidadeSaude) {
     const draJuliana = getServidor('juliana.barbosa@saude.sp.gov.br');
     const psiGustavo = getServidor('gustavo.dias@saude.sp.gov.br');
 
@@ -498,7 +498,7 @@ export async function seed04EquipesSaude() {
         ine: '0006789012',
         nome: 'NASF 02',
         tipo: 'NASF',
-        unidadeId: ubsNorte.UnidadeSaude.id,
+        unidadeId: ubsNorte.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -541,7 +541,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE CAPS ===============
 
-  if (caps?.UnidadeSaude) {
+  if (caps?.unidadeSaude) {
     const draAna = getServidor('ana.rodrigues@saude.sp.gov.br');
     const enfRafael = getServidor('rafael.martins@saude.sp.gov.br');
     const psiBeatriz = getServidor('beatriz.lima@saude.sp.gov.br');
@@ -565,7 +565,7 @@ export async function seed04EquipesSaude() {
         ine: '0007890123',
         nome: 'Equipe CAPS Centro',
         tipo: 'eAP', // Atenção Primária especializada
-        unidadeId: caps.UnidadeSaude.id,
+        unidadeId: caps.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
@@ -609,7 +609,7 @@ export async function seed04EquipesSaude() {
 
   // =============== EQUIPE UPA CENTRO ===============
 
-  if (upaCentro?.UnidadeSaude) {
+  if (upaCentro?.unidadeSaude) {
     const drFernando = getServidor('fernando.souza@saude.sp.gov.br');
     const enfMarcos = getServidor('marcos.lopes@saude.sp.gov.br');
     const tecPaulo = getServidor('paulo.gomes@saude.sp.gov.br');
@@ -633,7 +633,7 @@ export async function seed04EquipesSaude() {
         ine: '0008901234',
         nome: 'Equipe UPA Centro',
         tipo: 'eAP',
-        unidadeId: upaCentro.UnidadeSaude.id,
+        unidadeId: upaCentro.unidadeSaude.id,
         teamId: team.id,
         ativo: true,
       }
