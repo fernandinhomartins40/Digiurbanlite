@@ -146,7 +146,10 @@ export interface AuditListResponse {
 // ─────────────────────────────────────────────
 
 export class PricesClient {
-  private readonly baseUrl = '/api/prices';
+  // Usado com o api client (que já tem /api como base)
+  private readonly baseUrl = '/prices';
+  // Usado com fetch direto (sem base automática)
+  private readonly fetchBaseUrl = '/api/prices';
 
   /** Busca por item (texto livre) */
   async search(params: PriceSearchRequest): Promise<PriceSearchResponse> {
@@ -172,7 +175,7 @@ export class PricesClient {
 
   /** Gera relatório PDF — usa fetch direto para suportar responseType blob */
   async generateReport(params: ReportRequest): Promise<Blob> {
-    const response = await fetch(`${this.baseUrl}/reports/price-research`, {
+    const response = await fetch(`${this.fetchBaseUrl}/reports/price-research`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
