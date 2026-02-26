@@ -9,8 +9,14 @@ import type {
   PncpFetchOptions,
 } from './pncp.types';
 
+// A API do PNCP tem dois base paths distintos:
+// - /api/consulta/v1  → busca/listagem de contratações e contratos
+// - /pncp-api/v1      → itens de contratações específicas
+const PNCP_ITEMS_BASE_URL = 'https://pncp.gov.br/pncp-api/v1';
+
 export class PncpClient {
   private http: AxiosInstance;
+  private httpItems: AxiosInstance;
   private lastRequestTime = 0;
 
   constructor() {
@@ -23,21 +29,32 @@ export class PncpClient {
       },
     });
 
-    axiosRetry(this.http, {
+    this.httpItems = axios.create({
+      baseURL: PNCP_ITEMS_BASE_URL,
+      timeout: config.pncp.timeoutMs,
+      headers: {
+        Accept: 'application/json',
+        'User-Agent': 'DigiUrban-Prices/1.0',
+      },
+    });
+
+    const retryConfig = {
       retries: config.pncp.maxRetries,
-      retryDelay: (retryCount) => retryCount * config.pncp.retryDelayMs,
-      retryCondition: (error) =>
+      retryDelay: (retryCount: number) => retryCount * config.pncp.retryDelayMs,
+      retryCondition: (error: import('axios').AxiosError) =>
         axiosRetry.isNetworkOrIdempotentRequestError(error) ||
         error.response?.status === 429 ||
         error.response?.status === 503,
-      onRetry: (retryCount, error, requestConfig) => {
+      onRetry: (retryCount: number, error: import('axios').AxiosError) => {
         logger.warn('[PNCP] Retry', {
           attempt: retryCount,
-          url: requestConfig.url,
+          url: error.config?.url,
           status: error.response?.status,
         });
       },
-    });
+    };
+    axiosRetry(this.http, retryConfig);
+    axiosRetry(this.httpItems, retryConfig);
   }
 
   // Rate limit básico entre requisições
@@ -51,12 +68,15 @@ export class PncpClient {
   }
 
   // Busca contratações (editais/compras)
+  // Endpoint correto: /contratacoes/proposta (tamanhoPagina mínimo: 10)
   async fetchContratacoes(options: PncpFetchOptions = {}): Promise<PncpContratacao[]> {
-    const { sinceDays = config.ingest.sinceDays, page = 1, pageSize = config.pncp.pageSize } = options;
+    const { sinceDays = config.ingest.sinceDays, page = 1 } = options;
+    // PNCP exige tamanhoPagina >= 10; usar 50 como padrão produtivo
+    const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
 
-    const dataInicial = new Date();
-    dataInicial.setDate(dataInicial.getDate() - sinceDays);
     const dataFinal = new Date();
+    const dataInicial = new Date();
+    dataInicial.setDate(dataFinal.getDate() - sinceDays);
 
     const params: Record<string, unknown> = {
       dataInicial: this.formatDate(dataInicial),
@@ -73,7 +93,7 @@ export class PncpClient {
     try {
       logger.debug('[PNCP] Fetching contratacoes', { params });
       const response = await this.http.get<PncpListResponse<PncpContratacao>>(
-        '/contratacoes/publicacoes',
+        '/contratacoes/proposta',
         { params },
       );
       return response.data?.data ?? [];
@@ -84,6 +104,7 @@ export class PncpClient {
   }
 
   // Busca todos os itens de uma contratação
+  // Usa o base path /pncp-api/v1 (distinto do /api/consulta/v1)
   async fetchItensContratacao(
     cnpjOrgao: string,
     anoCompra: number,
@@ -92,7 +113,7 @@ export class PncpClient {
     await this.throttle();
 
     try {
-      const response = await this.http.get<{ data: PncpContratacao['itens'] }>(
+      const response = await this.httpItems.get<{ data: PncpContratacao['itens'] }>(
         `/orgaos/${cnpjOrgao}/compras/${anoCompra}/${sequencialCompra}/itens`,
         { params: { pagina: 1, tamanhoPagina: 500 } },
       );
@@ -109,15 +130,18 @@ export class PncpClient {
   }
 
   // Busca contratos (não compras)
+  // Endpoint correto: /contratos/publicacoes (tamanhoPagina mínimo: 10)
   async fetchContratos(options: PncpFetchOptions = {}): Promise<PncpContrato[]> {
-    const { sinceDays = config.ingest.sinceDays, page = 1, pageSize = config.pncp.pageSize } = options;
+    const { sinceDays = config.ingest.sinceDays, page = 1 } = options;
+    const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
 
+    const dataFinal = new Date();
     const dataInicial = new Date();
-    dataInicial.setDate(dataInicial.getDate() - sinceDays);
+    dataInicial.setDate(dataFinal.getDate() - sinceDays);
 
     const params: Record<string, unknown> = {
       dataInicial: this.formatDate(dataInicial),
-      dataFinal: this.formatDate(new Date()),
+      dataFinal: this.formatDate(dataFinal),
       pagina: page,
       tamanhoPagina: pageSize,
     };
@@ -128,7 +152,7 @@ export class PncpClient {
 
     try {
       const response = await this.http.get<PncpListResponse<PncpContrato>>(
-        '/contratos',
+        '/contratos/publicacoes',
         { params },
       );
       return response.data?.data ?? [];
@@ -161,12 +185,15 @@ export class PncpClient {
   async ping(): Promise<boolean> {
     try {
       await this.throttle();
-      await this.http.get('/contratacoes/publicacoes', {
+      const dataFinal = new Date();
+      const dataInicial = new Date();
+      dataInicial.setDate(dataFinal.getDate() - 7);
+      await this.http.get('/contratacoes/proposta', {
         params: {
-          dataInicial: this.formatDate(new Date()),
-          dataFinal: this.formatDate(new Date()),
+          dataInicial: this.formatDate(dataInicial),
+          dataFinal: this.formatDate(dataFinal),
           pagina: 1,
-          tamanhoPagina: 1,
+          tamanhoPagina: 10,
         },
         timeout: 10000,
       });

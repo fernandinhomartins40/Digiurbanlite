@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Search, Download, FileText, BarChart2, RefreshCw, AlertCircle,
   ChevronDown, ChevronUp, Building2, TrendingUp, Database, Clock,
-  Shield, Users, MapPin, Layers, FileDown, ScrollText,
+  Shield, Users, MapPin, Layers, FileDown, ScrollText, Play, Settings,
+  CheckCircle, XCircle, Loader2,
 } from 'lucide-react';
+import { IngestStatus } from '@/lib/prices-client';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -110,6 +112,50 @@ export default function PesquisaPrecos() {
   const [filterMaxPrice, setFilterMaxPrice] = useState<string>('');
   const [periodFrom, setPeriodFrom] = useState<string>('');
   const [periodTo, setPeriodTo] = useState<string>('');
+
+  // Painel de ingestão
+  const [showIngestPanel, setShowIngestPanel] = useState(false);
+  const [ingestStatus, setIngestStatus] = useState<IngestStatus | null>(null);
+  const [ingestLoading, setIngestLoading] = useState(false);
+  const [ingestTriggering, setIngestTriggering] = useState<string | null>(null);
+
+  // Carregar status de ingestão automaticamente ao abrir painel
+  useEffect(() => {
+    if (showIngestPanel && !ingestStatus) {
+      loadIngestStatus();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showIngestPanel]);
+
+  async function loadIngestStatus() {
+    setIngestLoading(true);
+    try {
+      const status = await pricesClient.getIngestStatus();
+      setIngestStatus(status);
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível obter status de ingestão.', variant: 'destructive' });
+    } finally {
+      setIngestLoading(false);
+    }
+  }
+
+  async function handleTriggerIngest(source?: string) {
+    const key = source ?? 'all';
+    setIngestTriggering(key);
+    try {
+      const { jobId } = await pricesClient.triggerIngest({ source, since_days: 365 });
+      toast({
+        title: 'Ingestão iniciada!',
+        description: `Job ${jobId} iniciado para ${source ? `fonte: ${source.toUpperCase()}` : 'todas as fontes'}. Os dados serão disponíveis em alguns minutos.`,
+      });
+      // Recarregar status após 3s
+      setTimeout(() => loadIngestStatus(), 3000);
+    } catch {
+      toast({ title: 'Erro ao iniciar ingestão', description: 'Verifique se o módulo está disponível.', variant: 'destructive' });
+    } finally {
+      setIngestTriggering(null);
+    }
+  }
 
   function buildFilters(): PriceSearchFilters {
     const f: PriceSearchFilters = {};
@@ -289,14 +335,129 @@ export default function PesquisaPrecos() {
         </p>
       </div>
 
-      {/* Cards de cobertura */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+      {/* Cards de cobertura + botão painel */}
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
         {SOURCES.map((src) => (
           <div key={src.value} className={`rounded-lg border px-3 py-2 flex items-center gap-2 ${src.color}`}>
             <Database className="w-4 h-4 shrink-0" />
             <span className="text-xs font-medium truncate">{src.label}</span>
           </div>
         ))}
+      </div>
+
+      {/* Painel de Ingestão de Dados */}
+      <div className="mb-6">
+        <button
+          type="button"
+          onClick={() => setShowIngestPanel(!showIngestPanel)}
+          className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 transition-colors"
+        >
+          <Settings className="w-4 h-4" />
+          <span>Configuração e Ingestão de Dados</span>
+          {showIngestPanel ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {showIngestPanel && (
+          <Card className="mt-3 border-orange-200 dark:border-orange-800">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Database className="w-4 h-4 text-orange-600" />
+                Painel de Ingestão de Dados
+              </CardTitle>
+              <CardDescription>
+                Dispare a coleta de dados das fontes públicas. A ingestão pode levar vários minutos.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Status da última execução */}
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Status da ingestão</span>
+                <Button variant="outline" size="sm" onClick={loadIngestStatus} disabled={ingestLoading}>
+                  {ingestLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                  Atualizar
+                </Button>
+              </div>
+
+              {ingestStatus && (
+                <div className="space-y-3">
+                  {/* Queue */}
+                  <div className="grid grid-cols-4 gap-2 text-center">
+                    {[
+                      { label: 'Ativas', value: ingestStatus.queue.active, color: 'text-blue-600' },
+                      { label: 'Aguardando', value: ingestStatus.queue.waiting, color: 'text-yellow-600' },
+                      { label: 'Concluídas', value: ingestStatus.queue.completed, color: 'text-green-600' },
+                      { label: 'Com Erro', value: ingestStatus.queue.failed, color: 'text-red-600' },
+                    ].map((q) => (
+                      <div key={q.label} className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                        <p className={`text-lg font-bold ${q.color}`}>{q.value}</p>
+                        <p className="text-xs text-gray-500">{q.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Última execução */}
+                  {ingestStatus.lastRun && (
+                    <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-3 text-sm space-y-1">
+                      <div className="flex items-center gap-2">
+                        {ingestStatus.lastRun.status === 'completed' && <CheckCircle className="w-4 h-4 text-green-500" />}
+                        {ingestStatus.lastRun.status === 'running' && <Loader2 className="w-4 h-4 text-blue-500 animate-spin" />}
+                        {ingestStatus.lastRun.status === 'failed' && <XCircle className="w-4 h-4 text-red-500" />}
+                        <span className="font-medium">Última execução: {ingestStatus.lastRun.status === 'completed' ? 'Concluída' : ingestStatus.lastRun.status === 'running' ? 'Em andamento' : 'Com falha'}</span>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-xs text-gray-600 dark:text-gray-400">
+                        <span>Iniciada: {new Date(ingestStatus.lastRun.startedAt).toLocaleString('pt-BR')}</span>
+                        <span>Ingeridos: <strong className="text-green-600">{ingestStatus.lastRun.itemsIngested.toLocaleString()}</strong></span>
+                        <span>Erros: <strong className={ingestStatus.lastRun.errors > 0 ? 'text-red-600' : ''}>{ingestStatus.lastRun.errors}</strong></span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {!ingestStatus && !ingestLoading && (
+                <p className="text-sm text-gray-400 italic">Clique em "Atualizar" para ver o status atual.</p>
+              )}
+
+              {/* Botões de ingestão por fonte */}
+              <div>
+                <p className="text-sm font-medium mb-2">Disparar ingestão manual</p>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                  <Button
+                    variant="default"
+                    size="sm"
+                    onClick={() => handleTriggerIngest()}
+                    disabled={ingestTriggering !== null}
+                    className="bg-gray-800 hover:bg-gray-700"
+                  >
+                    {ingestTriggering === 'all' ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Play className="w-3 h-3 mr-1" />}
+                    Todas as fontes
+                  </Button>
+                  {SOURCES.map((src) => (
+                    <Button
+                      key={src.value}
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleTriggerIngest(src.value)}
+                      disabled={ingestTriggering !== null}
+                      className="text-xs"
+                    >
+                      {ingestTriggering === src.value ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <Play className="w-3 h-3 mr-1" />}
+                      {src.label}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <Alert className="border-amber-200 bg-amber-50 dark:bg-amber-950 dark:border-amber-800">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <AlertDescription className="text-xs text-amber-800 dark:text-amber-300">
+                  A ingestão de dados é executada automaticamente todo dia às 02:00. Use o disparo manual apenas para atualização imediata ou quando não houver dados na pesquisa.
+                  O processamento inicial pode levar 15–30 minutos dependendo do volume de dados.
+                </AlertDescription>
+              </Alert>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* Formulário de busca */}

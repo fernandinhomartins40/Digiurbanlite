@@ -70,17 +70,17 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar Playwright + Chromium
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN npx -y playwright@1.50.1 install chromium --with-deps
-
-# Copiar arquivos do builder
+# Copiar arquivos do builder primeiro (necessário para playwright install usar node_modules local)
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/templates ./templates
 COPY --from=builder /app/docker-entrypoint.sh ./docker-entrypoint.sh
+
+# Instalar Playwright + Chromium (após copiar node_modules para usar versão local)
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
+RUN node_modules/.bin/playwright install chromium --with-deps
 
 # Permissao de execucao no entrypoint
 RUN chmod +x docker-entrypoint.sh
