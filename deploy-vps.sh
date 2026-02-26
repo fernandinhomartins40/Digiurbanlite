@@ -115,6 +115,10 @@ docker stop digiurban-postgres 2>/dev/null || true
 docker rm digiurban-postgres 2>/dev/null || true
 docker stop digiurban-redis 2>/dev/null || true
 docker rm digiurban-redis 2>/dev/null || true
+docker stop digiurban-flow 2>/dev/null || true
+docker rm digiurban-flow 2>/dev/null || true
+docker stop digiurban-prices 2>/dev/null || true
+docker rm digiurban-prices 2>/dev/null || true
 
 echo "✅ Containers órfãos removidos"
 echo ""
@@ -284,16 +288,27 @@ docker container prune -f || true
 echo "=== 🔥 LIMPEZA NUCLEAR DE CACHE DOCKER ==="
 echo ""
 
-# 1. Remover TODAS as imagens relacionadas ao DigiUrban
+# 1. Remover TODAS as imagens relacionadas ao DigiUrban (incluindo módulos flow e prices)
 echo "🗑️  Removendo TODAS as imagens do DigiUrban..."
 docker images | grep -i digiurban | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 docker images | grep -i backend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 docker images | grep -i frontend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 docker images | grep -i runner | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
+# Remover imagens dos módulos isolados pelo nome exato que o docker-compose gera
+echo "🗑️  Removendo imagens dos módulos flow e prices..."
+docker rmi -f digiurban-digiurban-flow 2>/dev/null || true
+docker rmi -f digiurban-digiurban-prices 2>/dev/null || true
+docker rmi -f digiurban_digiurban-flow 2>/dev/null || true
+docker rmi -f digiurban_digiurban-prices 2>/dev/null || true
+# Remover qualquer imagem que contenha "flow" ou "prices" no nome
+docker images | grep -E "flow|prices" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+
 # 2. Remover imagens base do Node.js (força download novo)
 echo "🗑️  Removendo imagens base do Node.js..."
 docker images | grep "node.*18-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+docker images | grep "node.*22-alpine" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+docker images | grep "node.*20-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
 # 3. Limpar build cache do Docker
 echo "🗑️  Limpando build cache do Docker..."
@@ -315,9 +330,11 @@ echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"
 echo "CACHE_BUST=${CACHE_BUST}"
 echo ""
 
-# 7. Forçar pull das imagens base
+# 7. Forçar pull das imagens base usadas por todos os módulos
 echo "📥 Forçando pull de imagens base..."
-docker pull node:18-bookworm-slim
+docker pull node:18-bookworm-slim || true
+docker pull node:20-bookworm-slim || true
+docker pull node:22-alpine || true
 echo ""
 
 # ============================================================================
@@ -601,6 +618,32 @@ docker logs ultrazend-messages 2>&1 | grep -i "prisma" || echo "Logs do Prisma m
 # Verificar se as tabelas foram criadas
 echo "=== Verificando tabelas do UltraZend Messages no banco ==="
 docker exec digiurban-postgres psql -U digiurban -d digiurban -c "\dt message_*" || echo "⚠️ Tabelas ainda não criadas"
+echo ""
+
+# ============================================================================
+# ETAPA 14b: VERIFICAR MIGRATIONS DO DIGIURBAN-FLOW E DIGIURBAN-PRICES
+# ============================================================================
+
+echo "=== Verificando migrations do digiurban-flow ==="
+docker logs digiurban-flow --tail=40 2>&1 | grep -E "migration|error|Error|table|Starting" || true
+echo ""
+
+# Verificar se tabelas do flow foram criadas
+echo "=== Tabelas flow_* no banco ==="
+docker exec digiurban-postgres psql -U digiurban -d digiurban \
+  -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'flow_%' ORDER BY tablename;" \
+  || echo "⚠️ Não foi possível verificar tabelas flow"
+echo ""
+
+echo "=== Verificando migrations do digiurban-prices ==="
+docker logs digiurban-prices --tail=40 2>&1 | grep -E "migration|error|Error|table|Starting" || true
+echo ""
+
+# Verificar se tabelas do prices foram criadas
+echo "=== Tabelas prices_* no banco ==="
+docker exec digiurban-postgres psql -U digiurban -d digiurban \
+  -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'prices_%' ORDER BY tablename;" \
+  || echo "⚠️ Não foi possível verificar tabelas prices"
 echo ""
 
 # ============================================================================
