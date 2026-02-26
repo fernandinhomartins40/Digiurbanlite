@@ -45,9 +45,29 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
 # Usar prisma local (evita npx baixar versao 7.x incompativel)
 PRISMA_BIN="./node_modules/.bin/prisma"
 
-# Resolver migrations com falha registrada no banco (evita P3009 bloqueando deploy)
-echo "🔧 Resolvendo migrations com falha conhecida..."
-$PRISMA_BIN migrate resolve --rolled-back 20260121_add_flow_models 2>/dev/null || true
+# Resolver QUALQUER migration com falha registrada no banco (evita P3009 bloqueando deploy)
+# Consulta a tabela _prisma_migrations e marca como rolled-back toda que estiver em falha
+echo "🔧 Verificando e resolvendo migrations com falha..."
+FAILED_MIGRATIONS=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql \
+  -h postgres \
+  -U ${POSTGRES_USER:-digiurban} \
+  -d ${POSTGRES_DB:-digiurban} \
+  -t -A \
+  -c "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL AND logs IS NOT NULL;" \
+  2>/dev/null || echo "")
+
+if [ -n "$FAILED_MIGRATIONS" ]; then
+  echo "   Migrations com falha encontradas:"
+  echo "$FAILED_MIGRATIONS" | while IFS= read -r migration; do
+    migration=$(echo "$migration" | tr -d '[:space:]')
+    if [ -n "$migration" ]; then
+      echo "   → Marcando como rolled-back: $migration"
+      $PRISMA_BIN migrate resolve --rolled-back "$migration" 2>/dev/null || true
+    fi
+  done
+else
+  echo "   Nenhuma migration com falha encontrada."
+fi
 
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
