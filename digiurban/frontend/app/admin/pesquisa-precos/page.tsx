@@ -39,7 +39,7 @@ export default function PesquisaPrecos() {
 
   function buildFilters(): PriceSearchFilters {
     const f: PriceSearchFilters = {};
-    if (filterUf) f.uf = filterUf;
+    if (filterUf && filterUf !== 'all') f.uf = filterUf;
     if (filterUnit) f.unit = filterUnit;
     if (filterMinPrice) f.minPrice = parseFloat(filterMinPrice);
     if (filterMaxPrice) f.maxPrice = parseFloat(filterMaxPrice);
@@ -172,7 +172,7 @@ export default function PesquisaPrecos() {
                       <SelectValue placeholder="Todos" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">Todos</SelectItem>
+                      <SelectItem value="all">Todos</SelectItem>
                       {UFS.map((uf) => (
                         <SelectItem key={uf} value={uf}>{uf}</SelectItem>
                       ))}
