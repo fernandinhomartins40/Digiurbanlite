@@ -79,21 +79,43 @@ const SYNONYMS_LIST = [
   'treinamento, capacitação, curso',
 ];
 
+// Versão do mapping — incrementar quando o schema mudar para forçar reindex
+const MAPPING_VERSION = 'v2';
+
 export async function ensureIndexExists(): Promise<void> {
   const client = getOpenSearchClient();
   const index = config.opensearch.indexLineItems;
+  const mappingVersionAlias = `${index}_${MAPPING_VERSION}`;
 
   try {
     const exists = await client.indices.exists({ index });
     if (exists.body) {
-      logger.info('[OpenSearch] Index already exists', { index });
-      return;
+      // Verifica se o mapping tem o campo 'source' (novo em v2)
+      // Se não tiver, recria o índice com o novo mapping
+      try {
+        const mappingRes = await client.indices.getMapping({ index });
+        const props = (mappingRes.body as Record<string, { mappings?: { properties?: Record<string, unknown> } }>)[index]?.mappings?.properties ?? {};
+        const hasSourceField = 'source' in props;
+        const hasVersionAlias = await client.indices.existsAlias({ name: mappingVersionAlias }).then(r => r.body).catch(() => false);
+        if (hasSourceField && hasVersionAlias) {
+          logger.info('[OpenSearch] Index already exists with current mapping', { index, version: MAPPING_VERSION });
+          return;
+        }
+        if (!hasSourceField) {
+          logger.info('[OpenSearch] Index exists with OLD mapping — dropping and recreating', { index });
+          await client.indices.delete({ index });
+          // Ingest will repopulate after recreation
+        }
+      } catch {
+        logger.info('[OpenSearch] Index already exists', { index });
+        return;
+      }
     }
   } catch {
-    // index does not exist
+    // index does not exist — proceed to create
   }
 
-  logger.info('[OpenSearch] Creating enhanced index', { index });
+  logger.info('[OpenSearch] Creating enhanced index (v2 mapping)', { index });
 
   await client.indices.create({
     index,
@@ -224,7 +246,14 @@ export async function ensureIndexExists(): Promise<void> {
     },
   });
 
-  logger.info('[OpenSearch] Enhanced index created', { index });
+  // Criar alias de versão para detectar futuras mudanças de mapping
+  try {
+    await client.indices.putAlias({ index, name: mappingVersionAlias });
+  } catch {
+    // alias creation is optional
+  }
+
+  logger.info('[OpenSearch] Enhanced index created (v2)', { index });
 }
 
 // Drop + recreate do índice com o novo mapping

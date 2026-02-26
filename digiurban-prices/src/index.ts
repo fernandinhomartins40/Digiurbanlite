@@ -95,10 +95,28 @@ async function start() {
     process.exit(1);
   }
 
-  // Criar índice OpenSearch (se não existir)
+  // Criar índice OpenSearch (se não existir ou mapping desatualizado)
+  let indexWasRecreated = false;
   try {
+    const { getOpenSearchClient } = await import('./search_index/opensearch.client');
+    const osClient = getOpenSearchClient();
+    const indexName = (await import('./config/config')).config.opensearch.indexLineItems;
+    const existedBefore = await osClient.indices.exists({ index: indexName }).then(r => r.body).catch(() => false);
+
     await ensureIndexExists();
     logger.info('[Startup] OpenSearch index ready');
+
+    const existsAfter = await osClient.indices.exists({ index: indexName }).then(r => r.body).catch(() => false);
+    // Se existia antes e foi recriado (foi deletado + recriado), precisamos reindexar
+    if (existedBefore && existsAfter) {
+      // Verificar se o doc_count é 0 (índice foi recriado vazio)
+      const stats = await osClient.indices.stats({ index: indexName }).catch(() => null);
+      const docCount = (stats?.body as Record<string, unknown> | null)?._all as { total?: { docs?: { count?: number } } } | undefined;
+      if ((docCount?.total?.docs?.count ?? 1) === 0) {
+        indexWasRecreated = true;
+        logger.info('[Startup] OpenSearch index was recreated with new mapping — will re-trigger ingest');
+      }
+    }
   } catch (err) {
     logger.warn('[Startup] OpenSearch not available — search may be degraded', {
       error: (err as Error).message,
@@ -113,13 +131,13 @@ async function start() {
   startIngestScheduler();
   logger.info('[Startup] Ingest scheduler started');
 
-  // Disparar ingestão inicial se nunca houve dados
+  // Disparar ingestão inicial se nunca houve dados OU se o índice foi recriado
   try {
     const lastRun = await prisma.ingestRun.findFirst({
       where: { status: 'completed' },
     });
-    if (!lastRun) {
-      logger.info('[Startup] No completed ingest found — triggering initial ingest');
+    if (!lastRun || indexWasRecreated) {
+      logger.info('[Startup] Triggering initial ingest', { reason: indexWasRecreated ? 'index-recreated' : 'no-data' });
       await triggerIngest({ triggeredBy: 'startup', sinceDays: 365 });
     }
   } catch (err) {

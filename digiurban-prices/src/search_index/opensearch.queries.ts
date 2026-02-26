@@ -35,27 +35,18 @@ export function buildSearchQuery(params: SearchQueryParams) {
   const must: unknown[] = [];
   const filter: unknown[] = [];
 
-  // Query principal: multi_match com boost por campo + fuzzy
+  // Query principal: multi_match em campos seguros (existem no mapping original + novo)
   must.push({
     multi_match: {
       query,
-      fields: [
-        'description^3',
-        'normalized_description^2.5',
-        'catmat_description^2',
-        'description.autocomplete^1.5',
-        'organization_name^1',
-        'supplier_name^0.8',
-      ],
+      fields: ['normalized_description^2', 'description', 'organization_name'],
       type: 'best_fields',
       fuzziness: 'AUTO',
-      prefix_length: 2,
-      operator: 'or',
       minimum_should_match: '60%',
     },
   });
 
-  // Filtros
+  // Filtros base
   if (filters.uf) filter.push({ term: { uf: filters.uf } });
   if (filters.unit) filter.push({ term: { unit: filters.unit } });
   if (filters.modality) filter.push({ term: { modality: filters.modality } });
@@ -74,9 +65,17 @@ export function buildSearchQuery(params: SearchQueryParams) {
     filter.push({ range: { unit_price: range } });
   }
 
-  // Confiabilidade mínima
+  // Confiabilidade mínima (campo novo — só filtra se o campo existir)
   if (filters.minConfidence !== undefined) {
-    filter.push({ range: { confidence_score: { gte: filters.minConfidence } } });
+    filter.push({
+      bool: {
+        should: [
+          { range: { confidence_score: { gte: filters.minConfidence } } },
+          { bool: { must_not: { exists: { field: 'confidence_score' } } } },
+        ],
+        minimum_should_match: 1,
+      },
+    });
   }
 
   // Faixa de quantidade
@@ -94,13 +93,15 @@ export function buildSearchQuery(params: SearchQueryParams) {
     if (period.to) range.lte = period.to;
     filter.push({ range: { contract_date: range } });
   } else {
-    // Padrão: últimos 24 meses (ampliado de 12)
+    // Padrão: últimos 24 meses
     const from = new Date();
     from.setFullYear(from.getFullYear() - 2);
     filter.push({ range: { contract_date: { gte: from.toISOString().split('T')[0] } } });
   }
 
-  // function_score: boost por recência + confiabilidade
+  // function_score: boost para documentos mais recentes
+  // IMPORTANTE: usar filter na function para que documentos sem contract_date
+  // não recebam score 0 (com boost_mode: sum, score base é preservado)
   const query_body = {
     function_score: {
       query: {
@@ -114,25 +115,18 @@ export function buildSearchQuery(params: SearchQueryParams) {
           gauss: {
             contract_date: {
               origin: 'now',
-              scale: '180d',
+              scale: '365d',
               offset: '30d',
               decay: 0.5,
             },
           },
           weight: 1.5,
-        },
-        {
-          field_value_factor: {
-            field: 'confidence_score',
-            factor: 0.5,
-            modifier: 'sqrt',
-            missing: 0.5,
-          },
-          weight: 1.0,
+          // Só aplica o decay em documentos que têm contract_date
+          filter: { exists: { field: 'contract_date' } },
         },
       ],
       score_mode: 'sum',
-      boost_mode: 'multiply',
+      boost_mode: 'sum',  // sum preserva o score base mesmo quando a function retorna 0
     },
   };
 
@@ -164,15 +158,7 @@ export function buildSearchQuery(params: SearchQueryParams) {
         by_modality: {
           terms: { field: 'modality', size: 10 },
         },
-        by_supplier: {
-          terms: { field: 'supplier_name.keyword', size: 20, min_doc_count: 2 },
-          aggs: {
-            avg_price: { avg: { field: 'unit_price' } },
-            min_price: { min: { field: 'unit_price' } },
-            max_price: { max: { field: 'unit_price' } },
-            last_seen: { max: { field: 'contract_date' } },
-          },
-        },
+        // avg_confidence: só funciona com novo mapping, mas não causa erro (retorna null)
         avg_confidence: {
           avg: { field: 'confidence_score' },
         },
