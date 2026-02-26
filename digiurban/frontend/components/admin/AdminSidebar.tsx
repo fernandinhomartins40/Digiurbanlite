@@ -313,18 +313,6 @@ export function AdminSidebar() {
       ]
     },
     {
-      title: 'Processos Internos',
-      items: [
-        {
-          title: 'Processos Internos',
-          href: '/admin/processos-internos',
-          icon: ArrowRightLeft,
-          minRole: 'COORDINATOR',
-          badge: 'NOVO'
-        }
-      ]
-    },
-    {
       title: 'Análise & Relatórios',
       items: [
         {
