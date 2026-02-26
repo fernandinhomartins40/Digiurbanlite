@@ -6,7 +6,7 @@ import { config } from './config/config';
 import { logger } from './utils/logger';
 import { prisma } from './models/prisma';
 import { ensureIndexExists } from './search_index/opensearch.client';
-import { startIngestWorker } from './ingest/ingest.worker';
+import { startIngestWorker, triggerIngest } from './ingest/ingest.worker';
 import { startIngestScheduler } from './ingest/scheduler';
 import { apiKeyMiddleware } from './api/middlewares/auth.middleware';
 import { defaultRateLimiter } from './api/middlewares/rate-limit.middleware';
@@ -108,6 +108,19 @@ async function start() {
   // Iniciar scheduler de ingestão
   startIngestScheduler();
   logger.info('[Startup] Ingest scheduler started');
+
+  // Disparar ingestão inicial se nunca houve dados
+  try {
+    const lastRun = await prisma.ingestRun.findFirst({
+      where: { status: 'completed' },
+    });
+    if (!lastRun) {
+      logger.info('[Startup] No completed ingest found — triggering initial ingest');
+      await triggerIngest({ triggeredBy: 'startup', sinceDays: 365 });
+    }
+  } catch (err) {
+    logger.warn('[Startup] Could not check/trigger initial ingest', { error: (err as Error).message });
+  }
 
   // Iniciar servidor HTTP
   const server = app.listen(config.port, () => {

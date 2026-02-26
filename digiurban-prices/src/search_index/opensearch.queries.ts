@@ -131,13 +131,6 @@ export function buildSearchQuery(params: SearchQueryParams) {
         by_unit: {
           terms: { field: 'unit', size: 20 },
         },
-        price_histogram: {
-          histogram: {
-            field: 'unit_price',
-            interval: 0, // calculado dinamicamente
-            min_doc_count: 1,
-          },
-        },
         over_time: {
           date_histogram: {
             field: 'contract_date',
