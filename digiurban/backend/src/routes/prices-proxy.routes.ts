@@ -128,4 +128,19 @@ router.post('/ingest/run', (req, res, next) =>
   proxyRequest(req, res, next, '/ingest/run'),
 );
 
+// GET /api/prices/catmat/search
+router.get('/catmat/search', (req, res, next) =>
+  proxyRequest(req, res, next, '/catmat/search'),
+);
+
+// POST /api/prices/catmat/sync
+router.post('/catmat/sync', (req, res, next) =>
+  proxyRequest(req, res, next, '/catmat/sync'),
+);
+
+// GET /api/prices/suppliers/map
+router.get('/suppliers/map', (req, res, next) =>
+  proxyRequest(req, res, next, '/suppliers/map'),
+);
+
 export default router;

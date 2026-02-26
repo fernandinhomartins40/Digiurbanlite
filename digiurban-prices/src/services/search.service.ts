@@ -18,7 +18,21 @@ export interface SearchItem {
   city: string | null;
   organizationName: string | null;
   modality: string | null;
+  source: string | null;
+  supplierName: string | null;
+  supplierCnpj: string | null;
+  catmatCode: string | null;
+  confidenceScore: number | null;
   score: number;
+}
+
+export interface SupplierAgg {
+  name: string;
+  count: number;
+  avgPrice: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  lastSeen: string | null;
 }
 
 export interface SearchResponse {
@@ -32,7 +46,11 @@ export interface SearchResponse {
   aggregations: {
     byUf: { key: string; count: number }[];
     byUnit: { key: string; count: number }[];
-    overTime: { date: string; avgPrice: number | null; count: number }[];
+    bySource: { key: string; count: number }[];
+    byModality: { key: string; count: number }[];
+    bySupplier: SupplierAgg[];
+    overTime: { date: string; avgPrice: number | null; minPrice: number | null; maxPrice: number | null; count: number }[];
+    avgConfidence: number | null;
   };
   explanation: {
     methodology: string;
@@ -86,7 +104,6 @@ export async function searchPrices(
     osResponse = response.body as Record<string, unknown>;
   } catch (err) {
     logger.error('[Search] OpenSearch error', { error: (err as Error).message, query });
-    // Fallback: retornar resposta vazia
     return buildEmptyResponse(query, normalizedQuery, page, pageSize, Date.now() - startMs);
   }
 
@@ -106,6 +123,11 @@ export async function searchPrices(
       city: string | null;
       organization_name: string | null;
       modality: string | null;
+      source: string | null;
+      supplier_name: string | null;
+      supplier_cnpj: string | null;
+      catmat_code: string | null;
+      confidence_score: number | null;
     };
   }>;
 
@@ -122,10 +144,15 @@ export async function searchPrices(
     city: hit._source.city,
     organizationName: hit._source.organization_name,
     modality: hit._source.modality,
+    source: hit._source.source,
+    supplierName: hit._source.supplier_name,
+    supplierCnpj: hit._source.supplier_cnpj,
+    catmatCode: hit._source.catmat_code,
+    confidenceScore: hit._source.confidence_score,
     score: hit._score,
   }));
 
-  // Extrair valores para estatísticas
+  // Estatísticas com remoção de outliers
   const prices = items
     .map((i) => i.unitPrice)
     .filter((v): v is number => v !== null && v > 0);
@@ -137,16 +164,42 @@ export async function searchPrices(
 
   const byUfBuckets = ((aggs.by_uf as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
   const byUnitBuckets = ((aggs.by_unit as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
-  const overTimeBuckets = ((aggs.over_time as { buckets?: { key_as_string: string; doc_count: number; avg_price: { value: number | null } }[] })?.buckets ?? []);
+  const bySourceBuckets = ((aggs.by_source as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
+  const byModalityBuckets = ((aggs.by_modality as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
+  const bySupplierBuckets = ((aggs.by_supplier as {
+    buckets?: {
+      key: string;
+      doc_count: number;
+      avg_price?: { value: number | null };
+      min_price?: { value: number | null };
+      max_price?: { value: number | null };
+      last_seen?: { value_as_string?: string };
+    }[];
+  })?.buckets ?? []);
+  const overTimeBuckets = ((aggs.over_time as {
+    buckets?: {
+      key_as_string: string;
+      doc_count: number;
+      avg_price?: { value: number | null };
+      min_price?: { value: number | null };
+      max_price?: { value: number | null };
+    }[];
+  })?.buckets ?? []);
+  const avgConfidence = ((aggs.avg_confidence as { value?: number | null })?.value) ?? null;
 
-  // Construir explicação
+  // Filtros aplicados
   const filtersApplied: string[] = [];
   if (filters.uf) filtersApplied.push(`UF: ${filters.uf}`);
+  if (filters.source) filtersApplied.push(`Fonte: ${filters.source}`);
   if (filters.unit) filtersApplied.push(`Unidade: ${filters.unit}`);
+  if (filters.catmatCode) filtersApplied.push(`CATMAT: ${filters.catmatCode}`);
+  if (filters.modality) filtersApplied.push(`Modalidade: ${filters.modality}`);
   if (filters.minPrice) filtersApplied.push(`Preço mínimo: R$ ${filters.minPrice}`);
   if (filters.maxPrice) filtersApplied.push(`Preço máximo: R$ ${filters.maxPrice}`);
+  if (filters.minConfidence) filtersApplied.push(`Confiabilidade ≥ ${Math.round(filters.minConfidence * 100)}%`);
 
-  const periodFrom = period?.from ?? new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+  const periodFrom = period?.from ?? twoYearsAgo;
   const periodTo = period?.to ?? new Date().toISOString().split('T')[0];
 
   return {
@@ -160,17 +213,30 @@ export async function searchPrices(
     aggregations: {
       byUf: byUfBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
       byUnit: byUnitBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
+      bySource: bySourceBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
+      byModality: byModalityBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
+      bySupplier: bySupplierBuckets.map((b) => ({
+        name: b.key,
+        count: b.doc_count,
+        avgPrice: b.avg_price?.value ?? null,
+        minPrice: b.min_price?.value ?? null,
+        maxPrice: b.max_price?.value ?? null,
+        lastSeen: b.last_seen?.value_as_string ?? null,
+      })),
       overTime: overTimeBuckets.map((b) => ({
         date: b.key_as_string,
         avgPrice: b.avg_price?.value ?? null,
+        minPrice: b.min_price?.value ?? null,
+        maxPrice: b.max_price?.value ?? null,
         count: b.doc_count,
       })),
+      avgConfidence,
     },
     explanation: {
       methodology: statistics?.methodology ?? 'Sem dados suficientes para análise estatística.',
       filters: filtersApplied,
       period: { from: periodFrom, to: periodTo },
-      algorithmVersion: '1.0',
+      algorithmVersion: '2.0',
     },
     durationMs: Date.now() - startMs,
   };
@@ -197,15 +263,17 @@ export async function batchSearchPrices(
     }),
   );
 
-  const totalsMin = results
-    .map((r) => r.results.statistics?.min)
-    .filter((v): v is number => v !== null);
-  const totalsMax = results
-    .map((r) => r.results.statistics?.max)
-    .filter((v): v is number => v !== null);
-  const totalsMedian = results
-    .map((r) => r.estimatedTotal)
-    .filter((v): v is number => v !== null);
+  const totalsMin: number[] = [];
+  const totalsMax: number[] = [];
+  const totalsMedian: number[] = [];
+
+  for (const r of results) {
+    const minVal = r.results.statistics?.min;
+    const maxVal = r.results.statistics?.max;
+    if (typeof minVal === 'number') totalsMin.push(minVal);
+    if (typeof maxVal === 'number') totalsMax.push(maxVal);
+    if (r.estimatedTotal !== null) totalsMedian.push(r.estimatedTotal);
+  }
 
   return {
     items: results,
@@ -222,6 +290,7 @@ function buildEmptyResponse(
   pageSize: number,
   durationMs: number,
 ): SearchResponse {
+  const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   return {
     query,
     normalizedQuery,
@@ -230,15 +299,20 @@ function buildEmptyResponse(
     pageSize,
     items: [],
     statistics: null,
-    aggregations: { byUf: [], byUnit: [], overTime: [] },
+    aggregations: {
+      byUf: [],
+      byUnit: [],
+      bySource: [],
+      byModality: [],
+      bySupplier: [],
+      overTime: [],
+      avgConfidence: null,
+    },
     explanation: {
       methodology: 'Sem resultados encontrados.',
       filters: [],
-      period: {
-        from: new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-        to: new Date().toISOString().split('T')[0],
-      },
-      algorithmVersion: '1.0',
+      period: { from: twoYearsAgo, to: new Date().toISOString().split('T')[0] },
+      algorithmVersion: '2.0',
     },
     durationMs,
   };

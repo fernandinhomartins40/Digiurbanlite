@@ -9,16 +9,18 @@ const router = Router();
 // POST /api/v1/ingest/run — disparar ingestão manual
 router.post('/ingest/run', ingestAuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { since_days: sinceDays, uf } = req.body as {
+    const { since_days: sinceDays, uf, source } = req.body as {
       since_days?: number;
       uf?: string;
+      source?: string;
     };
 
-    logger.info('[Ingest] Manual trigger via API', { sinceDays, uf });
+    logger.info('[Ingest] Manual trigger via API', { sinceDays, uf, source });
 
     const jobId = await triggerIngest({
       sinceDays,
       uf,
+      source: source as import('../../ingest/ingest.orchestrator').IngestSource | undefined,
       triggeredBy: 'api',
     });
 

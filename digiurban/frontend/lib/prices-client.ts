@@ -18,6 +18,8 @@ export interface PriceSearchFilters {
   maxQuantity?: number;
   organization?: string;
   modality?: string;
+  source?: string;
+  minConfidence?: number;
 }
 
 export interface PriceSearchPeriod {
@@ -46,6 +48,11 @@ export interface PriceSearchItem {
   city: string | null;
   organizationName: string | null;
   modality: string | null;
+  source: string;
+  supplierName: string | null;
+  supplierCnpj: string | null;
+  catmatCode: string | null;
+  confidenceScore: number;
   score: number;
 }
 
@@ -65,6 +72,16 @@ export interface PriceStatistics {
   methodology: string;
 }
 
+export interface SupplierAgg {
+  supplierName: string;
+  supplierCnpj: string | null;
+  contractCount: number;
+  avgPrice: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  lastSeen: string | null;
+}
+
 export interface PriceSearchResponse {
   query: string;
   normalizedQuery: string;
@@ -76,7 +93,11 @@ export interface PriceSearchResponse {
   aggregations: {
     byUf: { key: string; count: number }[];
     byUnit: { key: string; count: number }[];
-    overTime: { date: string; avgPrice: number | null; count: number }[];
+    bySource: { key: string; count: number }[];
+    byModality: { key: string; count: number }[];
+    bySupplier: SupplierAgg[];
+    overTime: { date: string; avgPrice: number | null; minPrice?: number | null; maxPrice?: number | null; count: number }[];
+    avgConfidence: number | null;
   };
   explanation: {
     methodology: string;
@@ -109,6 +130,9 @@ export interface ReportRequest {
   filters?: PriceSearchFilters;
   period?: PriceSearchPeriod;
   format: 'pdf' | 'html';
+  includeTermoReferencia?: boolean;
+  unit?: string;
+  orgaoSolicitante?: string;
 }
 
 export interface IngestStatus {
@@ -141,24 +165,48 @@ export interface AuditListResponse {
   }[];
 }
 
+export interface CatmatSearchResult {
+  code: string;
+  type: 'material' | 'service';
+  description: string;
+  groupDescription: string | null;
+  classDescription: string | null;
+  pdmDescription: string | null;
+}
+
+export interface SupplierMapEntry {
+  supplierName: string;
+  supplierCnpj: string | null;
+  contractCount: number;
+  avgPrice: number | null;
+  minPrice: number | null;
+  maxPrice: number | null;
+  lastSeen: string | null;
+  ufs: string[];
+  sources: string[];
+}
+
+export interface SupplierMapResponse {
+  query: string;
+  total: number;
+  suppliers: SupplierMapEntry[];
+  durationMs: number;
+}
+
 // ─────────────────────────────────────────────
 // Cliente
 // ─────────────────────────────────────────────
 
 export class PricesClient {
-  // Usado com o api client (que já tem /api como base)
   private readonly baseUrl = '/prices';
-  // Usado com fetch direto (sem base automática)
   private readonly fetchBaseUrl = '/api/prices';
 
-  /** Busca por item (texto livre) */
   async search(params: PriceSearchRequest): Promise<PriceSearchResponse> {
     const { data } = await api.post<PriceSearchResponse>(`${this.baseUrl}/search`, params);
     if (!data) throw new Error('Erro ao buscar preços');
     return data;
   }
 
-  /** Busca em lote via JSON */
   async searchBatch(
     items: BatchSearchItemInput[],
     filters?: PriceSearchFilters,
@@ -173,7 +221,6 @@ export class PricesClient {
     return data;
   }
 
-  /** Gera relatório PDF — usa fetch direto para suportar responseType blob */
   async generateReport(params: ReportRequest): Promise<Blob> {
     const response = await fetch(`${this.fetchBaseUrl}/reports/price-research`, {
       method: 'POST',
@@ -185,7 +232,6 @@ export class PricesClient {
     return response.blob();
   }
 
-  /** Download de relatório — abre no browser ou força download */
   async downloadReport(params: ReportRequest): Promise<void> {
     const blob = await this.generateReport(params);
     const url = URL.createObjectURL(blob);
@@ -196,21 +242,18 @@ export class PricesClient {
     URL.revokeObjectURL(url);
   }
 
-  /** Status da ingestão */
   async getIngestStatus(): Promise<IngestStatus> {
     const { data } = await api.get<IngestStatus>(`${this.baseUrl}/ingest/status`);
     if (!data) throw new Error('Erro ao obter status de ingestão');
     return data;
   }
 
-  /** Trigger ingestão manual */
-  async triggerIngest(options?: { since_days?: number; uf?: string }): Promise<{ jobId: string }> {
+  async triggerIngest(options?: { since_days?: number; uf?: string; source?: string }): Promise<{ jobId: string }> {
     const { data } = await api.post<{ jobId: string }>(`${this.baseUrl}/ingest/run`, options ?? {});
     if (!data) throw new Error('Erro ao iniciar ingestão');
     return data;
   }
 
-  /** Lista auditorias */
   async listAudits(params?: {
     from?: string;
     to?: string;
@@ -222,13 +265,31 @@ export class PricesClient {
     return data;
   }
 
-  /** Health check do módulo */
   async health(): Promise<{ status: string }> {
     const { data } = await api.get<{ status: string }>(`${this.baseUrl}/health`);
     if (!data) throw new Error('Módulo de preços indisponível');
     return data;
   }
+
+  /** Busca no catálogo CATMAT/CATSER */
+  async searchCatmat(q: string, type?: 'material' | 'service', limit = 10): Promise<CatmatSearchResult[]> {
+    const { data } = await api.get<{ results: CatmatSearchResult[] }>(`${this.baseUrl}/catmat/search`, {
+      params: { q, type, limit },
+    });
+    return data?.results ?? [];
+  }
+
+  /** Mapa de fornecedores */
+  async getSupplierMap(
+    q: string,
+    options?: { uf?: string; source?: string; period?: string; limit?: number },
+  ): Promise<SupplierMapResponse> {
+    const { data } = await api.get<SupplierMapResponse>(`${this.baseUrl}/suppliers/map`, {
+      params: { q, ...options },
+    });
+    if (!data) throw new Error('Erro ao obter mapa de fornecedores');
+    return data;
+  }
 }
 
-// Singleton
 export const pricesClient = new PricesClient();

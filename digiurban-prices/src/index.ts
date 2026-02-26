@@ -17,6 +17,8 @@ import searchRouter from './api/routes/search.routes';
 import reportsRouter from './api/routes/reports.routes';
 import auditsRouter from './api/routes/audits.routes';
 import ingestRouter from './api/routes/ingest.routes';
+import catmatRouter from './api/routes/catmat.routes';
+import suppliersRouter from './api/routes/suppliers.routes';
 
 const app = express();
 
@@ -69,6 +71,8 @@ app.use('/api/v1', searchRouter);
 app.use('/api/v1', reportsRouter);
 app.use('/api/v1', auditsRouter);
 app.use('/api/v1', ingestRouter);
+app.use('/api/v1', catmatRouter);
+app.use('/api/v1', suppliersRouter);
 
 // ─────────────────────────────────────────────
 // ERROR HANDLER

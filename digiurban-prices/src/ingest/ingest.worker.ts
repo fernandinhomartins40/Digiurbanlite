@@ -39,7 +39,7 @@ export function startIngestWorker(): Worker {
     },
     {
       connection,
-      concurrency: 1,
+      concurrency: 1, // Processar uma ingestão por vez para não sobrecarregar
     },
   );
 
@@ -55,18 +55,19 @@ export function startIngestWorker(): Worker {
   return worker;
 }
 
-// Disparar ingestão manual (via API ou scheduler)
+// Disparar ingestão (via API ou scheduler)
 export async function triggerIngest(options: IngestJobOptions = {}): Promise<string> {
   const q = getIngestQueue();
   const job = await q.add('ingest-run', options, {
     attempts: 2,
     backoff: { type: 'exponential', delay: 5000 },
+    jobId: options.source ? `${options.source}_${Date.now()}` : undefined,
   });
-  logger.info('[IngestWorker] Job enqueued', { jobId: job.id });
+  logger.info('[IngestWorker] Job enqueued', { jobId: job.id, source: options.source });
   return job.id ?? 'unknown';
 }
 
-// Obter status do último job
+// Status da fila
 export async function getIngestStatus(): Promise<{
   active: number;
   waiting: number;

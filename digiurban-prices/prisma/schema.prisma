@@ -101,8 +101,23 @@ model LineItem {
 
   // Classificação
   catmatCode            String?     // código CATMAT
+  catmatDescription     String?     @db.Text  // descrição do item no CATMAT
   catserCode            String?     // código CATSER
   itemCategory          String?
+
+  // Fonte do dado
+  source                String      @default("pncp") // pncp, comprasnet, transparencia, bps, fnde
+  sourceId              String?     // id único na fonte original
+
+  // Fornecedor (desnormalizado para performance)
+  supplierName          String?
+  supplierCnpj          String?
+
+  // Score de confiabilidade (0.0 – 1.0)
+  confidenceScore       Float?      @default(1.0)
+
+  // Período (YYYY-MM para filtros rápidos)
+  yearMonth             String?     // "2024-03"
 
   // Metadados
   contractDate          DateTime?
@@ -133,8 +148,55 @@ model LineItem {
   @@index([catserCode])
   @@index([contractDate])
   @@index([uf])
+  @@index([source])
+  @@index([yearMonth])
   @@index([isValid, isOutlier])
   @@map("prices_line_items")
+}
+
+// ─────────────────────────────────────────────
+// CATÁLOGO CATMAT / CATSER (cache local)
+// ─────────────────────────────────────────────
+model CatmatItem {
+  code             String   @id   // ex: "449034" ou "S-040271"
+  type             String         // "material" | "service"
+  description      String   @db.Text
+  groupCode        String?
+  groupDescription String?
+  classCode        String?
+  classDescription String?
+  pdmCode          String?
+  pdmDescription   String?
+  isActive         Boolean  @default(true)
+  syncedAt         DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([description])
+  @@index([type])
+  @@index([groupCode])
+  @@map("prices_catmat_items")
+}
+
+// ─────────────────────────────────────────────
+// ESTATÍSTICAS POR FORNECEDOR (pré-calculadas)
+// ─────────────────────────────────────────────
+model SupplierStats {
+  id              String   @id @default(cuid())
+  supplierName    String
+  supplierCnpj    String?
+  itemNormalized  String   @db.Text  // normalizedDescription do item
+  count           Int      @default(0)
+  avgPrice        Float?
+  minPrice        Float?
+  maxPrice        Float?
+  lastSeenAt      DateTime?
+  sources         String[] // ["pncp", "comprasnet"]
+  ufs             String[] // ["SP", "RJ"]
+  updatedAt       DateTime @updatedAt
+
+  @@index([itemNormalized])
+  @@index([supplierCnpj])
+  @@map("prices_supplier_stats")
 }
 
 // ─────────────────────────────────────────────

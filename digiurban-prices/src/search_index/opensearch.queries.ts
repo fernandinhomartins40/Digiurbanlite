@@ -10,6 +10,9 @@ export interface SearchFilters {
   organization?: string;
   modality?: string;
   catmatCode?: string;
+  source?: string;         // pncp | comprasnet | bps | transparencia | fnde
+  minConfidence?: number;  // 0.0 – 1.0
+  yearMonth?: string;      // "2024-03"
 }
 
 export interface SearchPeriod {
@@ -32,14 +35,22 @@ export function buildSearchQuery(params: SearchQueryParams) {
   const must: unknown[] = [];
   const filter: unknown[] = [];
 
-  // Query principal: BM25 em description + normalized_description
-  // com boost para normalized_description (já limpa)
+  // Query principal: multi_match com boost por campo + fuzzy
   must.push({
     multi_match: {
       query,
-      fields: ['normalized_description^2', 'description', 'organization_name'],
+      fields: [
+        'description^3',
+        'normalized_description^2.5',
+        'catmat_description^2',
+        'description.autocomplete^1.5',
+        'organization_name^1',
+        'supplier_name^0.8',
+      ],
       type: 'best_fields',
       fuzziness: 'AUTO',
+      prefix_length: 2,
+      operator: 'or',
       minimum_should_match: '60%',
     },
   });
@@ -49,6 +60,8 @@ export function buildSearchQuery(params: SearchQueryParams) {
   if (filters.unit) filter.push({ term: { unit: filters.unit } });
   if (filters.modality) filter.push({ term: { modality: filters.modality } });
   if (filters.catmatCode) filter.push({ term: { catmat_code: filters.catmatCode } });
+  if (filters.source) filter.push({ term: { source: filters.source } });
+  if (filters.yearMonth) filter.push({ term: { year_month: filters.yearMonth } });
   if (filters.organization) {
     filter.push({ match: { 'organization_name.keyword': filters.organization } });
   }
@@ -59,6 +72,11 @@ export function buildSearchQuery(params: SearchQueryParams) {
     if (filters.minPrice !== undefined) range.gte = filters.minPrice;
     if (filters.maxPrice !== undefined) range.lte = filters.maxPrice;
     filter.push({ range: { unit_price: range } });
+  }
+
+  // Confiabilidade mínima
+  if (filters.minConfidence !== undefined) {
+    filter.push({ range: { confidence_score: { gte: filters.minConfidence } } });
   }
 
   // Faixa de quantidade
@@ -76,13 +94,13 @@ export function buildSearchQuery(params: SearchQueryParams) {
     if (period.to) range.lte = period.to;
     filter.push({ range: { contract_date: range } });
   } else {
-    // Padrão: últimos 12 meses
+    // Padrão: últimos 24 meses (ampliado de 12)
     const from = new Date();
-    from.setFullYear(from.getFullYear() - 1);
+    from.setFullYear(from.getFullYear() - 2);
     filter.push({ range: { contract_date: { gte: from.toISOString().split('T')[0] } } });
   }
 
-  // Boost para itens mais recentes (decay function)
+  // function_score: boost por recência + confiabilidade
   const query_body = {
     function_score: {
       query: {
@@ -103,8 +121,17 @@ export function buildSearchQuery(params: SearchQueryParams) {
           },
           weight: 1.5,
         },
+        {
+          field_value_factor: {
+            field: 'confidence_score',
+            factor: 0.5,
+            modifier: 'sqrt',
+            missing: 0.5,
+          },
+          weight: 1.0,
+        },
       ],
-      score_mode: 'multiply',
+      score_mode: 'sum',
       boost_mode: 'multiply',
     },
   };
@@ -131,18 +158,38 @@ export function buildSearchQuery(params: SearchQueryParams) {
         by_unit: {
           terms: { field: 'unit', size: 20 },
         },
+        by_source: {
+          terms: { field: 'source', size: 10 },
+        },
+        by_modality: {
+          terms: { field: 'modality', size: 10 },
+        },
+        by_supplier: {
+          terms: { field: 'supplier_name.keyword', size: 20, min_doc_count: 2 },
+          aggs: {
+            avg_price: { avg: { field: 'unit_price' } },
+            min_price: { min: { field: 'unit_price' } },
+            max_price: { max: { field: 'unit_price' } },
+            last_seen: { max: { field: 'contract_date' } },
+          },
+        },
+        avg_confidence: {
+          avg: { field: 'confidence_score' },
+        },
         over_time: {
           date_histogram: {
             field: 'contract_date',
             calendar_interval: 'month',
-            min_doc_count: 0,
+            min_doc_count: 1,
           },
           aggs: {
             avg_price: { avg: { field: 'unit_price' } },
+            min_price: { min: { field: 'unit_price' } },
+            max_price: { max: { field: 'unit_price' } },
           },
         },
       },
-      sort: [{ _score: { order: 'desc' } }, { contract_date: { order: 'desc' } }],
+      sort: [{ _score: { order: 'desc' } }, { contract_date: { order: 'desc', missing: '_last' } }],
     },
   };
 }

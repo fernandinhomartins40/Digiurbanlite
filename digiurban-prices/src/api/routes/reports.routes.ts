@@ -19,11 +19,17 @@ router.post(
         filters = {},
         period,
         format = 'pdf',
+        includeTermoReferencia = false,
+        unit,
+        orgaoSolicitante,
       } = req.body as {
         query: string;
         filters?: Record<string, unknown>;
         period?: { from?: string; to?: string };
         format?: 'pdf' | 'html';
+        includeTermoReferencia?: boolean;
+        unit?: string;
+        orgaoSolicitante?: string;
       };
 
       if (!query || typeof query !== 'string' || query.trim().length < 2) {
@@ -43,6 +49,9 @@ router.post(
         query: query.trim(),
         searchResult,
         format: format as 'pdf' | 'html',
+        includeTermoReferencia,
+        unit,
+        orgaoSolicitante,
       });
 
       // Registrar auditoria

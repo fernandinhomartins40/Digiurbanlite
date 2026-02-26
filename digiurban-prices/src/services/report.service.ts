@@ -33,6 +33,9 @@ export interface ReportInput {
   searchResult: SearchResponse;
   format: 'pdf' | 'html';
   requestId?: string;
+  includeTermoReferencia?: boolean;
+  unit?: string;
+  orgaoSolicitante?: string;
 }
 
 export interface ReportOutput {
@@ -44,7 +47,15 @@ export interface ReportOutput {
 }
 
 export async function generatePriceReport(input: ReportInput): Promise<ReportOutput> {
-  const { query, searchResult, format, requestId } = input;
+  const {
+    query,
+    searchResult,
+    format,
+    requestId,
+    includeTermoReferencia = false,
+    unit,
+    orgaoSolicitante,
+  } = input;
   const auditId = requestId ?? crypto.randomBytes(8).toString('hex').toUpperCase();
   const generatedAt = new Date();
   const timestamp = generatedAt.getTime();
@@ -69,6 +80,11 @@ export async function generatePriceReport(input: ReportInput): Promise<ReportOut
 
   // Gerar gráfico SVG de distribuição de preços
   const svgChart = stats ? generatePriceDistributionSvg(stats) : '';
+
+  // Gerar Termo de Referência automático
+  const termoReferencia = includeTermoReferencia && stats
+    ? generateTermoReferencia({ query, stats, unit, orgaoSolicitante, auditId, generatedAt, searchResult })
+    : null;
 
   const htmlContent = template({
     query,
@@ -106,7 +122,13 @@ export async function generatePriceReport(input: ReportInput): Promise<ReportOut
       contractDate: item.contractDate ? new Date(item.contractDate).toLocaleDateString('pt-BR') : '-',
       uf: item.uf ?? '-',
       organization: item.organizationName ?? '-',
+      source: item.source ?? '-',
+      supplier: item.supplierName ?? '-',
     })),
+
+    // Termo de Referência
+    includeTermoReferencia,
+    termoReferencia,
 
     // Gráfico SVG
     svgChart,
@@ -202,4 +224,77 @@ function generatePriceDistributionSvg(stats: StatisticsResult): string {
   <text x="${padding}" y="${height - 5}" font-size="8" fill="#64748b" text-anchor="middle">R$ ${stats.min.toFixed(0)}</text>
   <text x="${width - padding}" y="${height - 5}" font-size="8" fill="#64748b" text-anchor="middle">R$ ${stats.max.toFixed(0)}</text>
 </svg>`;
+}
+
+// Gera texto do Termo de Referência automático
+function generateTermoReferencia(input: {
+  query: string;
+  stats: StatisticsResult;
+  unit?: string;
+  orgaoSolicitante?: string;
+  auditId: string;
+  generatedAt: Date;
+  searchResult: SearchResponse;
+}): string {
+  const { query, stats, unit, orgaoSolicitante, auditId, generatedAt, searchResult } = input;
+
+  const fmt = (v: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v);
+  const fmtDate = (d: Date) => d.toLocaleDateString('pt-BR');
+  const periodFrom = searchResult.explanation.period.from;
+  const periodTo = searchResult.explanation.period.to;
+  const unitStr = unit ?? 'unidade';
+  const orgao = orgaoSolicitante ?? '[NOME DO ÓRGÃO]';
+
+  const fontes = searchResult.aggregations.bySource.map((s) => s.key).join(', ') || 'PNCP';
+
+  return `
+TERMO DE REFERÊNCIA — PESQUISA DE PREÇOS
+ID de Auditoria: ${auditId}
+Data da Pesquisa: ${fmtDate(generatedAt)}
+Órgão Solicitante: ${orgao}
+
+1. OBJETO
+Aquisição de: ${query}
+
+2. FUNDAMENTAÇÃO LEGAL
+Esta pesquisa de preços foi realizada em conformidade com:
+• Lei nº 14.133/2021 — Lei de Licitações e Contratos Administrativos (art. 23)
+• Instrução Normativa SEGES/ME nº 65/2021 — Pesquisa de Preços para Aquisições
+
+3. METODOLOGIA
+Foram consultadas as seguintes bases de dados públicas: ${fontes}.
+O período de referência abrange ${periodFrom} a ${periodTo}.
+Total de registros localizados: ${searchResult.total}.
+Após aplicação de metodologia de remoção de outliers (${searchResult.explanation.methodology}),
+foram considerados ${stats.count} registros válidos para cálculo estatístico.
+
+4. RESULTADO DA PESQUISA
+
+| Estatística          | Valor                |
+|---------------------|----------------------|
+| Preço médio         | ${fmt(stats.mean)}   |
+| Preço mediano       | ${fmt(stats.median)} |
+| Menor preço         | ${fmt(stats.min)}    |
+| Maior preço         | ${fmt(stats.max)}    |
+| Desvio padrão       | ${fmt(stats.stdDev)} |
+| Q1 (25%)            | ${fmt(stats.q1)}     |
+| Q3 (75%)            | ${fmt(stats.q3)}     |
+| Registros válidos   | ${stats.count}       |
+| Outliers excluídos  | ${stats.excludedCount} |
+
+5. PREÇO DE REFERÊNCIA
+Conforme o art. 5º da IN SEGES/ME nº 65/2021, o preço de referência para este processo
+é o valor da MEDIANA apurada, igual a ${fmt(stats.median)} por ${unitStr}.
+
+O valor total estimado para a contratação deverá ser calculado com base neste preço de
+referência, multiplicado pela quantidade a ser adquirida.
+
+6. DECLARAÇÃO
+Declaro que os preços obtidos são compatíveis com os preços praticados no mercado público
+conforme bases consultadas: ${fontes}.
+
+________________________________
+Responsável pela pesquisa de preços
+Data: ${fmtDate(generatedAt)}
+  `.trim();
 }
