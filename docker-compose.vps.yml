@@ -184,6 +184,8 @@ services:
       - OPENSEARCH_PASSWORD=admin
       - REDIS_URL=redis://redis:6379
       - DIGIURBAN_API_KEY=${DIGIURBAN_API_KEY:-digiurban-prices-api-key-change-me}
+      - TRANSPARENCIA_API_KEY=${TRANSPARENCIA_API_KEY:-}
+      - COMPRASNET_BASE_URL=https://api.compras.dados.gov.br
       - PNCP_BASE_URL=https://pncp.gov.br/api/consulta/v1
       - INGEST_SINCE_DAYS=365
       - INGEST_CRON=0 2 * * *

@@ -62,7 +62,7 @@ export async function runIngestOrchestrator(options: OrchestratorOptions = {}): 
           result = await runPncpIngest({ sinceDays, uf, runId: runRecord.id });
           break;
         case 'comprasnet':
-          result = await runComprasnetIngest({ sinceDays, uf, runId: runRecord.id });
+          result = await runComprasnetIngest({ sinceDays, runId: runRecord.id });
           break;
         case 'transparencia':
           result = await runTransparenciaIngest({ sinceDays, runId: runRecord.id });

@@ -2,18 +2,21 @@ import axios, { AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
 import { logger } from '../../utils/logger';
 import type {
-  ComprasnetLicitacao,
-  ComprasnetItem,
+  ComprasnetContrato,
+  ComprasnetContratoItem,
   ComprasnetFetchOptions,
 } from './comprasnet.types';
 
-// API de dados abertos do SIASG / ComprasNet (histórico 2015–2021)
-const BASE_URL = 'https://compras.dados.gov.br';
+// Nova API de Contratos do SIASG (versão 2.0, fev/2026)
+// URL base: https://api.compras.dados.gov.br
+// Docs: https://api.compras.dados.gov.br/openapi.yaml
+// Sem autenticação — pública
+const BASE_URL = 'https://api.compras.dados.gov.br';
 
 export class ComprasnetClient {
   private http: AxiosInstance;
   private lastRequestTime = 0;
-  private readonly rateLimitMs = 1000; // 1 req/s — API pública sem chave
+  private readonly rateLimitMs = 1000; // 1 req/s
 
   constructor() {
     this.http = axios.create({
@@ -43,29 +46,33 @@ export class ComprasnetClient {
     this.lastRequestTime = Date.now();
   }
 
-  async fetchLicitacoes(options: ComprasnetFetchOptions = {}): Promise<ComprasnetLicitacao[]> {
-    const { dataAberturaMim, dataAberturaMax, uf, page = 1, pageSize = 50 } = options;
+  async fetchContratos(options: ComprasnetFetchOptions = {}): Promise<ComprasnetContrato[]> {
+    const { dataAssinaturaMin, dataAssinaturaMax, orgaoNome, fornecedorNome, offset = 0, pageSize = 500 } = options;
 
     const params: Record<string, unknown> = {
-      _page: page - 1, // API usa 0-indexed
-      _pageSize: pageSize,
+      offset,
+      order: 'data_assinatura',
+      order_by: 'desc',
     };
 
-    if (dataAberturaMim) params['data_abertura_min'] = dataAberturaMim;
-    if (dataAberturaMax) params['data_abertura_max'] = dataAberturaMax;
-    if (uf) params['uf'] = uf;
+    if (dataAssinaturaMin) params['data_assinatura_min'] = dataAssinaturaMin;
+    if (dataAssinaturaMax) params['data_assinatura_max'] = dataAssinaturaMax;
+    if (orgaoNome) params['orgao_nome'] = orgaoNome;
+    if (fornecedorNome) params['fornecedor_nome'] = fornecedorNome;
 
     await this.throttle();
 
     try {
-      const response = await this.http.get<{
-        _embedded?: { licitacoes?: ComprasnetLicitacao[] };
-        page?: { totalElements?: number };
-      }>('/licitacoes/v1/licitacoes.json', { params });
-
-      return response.data?._embedded?.licitacoes ?? [];
+      // API retorna array direto ou objeto com data
+      const response = await this.http.get<ComprasnetContrato[] | { data?: ComprasnetContrato[] }>(
+        '/comprasContratos/v1/contratos',
+        { params },
+      );
+      const body = response.data;
+      if (Array.isArray(body)) return body;
+      return (body as { data?: ComprasnetContrato[] })?.data ?? [];
     } catch (err: unknown) {
-      logger.warn('[ComprasNet] Error fetching licitacoes', {
+      logger.warn('[ComprasNet] Error fetching contratos', {
         error: (err as Error).message,
         params,
       });
@@ -73,33 +80,35 @@ export class ComprasnetClient {
     }
   }
 
-  async fetchItensLicitacao(idLicitacao: string): Promise<ComprasnetItem[]> {
+  async fetchItensContrato(contratoId: string): Promise<ComprasnetContratoItem[]> {
     await this.throttle();
 
     try {
-      const response = await this.http.get<{
-        _embedded?: { itens?: ComprasnetItem[] };
-      }>(`/licitacoes/v1/licitacoes/${idLicitacao}/itens.json`);
-
-      return response.data?._embedded?.itens ?? [];
+      const response = await this.http.get<ComprasnetContratoItem[] | { data?: ComprasnetContratoItem[] }>(
+        `/comprasContratos/doc/contrato/${contratoId}/itens_compras_contratos`,
+      );
+      const body = response.data;
+      if (Array.isArray(body)) return body;
+      return (body as { data?: ComprasnetContratoItem[] })?.data ?? [];
     } catch (err: unknown) {
       logger.warn('[ComprasNet] Error fetching itens', {
         error: (err as Error).message,
-        idLicitacao,
+        contratoId,
       });
       return [];
     }
   }
 
-  async fetchAllPages(options: ComprasnetFetchOptions, maxPages = 10): Promise<ComprasnetLicitacao[]> {
-    const results: ComprasnetLicitacao[] = [];
-    let page = 1;
+  async fetchAllPages(options: ComprasnetFetchOptions, maxPages = 10): Promise<ComprasnetContrato[]> {
+    const results: ComprasnetContrato[] = [];
+    const pageSize = options.pageSize ?? 500;
+    let page = 0;
 
-    while (page <= maxPages) {
-      const data = await this.fetchLicitacoes({ ...options, page });
+    while (page < maxPages) {
+      const data = await this.fetchContratos({ ...options, offset: page * pageSize, pageSize });
       if (!data || data.length === 0) break;
       results.push(...data);
-      if (data.length < (options.pageSize ?? 50)) break;
+      if (data.length < pageSize) break;
       page++;
     }
 
@@ -109,11 +118,8 @@ export class ComprasnetClient {
   async ping(): Promise<boolean> {
     try {
       await this.throttle();
-      await this.http.get('/licitacoes/v1/licitacoes.json', {
-        params: { _pageSize: 1 },
-        timeout: 10000,
-      });
-      return true;
+      const data = await this.fetchContratos({ pageSize: 1 });
+      return data.length >= 0; // retorna true mesmo com 0 — API respondeu
     } catch {
       return false;
     }

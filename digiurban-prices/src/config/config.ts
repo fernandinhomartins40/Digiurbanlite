@@ -39,7 +39,8 @@ export const config = {
   },
 
   comprasnet: {
-    baseUrl: process.env.COMPRASNET_BASE_URL ?? 'https://compras.dados.gov.br',
+    // Nova API v2 (fev/2026) — antiga compras.dados.gov.br está fora do ar
+    baseUrl: process.env.COMPRASNET_BASE_URL ?? 'https://api.compras.dados.gov.br',
   },
 
   bps: {

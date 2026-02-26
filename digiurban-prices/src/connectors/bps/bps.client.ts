@@ -4,15 +4,18 @@ import * as path from 'path';
 import * as os from 'os';
 import { createReadStream } from 'fs';
 import { createInterface } from 'readline';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const unzipper = require('unzipper');
 import { logger } from '../../utils/logger';
 import type { BpsItem } from './bps.types';
 
 // BPS — Banco de Preços em Saúde (Ministério da Saúde)
-// Dados públicos CSV em: https://opendatasus.saude.gov.br/dataset/bps
-// CKAN API para listar datasets e recursos
+// Portal migrou para: https://dadosabertos.saude.gov.br/dataset/bps
+// Arquivos CSV hospedados no S3: s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/BPS/csv/[ANO].csv.zip
+// Anos disponíveis: 2020-2025 (atualização trimestral)
 
-const CKAN_BASE = 'https://opendatasus.saude.gov.br';
-const BPS_DATASET_ID = 'bps';
+const BPS_S3_BASE = 'https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/BPS/csv';
+const BPS_AVAILABLE_YEARS = [2020, 2021, 2022, 2023, 2024, 2025];
 
 export interface BpsResource {
   id: string;
@@ -23,43 +26,69 @@ export interface BpsResource {
 }
 
 export class BpsClient {
-  // Lista os recursos CSV do dataset BPS
+  // Lista os recursos CSV direto do S3 (um por ano, 2020-2025)
   async listResources(): Promise<BpsResource[]> {
-    try {
-      const response = await axios.get<{
-        result?: { resources?: BpsResource[] };
-      }>(
-        `${CKAN_BASE}/api/3/action/package_show?id=${BPS_DATASET_ID}`,
-        { timeout: 30000, headers: { 'User-Agent': 'DigiUrban-Prices/1.0' } },
-      );
-      const resources = response.data?.result?.resources ?? [];
-      return resources.filter((r) => r.format?.toLowerCase() === 'csv' || r.url?.endsWith('.csv'));
-    } catch (err: unknown) {
-      logger.warn('[BPS] Erro ao listar recursos', { error: (err as Error).message });
-      return [];
-    }
+    const currentYear = new Date().getFullYear();
+    const years = BPS_AVAILABLE_YEARS.filter((y) => y <= currentYear);
+    return years.map((year) => ({
+      id: `bps_${year}`,
+      name: `BPS ${year}`,
+      url: `${BPS_S3_BASE}/${year}.csv.zip`,
+      format: 'csv',
+      last_modified: `${year}-12-31`,
+    }));
   }
 
-  // Baixa CSV para arquivo temporário e retorna o path
+  // Baixa CSV ou ZIP contendo CSV para arquivo temporário e retorna o path do CSV
   async downloadCsv(url: string): Promise<string> {
-    const tmpFile = path.join(os.tmpdir(), `bps_${Date.now()}.csv`);
-    logger.info('[BPS] Baixando CSV', { url, tmpFile });
+    const isZip = url.endsWith('.zip');
+    const tmpCsv = path.join(os.tmpdir(), `bps_${Date.now()}.csv`);
+    logger.info('[BPS] Baixando arquivo', { url, isZip });
 
     const response = await axios.get(url, {
       responseType: 'stream',
-      timeout: 120000,
+      timeout: 300000, // 5 min — arquivos grandes
       headers: { 'User-Agent': 'DigiUrban-Prices/1.0' },
     });
 
-    await new Promise<void>((resolve, reject) => {
-      const writer = fs.createWriteStream(tmpFile);
-      (response.data as NodeJS.ReadableStream).pipe(writer);
-      writer.on('finish', resolve);
-      writer.on('error', reject);
-    });
+    if (isZip) {
+      // Descompactar ZIP em memória e extrair o primeiro .csv
+      await new Promise<void>((resolve, reject) => {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const parser: any = unzipper.Parse();
+        (response.data as NodeJS.ReadableStream).pipe(parser);
+        parser
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .on('entry', (entry: any) => {
+            if (entry.type === 'File' && (entry.path as string).toLowerCase().endsWith('.csv')) {
+              const writer = fs.createWriteStream(tmpCsv);
+              entry.pipe(writer);
+              writer.on('finish', resolve);
+              writer.on('error', reject);
+            } else {
+              entry.autodrain();
+            }
+          })
+          .on('error', reject)
+          .on('finish', () => {
+            if (!fs.existsSync(tmpCsv)) resolve();
+          });
+      });
+    } else {
+      await new Promise<void>((resolve, reject) => {
+        const writer = fs.createWriteStream(tmpCsv);
+        (response.data as NodeJS.ReadableStream).pipe(writer);
+        writer.on('finish', resolve);
+        writer.on('error', reject);
+      });
+    }
 
-    logger.info('[BPS] CSV baixado', { tmpFile, size: fs.statSync(tmpFile).size });
-    return tmpFile;
+    if (!fs.existsSync(tmpCsv)) {
+      throw new Error(`[BPS] Arquivo CSV não encontrado após download: ${url}`);
+    }
+
+    logger.info('[BPS] CSV pronto', { tmpCsv, size: fs.statSync(tmpCsv).size });
+    return tmpCsv;
   }
 
   // Parseia CSV linha a linha (streaming para não explodir a memória)
