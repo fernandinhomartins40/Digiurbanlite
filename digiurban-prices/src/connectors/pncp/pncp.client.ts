@@ -170,16 +170,21 @@ export class PncpClient {
   // Paginação automática (busca TODAS as páginas)
   async fetchAllPages<T>(
     fetcher: (page: number) => Promise<T[]>,
-    maxPages = 20,
+    maxPages = 200,
   ): Promise<T[]> {
     const results: T[] = [];
     let page = 1;
+    const safeMaxPages = Math.max(1, maxPages);
+    const maxResults = 250_000;
 
-    while (page <= maxPages) {
+    while (page <= safeMaxPages) {
       const data = await fetcher(page);
       if (!data || data.length === 0) break;
       results.push(...data);
-      if (data.length < config.pncp.pageSize) break;
+      if (results.length >= maxResults) {
+        logger.warn('[PNCP] Pagination stopped by safety cap', { maxResults, page });
+        break;
+      }
       page++;
     }
 

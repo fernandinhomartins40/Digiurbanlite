@@ -143,4 +143,9 @@ router.get('/suppliers/map', (req, res, next) =>
   proxyRequest(req, res, next, '/suppliers/map'),
 );
 
+// GET /api/prices/coverage
+router.get('/coverage', (req, res, next) =>
+  proxyRequest(req, res, next, '/coverage'),
+);
+
 export default router;

@@ -2,8 +2,11 @@ import { prisma } from '../../models/prisma';
 import { getPncpClient } from '../../connectors/pncp/pncp.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
 import { normalizeText, normalizeUnit, calculateUnitPrice, validateLineItem } from '../normalizer';
+import { inferItemsFromObject } from '../object-itemizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
+import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
+import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
 import type { PncpContratacao, PncpItem } from '../../connectors/pncp/pncp.types';
 
@@ -32,7 +35,7 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
   try {
     const contratacoes = await client.fetchAllPages(
       (page) => client.fetchContratacoes({ sinceDays, uf, page }),
-      50,
+      config.pncp.maxPagesContratacoes,
     );
 
     logger.info('[PNCP Ingest] Contratacoes fetched', { count: contratacoes.length });
@@ -46,11 +49,25 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
           contratacao.sequencialCompra ?? 0,
         );
 
-        for (const item of itens ?? []) {
-          const result = await processLineItem(item, contratacao, org.id, osClient);
-          if (result === 'ingested') ingested++;
-          else if (result === 'updated') updated++;
-          else if (result === 'skipped') skipped++;
+        if ((itens ?? []).length > 0) {
+          for (const item of itens ?? []) {
+            const result = await processLineItem(item, contratacao, org.id, osClient);
+            if (result === 'ingested') ingested++;
+            else if (result === 'updated') updated++;
+            else if (result === 'skipped') skipped++;
+          }
+        } else {
+          const inferred = inferItemsFromObject(contratacao.objetoCompra ?? '', 4);
+          for (let idx = 0; idx < inferred.length; idx++) {
+            const pseudoItem = buildPseudoPncpItem(inferred[idx].description, idx + 1, contratacao.valorTotalEstimado);
+            const result = await processLineItem(pseudoItem, contratacao, org.id, osClient, {
+              inferredFromObject: true,
+              inferredIndex: idx + 1,
+            });
+            if (result === 'ingested') ingested++;
+            else if (result === 'updated') updated++;
+            else if (result === 'skipped') skipped++;
+          }
         }
       } catch (err: unknown) {
         logger.warn('[PNCP Ingest] Error processing contratacao', {
@@ -64,7 +81,7 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
     // Contratos (fornecedores)
     const contratos = await client.fetchAllPages(
       (page) => client.fetchContratos({ sinceDays, uf, page }),
-      20,
+      config.pncp.maxPagesContratos,
     );
 
     logger.info('[PNCP Ingest] Contratos fetched', { count: contratos.length });
@@ -80,6 +97,18 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
         if (contrato.itens?.length) {
           for (const item of contrato.itens) {
             const result = await processContractItem(item, contrato, org.id, supplier?.id ?? null, osClient);
+            if (result === 'ingested') ingested++;
+            else if (result === 'updated') updated++;
+            else if (result === 'skipped') skipped++;
+          }
+        } else {
+          const inferred = inferItemsFromObject(contrato.objetoContrato ?? '', 4);
+          for (let idx = 0; idx < inferred.length; idx++) {
+            const pseudoItem = buildPseudoPncpItem(inferred[idx].description, idx + 1, contrato.valorGlobal ?? contrato.valorInicial);
+            const result = await processContractItem(pseudoItem, contrato, org.id, supplier?.id ?? null, osClient, {
+              inferredFromObject: true,
+              inferredIndex: idx + 1,
+            });
             if (result === 'ingested') ingested++;
             else if (result === 'updated') updated++;
             else if (result === 'skipped') skipped++;
@@ -142,6 +171,7 @@ async function processLineItem(
   contratacao: PncpContratacao,
   orgId: string,
   osClient: ReturnType<typeof getOpenSearchClient>,
+  options: { inferredFromObject?: boolean; inferredIndex?: number } = {},
 ): Promise<'ingested' | 'updated' | 'skipped'> {
   const validation = validateLineItem({
     description: item.descricao,
@@ -151,13 +181,29 @@ async function processLineItem(
   });
   if (!validation.isValid) return 'skipped';
 
-  const sourceId = `pncp_${contratacao.numeroControlePNCP}_${item.numeroItem}`;
+  const inferredFromObject = options.inferredFromObject ?? false;
+  const sourceId = inferredFromObject
+    ? `pncp_${contratacao.numeroControlePNCP}_inferred_${options.inferredIndex ?? item.numeroItem}`
+    : `pncp_${contratacao.numeroControlePNCP}_${item.numeroItem}`;
   const normalizedDescription = normalizeText(item.descricao ?? '');
   const unit = normalizeUnit(item.unidadeMedida);
   const unitPrice = item.valorUnitarioEstimado ?? calculateUnitPrice(item.valorTotal, item.quantidade);
   const contractDate = contratacao.dataPublicacaoPncp
     ? new Date(contratacao.dataPublicacaoPncp)
     : null;
+  const classification = await classifyCatalog({
+    description: item.descricao ?? '',
+    normalizedDescription,
+    catmatCode: item.codigoCatalogo,
+    allowDescriptionFallback: !item.codigoCatalogo,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'pncp',
+    sourceId,
+    description: item.descricao ?? '',
+    unitPrice,
+    contractDate,
+  });
 
   const confidenceScore = calculateConfidenceScore({
     source: 'pncp',
@@ -179,10 +225,15 @@ async function processLineItem(
     unitPrice,
     totalPrice: item.valorTotal,
     calculatedUnitPrice: unitPrice,
-    catmatCode: item.codigoCatalogo,
+    catmatCode: classification.catmatCode ?? item.codigoCatalogo ?? null,
+    catserCode: classification.catserCode,
+    catmatDescription: classification.catmatDescription,
     source: 'pncp',
     sourceId,
+    provenanceHash,
+    inferredFromObject,
     confidenceScore,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
     uf: contratacao.unidadeOrgao?.ufSigla,
@@ -193,7 +244,7 @@ async function processLineItem(
   let dbItem: { id: string };
   if (existing) {
     dbItem = await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: '' });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: contratacao.orgaoEntidade.razaoSocial });
     return 'updated';
   } else {
     dbItem = await prisma.lineItem.create({ data });
@@ -208,6 +259,7 @@ async function processContractItem(
   orgId: string,
   supplierId: string | null,
   osClient: ReturnType<typeof getOpenSearchClient>,
+  options: { inferredFromObject?: boolean; inferredIndex?: number } = {},
 ): Promise<'ingested' | 'updated' | 'skipped'> {
   const validation = validateLineItem({
     description: item.descricao,
@@ -217,11 +269,28 @@ async function processContractItem(
   });
   if (!validation.isValid) return 'skipped';
 
-  const sourceId = `pncp_c_${contrato.numeroControlePNCP}_${item.numeroItem}`;
+  const inferredFromObject = options.inferredFromObject ?? false;
+  const sourceId = inferredFromObject
+    ? `pncp_c_${contrato.numeroControlePNCP}_inferred_${options.inferredIndex ?? item.numeroItem}`
+    : `pncp_c_${contrato.numeroControlePNCP}_${item.numeroItem}`;
   const normalizedDescription = normalizeText(item.descricao ?? '');
   const unit = normalizeUnit(item.unidadeMedida);
   const unitPrice = item.valorUnitarioEstimado ?? calculateUnitPrice(item.valorTotal, item.quantidade);
   const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
+  const classification = await classifyCatalog({
+    description: item.descricao ?? '',
+    normalizedDescription,
+    catmatCode: item.codigoCatalogo,
+    allowDescriptionFallback: !item.codigoCatalogo,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'pncp',
+    sourceId,
+    description: item.descricao ?? '',
+    unitPrice,
+    contractDate,
+    supplier: contrato.tipoPessoa === 'PJ' ? contrato.niFornecedor : contrato.nomeRazaoSocialFornecedor ?? contrato.nomeFornecedor,
+  });
 
   const confidenceScore = calculateConfidenceScore({ source: 'pncp', contractDate, count: 1 });
   const yearMonth = contractDate
@@ -238,13 +307,18 @@ async function processContractItem(
     unitPrice,
     totalPrice: item.valorTotal,
     calculatedUnitPrice: unitPrice,
-    catmatCode: item.codigoCatalogo,
+    catmatCode: classification.catmatCode ?? item.codigoCatalogo ?? null,
+    catserCode: classification.catserCode,
+    catmatDescription: classification.catmatDescription,
     source: 'pncp',
     sourceId,
+    provenanceHash,
+    inferredFromObject,
     supplierId,
     supplierName: contrato.nomeRazaoSocialFornecedor ?? contrato.nomeFornecedor,
     supplierCnpj: contrato.tipoPessoa === 'PJ' ? contrato.niFornecedor : null,
     confidenceScore,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
     uf: contrato.unidadeOrgao?.ufSigla,
@@ -279,11 +353,17 @@ async function indexToOpenSearch(
     city?: string | null;
     organizationName: string;
     catmatCode?: string | null;
+    catserCode?: string | null;
+    catmatDescription?: string | null;
     source?: string;
+    sourceId?: string | null;
     supplierName?: string | null;
     supplierCnpj?: string | null;
     confidenceScore?: number | null;
+    classificationScore?: number | null;
     yearMonth?: string | null;
+    provenanceHash?: string | null;
+    inferredFromObject?: boolean;
   },
 ): Promise<void> {
   try {
@@ -303,10 +383,22 @@ async function indexToOpenSearch(
         city: item.city,
         organization_name: item.organizationName,
         catmat_code: item.catmatCode,
+        catser_code: item.catserCode,
+        catmat_description: item.catmatDescription,
         source: item.source ?? 'pncp',
         supplier_name: item.supplierName,
         supplier_cnpj: item.supplierCnpj,
+        provenance_hash: item.provenanceHash ?? buildProvenanceHash({
+          source: item.source ?? 'pncp',
+          sourceId: item.sourceId ?? item.id,
+          description: item.description,
+          unitPrice: item.unitPrice,
+          contractDate: item.contractDate,
+          supplier: item.supplierCnpj ?? item.supplierName,
+        }),
         confidence_score: item.confidenceScore ?? 1.0,
+        classification_score: item.classificationScore,
+        inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth,
         indexed_at: new Date().toISOString(),
       },
@@ -320,4 +412,15 @@ function mapEsfera(esferaId?: string): string | undefined {
   if (!esferaId) return undefined;
   const map: Record<string, string> = { '1': 'federal', '2': 'estadual', '3': 'municipal' };
   return map[esferaId];
+}
+
+function buildPseudoPncpItem(description: string, numeroItem: number, totalValue?: number | null): PncpItem {
+  return {
+    numeroItem,
+    descricao: description,
+    quantidade: 1,
+    unidadeMedida: 'UN',
+    valorTotal: totalValue ?? undefined,
+    valorUnitarioEstimado: totalValue ?? undefined,
+  };
 }

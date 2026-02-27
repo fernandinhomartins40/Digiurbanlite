@@ -19,6 +19,7 @@ import auditsRouter from './api/routes/audits.routes';
 import ingestRouter from './api/routes/ingest.routes';
 import catmatRouter from './api/routes/catmat.routes';
 import suppliersRouter from './api/routes/suppliers.routes';
+import coverageRouter from './api/routes/coverage.routes';
 
 const app = express();
 
@@ -73,6 +74,7 @@ app.use('/api/v1', auditsRouter);
 app.use('/api/v1', ingestRouter);
 app.use('/api/v1', catmatRouter);
 app.use('/api/v1', suppliersRouter);
+app.use('/api/v1', coverageRouter);
 
 // ─────────────────────────────────────────────
 // ERROR HANDLER
@@ -138,7 +140,11 @@ async function start() {
     });
     if (!lastRun || indexWasRecreated) {
       logger.info('[Startup] Triggering initial ingest', { reason: indexWasRecreated ? 'index-recreated' : 'no-data' });
-      await triggerIngest({ triggeredBy: 'startup', sinceDays: 365 });
+      await triggerIngest({
+        triggeredBy: 'startup',
+        sinceDays: config.ingest.sinceDays,
+        bpsMaxFiles: config.bps.maxFilesPerRun,
+      });
     }
   } catch (err) {
     logger.warn('[Startup] Could not check/trigger initial ingest', { error: (err as Error).message });

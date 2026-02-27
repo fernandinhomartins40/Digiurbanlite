@@ -1,9 +1,12 @@
 import { prisma } from '../../models/prisma';
 import { getTransparenciaClient } from '../../connectors/transparencia/transparencia.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
-import { normalizeText, validateLineItem } from '../normalizer';
+import { normalizeText, normalizeUnit, validateLineItem } from '../normalizer';
+import { inferItemsFromObject } from '../object-itemizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
+import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
+import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
 import type { TransparenciaContrato } from '../../connectors/transparencia/transparencia.types';
 
@@ -20,7 +23,7 @@ export interface IngestSourceResult {
 }
 
 export async function runTransparenciaIngest(options: TransparenciaIngestOptions = {}): Promise<IngestSourceResult> {
-  const { sinceDays = 90, runId } = options;
+  const { sinceDays = config.ingest.sinceDays, runId } = options;
   const client = getTransparenciaClient();
   const osClient = getOpenSearchClient();
 
@@ -49,10 +52,20 @@ export async function runTransparenciaIngest(options: TransparenciaIngestOptions
 
     for (const contrato of contratos) {
       try {
-        const result = await processContrato(contrato, osClient);
-        if (result === 'ingested') ingested++;
-        else if (result === 'updated') updated++;
-        else skipped++;
+        const inferredItems = inferItemsFromObject(contrato.objeto ?? '', 4);
+        if (inferredItems.length === 0) {
+          const result = await processContrato(contrato, osClient);
+          if (result === 'ingested') ingested++;
+          else if (result === 'updated') updated++;
+          else skipped++;
+        } else {
+          for (let idx = 0; idx < inferredItems.length; idx++) {
+            const result = await processContrato(contrato, osClient, inferredItems[idx], idx + 1);
+            if (result === 'ingested') ingested++;
+            else if (result === 'updated') updated++;
+            else skipped++;
+          }
+        }
       } catch (err: unknown) {
         logger.warn('[Transparencia Ingest] Error processing contrato', {
           error: (err as Error).message,
@@ -73,19 +86,42 @@ export async function runTransparenciaIngest(options: TransparenciaIngestOptions
 async function processContrato(
   contrato: TransparenciaContrato,
   osClient: ReturnType<typeof getOpenSearchClient>,
+  inferred?: { description: string; quantity: number | null; unit: string | null },
+  inferredIndex?: number,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
   // Contratos da Transparência têm objeto (descrição) mas não itemização detalhada
-  const desc = contrato.objeto ?? '';
+  const desc = inferred?.description ?? contrato.objeto ?? '';
+  const quantity = inferred?.quantity ?? null;
+  const totalPrice = contrato.valorInicial ?? contrato.valorFinal ?? null;
+  const unitPrice = totalPrice && quantity && quantity > 0
+    ? totalPrice / quantity
+    : totalPrice;
   const validation = validateLineItem({
     description: desc,
-    unitPrice: contrato.valorInicial ?? contrato.valorFinal,
+    unitPrice,
   });
   if (!validation.isValid) return 'skipped';
 
-  const sourceId = `transparencia_${contrato.id}`;
+  const sourceId = inferredIndex
+    ? `transparencia_${contrato.id}_inferred_${inferredIndex}`
+    : `transparencia_${contrato.id}`;
   const normalizedDescription = normalizeText(desc);
   const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
   const uf = contrato.unidadeGestora?.orgaoVinculado?.municipio?.uf;
+  const classification = await classifyCatalog({
+    description: desc,
+    normalizedDescription,
+    typeHint: 'service',
+    allowDescriptionFallback: true,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'transparencia',
+    sourceId,
+    description: desc,
+    unitPrice,
+    contractDate,
+    supplier: contrato.fornecedor?.cnpj ?? contrato.fornecedor?.nome,
+  });
 
   const confidenceScore = calculateConfidenceScore({ source: 'transparencia', contractDate, count: 1 });
   const yearMonth = contractDate
@@ -120,14 +156,22 @@ async function processContrato(
   const data = {
     description: desc,
     normalizedDescription,
-    unitPrice: contrato.valorInicial ?? contrato.valorFinal,
-    totalPrice: contrato.valorFinal ?? contrato.valorInicial,
+    quantity,
+    unit: normalizeUnit(inferred?.unit),
+    unitPrice,
+    totalPrice: totalPrice ?? null,
+    catmatCode: classification.catmatCode,
+    catserCode: classification.catserCode,
+    catmatDescription: classification.catmatDescription,
     source: 'transparencia',
     sourceId,
+    provenanceHash,
+    inferredFromObject: Boolean(inferredIndex),
     supplierId: supplier?.id ?? null,
     supplierName: contrato.fornecedor?.nome,
     supplierCnpj,
     confidenceScore,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
     uf,
@@ -152,17 +196,26 @@ async function indexToOpenSearch(
     id: string;
     description: string;
     normalizedDescription: string;
+    quantity?: number | null;
+    unit?: string | null;
     unitPrice?: number | null;
     totalPrice?: number | null;
     contractDate?: Date | null;
     uf?: string | null;
     organizationName: string;
+    catmatCode?: string | null;
+    catserCode?: string | null;
+    catmatDescription?: string | null;
     source?: string;
+    sourceId?: string | null;
     supplierName?: string | null;
     supplierCnpj?: string | null;
     confidenceScore?: number | null;
+    classificationScore?: number | null;
     yearMonth?: string | null;
     modality?: string | null;
+    provenanceHash?: string | null;
+    inferredFromObject?: boolean;
   },
 ): Promise<void> {
   try {
@@ -173,15 +226,30 @@ async function indexToOpenSearch(
         id: item.id,
         description: item.description,
         normalized_description: item.normalizedDescription,
+        quantity: item.quantity,
+        unit: item.unit,
         unit_price: item.unitPrice,
         total_price: item.totalPrice,
         contract_date: item.contractDate?.toISOString(),
         uf: item.uf,
         organization_name: item.organizationName,
+        catmat_code: item.catmatCode,
+        catser_code: item.catserCode,
+        catmat_description: item.catmatDescription,
         source: item.source ?? 'transparencia',
         supplier_name: item.supplierName,
         supplier_cnpj: item.supplierCnpj,
+        provenance_hash: item.provenanceHash ?? buildProvenanceHash({
+          source: item.source ?? 'transparencia',
+          sourceId: item.sourceId ?? item.id,
+          description: item.description,
+          unitPrice: item.unitPrice,
+          contractDate: item.contractDate,
+          supplier: item.supplierCnpj ?? item.supplierName,
+        }),
         confidence_score: item.confidenceScore ?? 0.85,
+        classification_score: item.classificationScore,
+        inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth,
         modality: item.modality,
         indexed_at: new Date().toISOString(),

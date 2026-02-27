@@ -29,6 +29,8 @@ export const config = {
     timeoutMs: parseInt(process.env.PNCP_TIMEOUT_MS ?? '30000', 10),
     rateLimitMs: parseInt(process.env.PNCP_RATE_LIMIT_MS ?? '500', 10),
     pageSize: 50,
+    maxPagesContratacoes: parseInt(process.env.PNCP_MAX_PAGES_CONTRATACOES ?? '500', 10),
+    maxPagesContratos: parseInt(process.env.PNCP_MAX_PAGES_CONTRATOS ?? '300', 10),
     maxRetries: 3,
     retryDelayMs: 1000,
   },
@@ -45,7 +47,7 @@ export const config = {
 
   bps: {
     dataUrl: process.env.BPS_DATA_URL ?? 'https://opendatasus.saude.gov.br',
-    maxFilesPerRun: parseInt(process.env.BPS_MAX_FILES_PER_RUN ?? '2', 10),
+    maxFilesPerRun: parseInt(process.env.BPS_MAX_FILES_PER_RUN ?? '6', 10),
   },
 
   fnde: {
@@ -55,10 +57,13 @@ export const config = {
   catmat: {
     syncEnabled: process.env.CATMAT_SYNC_ENABLED !== 'false',
     baseUrl: 'https://dadosabertos.compras.gov.br',
+    autoClassifyEnabled: process.env.CATMAT_AUTO_CLASSIFY_ENABLED !== 'false',
+    autoClassifyMinScore: parseFloat(process.env.CATMAT_AUTO_CLASSIFY_MIN_SCORE ?? '0.55'),
+    autoClassifyMaxCandidates: parseInt(process.env.CATMAT_AUTO_CLASSIFY_MAX_CANDIDATES ?? '80', 10),
   },
 
   ingest: {
-    sinceDays: parseInt(process.env.INGEST_SINCE_DAYS ?? '365', 10),
+    sinceDays: parseInt(process.env.INGEST_SINCE_DAYS ?? '1825', 10),
     historicalDays: parseInt(process.env.INGEST_HISTORICAL_DAYS ?? '1825', 10),
     cron: process.env.INGEST_CRON ?? '0 2 * * *',
     cronComprasnet: process.env.INGEST_CRON_COMPRASNET ?? '0 3 * * 0',

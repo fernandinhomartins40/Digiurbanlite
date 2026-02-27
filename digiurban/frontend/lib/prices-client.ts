@@ -148,6 +148,48 @@ export interface IngestStatus {
   } | null;
 }
 
+export interface PricesCoverageResponse {
+  generatedAt: string;
+  totals: {
+    lineItems: number;
+    organizations: number;
+    suppliers: number;
+    withSupplier: number;
+    withCatmat: number;
+    inferredFromObject: number;
+    technicalItems: number;
+  };
+  bySource: Array<{
+    source: string;
+    count: number;
+    withSupplier: number;
+    withCatmat: number;
+    lastContractDate: string | null;
+    freshnessDays: number | null;
+  }>;
+  byUf: Array<{ uf: string; count: number }>;
+  byMonth: Array<{ month: string; count: number }>;
+  governance: {
+    complianceScore: number;
+    status: 'ok' | 'attention' | 'critical';
+    legalReferences: string[];
+    quality: {
+      supplierCoveragePct: number;
+      catalogCoveragePct: number;
+      inferredCoveragePct: number;
+      technicalCoveragePct: number;
+    };
+    ingest: {
+      lastRunAt: string | null;
+      lastRunStatus: string | null;
+      runs24h: number;
+      runs7d: number;
+      failedRuns7d: number;
+    };
+    riskFlags: string[];
+  };
+}
+
 export interface AuditListResponse {
   total: number;
   page: number;
@@ -248,6 +290,12 @@ export class PricesClient {
     return data;
   }
 
+  async getCoverage(): Promise<PricesCoverageResponse> {
+    const { data } = await api.get<PricesCoverageResponse>(`${this.baseUrl}/coverage`);
+    if (!data) throw new Error('Erro ao obter cobertura da base');
+    return data;
+  }
+
   async triggerIngest(options?: { since_days?: number; uf?: string; source?: string }): Promise<{ jobId: string }> {
     const { data } = await api.post<{ jobId: string }>(`${this.baseUrl}/ingest/run`, options ?? {});
     if (!data) throw new Error('Erro ao iniciar ingestão');
@@ -274,7 +322,9 @@ export class PricesClient {
   /** Busca no catálogo CATMAT/CATSER */
   async searchCatmat(q: string, type?: 'material' | 'service', limit = 10): Promise<CatmatSearchResult[]> {
     const { data } = await api.get<{ results: CatmatSearchResult[] }>(`${this.baseUrl}/catmat/search`, {
-      params: { q, type, limit },
+      q,
+      type,
+      limit,
     });
     return data?.results ?? [];
   }
@@ -285,7 +335,8 @@ export class PricesClient {
     options?: { uf?: string; source?: string; period?: string; limit?: number },
   ): Promise<SupplierMapResponse> {
     const { data } = await api.get<SupplierMapResponse>(`${this.baseUrl}/suppliers/map`, {
-      params: { q, ...options },
+      q,
+      ...options,
     });
     if (!data) throw new Error('Erro ao obter mapa de fornecedores');
     return data;

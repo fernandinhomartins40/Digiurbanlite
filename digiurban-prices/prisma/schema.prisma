@@ -115,6 +115,7 @@ model LineItem {
 
   // Score de confiabilidade (0.0 – 1.0)
   confidenceScore       Float?      @default(1.0)
+  classificationScore   Float?
 
   // Período (YYYY-MM para filtros rápidos)
   yearMonth             String?     // "2024-03"
@@ -123,6 +124,8 @@ model LineItem {
   contractDate          DateTime?
   uf                    String?
   city                  String?
+  provenanceHash        String?
+  inferredFromObject    Boolean     @default(false)
 
   // Qualidade do dado
   isValid               Boolean     @default(true)
@@ -150,6 +153,8 @@ model LineItem {
   @@index([uf])
   @@index([source])
   @@index([yearMonth])
+  @@index([provenanceHash])
+  @@index([inferredFromObject])
   @@index([isValid, isOutlier])
   @@map("prices_line_items")
 }
@@ -264,3 +269,4 @@ model SearchAudit {
   @@index([createdAt])
   @@map("prices_search_audits")
 }
+

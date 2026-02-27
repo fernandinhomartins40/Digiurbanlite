@@ -2,6 +2,7 @@ import { getOpenSearchClient } from '../search_index/opensearch.client';
 import { buildSearchQuery, SearchFilters, SearchPeriod } from '../search_index/opensearch.queries';
 import { calculateStatistics, StatisticsResult } from './statistics.service';
 import { normalizeText } from '../ingest/normalizer';
+import { buildQueryIntelligence, evidenceScore, semanticSimilarityScore } from './query-intelligence.service';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
 
@@ -87,13 +88,17 @@ export async function searchPrices(
 ): Promise<SearchResponse> {
   const startMs = Date.now();
   const normalizedQuery = normalizeText(query);
+  const queryIntelligence = buildQueryIntelligence(query);
+  const candidatePageSize = Math.min(200, Math.max(pageSize, pageSize * 4));
 
   const searchParams = buildSearchQuery({
-    query: normalizedQuery || query,
+    query: queryIntelligence.normalized || normalizedQuery || query,
+    expandedQuery: queryIntelligence.expandedQuery,
     filters,
     period,
     page,
-    pageSize,
+    pageSize: candidatePageSize,
+    preferTechnicalTerms: queryIntelligence.technicalTerms,
   });
 
   let osResponse: Record<string, unknown>;
@@ -107,8 +112,8 @@ export async function searchPrices(
     return buildEmptyResponse(query, normalizedQuery, page, pageSize, Date.now() - startMs);
   }
 
-  const hits = (osResponse as { hits?: { hits?: unknown[]; total?: { value?: number } } }).hits;
-  const rawItems = (hits?.hits ?? []) as Array<{
+  let hits = (osResponse as { hits?: { hits?: unknown[]; total?: { value?: number } } }).hits;
+  let rawItems = (hits?.hits ?? []) as Array<{
     _id: string;
     _score: number;
     _source: {
@@ -131,7 +136,30 @@ export async function searchPrices(
     };
   }>;
 
-  const items: SearchItem[] = rawItems.map((hit) => ({
+  // Fallback de recall: relaxa o matching quando não há resultados na busca principal.
+  if (rawItems.length === 0 && queryIntelligence.expandedQuery.trim().length > 2) {
+    try {
+      const client = getOpenSearchClient();
+      const relaxedSearchParams = buildSearchQuery({
+        query: queryIntelligence.normalized || query,
+        expandedQuery: queryIntelligence.expandedQuery,
+        filters,
+        period,
+        page,
+        pageSize: candidatePageSize,
+        relaxMatching: true,
+        preferTechnicalTerms: queryIntelligence.technicalTerms,
+      });
+      const fallbackRes = await client.search(relaxedSearchParams as Parameters<typeof client.search>[0]);
+      osResponse = fallbackRes.body as Record<string, unknown>;
+      hits = (osResponse as { hits?: { hits?: unknown[]; total?: { value?: number } } }).hits;
+      rawItems = (hits?.hits ?? []) as typeof rawItems;
+    } catch (err) {
+      logger.warn('[Search] Relaxed fallback failed', { error: (err as Error).message, query });
+    }
+  }
+
+  const candidateItems: SearchItem[] = rawItems.map((hit) => ({
     id: hit._id,
     description: hit._source.description,
     normalizedDescription: hit._source.normalized_description,
@@ -151,6 +179,35 @@ export async function searchPrices(
     confidenceScore: hit._source.confidence_score,
     score: hit._score,
   }));
+
+  const maxOsScore = candidateItems.reduce((acc, item) => Math.max(acc, item.score || 0), 0) || 1;
+  const scoredItems = candidateItems
+    .map((item) => {
+      const osScoreNormalized = (item.score || 0) / maxOsScore;
+      const semanticScore = semanticSimilarityScore(queryIntelligence.expandedTokens, item.normalizedDescription || item.description);
+      const evidence = evidenceScore({
+        source: item.source,
+        confidenceScore: item.confidenceScore,
+        contractDate: item.contractDate,
+        hasSupplier: Boolean(item.supplierName || item.supplierCnpj),
+        hasCatmat: Boolean(item.catmatCode),
+      });
+      const confidence = item.confidenceScore ?? 0.5;
+      const rankingScore = (
+        osScoreNormalized * 0.45 +
+        semanticScore * 0.25 +
+        evidence * 0.2 +
+        confidence * 0.1
+      );
+      return {
+        ...item,
+        score: Math.round(rankingScore * 10_000) / 10_000,
+      };
+    })
+    .sort((a, b) => b.score - a.score);
+
+  const dedupedItems = dedupeBySimilarity(scoredItems);
+  const items = dedupedItems.slice(0, pageSize);
 
   // Estatísticas com remoção de outliers
   const prices = items
@@ -201,11 +258,12 @@ export async function searchPrices(
   const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   const periodFrom = period?.from ?? twoYearsAgo;
   const periodTo = period?.to ?? new Date().toISOString().split('T')[0];
+  const totalHits = hits?.total?.value ?? 0;
 
   return {
     query,
     normalizedQuery,
-    total: hits?.total?.value ?? 0,
+    total: totalHits,
     page,
     pageSize,
     items,
@@ -236,7 +294,7 @@ export async function searchPrices(
       methodology: statistics?.methodology ?? 'Sem dados suficientes para análise estatística.',
       filters: filtersApplied,
       period: { from: periodFrom, to: periodTo },
-      algorithmVersion: '2.0',
+      algorithmVersion: '2.1-hybrid',
     },
     durationMs: Date.now() - startMs,
   };
@@ -312,10 +370,29 @@ function buildEmptyResponse(
       methodology: 'Sem resultados encontrados.',
       filters: [],
       period: { from: twoYearsAgo, to: new Date().toISOString().split('T')[0] },
-      algorithmVersion: '2.0',
+      algorithmVersion: '2.1-hybrid',
     },
     durationMs,
   };
+}
+
+function dedupeBySimilarity(items: SearchItem[]): SearchItem[] {
+  const seen = new Set<string>();
+  const result: SearchItem[] = [];
+  for (const item of items) {
+    const normalized = (item.normalizedDescription || item.description || '')
+      .toLowerCase()
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120);
+    const month = item.contractDate ? item.contractDate.slice(0, 7) : 'na';
+    const priceBucket = item.unitPrice ? Math.round(item.unitPrice / 10) : 'na';
+    const key = `${normalized}|${month}|${item.uf ?? 'na'}|${item.unit ?? 'na'}|${priceBucket}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(item);
+  }
+  return result;
 }
 
 function round2(n: number) {

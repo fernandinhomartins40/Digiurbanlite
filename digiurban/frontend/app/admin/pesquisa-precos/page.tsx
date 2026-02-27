@@ -23,6 +23,7 @@ import {
   PriceSearchResponse,
   PriceSearchFilters,
   PriceSearchPeriod,
+  PricesCoverageResponse,
   SupplierMapResponse,
   CatmatSearchResult,
 } from '@/lib/prices-client';
@@ -118,14 +119,21 @@ export default function PesquisaPrecos() {
   const [ingestStatus, setIngestStatus] = useState<IngestStatus | null>(null);
   const [ingestLoading, setIngestLoading] = useState(false);
   const [ingestTriggering, setIngestTriggering] = useState<string | null>(null);
+  const [ingestSinceDays, setIngestSinceDays] = useState<string>('1825');
+  const [coverage, setCoverage] = useState<PricesCoverageResponse | null>(null);
 
   // Carregar status de ingestão automaticamente ao abrir painel
   useEffect(() => {
-    if (showIngestPanel && !ingestStatus) {
-      loadIngestStatus();
-    }
+    if (!showIngestPanel) return;
+    if (!ingestStatus) loadIngestStatus();
+    if (!coverage) loadCoverage();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showIngestPanel]);
+
+  useEffect(() => {
+    loadCoverage();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function loadIngestStatus() {
     setIngestLoading(true);
@@ -139,14 +147,27 @@ export default function PesquisaPrecos() {
     }
   }
 
+  async function loadCoverage() {
+    try {
+      const data = await pricesClient.getCoverage();
+      setCoverage(data);
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível obter métricas de cobertura da base.', variant: 'destructive' });
+    }
+  }
+
   async function handleTriggerIngest(source?: string) {
     const key = source ?? 'all';
     setIngestTriggering(key);
     try {
-      const { jobId } = await pricesClient.triggerIngest({ source, since_days: 365 });
+      const parsedSinceDays = Number.parseInt(ingestSinceDays, 10);
+      const sinceDays = Number.isFinite(parsedSinceDays)
+        ? Math.min(3650, Math.max(30, parsedSinceDays))
+        : 1825;
+      const { jobId } = await pricesClient.triggerIngest({ source, since_days: sinceDays });
       toast({
         title: 'Ingestão iniciada!',
-        description: `Job ${jobId} iniciado para ${source ? `fonte: ${source.toUpperCase()}` : 'todas as fontes'}. Os dados serão disponíveis em alguns minutos.`,
+        description: `Job ${jobId} iniciado para ${source ? `fonte: ${source.toUpperCase()}` : 'todas as fontes'} (janela: ${sinceDays} dias). Os dados serão disponíveis em alguns minutos.`,
       });
       // Recarregar status após 3s
       setTimeout(() => loadIngestStatus(), 3000);
@@ -337,12 +358,20 @@ export default function PesquisaPrecos() {
 
       {/* Cards de cobertura + botão painel */}
       <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-4">
-        {SOURCES.map((src) => (
-          <div key={src.value} className={`rounded-lg border px-3 py-2 flex items-center gap-2 ${src.color}`}>
-            <Database className="w-4 h-4 shrink-0" />
-            <span className="text-xs font-medium truncate">{src.label}</span>
-          </div>
-        ))}
+        {SOURCES.map((src) => {
+          const sourceCoverage = coverage?.bySource.find((item) => item.source === src.value);
+          return (
+            <div key={src.value} className={`rounded-lg border px-3 py-2 flex items-center justify-between gap-2 ${src.color}`}>
+              <span className="inline-flex items-center gap-2">
+                <Database className="w-4 h-4 shrink-0" />
+                <span className="text-xs font-medium truncate">{src.label}</span>
+              </span>
+              <span className="text-xs font-bold">
+                {(sourceCoverage?.count ?? 0).toLocaleString('pt-BR')}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* Painel de Ingestão de Dados */}
@@ -372,6 +401,115 @@ export default function PesquisaPrecos() {
               {/* Status da última execução */}
               <div className="flex items-center justify-between">
                 <span className="text-sm font-medium">Status da ingestão</span>
+                <div className="flex items-center gap-2">
+                  <Button variant="outline" size="sm" onClick={loadCoverage} disabled={ingestLoading}>
+                    <Database className="w-3 h-3 mr-1" />
+                    Cobertura
+                  </Button>
+                  <Button variant="outline" size="sm" onClick={loadIngestStatus} disabled={ingestLoading}>
+                    {ingestLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
+                    Atualizar
+                  </Button>
+                </div>
+              </div>
+
+              {coverage && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-center">
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                    <p className="text-lg font-bold text-blue-600">{coverage.totals.lineItems.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-gray-500">Itens totais</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                    <p className="text-lg font-bold text-green-600">{coverage.totals.withSupplier.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-gray-500">Com fornecedor</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                    <p className="text-lg font-bold text-indigo-600">{coverage.totals.withCatmat.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-gray-500">Com CATMAT/CATSER</p>
+                  </div>
+                  <div className="bg-gray-50 dark:bg-gray-800 rounded-lg p-2">
+                    <p className="text-lg font-bold text-purple-600">{coverage.totals.technicalItems.toLocaleString('pt-BR')}</p>
+                    <p className="text-xs text-gray-500">Itens técnicos</p>
+                  </div>
+                </div>
+              )}
+
+              {coverage && coverage.bySource.length > 0 && (
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-2">
+                  {SOURCES.map((src) => {
+                    const item = coverage.bySource.find((x) => x.source === src.value);
+                    return (
+                      <div key={`cov-${src.value}`} className="rounded border p-2 text-xs">
+                        <p className="font-semibold">{src.label}</p>
+                        <p className="text-gray-500">{(item?.count ?? 0).toLocaleString('pt-BR')} itens</p>
+                        <p className="text-gray-400">Fornecedores: {(item?.withSupplier ?? 0).toLocaleString('pt-BR')}</p>
+                        <p className="text-gray-400">
+                          Atualização: {item?.lastContractDate ? formatDate(item.lastContractDate) : '-'}
+                        </p>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+
+              {coverage?.governance && (
+                <div className="rounded-lg border bg-gray-50 dark:bg-gray-900 p-3 space-y-3">
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-emerald-600" />
+                      <p className="text-sm font-medium">Governança e conformidade</p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="text-xs">
+                        Score: {coverage.governance.complianceScore}
+                      </Badge>
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          coverage.governance.status === 'ok'
+                            ? 'border-green-300 text-green-700'
+                            : coverage.governance.status === 'attention'
+                              ? 'border-yellow-300 text-yellow-700'
+                              : 'border-red-300 text-red-700'
+                        }`}
+                      >
+                        {coverage.governance.status === 'ok' ? 'OK' : coverage.governance.status === 'attention' ? 'Atenção' : 'Crítico'}
+                      </Badge>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-xs">
+                    <div className="rounded border bg-white dark:bg-gray-800 p-2">
+                      <p className="text-gray-500">Cobertura fornecedor</p>
+                      <p className="font-semibold">{coverage.governance.quality.supplierCoveragePct.toFixed(1)}%</p>
+                    </div>
+                    <div className="rounded border bg-white dark:bg-gray-800 p-2">
+                      <p className="text-gray-500">Cobertura CATMAT/CATSER</p>
+                      <p className="font-semibold">{coverage.governance.quality.catalogCoveragePct.toFixed(1)}%</p>
+                    </div>
+                    <div className="rounded border bg-white dark:bg-gray-800 p-2">
+                      <p className="text-gray-500">Itens inferidos</p>
+                      <p className="font-semibold">{coverage.governance.quality.inferredCoveragePct.toFixed(1)}%</p>
+                    </div>
+                    <div className="rounded border bg-white dark:bg-gray-800 p-2">
+                      <p className="text-gray-500">Itens técnicos</p>
+                      <p className="font-semibold">{coverage.governance.quality.technicalCoveragePct.toFixed(1)}%</p>
+                    </div>
+                  </div>
+                  {coverage.governance.riskFlags.length > 0 && (
+                    <div className="rounded border border-yellow-300 bg-yellow-50 dark:bg-yellow-950 p-2">
+                      <p className="text-xs font-medium text-yellow-800 dark:text-yellow-200">Riscos detectados</p>
+                      <ul className="text-xs text-yellow-800 dark:text-yellow-200 list-disc ml-4 mt-1">
+                        {coverage.governance.riskFlags.map((risk) => (
+                          <li key={risk}>{risk}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium">Fila de ingestão</span>
                 <Button variant="outline" size="sm" onClick={loadIngestStatus} disabled={ingestLoading}>
                   {ingestLoading ? <Loader2 className="w-3 h-3 animate-spin mr-1" /> : <RefreshCw className="w-3 h-3 mr-1" />}
                   Atualizar
@@ -421,6 +559,27 @@ export default function PesquisaPrecos() {
               {/* Botões de ingestão por fonte */}
               <div>
                 <p className="text-sm font-medium mb-2">Disparar ingestão manual</p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-3">
+                  <div className="md:col-span-1">
+                    <Label className="text-xs text-gray-500 mb-1 block">Janela histórica (dias)</Label>
+                    <Input
+                      type="number"
+                      min={30}
+                      max={3650}
+                      step={30}
+                      value={ingestSinceDays}
+                      onChange={(e) => setIngestSinceDays(e.target.value)}
+                      className="h-8 text-sm"
+                      placeholder="1825"
+                      disabled={ingestTriggering !== null}
+                    />
+                  </div>
+                  <div className="md:col-span-2 flex items-end">
+                    <p className="text-xs text-gray-500">
+                      Recomendado: 1825 dias (5 anos) para carga ampla.
+                    </p>
+                  </div>
+                </div>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                   <Button
                     variant="default"

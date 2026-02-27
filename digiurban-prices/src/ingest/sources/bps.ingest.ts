@@ -4,7 +4,9 @@ import { getBpsClient } from '../../connectors/bps/bps.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
 import { normalizeText, normalizeUnit, validateLineItem } from '../normalizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
+import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
+import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
 import type { BpsItem } from '../../connectors/bps/bps.types';
 
@@ -24,7 +26,7 @@ export interface IngestSourceResult {
 const BPS_ORG_CNPJ = 'BPS_MS_00394544000185';
 
 export async function runBpsIngest(options: BpsIngestOptions = {}): Promise<IngestSourceResult> {
-  const { runId, maxFiles = 2 } = options;
+  const { runId, maxFiles = config.bps.maxFilesPerRun } = options;
   const client = getBpsClient();
   const osClient = getOpenSearchClient();
 
@@ -50,7 +52,8 @@ export async function runBpsIngest(options: BpsIngestOptions = {}): Promise<Inge
     const resources = await client.listResources();
     logger.info('[BPS Ingest] Resources found', { count: resources.length });
 
-    const toProcess = resources.slice(0, maxFiles);
+    const effectiveMaxFiles = maxFiles <= 0 ? resources.length : maxFiles;
+    const toProcess = resources.slice(0, effectiveMaxFiles);
 
     for (const resource of toProcess) {
       let tmpFile: string | null = null;
@@ -123,6 +126,20 @@ async function processItem(
       contractDate = new Date(comp);
     } catch { /* ignore */ }
   }
+  const classification = await classifyCatalog({
+    description: desc,
+    normalizedDescription,
+    catmatCode: item.CODIGO_ITEM,
+    allowDescriptionFallback: false,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'bps',
+    sourceId,
+    description: desc,
+    unitPrice,
+    contractDate,
+    supplier: item.CNPJ_FORNECEDOR ?? item.NOME_FORNECEDOR,
+  });
 
   const confidenceScore = calculateConfidenceScore({ source: 'bps', contractDate, count: 1 });
   const yearMonth = item.COMPETENCIA?.replace('/', '-').substring(0, 7) ?? null;
@@ -148,13 +165,18 @@ async function processItem(
     unitPrice,
     totalPrice,
     calculatedUnitPrice: unitPrice,
-    catmatCode: item.CODIGO_ITEM,
+    catmatCode: classification.catmatCode ?? item.CODIGO_ITEM ?? null,
+    catserCode: classification.catserCode,
+    catmatDescription: classification.catmatDescription,
     source: 'bps',
     sourceId,
+    provenanceHash,
+    inferredFromObject: false,
     supplierId,
     supplierName: item.NOME_FORNECEDOR,
     supplierCnpj: item.CNPJ_FORNECEDOR,
     confidenceScore,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
     uf: item.UF_COMPRADOR,
@@ -188,11 +210,17 @@ async function indexToOpenSearch(
     city?: string | null;
     organizationName: string;
     catmatCode?: string | null;
+    catserCode?: string | null;
+    catmatDescription?: string | null;
     source?: string;
+    sourceId?: string | null;
     supplierName?: string | null;
     supplierCnpj?: string | null;
     confidenceScore?: number | null;
+    classificationScore?: number | null;
     yearMonth?: string | null;
+    provenanceHash?: string | null;
+    inferredFromObject?: boolean;
   },
 ): Promise<void> {
   try {
@@ -212,10 +240,22 @@ async function indexToOpenSearch(
         city: item.city,
         organization_name: item.organizationName,
         catmat_code: item.catmatCode,
+        catser_code: item.catserCode,
+        catmat_description: item.catmatDescription,
         source: item.source ?? 'bps',
         supplier_name: item.supplierName,
         supplier_cnpj: item.supplierCnpj,
+        provenance_hash: item.provenanceHash ?? buildProvenanceHash({
+          source: item.source ?? 'bps',
+          sourceId: item.sourceId ?? item.id,
+          description: item.description,
+          unitPrice: item.unitPrice,
+          contractDate: item.contractDate,
+          supplier: item.supplierCnpj ?? item.supplierName,
+        }),
         confidence_score: item.confidenceScore ?? 0.90,
+        classification_score: item.classificationScore,
+        inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth,
         indexed_at: new Date().toISOString(),
       },

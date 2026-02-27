@@ -3,7 +3,9 @@ import { getFndeClient } from '../../connectors/fnde/fnde.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
 import { normalizeText, normalizeUnit, validateLineItem } from '../normalizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
+import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
+import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
 import type { FndeContrato } from '../../connectors/fnde/fnde.types';
 
@@ -23,7 +25,7 @@ export interface IngestSourceResult {
 const FNDE_ORG_CNPJ = 'FNDE_00378257000181';
 
 export async function runFndeIngest(options: FndeIngestOptions = {}): Promise<IngestSourceResult> {
-  const { runId, sinceDays = 365, uf } = options;
+  const { runId, sinceDays = config.ingest.sinceDays, uf } = options;
   const client = getFndeClient();
   const osClient = getOpenSearchClient();
 
@@ -105,6 +107,20 @@ async function processContrato(
   const normalizedDescription = normalizeText(desc);
   const unit = normalizeUnit(contrato.unidadeMedida);
   const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
+  const classification = await classifyCatalog({
+    description: desc,
+    normalizedDescription,
+    catmatCode: contrato.codigoCatmat,
+    allowDescriptionFallback: !contrato.codigoCatmat,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'fnde',
+    sourceId,
+    description: desc,
+    unitPrice,
+    contractDate,
+    supplier: contrato.cnpjFornecedor ?? contrato.nomeFornecedor,
+  });
 
   const confidenceScore = calculateConfidenceScore({ source: 'fnde', contractDate, count: 1 });
   const yearMonth = contractDate
@@ -131,13 +147,18 @@ async function processContrato(
     unitPrice,
     totalPrice: contrato.valor ?? contrato.valorTotal,
     calculatedUnitPrice: unitPrice,
-    catmatCode: contrato.codigoCatmat,
+    catmatCode: classification.catmatCode ?? contrato.codigoCatmat ?? null,
+    catserCode: classification.catserCode,
+    catmatDescription: classification.catmatDescription,
     source: 'fnde',
     sourceId,
+    provenanceHash,
+    inferredFromObject: false,
     supplierId,
     supplierName: contrato.nomeFornecedor,
     supplierCnpj: contrato.cnpjFornecedor,
     confidenceScore,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
     uf: contrato.uf,
@@ -171,11 +192,17 @@ async function indexToOpenSearch(
     city?: string | null;
     organizationName: string;
     catmatCode?: string | null;
+    catserCode?: string | null;
+    catmatDescription?: string | null;
     source?: string;
+    sourceId?: string | null;
     supplierName?: string | null;
     supplierCnpj?: string | null;
     confidenceScore?: number | null;
+    classificationScore?: number | null;
     yearMonth?: string | null;
+    provenanceHash?: string | null;
+    inferredFromObject?: boolean;
   },
 ): Promise<void> {
   try {
@@ -195,10 +222,22 @@ async function indexToOpenSearch(
         city: item.city,
         organization_name: item.organizationName,
         catmat_code: item.catmatCode,
+        catser_code: item.catserCode,
+        catmat_description: item.catmatDescription,
         source: item.source ?? 'fnde',
         supplier_name: item.supplierName,
         supplier_cnpj: item.supplierCnpj,
+        provenance_hash: item.provenanceHash ?? buildProvenanceHash({
+          source: item.source ?? 'fnde',
+          sourceId: item.sourceId ?? item.id,
+          description: item.description,
+          unitPrice: item.unitPrice,
+          contractDate: item.contractDate,
+          supplier: item.supplierCnpj ?? item.supplierName,
+        }),
         confidence_score: item.confidenceScore ?? 0.80,
+        classification_score: item.classificationScore,
+        inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth,
         indexed_at: new Date().toISOString(),
       },

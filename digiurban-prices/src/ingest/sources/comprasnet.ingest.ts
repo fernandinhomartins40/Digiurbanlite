@@ -2,8 +2,11 @@ import { prisma } from '../../models/prisma';
 import { getComprasnetClient } from '../../connectors/comprasnet/comprasnet.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
 import { normalizeText, normalizeUnit, calculateUnitPrice, validateLineItem } from '../normalizer';
+import { inferItemsFromObject } from '../object-itemizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
+import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
+import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
 import type { ComprasnetContrato, ComprasnetContratoItem } from '../../connectors/comprasnet/comprasnet.types';
 
@@ -47,11 +50,21 @@ export async function runComprasnetIngest(options: ComprasnetIngestOptions = {})
         const itens = await client.fetchItensContrato(contrato.id);
 
         if (itens.length === 0) {
-          // Sem itens detalhados — indexar o objeto do contrato como item
-          const result = await processContratoAsItem(contrato, org.id, osClient);
-          if (result === 'ingested') ingested++;
-          else if (result === 'updated') updated++;
-          else skipped++;
+          // Sem itens detalhados: inferir subitens a partir do objeto textual.
+          const inferredItems = inferItemsFromObject(contrato.objeto ?? '', 5);
+          if (inferredItems.length === 0) {
+            const result = await processContratoAsItem(contrato, org.id, osClient);
+            if (result === 'ingested') ingested++;
+            else if (result === 'updated') updated++;
+            else skipped++;
+          } else {
+            for (let idx = 0; idx < inferredItems.length; idx++) {
+              const result = await processContratoAsItem(contrato, org.id, osClient, inferredItems[idx], idx + 1);
+              if (result === 'ingested') ingested++;
+              else if (result === 'updated') updated++;
+              else skipped++;
+            }
+          }
         } else {
           for (const item of itens) {
             const result = await processItem(item, contrato, org.id, osClient);
@@ -111,6 +124,20 @@ async function processItem(
   const normalizedDescription = normalizeText(desc);
   const unit = normalizeUnit(item.unidade_medida);
   const contractDate = contrato.data_assinatura ? new Date(contrato.data_assinatura) : null;
+  const classification = await classifyCatalog({
+    description: desc,
+    normalizedDescription,
+    catmatCode: item.codigo_catmat,
+    allowDescriptionFallback: !item.codigo_catmat,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'comprasnet',
+    sourceId,
+    description: desc,
+    unitPrice,
+    contractDate,
+    supplier: contrato.fornecedor_cnpj_cpf_idgener ?? contrato.fornecedor_nome,
+  });
   const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: 1 });
   const yearMonth = contractDate
     ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
@@ -130,8 +157,11 @@ async function processItem(
   const data = {
     description: desc, normalizedDescription, quantity: item.quantidade, unit,
     unitPrice, totalPrice: item.valor_total, calculatedUnitPrice: unitPrice,
-    catmatCode: item.codigo_catmat, source: 'comprasnet', sourceId,
+    catmatCode: classification.catmatCode ?? item.codigo_catmat ?? null, catserCode: classification.catserCode,
+    source: 'comprasnet', sourceId, provenanceHash, inferredFromObject: false,
+    catmatDescription: classification.catmatDescription,
     supplierId, supplierName: contrato.fornecedor_nome, supplierCnpj: contrato.fornecedor_cnpj_cpf_idgener,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     confidenceScore, yearMonth, contractDate, uf: contrato.uf, city: contrato.municipio, organizationId: orgId,
   };
 
@@ -149,16 +179,35 @@ async function processContratoAsItem(
   contrato: ComprasnetContrato,
   orgId: string,
   osClient: ReturnType<typeof getOpenSearchClient>,
+  inferred?: { description: string; quantity: number | null; unit: string | null },
+  inferredIndex?: number,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  const desc = contrato.objeto ?? '';
-  const unitPrice = contrato.valor_global ?? contrato.valor_inicial;
+  const desc = inferred?.description ?? contrato.objeto ?? '';
+  const quantity = inferred?.quantity ?? 1;
+  const totalPrice = contrato.valor_global ?? contrato.valor_inicial ?? null;
+  const unitPrice = totalPrice && quantity > 0 ? totalPrice / quantity : totalPrice;
   const validation = validateLineItem({ description: desc, unitPrice });
   if (!validation.isValid) return 'skipped';
 
-  const sourceId = `comprasnet_contrato_${contrato.id}`;
+  const sourceId = inferredIndex
+    ? `comprasnet_contrato_${contrato.id}_inferred_${inferredIndex}`
+    : `comprasnet_contrato_${contrato.id}`;
   const normalizedDescription = normalizeText(desc);
   const contractDate = contrato.data_assinatura ? new Date(contrato.data_assinatura) : null;
-  const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: 1 });
+  const classification = await classifyCatalog({
+    description: desc,
+    normalizedDescription,
+    allowDescriptionFallback: true,
+  });
+  const provenanceHash = buildProvenanceHash({
+    source: 'comprasnet',
+    sourceId,
+    description: desc,
+    unitPrice,
+    contractDate,
+    supplier: contrato.fornecedor_cnpj_cpf_idgener ?? contrato.fornecedor_nome,
+  });
+  const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: inferredIndex ? 2 : 1 });
   const yearMonth = contractDate
     ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
     : null;
@@ -175,10 +224,12 @@ async function processContratoAsItem(
 
   const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
   const data = {
-    description: desc, normalizedDescription, quantity: 1, unit: 'UN',
-    unitPrice, totalPrice: contrato.valor_global, calculatedUnitPrice: unitPrice,
-    catmatCode: null, source: 'comprasnet', sourceId,
+    description: desc, normalizedDescription, quantity, unit: normalizeUnit(inferred?.unit ?? 'UN'),
+    unitPrice, totalPrice, calculatedUnitPrice: unitPrice,
+    catmatCode: classification.catmatCode, catserCode: classification.catserCode, catmatDescription: classification.catmatDescription,
+    source: 'comprasnet', sourceId, provenanceHash, inferredFromObject: Boolean(inferredIndex),
     supplierId, supplierName: contrato.fornecedor_nome, supplierCnpj: contrato.fornecedor_cnpj_cpf_idgener,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
     confidenceScore, yearMonth, contractDate, uf: contrato.uf, city: contrato.municipio, organizationId: orgId,
   };
 
@@ -199,8 +250,11 @@ async function indexToOpenSearch(
     unit?: string | null; unitPrice?: number | null; totalPrice?: number | null;
     quantity?: number | null; contractDate?: Date | null; uf?: string | null;
     city?: string | null; organizationName: string; catmatCode?: string | null;
-    source?: string; supplierName?: string | null; supplierCnpj?: string | null;
-    confidenceScore?: number | null; yearMonth?: string | null; modality?: string | null;
+    catserCode?: string | null;
+    catmatDescription?: string | null;
+    source?: string; sourceId?: string | null; supplierName?: string | null; supplierCnpj?: string | null;
+    confidenceScore?: number | null; classificationScore?: number | null; yearMonth?: string | null; modality?: string | null;
+    provenanceHash?: string | null; inferredFromObject?: boolean;
   },
 ): Promise<void> {
   try {
@@ -212,9 +266,19 @@ async function indexToOpenSearch(
         unit: item.unit, unit_price: item.unitPrice, total_price: item.totalPrice,
         quantity: item.quantity, contract_date: item.contractDate?.toISOString(),
         uf: item.uf, city: item.city, organization_name: item.organizationName,
-        catmat_code: item.catmatCode, source: item.source ?? 'comprasnet',
+        catmat_code: item.catmatCode, catser_code: item.catserCode, catmat_description: item.catmatDescription, source: item.source ?? 'comprasnet',
         supplier_name: item.supplierName, supplier_cnpj: item.supplierCnpj,
+        provenance_hash: item.provenanceHash ?? buildProvenanceHash({
+          source: item.source ?? 'comprasnet',
+          sourceId: item.sourceId ?? item.id,
+          description: item.description,
+          unitPrice: item.unitPrice,
+          contractDate: item.contractDate,
+          supplier: item.supplierCnpj ?? item.supplierName,
+        }),
         confidence_score: item.confidenceScore ?? 0.95,
+        classification_score: item.classificationScore,
+        inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth, modality: item.modality,
         indexed_at: new Date().toISOString(),
       },

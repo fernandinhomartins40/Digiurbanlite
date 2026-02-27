@@ -34,6 +34,16 @@ export async function pingOpenSearch(): Promise<boolean> {
 const SYNONYMS_LIST = [
   'computador, microcomputador, desktop, pc',
   'notebook, laptop, computador portátil',
+  'core i3, i3, intel i3',
+  'core i5, i5, intel i5',
+  'core i7, i7, intel i7',
+  'core i9, i9, intel i9',
+  'ryzen 3, amd ryzen 3',
+  'ryzen 5, amd ryzen 5',
+  'ryzen 7, amd ryzen 7',
+  '8gb, 8 gb, memoria 8gb',
+  '16gb, 16 gb, memoria 16gb',
+  '32gb, 32 gb, memoria 32gb',
   'impressora, multifuncional, copiadora',
   'servidor, server',
   'monitor, display, tela',
@@ -80,7 +90,7 @@ const SYNONYMS_LIST = [
 ];
 
 // Versão do mapping — incrementar quando o schema mudar para forçar reindex
-const MAPPING_VERSION = 'v2';
+const MAPPING_VERSION = 'v3';
 
 export async function ensureIndexExists(): Promise<void> {
   const client = getOpenSearchClient();
@@ -95,17 +105,16 @@ export async function ensureIndexExists(): Promise<void> {
       try {
         const mappingRes = await client.indices.getMapping({ index });
         const props = (mappingRes.body as Record<string, { mappings?: { properties?: Record<string, unknown> } }>)[index]?.mappings?.properties ?? {};
-        const hasSourceField = 'source' in props;
+        const requiredFields = ['source', 'catser_code', 'classification_score', 'inferred_from_object', 'provenance_hash'];
+        const hasRequiredFields = requiredFields.every((field) => field in props);
         const hasVersionAlias = await client.indices.existsAlias({ name: mappingVersionAlias }).then(r => r.body).catch(() => false);
-        if (hasSourceField && hasVersionAlias) {
+        if (hasRequiredFields && hasVersionAlias) {
           logger.info('[OpenSearch] Index already exists with current mapping', { index, version: MAPPING_VERSION });
           return;
         }
-        if (!hasSourceField) {
-          logger.info('[OpenSearch] Index exists with OLD mapping — dropping and recreating', { index });
-          await client.indices.delete({ index });
-          // Ingest will repopulate after recreation
-        }
+        logger.info('[OpenSearch] Index exists with OLD mapping/version - dropping and recreating', { index });
+        await client.indices.delete({ index });
+        // Ingest will repopulate after recreation
       } catch {
         logger.info('[OpenSearch] Index already exists', { index });
         return;
@@ -115,7 +124,7 @@ export async function ensureIndexExists(): Promise<void> {
     // index does not exist — proceed to create
   }
 
-  logger.info('[OpenSearch] Creating enhanced index (v2 mapping)', { index });
+  logger.info('[OpenSearch] Creating enhanced index', { index });
 
   await client.indices.create({
     index,
@@ -197,6 +206,7 @@ export async function ensureIndexExists(): Promise<void> {
 
           // CATMAT
           catmat_code: { type: 'keyword' },
+          catser_code: { type: 'keyword' },
           catmat_description: {
             type: 'text',
             analyzer: 'portuguese_custom',
@@ -230,6 +240,8 @@ export async function ensureIndexExists(): Promise<void> {
           modality: { type: 'keyword' },
           source: { type: 'keyword' },
           confidence_score: { type: 'float' },
+          classification_score: { type: 'float' },
+          inferred_from_object: { type: 'boolean' },
 
           // Fornecedor
           supplier_name: {
@@ -240,6 +252,7 @@ export async function ensureIndexExists(): Promise<void> {
           supplier_cnpj: { type: 'keyword' },
 
           // Metadados
+          provenance_hash: { type: 'keyword' },
           indexed_at: { type: 'date' },
         },
       },
@@ -253,7 +266,7 @@ export async function ensureIndexExists(): Promise<void> {
     // alias creation is optional
   }
 
-  logger.info('[OpenSearch] Enhanced index created (v2)', { index });
+  logger.info('[OpenSearch] Enhanced index created', { index });
 }
 
 // Drop + recreate do índice com o novo mapping
@@ -274,3 +287,4 @@ export async function reindexWithNewMapping(): Promise<void> {
   await ensureIndexExists();
   logger.info('[OpenSearch] Re-mapping done — repopulate via ingest');
 }
+

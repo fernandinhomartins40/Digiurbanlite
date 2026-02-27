@@ -1,5 +1,6 @@
 import { prisma } from '../models/prisma';
 import { logger } from '../utils/logger';
+import { config } from '../config/config';
 import { runPncpIngest } from './sources/pncp.ingest';
 import { runComprasnetIngest } from './sources/comprasnet.ingest';
 import { runTransparenciaIngest } from './sources/transparencia.ingest';
@@ -31,7 +32,7 @@ export async function runIngestOrchestrator(options: OrchestratorOptions = {}): 
     sinceDays,
     uf,
     triggeredBy = 'manual',
-    bpsMaxFiles = 2,
+    bpsMaxFiles = config.bps.maxFilesPerRun,
   } = options;
 
   const sources: IngestSource[] = source === 'all'
@@ -48,7 +49,7 @@ export async function runIngestOrchestrator(options: OrchestratorOptions = {}): 
         source: src,
         status: 'running',
         triggeredBy,
-        sinceDays: sinceDays ?? 365,
+        sinceDays: sinceDays ?? config.ingest.sinceDays,
       },
     });
 

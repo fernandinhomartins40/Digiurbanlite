@@ -1,6 +1,7 @@
 import { getOpenSearchClient } from '../search_index/opensearch.client';
 import { config } from '../config/config';
 import { logger } from '../utils/logger';
+import { buildQueryIntelligence } from './query-intelligence.service';
 
 export interface SupplierMapEntry {
   supplierName: string;
@@ -32,6 +33,7 @@ export async function getSupplierMap(
 ): Promise<SupplierMapResponse> {
   const startMs = Date.now();
   const { uf, source, period = '24m', limit = 20 } = options;
+  const queryIntelligence = buildQueryIntelligence(query);
 
   const client = getOpenSearchClient();
 
@@ -58,14 +60,28 @@ export async function getSupplierMap(
             must: [
               {
                 multi_match: {
-                  query,
-                  fields: ['description^3', 'normalized_description^2', 'catmat_description'],
+                  query: queryIntelligence.normalized || query,
+                  fields: ['description^3', 'normalized_description^2.4', 'catmat_description^1.6'],
                   type: 'best_fields',
                   fuzziness: 'AUTO',
-                  minimum_should_match: '60%',
+                  minimum_should_match: '45%',
                 },
               },
             ],
+            should: queryIntelligence.expandedQuery && queryIntelligence.expandedQuery !== queryIntelligence.normalized
+              ? [
+                {
+                  multi_match: {
+                    query: queryIntelligence.expandedQuery,
+                    fields: ['description^1.2', 'normalized_description^1.4', 'catmat_description'],
+                    type: 'most_fields',
+                    minimum_should_match: '30%',
+                    fuzziness: 'AUTO',
+                    boost: 0.7,
+                  },
+                },
+              ]
+              : undefined,
             filter: filters,
           },
         },

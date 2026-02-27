@@ -83,6 +83,7 @@ docker compose up -d
 | `GET` | `/api/v1/audits` | Lista auditorias de consultas |
 | `POST` | `/api/v1/ingest/run` | Dispara ingestão manual |
 | `GET` | `/api/v1/ingest/status` | Status da última ingestão |
+| `GET` | `/api/v1/coverage` | Cobertura + governança (qualidade, conformidade e risco) |
 
 ### Autenticação
 
@@ -226,7 +227,13 @@ O módulo já está integrado ao DigiUrban:
 | `REDIS_URL` | `redis://localhost:6379` | Redis (mesmo do DigiUrban) |
 | `DIGIURBAN_API_KEY` | — | Chave de autenticação (igual no backend) |
 | `PNCP_BASE_URL` | `https://pncp.gov.br/api/consulta/v1` | API PNCP |
-| `INGEST_SINCE_DAYS` | `365` | Dias atrás para ingestão |
+| `INGEST_SINCE_DAYS` | `1825` | Dias atrás para ingestão |
+| `BPS_MAX_FILES_PER_RUN` | `6` | Quantidade de arquivos anuais do BPS por execução |
+| `PNCP_MAX_PAGES_CONTRATACOES` | `500` | Limite de páginas PNCP para contratações |
+| `PNCP_MAX_PAGES_CONTRATOS` | `300` | Limite de páginas PNCP para contratos |
+| `CATMAT_AUTO_CLASSIFY_ENABLED` | `true` | Ativa classificador automático CATMAT/CATSER |
+| `CATMAT_AUTO_CLASSIFY_MIN_SCORE` | `0.55` | Score mínimo do classificador para aplicar enriquecimento |
+| `CATMAT_AUTO_CLASSIFY_MAX_CANDIDATES` | `80` | Máximo de candidatos analisados por descrição |
 | `INGEST_CRON` | `0 2 * * *` | Expressão cron para ingestão automática |
 | `OUTLIER_METHOD` | `IQR` | Método de remoção de outliers (IQR ou ZSCORE) |
 | `OUTLIER_IQR_K` | `1.5` | Multiplicador k do IQR |

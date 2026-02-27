@@ -10,6 +10,7 @@ module.exports = {
         strict: false,
         esModuleInterop: true,
         skipLibCheck: true,
+        types: ['node', 'jest'],
       },
     }],
   },

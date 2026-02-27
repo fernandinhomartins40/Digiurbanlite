@@ -22,35 +22,101 @@ export interface SearchPeriod {
 
 export interface SearchQueryParams {
   query: string;
+  expandedQuery?: string;
   filters?: SearchFilters;
   period?: SearchPeriod;
   page?: number;
   pageSize?: number;
+  relaxMatching?: boolean;
+  preferTechnicalTerms?: string[];
   includeExcluded?: boolean;
 }
 
 export function buildSearchQuery(params: SearchQueryParams) {
-  const { query, filters = {}, period, page = 1, pageSize = 20 } = params;
+  const {
+    query,
+    expandedQuery,
+    filters = {},
+    period,
+    page = 1,
+    pageSize = 20,
+    relaxMatching = false,
+    preferTechnicalTerms = [],
+  } = params;
 
   const must: unknown[] = [];
+  const should: unknown[] = [];
   const filter: unknown[] = [];
+  const tokenCount = query.trim().split(/\s+/).filter(Boolean).length;
+  const minimumShouldMatch = relaxMatching
+    ? '35%'
+    : tokenCount <= 2
+      ? '100%'
+      : tokenCount <= 4
+        ? '75%'
+        : '60%';
 
   // Query principal: multi_match em campos seguros (existem no mapping original + novo)
   must.push({
     multi_match: {
       query,
-      fields: ['normalized_description^2', 'description', 'organization_name'],
+      fields: ['normalized_description^2.4', 'description^2', 'catmat_description^1.6', 'organization_name'],
       type: 'best_fields',
       fuzziness: 'AUTO',
-      minimum_should_match: '60%',
+      minimum_should_match: minimumShouldMatch,
     },
   });
+
+  // Boost de frase para aproximar itens tecnicamente equivalentes
+  should.push({
+    match_phrase: {
+      description: {
+        query,
+        slop: 3,
+        boost: relaxMatching ? 0.8 : 1.3,
+      },
+    },
+  });
+
+  if (expandedQuery && expandedQuery.trim().length > 2 && expandedQuery !== query) {
+    should.push({
+      multi_match: {
+        query: expandedQuery,
+        fields: ['normalized_description^1.6', 'description^1.2', 'catmat_description^1.2'],
+        type: 'most_fields',
+        fuzziness: 'AUTO',
+        minimum_should_match: relaxMatching ? '25%' : '35%',
+        boost: 0.65,
+      },
+    });
+  }
+
+  for (const technicalTerm of preferTechnicalTerms.slice(0, 8)) {
+    should.push({
+      match: {
+        normalized_description: {
+          query: technicalTerm,
+          boost: 1.1,
+        },
+      },
+    });
+  }
 
   // Filtros base
   if (filters.uf) filter.push({ term: { uf: filters.uf } });
   if (filters.unit) filter.push({ term: { unit: filters.unit } });
   if (filters.modality) filter.push({ term: { modality: filters.modality } });
-  if (filters.catmatCode) filter.push({ term: { catmat_code: filters.catmatCode } });
+  if (filters.catmatCode) {
+    filter.push({
+      bool: {
+        should: [
+          { term: { catmat_code: filters.catmatCode } },
+          { term: { catser_code: filters.catmatCode } },
+        ],
+        minimum_should_match: 1,
+      },
+    });
+  }
   if (filters.source) filter.push({ term: { source: filters.source } });
   if (filters.yearMonth) filter.push({ term: { year_month: filters.yearMonth } });
   if (filters.organization) {
@@ -107,6 +173,8 @@ export function buildSearchQuery(params: SearchQueryParams) {
       query: {
         bool: {
           must,
+          should,
+          minimum_should_match: should.length > 0 ? 1 : 0,
           filter,
         },
       },
@@ -157,6 +225,19 @@ export function buildSearchQuery(params: SearchQueryParams) {
         },
         by_modality: {
           terms: { field: 'modality', size: 10 },
+        },
+        by_supplier: {
+          terms: {
+            field: 'supplier_name.keyword',
+            size: 20,
+            order: { _count: 'desc' },
+          },
+          aggs: {
+            avg_price: { avg: { field: 'unit_price' } },
+            min_price: { min: { field: 'unit_price' } },
+            max_price: { max: { field: 'unit_price' } },
+            last_seen: { max: { field: 'contract_date' } },
+          },
         },
         // avg_confidence: só funciona com novo mapping, mas não causa erro (retorna null)
         avg_confidence: {
