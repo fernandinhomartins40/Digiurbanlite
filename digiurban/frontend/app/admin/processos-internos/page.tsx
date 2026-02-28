@@ -32,6 +32,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
 import { OrganizationalUnitAutocomplete } from '@/components/admin/OrganizationalUnitAutocomplete'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
 import {
   ArrowRightLeft,
@@ -163,6 +164,7 @@ function CreateProcessDialog({
   processTypes: ProcessType[]
   onCreated: () => void
 }) {
+  const { user } = useAdminAuth()
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [form, setForm] = useState({
@@ -179,6 +181,21 @@ function CreateProcessDialog({
 
   const selectedType = processTypes.find(t => t.id === form.typeId)
   const hasDefaultFlow = !!selectedType?.defaultWorkflowTemplateId
+
+  useEffect(() => {
+    if (!open || form.originSectorName) return
+
+    const defaultSectorName = user?.department?.name || user?.primaryDepartment?.name
+    const defaultSectorId = user?.departmentId || user?.primaryDepartment?.id || defaultSectorName
+
+    if (!defaultSectorName || !defaultSectorId) return
+
+    setForm(current => ({
+      ...current,
+      originSectorId: defaultSectorId,
+      originSectorName: defaultSectorName,
+    }))
+  }, [form.originSectorName, open, user?.department?.name, user?.departmentId, user?.primaryDepartment?.id, user?.primaryDepartment?.name])
 
   const handleSubmit = async () => {
     if (!form.typeId || !form.subject || !form.originSectorName) {
@@ -199,7 +216,6 @@ function CreateProcessDialog({
         tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
       })
 
-      // Iniciar fluxo automÃ¡tico se solicitado
       toast({ title: 'Processo criado com sucesso!' })
       onCreated()
       onClose()
@@ -371,26 +387,64 @@ function DispatchDialog({
 }) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
+  const [loadingWorkflow, setLoadingWorkflow] = useState(false)
   const [mode, setMode] = useState<'livre' | 'fluxo'>('livre')
+  const [toSectorId, setToSectorId] = useState('')
   const [toSectorName, setToSectorName] = useState('')
   const [note, setNote] = useState('')
   const [action, setAction] = useState('ENCAMINHADO')
+  const [resolvedWorkflowInstance, setResolvedWorkflowInstance] = useState<WorkflowInstanceDetail | undefined>(workflowInstance)
+
+  useEffect(() => {
+    setResolvedWorkflowInstance(workflowInstance)
+  }, [workflowInstance])
+
+  useEffect(() => {
+    if (!process || workflowInstance) return
+
+    let cancelled = false
+    setLoadingWorkflow(true)
+
+    flowClient.getProcess(process.id)
+      .then(detail => {
+        if (!cancelled) {
+          setResolvedWorkflowInstance(detail.workflowInstance)
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setResolvedWorkflowInstance(undefined)
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoadingWorkflow(false)
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [process, workflowInstance])
+
+  const activeWorkflowInstance = workflowInstance || resolvedWorkflowInstance
 
   // Dados do fluxo (calculados a partir do workflowInstance)
-  const hasActiveFlow = workflowInstance?.status === 'ATIVO'
-  const flowSteps = (workflowInstance?.template?.steps || []) as WorkflowStep[]
+  const hasActiveFlow = activeWorkflowInstance?.status === 'ATIVO'
+  const flowSteps = (activeWorkflowInstance?.template?.steps || []) as WorkflowStep[]
   const sortedSteps = [...flowSteps].sort((a, b) => a.order - b.order)
-  const currentStepIdx = sortedSteps.findIndex(s => s.id === workflowInstance?.currentStepId)
-  const currentStep = sortedSteps[currentStepIdx]
+  const currentStepIdx = sortedSteps.findIndex(s => s.id === activeWorkflowInstance?.currentStepId)
   const nextStep = sortedSteps[currentStepIdx + 1]
 
   // Quando muda para modo fluxo, prÃ©-preenche campos
   useEffect(() => {
     if (mode === 'fluxo' && nextStep) {
+      setToSectorId(nextStep.sectorId || nextStep.sectorName || '')
       setToSectorName(nextStep.sectorName || '')
       setAction(nextStep.actions[0] || 'ENCAMINHADO')
     }
     if (mode === 'livre') {
+      setToSectorId('')
       setToSectorName('')
       setAction('ENCAMINHADO')
     }
@@ -400,6 +454,7 @@ function DispatchDialog({
   useEffect(() => {
     if (!process) {
       setMode('livre')
+      setToSectorId('')
       setToSectorName('')
       setNote('')
       setAction('ENCAMINHADO')
@@ -415,16 +470,16 @@ function DispatchDialog({
     try {
       // Despachar o processo
       await flowClient.dispatchProcess(process.id, {
-        toSectorId: toSectorName,
+        toSectorId: toSectorId || toSectorName,
         toSectorName,
         note: note || undefined,
         action,
       })
 
       // Se modo fluxo, avanÃ§ar a instÃ¢ncia de workflow tambÃ©m
-      if (mode === 'fluxo' && workflowInstance?.id) {
+      if (mode === 'fluxo' && activeWorkflowInstance?.id) {
         try {
-          await flowClient.advanceWorkflow(workflowInstance.id, action, note || undefined)
+          await flowClient.advanceWorkflow(activeWorkflowInstance.id, action, note || undefined)
         } catch {
           // AvanÃ§ar workflow Ã© best-effort â€” despacho jÃ¡ foi feito
         }
@@ -481,6 +536,12 @@ function DispatchDialog({
             </div>
           )}
 
+          {loadingWorkflow && !workflowInstance && (
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs text-blue-700">
+              Carregando etapa atual do fluxo...
+            </div>
+          )}
+
           {/* Modo: Seguir Fluxo */}
           {mode === 'fluxo' && hasActiveFlow && (
             <div className="space-y-3">
@@ -488,7 +549,7 @@ function DispatchDialog({
               <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg space-y-2">
                 <p className="text-xs font-semibold text-blue-700 flex items-center gap-1">
                   <GitBranch className="w-3.5 h-3.5" />
-                  {workflowInstance?.template?.name}
+                  {activeWorkflowInstance?.template?.name}
                 </p>
                 <div className="flex items-center gap-1.5 flex-wrap">
                   {sortedSteps.map((step, idx) => (
@@ -516,17 +577,28 @@ function DispatchDialog({
                 <>
                   <div>
                     <Label className="text-xs text-gray-500">PrÃ³xima etapa: <strong>{nextStep.name}</strong></Label>
-                    <Input
+                    <OrganizationalUnitAutocomplete
+                      label=""
                       value={toSectorName}
-                      onChange={e => setToSectorName(e.target.value)}
+                      onValueChange={value => {
+                        setToSectorId(value)
+                        setToSectorName(value)
+                      }}
+                      onSelect={unit => {
+                        setToSectorId(unit.id)
+                        setToSectorName(unit.nome)
+                      }}
                       placeholder="Setor de destino"
-                      className="mt-1"
+                      helperText={nextStep.sectorName ? 'O setor da próxima etapa já vem sugerido pelo fluxo.' : 'Selecione uma unidade ou mantenha texto livre.'}
                     />
                     {nextStep.sectorName && toSectorName !== nextStep.sectorName && (
                       <button
                         type="button"
                         className="text-xs text-blue-600 mt-1"
-                        onClick={() => setToSectorName(nextStep.sectorName || '')}
+                        onClick={() => {
+                          setToSectorId(nextStep.sectorId || nextStep.sectorName || '')
+                          setToSectorName(nextStep.sectorName || '')
+                        }}
                       >
                         Usar setor padrÃ£o: {nextStep.sectorName}
                       </button>
@@ -577,11 +649,20 @@ function DispatchDialog({
                 </Select>
               </div>
               <div>
-                <Label>Setor / Secretaria de Destino *</Label>
-                <Input
+                <OrganizationalUnitAutocomplete
+                  label="Setor / Secretaria de Destino"
                   value={toSectorName}
-                  onChange={e => setToSectorName(e.target.value)}
-                  placeholder="Ex: Secretaria de FinanÃ§as"
+                  onValueChange={value => {
+                    setToSectorId(value)
+                    setToSectorName(value)
+                  }}
+                  onSelect={unit => {
+                    setToSectorId(unit.id)
+                    setToSectorName(unit.nome)
+                  }}
+                  placeholder="Ex: Secretaria de Finanças"
+                  required
+                  helperText="Selecione uma unidade existente ou use texto livre para processos legados."
                 />
               </div>
             </>
@@ -1418,9 +1499,13 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
 // ============================================================================
 
 function InboxTab() {
+  const { user } = useAdminAuth()
   const { toast } = useToast()
-  const [sectorInput, setSectorInput] = useState('')
+  const [draftSectorId, setDraftSectorId] = useState('')
+  const [draftSectorName, setDraftSectorName] = useState('')
   const [sectorId, setSectorId] = useState('')
+  const [sectorName, setSectorName] = useState('')
+  const [resolvedSectorKey, setResolvedSectorKey] = useState('')
   const [processes, setProcesses] = useState<InternalProcess[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -1429,25 +1514,67 @@ function InboxTab() {
   const [actionProcess, setActionProcess] = useState<InternalProcess | null>(null)
   const [actionType, setActionType] = useState<ActionType | null>(null)
 
+  useEffect(() => {
+    if (draftSectorName) return
+
+    const defaultSectorName = user?.department?.name || user?.primaryDepartment?.name
+    const defaultSectorId = user?.departmentId || user?.primaryDepartment?.id || defaultSectorName
+
+    if (!defaultSectorName || !defaultSectorId) return
+
+    setDraftSectorId(defaultSectorId)
+    setDraftSectorName(defaultSectorName)
+    setSectorId(defaultSectorId)
+    setSectorName(defaultSectorName)
+  }, [draftSectorName, user?.department?.name, user?.departmentId, user?.primaryDepartment?.id, user?.primaryDepartment?.name])
+
   const loadInbox = useCallback(async () => {
-    if (!sectorId) return
+    const candidates = Array.from(new Set([sectorId, sectorName].filter(Boolean)))
+    if (candidates.length === 0) return
+
     setLoading(true)
     try {
-      const data = await flowClient.getInbox(sectorId)
-      setProcesses(data)
+      let loadedProcesses: InternalProcess[] = []
+      let matchedKey = candidates[0]
+
+      for (const candidate of candidates) {
+        const data = await flowClient.getInbox(candidate)
+        loadedProcesses = data
+        matchedKey = candidate
+
+        if (data.length > 0) {
+          break
+        }
+      }
+
+      setResolvedSectorKey(matchedKey)
+      setProcesses(loadedProcesses)
     } catch {
       toast({ title: 'Erro ao carregar caixa de entrada', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
-  }, [sectorId, toast])
+  }, [sectorId, sectorName, toast])
 
   useEffect(() => { loadInbox() }, [loadInbox])
 
+  const applySectorFilter = () => {
+    if (!draftSectorName) {
+      toast({ title: 'Informe um setor para consultar', variant: 'destructive' })
+      return
+    }
+
+    setResolvedSectorKey('')
+    setSectorId(draftSectorId || draftSectorName)
+    setSectorName(draftSectorName)
+  }
+
   const handleMarkAllRead = async () => {
-    if (!sectorId) return
+    const inboxSectorKey = resolvedSectorKey || sectorId || sectorName
+    if (!inboxSectorKey) return
+
     try {
-      await flowClient.markAllDispatchesRead(sectorId)
+      await flowClient.markAllDispatchesRead(inboxSectorKey)
       toast({ title: 'Todos os despachos marcados como lidos' })
     } catch {
       toast({ title: 'Erro', variant: 'destructive' })
@@ -1463,28 +1590,37 @@ function InboxTab() {
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
-            <Input
-              value={sectorInput}
-              onChange={e => setSectorInput(e.target.value)}
-              placeholder="Nome do setor"
-              className="flex-1"
-              onKeyDown={e => e.key === 'Enter' && setSectorId(sectorInput)}
-            />
-            <Button onClick={() => setSectorId(sectorInput)}>
+            <div className="flex-1">
+              <OrganizationalUnitAutocomplete
+                label="Setor"
+                value={draftSectorName}
+                onValueChange={value => {
+                  setDraftSectorId(value)
+                  setDraftSectorName(value)
+                }}
+                onSelect={unit => {
+                  setDraftSectorId(unit.id)
+                  setDraftSectorName(unit.nome)
+                }}
+                placeholder="Nome do setor"
+                helperText="A busca tenta o ID da unidade e, se necessário, também o nome para manter compatibilidade com processos antigos."
+              />
+            </div>
+            <Button className="self-start" onClick={applySectorFilter}>
               <Inbox className="w-4 h-4 mr-2" /> Buscar
             </Button>
-            {sectorId && (
-              <Button variant="outline" onClick={handleMarkAllRead}>Marcar Lidos</Button>
+            {(sectorId || sectorName) && (
+              <Button className="self-start" variant="outline" onClick={handleMarkAllRead}>Marcar Lidos</Button>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {sectorId && (
+      {(sectorId || sectorName) && (
         <>
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-800">
-              Processos em {sectorId} <span className="text-sm font-normal text-gray-500">({processes.length})</span>
+              Processos em {sectorName || sectorId} <span className="text-sm font-normal text-gray-500">({processes.length})</span>
             </h3>
             <Button variant="ghost" size="sm" onClick={loadInbox}>
               <RefreshCw className="w-3.5 h-3.5 mr-1" /> Atualizar
