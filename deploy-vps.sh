@@ -695,7 +695,7 @@ echo ""
 echo "=== Validando rotas críticas no container ==="
 echo ""
 
-# Verificar se o arquivo compilado existe
+# Verificar se os arquivos compilados existem
 if ! docker exec digiurban-vps test -f /app/backend/dist/routes/citizen-services.js; then
   echo "❌ ERRO: citizen-services.js não foi compilado no container!"
   echo "=== Listando arquivos em dist/routes ==="
@@ -704,12 +704,33 @@ if ! docker exec digiurban-vps test -f /app/backend/dist/routes/citizen-services
 fi
 echo "✓ citizen-services.js compilado no container"
 
-# Verificar se o index.js registra a rota
+if ! docker exec digiurban-vps test -f /app/backend/dist/routes/prices-proxy.routes.js; then
+  echo "❌ ERRO: prices-proxy.routes.js não foi compilado no container!"
+  echo "=== Listando arquivos em dist/routes ==="
+  docker exec digiurban-vps ls -la /app/backend/dist/routes/ || true
+  exit 1
+fi
+echo "✓ prices-proxy.routes.js compilado no container"
+
+# Verificar se o index.js registra as rotas críticas
 if ! docker exec digiurban-vps grep -q "citizen-services" /app/backend/dist/index.js; then
   echo "❌ ERRO: Rota citizen-services não registrada no index.js compilado!"
   exit 1
 fi
 echo "✓ Rota citizen-services registrada no index.js compilado"
+
+if ! docker exec digiurban-vps grep -q "prices-proxy" /app/backend/dist/index.js; then
+  echo "❌ ERRO: Rota prices-proxy não registrada no index.js compilado!"
+  exit 1
+fi
+echo "✓ Rota prices-proxy registrada no index.js compilado"
+
+# Verificar se a rota /coverage está no prices-proxy compilado
+if ! docker exec digiurban-vps grep -q "coverage" /app/backend/dist/routes/prices-proxy.routes.js; then
+  echo "❌ ERRO: Rota /coverage não encontrada em prices-proxy.routes.js compilado!"
+  exit 1
+fi
+echo "✓ Rota /coverage presente em prices-proxy.routes.js compilado"
 
 # Aguardar backend inicializar e buscar logs de carregamento de rotas
 echo "=== Aguardando backend carregar rotas (10s) ==="

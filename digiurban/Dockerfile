@@ -35,6 +35,10 @@ COPY digiurban/backend ./
 # Isso permite imports como '@shared/*' ou '../shared/*'
 COPY digiurban/shared ./src/shared
 
+# ⚡ CACHE BUSTER pós-COPY: deve ficar DEPOIS dos COPYs de código para invalidar cache
+# Sem isso, docker reutiliza camada antiga quando só o código muda (não o package.json)
+RUN echo "Backend source cache bust: ${BUILD_TIMESTAMP:-unknown} / ${CACHE_BUST:-unknown}"
+
 # Gerar Prisma Client e Build TypeScript
 ARG DATABASE_URL
 ENV DATABASE_URL=${DATABASE_URL:-postgresql://digiurban:digiurban2024@postgres:5432/digiurban}
@@ -44,6 +48,7 @@ RUN ./node_modules/.bin/prisma generate && \
     ls -la dist && \
     if [ ! -f "dist/index.js" ]; then echo "❌ ERRO: index.js não foi compilado!"; exit 1; fi && \
     if [ ! -f "dist/routes/citizen-services.js" ]; then echo "❌ ERRO: citizen-services.js não foi compilado!"; exit 1; fi && \
+    if [ ! -f "dist/routes/prices-proxy.routes.js" ]; then echo "❌ ERRO: prices-proxy.routes.js não foi compilado!"; exit 1; fi && \
     echo "✅ Build do TypeScript concluído com sucesso"
 
 # ========== STAGE 2: Build Frontend ==========
