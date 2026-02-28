@@ -44,6 +44,17 @@ export interface EvidenceInput {
   hasCatmat: boolean;
 }
 
+const INCIDENTAL_CONTEXT_HINTS = [
+  'kit ',
+  'conjunto ',
+  'composto por',
+  'acompanha ',
+  'inclui ',
+  'referente ',
+  'acessorio ',
+  'acessorios ',
+];
+
 export function buildQueryIntelligence(query: string): QueryIntelligence {
   const normalized = normalizeText(query);
   const tokens = tokenize(normalized);
@@ -102,6 +113,107 @@ export function semanticSimilarityScore(queryTokens: string[], text: string): nu
   return clamp01(base + bonus);
 }
 
+export function lexicalIntentScore(query: QueryIntelligence, text: string): number {
+  const normalizedText = normalizeText(text);
+  if (!query.normalized || !normalizedText) return 0;
+
+  const textTokens = tokenize(normalizedText);
+  if (textTokens.length === 0) return 0;
+
+  const originalMatches = query.tokens.filter((token) =>
+    containsNormalizedTerm(normalizedText, textTokens, token),
+  );
+  const expandedMatches = query.expandedTokens.filter((term) =>
+    containsNormalizedTerm(normalizedText, textTokens, term),
+  );
+
+  const originalCoverage = query.tokens.length > 0
+    ? originalMatches.length / query.tokens.length
+    : 0;
+  const expandedSignal = expandedMatches.length > 0
+    ? Math.min(1, 0.55 + ((expandedMatches.length - 1) * 0.12))
+    : 0;
+  const exactPhrase = containsNormalizedTerm(normalizedText, textTokens, query.normalized) ? 1 : 0;
+  const startsWithQuery = normalizedText.startsWith(query.normalized) ? 1 : 0;
+  const firstMatchIndex = findFirstMatchIndex(textTokens, query.tokens, query.expandedTokens);
+  const earlySignal = firstMatchIndex === null
+    ? 0
+    : firstMatchIndex <= 2
+      ? 1
+      : firstMatchIndex <= 5
+        ? 0.75
+        : firstMatchIndex <= 9
+          ? 0.45
+          : 0.18;
+
+  const densitySignal = query.tokens.length > 0
+    ? Math.min(1, (originalMatches.length / textTokens.length) * 12)
+    : 0;
+
+  let score = (
+    (Math.max(originalCoverage, expandedSignal * 0.85) * 0.46) +
+    (exactPhrase * 0.22) +
+    (startsWithQuery * 0.14) +
+    (earlySignal * 0.13) +
+    (densitySignal * 0.05)
+  );
+
+  const isIncidental = query.tokens.length <= 2 &&
+    firstMatchIndex !== null &&
+    firstMatchIndex > 8 &&
+    textTokens.length >= 16 &&
+    !startsWithQuery;
+
+  if (isIncidental) {
+    score -= 0.18;
+  }
+
+  if (isBundleLike(normalizedText) && query.tokens.length <= 2 && firstMatchIndex !== null && firstMatchIndex > 4) {
+    score -= 0.12;
+  }
+
+  return clamp01(score);
+}
+
+export function shouldKeepSearchHit(
+  query: QueryIntelligence,
+  text: string,
+  lexicalScore = lexicalIntentScore(query, text),
+  semanticScore = semanticSimilarityScore(query.expandedTokens, text),
+): boolean {
+  const normalizedText = normalizeText(text);
+  const textTokens = tokenize(normalizedText);
+  if (textTokens.length === 0) return false;
+
+  const firstMatchIndex = findFirstMatchIndex(textTokens, query.tokens, query.expandedTokens);
+  const bundleLike = isBundleLike(normalizedText);
+
+  const hasLexicalSignal = query.expandedTokens.some((term) =>
+    containsNormalizedTerm(normalizedText, textTokens, term),
+  );
+
+  if (!hasLexicalSignal) {
+    return false;
+  }
+
+  if (query.tokens.length === 1) {
+    const longDescription = textTokens.length >= 14;
+    if (bundleLike && firstMatchIndex !== null && firstMatchIndex > 4) {
+      return false;
+    }
+    if (longDescription && lexicalScore < 0.5 && semanticScore < 0.22) {
+      return false;
+    }
+    return lexicalScore >= 0.2 || semanticScore >= 0.14;
+  }
+
+  if (query.tokens.length === 2) {
+    return lexicalScore >= 0.18 || semanticScore >= 0.16;
+  }
+
+  return lexicalScore >= 0.12 || semanticScore >= 0.12;
+}
+
 export function evidenceScore(input: EvidenceInput): number {
   const sourceWeight = SOURCE_WEIGHTS[input.source ?? ''] ?? 0.75;
   const confidence = input.confidenceScore ?? 0.5;
@@ -158,9 +270,71 @@ function tokenize(text: string): string[] {
     .filter((token) => token.length > 1);
 }
 
+function containsNormalizedTerm(normalizedText: string, textTokens: string[], term: string): boolean {
+  const normalizedTerm = normalizeText(term);
+  if (!normalizedTerm) return false;
+
+  if (!normalizedTerm.includes(' ')) {
+    const stemmedTerm = stemToken(normalizedTerm);
+    return textTokens.some((token) => stemToken(token) === stemmedTerm);
+  }
+
+  const escaped = escapeRegex(normalizedTerm);
+  return new RegExp(`(?:^|\\s)${escaped}(?:$|\\s)`, 'i').test(normalizedText);
+}
+
+function findFirstMatchIndex(textTokens: string[], originalTerms: string[], expandedTerms: string[]): number | null {
+  let firstIndex: number | null = null;
+
+  for (const term of [...originalTerms, ...expandedTerms]) {
+    const normalizedTerm = normalizeText(term);
+    if (!normalizedTerm) continue;
+
+    const index = normalizedTerm.includes(' ')
+      ? findPhraseIndex(textTokens, tokenize(normalizedTerm))
+      : textTokens.findIndex((token) => stemToken(token) === stemToken(normalizedTerm));
+
+    if (index >= 0 && (firstIndex === null || index < firstIndex)) {
+      firstIndex = index;
+    }
+  }
+
+  return firstIndex;
+}
+
+function findPhraseIndex(textTokens: string[], phraseTokens: string[]): number {
+  if (phraseTokens.length === 0 || phraseTokens.length > textTokens.length) return -1;
+
+  for (let i = 0; i <= textTokens.length - phraseTokens.length; i += 1) {
+    let matched = true;
+    for (let j = 0; j < phraseTokens.length; j += 1) {
+      if (stemToken(textTokens[i + j]) !== stemToken(phraseTokens[j])) {
+        matched = false;
+        break;
+      }
+    }
+    if (matched) return i;
+  }
+
+  return -1;
+}
+
+function stemToken(token: string): string {
+  if (token.length > 5 && token.endsWith('es')) return token.slice(0, -2);
+  if (token.length > 4 && token.endsWith('s')) return token.slice(0, -1);
+  return token;
+}
+
+function isBundleLike(normalizedText: string): boolean {
+  return INCIDENTAL_CONTEXT_HINTS.some((hint) => normalizedText.includes(hint));
+}
+
+function escapeRegex(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 function clamp01(value: number): number {
   if (value < 0) return 0;
   if (value > 1) return 1;
   return Math.round(value * 1000) / 1000;
 }
-

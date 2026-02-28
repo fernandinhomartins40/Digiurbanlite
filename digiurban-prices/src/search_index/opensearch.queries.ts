@@ -48,6 +48,8 @@ export function buildSearchQuery(params: SearchQueryParams) {
   const should: unknown[] = [];
   const filter: unknown[] = [];
   const tokenCount = query.trim().split(/\s+/).filter(Boolean).length;
+  const strictSingleTerm = tokenCount === 1 && (!expandedQuery || expandedQuery === query) && !relaxMatching;
+  const fuzziness: 'AUTO' | 0 = strictSingleTerm ? 0 : 'AUTO';
   const minimumShouldMatch = relaxMatching
     ? '35%'
     : tokenCount <= 2
@@ -62,12 +64,22 @@ export function buildSearchQuery(params: SearchQueryParams) {
       query,
       fields: ['normalized_description^2.4', 'description^2', 'catmat_description^1.6', 'organization_name'],
       type: 'best_fields',
-      fuzziness: 'AUTO',
+      fuzziness,
       minimum_should_match: minimumShouldMatch,
     },
   });
 
   // Boost de frase para aproximar itens tecnicamente equivalentes
+  should.push({
+    match_phrase: {
+      normalized_description: {
+        query,
+        slop: 0,
+        boost: strictSingleTerm ? 2.2 : 1.6,
+      },
+    },
+  });
+
   should.push({
     match_phrase: {
       description: {
@@ -84,7 +96,7 @@ export function buildSearchQuery(params: SearchQueryParams) {
         query: expandedQuery,
         fields: ['normalized_description^1.6', 'description^1.2', 'catmat_description^1.2'],
         type: 'most_fields',
-        fuzziness: 'AUTO',
+        fuzziness,
         minimum_should_match: relaxMatching ? '25%' : '35%',
         boost: 0.65,
       },
@@ -121,6 +133,19 @@ export function buildSearchQuery(params: SearchQueryParams) {
   if (filters.yearMonth) filter.push({ term: { year_month: filters.yearMonth } });
   if (filters.organization) {
     filter.push({ match: { 'organization_name.keyword': filters.organization } });
+  }
+
+  if (strictSingleTerm) {
+    filter.push({
+      bool: {
+        should: [
+          { match_phrase: { normalized_description: { query } } },
+          { match_phrase: { description: { query } } },
+          { match_phrase: { catmat_description: { query } } },
+        ],
+        minimum_should_match: 1,
+      },
+    });
   }
 
   // Faixa de preço

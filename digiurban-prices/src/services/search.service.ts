@@ -2,8 +2,13 @@ import { getOpenSearchClient } from '../search_index/opensearch.client';
 import { buildSearchQuery, SearchFilters, SearchPeriod } from '../search_index/opensearch.queries';
 import { calculateStatistics, StatisticsResult } from './statistics.service';
 import { normalizeText } from '../ingest/normalizer';
-import { buildQueryIntelligence, evidenceScore, semanticSimilarityScore } from './query-intelligence.service';
-import { config } from '../config/config';
+import {
+  buildQueryIntelligence,
+  evidenceScore,
+  lexicalIntentScore,
+  semanticSimilarityScore,
+  shouldKeepSearchHit,
+} from './query-intelligence.service';
 import { logger } from '../utils/logger';
 
 export interface SearchItem {
@@ -79,6 +84,8 @@ export interface BatchSearchResponse {
   grandTotalMedian: number | null;
 }
 
+type RankedSearchItem = SearchItem & { keep: boolean };
+
 export async function searchPrices(
   query: string,
   filters: SearchFilters = {},
@@ -136,7 +143,6 @@ export async function searchPrices(
     };
   }>;
 
-  // Fallback de recall: relaxa o matching quando não há resultados na busca principal.
   if (rawItems.length === 0 && queryIntelligence.expandedQuery.trim().length > 2) {
     try {
       const client = getOpenSearchClient();
@@ -162,7 +168,7 @@ export async function searchPrices(
   const candidateItems: SearchItem[] = rawItems.map((hit) => ({
     id: hit._id,
     description: hit._source.description,
-    normalizedDescription: hit._source.normalized_description,
+    normalizedDescription: hit._source.normalized_description || normalizeText(hit._source.description),
     unit: hit._source.unit,
     unitPrice: hit._source.unit_price,
     totalPrice: hit._source.total_price,
@@ -181,10 +187,13 @@ export async function searchPrices(
   }));
 
   const maxOsScore = candidateItems.reduce((acc, item) => Math.max(acc, item.score || 0), 0) || 1;
-  const scoredItems = candidateItems
+  const rankedItems: RankedSearchItem[] = candidateItems
     .map((item) => {
+      const normalizedDescription = item.normalizedDescription || normalizeText(item.description);
       const osScoreNormalized = (item.score || 0) / maxOsScore;
-      const semanticScore = semanticSimilarityScore(queryIntelligence.expandedTokens, item.normalizedDescription || item.description);
+      const semanticScore = semanticSimilarityScore(queryIntelligence.expandedTokens, normalizedDescription);
+      const lexicalScore = lexicalIntentScore(queryIntelligence, normalizedDescription);
+      const keep = shouldKeepSearchHit(queryIntelligence, normalizedDescription, lexicalScore, semanticScore);
       const evidence = evidenceScore({
         source: item.source,
         confidenceScore: item.confidenceScore,
@@ -194,107 +203,68 @@ export async function searchPrices(
       });
       const confidence = item.confidenceScore ?? 0.5;
       const rankingScore = (
-        osScoreNormalized * 0.45 +
-        semanticScore * 0.25 +
-        evidence * 0.2 +
-        confidence * 0.1
+        (osScoreNormalized * 0.32) +
+        (lexicalScore * 0.28) +
+        (semanticScore * 0.2) +
+        (evidence * 0.15) +
+        (confidence * 0.05)
       );
+
       return {
         ...item,
+        normalizedDescription,
+        keep,
         score: Math.round(rankingScore * 10_000) / 10_000,
       };
     })
     .sort((a, b) => b.score - a.score);
 
-  const dedupedItems = dedupeBySimilarity(scoredItems);
+  const filteredItems = rankedItems.filter((item) => item.keep);
+  const relevantItems = filteredItems.length > 0
+    ? filteredItems
+    : rankedItems.filter((item) => item.score >= 0.3);
+
+  const dedupedItems = dedupeBySimilarity(relevantItems);
   const items = dedupedItems.slice(0, pageSize);
 
-  // Estatísticas com remoção de outliers
-  const prices = items
-    .map((i) => i.unitPrice)
-    .filter((v): v is number => v !== null && v > 0);
+  const prices = dedupedItems
+    .map((item) => item.unitPrice)
+    .filter((value): value is number => value !== null && value > 0);
 
   const statistics = calculateStatistics({ values: prices });
+  const aggregations = buildAggregations(dedupedItems);
 
-  // Agregações
-  const aggs = (osResponse as { aggregations?: Record<string, unknown> }).aggregations ?? {};
-
-  const byUfBuckets = ((aggs.by_uf as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
-  const byUnitBuckets = ((aggs.by_unit as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
-  const bySourceBuckets = ((aggs.by_source as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
-  const byModalityBuckets = ((aggs.by_modality as { buckets?: { key: string; doc_count: number }[] })?.buckets ?? []);
-  const bySupplierBuckets = ((aggs.by_supplier as {
-    buckets?: {
-      key: string;
-      doc_count: number;
-      avg_price?: { value: number | null };
-      min_price?: { value: number | null };
-      max_price?: { value: number | null };
-      last_seen?: { value_as_string?: string };
-    }[];
-  })?.buckets ?? []);
-  const overTimeBuckets = ((aggs.over_time as {
-    buckets?: {
-      key_as_string: string;
-      doc_count: number;
-      avg_price?: { value: number | null };
-      min_price?: { value: number | null };
-      max_price?: { value: number | null };
-    }[];
-  })?.buckets ?? []);
-  const avgConfidence = ((aggs.avg_confidence as { value?: number | null })?.value) ?? null;
-
-  // Filtros aplicados
   const filtersApplied: string[] = [];
   if (filters.uf) filtersApplied.push(`UF: ${filters.uf}`);
   if (filters.source) filtersApplied.push(`Fonte: ${filters.source}`);
   if (filters.unit) filtersApplied.push(`Unidade: ${filters.unit}`);
   if (filters.catmatCode) filtersApplied.push(`CATMAT: ${filters.catmatCode}`);
   if (filters.modality) filtersApplied.push(`Modalidade: ${filters.modality}`);
-  if (filters.minPrice) filtersApplied.push(`Preço mínimo: R$ ${filters.minPrice}`);
-  if (filters.maxPrice) filtersApplied.push(`Preço máximo: R$ ${filters.maxPrice}`);
-  if (filters.minConfidence) filtersApplied.push(`Confiabilidade ≥ ${Math.round(filters.minConfidence * 100)}%`);
+  if (filters.minPrice) filtersApplied.push(`Preco minimo: R$ ${filters.minPrice}`);
+  if (filters.maxPrice) filtersApplied.push(`Preco maximo: R$ ${filters.maxPrice}`);
+  if (filters.minConfidence) filtersApplied.push(`Confiabilidade >= ${Math.round(filters.minConfidence * 100)}%`);
+  if (relevantItems.length < candidateItems.length) filtersApplied.push('Relevancia: matches incidentais removidos');
 
   const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
   const periodFrom = period?.from ?? twoYearsAgo;
   const periodTo = period?.to ?? new Date().toISOString().split('T')[0];
   const totalHits = hits?.total?.value ?? 0;
+  const totalRelevant = estimateRelevantTotal(totalHits, candidateItems.length, dedupedItems.length);
 
   return {
     query,
     normalizedQuery,
-    total: totalHits,
+    total: totalRelevant,
     page,
     pageSize,
     items,
     statistics,
-    aggregations: {
-      byUf: byUfBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
-      byUnit: byUnitBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
-      bySource: bySourceBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
-      byModality: byModalityBuckets.map((b) => ({ key: b.key, count: b.doc_count })),
-      bySupplier: bySupplierBuckets.map((b) => ({
-        name: b.key,
-        count: b.doc_count,
-        avgPrice: b.avg_price?.value ?? null,
-        minPrice: b.min_price?.value ?? null,
-        maxPrice: b.max_price?.value ?? null,
-        lastSeen: b.last_seen?.value_as_string ?? null,
-      })),
-      overTime: overTimeBuckets.map((b) => ({
-        date: b.key_as_string,
-        avgPrice: b.avg_price?.value ?? null,
-        minPrice: b.min_price?.value ?? null,
-        maxPrice: b.max_price?.value ?? null,
-        count: b.doc_count,
-      })),
-      avgConfidence,
-    },
+    aggregations,
     explanation: {
-      methodology: statistics?.methodology ?? 'Sem dados suficientes para análise estatística.',
+      methodology: statistics?.methodology ?? 'Sem dados suficientes para analise estatistica.',
       filters: filtersApplied,
       period: { from: periodFrom, to: periodTo },
-      algorithmVersion: '2.1-hybrid',
+      algorithmVersion: '2.2-hybrid-lexical',
     },
     durationMs: Date.now() - startMs,
   };
@@ -325,12 +295,12 @@ export async function batchSearchPrices(
   const totalsMax: number[] = [];
   const totalsMedian: number[] = [];
 
-  for (const r of results) {
-    const minVal = r.results.statistics?.min;
-    const maxVal = r.results.statistics?.max;
+  for (const result of results) {
+    const minVal = result.results.statistics?.min;
+    const maxVal = result.results.statistics?.max;
     if (typeof minVal === 'number') totalsMin.push(minVal);
     if (typeof maxVal === 'number') totalsMax.push(maxVal);
-    if (r.estimatedTotal !== null) totalsMedian.push(r.estimatedTotal);
+    if (result.estimatedTotal !== null) totalsMedian.push(result.estimatedTotal);
   }
 
   return {
@@ -370,15 +340,16 @@ function buildEmptyResponse(
       methodology: 'Sem resultados encontrados.',
       filters: [],
       period: { from: twoYearsAgo, to: new Date().toISOString().split('T')[0] },
-      algorithmVersion: '2.1-hybrid',
+      algorithmVersion: '2.2-hybrid-lexical',
     },
     durationMs,
   };
 }
 
-function dedupeBySimilarity(items: SearchItem[]): SearchItem[] {
+function dedupeBySimilarity<T extends SearchItem>(items: T[]): T[] {
   const seen = new Set<string>();
-  const result: SearchItem[] = [];
+  const result: T[] = [];
+
   for (const item of items) {
     const normalized = (item.normalizedDescription || item.description || '')
       .toLowerCase()
@@ -388,11 +359,109 @@ function dedupeBySimilarity(items: SearchItem[]): SearchItem[] {
     const month = item.contractDate ? item.contractDate.slice(0, 7) : 'na';
     const priceBucket = item.unitPrice ? Math.round(item.unitPrice / 10) : 'na';
     const key = `${normalized}|${month}|${item.uf ?? 'na'}|${item.unit ?? 'na'}|${priceBucket}`;
+
     if (seen.has(key)) continue;
     seen.add(key);
     result.push(item);
   }
+
   return result;
+}
+
+function estimateRelevantTotal(totalHits: number, candidateCount: number, relevantCount: number): number {
+  if (totalHits <= candidateCount) return relevantCount;
+  if (candidateCount === 0) return 0;
+
+  const relevantRatio = relevantCount / candidateCount;
+  const estimated = Math.round(totalHits * relevantRatio);
+  return Math.max(relevantCount, Math.min(totalHits, estimated));
+}
+
+function buildAggregations(items: SearchItem[]): SearchResponse['aggregations'] {
+  const byUf = buildBucketCounts(items.map((item) => item.uf));
+  const byUnit = buildBucketCounts(items.map((item) => item.unit));
+  const bySource = buildBucketCounts(items.map((item) => item.source));
+  const byModality = buildBucketCounts(items.map((item) => item.modality));
+
+  const supplierMap = new Map<string, { name: string; count: number; prices: number[]; lastSeen: string | null }>();
+  const overTimeMap = new Map<string, { prices: number[]; count: number }>();
+  const confidences: number[] = [];
+
+  for (const item of items) {
+    if (item.confidenceScore !== null) confidences.push(item.confidenceScore);
+
+    if (item.supplierName) {
+      const key = `${item.supplierCnpj ?? 'na'}|${item.supplierName}`;
+      const current = supplierMap.get(key) ?? {
+        name: item.supplierName,
+        count: 0,
+        prices: [],
+        lastSeen: null,
+      };
+
+      current.count += 1;
+      if (typeof item.unitPrice === 'number' && item.unitPrice > 0) current.prices.push(item.unitPrice);
+      if (item.contractDate && (!current.lastSeen || item.contractDate > current.lastSeen)) {
+        current.lastSeen = item.contractDate;
+      }
+      supplierMap.set(key, current);
+    }
+
+    if (item.contractDate) {
+      const month = item.contractDate.slice(0, 7);
+      const current = overTimeMap.get(month) ?? { prices: [], count: 0 };
+      current.count += 1;
+      if (typeof item.unitPrice === 'number' && item.unitPrice > 0) current.prices.push(item.unitPrice);
+      overTimeMap.set(month, current);
+    }
+  }
+
+  const bySupplier = Array.from(supplierMap.values())
+    .map((supplier) => ({
+      name: supplier.name,
+      count: supplier.count,
+      avgPrice: supplier.prices.length > 0 ? round2(supplier.prices.reduce((sum, price) => sum + price, 0) / supplier.prices.length) : null,
+      minPrice: supplier.prices.length > 0 ? Math.min(...supplier.prices) : null,
+      maxPrice: supplier.prices.length > 0 ? Math.max(...supplier.prices) : null,
+      lastSeen: supplier.lastSeen,
+    }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, 20);
+
+  const overTime = Array.from(overTimeMap.entries())
+    .map(([date, entry]) => ({
+      date,
+      avgPrice: entry.prices.length > 0 ? round2(entry.prices.reduce((sum, price) => sum + price, 0) / entry.prices.length) : null,
+      minPrice: entry.prices.length > 0 ? Math.min(...entry.prices) : null,
+      maxPrice: entry.prices.length > 0 ? Math.max(...entry.prices) : null,
+      count: entry.count,
+    }))
+    .sort((a, b) => a.date.localeCompare(b.date));
+
+  return {
+    byUf,
+    byUnit,
+    bySource,
+    byModality,
+    bySupplier,
+    overTime,
+    avgConfidence: confidences.length > 0
+      ? round2((confidences.reduce((sum, value) => sum + value, 0) / confidences.length) * 100) / 100
+      : null,
+  };
+}
+
+function buildBucketCounts(values: Array<string | null>): Array<{ key: string; count: number }> {
+  const counts = new Map<string, number>();
+
+  for (const value of values) {
+    if (!value) continue;
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+  }
+
+  return Array.from(counts.entries())
+    .map(([key, count]) => ({ key, count }))
+    .sort((a, b) => b.count - a.count || a.key.localeCompare(b.key));
 }
 
 function round2(n: number) {

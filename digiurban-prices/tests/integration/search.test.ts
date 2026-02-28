@@ -1,69 +1,11 @@
-/**
- * Testes de integração para os endpoints de busca.
- * Mocka OpenSearch e Prisma para rodar sem dependências externas.
- */
-
 import express from 'express';
 import request from 'supertest';
 
-// Mock OpenSearch antes de importar os módulos
+const mockSearch = jest.fn();
+
 jest.mock('../../src/search_index/opensearch.client', () => ({
   getOpenSearchClient: () => ({
-    search: jest.fn().mockResolvedValue({
-      body: {
-        hits: {
-          total: { value: 2 },
-          hits: [
-            {
-              _id: 'item-1',
-              _score: 1.5,
-              _source: {
-                description: 'Computador Desktop Intel i5 8GB',
-                normalized_description: 'computador desktop intel i5 8gb',
-                unit: 'un',
-                unit_price: 2850,
-                total_price: 28500,
-                quantity: 10,
-                contract_date: '2025-03-01',
-                uf: 'SP',
-                city: 'São Paulo',
-                organization_name: 'Prefeitura Municipal',
-                modality: 'Pregão Eletrônico',
-              },
-            },
-            {
-              _id: 'item-2',
-              _score: 1.2,
-              _source: {
-                description: 'Microcomputador tipo desktop i5',
-                normalized_description: 'microcomputador desktop i5',
-                unit: 'un',
-                unit_price: 2920,
-                total_price: 14600,
-                quantity: 5,
-                contract_date: '2025-02-15',
-                uf: 'MG',
-                city: 'Belo Horizonte',
-                organization_name: 'Câmara Municipal',
-                modality: 'Dispensa',
-              },
-            },
-          ],
-        },
-        aggregations: {
-          stats_unit_price: { avg: 2885, min: 2850, max: 2920, sum: 5770, count: 2 },
-          percentiles_unit_price: { values: { '50.0': 2885 } },
-          by_uf: { buckets: [{ key: 'SP', doc_count: 1 }, { key: 'MG', doc_count: 1 }] },
-          by_unit: { buckets: [{ key: 'un', doc_count: 2 }] },
-          over_time: {
-            buckets: [
-              { key_as_string: '2025-02', doc_count: 1, avg_price: { value: 2920 } },
-              { key_as_string: '2025-03', doc_count: 1, avg_price: { value: 2850 } },
-            ],
-          },
-        },
-      },
-    }),
+    search: mockSearch,
     ping: jest.fn().mockResolvedValue({}),
     indices: {
       exists: jest.fn().mockResolvedValue({ body: true }),
@@ -99,12 +41,10 @@ jest.mock('../../src/ingest/scheduler', () => ({
   startIngestScheduler: jest.fn(),
 }));
 
-// Setup app de teste
 function createTestApp() {
   const app = express();
   app.use(express.json());
 
-  // Override API key para testes
   process.env.DIGIURBAN_API_KEY = 'test-api-key';
 
   const { apiKeyMiddleware } = require('../../src/api/middlewares/auth.middleware');
@@ -120,6 +60,63 @@ function createTestApp() {
   app.use('/api/v1', ingestRouter);
 
   return app;
+}
+
+function buildDefaultSearchBody() {
+  return {
+    body: {
+      hits: {
+        total: { value: 2 },
+        hits: [
+          {
+            _id: 'item-1',
+            _score: 1.5,
+            _source: {
+              description: 'Computador Desktop Intel i5 8GB',
+              normalized_description: 'computador desktop intel i5 8gb',
+              unit: 'un',
+              unit_price: 2850,
+              total_price: 28500,
+              quantity: 10,
+              contract_date: '2025-03-01',
+              uf: 'SP',
+              city: 'Sao Paulo',
+              organization_name: 'Prefeitura Municipal',
+              modality: 'Pregao Eletronico',
+              source: 'pncp',
+              supplier_name: 'Fornecedor A',
+              supplier_cnpj: '00000000000191',
+              catmat_code: '123',
+              confidence_score: 0.94,
+            },
+          },
+          {
+            _id: 'item-2',
+            _score: 1.2,
+            _source: {
+              description: 'Microcomputador tipo desktop i5',
+              normalized_description: 'microcomputador desktop i5',
+              unit: 'un',
+              unit_price: 2920,
+              total_price: 14600,
+              quantity: 5,
+              contract_date: '2025-02-15',
+              uf: 'MG',
+              city: 'Belo Horizonte',
+              organization_name: 'Camara Municipal',
+              modality: 'Dispensa',
+              source: 'comprasnet',
+              supplier_name: 'Fornecedor B',
+              supplier_cnpj: '00000000000192',
+              catmat_code: '124',
+              confidence_score: 0.9,
+            },
+          },
+        ],
+      },
+      aggregations: {},
+    },
+  };
 }
 
 describe('Health endpoints', () => {
@@ -145,12 +142,16 @@ describe('Health endpoints', () => {
 
 describe('Search endpoints', () => {
   let app: ReturnType<typeof createTestApp>;
+  const AUTH_HEADER = { 'x-digiurban-key': 'test-api-key' };
 
   beforeAll(() => {
     app = createTestApp();
   });
 
-  const AUTH_HEADER = { 'x-digiurban-key': 'test-api-key' };
+  beforeEach(() => {
+    mockSearch.mockReset();
+    mockSearch.mockResolvedValue(buildDefaultSearchBody());
+  });
 
   it('POST /api/v1/search deve retornar 401 sem API key', async () => {
     const res = await request(app)
@@ -180,7 +181,121 @@ describe('Search endpoints', () => {
     expect(res.body.statistics).toBeDefined();
   });
 
-  it('POST /api/v1/search deve incluir estatísticas', async () => {
+  it('POST /api/v1/search deve filtrar matches irrelevantes para item simples', async () => {
+    mockSearch.mockResolvedValueOnce({
+      body: {
+        hits: {
+          total: { value: 4 },
+          hits: [
+            {
+              _id: 'vas-1',
+              _score: 1.8,
+              _source: {
+                description: 'VASSOURA TIPO CAIPIRA AMARELA DE 05 FIOS COM CABO',
+                normalized_description: 'vassoura tipo caipira amarela 05 fios cabo',
+                unit: 'un',
+                unit_price: 19.9,
+                total_price: 1990,
+                quantity: 100,
+                contract_date: '2026-02-24',
+                uf: 'SP',
+                city: 'Espirito Santo do Pinhal',
+                organization_name: 'Municipio X',
+                modality: 'Pregao',
+                source: 'pncp',
+                supplier_name: 'Fornecedor Vassoura',
+                supplier_cnpj: '00000000000193',
+                catmat_code: '999',
+                confidence_score: 0.92,
+              },
+            },
+            {
+              _id: 'rod-1',
+              _score: 1.7,
+              _source: {
+                description: 'RODO DE BORRACHA 40CM COM CABO DE MADEIRA',
+                normalized_description: 'rodo borracha 40cm cabo madeira',
+                unit: 'un',
+                unit_price: 24.14,
+                total_price: 2414,
+                quantity: 100,
+                contract_date: '2026-02-24',
+                uf: 'CE',
+                city: 'Fortaleza',
+                organization_name: 'Estado Y',
+                modality: 'Pregao',
+                source: 'pncp',
+                supplier_name: 'Fornecedor Rodo',
+                supplier_cnpj: '00000000000194',
+                catmat_code: null,
+                confidence_score: 0.81,
+              },
+            },
+            {
+              _id: 'kit-1',
+              _score: 1.65,
+              _source: {
+                description: 'KIT LIMPEZA INFANTIL COMPOSTO POR RODO PA E VASSOURA EM MATERIAL PLASTICO',
+                normalized_description: 'kit limpeza infantil composto por rodo pa e vassoura material plastico',
+                unit: 'un',
+                unit_price: 40.2,
+                total_price: 1447.2,
+                quantity: 36,
+                contract_date: '2026-02-19',
+                uf: 'SP',
+                city: 'Pirapozinho',
+                organization_name: 'Municipio Z',
+                modality: 'Pregao',
+                source: 'pncp',
+                supplier_name: 'Fornecedor Kit',
+                supplier_cnpj: '00000000000195',
+                catmat_code: null,
+                confidence_score: 0.84,
+              },
+            },
+            {
+              _id: 'vas-2',
+              _score: 1.6,
+              _source: {
+                description: 'VASSOURA MULTIUSO TIPO NOVICA PARA PISOS INTERNOS E EXTERNOS',
+                normalized_description: 'vassoura multiuso tipo novica pisos internos externos',
+                unit: 'un',
+                unit_price: 9,
+                total_price: 180,
+                quantity: 20,
+                contract_date: '2026-02-24',
+                uf: 'CE',
+                city: 'Fortaleza',
+                organization_name: 'Estado Y',
+                modality: 'Pregao',
+                source: 'pncp',
+                supplier_name: 'Fornecedor Novica',
+                supplier_cnpj: '00000000000196',
+                catmat_code: '1000',
+                confidence_score: 0.9,
+              },
+            },
+          ],
+        },
+        aggregations: {},
+      },
+    });
+
+    const res = await request(app)
+      .post('/api/v1/search')
+      .set(AUTH_HEADER)
+      .send({ query: 'vassoura' });
+
+    expect(res.status).toBe(200);
+    expect(res.body.items).toHaveLength(2);
+    expect(res.body.total).toBe(2);
+    expect(res.body.items.every((item: { description: string }) => item.description.toLowerCase().includes('vassoura'))).toBe(true);
+    expect(res.body.items.some((item: { description: string }) => item.description.toLowerCase().includes('kit limpeza infantil'))).toBe(false);
+    expect(res.body.aggregations.bySource).toEqual([{ key: 'pncp', count: 2 }]);
+    expect(res.body.explanation.filters).toContain('Relevancia: matches incidentais removidos');
+  });
+
+  it('POST /api/v1/search deve incluir estatisticas', async () => {
     const res = await request(app)
       .post('/api/v1/search')
       .set(AUTH_HEADER)
