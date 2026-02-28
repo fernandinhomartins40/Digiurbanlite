@@ -1,24 +1,27 @@
-// Conector "ComprasNet/SIASG" — agora usa PNCP /contratos
-// A antiga API api.compras.dados.gov.br está offline (404, fev/2026).
-// O PNCP disponibiliza todos os contratos federais via /api/consulta/v1/contratos.
-// Esta fonte complementa o pncp.ingest.ts (que ingere contratações/editais),
-// focando nos *contratos* assinados (resultado efetivo das licitações).
+// Conector ComprasNet/SIASG — usa dadosabertos.compras.gov.br
+// Fontes:
+//   1. /modulo-legado/4_consultarItensPregoes — pregões homologados (preço real praticado)
+//   2. /modulo-arp/2_consultarARPItem         — itens de Atas de Registro de Preço
+//
+// NÃO usa PNCP — são sistemas distintos.
+// - PNCP (pncp.gov.br): contratações/editais da Lei 14.133/2021
+// - ComprasNet (dadosabertos.compras.gov.br): SIASG, pregões, ARPs (todos os regimes)
 
 import { prisma } from '../../models/prisma';
-import { getPncpClient } from '../../connectors/pncp/pncp.client';
+import { getComprasnetClient } from '../../connectors/comprasnet/comprasnet.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
 import { normalizeText, normalizeUnit, validateLineItem } from '../normalizer';
-import { inferItemsFromObject } from '../object-itemizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
 import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
 import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
-import type { PncpContrato } from '../../connectors/pncp/pncp.types';
+import type { ComprasnetItemPregao, ComprasnetARPItem } from '../../connectors/comprasnet/comprasnet.types';
 
 export interface ComprasnetIngestOptions {
   sinceDays?: number;
   runId?: string;
+  skipARP?: boolean;    // pular ATAs (útil em testes — endpoint pode ser lento)
 }
 
 export interface IngestSourceResult {
@@ -29,95 +32,89 @@ export interface IngestSourceResult {
 }
 
 export async function runComprasnetIngest(options: ComprasnetIngestOptions = {}): Promise<IngestSourceResult> {
-  const { sinceDays = config.ingest.sinceDays, runId } = options;
-  const client = getPncpClient();
+  const { sinceDays = config.ingest.sinceDays, runId, skipARP = false } = options;
+  const client = getComprasnetClient();
   const osClient = getOpenSearchClient();
 
   let ingested = 0, updated = 0, skipped = 0, errors = 0;
-  logger.info('[ComprasNet Ingest] Starting (via PNCP /contratos)', { sinceDays, runId });
+  logger.info('[ComprasNet Ingest] Starting (dadosabertos.compras.gov.br)', { sinceDays, runId });
 
+  // ── 1. Pregões homologados ──────────────────────────────────────────────────
   try {
-    // PNCP /contratos limita a 365 dias por request — usar multi-janela para períodos longos
-    const contratos = await client.fetchContratosMultiWindow(sinceDays, 50, config.pncp.maxPagesContratos);
+    logger.info('[ComprasNet Ingest] Fetching pregoes homologados...');
+    const itens = await client.fetchAllPregoes(sinceDays, 100);
+    logger.info('[ComprasNet Ingest] Pregoes fetched', { count: itens.length });
 
-    logger.info('[ComprasNet Ingest] Contratos fetched', { count: contratos.length });
-
-    for (const contrato of contratos) {
+    for (const item of itens) {
       try {
-        const result = await processContrato(contrato, osClient);
+        const result = await processPregaoItem(item, osClient);
         if (result === 'ingested') ingested++;
         else if (result === 'updated') updated++;
         else skipped++;
       } catch (err: unknown) {
-        logger.warn('[ComprasNet Ingest] Error processing contrato', {
+        logger.warn('[ComprasNet Ingest] Error processing pregao item', {
           error: (err as Error).message,
-          id: contrato.numeroControlePNCP,
+          id: item.idCompraItem,
         });
         errors++;
       }
     }
   } catch (err: unknown) {
-    logger.error('[ComprasNet Ingest] Fatal error', { error: (err as Error).message });
+    logger.error('[ComprasNet Ingest] Fatal error (pregoes)', { error: (err as Error).message });
     errors++;
+  }
+
+  // ── 2. Itens de ATAs de Registro de Preço ──────────────────────────────────
+  if (!skipARP) {
+    try {
+      logger.info('[ComprasNet Ingest] Fetching ARP itens...');
+      const arpItens = await client.fetchAllARPItens(sinceDays, 50);
+      logger.info('[ComprasNet Ingest] ARP itens fetched', { count: arpItens.length });
+
+      for (const item of arpItens) {
+        try {
+          const result = await processARPItem(item, osClient);
+          if (result === 'ingested') ingested++;
+          else if (result === 'updated') updated++;
+          else skipped++;
+        } catch (err: unknown) {
+          logger.warn('[ComprasNet Ingest] Error processing ARP item', {
+            error: (err as Error).message,
+            ata: item.numeroAtaRegistroPreco,
+          });
+          errors++;
+        }
+      }
+    } catch (err: unknown) {
+      logger.error('[ComprasNet Ingest] Fatal error (ARP)', { error: (err as Error).message });
+      errors++;
+    }
   }
 
   logger.info('[ComprasNet Ingest] Done', { ingested, updated, skipped, errors });
   return { ingested, updated, skipped, errors };
 }
 
-async function processContrato(
-  contrato: PncpContrato,
+// ── Processadores individuais ─────────────────────────────────────────────────
+
+async function processPregaoItem(
+  item: ComprasnetItemPregao,
   osClient: ReturnType<typeof getOpenSearchClient>,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  const desc = contrato.objetoContrato ?? '';
-  const totalPrice = contrato.valorGlobal ?? contrato.valorInicial ?? null;
-
-  // Tentar inferir itens do objeto textual
-  const inferredItems = inferItemsFromObject(desc, 5);
-
-  if (inferredItems.length === 0) {
-    return processSingleContrato(contrato, desc, null, totalPrice, null, false, osClient);
-  }
-
-  // Processar cada item inferido — retornar o último resultado (maioria ingested/skipped)
-  let lastResult: 'ingested' | 'updated' | 'skipped' = 'skipped';
-  for (let idx = 0; idx < inferredItems.length; idx++) {
-    const item = inferredItems[idx];
-    const r = await processSingleContrato(contrato, item.description, item.quantity, totalPrice, item.unit, true, osClient, idx + 1);
-    if (r !== 'skipped') lastResult = r;
-  }
-  return lastResult;
-}
-
-async function processSingleContrato(
-  contrato: PncpContrato,
-  desc: string,
-  quantity: number | null,
-  totalPrice: number | null,
-  unit: string | null,
-  inferredFromObject: boolean,
-  osClient: ReturnType<typeof getOpenSearchClient>,
-  inferredIndex?: number,
-): Promise<'ingested' | 'updated' | 'skipped'> {
-  const unitPrice = totalPrice && quantity && quantity > 0
-    ? totalPrice / quantity
-    : totalPrice;
+  const desc = item.descricaoItem ?? item.descricaoDetalhadaItem ?? '';
+  const unitPrice = item.valorHomologadoItem ? parseFloat(item.valorHomologadoItem) : null;
+  const quantity = item.quantidadeItem ? parseFloat(item.quantidadeItem) : null;
 
   const validation = validateLineItem({ description: desc, unitPrice });
   if (!validation.isValid) return 'skipped';
+  // Ignorar itens cancelados sem preço
+  if (item.situacaoItem === 'cancelado' && !unitPrice) return 'skipped';
 
-  const baseId = contrato.numeroControlePNCP ?? contrato.numeroControlePncpCompra ?? `pncp_contrato_${Date.now()}`;
-  const sourceId = inferredIndex
-    ? `comprasnet_${baseId}_inferred_${inferredIndex}`.replace(/[^a-z0-9_]/gi, '_')
-    : `comprasnet_${baseId}`.replace(/[^a-z0-9_]/gi, '_');
+  const sourceId = `comprasnet_pregao_${item.idCompraItem ?? item.idCompra}_${item.tbVwItensPregaoId?.coItem}`
+    .replace(/[^a-z0-9_]/gi, '_');
 
+  const contractDate = item.dtHom ? new Date(item.dtHom) : null;
   const normalizedDescription = normalizeText(desc);
-  const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
-  const uf = contrato.unidadeOrgao?.ufSigla ?? null;
-  const city = contrato.unidadeOrgao?.municipioNome ?? null;
-  const modality = contrato.categoriaProcesso?.nome ?? null;
-  const supplierCnpj = contrato.niFornecedor ?? null;
-  const supplierName = contrato.nomeRazaoSocialFornecedor ?? contrato.nomeFornecedor ?? null;
 
   const classification = await classifyCatalog({
     description: desc,
@@ -131,53 +128,28 @@ async function processSingleContrato(
     description: desc,
     unitPrice,
     contractDate,
-    supplier: supplierCnpj ?? supplierName,
+    supplier: item.fornecedorVencedor,
   });
 
-  const confidenceScore = calculateConfidenceScore({
-    source: 'comprasnet',
-    contractDate,
-    count: inferredIndex ? 2 : 1,
-  });
-
+  const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: 1 });
   const yearMonth = contractDate
     ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
     : null;
 
-  // Upsert organização
-  const orgCnpj = `PNCP_${contrato.orgaoEntidade?.cnpj ?? baseId}`;
+  const orgCnpj = `SIASG_${item.tbVwItensPregaoId?.coUasg ?? item.idCompra ?? 'unknown'}`;
   const org = await prisma.organization.upsert({
     where: { cnpj: orgCnpj },
-    create: {
-      cnpj: orgCnpj,
-      name: contrato.unidadeOrgao?.nomeUnidade ?? contrato.orgaoEntidade?.razaoSocial ?? 'Órgão PNCP',
-      uf,
-      city,
-      sphere: 'federal',
-    },
+    create: { cnpj: orgCnpj, name: `UASG ${item.tbVwItensPregaoId?.coUasg ?? 'ComprasNet'}`, sphere: 'federal' },
     update: {},
   });
-
-  // Upsert fornecedor
-  let supplierId: string | null = null;
-  if (supplierCnpj) {
-    const supplier = await prisma.supplier.upsert({
-      where: { cnpj: supplierCnpj },
-      create: { cnpj: supplierCnpj, name: supplierName ?? '' },
-      update: { name: supplierName ?? '' },
-    });
-    supplierId = supplier.id;
-  }
-
-  const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
 
   const data = {
     description: desc,
     normalizedDescription,
     quantity,
-    unit: normalizeUnit(unit ?? 'UN'),
+    unit: normalizeUnit(item.unidadeFornecimento ?? 'UN'),
     unitPrice,
-    totalPrice,
+    totalPrice: unitPrice && quantity ? unitPrice * quantity : null,
     calculatedUnitPrice: unitPrice,
     catmatCode: classification.catmatCode,
     catserCode: classification.catserCode,
@@ -185,30 +157,130 @@ async function processSingleContrato(
     source: 'comprasnet',
     sourceId,
     provenanceHash,
-    inferredFromObject,
-    supplierId,
-    supplierName,
-    supplierCnpj,
+    inferredFromObject: false,
+    supplierId: null as string | null,
+    supplierName: item.fornecedorVencedor ?? null,
+    supplierCnpj: null as string | null,
     confidenceScore,
     classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
-    uf,
-    city,
+    uf: null as string | null,
+    city: null as string | null,
     organizationId: org.id,
-    // 'modality' não existe no modelo LineItem — vai apenas para OpenSearch
   };
 
+  const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality: 'Pregão' });
     return 'updated';
   }
-
   const dbItem = await prisma.lineItem.create({ data });
-  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality: 'Pregão' });
   return 'ingested';
 }
+
+async function processARPItem(
+  item: ComprasnetARPItem,
+  osClient: ReturnType<typeof getOpenSearchClient>,
+): Promise<'ingested' | 'updated' | 'skipped'> {
+  const desc = item.descricaoItem ?? '';
+  const unitPrice = item.valorUnitario ?? null;
+  const quantity = item.quantidade ?? null;
+
+  const validation = validateLineItem({ description: desc, unitPrice });
+  if (!validation.isValid) return 'skipped';
+
+  const sourceId = `comprasnet_arp_${item.numeroControlePncpAta ?? item.numeroAtaRegistroPreco}_${item.codigoItem}`
+    .replace(/[^a-z0-9_]/gi, '_');
+
+  const contractDate = item.dataVigenciaInicial ? new Date(item.dataVigenciaInicial) : null;
+  const normalizedDescription = normalizeText(desc);
+
+  const classification = await classifyCatalog({
+    description: desc,
+    normalizedDescription,
+    catmatCode: item.tipoItem === 'M' ? item.codigoItem : undefined,
+    allowDescriptionFallback: true,
+  });
+
+  const provenanceHash = buildProvenanceHash({
+    source: 'comprasnet',
+    sourceId,
+    description: desc,
+    unitPrice,
+    contractDate,
+    supplier: item.niFornecedor ?? item.nomeFornecedor,
+  });
+
+  const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: 1 });
+  const yearMonth = contractDate
+    ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
+    : null;
+
+  const orgCnpj = `SIASG_ARP_${item.codigoUnidadeGerenciadora ?? 'unknown'}`;
+  const org = await prisma.organization.upsert({
+    where: { cnpj: orgCnpj },
+    create: {
+      cnpj: orgCnpj,
+      name: item.nomeUnidadeGerenciadora ?? `UG ${item.codigoUnidadeGerenciadora ?? 'ComprasNet'}`,
+      uf: item.uf ?? null,
+      city: item.municipio ?? null,
+      sphere: 'federal',
+    },
+    update: {},
+  });
+
+  let supplierId: string | null = null;
+  if (item.niFornecedor) {
+    const supplier = await prisma.supplier.upsert({
+      where: { cnpj: item.niFornecedor },
+      create: { cnpj: item.niFornecedor, name: item.nomeFornecedor ?? '' },
+      update: { name: item.nomeFornecedor ?? '' },
+    });
+    supplierId = supplier.id;
+  }
+
+  const data = {
+    description: desc,
+    normalizedDescription,
+    quantity,
+    unit: normalizeUnit(item.unidadeMedida ?? 'UN'),
+    unitPrice,
+    totalPrice: item.valorTotal ?? null,
+    calculatedUnitPrice: unitPrice,
+    catmatCode: classification.catmatCode ?? (item.tipoItem === 'M' ? item.codigoItem ?? null : null),
+    catserCode: classification.catserCode ?? (item.tipoItem === 'S' ? item.codigoItem ?? null : null),
+    catmatDescription: classification.catmatDescription,
+    source: 'comprasnet',
+    sourceId,
+    provenanceHash,
+    inferredFromObject: false,
+    supplierId,
+    supplierName: item.nomeFornecedor ?? null,
+    supplierCnpj: item.niFornecedor ?? null,
+    confidenceScore,
+    classificationScore: classification.confidence > 0 ? classification.confidence : null,
+    yearMonth,
+    contractDate,
+    uf: item.uf ?? null,
+    city: item.municipio ?? null,
+    organizationId: org.id,
+  };
+
+  const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
+  if (existing) {
+    await prisma.lineItem.update({ where: { id: existing.id }, data });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality: 'Ata de Registro de Preço' });
+    return 'updated';
+  }
+  const dbItem = await prisma.lineItem.create({ data });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality: 'Ata de Registro de Preço' });
+  return 'ingested';
+}
+
+// ── OpenSearch indexing ───────────────────────────────────────────────────────
 
 async function indexToOpenSearch(
   osClient: ReturnType<typeof getOpenSearchClient>,
@@ -244,7 +316,7 @@ async function indexToOpenSearch(
           contractDate: item.contractDate,
           supplier: item.supplierCnpj ?? item.supplierName,
         }),
-        confidence_score: item.confidenceScore ?? 0.95,
+        confidence_score: item.confidenceScore ?? 0.92,
         classification_score: item.classificationScore,
         inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth, modality: item.modality,
