@@ -9,6 +9,7 @@ import { config } from '../../config/config';
 import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
 import type { TransparenciaContrato } from '../../connectors/transparencia/transparencia.types';
+import { TRANSPARENCIA_ORGAOS_PRINCIPAIS } from '../../connectors/transparencia/transparencia.types';
 
 export interface TransparenciaIngestOptions {
   sinceDays?: number;
@@ -43,10 +44,13 @@ export async function runTransparenciaIngest(options: TransparenciaIngestOptions
 
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
-    const contratos = await client.fetchAllPages({
-      dataInicio: formatDate(dataInicio),
-      dataFim: formatDate(dataFim),
-    }, 20);
+    // API exige codigoOrgao — busca por lista de órgãos principais
+    const contratos = await client.fetchAllOrgaos(
+      formatDate(dataInicio),
+      formatDate(dataFim),
+      TRANSPARENCIA_ORGAOS_PRINCIPAIS,
+      20,
+    );
 
     logger.info('[Transparencia Ingest] Contratos fetched', { count: contratos.length });
 
@@ -92,7 +96,8 @@ async function processContrato(
   // Contratos da Transparência têm objeto (descrição) mas não itemização detalhada
   const desc = inferred?.description ?? contrato.objeto ?? '';
   const quantity = inferred?.quantity ?? null;
-  const totalPrice = contrato.valorInicial ?? contrato.valorFinal ?? null;
+  // Campos reais da API: valorInicialCompra / valorFinalCompra
+  const totalPrice = contrato.valorInicialCompra ?? contrato.valorFinalCompra ?? null;
   const unitPrice = totalPrice && quantity && quantity > 0
     ? totalPrice / quantity
     : totalPrice;
@@ -107,7 +112,13 @@ async function processContrato(
     : `transparencia_${contrato.id}`;
   const normalizedDescription = normalizeText(desc);
   const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
-  const uf = contrato.unidadeGestora?.orgaoVinculado?.municipio?.uf;
+  // UF não vem em orgaoVinculado — a API não retorna município/UF diretamente
+  const uf: string | undefined = undefined;
+
+  // Campo real da API: cnpjFormatado (com pontos/barras) — normalizar para 14 dígitos
+  const cnpjRaw = contrato.fornecedor?.cnpjFormatado ?? null;
+  const supplierCnpj = cnpjRaw ? cnpjRaw.replace(/[.\-\/]/g, '') : null;
+
   const classification = await classifyCatalog({
     description: desc,
     normalizedDescription,
@@ -120,7 +131,7 @@ async function processContrato(
     description: desc,
     unitPrice,
     contractDate,
-    supplier: contrato.fornecedor?.cnpj ?? contrato.fornecedor?.nome,
+    supplier: supplierCnpj ?? contrato.fornecedor?.nome,
   });
 
   const confidenceScore = calculateConfidenceScore({ source: 'transparencia', contractDate, count: 1 });
@@ -141,7 +152,6 @@ async function processContrato(
     update: {},
   });
 
-  const supplierCnpj = contrato.fornecedor?.cnpj ?? null;
   let supplier: { id: string } | null = null;
   if (supplierCnpj) {
     supplier = await prisma.supplier.upsert({
@@ -176,7 +186,7 @@ async function processContrato(
     contractDate,
     uf,
     organizationId: org.id,
-    modality: contrato.modalidade?.descricao,
+    modality: contrato.modalidadeCompra ?? null,
   };
 
   if (existing) {

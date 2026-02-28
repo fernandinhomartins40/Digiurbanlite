@@ -101,35 +101,37 @@ async function processItem(
   orgId: string,
   osClient: ReturnType<typeof getOpenSearchClient>,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  const desc = [item.DESCRICAO_ITEM, item.PRINCIPIO_ATIVO, item.CONCENTRACAO, item.FORMA_FARMACEUTICA]
+  // Descrição principal é DESCRICAO_CATMAT; pode incluir capacidade e unidade para enriquecer
+  const desc = [item.DESCRICAO_CATMAT, item.CAPACIDADE, item.UNIDADE_FORNECIMENTO_CAPACIDADE]
     .filter(Boolean).join(' — ');
 
-  const unitPrice = item.PRECO_UNITARIO ? parseFloat(item.PRECO_UNITARIO.replace(',', '.')) : null;
-  const totalPrice = item.PRECO_TOTAL ? parseFloat(item.PRECO_TOTAL.replace(',', '.')) : null;
-  const quantity = item.QUANTIDADE ? parseFloat(item.QUANTIDADE.replace(',', '.')) : null;
+  // CSV usa ponto como separador decimal (ex: "0.32")
+  const unitPrice = item.PRECO_UNITARIO ? parseFloat(item.PRECO_UNITARIO) : null;
+  const totalPrice = item.PRECO_TOTAL ? parseFloat(item.PRECO_TOTAL) : null;
+  const quantity = item.QTD_ITENS_COMPRADOS ? parseFloat(item.QTD_ITENS_COMPRADOS) : null;
 
   const validation = validateLineItem({ description: desc, unitPrice, totalPrice, quantity });
   if (!validation.isValid) return 'skipped';
 
-  // sourceId: competência + código do item + CNPJ comprador
-  const sourceId = `bps_${item.COMPETENCIA}_${item.CODIGO_ITEM}_${item.CNPJ_COMPRADOR}`.replace(/[^a-z0-9_]/gi, '_');
+  // sourceId: ano + código CATMAT + CNPJ comprador
+  const sourceId = `bps_${item.ANO_COMPRA}_${item.CODIGO_BR}_${item.CNPJ_INSTITUICAO}`.replace(/[^a-z0-9_]/gi, '_');
   const normalizedDescription = normalizeText(desc);
-  const unit = normalizeUnit(item.UNIDADE_MEDIDA);
+  const unit = normalizeUnit(item.UNIDADE_MEDIDA ?? item.UNIDADE_FORNECIMENTO);
 
-  // Parsear data de competência "YYYY-MM" ou "MM/YYYY"
+  // Parsear data da compra: "YYYY-MM-DD HH:mm:ss.mmm" → Date
   let contractDate: Date | null = null;
-  if (item.COMPETENCIA) {
+  if (item.COMPRA) {
     try {
-      const comp = item.COMPETENCIA.includes('/')
-        ? item.COMPETENCIA.split('/').reverse().join('-') + '-01'
-        : item.COMPETENCIA + '-01';
-      contractDate = new Date(comp);
+      contractDate = new Date(item.COMPRA.split(' ')[0]);
     } catch { /* ignore */ }
+  } else if (item.ANO_COMPRA) {
+    contractDate = new Date(`${item.ANO_COMPRA}-01-01`);
   }
+
   const classification = await classifyCatalog({
     description: desc,
     normalizedDescription,
-    catmatCode: item.CODIGO_ITEM,
+    catmatCode: item.CODIGO_BR,
     allowDescriptionFallback: false,
   });
   const provenanceHash = buildProvenanceHash({
@@ -138,19 +140,23 @@ async function processItem(
     description: desc,
     unitPrice,
     contractDate,
-    supplier: item.CNPJ_FORNECEDOR ?? item.NOME_FORNECEDOR,
+    supplier: item.CNPJ_FORNECEDOR ?? item.FORNECEDOR,
   });
 
   const confidenceScore = calculateConfidenceScore({ source: 'bps', contractDate, count: 1 });
-  const yearMonth = item.COMPETENCIA?.replace('/', '-').substring(0, 7) ?? null;
+  const yearMonth = item.ANO_COMPRA
+    ? (contractDate
+        ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
+        : `${item.ANO_COMPRA}-01`)
+    : null;
 
   // Upsert fornecedor
   let supplierId: string | null = null;
   if (item.CNPJ_FORNECEDOR) {
     const supplier = await prisma.supplier.upsert({
       where: { cnpj: item.CNPJ_FORNECEDOR },
-      create: { cnpj: item.CNPJ_FORNECEDOR, name: item.NOME_FORNECEDOR ?? '' },
-      update: { name: item.NOME_FORNECEDOR ?? '' },
+      create: { cnpj: item.CNPJ_FORNECEDOR, name: item.FORNECEDOR ?? '' },
+      update: { name: item.FORNECEDOR ?? '' },
     });
     supplierId = supplier.id;
   }
@@ -165,7 +171,7 @@ async function processItem(
     unitPrice,
     totalPrice,
     calculatedUnitPrice: unitPrice,
-    catmatCode: classification.catmatCode ?? item.CODIGO_ITEM ?? null,
+    catmatCode: classification.catmatCode ?? item.CODIGO_BR ?? null,
     catserCode: classification.catserCode,
     catmatDescription: classification.catmatDescription,
     source: 'bps',
@@ -173,24 +179,24 @@ async function processItem(
     provenanceHash,
     inferredFromObject: false,
     supplierId,
-    supplierName: item.NOME_FORNECEDOR,
+    supplierName: item.FORNECEDOR,
     supplierCnpj: item.CNPJ_FORNECEDOR,
     confidenceScore,
     classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
-    uf: item.UF_COMPRADOR,
-    city: item.MUNICIPIO_COMPRADOR,
+    uf: item.UF,
+    city: item.MUNICIPIO_INSTITUICAO,
     organizationId: orgId,
   };
 
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: item.NOME_COMPRADOR ?? 'Comprador BPS' });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: item.NOME_INSTITUICAO ?? 'Comprador BPS' });
     return 'updated';
   } else {
     const dbItem = await prisma.lineItem.create({ data });
-    await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: item.NOME_COMPRADOR ?? 'Comprador BPS' });
+    await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: item.NOME_INSTITUICAO ?? 'Comprador BPS' });
     return 'ingested';
   }
 }

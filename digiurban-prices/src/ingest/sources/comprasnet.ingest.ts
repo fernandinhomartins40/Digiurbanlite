@@ -1,14 +1,20 @@
+// Conector "ComprasNet/SIASG" — agora usa PNCP /contratos
+// A antiga API api.compras.dados.gov.br está offline (404, fev/2026).
+// O PNCP disponibiliza todos os contratos federais via /api/consulta/v1/contratos.
+// Esta fonte complementa o pncp.ingest.ts (que ingere contratações/editais),
+// focando nos *contratos* assinados (resultado efetivo das licitações).
+
 import { prisma } from '../../models/prisma';
-import { getComprasnetClient } from '../../connectors/comprasnet/comprasnet.client';
+import { getPncpClient } from '../../connectors/pncp/pncp.client';
 import { getOpenSearchClient } from '../../search_index/opensearch.client';
-import { normalizeText, normalizeUnit, calculateUnitPrice, validateLineItem } from '../normalizer';
+import { normalizeText, normalizeUnit, validateLineItem } from '../normalizer';
 import { inferItemsFromObject } from '../object-itemizer';
 import { calculateConfidenceScore } from '../../services/confidence.service';
 import { classifyCatalog } from '../../services/catmat-classifier.service';
 import { config } from '../../config/config';
 import { buildProvenanceHash } from '../../utils/provenance';
 import { logger } from '../../utils/logger';
-import type { ComprasnetContrato, ComprasnetContratoItem } from '../../connectors/comprasnet/comprasnet.types';
+import type { PncpContrato } from '../../connectors/pncp/pncp.types';
 
 export interface ComprasnetIngestOptions {
   sinceDays?: number;
@@ -24,59 +30,30 @@ export interface IngestSourceResult {
 
 export async function runComprasnetIngest(options: ComprasnetIngestOptions = {}): Promise<IngestSourceResult> {
   const { sinceDays = config.ingest.sinceDays, runId } = options;
-  const client = getComprasnetClient();
+  const client = getPncpClient();
   const osClient = getOpenSearchClient();
 
   let ingested = 0, updated = 0, skipped = 0, errors = 0;
-  logger.info('[ComprasNet Ingest] Starting', { sinceDays, runId });
+  logger.info('[ComprasNet Ingest] Starting (via PNCP /contratos)', { sinceDays, runId });
 
   try {
-    const dataMax = new Date();
-    const dataMin = new Date();
-    dataMin.setDate(dataMin.getDate() - sinceDays);
-    const formatDate = (d: Date) => d.toISOString().split('T')[0];
-
-    const contratos = await client.fetchAllPages({
-      dataAssinaturaMin: formatDate(dataMin),
-      dataAssinaturaMax: formatDate(dataMax),
-      pageSize: 500,
-    }, 20);
+    const contratos = await client.fetchAllPages(
+      (page) => client.fetchContratos({ sinceDays, page, pageSize: 50 }),
+      config.pncp.maxPagesContratos,
+    );
 
     logger.info('[ComprasNet Ingest] Contratos fetched', { count: contratos.length });
 
     for (const contrato of contratos) {
       try {
-        const org = await upsertOrganization(contrato);
-        const itens = await client.fetchItensContrato(contrato.id);
-
-        if (itens.length === 0) {
-          // Sem itens detalhados: inferir subitens a partir do objeto textual.
-          const inferredItems = inferItemsFromObject(contrato.objeto ?? '', 5);
-          if (inferredItems.length === 0) {
-            const result = await processContratoAsItem(contrato, org.id, osClient);
-            if (result === 'ingested') ingested++;
-            else if (result === 'updated') updated++;
-            else skipped++;
-          } else {
-            for (let idx = 0; idx < inferredItems.length; idx++) {
-              const result = await processContratoAsItem(contrato, org.id, osClient, inferredItems[idx], idx + 1);
-              if (result === 'ingested') ingested++;
-              else if (result === 'updated') updated++;
-              else skipped++;
-            }
-          }
-        } else {
-          for (const item of itens) {
-            const result = await processItem(item, contrato, org.id, osClient);
-            if (result === 'ingested') ingested++;
-            else if (result === 'updated') updated++;
-            else skipped++;
-          }
-        }
+        const result = await processContrato(contrato, osClient);
+        if (result === 'ingested') ingested++;
+        else if (result === 'updated') updated++;
+        else skipped++;
       } catch (err: unknown) {
         logger.warn('[ComprasNet Ingest] Error processing contrato', {
           error: (err as Error).message,
-          id: contrato.id,
+          id: contrato.numeroControlePNCP,
         });
         errors++;
       }
@@ -90,156 +67,148 @@ export async function runComprasnetIngest(options: ComprasnetIngestOptions = {})
   return { ingested, updated, skipped, errors };
 }
 
-async function upsertOrganization(c: ComprasnetContrato) {
-  const cnpj = c.unidade_gestora_codigo
-    ? `UASG_${c.unidade_gestora_codigo}`
-    : `ORG_${c.orgao_codigo ?? 'COMPRASNET'}`;
-  return prisma.organization.upsert({
-    where: { cnpj },
-    create: {
-      cnpj,
-      name: c.unidade_gestora_nome ?? c.orgao_nome ?? 'Orgao ComprasNet',
-      shortName: c.orgao_nome,
-      uf: c.uf,
-      city: c.municipio,
-      sphere: 'federal',
-    },
-    update: { name: c.unidade_gestora_nome ?? c.orgao_nome ?? 'Orgao ComprasNet' },
-  });
-}
-
-async function processItem(
-  item: ComprasnetContratoItem,
-  contrato: ComprasnetContrato,
-  orgId: string,
+async function processContrato(
+  contrato: PncpContrato,
   osClient: ReturnType<typeof getOpenSearchClient>,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  const desc = item.descricao ?? item.descricao_complementar ?? '';
-  const unitPrice = item.valor_unitario ?? calculateUnitPrice(item.valor_total, item.quantidade);
+  const desc = contrato.objetoContrato ?? '';
+  const totalPrice = contrato.valorGlobal ?? contrato.valorInicial ?? null;
 
-  const validation = validateLineItem({ description: desc, unitPrice, totalPrice: item.valor_total, quantity: item.quantidade });
-  if (!validation.isValid) return 'skipped';
+  // Tentar inferir itens do objeto textual
+  const inferredItems = inferItemsFromObject(desc, 5);
 
-  const sourceId = `comprasnet_${contrato.id}_${item.id ?? item.numero_item ?? 'i'}`.replace(/[^a-z0-9_]/gi, '_');
-  const normalizedDescription = normalizeText(desc);
-  const unit = normalizeUnit(item.unidade_medida);
-  const contractDate = contrato.data_assinatura ? new Date(contrato.data_assinatura) : null;
-  const classification = await classifyCatalog({
-    description: desc,
-    normalizedDescription,
-    catmatCode: item.codigo_catmat,
-    allowDescriptionFallback: !item.codigo_catmat,
-  });
-  const provenanceHash = buildProvenanceHash({
-    source: 'comprasnet',
-    sourceId,
-    description: desc,
-    unitPrice,
-    contractDate,
-    supplier: contrato.fornecedor_cnpj_cpf_idgener ?? contrato.fornecedor_nome,
-  });
-  const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: 1 });
-  const yearMonth = contractDate
-    ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
-    : null;
-
-  let supplierId: string | null = null;
-  if (contrato.fornecedor_cnpj_cpf_idgener) {
-    const supplier = await prisma.supplier.upsert({
-      where: { cnpj: contrato.fornecedor_cnpj_cpf_idgener },
-      create: { cnpj: contrato.fornecedor_cnpj_cpf_idgener, name: contrato.fornecedor_nome ?? '' },
-      update: { name: contrato.fornecedor_nome ?? '' },
-    });
-    supplierId = supplier.id;
+  if (inferredItems.length === 0) {
+    return processSingleContrato(contrato, desc, null, totalPrice, null, false, osClient);
   }
 
-  const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
-  const data = {
-    description: desc, normalizedDescription, quantity: item.quantidade, unit,
-    unitPrice, totalPrice: item.valor_total, calculatedUnitPrice: unitPrice,
-    catmatCode: classification.catmatCode ?? item.codigo_catmat ?? null, catserCode: classification.catserCode,
-    source: 'comprasnet', sourceId, provenanceHash, inferredFromObject: false,
-    catmatDescription: classification.catmatDescription,
-    supplierId, supplierName: contrato.fornecedor_nome, supplierCnpj: contrato.fornecedor_cnpj_cpf_idgener,
-    classificationScore: classification.confidence > 0 ? classification.confidence : null,
-    confidenceScore, yearMonth, contractDate, uf: contrato.uf, city: contrato.municipio, organizationId: orgId,
-  };
-
-  if (existing) {
-    await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: contrato.orgao_nome ?? '', modality: contrato.modalidade });
-    return 'updated';
+  // Processar cada item inferido — retornar o último resultado (maioria ingested/skipped)
+  let lastResult: 'ingested' | 'updated' | 'skipped' = 'skipped';
+  for (let idx = 0; idx < inferredItems.length; idx++) {
+    const item = inferredItems[idx];
+    const r = await processSingleContrato(contrato, item.description, item.quantity, totalPrice, item.unit, true, osClient, idx + 1);
+    if (r !== 'skipped') lastResult = r;
   }
-  const dbItem = await prisma.lineItem.create({ data });
-  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: contrato.orgao_nome ?? '', modality: contrato.modalidade });
-  return 'ingested';
+  return lastResult;
 }
 
-async function processContratoAsItem(
-  contrato: ComprasnetContrato,
-  orgId: string,
+async function processSingleContrato(
+  contrato: PncpContrato,
+  desc: string,
+  quantity: number | null,
+  totalPrice: number | null,
+  unit: string | null,
+  inferredFromObject: boolean,
   osClient: ReturnType<typeof getOpenSearchClient>,
-  inferred?: { description: string; quantity: number | null; unit: string | null },
   inferredIndex?: number,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  const desc = inferred?.description ?? contrato.objeto ?? '';
-  const quantity = inferred?.quantity ?? 1;
-  const totalPrice = contrato.valor_global ?? contrato.valor_inicial ?? null;
-  const unitPrice = totalPrice && quantity > 0 ? totalPrice / quantity : totalPrice;
+  const unitPrice = totalPrice && quantity && quantity > 0
+    ? totalPrice / quantity
+    : totalPrice;
+
   const validation = validateLineItem({ description: desc, unitPrice });
   if (!validation.isValid) return 'skipped';
 
+  const baseId = contrato.numeroControlePNCP ?? contrato.numeroControlePncpCompra ?? `pncp_contrato_${Date.now()}`;
   const sourceId = inferredIndex
-    ? `comprasnet_contrato_${contrato.id}_inferred_${inferredIndex}`
-    : `comprasnet_contrato_${contrato.id}`;
+    ? `comprasnet_${baseId}_inferred_${inferredIndex}`.replace(/[^a-z0-9_]/gi, '_')
+    : `comprasnet_${baseId}`.replace(/[^a-z0-9_]/gi, '_');
+
   const normalizedDescription = normalizeText(desc);
-  const contractDate = contrato.data_assinatura ? new Date(contrato.data_assinatura) : null;
+  const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
+  const uf = contrato.unidadeOrgao?.ufSigla ?? null;
+  const city = contrato.unidadeOrgao?.municipioNome ?? null;
+  const modality = contrato.categoriaProcesso?.nome ?? null;
+  const supplierCnpj = contrato.niFornecedor ?? null;
+  const supplierName = contrato.nomeRazaoSocialFornecedor ?? contrato.nomeFornecedor ?? null;
+
   const classification = await classifyCatalog({
     description: desc,
     normalizedDescription,
     allowDescriptionFallback: true,
   });
+
   const provenanceHash = buildProvenanceHash({
     source: 'comprasnet',
     sourceId,
     description: desc,
     unitPrice,
     contractDate,
-    supplier: contrato.fornecedor_cnpj_cpf_idgener ?? contrato.fornecedor_nome,
+    supplier: supplierCnpj ?? supplierName,
   });
-  const confidenceScore = calculateConfidenceScore({ source: 'comprasnet', contractDate, count: inferredIndex ? 2 : 1 });
+
+  const confidenceScore = calculateConfidenceScore({
+    source: 'comprasnet',
+    contractDate,
+    count: inferredIndex ? 2 : 1,
+  });
+
   const yearMonth = contractDate
     ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
     : null;
 
+  // Upsert organização
+  const orgCnpj = `PNCP_${contrato.orgaoEntidade?.cnpj ?? baseId}`;
+  const org = await prisma.organization.upsert({
+    where: { cnpj: orgCnpj },
+    create: {
+      cnpj: orgCnpj,
+      name: contrato.unidadeOrgao?.nomeUnidade ?? contrato.orgaoEntidade?.razaoSocial ?? 'Órgão PNCP',
+      uf,
+      city,
+      sphere: 'federal',
+    },
+    update: {},
+  });
+
+  // Upsert fornecedor
   let supplierId: string | null = null;
-  if (contrato.fornecedor_cnpj_cpf_idgener) {
+  if (supplierCnpj) {
     const supplier = await prisma.supplier.upsert({
-      where: { cnpj: contrato.fornecedor_cnpj_cpf_idgener },
-      create: { cnpj: contrato.fornecedor_cnpj_cpf_idgener, name: contrato.fornecedor_nome ?? '' },
-      update: { name: contrato.fornecedor_nome ?? '' },
+      where: { cnpj: supplierCnpj },
+      create: { cnpj: supplierCnpj, name: supplierName ?? '' },
+      update: { name: supplierName ?? '' },
     });
     supplierId = supplier.id;
   }
 
   const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
+
   const data = {
-    description: desc, normalizedDescription, quantity, unit: normalizeUnit(inferred?.unit ?? 'UN'),
-    unitPrice, totalPrice, calculatedUnitPrice: unitPrice,
-    catmatCode: classification.catmatCode, catserCode: classification.catserCode, catmatDescription: classification.catmatDescription,
-    source: 'comprasnet', sourceId, provenanceHash, inferredFromObject: Boolean(inferredIndex),
-    supplierId, supplierName: contrato.fornecedor_nome, supplierCnpj: contrato.fornecedor_cnpj_cpf_idgener,
+    description: desc,
+    normalizedDescription,
+    quantity,
+    unit: normalizeUnit(unit ?? 'UN'),
+    unitPrice,
+    totalPrice,
+    calculatedUnitPrice: unitPrice,
+    catmatCode: classification.catmatCode,
+    catserCode: classification.catserCode,
+    catmatDescription: classification.catmatDescription,
+    source: 'comprasnet',
+    sourceId,
+    provenanceHash,
+    inferredFromObject,
+    supplierId,
+    supplierName,
+    supplierCnpj,
+    confidenceScore,
     classificationScore: classification.confidence > 0 ? classification.confidence : null,
-    confidenceScore, yearMonth, contractDate, uf: contrato.uf, city: contrato.municipio, organizationId: orgId,
+    yearMonth,
+    contractDate,
+    uf,
+    city,
+    organizationId: org.id,
+    modality,
   };
 
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: contrato.orgao_nome ?? '', modality: contrato.modalidade });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name });
     return 'updated';
   }
+
   const dbItem = await prisma.lineItem.create({ data });
-  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: contrato.orgao_nome ?? '', modality: contrato.modalidade });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name });
   return 'ingested';
 }
 
@@ -250,11 +219,11 @@ async function indexToOpenSearch(
     unit?: string | null; unitPrice?: number | null; totalPrice?: number | null;
     quantity?: number | null; contractDate?: Date | null; uf?: string | null;
     city?: string | null; organizationName: string; catmatCode?: string | null;
-    catserCode?: string | null;
-    catmatDescription?: string | null;
-    source?: string; sourceId?: string | null; supplierName?: string | null; supplierCnpj?: string | null;
-    confidenceScore?: number | null; classificationScore?: number | null; yearMonth?: string | null; modality?: string | null;
-    provenanceHash?: string | null; inferredFromObject?: boolean;
+    catserCode?: string | null; catmatDescription?: string | null;
+    source?: string; sourceId?: string | null; supplierName?: string | null;
+    supplierCnpj?: string | null; confidenceScore?: number | null;
+    classificationScore?: number | null; yearMonth?: string | null;
+    modality?: string | null; provenanceHash?: string | null; inferredFromObject?: boolean;
   },
 ): Promise<void> {
   try {
@@ -266,7 +235,8 @@ async function indexToOpenSearch(
         unit: item.unit, unit_price: item.unitPrice, total_price: item.totalPrice,
         quantity: item.quantity, contract_date: item.contractDate?.toISOString(),
         uf: item.uf, city: item.city, organization_name: item.organizationName,
-        catmat_code: item.catmatCode, catser_code: item.catserCode, catmat_description: item.catmatDescription, source: item.source ?? 'comprasnet',
+        catmat_code: item.catmatCode, catser_code: item.catserCode,
+        catmat_description: item.catmatDescription, source: item.source ?? 'comprasnet',
         supplier_name: item.supplierName, supplier_cnpj: item.supplierCnpj,
         provenance_hash: item.provenanceHash ?? buildProvenanceHash({
           source: item.source ?? 'comprasnet',

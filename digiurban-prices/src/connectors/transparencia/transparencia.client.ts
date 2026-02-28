@@ -6,9 +6,12 @@ import type {
   TransparenciaContrato,
   TransparenciaFetchOptions,
 } from './transparencia.types';
+import { TRANSPARENCIA_ORGAOS_PRINCIPAIS } from './transparencia.types';
 
 // API do Portal da Transparência
 // Requer chave gratuita: https://portaldatransparencia.gov.br/api-de-dados/cadastrar-email
+// Header: chave-api-dados: <KEY>
+// Endpoint /contratos exige codigoOrgao (obrigatório)
 const BASE_URL = 'https://api.portaldatransparencia.gov.br/api-de-dados';
 
 export class TransparenciaClient {
@@ -45,8 +48,8 @@ export class TransparenciaClient {
     this.lastRequestTime = Date.now();
   }
 
+  // Converte "YYYY-MM-DD" → "dd/MM/yyyy" (formato exigido pela API)
   private formatDateBR(iso: string): string {
-    // Converte "YYYY-MM-DD" para "dd/MM/yyyy"
     const [y, m, d] = iso.split('-');
     return `${d}/${m}/${y}`;
   }
@@ -57,15 +60,14 @@ export class TransparenciaClient {
       return [];
     }
 
-    const { dataInicio, dataFim, codigoOrgao, page = 1, size = 50 } = options;
+    const { dataInicio, dataFim, codigoOrgao, page = 1 } = options;
 
     const params: Record<string, unknown> = {
       pagina: page,
-      tamanhoDaPagina: size,
     };
 
-    if (dataInicio) params['dataInicio'] = this.formatDateBR(dataInicio);
-    if (dataFim) params['dataFim'] = this.formatDateBR(dataFim);
+    if (dataInicio) params['dataInicialCompra'] = this.formatDateBR(dataInicio);
+    if (dataFim) params['dataFinalCompra'] = this.formatDateBR(dataFim);
     if (codigoOrgao) params['codigoOrgao'] = codigoOrgao;
 
     await this.throttle();
@@ -76,34 +78,64 @@ export class TransparenciaClient {
     } catch (err: unknown) {
       logger.warn('[Transparencia] Error fetching contratos', {
         error: (err as Error).message,
+        orgao: codigoOrgao,
         params,
       });
       return [];
     }
   }
 
-  async fetchAllPages(options: TransparenciaFetchOptions, maxPages = 20): Promise<TransparenciaContrato[]> {
+  // Pagina todos os contratos de um órgão dentro do período
+  async fetchAllPagesForOrgao(
+    codigoOrgao: string,
+    dataInicio: string,
+    dataFim: string,
+    maxPages = 20,
+  ): Promise<TransparenciaContrato[]> {
     const results: TransparenciaContrato[] = [];
     let page = 1;
 
     while (page <= maxPages) {
-      const data = await this.fetchContratos({ ...options, page });
+      const data = await this.fetchContratos({ codigoOrgao, dataInicio, dataFim, page });
       if (!data || data.length === 0) break;
       results.push(...data);
-      if (data.length < (options.size ?? 50)) break;
+      // A API retorna até 15 por página (sem tamanhoDaPagina configurável pelo usuário livre)
+      // Se retornou menos de 15, chegamos ao fim
+      if (data.length < 15) break;
       page++;
     }
 
     return results;
   }
 
+  // Busca contratos de todos os principais órgãos federais
+  async fetchAllOrgaos(
+    dataInicio: string,
+    dataFim: string,
+    orgaos: string[] = TRANSPARENCIA_ORGAOS_PRINCIPAIS,
+    maxPagesPerOrgao = 20,
+  ): Promise<TransparenciaContrato[]> {
+    const all: TransparenciaContrato[] = [];
+    for (const orgao of orgaos) {
+      const data = await this.fetchAllPagesForOrgao(orgao, dataInicio, dataFim, maxPagesPerOrgao);
+      if (data.length > 0) {
+        logger.info('[Transparencia] Orgao done', { orgao, count: data.length });
+        all.push(...data);
+      }
+    }
+    return all;
+  }
+
   async ping(): Promise<boolean> {
     if (!config.transparencia.apiKey) return false;
     try {
       await this.throttle();
-      await this.http.get('/contratos', {
-        params: { pagina: 1, tamanhoDaPagina: 1 },
-        timeout: 10000,
+      const today = new Date().toISOString().split('T')[0];
+      await this.fetchContratos({
+        codigoOrgao: TRANSPARENCIA_ORGAOS_PRINCIPAIS[0],
+        dataInicio: today,
+        dataFim: today,
+        page: 1,
       });
       return true;
     } catch {
