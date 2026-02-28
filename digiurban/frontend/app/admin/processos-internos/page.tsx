@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -31,6 +31,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Separator } from '@/components/ui/separator'
+import { OrganizationalUnitAutocomplete } from '@/components/admin/OrganizationalUnitAutocomplete'
 import { useToast } from '@/hooks/use-toast'
 import {
   ArrowRightLeft,
@@ -80,9 +81,9 @@ import {
 const STATUS_LABELS: Record<string, string> = {
   RASCUNHO: 'Rascunho',
   ABERTO: 'Aberto',
-  EM_TRAMITACAO: 'Em Tramitação',
+  EM_TRAMITACAO: 'Em TramitaÃ§Ã£o',
   PENDENTE: 'Pendente',
-  CONCLUIDO: 'Concluído',
+  CONCLUIDO: 'ConcluÃ­do',
   ARQUIVADO: 'Arquivado',
   CANCELADO: 'Cancelado',
 }
@@ -100,7 +101,7 @@ const STATUS_COLORS: Record<string, string> = {
 const PRIORITY_LABELS: Record<number, string> = {
   0: 'Normal',
   1: 'Urgente',
-  2: 'Urgentíssimo',
+  2: 'UrgentÃ­ssimo',
 }
 
 const PRIORITY_COLORS: Record<number, string> = {
@@ -164,13 +165,13 @@ function CreateProcessDialog({
 }) {
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
-  const [iniciarFluxo, setIniciarFluxo] = useState(false)
   const [form, setForm] = useState({
     typeId: '',
     subject: '',
     description: '',
     sigilo: 'PUBLICO',
     priority: '0',
+    originSectorId: '',
     originSectorName: '',
     dueAt: '',
     tags: '',
@@ -181,37 +182,38 @@ function CreateProcessDialog({
 
   const handleSubmit = async () => {
     if (!form.typeId || !form.subject || !form.originSectorName) {
-      toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
+      toast({ title: 'Preencha os campos obrigatÃ³rios', variant: 'destructive' })
       return
     }
     setLoading(true)
     try {
-      const created = await flowClient.createProcess({
+      await flowClient.createProcess({
         typeId: form.typeId,
         subject: form.subject,
         description: form.description || undefined,
         sigilo: form.sigilo,
         priority: parseInt(form.priority),
-        originSectorId: form.originSectorName,
+        originSectorId: form.originSectorId || form.originSectorName,
         originSectorName: form.originSectorName,
         dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : undefined,
         tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
       })
 
-      // Iniciar fluxo automático se solicitado
-      if (iniciarFluxo && selectedType?.defaultWorkflowTemplateId) {
-        try {
-          await flowClient.instantiateWorkflow(created.id, selectedType.defaultWorkflowTemplateId)
-        } catch {
-          toast({ title: 'Processo criado, mas falha ao iniciar fluxo', variant: 'destructive' })
-        }
-      }
-
+      // Iniciar fluxo automÃ¡tico se solicitado
       toast({ title: 'Processo criado com sucesso!' })
       onCreated()
       onClose()
-      setForm({ typeId: '', subject: '', description: '', sigilo: 'PUBLICO', priority: '0', originSectorName: '', dueAt: '', tags: '' })
-      setIniciarFluxo(false)
+      setForm({
+        typeId: '',
+        subject: '',
+        description: '',
+        sigilo: 'PUBLICO',
+        priority: '0',
+        originSectorId: '',
+        originSectorName: '',
+        dueAt: '',
+        tags: '',
+      })
     } catch (error) {
       toast({ title: 'Erro ao criar processo', description: (error as Error).message, variant: 'destructive' })
     } finally {
@@ -249,11 +251,22 @@ function CreateProcessDialog({
             />
           </div>
           <div>
-            <Label>Setor de Origem *</Label>
-            <Input
+            <OrganizationalUnitAutocomplete
+              label="Setor de Origem"
               value={form.originSectorName}
-              onChange={e => setForm(f => ({ ...f, originSectorName: e.target.value }))}
+              onValueChange={value => setForm(f => ({
+                ...f,
+                originSectorName: value,
+                originSectorId: value,
+              }))}
+              onSelect={unit => setForm(f => ({
+                ...f,
+                originSectorId: unit.id,
+                originSectorName: unit.nome,
+              }))}
               placeholder="Ex: Secretaria de Administração"
+              required
+              helperText="Selecione uma unidade existente ou mantenha texto livre para preservar compatibilidade."
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -262,7 +275,7 @@ function CreateProcessDialog({
               <Select value={form.sigilo} onValueChange={v => setForm(f => ({ ...f, sigilo: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="PUBLICO">Público</SelectItem>
+                  <SelectItem value="PUBLICO">PÃºblico</SelectItem>
                   <SelectItem value="RESTRITO">Restrito</SelectItem>
                   <SelectItem value="CONFIDENCIAL">Confidencial</SelectItem>
                 </SelectContent>
@@ -275,7 +288,7 @@ function CreateProcessDialog({
                 <SelectContent>
                   <SelectItem value="0">Normal</SelectItem>
                   <SelectItem value="1">Urgente</SelectItem>
-                  <SelectItem value="2">Urgentíssimo</SelectItem>
+                  <SelectItem value="2">UrgentÃ­ssimo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -289,7 +302,7 @@ function CreateProcessDialog({
             />
           </div>
           <div>
-            <Label>Descrição</Label>
+            <Label>DescriÃ§Ã£o</Label>
             <Textarea
               value={form.description}
               onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
@@ -298,7 +311,7 @@ function CreateProcessDialog({
             />
           </div>
           <div>
-            <Label>Tags (separadas por vírgula)</Label>
+            <Label>Tags (separadas por vÃ­rgula)</Label>
             <Input
               value={form.tags}
               onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
@@ -306,24 +319,16 @@ function CreateProcessDialog({
             />
           </div>
 
-          {/* Iniciar fluxo automático — só aparece se o tipo tem fluxo padrão */}
+          {/* Iniciar fluxo automÃ¡tico â€” sÃ³ aparece se o tipo tem fluxo padrÃ£o */}
           {hasDefaultFlow && (
-            <div className="flex items-center gap-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-              <input
-                type="checkbox"
-                id="iniciarFluxo"
-                checked={iniciarFluxo}
-                onChange={e => setIniciarFluxo(e.target.checked)}
-                className="w-4 h-4 accent-blue-600"
-              />
-              <label htmlFor="iniciarFluxo" className="text-sm text-blue-800 cursor-pointer">
-                <span className="font-medium flex items-center gap-1">
-                  <GitBranch className="w-3.5 h-3.5 inline" /> Iniciar fluxo automático
-                </span>
-                <span className="text-xs text-blue-600 block">
-                  Usará o fluxo: <strong>{selectedType?.defaultWorkflowTemplate?.name || 'Fluxo padrão do tipo'}</strong>
-                </span>
-              </label>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <span className="flex items-center gap-1 text-sm font-medium text-blue-800">
+                <GitBranch className="inline h-3.5 w-3.5" /> Fluxo iniciado automaticamente
+              </span>
+              <span className="mt-1 block text-xs text-blue-600">
+                Este tipo já cria o processo com o fluxo padrão:
+                <strong> {selectedType?.defaultWorkflowTemplate?.name || 'Fluxo padrão do tipo'}</strong>
+              </span>
             </div>
           )}
         </div>
@@ -379,7 +384,7 @@ function DispatchDialog({
   const currentStep = sortedSteps[currentStepIdx]
   const nextStep = sortedSteps[currentStepIdx + 1]
 
-  // Quando muda para modo fluxo, pré-preenche campos
+  // Quando muda para modo fluxo, prÃ©-preenche campos
   useEffect(() => {
     if (mode === 'fluxo' && nextStep) {
       setToSectorName(nextStep.sectorName || '')
@@ -416,12 +421,12 @@ function DispatchDialog({
         action,
       })
 
-      // Se modo fluxo, avançar a instância de workflow também
+      // Se modo fluxo, avanÃ§ar a instÃ¢ncia de workflow tambÃ©m
       if (mode === 'fluxo' && workflowInstance?.id) {
         try {
           await flowClient.advanceWorkflow(workflowInstance.id, action, note || undefined)
         } catch {
-          // Avançar workflow é best-effort — despacho já foi feito
+          // AvanÃ§ar workflow Ã© best-effort â€” despacho jÃ¡ foi feito
         }
       }
 
@@ -441,12 +446,12 @@ function DispatchDialog({
         <DialogHeader>
           <DialogTitle>Despachar Processo</DialogTitle>
           <DialogDescription>
-            {process?.number} — {process?.subject}
+            {process?.number} â€” {process?.subject}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* Toggle de modo — só aparece se há fluxo ativo */}
+          {/* Toggle de modo â€” sÃ³ aparece se hÃ¡ fluxo ativo */}
           {hasActiveFlow && (
             <div className="flex rounded-lg border overflow-hidden">
               <button
@@ -459,7 +464,7 @@ function DispatchDialog({
                 }`}
               >
                 <Send className="w-3.5 h-3.5" />
-                Destinatário livre
+                DestinatÃ¡rio livre
               </button>
               <button
                 type="button"
@@ -510,7 +515,7 @@ function DispatchDialog({
               {nextStep ? (
                 <>
                   <div>
-                    <Label className="text-xs text-gray-500">Próxima etapa: <strong>{nextStep.name}</strong></Label>
+                    <Label className="text-xs text-gray-500">PrÃ³xima etapa: <strong>{nextStep.name}</strong></Label>
                     <Input
                       value={toSectorName}
                       onChange={e => setToSectorName(e.target.value)}
@@ -523,7 +528,7 @@ function DispatchDialog({
                         className="text-xs text-blue-600 mt-1"
                         onClick={() => setToSectorName(nextStep.sectorName || '')}
                       >
-                        Usar setor padrão: {nextStep.sectorName}
+                        Usar setor padrÃ£o: {nextStep.sectorName}
                       </button>
                     )}
                   </div>
@@ -536,7 +541,7 @@ function DispatchDialog({
                   )}
 
                   <div>
-                    <Label>Ação</Label>
+                    <Label>AÃ§Ã£o</Label>
                     <Select value={action} onValueChange={setAction}>
                       <SelectTrigger><SelectValue /></SelectTrigger>
                       <SelectContent>
@@ -550,7 +555,7 @@ function DispatchDialog({
               ) : (
                 <div className="p-3 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800 flex items-center gap-2">
                   <CheckCircle className="w-4 h-4" />
-                  Última etapa do fluxo. Use "Concluir Processo" para encerrar.
+                  Ãšltima etapa do fluxo. Use "Concluir Processo" para encerrar.
                 </div>
               )}
             </div>
@@ -560,7 +565,7 @@ function DispatchDialog({
           {(mode === 'livre' || !hasActiveFlow) && (
             <>
               <div>
-                <Label>Tipo de Ação</Label>
+                <Label>Tipo de AÃ§Ã£o</Label>
                 <Select value={action} onValueChange={setAction}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -576,16 +581,16 @@ function DispatchDialog({
                 <Input
                   value={toSectorName}
                   onChange={e => setToSectorName(e.target.value)}
-                  placeholder="Ex: Secretaria de Finanças"
+                  placeholder="Ex: Secretaria de FinanÃ§as"
                 />
               </div>
             </>
           )}
 
-          {/* Observação — sempre */}
+          {/* ObservaÃ§Ã£o â€” sempre */}
           {(mode === 'livre' || (mode === 'fluxo' && nextStep)) && (
             <div>
-              <Label>Despacho / Observação</Label>
+              <Label>Despacho / ObservaÃ§Ã£o</Label>
               <Textarea
                 value={note}
                 onChange={e => setNote(e.target.value)}
@@ -627,7 +632,7 @@ function ReturnDialog({
 
   const handleReturn = async () => {
     if (!process || !note) {
-      toast({ title: 'Informe o motivo da devolução', variant: 'destructive' })
+      toast({ title: 'Informe o motivo da devoluÃ§Ã£o', variant: 'destructive' })
       return
     }
     setLoading(true)
@@ -650,15 +655,15 @@ function ReturnDialog({
         <DialogHeader>
           <DialogTitle>Devolver Processo</DialogTitle>
           <DialogDescription>
-            {process?.number} — {process?.subject}
+            {process?.number} â€” {process?.subject}
           </DialogDescription>
         </DialogHeader>
         <div className="py-2">
-          <Label>Motivo da devolução *</Label>
+          <Label>Motivo da devoluÃ§Ã£o *</Label>
           <Textarea
             value={note}
             onChange={e => setNote(e.target.value)}
-            placeholder="Explique o motivo da devolução..."
+            placeholder="Explique o motivo da devoluÃ§Ã£o..."
             rows={4}
             className="mt-2"
           />
@@ -697,9 +702,9 @@ function ActionDialog({
   const [note, setNote] = useState('')
 
   const configMap: Record<ActionType, { title: string; label: string; btn: string; variant: 'default' | 'destructive' | 'outline'; icon: React.ElementType }> = {
-    conclude: { title: 'Concluir Processo', label: 'Observação final', btn: 'Concluir', variant: 'default', icon: CheckCircle },
+    conclude: { title: 'Concluir Processo', label: 'ObservaÃ§Ã£o final', btn: 'Concluir', variant: 'default', icon: CheckCircle },
     cancel: { title: 'Cancelar Processo', label: 'Motivo do cancelamento *', btn: 'Cancelar Processo', variant: 'destructive', icon: XCircle },
-    archive: { title: 'Arquivar Processo', label: 'Observação', btn: 'Arquivar', variant: 'outline', icon: Archive },
+    archive: { title: 'Arquivar Processo', label: 'ObservaÃ§Ã£o', btn: 'Arquivar', variant: 'outline', icon: Archive },
   }
 
   const handleAction = async () => {
@@ -713,7 +718,7 @@ function ActionDialog({
       if (actionType === 'conclude') await flowClient.concludeProcess(process.id, note || undefined)
       else if (actionType === 'cancel') await flowClient.cancelProcess(process.id, note)
       else if (actionType === 'archive') await flowClient.archiveProcess(process.id)
-      const labels = { conclude: 'concluído', cancel: 'cancelado', archive: 'arquivado' }
+      const labels = { conclude: 'concluÃ­do', cancel: 'cancelado', archive: 'arquivado' }
       toast({ title: `Processo ${process.number} ${labels[actionType]}` })
       setNote('')
       onDone()
@@ -735,7 +740,7 @@ function ActionDialog({
         <DialogHeader>
           <DialogTitle>{cfg.title}</DialogTitle>
           <DialogDescription>
-            {process.number} — {process.subject}
+            {process.number} â€” {process.subject}
           </DialogDescription>
         </DialogHeader>
         {actionType !== 'archive' && (
@@ -809,7 +814,7 @@ function ProcessDetailPanel({
     try {
       await flowClient.addComment(process.id, comment)
       setComment('')
-      toast({ title: 'Comentário adicionado' })
+      toast({ title: 'ComentÃ¡rio adicionado' })
       loadProcess()
     } catch {
       toast({ title: 'Erro ao comentar', variant: 'destructive' })
@@ -859,7 +864,7 @@ function ProcessDetailPanel({
                     )}
                   </div>
                   <p className="text-sm font-medium text-gray-800 mt-1 truncate">{process?.subject}</p>
-                  <p className="text-xs text-gray-500">{process?.type.name} · {process?.currentSectorName}</p>
+                  <p className="text-xs text-gray-500">{process?.type.name} Â· {process?.currentSectorName}</p>
                 </>
               )}
             </div>
@@ -869,7 +874,7 @@ function ProcessDetailPanel({
             </div>
           </div>
 
-          {/* Ações rápidas */}
+          {/* AÃ§Ãµes rÃ¡pidas */}
           {process && !isFinal && (
             <div className="flex gap-2 p-3 border-b bg-white flex-wrap">
               <Button size="sm" onClick={() => setDispatchOpen(true)}>
@@ -897,16 +902,16 @@ function ProcessDetailPanel({
           {/* Tabs */}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col overflow-hidden">
             <TabsList className="mx-4 mt-3 w-auto justify-start">
-              <TabsTrigger value="tramitacao">Tramitação</TabsTrigger>
+              <TabsTrigger value="tramitacao">TramitaÃ§Ã£o</TabsTrigger>
               <TabsTrigger value="documentos">Documentos</TabsTrigger>
-              <TabsTrigger value="comentarios">Comentários</TabsTrigger>
+              <TabsTrigger value="comentarios">ComentÃ¡rios</TabsTrigger>
               <TabsTrigger value="detalhes">Detalhes</TabsTrigger>
             </TabsList>
 
             <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
-              {/* Tramitação */}
+              {/* TramitaÃ§Ã£o */}
               <TabsContent value="tramitacao" className="mt-0 space-y-3">
-                {/* Progresso do Fluxo (se houver instância ativa) */}
+                {/* Progresso do Fluxo (se houver instÃ¢ncia ativa) */}
                 {process?.workflowInstance && (
                   <div className={`p-3 rounded-lg border mt-2 ${
                     process.workflowInstance.status === 'ATIVO'
@@ -926,7 +931,7 @@ function ProcessDetailPanel({
                         'bg-gray-100 text-gray-600'
                       }`}>
                         {process.workflowInstance.status === 'ATIVO' ? 'Em andamento' :
-                         process.workflowInstance.status === 'CONCLUIDO' ? 'Concluído' : 'Cancelado'}
+                         process.workflowInstance.status === 'CONCLUIDO' ? 'ConcluÃ­do' : 'Cancelado'}
                       </span>
                     </div>
                     {/* Barra de etapas */}
@@ -963,11 +968,11 @@ function ProcessDetailPanel({
                   </div>
                 )}
 
-                <h3 className="text-sm font-medium text-gray-700 mt-2">Histórico de Movimentações</h3>
+                <h3 className="text-sm font-medium text-gray-700 mt-2">HistÃ³rico de MovimentaÃ§Ãµes</h3>
                 {loading ? (
                   <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 bg-gray-100 animate-pulse rounded" />)}</div>
                 ) : (process?.history.length ?? 0) === 0 ? (
-                  <p className="text-sm text-gray-500 py-4 text-center">Nenhuma movimentação registrada</p>
+                  <p className="text-sm text-gray-500 py-4 text-center">Nenhuma movimentaÃ§Ã£o registrada</p>
                 ) : (
                   <div className="relative">
                     <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-200" />
@@ -986,7 +991,7 @@ function ProcessDetailPanel({
                             )}
                             <div className="flex items-center gap-2 mt-1">
                               <span className="text-xs text-gray-500">{h.userName}</span>
-                              <span className="text-xs text-gray-400">·</span>
+                              <span className="text-xs text-gray-400">Â·</span>
                               <span className="text-xs text-gray-400">{formatDate(h.createdAt)}</span>
                             </div>
                           </div>
@@ -1047,11 +1052,11 @@ function ProcessDetailPanel({
                 )}
               </TabsContent>
 
-              {/* Comentários */}
+              {/* ComentÃ¡rios */}
               <TabsContent value="comentarios" className="mt-0 space-y-3">
-                <h3 className="text-sm font-medium text-gray-700 mt-2">Anotações e Comentários</h3>
+                <h3 className="text-sm font-medium text-gray-700 mt-2">AnotaÃ§Ãµes e ComentÃ¡rios</h3>
                 {(process?.comments || []).filter(c => !c.isDeleted).length === 0 && !loading && (
-                  <p className="text-sm text-gray-500 py-4 text-center">Nenhum comentário registrado</p>
+                  <p className="text-sm text-gray-500 py-4 text-center">Nenhum comentÃ¡rio registrado</p>
                 )}
                 <div className="space-y-3">
                   {(process?.comments || []).filter(c => !c.isDeleted).map(c => (
@@ -1074,12 +1079,12 @@ function ProcessDetailPanel({
                   <Textarea
                     value={comment}
                     onChange={e => setComment(e.target.value)}
-                    placeholder="Adicionar anotação ao processo..."
+                    placeholder="Adicionar anotaÃ§Ã£o ao processo..."
                     rows={3}
                   />
                   <Button size="sm" onClick={handleAddComment} disabled={addingComment || !comment.trim()}>
                     <MessageSquare className="w-3.5 h-3.5 mr-1" />
-                    {addingComment ? 'Salvando...' : 'Adicionar Anotação'}
+                    {addingComment ? 'Salvando...' : 'Adicionar AnotaÃ§Ã£o'}
                   </Button>
                 </div>
               </TabsContent>
@@ -1090,7 +1095,7 @@ function ProcessDetailPanel({
                   <div className="space-y-4 mt-2">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> Número</p>
+                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Hash className="w-3 h-3" /> NÃºmero</p>
                         <p className="font-mono text-sm font-bold">{process.number}</p>
                       </div>
                       <div>
@@ -1110,8 +1115,8 @@ function ProcessDetailPanel({
                         <p className="text-sm">{process.createdByName}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><User className="w-3 h-3" /> Responsável</p>
-                        <p className="text-sm">{process.currentUserName || 'Não atribuído'}</p>
+                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><User className="w-3 h-3" /> ResponsÃ¡vel</p>
+                        <p className="text-sm">{process.currentUserName || 'NÃ£o atribuÃ­do'}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Calendar className="w-3 h-3" /> Aberto em</p>
@@ -1134,7 +1139,7 @@ function ProcessDetailPanel({
                     </div>
                     {process.description && (
                       <div>
-                        <p className="text-xs text-gray-500 mb-1">Descrição</p>
+                        <p className="text-xs text-gray-500 mb-1">DescriÃ§Ã£o</p>
                         <p className="text-sm text-gray-700 whitespace-pre-wrap bg-gray-50 p-3 rounded">{process.description}</p>
                       </div>
                     )}
@@ -1314,7 +1319,7 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
           <Input
             value={search}
             onChange={e => { setSearch(e.target.value); setPage(1) }}
-            placeholder="Buscar por número, assunto, responsável..."
+            placeholder="Buscar por nÃºmero, assunto, responsÃ¡vel..."
             className="pl-9"
           />
         </div>
@@ -1323,9 +1328,9 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
           <SelectContent>
             <SelectItem value="all">Todos os status</SelectItem>
             <SelectItem value="ABERTO">Aberto</SelectItem>
-            <SelectItem value="EM_TRAMITACAO">Em Tramitação</SelectItem>
+            <SelectItem value="EM_TRAMITACAO">Em TramitaÃ§Ã£o</SelectItem>
             <SelectItem value="PENDENTE">Pendente</SelectItem>
-            <SelectItem value="CONCLUIDO">Concluído</SelectItem>
+            <SelectItem value="CONCLUIDO">ConcluÃ­do</SelectItem>
             <SelectItem value="CANCELADO">Cancelado</SelectItem>
             <SelectItem value="ARQUIVADO">Arquivado</SelectItem>
           </SelectContent>
@@ -1343,7 +1348,7 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
             <SelectItem value="all">Qualquer prioridade</SelectItem>
             <SelectItem value="0">Normal</SelectItem>
             <SelectItem value="1">Urgente</SelectItem>
-            <SelectItem value="2">Urgentíssimo</SelectItem>
+            <SelectItem value="2">UrgentÃ­ssimo</SelectItem>
           </SelectContent>
         </Select>
         <Button variant="outline" size="sm" onClick={() => flowClient.exportCSV({
@@ -1394,8 +1399,8 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
           <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage(p => p - 1)}>Anterior</Button>
-          <span className="text-sm text-gray-500">Página {page} de {totalPages}</span>
-          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>Próxima</Button>
+          <span className="text-sm text-gray-500">PÃ¡gina {page} de {totalPages}</span>
+          <Button variant="outline" size="sm" disabled={page >= totalPages} onClick={() => setPage(p => p + 1)}>PrÃ³xima</Button>
         </div>
       )}
 
@@ -1454,7 +1459,7 @@ function InboxTab() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Caixa de Entrada</CardTitle>
-          <CardDescription>Processos aguardando ação no seu setor</CardDescription>
+          <CardDescription>Processos aguardando aÃ§Ã£o no seu setor</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
@@ -1554,9 +1559,9 @@ function DashboardTab() {
   const stats = [
     { label: 'Ativos', value: r?.ativos ?? 0, color: 'text-blue-600', bg: 'bg-blue-50', icon: ArrowRightLeft },
     { label: 'Abertos', value: r?.abertos ?? 0, color: 'text-sky-600', bg: 'bg-sky-50', icon: FileText },
-    { label: 'Em Tramitação', value: r?.emTramitacao ?? 0, color: 'text-amber-600', bg: 'bg-amber-50', icon: Send },
+    { label: 'Em TramitaÃ§Ã£o', value: r?.emTramitacao ?? 0, color: 'text-amber-600', bg: 'bg-amber-50', icon: Send },
     { label: 'Pendentes', value: r?.pendentes ?? 0, color: 'text-orange-600', bg: 'bg-orange-50', icon: Clock },
-    { label: 'Concluídos', value: r?.concluidos ?? 0, color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle },
+    { label: 'ConcluÃ­dos', value: r?.concluidos ?? 0, color: 'text-green-600', bg: 'bg-green-50', icon: CheckCircle },
     { label: 'Urgentes', value: r?.urgentes ?? 0, color: 'text-red-600', bg: 'bg-red-50', icon: Flag },
     { label: 'Vencidos', value: r?.vencidos ?? 0, color: 'text-red-700', bg: 'bg-red-100', icon: AlertTriangle },
     { label: 'Arquivados', value: r?.arquivados ?? 0, color: 'text-slate-600', bg: 'bg-slate-50', icon: Archive },
@@ -1595,7 +1600,7 @@ function DashboardTab() {
 
       {dashboard && (
         <Card>
-          <CardHeader className="pb-2"><CardTitle className="text-sm">Últimos 30 dias</CardTitle></CardHeader>
+          <CardHeader className="pb-2"><CardTitle className="text-sm">Ãšltimos 30 dias</CardTitle></CardHeader>
           <CardContent className="grid grid-cols-2 gap-4">
             <div className="text-center">
               <p className="text-2xl font-bold text-blue-600">{dashboard.ultimos30Dias.criados}</p>
@@ -1603,7 +1608,7 @@ function DashboardTab() {
             </div>
             <div className="text-center">
               <p className="text-2xl font-bold text-green-600">{dashboard.ultimos30Dias.concluidos}</p>
-              <p className="text-xs text-gray-500">Processos concluídos</p>
+              <p className="text-xs text-gray-500">Processos concluÃ­dos</p>
             </div>
           </CardContent>
         </Card>
@@ -1685,7 +1690,7 @@ function DashboardTab() {
 }
 
 // ============================================================================
-// TAB: CONFIGURAÇÕES
+// TAB: CONFIGURAÃ‡Ã•ES
 // ============================================================================
 
 function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; onRefresh: () => void }) {
@@ -1696,7 +1701,7 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
 
   const handleCreateType = async () => {
     if (!newType.name || !newType.prefix) {
-      toast({ title: 'Nome e prefixo são obrigatórios', variant: 'destructive' })
+      toast({ title: 'Nome e prefixo sÃ£o obrigatÃ³rios', variant: 'destructive' })
       return
     }
     setLoading(true)
@@ -1727,7 +1732,7 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base">Tipos de Processo</CardTitle>
-              <CardDescription>Gerencie os tipos disponíveis e seus prefixos de numeração</CardDescription>
+              <CardDescription>Gerencie os tipos disponÃ­veis e seus prefixos de numeraÃ§Ã£o</CardDescription>
             </div>
             <Button size="sm" onClick={() => setCreateOpen(true)}>
               <Plus className="w-4 h-4 mr-1" /> Novo Tipo
@@ -1756,16 +1761,16 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
         </CardContent>
       </Card>
 
-      {/* Card: Fluxos de Tramitação */}
+      {/* Card: Fluxos de TramitaÃ§Ã£o */}
       <Card className="border-blue-100">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-base flex items-center gap-2">
                 <GitBranch className="w-4 h-4 text-blue-600" />
-                Fluxos de Tramitação
+                Fluxos de TramitaÃ§Ã£o
               </CardTitle>
-              <CardDescription>Defina sequências automáticas de etapas para os tipos de processo</CardDescription>
+              <CardDescription>Defina sequÃªncias automÃ¡ticas de etapas para os tipos de processo</CardDescription>
             </div>
             <Link href="/admin/processos-internos/fluxos">
               <Button size="sm">
@@ -1778,8 +1783,8 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
           <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
             <Zap className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
             <div className="space-y-1">
-              <p>Crie fluxos com etapas (setor → documento → SLA) e vincule aos tipos de processo.</p>
-              <p>Ao despachar, escolha entre <strong>destinatário livre</strong> ou <strong>seguir o fluxo</strong> definido.</p>
+              <p>Crie fluxos com etapas (setor â†’ documento â†’ SLA) e vincule aos tipos de processo.</p>
+              <p>Ao despachar, escolha entre <strong>destinatÃ¡rio livre</strong> ou <strong>seguir o fluxo</strong> definido.</p>
             </div>
           </div>
         </CardContent>
@@ -1788,7 +1793,7 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Templates de Documentos</CardTitle>
-          <CardDescription>Templates disponíveis para geração automática de PDFs</CardDescription>
+          <CardDescription>Templates disponÃ­veis para geraÃ§Ã£o automÃ¡tica de PDFs</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 gap-3">
@@ -1814,27 +1819,27 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
               <Input value={newType.name} onChange={e => setNewType(f => ({ ...f, name: e.target.value }))} placeholder="Ex: Portaria" />
             </div>
             <div>
-              <Label>Prefixo * (até 5 letras)</Label>
+              <Label>Prefixo * (atÃ© 5 letras)</Label>
               <Input value={newType.prefix} onChange={e => setNewType(f => ({ ...f, prefix: e.target.value.toUpperCase().slice(0, 5) }))} placeholder="Ex: POR" maxLength={5} />
             </div>
             <div>
-              <Label>SLA padrão (horas)</Label>
+              <Label>SLA padrÃ£o (horas)</Label>
               <Input type="number" value={newType.defaultSlaHours} onChange={e => setNewType(f => ({ ...f, defaultSlaHours: e.target.value }))} />
             </div>
             <div>
-              <Label>Template padrão</Label>
+              <Label>Template padrÃ£o</Label>
               <Select value={newType.defaultDocumentTemplate} onValueChange={v => setNewType(f => ({ ...f, defaultDocumentTemplate: v }))}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="memorando">Memorando</SelectItem>
-                  <SelectItem value="oficio">Ofício</SelectItem>
+                  <SelectItem value="oficio">OfÃ­cio</SelectItem>
                   <SelectItem value="despacho">Despacho</SelectItem>
                   <SelectItem value="capa-processo">Capa de Processo</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <Label>Descrição</Label>
+              <Label>DescriÃ§Ã£o</Label>
               <Input value={newType.description} onChange={e => setNewType(f => ({ ...f, description: e.target.value }))} placeholder="Opcional" />
             </div>
           </div>
@@ -1849,7 +1854,7 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
 }
 
 // ============================================================================
-// PÁGINA PRINCIPAL
+// PÃGINA PRINCIPAL
 // ============================================================================
 
 export default function ProcessosInternosPage() {
@@ -1879,7 +1884,7 @@ export default function ProcessosInternosPage() {
             <ArrowRightLeft className="w-6 h-6 text-blue-600" />
             Processos Internos
           </h1>
-          <p className="text-gray-500 mt-1">Gestão de tramitação administrativa — Memorandos, Ofícios e Processos</p>
+          <p className="text-gray-500 mt-1">GestÃ£o de tramitaÃ§Ã£o administrativa â€” Memorandos, OfÃ­cios e Processos</p>
         </div>
         <Button variant="outline" size="sm" onClick={loadTypes}>
           <RefreshCw className="w-4 h-4 mr-1" /> Atualizar
@@ -1891,7 +1896,7 @@ export default function ProcessosInternosPage() {
           <TabsTrigger value="processos"><FileText className="w-4 h-4 mr-2" /> Processos</TabsTrigger>
           <TabsTrigger value="inbox"><Inbox className="w-4 h-4 mr-2" /> Caixa de Entrada</TabsTrigger>
           <TabsTrigger value="dashboard"><BarChart3 className="w-4 h-4 mr-2" /> Dashboard</TabsTrigger>
-          <TabsTrigger value="config"><Settings className="w-4 h-4 mr-2" /> Configurações</TabsTrigger>
+          <TabsTrigger value="config"><Settings className="w-4 h-4 mr-2" /> ConfiguraÃ§Ãµes</TabsTrigger>
         </TabsList>
 
         <div className="mt-6">
@@ -1912,3 +1917,4 @@ export default function ProcessosInternosPage() {
     </div>
   )
 }
+

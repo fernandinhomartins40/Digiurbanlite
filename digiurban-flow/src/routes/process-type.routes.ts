@@ -15,6 +15,7 @@ const createTypeSchema = z.object({
   description: z.string().optional(),
   defaultSlaHours: z.number().int().positive().default(168),
   sigiloDefault: z.enum(['PUBLICO', 'RESTRITO', 'CONFIDENCIAL']).default('PUBLICO'),
+  defaultDocumentTemplate: z.string().optional(),
   defaultWorkflowTemplateId: z.string().optional(),
 });
 
@@ -42,6 +43,12 @@ router.get('/', async (_req: Request, res: Response) => {
       where: { isActive: true },
       orderBy: { name: 'asc' },
       include: {
+        defaultWorkflowTemplate: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
         _count: { select: { processes: true } },
       },
     });

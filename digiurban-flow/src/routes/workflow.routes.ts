@@ -19,6 +19,7 @@ const stepSchema = z.object({
   sectorId: z.string().optional(),
   sectorName: z.string().optional(),
   slaHours: z.number().int().positive().optional(),
+  documentRequired: z.string().optional(),
   order: z.number().int().min(0),
   actions: z.array(z.string()),
 });
@@ -35,6 +36,10 @@ const createTemplateSchema = z.object({
   description: z.string().optional(),
   steps: z.array(stepSchema).min(1),
   transitions: z.array(transitionSchema),
+});
+
+const updateTemplateSchema = createTemplateSchema.partial().extend({
+  isActive: z.boolean().optional(),
 });
 
 const advanceSchema = z.object({
@@ -80,7 +85,7 @@ router.get('/templates/:id', async (req: Request, res: Response) => {
 
 router.put('/templates/:id', async (req: Request, res: Response) => {
   try {
-    const body = createTemplateSchema.partial().parse(req.body);
+    const body = updateTemplateSchema.parse(req.body);
     const template = await workflowService.updateWorkflowTemplate(req.params.id as string, body);
     res.json(template);
   } catch (error: unknown) {

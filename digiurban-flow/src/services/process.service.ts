@@ -1,5 +1,5 @@
 /**
- * Serviço principal de CRUD de processos internos
+ * Servico principal de CRUD de processos internos
  */
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
@@ -67,24 +67,21 @@ export async function createProcess(input: CreateProcessInput) {
   });
 
   if (!processType) {
-    throw new Error('Tipo de processo não encontrado');
+    throw new Error('Tipo de processo nao encontrado');
   }
 
   if (!processType.isActive) {
     throw new Error('Tipo de processo inativo');
   }
 
-  // Gerar numeração automática
   const number = await generateProcessNumber(processType.prefix);
 
-  // Calcular prazo se não fornecido
   let dueAt = input.dueAt;
   if (!dueAt && processType.defaultSlaHours) {
     dueAt = new Date();
     dueAt.setHours(dueAt.getHours() + processType.defaultSlaHours);
   }
 
-  // Criar processo + histórico inicial em transaction
   const process = await prisma.$transaction(async (tx) => {
     const proc = await tx.internalProcess.create({
       data: {
@@ -110,7 +107,6 @@ export async function createProcess(input: CreateProcessInput) {
       },
     });
 
-    // Registrar histórico de abertura
     await tx.internalProcessHistory.create({
       data: {
         processId: proc.id,
@@ -126,14 +122,13 @@ export async function createProcess(input: CreateProcessInput) {
       },
     });
 
-    // Se o tipo tem workflow padrão, instanciar
     if (processType.defaultWorkflowTemplate) {
       const template = processType.defaultWorkflowTemplate;
       const steps = template.steps as Array<{ id: string; name: string }>;
       const firstStep = steps[0];
 
       if (firstStep) {
-        await tx.workflowInstance.create({
+        const workflowInstance = await tx.workflowInstance.create({
           data: {
             processId: proc.id,
             templateId: template.id,
@@ -145,7 +140,7 @@ export async function createProcess(input: CreateProcessInput) {
 
         await tx.workflowStepHistory.create({
           data: {
-            instanceId: proc.id, // placeholder, será atualizado
+            instanceId: workflowInstance.id,
             stepId: firstStep.id,
             stepName: firstStep.name,
             action: 'iniciado',
@@ -236,6 +231,11 @@ export async function getProcessById(id: string) {
       history: { orderBy: { createdAt: 'desc' } },
       dispatches: { orderBy: { createdAt: 'desc' } },
       documents: { orderBy: { createdAt: 'desc' } },
+      comments: {
+        where: { isDeleted: false },
+        orderBy: { createdAt: 'desc' },
+      },
+      signatures: { orderBy: { createdAt: 'desc' } },
       workflowInstance: {
         include: {
           template: true,
@@ -246,7 +246,7 @@ export async function getProcessById(id: string) {
   });
 
   if (!process) {
-    throw new Error('Processo não encontrado');
+    throw new Error('Processo nao encontrado');
   }
 
   return process;
@@ -258,10 +258,10 @@ export async function getProcessById(id: string) {
 
 export async function updateProcess(id: string, input: UpdateProcessInput, userId: string, userName: string) {
   const existing = await prisma.internalProcess.findUnique({ where: { id } });
-  if (!existing) throw new Error('Processo não encontrado');
+  if (!existing) throw new Error('Processo nao encontrado');
 
   if (existing.status === 'CONCLUIDO' || existing.status === 'CANCELADO') {
-    throw new Error('Não é possível alterar um processo concluído ou cancelado');
+    throw new Error('Nao e possivel alterar um processo concluido ou cancelado');
   }
 
   const process = await prisma.internalProcess.update({
@@ -279,7 +279,7 @@ export async function updateProcess(id: string, input: UpdateProcessInput, userI
     },
   });
 
-  logger.info(`Processo atualizado: ${process.number}`, { id });
+  logger.info(`Processo atualizado: ${process.number}`, { id, userId, userName });
   return process;
 }
 
@@ -289,10 +289,10 @@ export async function updateProcess(id: string, input: UpdateProcessInput, userI
 
 export async function cancelProcess(id: string, userId: string, userName: string, reason: string) {
   const existing = await prisma.internalProcess.findUnique({ where: { id } });
-  if (!existing) throw new Error('Processo não encontrado');
+  if (!existing) throw new Error('Processo nao encontrado');
 
   if (existing.status === 'CONCLUIDO' || existing.status === 'CANCELADO') {
-    throw new Error('Processo já está finalizado');
+    throw new Error('Processo ja esta finalizado');
   }
 
   const process = await prisma.$transaction(async (tx) => {
@@ -312,7 +312,6 @@ export async function cancelProcess(id: string, userId: string, userName: string
       },
     });
 
-    // Cancelar workflow se existir
     await tx.workflowInstance.updateMany({
       where: { processId: id, status: 'ATIVO' },
       data: { status: 'CANCELADO', completedAt: new Date() },

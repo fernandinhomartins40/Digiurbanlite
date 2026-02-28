@@ -289,7 +289,7 @@ class FlowClient {
   }
 
   async cancelProcess(id: string, reason: string): Promise<InternalProcess> {
-    const { data } = await api.delete<InternalProcess>(`${this.baseUrl}/processes/${id}`)
+    const { data } = await api.delete<InternalProcess>(`${this.baseUrl}/processes/${id}`, { reason })
     if (!data) throw new Error('Erro ao cancelar processo')
     return data
   }

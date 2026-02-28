@@ -15,6 +15,7 @@ export interface WorkflowStep {
   sectorId?: string;
   sectorName?: string;
   slaHours?: number;
+  documentRequired?: string;
   order: number;
   actions: string[]; // ["aprovar", "rejeitar", "despachar"]
 }
@@ -31,6 +32,7 @@ export interface CreateWorkflowTemplateInput {
   description?: string;
   steps: WorkflowStep[];
   transitions: WorkflowTransition[];
+  isActive?: boolean;
 }
 
 export interface AdvanceWorkflowInput {
@@ -61,8 +63,10 @@ export async function createWorkflowTemplate(input: CreateWorkflowTemplateInput)
 
 export async function listWorkflowTemplates() {
   return prisma.workflowTemplate.findMany({
-    where: { isActive: true },
-    orderBy: { name: 'asc' },
+    orderBy: [
+      { isActive: 'desc' },
+      { name: 'asc' },
+    ],
     include: {
       _count: { select: { instances: true } },
     },
@@ -95,6 +99,7 @@ export async function updateWorkflowTemplate(
       ...(input.description !== undefined && { description: input.description }),
       ...(input.steps && { steps: input.steps as unknown as Prisma.InputJsonValue }),
       ...(input.transitions && { transitions: input.transitions as unknown as Prisma.InputJsonValue }),
+      ...(input.isActive !== undefined && { isActive: input.isActive }),
       version: existing.version + 1,
     },
   });
@@ -183,6 +188,11 @@ export async function advanceWorkflow(input: AdvanceWorkflowInput) {
 
   const steps = instance.template.steps as unknown as WorkflowStep[];
   const transitions = instance.template.transitions as unknown as WorkflowTransition[];
+  const currentStep = steps.find((step) => step.id === instance.currentStepId);
+
+  if (currentStep && currentStep.actions.length > 0 && !currentStep.actions.includes(input.action)) {
+    throw new Error('Ação não permitida para a etapa atual');
+  }
 
   // Encontrar transições possíveis a partir do step atual
   const possibleTransitions = transitions.filter((t) => t.fromStepId === instance.currentStepId);
@@ -216,7 +226,7 @@ export async function advanceWorkflow(input: AdvanceWorkflowInput) {
   }
 
   // Selecionar a próxima transição (primeira válida)
-  const nextTransition = possibleTransitions[0];
+  const nextTransition = possibleTransitions.find((transition) => transition.label === input.action) || possibleTransitions[0];
   const nextStep = steps.find((s) => s.id === nextTransition.toStepId);
 
   if (!nextStep) throw new Error('Próxima etapa não encontrada no template');

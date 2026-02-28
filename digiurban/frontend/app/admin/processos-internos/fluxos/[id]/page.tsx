@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
+import { OrganizationalUnitAutocomplete } from '@/components/admin/OrganizationalUnitAutocomplete'
 import {
   ArrowLeft, Plus, Trash2, Save, GitBranch, ChevronUp,
   ChevronDown, GripVertical, AlertTriangle, CheckCircle2,
@@ -16,7 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { flowClient, WorkflowStep, WorkflowTransition } from '@/lib/flow-client'
 
-// Ações disponíveis para etapas
+// AÃ§Ãµes disponÃ­veis para etapas
 const AVAILABLE_ACTIONS = [
   { value: 'ENCAMINHADO', label: 'Encaminhar' },
   { value: 'DESPACHO', label: 'Despacho' },
@@ -30,7 +31,7 @@ const AVAILABLE_ACTIONS = [
 const DOCUMENT_OPTIONS = [
   { value: '', label: 'Nenhum (opcional)' },
   { value: 'memorando', label: 'Memorando' },
-  { value: 'oficio', label: 'Ofício' },
+  { value: 'oficio', label: 'OfÃ­cio' },
   { value: 'despacho', label: 'Despacho' },
   { value: 'capa-processo', label: 'Capa de Processo' },
 ]
@@ -97,7 +98,7 @@ export default function FluxoEditorPage() {
 
   useEffect(() => { loadTemplate() }, [loadTemplate])
 
-  // ─── Manipulação de etapas ───
+  // â”€â”€â”€ ManipulaÃ§Ã£o de etapas â”€â”€â”€
 
   const addStep = () => {
     setSteps(prev => [...prev, newStep(prev.length)])
@@ -133,7 +134,7 @@ export default function FluxoEditorPage() {
     updateStep(idx, { actions: next })
   }
 
-  // ─── Salvar ───
+  // â”€â”€â”€ Salvar â”€â”€â”€
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -199,7 +200,7 @@ export default function FluxoEditorPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <GitBranch className="w-5 h-5 text-blue-600" />
-          {isNew ? 'Novo Fluxo de Tramitação' : 'Editar Fluxo'}
+          {isNew ? 'Novo Fluxo de TramitaÃ§Ã£o' : 'Editar Fluxo'}
         </h1>
         <Button onClick={handleSave} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
@@ -207,7 +208,7 @@ export default function FluxoEditorPage() {
         </Button>
       </div>
 
-      {/* Nome e Descrição */}
+      {/* Nome e DescriÃ§Ã£o */}
       <Card>
         <CardContent className="pt-4 space-y-4">
           <div>
@@ -216,12 +217,12 @@ export default function FluxoEditorPage() {
               id="name"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Ex: Fluxo de Memorando Padrão"
+              placeholder="Ex: Fluxo de Memorando PadrÃ£o"
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="desc">Descrição</Label>
+            <Label htmlFor="desc">DescriÃ§Ã£o</Label>
             <Textarea
               id="desc"
               value={description}
@@ -234,7 +235,7 @@ export default function FluxoEditorPage() {
         </CardContent>
       </Card>
 
-      {/* Visualização do fluxo */}
+      {/* VisualizaÃ§Ã£o do fluxo */}
       {steps.length > 1 && (
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
           {steps.map((step, idx) => (
@@ -289,12 +290,12 @@ export default function FluxoEditorPage() {
       <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p>
-          As transições entre etapas são geradas automaticamente em sequência linear (1→2→3...).
-          Ao despachar com "Seguir Fluxo", o setor de destino da próxima etapa é pré-selecionado.
+          As transiÃ§Ãµes entre etapas sÃ£o geradas automaticamente em sequÃªncia linear (1â†’2â†’3...).
+          Ao despachar com "Seguir Fluxo", o setor de destino da prÃ³xima etapa Ã© prÃ©-selecionado.
         </p>
       </div>
 
-      {/* Botão salvar ao final */}
+      {/* BotÃ£o salvar ao final */}
       <div className="flex justify-end gap-3 pt-2 pb-8">
         <Link href="/admin/processos-internos/fluxos">
           <Button variant="outline">Cancelar</Button>
@@ -308,7 +309,7 @@ export default function FluxoEditorPage() {
   )
 }
 
-// ─── Componente de Etapa ───
+// â”€â”€â”€ Componente de Etapa â”€â”€â”€
 
 function StepCard({
   step,
@@ -382,12 +383,13 @@ function StepCard({
         <div className="grid grid-cols-2 gap-3">
           {/* Setor */}
           <div>
-            <Label className="text-xs text-gray-500">Setor / Secretaria destino</Label>
-            <Input
+            <OrganizationalUnitAutocomplete
+              label="Setor / Secretaria destino"
               value={step.sectorName || ''}
-              onChange={e => onUpdate({ sectorName: e.target.value, sectorId: e.target.value })}
+              onValueChange={value => onUpdate({ sectorName: value, sectorId: value })}
+              onSelect={unit => onUpdate({ sectorName: unit.nome, sectorId: unit.id })}
               placeholder="Ex: Secretaria de Finanças"
-              className="mt-1 h-8 text-sm"
+              helperText="Use uma unidade do organograma quando existir; texto livre continua aceito para compatibilidade."
             />
           </div>
 
@@ -419,9 +421,9 @@ function StepCard({
           </select>
         </div>
 
-        {/* Ações permitidas */}
+        {/* AÃ§Ãµes permitidas */}
         <div>
-          <Label className="text-xs text-gray-500">Ações permitidas nesta etapa *</Label>
+          <Label className="text-xs text-gray-500">AÃ§Ãµes permitidas nesta etapa *</Label>
           <div className="flex flex-wrap gap-2 mt-1">
             {AVAILABLE_ACTIONS.map(a => {
               const active = step.actions.includes(a.value)
@@ -443,10 +445,11 @@ function StepCard({
             })}
           </div>
           {step.actions.length === 0 && (
-            <p className="text-xs text-red-500 mt-1">Selecione ao menos uma ação</p>
+            <p className="text-xs text-red-500 mt-1">Selecione ao menos uma aÃ§Ã£o</p>
           )}
         </div>
       </CardContent>
     </Card>
   )
 }
+

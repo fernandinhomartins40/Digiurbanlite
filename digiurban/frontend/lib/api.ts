@@ -8,6 +8,27 @@ interface ApiResponse<T = any> {
   message?: string
 }
 
+function getErrorMessage(data: unknown): string {
+  if (data && typeof data === 'object') {
+    const message = 'message' in data && typeof data.message === 'string' ? data.message : null
+    const error = 'error' in data && typeof data.error === 'string' ? data.error : null
+    return message || error || 'Erro na requisição'
+  }
+
+  return 'Erro na requisição'
+}
+
+async function parseJsonResponse(response: Response): Promise<any> {
+  const text = await response.text()
+  if (!text) return undefined
+
+  try {
+    return JSON.parse(text)
+  } catch {
+    return undefined
+  }
+}
+
 class ApiClient {
   private baseUrl: string
 
@@ -16,14 +37,9 @@ class ApiClient {
   }
 
   private getHeaders(): HeadersInit {
-    const headers: Record<string, string> = {
+    return {
       'Content-Type': 'application/json',
     }
-
-    // ✅ httpOnly cookies são enviados automaticamente pelo navegador
-    // Não é necessário adicionar Authorization header
-
-    return headers
   }
 
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
@@ -41,17 +57,17 @@ class ApiClient {
       const response = await fetch(url.toString(), {
         method: 'GET',
         headers: this.getHeaders(),
-        credentials: 'include', // ✅ Enviar cookies httpOnly
+        credentials: 'include',
       })
 
-      const data = await response.json()
+      const data = await parseJsonResponse(response)
 
       if (!response.ok) {
-        return { error: data.message || 'Erro na requisição' }
+        return { error: getErrorMessage(data) }
       }
 
       return { data }
-    } catch (error) {
+    } catch {
       return { error: 'Erro de conexão' }
     }
   }
@@ -62,17 +78,17 @@ class ApiClient {
         method: 'POST',
         headers: this.getHeaders(),
         body: body ? JSON.stringify(body) : undefined,
-        credentials: 'include', // ✅ Enviar cookies httpOnly
+        credentials: 'include',
       })
 
-      const data = await response.json()
+      const data = await parseJsonResponse(response)
 
       if (!response.ok) {
-        return { error: data.message || 'Erro na requisição' }
+        return { error: getErrorMessage(data) }
       }
 
       return { data }
-    } catch (error) {
+    } catch {
       return { error: 'Erro de conexão' }
     }
   }
@@ -83,37 +99,38 @@ class ApiClient {
         method: 'PUT',
         headers: this.getHeaders(),
         body: body ? JSON.stringify(body) : undefined,
-        credentials: 'include', // ✅ Enviar cookies httpOnly
+        credentials: 'include',
       })
 
-      const data = await response.json()
+      const data = await parseJsonResponse(response)
 
       if (!response.ok) {
-        return { error: data.message || 'Erro na requisição' }
+        return { error: getErrorMessage(data) }
       }
 
       return { data }
-    } catch (error) {
+    } catch {
       return { error: 'Erro de conexão' }
     }
   }
 
-  async delete<T>(endpoint: string): Promise<ApiResponse<T>> {
+  async delete<T>(endpoint: string, body?: any): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${this.baseUrl}${endpoint}`, {
         method: 'DELETE',
         headers: this.getHeaders(),
-        credentials: 'include', // ✅ Enviar cookies httpOnly
+        body: body ? JSON.stringify(body) : undefined,
+        credentials: 'include',
       })
 
-      const data = await response.json()
+      const data = await parseJsonResponse(response)
 
       if (!response.ok) {
-        return { error: data.message || 'Erro na requisição' }
+        return { error: getErrorMessage(data) }
       }
 
       return { data }
-    } catch (error) {
+    } catch {
       return { error: 'Erro de conexão' }
     }
   }
@@ -124,17 +141,17 @@ class ApiClient {
         method: 'PATCH',
         headers: this.getHeaders(),
         body: body ? JSON.stringify(body) : undefined,
-        credentials: 'include', // ✅ Enviar cookies httpOnly
+        credentials: 'include',
       })
 
-      const data = await response.json()
+      const data = await parseJsonResponse(response)
 
       if (!response.ok) {
-        return { error: data.message || 'Erro na requisição' }
+        return { error: getErrorMessage(data) }
       }
 
       return { data }
-    } catch (error) {
+    } catch {
       return { error: 'Erro de conexão' }
     }
   }
@@ -142,42 +159,20 @@ class ApiClient {
 
 export const apiClient = new ApiClient()
 
-// ✅ SOLUÇÃO PROFISSIONAL: Extrair tenant ID do JWT (fonte única da verdade)
-function getTenantFromToken(token: string | null): string | null {
-  if (!token) return null
-
-  try {
-    // JWT format: header.payload.signature
-    const payload = token.split('.')[1]
-    if (!payload) return null
-
-    const decoded = JSON.parse(atob(payload))
-    return decoded.tenantId || null
-  } catch {
-    return null
-  }
-}
-
-// Helper function for backward compatibility
 export async function apiRequest(endpoint: string, options?: RequestInit) {
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options?.headers as Record<string, string> || {}),
   }
 
-  // ✅ httpOnly cookies são enviados automaticamente pelo navegador
-  // Não é necessário adicionar Authorization header
-
-  // Build the full URL
   const url = `${API_BASE_URL}${endpoint}`
 
   const response = await fetch(url, {
     ...options,
     headers,
-    credentials: 'include', // Necessário para enviar cookies httpOnly
+    credentials: 'include',
   })
 
   return response.json()
 }
-
 export default apiClient
