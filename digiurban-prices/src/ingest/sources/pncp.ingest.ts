@@ -78,11 +78,8 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
       }
     }
 
-    // Contratos (fornecedores)
-    const contratos = await client.fetchAllPages(
-      (page) => client.fetchContratos({ sinceDays, uf, page }),
-      config.pncp.maxPagesContratos,
-    );
+    // Contratos (fornecedores) — PNCP limita a 365 dias por request, usar multi-janela
+    const contratos = await client.fetchContratosMultiWindow(sinceDays, 50, config.pncp.maxPagesContratos);
 
     logger.info('[PNCP Ingest] Contratos fetched', { count: contratos.length });
 

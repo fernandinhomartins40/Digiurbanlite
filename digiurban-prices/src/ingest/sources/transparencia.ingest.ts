@@ -186,16 +186,18 @@ async function processContrato(
     contractDate,
     uf,
     organizationId: org.id,
-    modality: contrato.modalidadeCompra ?? null,
+    // 'modality' não existe no modelo LineItem — vai apenas para OpenSearch
   };
+
+  const modality = contrato.modalidadeCompra ?? null;
 
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality });
     return 'updated';
   } else {
     const dbItem = await prisma.lineItem.create({ data });
-    await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name });
+    await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality });
     return 'ingested';
   }
 }

@@ -136,13 +136,25 @@ export class PncpClient {
 
   // Busca contratos (não compras)
   // Endpoint correto: /contratos (tamanhoPagina mínimo: 10, formato data: yyyyMMdd)
+  // LIMITAÇÃO DA API: período máximo de 365 dias por request
   async fetchContratos(options: PncpFetchOptions = {}): Promise<PncpContrato[]> {
-    const { sinceDays = config.ingest.sinceDays, page = 1 } = options;
+    const { page = 1 } = options;
     const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
 
-    const dataFinal = new Date();
-    const dataInicial = new Date();
-    dataInicial.setDate(dataFinal.getDate() - sinceDays);
+    // Usar dataInicial/dataFinal explícitas se fornecidas, caso contrário calcular por sinceDays
+    let dataFinal: Date;
+    let dataInicial: Date;
+    if (options.dataFinal && options.dataInicial) {
+      dataFinal = options.dataFinal;
+      dataInicial = options.dataInicial;
+    } else {
+      const sinceDays = options.sinceDays ?? config.ingest.sinceDays;
+      dataFinal = new Date();
+      dataInicial = new Date();
+      // PNCP limita a 365 dias por request — truncar se necessário
+      const effectiveDays = Math.min(sinceDays, 364);
+      dataInicial.setDate(dataFinal.getDate() - effectiveDays);
+    }
 
     const params: Record<string, unknown> = {
       dataInicial: this.formatDate(dataInicial),
@@ -165,6 +177,35 @@ export class PncpClient {
       logger.warn('[PNCP] Error fetching contratos', { error: (error as Error).message });
       return [];
     }
+  }
+
+  // Busca contratos em múltiplas janelas de 365 dias para cobrir períodos longos
+  async fetchContratosMultiWindow(sinceDays: number, pageSize = 50, maxPagesPerWindow = 300): Promise<PncpContrato[]> {
+    const WINDOW_DAYS = 364;
+    const all: PncpContrato[] = [];
+    const now = new Date();
+
+    // Dividir o período em janelas de 364 dias, do mais recente ao mais antigo
+    for (let offset = 0; offset < sinceDays; offset += WINDOW_DAYS) {
+      const windowEnd = new Date(now);
+      windowEnd.setDate(now.getDate() - offset);
+      const windowStart = new Date(now);
+      windowStart.setDate(now.getDate() - Math.min(offset + WINDOW_DAYS, sinceDays));
+
+      logger.info('[PNCP] Fetching contratos window', {
+        from: this.formatDate(windowStart),
+        to: this.formatDate(windowEnd),
+      });
+
+      const windowResults = await this.fetchAllPages(
+        (page) => this.fetchContratos({ dataInicial: windowStart, dataFinal: windowEnd, page, pageSize }),
+        maxPagesPerWindow,
+      );
+
+      all.push(...windowResults);
+    }
+
+    return all;
   }
 
   // Paginação automática (busca TODAS as páginas)

@@ -103,4 +103,6 @@ export interface PncpFetchOptions {
   modality?: number;
   page?: number;
   pageSize?: number;
+  dataInicial?: Date;   // quando fornecido, sobrepõe sinceDays
+  dataFinal?: Date;
 }

@@ -37,10 +37,8 @@ export async function runComprasnetIngest(options: ComprasnetIngestOptions = {})
   logger.info('[ComprasNet Ingest] Starting (via PNCP /contratos)', { sinceDays, runId });
 
   try {
-    const contratos = await client.fetchAllPages(
-      (page) => client.fetchContratos({ sinceDays, page, pageSize: 50 }),
-      config.pncp.maxPagesContratos,
-    );
+    // PNCP /contratos limita a 365 dias por request — usar multi-janela para períodos longos
+    const contratos = await client.fetchContratosMultiWindow(sinceDays, 50, config.pncp.maxPagesContratos);
 
     logger.info('[ComprasNet Ingest] Contratos fetched', { count: contratos.length });
 
@@ -198,17 +196,17 @@ async function processSingleContrato(
     uf,
     city,
     organizationId: org.id,
-    modality,
+    // 'modality' não existe no modelo LineItem — vai apenas para OpenSearch
   };
 
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality });
     return 'updated';
   }
 
   const dbItem = await prisma.lineItem.create({ data });
-  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality });
   return 'ingested';
 }
 
