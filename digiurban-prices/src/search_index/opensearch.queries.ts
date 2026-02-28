@@ -184,9 +184,9 @@ export function buildSearchQuery(params: SearchQueryParams) {
     if (period.to) range.lte = period.to;
     filter.push({ range: { contract_date: range } });
   } else {
-    // Padrão: últimos 24 meses
+    // Padrão: últimos 60 meses (5 anos) para cobrir fontes históricas como BPS (2020+)
     const from = new Date();
-    from.setFullYear(from.getFullYear() - 2);
+    from.setFullYear(from.getFullYear() - 5);
     filter.push({ range: { contract_date: { gte: from.toISOString().split('T')[0] } } });
   }
 
