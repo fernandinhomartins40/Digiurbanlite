@@ -87,7 +87,7 @@ EXPOSE 9003
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:9003/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
+  CMD node -e "require('http').get('http://localhost:9003/api/v1/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"
 
 # Copiar script de startup
 COPY docker-entrypoint.sh /app/docker-entrypoint.sh

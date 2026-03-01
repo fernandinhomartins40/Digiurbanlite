@@ -78,8 +78,8 @@ class DigiUrbanFlowServer {
   private createExpressApp(): express.Express {
     const app = express();
 
-    // Trust proxy (atrás de Nginx)
-    app.set('trust proxy', true);
+    // Trust proxy (atrás de Nginx) — usar número em vez de true para compatibilidade com express-rate-limit
+    app.set('trust proxy', 1);
 
     // Segurança
     app.use(helmet({ contentSecurityPolicy: false }));

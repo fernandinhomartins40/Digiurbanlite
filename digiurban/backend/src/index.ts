@@ -23,7 +23,8 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Trust proxy - CRÍTICO para rate limiting funcionar corretamente atrás de Nginx
-app.set('trust proxy', true);
+// Usar número em vez de true para compatibilidade com express-rate-limit (evita ERR_ERL_PERMISSIVE_TRUST_PROXY)
+app.set('trust proxy', 1);
 
 // Middleware de segurança — Helmet com CSP customizado
 app.use(helmet({
