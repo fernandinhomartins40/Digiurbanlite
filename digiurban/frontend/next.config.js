@@ -54,12 +54,16 @@ const withPWA = require('@ducanh2912/next-pwa').default({
         handler: 'NetworkOnly',
       },
       {
-        urlPattern: /\.(?:png|jpg|jpeg|svg|gif|webp|ico)$/,
+        // Cachear só imagens reais da mesma origem evita tentar gravar respostas inválidas no Cache API.
+        urlPattern: ({ request, sameOrigin }) => sameOrigin && request.destination === 'image',
         handler: 'CacheFirst',
         options: {
           // Bump de versão para evitar que respostas antigas (ex: HTML 200) fiquem presas no cache
           // e quebrem ícones do manifest como /icon-144x144.png.
-          cacheName: 'image-cache-v2',
+          cacheName: 'image-cache-v3',
+          cacheableResponse: {
+            statuses: [200],
+          },
           expiration: {
             maxEntries: 100,
             maxAgeSeconds: 30 * 24 * 60 * 60, // 30 dias

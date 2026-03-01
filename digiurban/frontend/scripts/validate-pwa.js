@@ -51,6 +51,18 @@ if (fs.existsSync(manifestPath)) {
       warnings++;
     }
 
+    if (manifest.screenshots && Array.isArray(manifest.screenshots)) {
+      manifest.screenshots.forEach((screenshot) => {
+        const screenshotPath = path.join(__dirname, '../public', screenshot.src.replace(/^\//, ''));
+        if (fs.existsSync(screenshotPath)) {
+          console.log(`   ✓ screenshot encontrado: ${screenshot.src}`);
+        } else {
+          console.warn(`⚠️  Screenshot referenciado não encontrado: ${screenshot.src}`);
+          warnings++;
+        }
+      });
+    }
+
   } catch (error) {
     console.error('❌ Erro ao ler manifest.json:', error.message);
     errors++;
