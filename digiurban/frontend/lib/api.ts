@@ -44,7 +44,10 @@ class ApiClient {
 
   async get<T>(endpoint: string, params?: Record<string, any>): Promise<ApiResponse<T>> {
     try {
-      const url = new URL(`${this.baseUrl}${endpoint}`)
+      const fullPath = `${this.baseUrl}${endpoint}`
+      // new URL() requer URL absoluta — usar window.location.origin como base quando relativa
+      const base = typeof window !== 'undefined' ? window.location.origin : undefined
+      const url = base ? new URL(fullPath, base) : new URL(fullPath)
 
       if (params) {
         Object.keys(params).forEach(key => {
