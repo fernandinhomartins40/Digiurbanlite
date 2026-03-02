@@ -20,23 +20,19 @@ export const loginRateLimiter = rateLimit({
     retryAfter: Math.ceil(RATE_LIMIT.WINDOW_MS / 1000 / 60), // em minutos
   },
   standardHeaders: true, // Retorna rate limit info nos headers `RateLimit-*`
-  legacyHeaders: false, // Desabilita headers `X-RateLimit-*`
-  skipSuccessfulRequests: false, // Conta requisições bem-sucedidas
-  skipFailedRequests: false, // Conta requisições que falharam
-  // CRÍTICO: Usar X-Forwarded-For do Nginx quando trust proxy está ativo
-  keyGenerator: (req) => {
-    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
-  },
+  legacyHeaders: false,  // Desabilita headers `X-RateLimit-*`
+  skipSuccessfulRequests: false,
+  skipFailedRequests: false,
   handler: (req, res) => {
     logger.warn('Rate limit exceeded', { ip: req.ip, path: req.path });
     res.status(429).json({
       success: false,
       error: 'Too many requests',
       message: RATE_LIMIT.MESSAGE,
-      retryAfter: Math.ceil(RATE_LIMIT.WINDOW_MS / 1000 / 60)
-        });
-  }
-        });
+      retryAfter: Math.ceil(RATE_LIMIT.WINDOW_MS / 1000 / 60),
+    });
+  },
+});
 
 /**
  * Rate limiter mais permissivo para rotas gerais de API
@@ -46,14 +42,11 @@ export const apiRateLimiter = rateLimit({
   max: 100, // 100 requisições por minuto
   message: {
     error: 'Too many requests',
-    message: 'Muitas requisições. Por favor, aguarde um momento.'
-        },
+    message: 'Muitas requisições. Por favor, aguarde um momento.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
-  }
-        });
+});
 
 /**
  * Rate limiter para rotas de registro
@@ -64,14 +57,11 @@ export const registerRateLimiter = rateLimit({
   max: 10, // 10 registros por 15 minutos
   message: {
     error: 'Too many registrations',
-    message: 'Muitas tentativas de cadastro. Tente novamente em 15 minutos.'
-        },
+    message: 'Muitas tentativas de cadastro. Tente novamente em 15 minutos.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
-  }
-        });
+});
 
 /**
  * Rate limiter para operações sensíveis (mudança de senha, etc)
@@ -81,14 +71,11 @@ export const sensitiveOperationLimiter = rateLimit({
   max: 5, // 5 operações por hora
   message: {
     error: 'Too many sensitive operations',
-    message: 'Muitas operações sensíveis. Tente novamente em 1 hora.'
-        },
+    message: 'Muitas operações sensíveis. Tente novamente em 1 hora.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
-  }
-        });
+});
 
 /**
  * Rate limiter para reset de senha
@@ -98,14 +85,11 @@ export const passwordResetLimiter = rateLimit({
   max: 3, // 3 tentativas
   message: {
     error: 'Too many password reset attempts',
-    message: 'Muitas tentativas de reset de senha. Tente novamente em 15 minutos.'
-        },
+    message: 'Muitas tentativas de reset de senha. Tente novamente em 15 minutos.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
-  }
-        });
+});
 
 /**
  * Rate limiter para exportação de dados (LGPD)
@@ -115,11 +99,8 @@ export const dataExportLimiter = rateLimit({
   max: 5, // 5 exportações por dia
   message: {
     error: 'Too many export requests',
-    message: 'Limite de exportações diárias atingido. Tente novamente amanhã.'
-        },
+    message: 'Limite de exportações diárias atingido. Tente novamente amanhã.',
+  },
   standardHeaders: true,
   legacyHeaders: false,
-  keyGenerator: (req) => {
-    return req.ip || (req.headers['x-forwarded-for'] as string) || 'unknown';
-  }
-        });
+});

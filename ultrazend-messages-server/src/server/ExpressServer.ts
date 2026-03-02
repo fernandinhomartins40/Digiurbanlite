@@ -68,13 +68,8 @@ export class ExpressServer {
       message: 'Too many requests from this IP',
       standardHeaders: true,
       legacyHeaders: false,
-      // CRÍTICO: Configurar skip failure quando trust proxy está ativo
       skipFailedRequests: false,
       skipSuccessfulRequests: false,
-      // Usar X-Forwarded-For do Nginx
-      keyGenerator: (req) => {
-        return req.ip || req.headers['x-forwarded-for'] as string || 'unknown';
-      },
     });
     this.app.use('/api', limiter);
 
