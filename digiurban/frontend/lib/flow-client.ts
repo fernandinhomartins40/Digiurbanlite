@@ -265,33 +265,33 @@ class FlowClient {
   // ─── Processos ───
 
   async createProcess(input: CreateProcessInput): Promise<InternalProcess> {
-    const { data } = await api.post<InternalProcess>(`${this.baseUrl}/processes`, input)
-    if (!data) throw new Error('Erro ao criar processo')
-    return data
+    const res = await api.post<InternalProcess>(`${this.baseUrl}/processes`, input)
+    if (!res.data) throw new Error(res.error || 'Erro ao criar processo')
+    return res.data
   }
 
   async listProcesses(params?: Record<string, string | number | undefined>): Promise<ProcessListResponse> {
-    const { data } = await api.get<ProcessListResponse>(`${this.baseUrl}/processes`, params)
-    if (!data) throw new Error('Erro ao listar processos')
-    return data
+    const res = await api.get<ProcessListResponse>(`${this.baseUrl}/processes`, params)
+    if (!res.data) throw new Error(res.error || 'Erro ao listar processos')
+    return res.data
   }
 
   async getProcess(id: string): Promise<ProcessDetail> {
-    const { data } = await api.get<ProcessDetail>(`${this.baseUrl}/processes/${id}`)
-    if (!data) throw new Error('Processo não encontrado')
-    return data
+    const res = await api.get<ProcessDetail>(`${this.baseUrl}/processes/${id}`)
+    if (!res.data) throw new Error(res.error || 'Processo não encontrado')
+    return res.data
   }
 
   async updateProcess(id: string, input: Partial<CreateProcessInput>): Promise<InternalProcess> {
-    const { data } = await api.patch<InternalProcess>(`${this.baseUrl}/processes/${id}`, input)
-    if (!data) throw new Error('Erro ao atualizar processo')
-    return data
+    const res = await api.patch<InternalProcess>(`${this.baseUrl}/processes/${id}`, input)
+    if (!res.data) throw new Error(res.error || 'Erro ao atualizar processo')
+    return res.data
   }
 
   async cancelProcess(id: string, reason: string): Promise<InternalProcess> {
-    const { data } = await api.delete<InternalProcess>(`${this.baseUrl}/processes/${id}`, { reason })
-    if (!data) throw new Error('Erro ao cancelar processo')
-    return data
+    const res = await api.delete<InternalProcess>(`${this.baseUrl}/processes/${id}`, { reason })
+    if (!res.data) throw new Error(res.error || 'Erro ao cancelar processo')
+    return res.data
   }
 
   // ─── Tramitação ───
