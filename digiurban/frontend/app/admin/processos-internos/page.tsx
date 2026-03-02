@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -146,216 +147,6 @@ function PriorityBadge({ priority }: { priority: number }) {
       <Flag className="w-3 h-3" />
       {PRIORITY_LABELS[priority]}
     </span>
-  )
-}
-
-// ============================================================================
-// DIALOG: CRIAR PROCESSO
-// ============================================================================
-
-function CreateProcessDialog({
-  open,
-  onClose,
-  processTypes,
-  onCreated,
-}: {
-  open: boolean
-  onClose: () => void
-  processTypes: ProcessType[]
-  onCreated: () => void
-}) {
-  const { user } = useAdminAuth()
-  const { toast } = useToast()
-  const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({
-    typeId: '',
-    subject: '',
-    description: '',
-    sigilo: 'PUBLICO',
-    priority: '0',
-    originSectorId: '',
-    originSectorName: '',
-    dueAt: '',
-    tags: '',
-  })
-
-  const selectedType = processTypes.find(t => t.id === form.typeId)
-  const hasDefaultFlow = !!selectedType?.defaultWorkflowTemplateId
-
-  useEffect(() => {
-    if (!open || form.originSectorName) return
-
-    const defaultSectorName = user?.department?.name || user?.primaryDepartment?.name
-    const defaultSectorId = user?.departmentId || user?.primaryDepartment?.id || defaultSectorName
-
-    if (!defaultSectorName || !defaultSectorId) return
-
-    setForm(current => ({
-      ...current,
-      originSectorId: defaultSectorId,
-      originSectorName: defaultSectorName,
-    }))
-  }, [form.originSectorName, open, user?.department?.name, user?.departmentId, user?.primaryDepartment?.id, user?.primaryDepartment?.name])
-
-  const handleSubmit = async () => {
-    if (!form.typeId || !form.subject || !form.originSectorName) {
-      toast({ title: 'Preencha os campos obrigatórios', variant: 'destructive' })
-      return
-    }
-    setLoading(true)
-    try {
-      await flowClient.createProcess({
-        typeId: form.typeId,
-        subject: form.subject,
-        description: form.description || undefined,
-        sigilo: form.sigilo,
-        priority: parseInt(form.priority),
-        originSectorId: form.originSectorId || form.originSectorName,
-        originSectorName: form.originSectorName,
-        dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : undefined,
-        tags: form.tags ? form.tags.split(',').map((t: string) => t.trim()).filter(Boolean) : [],
-      })
-
-      toast({ title: 'Processo criado com sucesso!' })
-      onCreated()
-      onClose()
-      setForm({
-        typeId: '',
-        subject: '',
-        description: '',
-        sigilo: 'PUBLICO',
-        priority: '0',
-        originSectorId: '',
-        originSectorName: '',
-        dueAt: '',
-        tags: '',
-      })
-    } catch (error) {
-      toast({ title: 'Erro ao criar processo', description: (error as Error).message, variant: 'destructive' })
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
-          <DialogTitle>Novo Processo Interno</DialogTitle>
-          <DialogDescription>Preencha os dados para abrir um novo processo</DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4 py-2">
-          <div>
-            <Label>Tipo de Processo *</Label>
-            <Select value={form.typeId} onValueChange={v => setForm(f => ({ ...f, typeId: v }))}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                {processTypes.filter(t => t.isActive).map(t => (
-                  <SelectItem key={t.id} value={t.id}>{t.name} ({t.prefix})</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Label>Assunto *</Label>
-            <Input
-              value={form.subject}
-              onChange={e => setForm(f => ({ ...f, subject: e.target.value }))}
-              placeholder="Descreva o assunto do processo"
-            />
-          </div>
-          <div>
-            <OrganizationalUnitAutocomplete
-              label="Setor de Origem"
-              value={form.originSectorName}
-              onValueChange={value => setForm(f => ({
-                ...f,
-                originSectorName: value,
-                originSectorId: value,
-              }))}
-              onSelect={unit => setForm(f => ({
-                ...f,
-                originSectorId: unit.id,
-                originSectorName: unit.nome,
-              }))}
-              placeholder="Ex: Secretaria de Administração"
-              required
-              helperText="Selecione uma unidade existente ou mantenha texto livre para preservar compatibilidade."
-            />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label>Sigilo</Label>
-              <Select value={form.sigilo} onValueChange={v => setForm(f => ({ ...f, sigilo: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="PUBLICO">Público</SelectItem>
-                  <SelectItem value="RESTRITO">Restrito</SelectItem>
-                  <SelectItem value="CONFIDENCIAL">Confidencial</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label>Prioridade</Label>
-              <Select value={form.priority} onValueChange={v => setForm(f => ({ ...f, priority: v }))}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="0">Normal</SelectItem>
-                  <SelectItem value="1">Urgente</SelectItem>
-                  <SelectItem value="2">Urgentíssimo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div>
-            <Label>Prazo</Label>
-            <Input
-              type="datetime-local"
-              value={form.dueAt}
-              onChange={e => setForm(f => ({ ...f, dueAt: e.target.value }))}
-            />
-          </div>
-          <div>
-            <Label>Descrição</Label>
-            <Textarea
-              value={form.description}
-              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
-              placeholder="Detalhes adicionais (opcional)"
-              rows={3}
-            />
-          </div>
-          <div>
-            <Label>Tags (separadas por vírgula)</Label>
-            <Input
-              value={form.tags}
-              onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-              placeholder="Ex: urgente, financeiro, recurso"
-            />
-          </div>
-
-          {/* Iniciar fluxo automático — só aparece se o tipo tem fluxo padrão */}
-          {hasDefaultFlow && (
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
-              <span className="flex items-center gap-1 text-sm font-medium text-blue-800">
-                <GitBranch className="inline h-3.5 w-3.5" /> Fluxo iniciado automaticamente
-              </span>
-              <span className="mt-1 block text-xs text-blue-600">
-                Este tipo já cria o processo com o fluxo padrão:
-                <strong> {selectedType?.defaultWorkflowTemplate?.name || 'Fluxo padrão do tipo'}</strong>
-              </span>
-            </div>
-          )}
-        </div>
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={loading}>
-            {loading ? 'Criando...' : 'Criar Processo'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
   )
 }
 
@@ -1352,6 +1143,8 @@ function ProcessCard({
 // ============================================================================
 
 function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
+  const router = useRouter()
+  const searchParams = useSearchParams()
   const { toast } = useToast()
   const [processes, setProcesses] = useState<InternalProcess[]>([])
   const [total, setTotal] = useState(0)
@@ -1361,7 +1154,6 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
   const [filterStatus, setFilterStatus] = useState('all')
   const [filterType, setFilterType] = useState('all')
   const [filterPriority, setFilterPriority] = useState('all')
-  const [createOpen, setCreateOpen] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [dispatchProcess, setDispatchProcess] = useState<InternalProcess | null>(null)
   const [returnProcess, setReturnProcess] = useState<InternalProcess | null>(null)
@@ -1389,6 +1181,22 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
   useEffect(() => {
     loadProcesses()
   }, [loadProcesses])
+
+  useEffect(() => {
+    const createdProcessId = searchParams.get('created')
+    if (!createdProcessId) return
+
+    setSelectedId(createdProcessId)
+    toast({
+      title: 'Processo criado com sucesso!',
+      description: 'O novo processo foi aberto e já pode seguir para conferência ou tramitação.',
+    })
+
+    const params = new URLSearchParams(searchParams.toString())
+    params.delete('created')
+    const query = params.toString()
+    router.replace(query ? `/admin/processos-internos?${query}` : '/admin/processos-internos')
+  }, [router, searchParams, toast])
 
   const totalPages = Math.ceil(total / 20)
 
@@ -1438,8 +1246,10 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
         })}>
           <Download className="w-4 h-4 mr-1" /> CSV
         </Button>
-        <Button size="sm" onClick={() => setCreateOpen(true)}>
-          <Plus className="w-4 h-4 mr-1" /> Novo Processo
+        <Button size="sm" asChild>
+          <Link href="/admin/processos-internos/novo">
+            <Plus className="w-4 h-4 mr-1" /> Novo Processo
+          </Link>
         </Button>
       </div>
 
@@ -1458,8 +1268,10 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
         <div className="py-16 text-center">
           <ArrowRightLeft className="w-10 h-10 text-gray-300 mx-auto mb-3" />
           <p className="text-gray-500">Nenhum processo encontrado</p>
-          <Button className="mt-4" onClick={() => setCreateOpen(true)}>
-            <Plus className="w-4 h-4 mr-2" /> Criar Primeiro Processo
+          <Button className="mt-4" asChild>
+            <Link href="/admin/processos-internos/novo">
+              <Plus className="w-4 h-4 mr-2" /> Criar Primeiro Processo
+            </Link>
           </Button>
         </div>
       ) : (
@@ -1485,7 +1297,6 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
         </div>
       )}
 
-      <CreateProcessDialog open={createOpen} onClose={() => setCreateOpen(false)} processTypes={processTypes} onCreated={loadProcesses} />
       <DispatchDialog process={dispatchProcess} onClose={() => setDispatchProcess(null)} onDone={loadProcesses} />
       <ReturnDialog process={returnProcess} onClose={() => setReturnProcess(null)} onDone={loadProcesses} />
       <ActionDialog process={actionProcess} actionType={actionType} onClose={() => { setActionProcess(null); setActionType(null) }} onDone={loadProcesses} />
@@ -2053,4 +1864,3 @@ export default function ProcessosInternosPage() {
     </div>
   )
 }
-
