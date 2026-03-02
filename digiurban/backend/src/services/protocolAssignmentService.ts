@@ -49,13 +49,17 @@ interface AssignTeamParams {
 /**
  * Buscar o vínculo funcional ativo (EmployeeAssignment) do servidor
  */
-async function getActiveEmployeeAssignment(userId: string) {
+async function getActiveEmployeeAssignment(userId: string, departmentId?: string) {
   return await prisma.employeeAssignment.findFirst({
     where: {
       userId,
       situacao: 'ATIVO',
-      isPrimary: true
+      ...(departmentId ? { departmentId } : {})
     },
+    orderBy: [
+      { isPrimary: 'desc' },
+      { dataInicio: 'desc' }
+    ],
     include: {
       organizationalUnit: true,
       position: true,
@@ -205,7 +209,9 @@ export async function assignProtocolToServer(params: AssignProtocolParams) {
   }
 
   // 4. Buscar vínculo funcional ativo
-  const employeeAssignment = await getActiveEmployeeAssignment(assignedUserId);
+  const employeeAssignment =
+    await getActiveEmployeeAssignment(assignedUserId, protocol.departmentId) ||
+    await getActiveEmployeeAssignment(assignedUserId);
 
   // 5. Marcar atribuições anteriores como SUBSTITUIDA
   await prisma.protocolServerAssignment.updateMany({
@@ -335,6 +341,15 @@ export async function delegateProtocol(params: DelegateProtocolParams) {
     comentario
   } = params;
 
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: { departmentId: true }
+  });
+
+  if (!protocol) {
+    throw new Error('Protocolo nao encontrado');
+  }
+
   // 1. Validar servidor delegado
   const delegado = await prisma.user.findUnique({
     where: { id: delegadoParaUserId },
@@ -351,7 +366,9 @@ export async function delegateProtocol(params: DelegateProtocolParams) {
   }
 
   // 2. Buscar vínculo funcional
-  const employeeAssignment = await getActiveEmployeeAssignment(delegadoParaUserId);
+  const employeeAssignment =
+    await getActiveEmployeeAssignment(delegadoParaUserId, protocol.departmentId) ||
+    await getActiveEmployeeAssignment(delegadoParaUserId);
 
   // 3. Criar atribuição de delegação
   const assignment = await prisma.protocolServerAssignment.create({
@@ -437,10 +454,19 @@ export async function forwardProtocol(params: ForwardProtocolParams) {
   }
 
   // 3. Verificar se é interdepartamental
-  const isInterdepartamental = forwardToDepartmentId && forwardToDepartmentId !== protocol.departmentId;
+  const destinationDepartmentId = forwardToDepartmentId || protocol.departmentId;
+  const isInterdepartamental = destinationDepartmentId !== protocol.departmentId;
 
   // 4. Buscar vínculo funcional
-  const employeeAssignment = await getActiveEmployeeAssignment(forwardToUserId);
+  const employeeAssignment =
+    await getActiveEmployeeAssignment(forwardToUserId, destinationDepartmentId) ||
+    await getActiveEmployeeAssignment(forwardToUserId);
+  const destinationDepartment =
+    employeeAssignment?.department ||
+    await prisma.department.findUnique({
+      where: { id: destinationDepartmentId },
+      select: { id: true, name: true }
+    });
 
   // 5. Se ENCAMINHADO, marcar atribuição anterior como SUBSTITUIDA
   if (tipoEncaminhamento === 'ENCAMINHADO') {
@@ -472,8 +498,8 @@ export async function forwardProtocol(params: ForwardProtocolParams) {
       isInterdepartamental: isInterdepartamental || false,
       departmentOrigemId: protocol.departmentId,
       departmentOrigemName: protocol.department.name,
-      departmentDestinoId: forwardToDepartmentId,
-      departmentDestinoName: forwardToUser.department?.name,
+      departmentDestinoId: destinationDepartmentId,
+      departmentDestinoName: destinationDepartment?.name,
       employeeAssignmentId: employeeAssignment?.id,
       organizationalUnitId: employeeAssignment?.organizationalUnitId,
       dataInicio: new Date()
@@ -486,7 +512,7 @@ export async function forwardProtocol(params: ForwardProtocolParams) {
       where: { id: protocolId },
       data: {
         currentAssignedUserId: forwardToUserId,
-        departmentId: forwardToDepartmentId || protocol.departmentId
+        departmentId: destinationDepartmentId
       }
     });
   }
@@ -683,12 +709,44 @@ export async function getWorkloadStats(departmentId?: string) {
   };
 
   if (departmentId) {
-    where.departmentId = departmentId;
+    where.OR = [
+      { departmentId },
+      {
+        userDepartments: {
+          some: {
+            departmentId,
+            isActive: true
+          }
+        }
+      },
+      {
+        assignments: {
+          some: {
+            departmentId,
+            situacao: 'ATIVO'
+          }
+        }
+      }
+    ];
   }
 
   const users = await prisma.user.findMany({
     where,
     include: {
+      department: true,
+      userDepartments: {
+        where: {
+          isActive: true,
+          ...(departmentId ? { departmentId } : {})
+        },
+        include: {
+          department: true
+        },
+        orderBy: [
+          { isPrimary: 'desc' },
+          { createdAt: 'asc' }
+        ]
+      },
       healthData: true,
       protocolAssignments: {
         where: {
@@ -706,9 +764,14 @@ export async function getWorkloadStats(departmentId?: string) {
       assignments: {
         where: {
           situacao: 'ATIVO',
-          isPrimary: true
+          ...(departmentId ? { departmentId } : {})
         },
+        orderBy: [
+          { isPrimary: 'desc' },
+          { dataInicio: 'desc' }
+        ],
         include: {
+          department: true,
           organizationalUnit: true,
           position: true
         }
@@ -728,12 +791,20 @@ export async function getWorkloadStats(departmentId?: string) {
     // Cálculo de carga percentual (baseado em 20 protocolos = 100%)
     const cargaPercentual = Math.min(100, Math.round((protocolosAtivos / 20) * 100));
 
-    const primaryAssignment = user.assignments.find(a => a.isPrimary);
+    const primaryAssignment = user.assignments.find(a => a.isPrimary) || user.assignments[0];
+    const primaryUserDepartment = user.userDepartments.find(ud => ud.isPrimary) || user.userDepartments[0];
+    const resolvedDepartment =
+      primaryAssignment?.department ||
+      primaryUserDepartment?.department ||
+      user.department ||
+      null;
 
     return {
       userId: user.id,
       name: user.name,
       email: user.email,
+      departmentId: resolvedDepartment?.id || null,
+      departmentName: resolvedDepartment?.name || null,
       protocolosAtivos,
       protocolosPendentes,
       protocolosPrazoVencido,

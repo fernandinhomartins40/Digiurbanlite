@@ -563,7 +563,7 @@ export default function ProtocolDetailPage() {
         open={showAssignDialog}
         onOpenChange={setShowAssignDialog}
         protocolId={protocolId}
-        departmentId={protocol.department?.id}
+        departmentId={protocol.departmentId || protocol.department?.id}
         onSuccess={() => {
           setShowAssignDialog(false)
           loadProtocolData()
@@ -574,6 +574,7 @@ export default function ProtocolDetailPage() {
         open={showDelegateDialog}
         onOpenChange={setShowDelegateDialog}
         protocolId={protocolId}
+        departmentId={protocol.departmentId || protocol.department?.id}
         onSuccess={() => {
           setShowDelegateDialog(false)
           loadProtocolData()
@@ -584,6 +585,7 @@ export default function ProtocolDetailPage() {
         open={showForwardDialog}
         onOpenChange={setShowForwardDialog}
         protocolId={protocolId}
+        currentDepartmentId={protocol.departmentId || protocol.department?.id}
         onSuccess={() => {
           setShowForwardDialog(false)
           loadProtocolData()

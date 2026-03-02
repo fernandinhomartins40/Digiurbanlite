@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -109,8 +109,11 @@ export default function AdminDashboard() {
 
   // Carregar protocolos pendentes (apenas para ADMIN)
   // Busca todos os protocolos não concluídos, ordenados por prioridade
-  const loadPendingProtocols = async () => {
-    if (user?.role !== 'ADMIN') return
+  const loadPendingProtocols = useCallback(async () => {
+    if (user?.role !== 'ADMIN') {
+      setPendingProtocols([])
+      return
+    }
 
     try {
       setLoadingProtocols(true)
@@ -138,7 +141,7 @@ export default function AdminDashboard() {
 
     } catch (error: any) {
       // Ignorar erro de "Não autenticado" (situação normal durante carregamento inicial)
-      if (error?.message !== 'Não autenticado') {
+      if (!error?.message?.includes('autenticado')) {
         console.error('❌ Erro ao carregar protocolos pendentes:', error)
         // Em caso de erro, limpar lista
         setPendingProtocols([])
@@ -146,7 +149,7 @@ export default function AdminDashboard() {
     } finally {
       setLoadingProtocols(false)
     }
-  }
+  }, [apiRequest, user?.role])
 
   // Cobrar agilidade do setor
   const requestUpdate = async (protocolId: string) => {
@@ -182,18 +185,17 @@ export default function AdminDashboard() {
   // Carregar protocolos pendentes ao montar e sempre que retornar à página
   // CRITICAL FIX: Apenas depender de loading para evitar loop infinito
   useEffect(() => {
-    // ✅ Só executar quando autenticação estiver COMPLETA (loading: false) E tiver user/stats
-    if (!loading && user?.role === 'ADMIN' && stats) {
-      // ✅ CRÍTICO: Sempre recarregar ao montar/retornar à página
-      loadPendingProtocols()
+    if (loading || user?.role !== 'ADMIN') {
+      return
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading])
+
+    loadPendingProtocols()
+  }, [loadPendingProtocols, loading, user?.role])
 
   // ✅ NOVO: Recarregar dados quando a página ganha foco (usuário volta para a tab)
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (!document.hidden && !loading && user?.role === 'ADMIN' && stats) {
+      if (!document.hidden && !loading && user?.role === 'ADMIN') {
         console.log('🔄 Página ganhou foco, recarregando dados...')
         loadPendingProtocols()
       }
@@ -201,8 +203,7 @@ export default function AdminDashboard() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [loadPendingProtocols, loading, user?.role])
 
   if (!user) {
     return (

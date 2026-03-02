@@ -94,6 +94,18 @@ interface AdminAuthProviderProps {
   children: ReactNode
 }
 
+type RequestError = Error & {
+  status?: number
+  code?: string | null
+}
+
+function createRequestError(message: string, status?: number, code?: string | null): RequestError {
+  const error = new Error(message) as RequestError
+  error.status = status
+  error.code = code
+  return error
+}
+
 export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   const [user, setUser] = useState<AdminUser | null>(null)
   const [stats, setStats] = useState<AdminAuthStats | null>(null)
@@ -102,6 +114,34 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   const [error, setError] = useState<string | null>(null)
   const [isRedirecting, setIsRedirecting] = useState(false)
   const router = useRouter()
+
+  const fetchCurrentUserData = useCallback(async () => {
+    const response = await fetch(getFullApiUrl('/admin/auth/me'), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      credentials: 'include',
+      cache: 'no-store'
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({
+        error: 'Erro desconhecido',
+        message: 'Erro desconhecido',
+        code: null
+      }))
+
+      throw createRequestError(
+        errorData.message || errorData.error || 'Erro na requisição',
+        response.status,
+        errorData.code ?? null
+      )
+    }
+
+    const result = await response.json()
+    return result.data || result
+  }, [])
 
   // Função para fazer requisições autenticadas
   const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
@@ -128,11 +168,17 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include' // Enviar cookies automaticamente
+      credentials: 'include', // Enviar cookies automaticamente
+      cache: options.cache ?? 'no-store'
     })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido', code: null }))
+      const requestError = createRequestError(
+        errorData.message || errorData.error || 'Erro na requisição',
+        response.status,
+        errorData.code ?? null
+      )
 
       // Se 401, token expirado ou inválido (cookie será limpo pelo backend)
       if (response.status === 401) {
@@ -144,10 +190,14 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         // NÃO redirecionar aqui - deixar o AdminLayout fazer isso
         // Isso evita múltiplos redirects e erros 301
 
-        throw new Error(errorData.code === 'TOKEN_EXPIRED' ? 'Token expirado' : 'Não autenticado')
+        throw createRequestError(
+          errorData.code === 'TOKEN_EXPIRED' ? 'Token expirado' : 'Não autenticado',
+          response.status,
+          errorData.code ?? null
+        )
       }
 
-      throw new Error(errorData.error || 'Erro na requisição')
+      throw requestError
     }
 
     return response.json()
@@ -172,6 +222,7 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         },
         body: JSON.stringify({ email, password }),
         credentials: 'include', // Incluir cookies
+        cache: 'no-store'
       })
 
       if (!response.ok) {
@@ -190,10 +241,19 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
       setPermissions(data.permissions || [])
       setStats(data.stats || null)
 
-      // Não chamar refreshUserData() aqui - dados já vieram no login
-      // O refreshUserData() será chamado pelo checkAuth() ao montar o dashboard
+      // O login retorna usuário e permissões, mas as estatísticas confiáveis
+      // vêm de /admin/auth/me; sincronizamos antes da navegação.
 
-      router.push('/admin/dashboard')
+      try {
+        const currentUserData = await fetchCurrentUserData()
+        setUser(currentUserData.user)
+        setPermissions(currentUserData.permissions || data.permissions || [])
+        setStats(currentUserData.stats || null)
+      } catch (refreshError) {
+        console.warn('[Auth] Login concluído, mas a sincronização inicial de /me falhou:', refreshError)
+      }
+
+      router.replace('/admin/dashboard')
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro no login')
       throw err
@@ -221,23 +281,25 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
   // Função para atualizar dados do usuário
   const refreshUserData = useCallback(async () => {
     try {
-      const response = await apiRequest('/admin/auth/me')
-      const data = response.data || response
+      const data = await fetchCurrentUserData()
       setUser(data.user)
       setStats(data.stats)
       setPermissions(data.permissions || [])
       return true
     } catch (err) {
-      // Silenciar erro 401 (já tratado no apiRequest)
-      // Apenas logar outros erros
-      if (err instanceof Error && !err.message.includes('Authentication failed') && !err.message.includes('Não autenticado')) {
+      if ((err as RequestError)?.status === 401) {
+        setUser(null)
+        setStats(null)
+        setPermissions([])
+      }
+
+      if (err instanceof Error && !err.message.includes('Authentication failed') && !err.message.includes('autenticado')) {
         console.error('Erro ao atualizar dados do usuário:', err)
       }
-      // Não precisamos limpar aqui, apiRequest já fez isso
+
       return false
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [fetchCurrentUserData])
 
   // Função para verificar autenticação ao carregar
   const checkAuth = useCallback(async () => {

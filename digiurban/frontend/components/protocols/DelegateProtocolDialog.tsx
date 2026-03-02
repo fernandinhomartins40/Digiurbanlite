@@ -26,19 +26,20 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { getFullApiUrl } from '@/lib/api-config';
 
 interface DelegateProtocolDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   protocolId: string;
+  departmentId?: string;
   onSuccess?: () => void;
 }
 
 interface User {
-  id: string;
+  userId: string;
   name: string;
   email: string;
-  role: string;
   protocolosAtivos?: number;
   cargaPercentual?: number;
   status?: string;
@@ -48,6 +49,7 @@ export function DelegateProtocolDialog({
   open,
   onOpenChange,
   protocolId,
+  departmentId,
   onSuccess
 }: DelegateProtocolDialogProps) {
   const [delegadoParaUserId, setDelegadoParaUserId] = useState('');
@@ -62,13 +64,18 @@ export function DelegateProtocolDialog({
     if (open) {
       fetchUsers();
     }
-  }, [open]);
+  }, [open, departmentId]);
 
   const fetchUsers = async () => {
     try {
       setLoadingUsers(true);
-      const response = await fetch('/api/protocols/workload-stats', {
-        credentials: 'include'
+      const url = departmentId
+        ? getFullApiUrl(`/protocols/workload-stats?departmentId=${encodeURIComponent(departmentId)}`)
+        : getFullApiUrl('/protocols/workload-stats');
+
+      const response = await fetch(url, {
+        credentials: 'include',
+        cache: 'no-store'
       });
 
       if (response.ok) {
@@ -92,7 +99,7 @@ export function DelegateProtocolDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/protocols/${protocolId}/delegate`, {
+      const response = await fetch(getFullApiUrl(`/protocols/${protocolId}/delegate`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -160,7 +167,7 @@ export function DelegateProtocolDialog({
                   {users
                     .filter(u => u.status === 'ATIVO')
                     .map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
+                      <SelectItem key={user.userId} value={user.userId}>
                         {user.name}
                         {user.cargaPercentual !== undefined && (
                           <span className="text-xs text-gray-500 ml-2">

@@ -17,12 +17,13 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Loader2, User, Users, Sparkles, Check, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
+import { getFullApiUrl } from '@/lib/api-config';
 
 interface AssignProtocolDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   protocolId: string;
-  departmentId: string;
+  departmentId?: string;
   onSuccess?: () => void;
 }
 
@@ -87,11 +88,14 @@ export function AssignProtocolDialog({
     try {
       setLoadingServers(true);
       const url = departmentId
-        ? `/api/protocols/workload-stats?departmentId=${departmentId}`
-        : '/api/protocols/workload-stats';
+        ? getFullApiUrl(`/protocols/workload-stats?departmentId=${encodeURIComponent(departmentId)}`)
+        : getFullApiUrl('/protocols/workload-stats');
 
       console.log('🌐 [ASSIGN-DIALOG] Fazendo requisição para:', url);
-      const response = await fetch(url, { credentials: 'include' });
+      const response = await fetch(url, {
+        credentials: 'include',
+        cache: 'no-store'
+      });
       console.log('📊 [ASSIGN-DIALOG] Status da resposta:', response.status, response.statusText);
 
       if (response.ok) {
@@ -117,10 +121,13 @@ export function AssignProtocolDialog({
     try {
       setLoadingSuggestions(true);
       const url = departmentId
-        ? `/api/protocols/${protocolId}/suggest-assignee?departmentId=${departmentId}`
-        : `/api/protocols/${protocolId}/suggest-assignee`;
+        ? getFullApiUrl(`/protocols/${protocolId}/suggest-assignee?departmentId=${encodeURIComponent(departmentId)}`)
+        : getFullApiUrl(`/protocols/${protocolId}/suggest-assignee`);
 
-      const response = await fetch(url, { credentials: 'include' });
+      const response = await fetch(url, {
+        credentials: 'include',
+        cache: 'no-store'
+      });
 
       if (response.ok) {
         const data = await response.json();
@@ -146,7 +153,7 @@ export function AssignProtocolDialog({
     try {
       setLoading(true);
 
-      const response = await fetch(`/api/protocols/${protocolId}/assign`, {
+      const response = await fetch(getFullApiUrl(`/protocols/${protocolId}/assign`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
