@@ -25,22 +25,34 @@ export type WorkflowStageAction =
   | 'REQUEST_INFO'      // Solicitar informações adicionais
   | 'SKIP'              // Pular etapa (se permitido)
 
-export type WorkflowStageSupportTargetType = 'USER' | 'ORGANIZATIONAL_UNIT'
+export type WorkflowStageSupportTargetType = 'USER' | 'DEPARTMENT' | 'ORGANIZATIONAL_UNIT'
 
-export type WorkflowStageSupportMode = 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT'
+export type WorkflowStageSupportMode =
+  | 'REFERENCE_ONLY'
+  | 'SUGGEST_ASSIGNMENT'
+  | 'REQUIRED_EXECUTION'
 
 export interface WorkflowStageSupportAssignment {
   id?: string
   targetType: WorkflowStageSupportTargetType
   mode?: WorkflowStageSupportMode
   userId?: string
+  departmentId?: string
   organizationalUnitId?: string
+  userName?: string
+  departmentName?: string
+  organizationalUnitName?: string
   user?: {
     id: string
     name: string
     email?: string
-    departmentId?: string
-    departmentName?: string
+      departmentId?: string
+      departmentName?: string
+  }
+  department?: {
+    id: string
+    name: string
+    code?: string
   }
   organizationalUnit?: {
     id: string
@@ -231,4 +243,3 @@ export interface ServiceForWorkflow {
 
 // ✅ FASE 2: WorkflowStatus enum removido (não era usado)
 // export { WorkflowStatus } from '@prisma/client';
-

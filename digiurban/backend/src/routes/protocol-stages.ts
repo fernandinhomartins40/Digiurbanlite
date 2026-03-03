@@ -188,11 +188,15 @@ router.put(
         data: stage
         });
     } catch (error) {
-      console.error('Erro ao iniciar etapa:', error);
-      return res.status(500).json({
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      const isAuthorization = message.includes('Execução restrita') || message.includes('não autorizado');
+      if (!isAuthorization) {
+        console.error('Erro ao iniciar etapa:', error);
+      }
+      return res.status(isAuthorization ? 400 : 500).json({
         success: false,
-        error: 'Erro ao iniciar etapa',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: isAuthorization ? message : 'Erro ao iniciar etapa',
+        details: message
         });
     }
   }
@@ -207,6 +211,7 @@ router.get(
   adminAuthMiddleware,
   async (req, res) => {
     try {
+      const authReq = req as AuthenticatedRequest;
       const { protocolId, stageId } = req.params;
 
       const stage = await stageService.getStageById(stageId);
@@ -225,6 +230,12 @@ router.get(
         protocolId,
         stage.stageOrder
       );
+      const executionAccess = await stageService.getStageExecutionAccess(stageId, authReq.userId);
+
+      if (!executionAccess.canExecute) {
+        validation.canProgress = false;
+        validation.blockers = [...executionAccess.blockers, ...validation.blockers];
+      }
 
       return res.json({
         success: true,
@@ -233,6 +244,7 @@ router.get(
           stageName: stage.stageName,
           stageOrder: stage.stageOrder,
           validation,
+          executionAccess,
           metadata: stage.metadata
         }
       });
@@ -275,13 +287,14 @@ router.put(
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Erro desconhecido';
       const isValidation = message.includes('Não é possível aprovar') || message.includes('Pendências') || message.includes('Documentos pendentes');
-      const statusCode = isValidation ? 400 : 500;
-      if (!isValidation) {
+      const isAuthorization = message.includes('Execução restrita') || message.includes('não autorizado');
+      const statusCode = isValidation || isAuthorization ? 400 : 500;
+      if (!isValidation && !isAuthorization) {
         console.error('Erro ao completar etapa:', error);
       }
       return res.status(statusCode).json({
         success: false,
-        error: isValidation ? message : 'Erro ao completar etapa',
+        error: isValidation || isAuthorization ? message : 'Erro ao completar etapa',
         details: message
         });
     }
@@ -313,11 +326,15 @@ router.put(
         data: stage
         });
     } catch (error) {
-      console.error('Erro ao pular etapa:', error);
-      return res.status(500).json({
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      const isAuthorization = message.includes('Execução restrita') || message.includes('não autorizado');
+      if (!isAuthorization) {
+        console.error('Erro ao pular etapa:', error);
+      }
+      return res.status(isAuthorization ? 400 : 500).json({
         success: false,
-        error: 'Erro ao pular etapa',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: isAuthorization ? message : 'Erro ao pular etapa',
+        details: message
         });
     }
   }
@@ -355,11 +372,15 @@ router.put(
         data: stage
         });
     } catch (error) {
-      console.error('Erro ao marcar etapa como falha:', error);
-      return res.status(500).json({
+      const message = error instanceof Error ? error.message : 'Erro desconhecido';
+      const isAuthorization = message.includes('Execução restrita') || message.includes('não autorizado');
+      if (!isAuthorization) {
+        console.error('Erro ao marcar etapa como falha:', error);
+      }
+      return res.status(isAuthorization ? 400 : 500).json({
         success: false,
-        error: 'Erro ao marcar etapa como falha',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: isAuthorization ? message : 'Erro ao marcar etapa como falha',
+        details: message
         });
     }
   }

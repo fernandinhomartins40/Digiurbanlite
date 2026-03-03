@@ -49,8 +49,14 @@ export interface WorkflowStageData {
   supportAssignments: WorkflowStageSupportAssignmentData[]
 }
 
-export type WorkflowStageSupportTargetType = 'USER' | 'ORGANIZATIONAL_UNIT'
-export type WorkflowStageSupportMode = 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT'
+export interface DepartmentOption {
+  id: string
+  name: string
+  code?: string
+}
+
+export type WorkflowStageSupportTargetType = 'USER' | 'DEPARTMENT' | 'ORGANIZATIONAL_UNIT'
+export type WorkflowStageSupportMode = 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT' | 'REQUIRED_EXECUTION'
 
 export interface WorkflowStageSupportAssignmentData {
   id: string
@@ -58,6 +64,8 @@ export interface WorkflowStageSupportAssignmentData {
   mode: WorkflowStageSupportMode
   userId?: string
   user?: AdminUser | null
+  departmentId?: string
+  department?: DepartmentOption | null
   organizationalUnitId?: string
   organizationalUnit?: OrganizationalUnitOption | null
   searchValue?: string
@@ -77,7 +85,7 @@ interface WorkflowStageEditorProps {
   totalStages: number
   serviceDocumentTypes: string[]
   serviceFormFields: { id: string; label: string }[]
-  departments: string[]
+  departments: DepartmentOption[]
   documentTemplates: DocumentTemplateOption[]
   workflowDepartmentId?: string
   onChange: (index: number, stage: WorkflowStageData) => void
@@ -248,7 +256,7 @@ export function WorkflowStageEditor({
                 {stage.canSkip && <Badge variant="outline" className="text-[10px] bg-yellow-50">Pulável</Badge>}
                 {stage.supportAssignments.length > 0 && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700">
-                    {stage.supportAssignments.length} apoio{stage.supportAssignments.length > 1 ? 's' : ''}
+                    {stage.supportAssignments.length} regra{stage.supportAssignments.length > 1 ? 's' : ''}
                   </Badge>
                 )}
               </div>
@@ -567,46 +575,51 @@ export function WorkflowStageEditor({
 
             {/* === TAB 4: GOVERNANÇA === */}
             <TabsContent value="governance" className="space-y-4 mt-4">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Role mínimo necessário</Label>
-                  <Select value={stage.role || ''} onValueChange={(v) => update({ role: v === 'none' ? '' : v })}>
-                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {ROLES.map(r => <SelectItem key={r.id || 'none'} value={r.id || 'none'}>{r.label}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <p className="text-[10px] text-muted-foreground">Define quem pode atuar nesta etapa</p>
+              <div className="rounded-md border p-3 space-y-4">
+                <div className="space-y-1">
+                  <Label className="text-xs font-medium">Regras gerais da etapa</Label>
+                  <p className="text-[10px] text-muted-foreground">
+                    Configure exigências gerais de operação e aprovação. As regras de execução abaixo definem quem pode atuar de forma obrigatória, sugerida ou apenas informativa.
+                  </p>
                 </div>
 
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-medium">Departamento responsável</Label>
-                  <Select value={stage.department || ''} onValueChange={(v) => update({ department: v === 'none' ? '' : v })}>
-                    <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Qualquer (mesmo do protocolo)</SelectItem>
-                      {departments.map(d => <SelectItem key={d} value={d}>{d}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-medium">Role mínimo necessário</Label>
+                    <Select value={stage.role || ''} onValueChange={(v) => update({ role: v === 'none' ? '' : v })}>
+                      <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {ROLES.map(r => <SelectItem key={r.id || 'none'} value={r.id || 'none'}>{r.label}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-[10px] text-muted-foreground">Define o nível mínimo de acesso para atuar na etapa.</p>
+                  </div>
+
+                  <div className="flex items-center justify-between p-3 rounded-md border">
+                    <div>
+                      <Label className="text-xs font-medium">Requer aprovação manual</Label>
+                      <p className="text-[10px] text-muted-foreground">Exige validação humana antes de avançar a etapa.</p>
+                    </div>
+                    <Switch checked={stage.requiresApproval} onCheckedChange={(v) => update({ requiresApproval: v })} />
+                  </div>
                 </div>
+
+                {stage.department && (
+                  <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                    <p className="text-xs font-medium text-amber-900">Campo legado de departamento</p>
+                    <p className="text-[10px] text-amber-800 mt-1">
+                      Este workflow ainda possui o departamento legado <strong>{stage.department}</strong>. Para novas regras operacionais, use os vínculos abaixo.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              <div className="flex items-center justify-between p-3 rounded-md border">
-                <div>
-                  <Label className="text-xs font-medium">Requer aprovação manual</Label>
-                  <p className="text-[10px] text-muted-foreground">Exige que um supervisor aprove antes de avançar</p>
-                </div>
-                <Switch checked={stage.requiresApproval} onCheckedChange={(v) => update({ requiresApproval: v })} />
-              </div>
-
-              <Separator />
-
-              <div className="space-y-3">
+              <div className="rounded-md border p-3 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <Label className="text-xs font-medium">Apoios da etapa</Label>
+                    <Label className="text-xs font-medium">Execução da etapa</Label>
                     <p className="text-[10px] text-muted-foreground">
-                      Vincule servidores ou setores como referência da etapa sem alterar a estrutura do workflow.
+                      Use <strong>Obrigatório</strong> quando apenas o servidor, setor ou departamento indicado puder executar a etapa. Use <strong>Sugestão</strong> para destino preferencial e <strong>Referência</strong> para orientação visual.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -616,12 +629,15 @@ export function WorkflowStageEditor({
                     <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => addSupportAssignment('ORGANIZATIONAL_UNIT')}>
                       <Building2 className="h-3.5 w-3.5 mr-1" />Setor
                     </Button>
+                    <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => addSupportAssignment('DEPARTMENT')}>
+                      <Shield className="h-3.5 w-3.5 mr-1" />Departamento
+                    </Button>
                   </div>
                 </div>
 
                 {stage.supportAssignments.length === 0 ? (
                   <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                    Nenhum apoio configurado. Use esta área para sugerir servidores ou setores quando a etapa precisar passar por mais de um responsável.
+                    Nenhuma regra de execução configurada. Se a etapa deve ser obrigatoriamente executada por um setor, departamento ou servidor, cadastre aqui.
                   </div>
                 ) : (
                   <div className="space-y-3">
@@ -630,10 +646,18 @@ export function WorkflowStageEditor({
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                           <div className="flex flex-wrap items-center gap-1.5">
                             <Badge variant="secondary" className="text-[10px]">
-                              {assignment.targetType === 'USER' ? 'Servidor' : 'Setor'}
+                              {assignment.targetType === 'USER'
+                                ? 'Servidor'
+                                : assignment.targetType === 'DEPARTMENT'
+                                  ? 'Departamento'
+                                  : 'Setor'}
                             </Badge>
                             <Badge variant="outline" className="text-[10px]">
-                              {assignment.mode === 'SUGGEST_ASSIGNMENT' ? 'Sugere atribuição' : 'Referência'}
+                              {assignment.mode === 'REQUIRED_EXECUTION'
+                                ? 'Obrigatório'
+                                : assignment.mode === 'SUGGEST_ASSIGNMENT'
+                                  ? 'Sugestão'
+                                  : 'Referência'}
                             </Badge>
                           </div>
                           <Button
@@ -649,19 +673,25 @@ export function WorkflowStageEditor({
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                           <div className="space-y-1.5">
-                            <Label className="text-[10px] font-medium">Modo</Label>
+                            <Label className="text-[10px] font-medium">Regra</Label>
                             <Select
                               value={assignment.mode}
                               onValueChange={(value) =>
                                 updateSupportAssignment(assignment.id, {
-                                  mode: value === 'SUGGEST_ASSIGNMENT' ? 'SUGGEST_ASSIGNMENT' : 'REFERENCE_ONLY'
+                                  mode:
+                                    value === 'REQUIRED_EXECUTION'
+                                      ? 'REQUIRED_EXECUTION'
+                                      : value === 'SUGGEST_ASSIGNMENT'
+                                        ? 'SUGGEST_ASSIGNMENT'
+                                        : 'REFERENCE_ONLY'
                                 })
                               }
                             >
                               <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="REQUIRED_EXECUTION">Obrigatório para executar</SelectItem>
+                                <SelectItem value="SUGGEST_ASSIGNMENT">Sugestão operacional</SelectItem>
                                 <SelectItem value="REFERENCE_ONLY">Somente referência</SelectItem>
-                                <SelectItem value="SUGGEST_ASSIGNMENT">Sugerir atribuição</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -678,8 +708,33 @@ export function WorkflowStageEditor({
                                 }
                                 departmentId={workflowDepartmentId}
                                 label=""
-                                placeholder="Busque o servidor desta etapa"
+                                placeholder="Busque o servidor autorizado nesta etapa"
                               />
+                            ) : assignment.targetType === 'DEPARTMENT' ? (
+                              <div className="space-y-1.5">
+                                <Label className="text-[10px] font-medium">Departamento</Label>
+                                <Select
+                                  value={assignment.departmentId || 'none'}
+                                  onValueChange={(value) =>
+                                    updateSupportAssignment(assignment.id, {
+                                      departmentId: value === 'none' ? undefined : value,
+                                      department: value === 'none'
+                                        ? null
+                                        : (departments.find(department => department.id === value) || null),
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="text-sm"><SelectValue placeholder="Selecione o departamento" /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="none">Selecione um departamento</SelectItem>
+                                    {departments.map((department) => (
+                                      <SelectItem key={department.id} value={department.id}>
+                                        {department.name}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
                             ) : (
                               <OrganizationalUnitAutocomplete
                                 value={assignment.searchValue ?? assignment.organizationalUnit?.nome ?? ''}
@@ -705,7 +760,7 @@ export function WorkflowStageEditor({
                                 }
                                 departmentId={workflowDepartmentId}
                                 label=""
-                                placeholder="Busque o setor desta etapa"
+                                placeholder="Busque o setor autorizado nesta etapa"
                               />
                             )}
                           </div>

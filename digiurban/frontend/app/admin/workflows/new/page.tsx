@@ -20,7 +20,8 @@ import {
   WorkflowStageEditor,
   WorkflowStageData,
   DocumentTemplateOption,
-  WorkflowStageSupportAssignmentData
+  WorkflowStageSupportAssignmentData,
+  DepartmentOption
 } from '@/components/admin/workflows/WorkflowStageEditor'
 
 const createStageId = () => globalThis.crypto?.randomUUID?.() || `stage-${Math.random().toString(36).slice(2)}`
@@ -30,31 +31,49 @@ function normalizeSupportAssignment(raw: any): WorkflowStageSupportAssignmentDat
   if (!raw || typeof raw !== 'object') return null
 
   const targetType =
-    raw.targetType === 'USER' || raw.targetType === 'ORGANIZATIONAL_UNIT'
+    raw.targetType === 'USER' || raw.targetType === 'DEPARTMENT' || raw.targetType === 'ORGANIZATIONAL_UNIT'
       ? raw.targetType
       : null
 
   if (!targetType) return null
 
   const userId = typeof raw.userId === 'string' ? raw.userId : raw.user?.id
+  const departmentId =
+    typeof raw.departmentId === 'string'
+      ? raw.departmentId
+      : raw.department?.id
   const organizationalUnitId =
     typeof raw.organizationalUnitId === 'string'
       ? raw.organizationalUnitId
       : raw.organizationalUnit?.id
 
   if (targetType === 'USER' && !userId) return null
+  if (targetType === 'DEPARTMENT' && !departmentId) return null
   if (targetType === 'ORGANIZATIONAL_UNIT' && !organizationalUnitId) return null
 
   return {
     id: typeof raw.id === 'string' && raw.id ? raw.id : createSupportAssignmentId(),
     targetType,
-    mode: raw.mode === 'SUGGEST_ASSIGNMENT' ? 'SUGGEST_ASSIGNMENT' : 'REFERENCE_ONLY',
+    mode:
+      raw.mode === 'REQUIRED_EXECUTION'
+        ? 'REQUIRED_EXECUTION'
+        : raw.mode === 'SUGGEST_ASSIGNMENT'
+          ? 'SUGGEST_ASSIGNMENT'
+          : 'REFERENCE_ONLY',
     userId,
     user: raw.user
       ? {
           ...raw.user,
           departmentId: raw.user.departmentId,
           department: raw.user.department || raw.user.departmentName,
+        }
+      : undefined,
+    departmentId,
+    department: raw.department
+      ? {
+          id: raw.department.id,
+          name: raw.department.name,
+          code: raw.department.code,
         }
       : undefined,
     organizationalUnitId,
@@ -146,7 +165,7 @@ export default function NewWorkflowPage() {
   const [services, setServices] = useState<ServiceOption[]>([])
   const [loadingServices, setLoadingServices] = useState(true)
   const [serviceSearch, setServiceSearch] = useState('')
-  const [departments, setDepartments] = useState<string[]>([])
+  const [departments, setDepartments] = useState<DepartmentOption[]>([])
 
   // Form
   const [selectedServiceId, setSelectedServiceId] = useState('')
@@ -178,7 +197,15 @@ export default function NewWorkflowPage() {
   const loadDepartments = useCallback(async () => {
     try {
       const response = await apiRequest('/departments')
-      if (response.success) setDepartments((response.data || []).map((d: any) => d.name))
+      if (response.success) {
+        setDepartments(
+          (response.data || []).map((d: any) => ({
+            id: d.id,
+            name: d.name,
+            code: d.code || undefined,
+          }))
+        )
+      }
     } catch {}
   }, [apiRequest])
 
@@ -279,8 +306,10 @@ export default function NewWorkflowPage() {
           targetType: assignment.targetType,
           mode: assignment.mode,
           userId: assignment.userId,
+          departmentId: assignment.departmentId,
           organizationalUnitId: assignment.organizationalUnitId,
           user: assignment.user,
+          department: assignment.department,
           organizationalUnit: assignment.organizationalUnit,
         })),
       }))

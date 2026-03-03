@@ -67,6 +67,13 @@ const workflowStageSupportInclude = {
       }
     }
   },
+  department: {
+    select: {
+      id: true,
+      name: true,
+      code: true
+    }
+  },
   organizationalUnit: {
     select: {
       id: true,
@@ -100,7 +107,9 @@ function normalizeStageSupportAssignment(
   }
 
   const targetType =
-    assignment.targetType === 'USER' || assignment.targetType === 'ORGANIZATIONAL_UNIT'
+    assignment.targetType === 'USER' ||
+    assignment.targetType === 'DEPARTMENT' ||
+    assignment.targetType === 'ORGANIZATIONAL_UNIT'
       ? assignment.targetType
       : null;
 
@@ -108,14 +117,25 @@ function normalizeStageSupportAssignment(
     return null;
   }
 
-  const mode = assignment.mode === 'SUGGEST_ASSIGNMENT' ? 'SUGGEST_ASSIGNMENT' : 'REFERENCE_ONLY';
+  const mode =
+    assignment.mode === 'SUGGEST_ASSIGNMENT'
+      ? 'SUGGEST_ASSIGNMENT'
+      : assignment.mode === 'REQUIRED_EXECUTION'
+        ? 'REQUIRED_EXECUTION'
+        : 'REFERENCE_ONLY';
   const userId = typeof assignment.userId === 'string' && assignment.userId ? assignment.userId : undefined;
+  const departmentId =
+    typeof assignment.departmentId === 'string' && assignment.departmentId ? assignment.departmentId : undefined;
   const organizationalUnitId =
     typeof assignment.organizationalUnitId === 'string' && assignment.organizationalUnitId
       ? assignment.organizationalUnitId
       : undefined;
 
   if (targetType === 'USER' && !userId) {
+    return null;
+  }
+
+  if (targetType === 'DEPARTMENT' && !departmentId) {
     return null;
   }
 
@@ -128,8 +148,10 @@ function normalizeStageSupportAssignment(
     targetType,
     mode,
     userId,
+    departmentId,
     organizationalUnitId,
     user: assignment.user,
+    department: assignment.department,
     organizationalUnit: assignment.organizationalUnit
   };
 }
@@ -206,7 +228,9 @@ function buildSupportAssignmentCreateManyInput(
       const targetId =
         normalizedAssignment.targetType === 'USER'
           ? normalizedAssignment.userId
-          : normalizedAssignment.organizationalUnitId;
+          : normalizedAssignment.targetType === 'DEPARTMENT'
+            ? normalizedAssignment.departmentId
+            : normalizedAssignment.organizationalUnitId;
 
       if (!targetId) {
         continue;
@@ -230,6 +254,10 @@ function buildSupportAssignmentCreateManyInput(
         targetType: normalizedAssignment.targetType as DbWorkflowStageSupportTargetType,
         mode: normalizedAssignment.mode as DbWorkflowStageSupportMode,
         userId: normalizedAssignment.targetType === 'USER' ? normalizedAssignment.userId : null,
+        departmentId:
+          normalizedAssignment.targetType === 'DEPARTMENT'
+            ? normalizedAssignment.departmentId
+            : null,
         organizationalUnitId:
           normalizedAssignment.targetType === 'ORGANIZATIONAL_UNIT'
             ? normalizedAssignment.organizationalUnitId
@@ -249,6 +277,7 @@ function serializeSupportAssignmentRecord(
     targetType: assignment.targetType,
     mode: assignment.mode,
     userId: assignment.userId || undefined,
+    departmentId: assignment.departmentId || undefined,
     organizationalUnitId: assignment.organizationalUnitId || undefined,
     user: assignment.user
       ? {
@@ -257,6 +286,13 @@ function serializeSupportAssignmentRecord(
           email: assignment.user.email,
           departmentId: assignment.user.departmentId || undefined,
           departmentName: assignment.user.department?.name || undefined
+        }
+      : undefined,
+    department: assignment.department
+      ? {
+          id: assignment.department.id,
+          name: assignment.department.name,
+          code: assignment.department.code || undefined
         }
       : undefined,
     organizationalUnit: assignment.organizationalUnit
@@ -335,6 +371,9 @@ export function buildStageSupportAssignmentsSnapshot(stage: WorkflowStage) {
     userEmail: assignment.user?.email,
     userDepartmentId: assignment.user?.departmentId,
     userDepartmentName: assignment.user?.departmentName,
+    departmentId: assignment.departmentId,
+    departmentName: assignment.department?.name,
+    departmentCode: assignment.department?.code,
     organizationalUnitId: assignment.organizationalUnitId,
     organizationalUnitName: assignment.organizationalUnit?.nome,
     organizationalUnitSigla: assignment.organizationalUnit?.sigla,

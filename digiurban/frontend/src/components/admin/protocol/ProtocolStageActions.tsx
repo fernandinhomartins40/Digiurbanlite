@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -26,6 +26,11 @@ interface StageValidation {
   missingFormFields: string[]
 }
 
+interface StageExecutionAccess {
+  canExecute: boolean
+  blockers: string[]
+}
+
 interface ProtocolStageActionsProps {
   protocolId: string
   stageId: string
@@ -47,6 +52,7 @@ export function ProtocolStageActions({
   const { toast } = useToast()
 
   const [validation, setValidation] = useState<StageValidation | null>(null)
+  const [executionAccess, setExecutionAccess] = useState<StageExecutionAccess | null>(null)
   const [isValidating, setIsValidating] = useState(false)
   const [showApproveModal, setShowApproveModal] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
@@ -61,6 +67,7 @@ export function ProtocolStageActions({
 
       if (response.success) {
         setValidation(response.data.validation)
+        setExecutionAccess(response.data.executionAccess || null)
       }
     } catch (error) {
       console.error('Erro ao validar etapa:', error)
@@ -68,6 +75,10 @@ export function ProtocolStageActions({
       setIsValidating(false)
     }
   }
+
+  useEffect(() => {
+    loadValidation()
+  }, [protocolId, stageId])
 
   // Aprovar etapa
   const handleApprove = async () => {
@@ -148,6 +159,7 @@ export function ProtocolStageActions({
   }
 
   const allowedActions = metadata?.allowedActions || []
+  const isExecutionBlocked = executionAccess ? !executionAccess.canExecute : false
 
   return (
     <>
@@ -181,6 +193,17 @@ export function ProtocolStageActions({
           {/* Resultados da validação */}
           {validation && (
             <div className="space-y-3">
+              {isExecutionBlocked && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <p className="font-medium text-red-900 mb-2">Execução restrita nesta etapa:</p>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-800">
+                    {executionAccess?.blockers.map((blocker, i) => (
+                      <li key={i}>{blocker}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               <div className="flex items-center gap-2">
                 {validation.canProgress ? (
                   <CheckCircle className="h-5 w-5 text-green-600" />
@@ -241,13 +264,13 @@ export function ProtocolStageActions({
           {/* Ações */}
           <div className="space-y-2 pt-2">
             {allowedActions.includes('APPROVE') && (
-              <Button
-                onClick={() => {
-                  loadValidation().then(() => setShowApproveModal(true))
-                }}
-                className="w-full"
-                disabled={isValidating}
-              >
+                <Button
+                  onClick={() => {
+                    loadValidation().then(() => setShowApproveModal(true))
+                  }}
+                  className="w-full"
+                  disabled={isValidating || isExecutionBlocked}
+                >
                 <CheckCircle className="h-4 w-4 mr-2" />
                 Aprovar e Avançar
               </Button>
@@ -258,6 +281,7 @@ export function ProtocolStageActions({
                 onClick={() => setShowRejectModal(true)}
                 variant="destructive"
                 className="w-full"
+                disabled={isExecutionBlocked}
               >
                 <XCircle className="h-4 w-4 mr-2" />
                 Rejeitar Etapa
@@ -268,6 +292,7 @@ export function ProtocolStageActions({
               <Button
                 variant="outline"
                 className="w-full"
+                disabled={isExecutionBlocked}
               >
                 <AlertCircle className="h-4 w-4 mr-2" />
                 Criar Pendência

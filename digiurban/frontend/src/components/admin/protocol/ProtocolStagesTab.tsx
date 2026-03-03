@@ -3,7 +3,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { CheckCircle2, Circle, Clock, XCircle, SkipForward, AlertCircle, Building2, UserRound } from 'lucide-react'
+import { CheckCircle2, Circle, Clock, XCircle, SkipForward, AlertCircle, Building2, UserRound, Shield } from 'lucide-react'
 import { ProtocolStage, StageStatus } from '@/types/protocol-enhancements'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -133,22 +133,34 @@ export function ProtocolStagesTab({ protocolId, stages, onRefresh }: ProtocolSta
                         {(stage.metadata?.stageSupportAssignments?.length || 0) > 0 && (
                           <div className="mt-3">
                             <p className="text-xs font-medium text-muted-foreground mb-1.5">
-                              Apoios da etapa
+                              Execução da etapa
                             </p>
                             <div className="flex flex-wrap gap-1.5">
                               {stage.metadata?.stageSupportAssignments?.map((assignment, assignmentIndex) => (
                                 <Badge
-                                  key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.organizationalUnitId || assignmentIndex}`}
+                                  key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.departmentId || assignment.organizationalUnitId || assignmentIndex}`}
                                   variant="outline"
-                                  className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200"
+                                  className={`text-xs ${
+                                    assignment.mode === 'REQUIRED_EXECUTION'
+                                      ? 'bg-red-50 text-red-700 border-red-200'
+                                      : assignment.mode === 'SUGGEST_ASSIGNMENT'
+                                        ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                        : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                  }`}
                                 >
                                   {assignment.targetType === 'USER' ? (
                                     <UserRound className="h-3 w-3 mr-1" />
+                                  ) : assignment.targetType === 'DEPARTMENT' ? (
+                                    <Shield className="h-3 w-3 mr-1" />
                                   ) : (
                                     <Building2 className="h-3 w-3 mr-1" />
                                   )}
-                                  {assignment.userName || assignment.organizationalUnitName}
-                                  {assignment.mode === 'SUGGEST_ASSIGNMENT' && ' · sugestão'}
+                                  {assignment.mode === 'REQUIRED_EXECUTION'
+                                    ? 'Obrigatório'
+                                    : assignment.mode === 'SUGGEST_ASSIGNMENT'
+                                      ? 'Sugestão'
+                                      : 'Referência'}
+                                  : {assignment.userName || assignment.departmentName || assignment.organizationalUnitName}
                                 </Badge>
                               ))}
                             </div>

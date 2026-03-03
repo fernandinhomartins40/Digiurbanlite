@@ -2,14 +2,17 @@
  * Serviço para gerenciamento de Etapas de Protocolos (Workflow)
  */
 
-import { StageStatus } from '@prisma/client';
+import { SituacaoVinculo, StageStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { checkAllDocumentsApproved } from './protocol-document.service';
 import {
   buildStageSupportAssignmentsSnapshot,
   getWorkflowByServiceId
 } from './service-workflow.service';
-import type { WorkflowStage } from '../types/workflow.types';
+import type {
+  WorkflowStage,
+  WorkflowStageSupportAssignment
+} from '../types/workflow.types';
 
 /**
  * Interface para criação de etapa
@@ -33,6 +36,24 @@ export interface UpdateStageData {
   result?: string;
   notes?: string;
   metadata?: any;
+}
+
+export interface StageExecutionAccess {
+  canExecute: boolean
+  blockers: string[]
+  requiredAssignments: WorkflowStageSupportAssignment[]
+}
+
+function formatExecutionRule(assignment: WorkflowStageSupportAssignment) {
+  if (assignment.targetType === 'USER') {
+    return assignment.user?.name || assignment.userName || 'servidor vinculado'
+  }
+
+  if (assignment.targetType === 'DEPARTMENT') {
+    return `departamento ${assignment.department?.name || assignment.departmentName || 'vinculado'}`
+  }
+
+  return `setor ${assignment.organizationalUnit?.nome || assignment.organizationalUnitName || 'vinculado'}`
 }
 
 function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata: any }>(
@@ -108,6 +129,127 @@ async function hydrateProtocolStagesSupport<T extends { protocolId: string; meta
   return stages.map(stage => enrichStageWithWorkflowSupport(stage, workflowStagesById));
 }
 
+export async function getStageExecutionAccess(
+  stageId: string,
+  userId: string
+): Promise<StageExecutionAccess> {
+  const stage = await getStageById(stageId);
+
+  if (!stage) {
+    throw new Error('Etapa não encontrada');
+  }
+
+  const metadata = (stage.metadata as Record<string, any> | null) || {};
+  const requiredAssignments = Array.isArray(metadata.stageSupportAssignments)
+    ? (metadata.stageSupportAssignments as WorkflowStageSupportAssignment[]).filter(
+        assignment => assignment.mode === 'REQUIRED_EXECUTION'
+      )
+    : [];
+
+  if (requiredAssignments.length === 0) {
+    return {
+      canExecute: true,
+      blockers: [],
+      requiredAssignments: []
+    };
+  }
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    include: {
+      userDepartments: {
+        where: {
+          isActive: true
+        },
+        select: {
+          departmentId: true
+        }
+      },
+      assignments: {
+        where: {
+          situacao: SituacaoVinculo.ATIVO
+        },
+        select: {
+          departmentId: true,
+          organizationalUnitId: true
+        }
+      },
+      unidadesResponsavel: {
+        select: {
+          id: true
+        }
+      }
+    }
+  });
+
+  if (!user) {
+    throw new Error('Servidor não encontrado');
+  }
+
+  const departmentIds = new Set<string>();
+  const organizationalUnitIds = new Set<string>();
+
+  if (user.departmentId) {
+    departmentIds.add(user.departmentId);
+  }
+
+  for (const userDepartment of user.userDepartments) {
+    departmentIds.add(userDepartment.departmentId);
+  }
+
+  for (const assignment of user.assignments) {
+    if (assignment.departmentId) {
+      departmentIds.add(assignment.departmentId);
+    }
+
+    if (assignment.organizationalUnitId) {
+      organizationalUnitIds.add(assignment.organizationalUnitId);
+    }
+  }
+
+  for (const unit of user.unidadesResponsavel) {
+    organizationalUnitIds.add(unit.id);
+  }
+
+  const canExecute = requiredAssignments.some((assignment) => {
+    if (assignment.targetType === 'USER') {
+      return assignment.userId === user.id
+    }
+
+    if (assignment.targetType === 'DEPARTMENT') {
+      return Boolean(assignment.departmentId && departmentIds.has(assignment.departmentId))
+    }
+
+    return Boolean(
+      assignment.organizationalUnitId && organizationalUnitIds.has(assignment.organizationalUnitId)
+    )
+  });
+
+  if (canExecute) {
+    return {
+      canExecute: true,
+      blockers: [],
+      requiredAssignments
+    };
+  }
+
+  return {
+    canExecute: false,
+    blockers: [
+      `Execução restrita: apenas ${requiredAssignments.map(formatExecutionRule).join(', ')} podem atuar nesta etapa.`
+    ],
+    requiredAssignments
+  };
+}
+
+async function assertUserCanExecuteStage(stageId: string, userId: string) {
+  const executionAccess = await getStageExecutionAccess(stageId, userId);
+
+  if (!executionAccess.canExecute) {
+    throw new Error(executionAccess.blockers[0] || 'Usuário não autorizado a executar esta etapa');
+  }
+}
+
 /**
  * Cria uma nova etapa de protocolo
  */
@@ -168,6 +310,10 @@ export async function updateStage(stageId: string, data: UpdateStageData) {
  * ✅ FASE 1: Atualiza currentStageId do protocolo
  */
 export async function startStage(stageId: string, userId?: string) {
+  if (userId) {
+    await assertUserCanExecuteStage(stageId, userId);
+  }
+
   const stage = await prisma.protocolStage.update({
     where: { id: stageId },
     data: {
@@ -195,6 +341,8 @@ export async function completeStage(
   result?: string,
   notes?: string
 ) {
+  await assertUserCanExecuteStage(stageId, userId);
+
   // Buscar informações da stage
   const stage = await prisma.protocolStage.findUnique({
     where: { id: stageId },
@@ -252,6 +400,8 @@ export async function skipStage(
   userId: string,
   reason?: string
 ) {
+  await assertUserCanExecuteStage(stageId, userId);
+
   return await prisma.protocolStage.update({
     where: { id: stageId },
     data: {
@@ -271,6 +421,8 @@ export async function failStage(
   userId: string,
   reason: string
 ) {
+  await assertUserCanExecuteStage(stageId, userId);
+
   const failedStage = await prisma.protocolStage.update({
     where: { id: stageId },
     data: {

@@ -301,7 +301,8 @@ model Department {
   users               User[]               @relation("UserPrimaryDepartment")
 
   // ✅ NOVO: Múltiplos usuários (N:N)
-  userDepartments UserDepartment[]
+  userDepartments                 UserDepartment[]
+  workflowStageSupportAssignments WorkflowStageSupportAssignment[]
 
   // Chamados administrativos
   tickets AdminTicket[]
@@ -1161,6 +1162,7 @@ model WorkflowStageSupportAssignment {
   mode       WorkflowStageSupportMode       @default(REFERENCE_ONLY)
 
   userId               String?
+  departmentId         String?
   organizationalUnitId String?
 
   createdAt DateTime @default(now())
@@ -1168,11 +1170,13 @@ model WorkflowStageSupportAssignment {
 
   serviceWorkflow    ServiceWorkflow     @relation(fields: [serviceWorkflowId], references: [id], onDelete: Cascade)
   user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  department         Department?         @relation(fields: [departmentId], references: [id], onDelete: SetNull)
   organizationalUnit OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id], onDelete: SetNull)
 
   @@index([serviceWorkflowId, workflowStageId], map: "wssa_workflow_stage_idx")
   @@index([serviceWorkflowId, workflowStageId, targetType], map: "wssa_workflow_stage_target_idx")
   @@index([userId], map: "wssa_user_idx")
+  @@index([departmentId], map: "wssa_department_idx")
   @@index([organizationalUnitId], map: "wssa_org_unit_idx")
   @@map("workflow_stage_support_assignments")
 }
@@ -7714,12 +7718,14 @@ enum TipoUnidadeOrganizacional {
 
 enum WorkflowStageSupportTargetType {
   USER
+  DEPARTMENT
   ORGANIZATIONAL_UNIT
 }
 
 enum WorkflowStageSupportMode {
   REFERENCE_ONLY
   SUGGEST_ASSIGNMENT
+  REQUIRED_EXECUTION
 }
 
 // ============================================

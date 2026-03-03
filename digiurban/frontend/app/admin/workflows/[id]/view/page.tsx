@@ -289,18 +289,34 @@ export default function WorkflowViewPage() {
                       {supportAssignments.length > 0 && (
                         <div>
                           <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
-                            <Shield className="h-3 w-3" />Apoios da etapa
+                            <Shield className="h-3 w-3" />Execução da etapa
                           </p>
                           <div className="flex flex-wrap gap-1">
                             {supportAssignments.map((assignment: any) => (
-                              <Badge key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.organizationalUnitId}`} variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                              <Badge
+                                key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.departmentId || assignment.organizationalUnitId}`}
+                                variant="outline"
+                                className={`text-xs ${
+                                  assignment.mode === 'REQUIRED_EXECUTION'
+                                    ? 'bg-red-50 text-red-700 border-red-200'
+                                    : assignment.mode === 'SUGGEST_ASSIGNMENT'
+                                      ? 'bg-amber-50 text-amber-700 border-amber-200'
+                                      : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                }`}
+                              >
                                 {assignment.targetType === 'USER' ? (
                                   <UserRound className="h-3 w-3 mr-1" />
+                                ) : assignment.targetType === 'DEPARTMENT' ? (
+                                  <Shield className="h-3 w-3 mr-1" />
                                 ) : (
                                   <Building2 className="h-3 w-3 mr-1" />
                                 )}
-                                {assignment.user?.name || assignment.organizationalUnit?.nome}
-                                {assignment.mode === 'SUGGEST_ASSIGNMENT' && ' · Sugestão'}
+                                {assignment.mode === 'REQUIRED_EXECUTION'
+                                  ? 'Obrigatório'
+                                  : assignment.mode === 'SUGGEST_ASSIGNMENT'
+                                    ? 'Sugestão'
+                                    : 'Referência'}
+                                : {assignment.user?.name || assignment.department?.name || assignment.organizationalUnit?.nome}
                               </Badge>
                             ))}
                           </div>

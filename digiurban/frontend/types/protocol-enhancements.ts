@@ -19,13 +19,16 @@ export enum StageStatus {
 
 export interface ProtocolStageSupportAssignmentSnapshot {
   id?: string
-  targetType: 'USER' | 'ORGANIZATIONAL_UNIT'
-  mode: 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT'
+  targetType: 'USER' | 'DEPARTMENT' | 'ORGANIZATIONAL_UNIT'
+  mode: 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT' | 'REQUIRED_EXECUTION'
   userId?: string
   userName?: string
   userEmail?: string
   userDepartmentId?: string
   userDepartmentName?: string
+  departmentId?: string
+  departmentName?: string
+  departmentCode?: string
   organizationalUnitId?: string
   organizationalUnitName?: string
   organizationalUnitSigla?: string

@@ -11,7 +11,8 @@ import {
   FileText,
   FormInput,
   Building2,
-  UserRound
+  UserRound,
+  Shield
 } from 'lucide-react'
 import type { ProtocolStageMetadata } from '@/types/protocol-enhancements'
 
@@ -47,6 +48,9 @@ export function StageFocusCard({
     currentStage.metadata?.requiredFormFields || currentStage.metadata?.requiredFormFieldIds || []
   const allowedActions = currentStage.metadata?.allowedActions || []
   const supportAssignments = currentStage.metadata?.stageSupportAssignments || []
+  const requiredExecutionAssignments = supportAssignments.filter(assignment => assignment.mode === 'REQUIRED_EXECUTION')
+  const suggestedAssignments = supportAssignments.filter(assignment => assignment.mode === 'SUGGEST_ASSIGNMENT')
+  const referenceAssignments = supportAssignments.filter(assignment => assignment.mode === 'REFERENCE_ONLY')
 
   // Calcular documentos pendentes
   const approvedDocs = documents.filter(d =>
@@ -262,22 +266,55 @@ export function StageFocusCard({
           {supportAssignments.length > 0 && (
             <div className="pt-2 border-t border-blue-200">
               <p className="text-xs text-blue-700 font-medium mb-2">
-                Apoios vinculados à etapa:
+                Execução e referências da etapa:
               </p>
               <div className="flex flex-wrap gap-2">
-                {supportAssignments.map((assignment, index) => (
+                {requiredExecutionAssignments.map((assignment, index) => (
                   <Badge
-                    key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.organizationalUnitId || index}`}
+                    key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.departmentId || assignment.organizationalUnitId || index}`}
+                    variant="outline"
+                    className="text-xs bg-red-50 text-red-700 border-red-300"
+                  >
+                    {assignment.targetType === 'USER' ? (
+                      <UserRound className="h-3 w-3 mr-1" />
+                    ) : assignment.targetType === 'DEPARTMENT' ? (
+                      <Shield className="h-3 w-3 mr-1" />
+                    ) : (
+                      <Building2 className="h-3 w-3 mr-1" />
+                    )}
+                    Obrigatório: {assignment.userName || assignment.departmentName || assignment.organizationalUnitName}
+                  </Badge>
+                ))}
+                {suggestedAssignments.map((assignment, index) => (
+                  <Badge
+                    key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.departmentId || assignment.organizationalUnitId || index}-suggested`}
+                    variant="outline"
+                    className="text-xs bg-amber-50 text-amber-700 border-amber-300"
+                  >
+                    {assignment.targetType === 'USER' ? (
+                      <UserRound className="h-3 w-3 mr-1" />
+                    ) : assignment.targetType === 'DEPARTMENT' ? (
+                      <Shield className="h-3 w-3 mr-1" />
+                    ) : (
+                      <Building2 className="h-3 w-3 mr-1" />
+                    )}
+                    Sugestão: {assignment.userName || assignment.departmentName || assignment.organizationalUnitName}
+                  </Badge>
+                ))}
+                {referenceAssignments.map((assignment, index) => (
+                  <Badge
+                    key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.departmentId || assignment.organizationalUnitId || index}-reference`}
                     variant="outline"
                     className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300"
                   >
                     {assignment.targetType === 'USER' ? (
                       <UserRound className="h-3 w-3 mr-1" />
+                    ) : assignment.targetType === 'DEPARTMENT' ? (
+                      <Shield className="h-3 w-3 mr-1" />
                     ) : (
                       <Building2 className="h-3 w-3 mr-1" />
                     )}
-                    {assignment.userName || assignment.organizationalUnitName}
-                    {assignment.mode === 'SUGGEST_ASSIGNMENT' && ' · sugestão'}
+                    Referência: {assignment.userName || assignment.departmentName || assignment.organizationalUnitName}
                   </Badge>
                 ))}
               </div>
