@@ -19,6 +19,20 @@ export interface OrganizationalUnitOption {
   }
 }
 
+function extractUnits(response: any): OrganizationalUnitOption[] {
+  const rawUnits = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data?.units)
+      ? response.data.units
+      : Array.isArray(response?.units)
+        ? response.units
+        : Array.isArray(response?.data)
+          ? response.data
+          : []
+
+  return rawUnits
+}
+
 interface OrganizationalUnitAutocompleteProps {
   value: string
   onValueChange: (value: string) => void
@@ -79,7 +93,7 @@ export function OrganizationalUnitAutocomplete({
       }
 
       const response = await apiRequest(`/organizational-units?${params.toString()}`)
-      const data = Array.isArray(response) ? response : (response?.data ?? [])
+      const data = extractUnits(response)
       setUnits(data.slice(0, 10))
       setIsOpen(true)
       setHighlightedIndex(0)

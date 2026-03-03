@@ -27,6 +27,24 @@ import {
 const createStageId = () => globalThis.crypto?.randomUUID?.() || `stage-${Math.random().toString(36).slice(2)}`
 const createSupportAssignmentId = () => globalThis.crypto?.randomUUID?.() || `support-${Math.random().toString(36).slice(2)}`
 
+function extractDepartmentOptions(response: any): DepartmentOption[] {
+  const rawDepartments = Array.isArray(response)
+    ? response
+    : Array.isArray(response?.data?.departments)
+      ? response.data.departments
+      : Array.isArray(response?.departments)
+        ? response.departments
+        : Array.isArray(response?.data)
+          ? response.data
+          : []
+
+  return rawDepartments.map((department: any) => ({
+    id: department.id,
+    name: department.name,
+    code: department.code || undefined,
+  }))
+}
+
 function normalizeSupportAssignment(raw: any): WorkflowStageSupportAssignmentData | null {
   if (!raw || typeof raw !== 'object') return null
 
@@ -196,23 +214,24 @@ export default function NewWorkflowPage() {
 
   const loadDepartments = useCallback(async () => {
     try {
-      const response = await apiRequest('/departments')
-      const departmentsData = Array.isArray(response)
-        ? response
-        : Array.isArray(response?.data)
-          ? response.data
-          : []
+      const response = await apiRequest('/admin/departments')
+      const options = extractDepartmentOptions(response)
 
-      if (departmentsData.length > 0) {
-        setDepartments(
-          departmentsData.map((d: any) => ({
-            id: d.id,
-            name: d.name,
-            code: d.code || undefined,
-          }))
-        )
+      if (options.length > 0) {
+        setDepartments(options)
+        return
       }
-    } catch {}
+    } catch (error) {
+      console.warn('Falha ao carregar departamentos em /admin/departments, tentando fallback.', error)
+    }
+
+    try {
+      const response = await apiRequest('/departments')
+      setDepartments(extractDepartmentOptions(response))
+    } catch (error) {
+      console.error('Erro ao carregar departamentos do workflow:', error)
+      setDepartments([])
+    }
   }, [apiRequest])
 
   useEffect(() => {

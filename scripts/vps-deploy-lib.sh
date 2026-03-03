@@ -79,3 +79,83 @@ wait_for_http_ready() {
   echo "ERRO: endpoint nao ficou pronto: ${url}"
   return 1
 }
+
+read_env_value() {
+  local key="${1:?key required}"
+  local env_file="${2:-.env.backup}"
+
+  if [ ! -f "${env_file}" ]; then
+    return 0
+  fi
+
+  grep -E "^${key}=" "${env_file}" | tail -n 1 | cut -d= -f2-
+}
+
+generate_random_secret() {
+  local prefix="${1:-secret}"
+  printf '%s-%s-%s' "${prefix}" "$(date +%s)" "$(openssl rand -hex 16)"
+}
+
+write_vps_env_file() {
+  local env_path="${1:-.env}"
+  local backup_path="${2:-.env.backup}"
+  local jwt_secret
+
+  jwt_secret="$(read_env_value JWT_SECRET "${backup_path}")"
+  if [[ -n "${jwt_secret}" && "${jwt_secret}" == *'$('* ]]; then
+    jwt_secret=""
+  fi
+
+  if [ -z "${jwt_secret}" ]; then
+    jwt_secret="$(generate_random_secret "digiurban-production-secret")"
+  fi
+
+  cat > "${env_path}" <<EOF
+# Node.js
+NODE_ENV=production
+
+# Backend
+PORT=3001
+BACKEND_PORT=3001
+
+# Frontend
+FRONTEND_PORT=3000
+NEXT_PUBLIC_API_URL=/api
+NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
+
+# PostgreSQL (valores padrão)
+POSTGRES_USER=digiurban
+POSTGRES_PASSWORD=digiurban2024
+POSTGRES_DB=digiurban
+
+# Database URL (PostgreSQL)
+DATABASE_URL=postgresql://digiurban:digiurban2024@postgres:5432/digiurban
+
+# Redis
+REDIS_URL=redis://redis:6379
+
+# JWT
+JWT_SECRET=${jwt_secret}
+JWT_EXPIRES_IN=7d
+JWT_ADMIN_EXPIRES_IN=8h
+JWT_CITIZEN_EXPIRES_IN=30d
+
+# CORS
+FRONTEND_URL=https://www.digiurban.com.br
+CORS_ORIGIN=https://www.digiurban.com.br
+ALLOWED_ORIGINS=https://www.digiurban.com.br,http://www.digiurban.com.br,https://digiurban.com.br,http://digiurban.com.br,http://72.60.10.108:3060,http://localhost:3060
+
+# Tenants
+DEFAULT_TENANT=demo
+
+# Logs
+LOG_LEVEL=info
+BUILD_TIMESTAMP=$(date +%s)
+
+# Ollama AI (DigiBot Enhanced)
+USE_OLLAMA=true
+OLLAMA_BASE_URL=http://ollama:11434
+OLLAMA_MODEL=digibot-qwen2.5
+OLLAMA_TIMEOUT=15000
+EOF
+}

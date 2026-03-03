@@ -23,6 +23,8 @@ import { seedServiceWorkflows } from './seeds/service-workflows.seed';
 const prisma = new PrismaClient();
 
 async function main() {
+  const shouldSeedServiceWorkflows =
+    process.env.SEED_SERVICE_WORKFLOWS === 'true' || process.env.NODE_ENV !== 'production';
   console.log('\n╔════════════════════════════════════════════════════════╗');
   console.log('║  🌱 SEED CONSOLIDADO - DigiUrban Single Tenant        ║');
   console.log('╚════════════════════════════════════════════════════════╝\n');
@@ -344,8 +346,16 @@ async function main() {
     console.log('8️⃣  Service Workflows');
     console.log('   ─────────────────────────────');
 
-    await seedServiceWorkflows();
-    console.log('   ✅ Workflows de serviços criados com sucesso\n');
+    if (shouldSeedServiceWorkflows) {
+      await seedServiceWorkflows();
+    } else {
+      console.log('   Workflow seed ignorado em producao para preservar customizacoes');
+    }
+    if (shouldSeedServiceWorkflows) {
+      console.log('   ✅ Workflows de serviços criados com sucesso\n');
+    } else {
+      console.log('');
+    }
 
     // ========================================================================
     // 9. SISTEMA UNIFICADO DE VINCULAÇÕES V2.0

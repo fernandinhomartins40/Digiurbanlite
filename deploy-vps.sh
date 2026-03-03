@@ -207,58 +207,7 @@ ensure_vm_max_map_count 262144
 # ============================================================================
 
 echo "📝 Criando arquivo .env..."
-cat > .env << 'EOF'
-# Node.js
-NODE_ENV=production
-
-# Backend
-PORT=3001
-BACKEND_PORT=3001
-
-# Frontend
-FRONTEND_PORT=3000
-NEXT_PUBLIC_API_URL=/api
-NEXT_PUBLIC_BACKEND_URL=http://localhost:3001
-
-# PostgreSQL (valores padrão)
-POSTGRES_USER=digiurban
-POSTGRES_PASSWORD=digiurban2024
-POSTGRES_DB=digiurban
-
-# Database URL (PostgreSQL)
-DATABASE_URL=postgresql://digiurban:digiurban2024@postgres:5432/digiurban
-
-# Redis
-REDIS_URL=redis://redis:6379
-
-# JWT (gerado automaticamente para produção)
-JWT_SECRET=digiurban-production-secret-$(date +%s)-$(openssl rand -hex 16)
-JWT_EXPIRES_IN=7d
-JWT_ADMIN_EXPIRES_IN=8h
-JWT_CITIZEN_EXPIRES_IN=30d
-
-# CORS
-FRONTEND_URL=https://www.digiurban.com.br
-CORS_ORIGIN=https://www.digiurban.com.br
-ALLOWED_ORIGINS=https://www.digiurban.com.br,http://www.digiurban.com.br,https://digiurban.com.br,http://digiurban.com.br,http://72.60.10.108:3060,http://localhost:3060
-
-# Tenants
-DEFAULT_TENANT=demo
-
-# Logs
-LOG_LEVEL=info
-EOF
-
-# Adicionar BUILD_TIMESTAMP ao .env
-echo "BUILD_TIMESTAMP=$(date +%s)" >> .env
-
-# Adicionar configurações Ollama ao .env
-echo "" >> .env
-echo "# Ollama AI (DigiBot Enhanced)" >> .env
-echo "USE_OLLAMA=true" >> .env
-echo "OLLAMA_BASE_URL=http://ollama:11434" >> .env
-echo "OLLAMA_MODEL=digibot-qwen2.5" >> .env
-echo "OLLAMA_TIMEOUT=15000" >> .env
+write_vps_env_file ".env" ".env.backup"
 
 echo "✅ Arquivo .env criado"
 echo ""
@@ -569,7 +518,7 @@ echo ""
 # ============================================================================
 
 echo "=== Executando seeds dos Micro Sistemas ==="
-docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed" || echo "⚠️ Seed falhou mas continuando deploy"
+docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed:deploy-safe" || echo "⚠️ Seed seguro falhou mas continuando deploy"
 echo "✅ Seeds executados"
 echo ""
 
