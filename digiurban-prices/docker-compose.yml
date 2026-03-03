@@ -1,13 +1,4 @@
-version: '3.9'
-
-# ─────────────────────────────────────────────
-# Docker Compose para desenvolvimento local
-# digiurban-prices + dependências isoladas
-# ─────────────────────────────────────────────
-
 services:
-
-  # ─── PostgreSQL (isolado para dev) ───────────
   postgres:
     image: postgres:15-alpine
     container_name: prices-postgres
@@ -27,7 +18,6 @@ services:
     networks:
       - prices_network
 
-  # ─── OpenSearch ───────────────────────────────
   opensearch:
     image: opensearchproject/opensearch:2.17.0
     container_name: prices-opensearch
@@ -35,7 +25,9 @@ services:
       - cluster.name=prices-cluster
       - node.name=prices-node
       - discovery.type=single-node
+      - bootstrap.memory_lock=true
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - OPENSEARCH_PATH_TMP=/tmp
       - plugins.security.disabled=true
       - DISABLE_INSTALL_DEMO_CONFIG=true
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=D1g1Urb@nPr1c3s!2026
@@ -43,15 +35,24 @@ services:
       - "9200:9200"
     volumes:
       - prices_opensearch_data:/usr/share/opensearch/data
+    tmpfs:
+      - /tmp:size=256m,mode=1777
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -fsS 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null || exit 1"]
+      interval: 20s
       timeout: 10s
-      retries: 5
+      retries: 12
+      start_period: 180s
     networks:
       - prices_network
 
-  # ─── Redis ────────────────────────────────────
   redis:
     image: redis:7-alpine
     container_name: prices-redis
@@ -65,7 +66,6 @@ services:
     networks:
       - prices_network
 
-  # ─── API Principal ────────────────────────────
   prices-api:
     build:
       context: .
@@ -88,7 +88,7 @@ services:
       postgres:
         condition: service_healthy
       opensearch:
-        condition: service_healthy
+        condition: service_started
       redis:
         condition: service_healthy
     networks:

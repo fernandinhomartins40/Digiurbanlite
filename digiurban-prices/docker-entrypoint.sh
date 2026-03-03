@@ -1,9 +1,9 @@
 #!/bin/sh
 set -e
 
-echo "=== DigiUrban Prices — Starting ==="
+echo "=== DigiUrban Prices - Starting ==="
 
-# Extrair host e porta da DATABASE_URL: postgresql://user:pass@host:port/db
+# Extract host and port from DATABASE_URL: postgresql://user:pass@host:port/db
 DB_HOST=$(echo "$DATABASE_URL" | sed -E 's|.*@([^:/]+).*|\1|')
 DB_PORT=$(echo "$DATABASE_URL" | sed -E 's|.*:([0-9]+)/.*|\1|')
 DB_PORT=${DB_PORT:-5432}
@@ -15,21 +15,39 @@ until nc -z "${DB_HOST}" "${DB_PORT}" 2>/dev/null; do
 done
 echo "Database is reachable."
 
-# Aguardar mais 2s para o PostgreSQL aceitar conexões
+# Give PostgreSQL a moment to accept queries after the TCP port opens.
 sleep 2
 
-# Usar prisma local (evita npx baixar versão incompatível)
+OPENSEARCH_ENDPOINT="${OPENSEARCH_URL%/}/_cluster/health?wait_for_status=yellow&timeout=5s"
+OPENSEARCH_ATTEMPTS=0
+OPENSEARCH_MAX_ATTEMPTS=${OPENSEARCH_MAX_ATTEMPTS:-60}
+OPENSEARCH_SLEEP_SECONDS=${OPENSEARCH_SLEEP_SECONDS:-5}
+
+echo "Waiting for OpenSearch at ${OPENSEARCH_ENDPOINT}..."
+until curl -fsS "${OPENSEARCH_ENDPOINT}" >/dev/null 2>&1; do
+  OPENSEARCH_ATTEMPTS=$((OPENSEARCH_ATTEMPTS + 1))
+
+  if [ "${OPENSEARCH_ATTEMPTS}" -ge "${OPENSEARCH_MAX_ATTEMPTS}" ]; then
+    echo "ERROR: OpenSearch did not become ready after ${OPENSEARCH_ATTEMPTS} attempts."
+    exit 1
+  fi
+
+  echo "OpenSearch not ready yet, retrying in ${OPENSEARCH_SLEEP_SECONDS}s... (${OPENSEARCH_ATTEMPTS}/${OPENSEARCH_MAX_ATTEMPTS})"
+  sleep "${OPENSEARCH_SLEEP_SECONDS}"
+done
+echo "OpenSearch is reachable."
+
+# Use the local Prisma binary to avoid downloading an incompatible version.
 PRISMA_BIN="./node_modules/.bin/prisma"
 
-# Resolver migrations com falha no banco compartilhado (evita P3009 bloqueando deploy)
-# Usa node inline para consultar _prisma_migrations via DATABASE_URL sem depender de psql
+# Resolve failed migrations recorded in the shared database and avoid P3009.
 echo "Checking for failed migrations..."
 FAILED=$(node -e "
 const { Client } = require('pg');
 const client = new Client({ connectionString: process.env.DATABASE_URL });
 client.connect()
   .then(() => client.query(\"SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL AND logs IS NOT NULL\"))
-  .then(r => { console.log(r.rows.map(x => x.migration_name).join('\n')); client.end(); })
+  .then(r => { console.log(r.rows.map(x => x.migration_name).join('\\n')); client.end(); })
   .catch(() => { client.end(); });
 " 2>/dev/null || echo "")
 
@@ -43,13 +61,10 @@ if [ -n "$FAILED" ]; then
     fi
   done
 else
-  # Fallback: tentar resolver migration problemática conhecida do banco compartilhado
+  # Fallback for a known failed migration in the shared database.
   $PRISMA_BIN migrate resolve --rolled-back 20260121_add_flow_models 2>/dev/null || true
 fi
 
-# Aplicar migrations (cria/atualiza apenas as tabelas do prices_*)
-# migrate deploy: aplica somente os arquivos SQL em prisma/migrations/
-# Nunca dropa tabelas desconhecidas — seguro em banco compartilhado
 echo "Applying database migrations..."
 $PRISMA_BIN migrate deploy 2>&1 || {
   echo "WARNING: migrate deploy failed, trying db push as fallback..."
@@ -59,10 +74,8 @@ $PRISMA_BIN migrate deploy 2>&1 || {
 }
 echo "Database migrations step complete."
 
-# Gerar Prisma Client atualizado
 echo "Generating Prisma Client..."
 $PRISMA_BIN generate
 
-# Iniciar servidor
 echo "Starting DigiUrban Prices API..."
 exec node dist/index.js

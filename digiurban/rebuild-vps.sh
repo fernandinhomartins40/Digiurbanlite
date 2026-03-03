@@ -1,44 +1,62 @@
 #!/bin/bash
-# Script para rebuildar o container na VPS após mudanças no Dockerfile
+set -e
 
-echo "🔄 Iniciando rebuild do container DigiUrban na VPS..."
+echo "Starting DigiUrban rebuild on the VPS..."
 
-# 1. Navegar para o diretório
 cd /root/digiurban
 
-# 2. Pull do código
-echo "📥 Fazendo pull do código..."
-git pull
+echo "Updating code..."
+git fetch origin main --prune
+git reset --hard origin/main
 
-# 3. Parar containers
-echo "⏸️  Parando containers..."
+if [ ! -f "scripts/vps-deploy-lib.sh" ]; then
+  echo "ERROR: scripts/vps-deploy-lib.sh not found"
+  exit 1
+fi
+
+. "scripts/vps-deploy-lib.sh"
+ensure_vm_max_map_count 262144
+
+echo "Stopping running containers..."
 docker compose -f docker-compose.vps.yml down
 
-# 4. Remover imagem antiga
-echo "🗑️  Removendo imagem antiga..."
+echo "Removing old digiurban image..."
 docker rmi digiurban-digiurban 2>/dev/null || true
 
-# 5. Rebuild com --no-cache
-echo "🏗️  Rebuilding imagem (pode demorar alguns minutos)..."
+echo "Rebuilding digiurban image..."
 docker compose -f docker-compose.vps.yml build digiurban --no-cache
 
-# 6. Subir containers
-echo "🚀 Subindo containers..."
-docker compose -f docker-compose.vps.yml up -d
+echo "Starting base infrastructure..."
+docker compose -f docker-compose.vps.yml up -d \
+  postgres \
+  redis \
+  ultrazend-smtp \
+  ollama \
+  ultrazend-messages \
+  digiurban-flow \
+  digiurban-opensearch
 
-# 7. Aguardar inicialização
-echo "⏳ Aguardando inicialização..."
-sleep 10
+wait_for_container_health digiurban-postgres 30 5
+wait_for_container_health digiurban-redis 30 5
+wait_for_container_health ultrazend-smtp 30 5
+wait_for_container_health digiurban-ollama 40 10
+wait_for_container_health ultrazend-messages 30 5
+wait_for_container_health digiurban-flow 30 5
+wait_for_container_health digiurban-opensearch 36 10
 
-# 8. Verificar status
-echo "✅ Status dos containers:"
+echo "Starting application services..."
+docker compose -f docker-compose.vps.yml up -d digiurban-prices
+wait_for_container_health digiurban-prices 36 10
+
+docker compose -f docker-compose.vps.yml up -d digiurban
+wait_for_container_health digiurban-vps 36 10
+
+echo "Container status:"
 docker compose -f docker-compose.vps.yml ps
 
-# 9. Verificar logs
-echo ""
-echo "📋 Últimas linhas do log:"
+echo
+echo "Recent digiurban logs:"
 docker compose -f docker-compose.vps.yml logs --tail=30 digiurban
 
-echo ""
-echo "✨ Rebuild concluído!"
-echo "💡 Para ver logs em tempo real: docker compose -f docker-compose.vps.yml logs -f digiurban"
+echo
+echo "Rebuild completed."

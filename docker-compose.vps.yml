@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:15-alpine
@@ -152,21 +150,32 @@ services:
       - cluster.name=digiurban-prices-cluster
       - node.name=prices-node
       - discovery.type=single-node
+      - bootstrap.memory_lock=true
       - OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m
+      - OPENSEARCH_PATH_TMP=/tmp
       - plugins.security.disabled=true
       - DISABLE_INSTALL_DEMO_CONFIG=true
       - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PASSWORD:-D1g1Urb@nPr1c3s!2026}
     volumes:
       - opensearch_data:/usr/share/opensearch/data
+    tmpfs:
+      - /tmp:size=256m,mode=1777
     restart: unless-stopped
     networks:
       - digiurban_network
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
     healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
-      interval: 30s
+      test: ["CMD-SHELL", "curl -fsS 'http://127.0.0.1:9200/_cluster/health?wait_for_status=yellow&timeout=5s' >/dev/null || exit 1"]
+      interval: 20s
       timeout: 10s
-      retries: 5
-      start_period: 60s
+      retries: 12
+      start_period: 180s
 
   digiurban-prices:
     build:
@@ -208,7 +217,7 @@ services:
       redis:
         condition: service_healthy
       digiurban-opensearch:
-        condition: service_healthy
+        condition: service_started
     networks:
       - digiurban_network
     healthcheck:

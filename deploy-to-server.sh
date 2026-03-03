@@ -1,33 +1,58 @@
 #!/bin/bash
+set -e
 
-# Script de deploy para DigiUrban VPS
-# Uso: ./deploy-to-server.sh
+echo "Starting deploy to digiurban.com.br..."
 
-echo "🚀 Iniciando deploy para digiurban.com.br..."
+ssh root@digiurban.com.br <<'ENDSSH'
+set -e
 
-# Conectar via SSH e executar comandos
-ssh root@digiurban.com.br << 'ENDSSH'
-cd digiurban || exit 1
+APP_DIR="/root/digiurban"
+cd "$APP_DIR" || exit 1
 
-echo "📥 Fazendo pull do repositório..."
-git pull origin main
+echo "Updating repository..."
+git fetch origin main --prune
+git reset --hard origin/main
 
-echo "🔨 Rebuilding container digiurban..."
+if [ ! -f "scripts/vps-deploy-lib.sh" ]; then
+  echo "ERROR: scripts/vps-deploy-lib.sh not found"
+  exit 1
+fi
+
+. "scripts/vps-deploy-lib.sh"
+ensure_vm_max_map_count 262144
+
+echo "Rebuilding digiurban image..."
 docker compose -f docker-compose.vps.yml build digiurban
 
-echo "🔄 Reiniciando container..."
+echo "Starting required services..."
+docker compose -f docker-compose.vps.yml up -d \
+  postgres \
+  redis \
+  ultrazend-smtp \
+  ollama \
+  ultrazend-messages \
+  digiurban-flow \
+  digiurban-opensearch
+
+wait_for_container_health digiurban-postgres 30 5
+wait_for_container_health digiurban-redis 30 5
+wait_for_container_health ultrazend-smtp 30 5
+wait_for_container_health digiurban-ollama 40 10
+wait_for_container_health ultrazend-messages 30 5
+wait_for_container_health digiurban-flow 30 5
+wait_for_container_health digiurban-opensearch 36 10
+
+docker compose -f docker-compose.vps.yml up -d digiurban-prices
+wait_for_container_health digiurban-prices 36 10
+
 docker compose -f docker-compose.vps.yml up -d digiurban
+wait_for_container_health digiurban-vps 36 10
 
-echo "✅ Deploy concluído!"
-echo "📊 Status dos containers:"
-docker ps --filter name=digiurban
-
-echo ""
-echo "📝 Últimos logs:"
-docker logs digiurban-vps --tail 20
-
+echo "Deploy completed."
+docker compose -f docker-compose.vps.yml ps
+echo
+docker logs digiurban-vps --tail 40
 ENDSSH
 
-echo ""
-echo "✅ Deploy finalizado com sucesso!"
-echo "🌐 Aplicação disponível em: https://digiurban.com.br"
+echo
+echo "Deploy finished successfully."

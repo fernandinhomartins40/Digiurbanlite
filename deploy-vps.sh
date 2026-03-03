@@ -194,6 +194,14 @@ git log --oneline -5
 echo "📂 Verificando código sincronizado..."
 ls -la
 
+if [ ! -f "$APP_DIR/scripts/vps-deploy-lib.sh" ]; then
+  echo "ERRO: scripts/vps-deploy-lib.sh nao encontrado"
+  exit 1
+fi
+
+. "$APP_DIR/scripts/vps-deploy-lib.sh"
+ensure_vm_max_map_count 262144
+
 # ============================================================================
 # ETAPA 3: CRIAR ARQUIVO .ENV
 # ============================================================================
@@ -524,11 +532,34 @@ docker-compose -f docker-compose.vps.yml down || true
 
 # Iniciar containers
 echo "🚀 Iniciando containers..."
-docker-compose -f docker-compose.vps.yml up -d
+echo "Iniciando infraestrutura base..."
+docker-compose -f docker-compose.vps.yml up -d \
+  postgres \
+  redis \
+  ultrazend-smtp \
+  ollama \
+  ultrazend-messages \
+  digiurban-flow \
+  digiurban-opensearch
+
+wait_for_container_health digiurban-postgres 30 5
+wait_for_container_health digiurban-redis 30 5
+wait_for_container_health ultrazend-smtp 30 5
+wait_for_container_health digiurban-ollama 40 10
+wait_for_container_health ultrazend-messages 30 5
+wait_for_container_health digiurban-flow 30 5
+wait_for_container_health digiurban-opensearch 36 10
+
+echo "Iniciando modulo de precos..."
+docker-compose -f docker-compose.vps.yml up -d digiurban-prices
+wait_for_container_health digiurban-prices 36 10
+
+echo "Iniciando aplicacao principal..."
+docker-compose -f docker-compose.vps.yml up -d digiurban
+wait_for_container_health digiurban-vps 36 10
 
 # Aguardar PostgreSQL e aplicação iniciarem
 echo "⏳ Aguardando containers iniciarem (30s)..."
-sleep 30
 
 echo "✅ Containers iniciados"
 echo ""
