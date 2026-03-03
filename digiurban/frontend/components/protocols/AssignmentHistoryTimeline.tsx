@@ -157,6 +157,17 @@ export function AssignmentHistoryTimeline({ protocolId }: AssignmentHistoryTimel
     }
   };
 
+  const formatDateSafe = (value?: string, dateFormat = 'dd/MM/yyyy HH:mm') => {
+    if (!value) return 'Data indisponível';
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return 'Data indisponível';
+    }
+
+    return format(date, dateFormat, { locale: ptBR });
+  };
+
   if (loading) {
     return (
       <Card>
@@ -232,10 +243,10 @@ export function AssignmentHistoryTimeline({ protocolId }: AssignmentHistoryTimel
                   </div>
 
                   <div className="text-right text-sm text-gray-500">
-                    <p>{format(new Date(assignment.dataInicio), 'dd/MM/yyyy HH:mm', { locale: ptBR })}</p>
+                    <p>{formatDateSafe(assignment.dataInicio)}</p>
                     {assignment.dataFim && (
                       <p className="text-xs mt-1">
-                        até {format(new Date(assignment.dataFim), 'dd/MM/yyyy HH:mm', { locale: ptBR })}
+                        até {formatDateSafe(assignment.dataFim)}
                       </p>
                     )}
                   </div>
@@ -266,7 +277,7 @@ export function AssignmentHistoryTimeline({ protocolId }: AssignmentHistoryTimel
                       {assignment.ativaAte && (
                         <>
                           <br />
-                          Ativa até: {format(new Date(assignment.ativaAte), 'dd/MM/yyyy', { locale: ptBR })}
+                          Ativa até: {formatDateSafe(assignment.ativaAte, 'dd/MM/yyyy')}
                         </>
                       )}
                     </p>

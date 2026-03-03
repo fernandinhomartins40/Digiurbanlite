@@ -72,6 +72,10 @@ export default function ProtocolDetailPage() {
   const [showForwardDialog, setShowForwardDialog] = useState(false)
   const [showAssignTeamDialog, setShowAssignTeamDialog] = useState(false)
 
+  const ensureArray = <T,>(value: unknown): T[] => {
+    return Array.isArray(value) ? value : []
+  }
+
   // Detectar modo de visualização
   const viewModeResult = useMemo(() => {
     if (!protocol || stages.length === 0) {
@@ -124,7 +128,7 @@ export default function ProtocolDetailPage() {
       // Carregar documentos
       try {
         const docs = await getProtocolDocuments(protocolId)
-        setDocuments(docs)
+        setDocuments(ensureArray(docs))
       } catch (err) {
         console.error('Error loading documents:', err)
         setDocuments([])
@@ -134,7 +138,7 @@ export default function ProtocolDetailPage() {
       try {
         const genDocs = await apiRequest(`/protocols/${protocolId}/generated-documents`)
         if (genDocs.success) {
-          setGeneratedDocuments(genDocs.data || [])
+          setGeneratedDocuments(ensureArray(genDocs.data))
         }
       } catch (err) {
         console.error('Error loading generated documents:', err)
@@ -144,7 +148,7 @@ export default function ProtocolDetailPage() {
       // Carregar pendências
       try {
         const pends = await getProtocolPendings(protocolId)
-        setPendings(pends)
+        setPendings(ensureArray(pends))
       } catch (err) {
         console.error('Error loading pendings:', err)
         setPendings([])
@@ -153,10 +157,11 @@ export default function ProtocolDetailPage() {
       // Carregar etapas
       try {
         const stgs = await getProtocolStages(protocolId)
-        setStages(stgs)
+        const normalizedStages = ensureArray<any>(stgs)
+        setStages(normalizedStages)
 
         // Se há etapa em progresso, carregar validação
-        const currentStage = stgs.find((s: any) => s.status === StageStatus.IN_PROGRESS)
+        const currentStage = normalizedStages.find((s: any) => s.status === StageStatus.IN_PROGRESS)
         if (currentStage) {
           loadValidation(currentStage.id)
         }
@@ -168,7 +173,7 @@ export default function ProtocolDetailPage() {
       // Carregar interações
       try {
         const ints = await getProtocolInteractions(protocolId)
-        setInteractions(ints)
+        setInteractions(ensureArray(ints))
       } catch (err) {
         console.error('Error loading interactions:', err)
         setInteractions([])
@@ -178,7 +183,7 @@ export default function ProtocolDetailPage() {
       try {
         const linksData = await apiRequest(`/protocols/${protocolId}/citizen-links`)
         if (linksData.success) {
-          setCitizenLinks(linksData.data || [])
+          setCitizenLinks(ensureArray(linksData.data?.links ?? linksData.data))
         }
       } catch (err) {
         console.log('No citizen links')
@@ -339,7 +344,7 @@ export default function ProtocolDetailPage() {
         status={protocol.status}
         citizenName={protocol.citizen?.name}
         currentStage={currentStage}
-        departmentId={protocol.department?.id}
+        departmentId={protocol.departmentId || protocol.department?.id}
         onActionComplete={loadProtocolData}
         onBack={() => router.push('/admin/protocolos')}
         onAssignAction={handleAssignAction}

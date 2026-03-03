@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { UserPlus, Users, Clock, User } from 'lucide-react'
+import { UserPlus, Clock, User } from 'lucide-react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
@@ -17,29 +17,48 @@ interface CurrentAssignmentCardProps {
 
 interface Assignment {
   id: string
-  assignedUserId: string | null
-  assignedTeamId: string | null
-  assignedAt: string
-  comment?: string
-  assignedBy?: {
-    name: string
-  }
-  assignedUser?: {
+  tipo: 'PRINCIPAL' | 'DELEGADO' | 'ENCAMINHADO' | 'CONSULTA' | 'APOIO'
+  situacao: 'ATIVA' | 'CONCLUIDA' | 'CANCELADA' | 'SUBSTITUIDA' | 'PENDENTE'
+  assignedByName?: string
+  comentario?: string
+  motivo?: string
+  dataInicio?: string | null
+  user?: {
     id: string
     name: string
     email?: string
     role?: string
-    employee?: {
-      department?: {
-        name: string
-      }
+    department?: {
+      name: string
     }
   }
-  assignedTeam?: {
+  assignedBy?: {
     id: string
     name: string
-    description?: string
-    memberCount?: number
+  }
+}
+
+const parseValidDate = (value?: string | null) => {
+  if (!value) return null
+
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const getTipoLabel = (tipo: Assignment['tipo']) => {
+  switch (tipo) {
+    case 'PRINCIPAL':
+      return 'Principal'
+    case 'DELEGADO':
+      return 'Delegado'
+    case 'ENCAMINHADO':
+      return 'Encaminhado'
+    case 'CONSULTA':
+      return 'Consulta'
+    case 'APOIO':
+      return 'Apoio'
+    default:
+      return tipo
   }
 }
 
@@ -55,18 +74,18 @@ export function CurrentAssignmentCard({ protocolId, onReassign }: CurrentAssignm
   const loadCurrentAssignment = async () => {
     try {
       setLoading(true)
-      const response = await apiRequest(`/api/protocols/${protocolId}/assignments`)
+      const response = await apiRequest(`/protocols/${protocolId}/assignments`)
+      const assignments = Array.isArray(response.data?.assignments)
+        ? (response.data.assignments as Assignment[])
+        : []
 
-      if (response.success && response.data?.assignments?.length > 0) {
-        // Pegar a atribuição mais recente que não tenha sido encerrada
-        const activeAssignment = response.data.assignments.find(
-          (a: Assignment) => !a.assignedUser?.employee && !a.assignedTeam
-        ) || response.data.assignments[0]
+      const activeAssignment =
+        assignments.find((item) => item.situacao === 'ATIVA' && item.tipo === 'PRINCIPAL') ||
+        assignments.find((item) => item.situacao === 'ATIVA') ||
+        assignments[0] ||
+        null
 
-        setAssignment(activeAssignment)
-      } else {
-        setAssignment(null)
-      }
+      setAssignment(activeAssignment)
     } catch (error) {
       console.error('Erro ao carregar atribuição atual:', error)
       setAssignment(null)
@@ -93,7 +112,7 @@ export function CurrentAssignmentCard({ protocolId, onReassign }: CurrentAssignm
     )
   }
 
-  if (!assignment) {
+  if (!assignment || !assignment.user) {
     return (
       <Card>
         <CardHeader>
@@ -118,75 +137,46 @@ export function CurrentAssignmentCard({ protocolId, onReassign }: CurrentAssignm
     )
   }
 
-  const isTeamAssignment = !!assignment.assignedTeamId
-  const isUserAssignment = !!assignment.assignedUserId
+  const assignedAt = parseValidDate(assignment.dataInicio)
 
   return (
     <Card>
       <CardHeader>
         <CardTitle className="text-base flex items-center gap-2">
-          {isTeamAssignment ? (
-            <>
-              <Users className="h-4 w-4" />
-              Equipe Atribuída
-            </>
-          ) : (
-            <>
-              <User className="h-4 w-4" />
-              Servidor Atribuído
-            </>
-          )}
+          <User className="h-4 w-4" />
+          Atribuição Atual
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Atribuição de Servidor */}
-        {isUserAssignment && assignment.assignedUser && (
-          <div className="flex items-start gap-3">
-            <Avatar className="h-10 w-10">
-              <AvatarFallback className="bg-primary text-primary-foreground">
-                {assignment.assignedUser.name
-                  .split(' ')
-                  .map(n => n[0])
-                  .join('')
-                  .toUpperCase()
-                  .slice(0, 2)}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{assignment.assignedUser.name}</p>
-              {assignment.assignedUser.email && (
-                <p className="text-xs text-gray-600 truncate">{assignment.assignedUser.email}</p>
-              )}
-              {assignment.assignedUser.employee?.department && (
-                <Badge variant="outline" className="mt-1 text-xs">
-                  {assignment.assignedUser.employee.department.name}
-                </Badge>
-              )}
+        <div className="flex items-start gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-primary text-primary-foreground">
+              {assignment.user.name
+                .split(' ')
+                .map((name) => name[0])
+                .join('')
+                .toUpperCase()
+                .slice(0, 2)}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="font-medium text-sm truncate">{assignment.user.name}</p>
+              <Badge variant="outline" className="text-xs">
+                {getTipoLabel(assignment.tipo)}
+              </Badge>
             </div>
+            {assignment.user.email && (
+              <p className="text-xs text-gray-600 truncate">{assignment.user.email}</p>
+            )}
+            {assignment.user.department?.name && (
+              <Badge variant="outline" className="mt-1 text-xs">
+                {assignment.user.department.name}
+              </Badge>
+            )}
           </div>
-        )}
+        </div>
 
-        {/* Atribuição de Equipe */}
-        {isTeamAssignment && assignment.assignedTeam && (
-          <div className="flex items-start gap-3">
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
-              <Users className="h-5 w-5 text-blue-600" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-sm truncate">{assignment.assignedTeam.name}</p>
-              {assignment.assignedTeam.description && (
-                <p className="text-xs text-gray-600 line-clamp-2">{assignment.assignedTeam.description}</p>
-              )}
-              {assignment.assignedTeam.memberCount && (
-                <Badge variant="outline" className="mt-1 text-xs">
-                  {assignment.assignedTeam.memberCount} membro(s)
-                </Badge>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Metadata da Atribuição */}
         <div className="pt-3 border-t space-y-2">
           <div className="flex items-center justify-between text-xs text-gray-600">
             <div className="flex items-center gap-1">
@@ -194,26 +184,29 @@ export function CurrentAssignmentCard({ protocolId, onReassign }: CurrentAssignm
               <span>Atribuído há</span>
             </div>
             <span className="font-medium">
-              {formatDistanceToNow(new Date(assignment.assignedAt), {
-                addSuffix: false,
-                locale: ptBR
-              })}
+              {assignedAt
+                ? formatDistanceToNow(assignedAt, {
+                    addSuffix: false,
+                    locale: ptBR
+                  })
+                : 'Data indisponível'}
             </span>
           </div>
-          {assignment.assignedBy && (
+          {(assignment.assignedBy?.name || assignment.assignedByName) && (
             <div className="text-xs text-gray-600">
               <span>Por: </span>
-              <span className="font-medium">{assignment.assignedBy.name}</span>
+              <span className="font-medium">{assignment.assignedBy?.name || assignment.assignedByName}</span>
             </div>
           )}
-          {assignment.comment && (
+          {(assignment.comentario || assignment.motivo) && (
             <div className="text-xs text-gray-600 pt-2 border-t">
-              <p className="italic line-clamp-2">&ldquo;{assignment.comment}&rdquo;</p>
+              <p className="italic line-clamp-3">
+                &ldquo;{assignment.comentario || assignment.motivo}&rdquo;
+              </p>
             </div>
           )}
         </div>
 
-        {/* Botão de Reatribuir */}
         {onReassign && (
           <Button size="sm" variant="outline" className="w-full" onClick={onReassign}>
             <UserPlus className="h-4 w-4 mr-2" />
