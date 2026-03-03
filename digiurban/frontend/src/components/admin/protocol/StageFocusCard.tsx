@@ -9,8 +9,11 @@ import {
   AlertCircle,
   CheckCircle2,
   FileText,
-  FormInput
+  FormInput,
+  Building2,
+  UserRound
 } from 'lucide-react'
+import type { ProtocolStageMetadata } from '@/types/protocol-enhancements'
 
 interface StageFocusCardProps {
   currentStage: {
@@ -18,11 +21,7 @@ interface StageFocusCardProps {
     stageName: string
     stageOrder: number
     status: string
-    metadata?: {
-      requiredDocumentTypes?: string[]
-      requiredFormFields?: string[]
-      allowedActions?: string[]
-    }
+    metadata?: ProtocolStageMetadata
     dueDate?: Date | string
   }
   totalStages: number
@@ -44,8 +43,10 @@ export function StageFocusCard({
   pendings = []
 }: StageFocusCardProps) {
   const requiredDocs = currentStage.metadata?.requiredDocumentTypes || []
-  const requiredFields = currentStage.metadata?.requiredFormFields || []
+  const requiredFields =
+    currentStage.metadata?.requiredFormFields || currentStage.metadata?.requiredFormFieldIds || []
   const allowedActions = currentStage.metadata?.allowedActions || []
+  const supportAssignments = currentStage.metadata?.stageSupportAssignments || []
 
   // Calcular documentos pendentes
   const approvedDocs = documents.filter(d =>
@@ -254,6 +255,31 @@ export function StageFocusCard({
                     +{requiredFields.length - 3} campo{requiredFields.length - 3 > 1 ? 's' : ''}
                   </Badge>
                 )}
+              </div>
+            </div>
+          )}
+
+          {supportAssignments.length > 0 && (
+            <div className="pt-2 border-t border-blue-200">
+              <p className="text-xs text-blue-700 font-medium mb-2">
+                Apoios vinculados à etapa:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {supportAssignments.map((assignment, index) => (
+                  <Badge
+                    key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.organizationalUnitId || index}`}
+                    variant="outline"
+                    className="text-xs bg-emerald-50 text-emerald-700 border-emerald-300"
+                  >
+                    {assignment.targetType === 'USER' ? (
+                      <UserRound className="h-3 w-3 mr-1" />
+                    ) : (
+                      <Building2 className="h-3 w-3 mr-1" />
+                    )}
+                    {assignment.userName || assignment.organizationalUnitName}
+                    {assignment.mode === 'SUGGEST_ASSIGNMENT' && ' · sugestão'}
+                  </Badge>
+                ))}
               </div>
             </div>
           )}

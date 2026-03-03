@@ -7,11 +7,12 @@ import { Label } from '@/components/ui/label'
 import { Search, User, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-interface AdminUser {
+export interface AdminUser {
   id: string
   name: string
   email: string
   role?: string
+  departmentId?: string
   department?: string
 }
 
@@ -22,6 +23,7 @@ interface AdminUserAutocompleteProps {
   placeholder?: string
   required?: boolean
   error?: string
+  departmentId?: string
 }
 
 export function AdminUserAutocomplete({
@@ -31,6 +33,7 @@ export function AdminUserAutocomplete({
   placeholder = 'Digite o nome do servidor...',
   required = false,
   error,
+  departmentId,
 }: AdminUserAutocompleteProps) {
   const { apiRequest } = useAdminAuth()
   const [searchTerm, setSearchTerm] = useState('')
@@ -50,7 +53,15 @@ export function AdminUserAutocomplete({
 
     setIsLoading(true)
     try {
-      const response = await apiRequest(`/api/admin/users/search?q=${encodeURIComponent(search)}`)
+      const params = new URLSearchParams({
+        q: search,
+      })
+
+      if (departmentId) {
+        params.set('departmentId', departmentId)
+      }
+
+      const response = await apiRequest(`/api/admin/users/search?${params.toString()}`)
       const usersData = response.data || []
       setUsers(usersData)
       setIsOpen(true)
@@ -72,7 +83,7 @@ export function AdminUserAutocomplete({
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [searchTerm])
+  }, [departmentId, searchTerm])
 
   // Fechar ao clicar fora
   useEffect(() => {

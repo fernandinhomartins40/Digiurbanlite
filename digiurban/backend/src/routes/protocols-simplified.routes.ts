@@ -14,7 +14,10 @@ import { protocolModuleService } from '../services/protocol-module.service';
 import { protocolServiceSimplified } from '../services/protocol-simplified.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import * as pendingService from '../services/protocol-pending.service';
-import { getWorkflowByServiceId } from '../services/service-workflow.service';
+import {
+  buildProtocolStageMetadataFromWorkflowStage,
+  getWorkflowByServiceId
+} from '../services/service-workflow.service';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 import type { WorkflowStage } from '../types/workflow.types';
 import * as protocolAssignmentService from '../services/protocolAssignmentService';
@@ -1515,21 +1518,6 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       0
     );
 
-    const buildStageMetadata = (stage: WorkflowStage) => ({
-      stageId: stage.id,
-      description: stage.description,
-      availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
-      primaryTab: stage.primaryTab || 'resumo',
-      requiredDocumentTypes: stage.requiredDocumentTypes || [],
-      requiredFormFieldIds: stage.requiredFormFieldIds || [],
-      allowedActions: stage.allowedActions || [],
-      canSkip: stage.canSkip || false,
-      skipCondition: stage.skipCondition,
-      role: stage.role,
-      department: stage.department,
-      requiresApproval: stage.requiresApproval
-    });
-
     if (protocol.stages.some(stage => stage.status === 'IN_PROGRESS')) {
       await prisma.protocolStage.updateMany({
         where: {
@@ -1561,7 +1549,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
               dueDate: stage.slaDays
                 ? new Date(now.getTime() + stage.slaDays * 24 * 60 * 60 * 1000)
                 : undefined,
-              metadata: buildStageMetadata(stage)
+              metadata: buildProtocolStageMetadataFromWorkflowStage(stage)
             }
           });
         })

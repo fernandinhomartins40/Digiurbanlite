@@ -25,6 +25,7 @@ interface ServiceWorkflow {
   description: string | null
   defaultSLA: number | null
   stages: any[]
+  supportAssignmentsCount?: number
   isActive: boolean
   createdAt: string
   updatedAt: string
@@ -143,7 +144,7 @@ export default function WorkflowsPage() {
 
       {/* Stats */}
       {stats && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           <Card>
             <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><Layers className="h-3.5 w-3.5" />Total Workflows</CardTitle></CardHeader>
             <CardContent><div className="text-2xl font-bold">{stats.totalWorkflows}</div></CardContent>
@@ -164,6 +165,10 @@ export default function WorkflowsPage() {
                 {stats.servicesWithoutWorkflow === 0 && <CheckCircle2 className="h-5 w-5 text-green-600" />}
               </div>
             </CardContent>
+          </Card>
+          <Card>
+            <CardHeader className="pb-2"><CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5"><GitBranch className="h-3.5 w-3.5" />Apoios</CardTitle></CardHeader>
+            <CardContent><div className="text-2xl font-bold">{stats.stageSupportAssignments || 0}</div></CardContent>
           </Card>
         </div>
       )}
@@ -234,6 +239,9 @@ export default function WorkflowsPage() {
                       <span className="flex items-center gap-1"><Layers className="h-3 w-3" />{workflow.stages.length} etapas</span>
                       {workflow.defaultSLA && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />SLA {workflow.defaultSLA}d</span>}
                       {hasDocumentTabs(workflow.stages) && <span className="flex items-center gap-1 text-blue-600"><FileText className="h-3 w-3" />Geração de docs</span>}
+                      {(workflow.supportAssignmentsCount || 0) > 0 && (
+                        <span className="flex items-center gap-1 text-emerald-600"><GitBranch className="h-3 w-3" />{workflow.supportAssignmentsCount} apoios</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 self-end sm:self-center">

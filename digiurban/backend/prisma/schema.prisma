@@ -147,9 +147,10 @@ model User {
   socialAssistanceData SocialAssistanceProfessionalData? @relation("UserSocialAssistanceData")
 
   // ✅ NOVO: Sistema de Atribuição de Protocolos (Sistema Unificado V2.0)
-  protocolAssignments ProtocolServerAssignment[] @relation("UserProtocolAssignments")
-  protocolsAssignedBy ProtocolServerAssignment[] @relation("ProtocolAssignedBy")
-  currentProtocols    ProtocolSimplified[]       @relation("CurrentProtocolAssignment")
+  protocolAssignments             ProtocolServerAssignment[]       @relation("UserProtocolAssignments")
+  protocolsAssignedBy             ProtocolServerAssignment[]       @relation("ProtocolAssignedBy")
+  currentProtocols                ProtocolSimplified[]             @relation("CurrentProtocolAssignment")
+  workflowStageSupportAssignments WorkflowStageSupportAssignment[]
 
   // ✅ Apps Saúde - Relacionamentos que migraram de ProfissionalSaude
   atendimentosOdonto       AtendimentoOdontologico[] @relation("DentistaAtendimentos")
@@ -1143,10 +1144,37 @@ model ServiceWorkflow {
   updatedAt DateTime @updatedAt
 
   // Relacionamento
-  service ServiceSimplified @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service            ServiceSimplified                @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  supportAssignments WorkflowStageSupportAssignment[]
 
   @@index([isActive])
   @@map("service_workflows")
+}
+
+model WorkflowStageSupportAssignment {
+  id String @id @default(cuid())
+
+  serviceWorkflowId String
+  workflowStageId   String
+
+  targetType WorkflowStageSupportTargetType
+  mode       WorkflowStageSupportMode       @default(REFERENCE_ONLY)
+
+  userId               String?
+  organizationalUnitId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  serviceWorkflow    ServiceWorkflow     @relation(fields: [serviceWorkflowId], references: [id], onDelete: Cascade)
+  user               User?               @relation(fields: [userId], references: [id], onDelete: SetNull)
+  organizationalUnit OrganizationalUnit? @relation(fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
+  @@index([serviceWorkflowId, workflowStageId], map: "wssa_workflow_stage_idx")
+  @@index([serviceWorkflowId, workflowStageId, targetType], map: "wssa_workflow_stage_target_idx")
+  @@index([userId], map: "wssa_user_idx")
+  @@index([organizationalUnitId], map: "wssa_org_unit_idx")
+  @@map("workflow_stage_support_assignments")
 }
 
 // ============================================================================
@@ -4916,13 +4944,13 @@ model Conversation {
   closedAt  DateTime?
 
   // Bot-specific fields (REFATORADO - source of truth é FlowExecution)
-  isBotConversation       Boolean  @default(false)
-  activeFlowExecutionId   String?  @unique // FK para execução ativa do bot
+  isBotConversation     Boolean @default(false)
+  activeFlowExecutionId String? @unique // FK para execução ativa do bot
 
   // Relacionamentos
-  messageServer        MessageServer  @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
-  messages             Message[]
-  activeFlowExecution  FlowExecution? @relation("ActiveFlowExecution", fields: [activeFlowExecutionId], references: [id], onDelete: SetNull)
+  messageServer       MessageServer  @relation(fields: [messageServerId], references: [id], onDelete: Cascade)
+  messages            Message[]
+  activeFlowExecution FlowExecution? @relation("ActiveFlowExecution", fields: [activeFlowExecutionId], references: [id], onDelete: SetNull)
 
   @@unique([participant1Id, participant1Type, participant2Id, participant2Type, protocolId])
   @@index([participant1Id, participant1Type, status])
@@ -4991,12 +5019,12 @@ model Message {
   metadata Json? // IP, user-agent, location, etc
 
   // ✅ NOVO: Campos para mensagens de bot (analytics queryable)
-  isBotMessage          Boolean  @default(false) // Mensagem gerada pelo bot
-  botInteractionType    String? // 'menu', 'form', 'upload', 'location', 'flow_navigation'
-  botSelectedOption     String? // ID da opção selecionada (para menus)
-  botStructuredData     Json? // Dados estruturados originais (form, location, etc)
-  botFlowNodeId         String? // ID do nodo que gerou/processou esta mensagem
-  botFlowAction         String? // Action executada (se aplicável)
+  isBotMessage       Boolean @default(false) // Mensagem gerada pelo bot
+  botInteractionType String? // 'menu', 'form', 'upload', 'location', 'flow_navigation'
+  botSelectedOption  String? // ID da opção selecionada (para menus)
+  botStructuredData  Json? // Dados estruturados originais (form, location, etc)
+  botFlowNodeId      String? // ID do nodo que gerou/processou esta mensagem
+  botFlowAction      String? // Action executada (se aplicável)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -6254,7 +6282,7 @@ model FlowDefinition {
 
 // Execuções de fluxos (estado de conversação)
 model FlowExecution {
-  id             String    @id @default(cuid())
+  id             String  @id @default(cuid())
   citizenId      String
   flowId         String
   conversationId String? // Vincula com UltraZend Messages
@@ -6262,28 +6290,28 @@ model FlowExecution {
   state          Json // Estado completo: dados coletados, variáveis, etc
   history        Json // Histórico de navegação (array de node IDs)
   status         String // ACTIVE, COMPLETED, CANCELLED, ERROR
-  errorMessage   String?   @db.Text
+  errorMessage   String? @db.Text
 
   // ✅ NOVO: Campos de pausa (movidos de metadata para campos diretos)
-  isPaused       Boolean   @default(false)
-  pausedBy       String? // userId do servidor que pausou
-  pausedAt       DateTime?
-  pauseReason    String? // "citizen_request", "complex_case", "human_needed"
-  resumedAt      DateTime?
-  resumedBy      String? // userId do servidor que retomou
+  isPaused    Boolean   @default(false)
+  pausedBy    String? // userId do servidor que pausou
+  pausedAt    DateTime?
+  pauseReason String? // "citizen_request", "complex_case", "human_needed"
+  resumedAt   DateTime?
+  resumedBy   String? // userId do servidor que retomou
 
   // ✅ NOVO: Retry e metadados
-  retryCount     Int       @default(0)
-  metadata       Json? // Outros metadados (não relacionados a pausa)
+  retryCount Int   @default(0)
+  metadata   Json? // Outros metadados (não relacionados a pausa)
 
-  startedAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  completedAt    DateTime?
+  startedAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  completedAt DateTime?
 
   // Relacionamentos
-  citizen                Citizen         @relation(fields: [citizenId], references: [id], onDelete: Cascade)
-  flow                   FlowDefinition  @relation(fields: [flowId], references: [id], onDelete: Cascade)
-  activeInConversation   Conversation?   @relation("ActiveFlowExecution")
+  citizen              Citizen        @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  flow                 FlowDefinition @relation(fields: [flowId], references: [id], onDelete: Cascade)
+  activeInConversation Conversation?  @relation("ActiveFlowExecution")
 
   @@index([citizenId])
   @@index([flowId])
@@ -7661,8 +7689,9 @@ model OrganizationalUnit {
   unidadeCRAS     UnidadeCRAS?     @relation("UnidadeCRASOrgUnit")
 
   // ✅ NOVO: Sistema de Atribuição de Protocolos
-  protocolAssignments ProtocolServerAssignment[] @relation("ProtocolUnitAssignments")
-  protocols           ProtocolSimplified[]       @relation("ProtocolOrganizationalUnits")
+  protocolAssignments             ProtocolServerAssignment[]       @relation("ProtocolUnitAssignments")
+  protocols                       ProtocolSimplified[]             @relation("ProtocolOrganizationalUnits")
+  workflowStageSupportAssignments WorkflowStageSupportAssignment[]
 
   @@unique([departmentId, sigla])
   @@index([departmentId, tipo, isActive])
@@ -7681,6 +7710,16 @@ enum TipoUnidadeOrganizacional {
   UNIDADE_ESPECIAL
   DEPARTAMENTO
   ASSESSORIA
+}
+
+enum WorkflowStageSupportTargetType {
+  USER
+  ORGANIZATIONAL_UNIT
+}
+
+enum WorkflowStageSupportMode {
+  REFERENCE_ONLY
+  SUGGEST_ASSIGNMENT
 }
 
 // ============================================

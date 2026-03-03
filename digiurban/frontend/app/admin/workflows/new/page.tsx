@@ -16,19 +16,89 @@ import {
   Layers, Search
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
-import { WorkflowStageEditor, WorkflowStageData, DocumentTemplateOption } from '@/components/admin/workflows/WorkflowStageEditor'
+import {
+  WorkflowStageEditor,
+  WorkflowStageData,
+  DocumentTemplateOption,
+  WorkflowStageSupportAssignmentData
+} from '@/components/admin/workflows/WorkflowStageEditor'
+
+const createStageId = () => globalThis.crypto?.randomUUID?.() || `stage-${Math.random().toString(36).slice(2)}`
+const createSupportAssignmentId = () => globalThis.crypto?.randomUUID?.() || `support-${Math.random().toString(36).slice(2)}`
+
+function normalizeSupportAssignment(raw: any): WorkflowStageSupportAssignmentData | null {
+  if (!raw || typeof raw !== 'object') return null
+
+  const targetType =
+    raw.targetType === 'USER' || raw.targetType === 'ORGANIZATIONAL_UNIT'
+      ? raw.targetType
+      : null
+
+  if (!targetType) return null
+
+  const userId = typeof raw.userId === 'string' ? raw.userId : raw.user?.id
+  const organizationalUnitId =
+    typeof raw.organizationalUnitId === 'string'
+      ? raw.organizationalUnitId
+      : raw.organizationalUnit?.id
+
+  if (targetType === 'USER' && !userId) return null
+  if (targetType === 'ORGANIZATIONAL_UNIT' && !organizationalUnitId) return null
+
+  return {
+    id: typeof raw.id === 'string' && raw.id ? raw.id : createSupportAssignmentId(),
+    targetType,
+    mode: raw.mode === 'SUGGEST_ASSIGNMENT' ? 'SUGGEST_ASSIGNMENT' : 'REFERENCE_ONLY',
+    userId,
+    user: raw.user
+      ? {
+          ...raw.user,
+          departmentId: raw.user.departmentId,
+          department: raw.user.department || raw.user.departmentName,
+        }
+      : undefined,
+    organizationalUnitId,
+    organizationalUnit: raw.organizationalUnit
+      ? {
+          ...raw.organizationalUnit,
+          department:
+            raw.organizationalUnit.department ||
+            (raw.organizationalUnit.departmentId || raw.organizationalUnit.departmentName
+              ? {
+                  id: raw.organizationalUnit.departmentId || '',
+                  name: raw.organizationalUnit.departmentName || '',
+                  code: '',
+                }
+              : undefined),
+        }
+      : undefined,
+    searchValue: raw.searchValue || raw.organizationalUnit?.nome || '',
+  }
+}
+
+function cloneSupportAssignments(
+  supportAssignments: WorkflowStageSupportAssignmentData[]
+): WorkflowStageSupportAssignmentData[] {
+  return supportAssignments.map(assignment => ({
+    ...assignment,
+    id: createSupportAssignmentId(),
+  }))
+}
 
 function createEmptyStage(order: number): WorkflowStageData {
   return {
+    id: createStageId(),
     name: '', description: '', order, slaDays: 3, canSkip: false, skipCondition: '',
     stageType: '', availableTabs: ['resumo', 'documentos', 'comunicacao'], primaryTab: 'resumo',
     allowedActions: ['APPROVE'], actionLabels: {}, requiredDocumentTypes: [],
     requiredFormFields: [], documentTemplateIds: [], role: '', department: '', requiresApproval: false,
+    supportAssignments: [],
   }
 }
 
 function normalizeStage(raw: any, order: number): WorkflowStageData {
   return {
+    id: raw.id || createStageId(),
     name: raw.name || '', description: raw.description || '', order,
     slaDays: raw.slaDays || 3, canSkip: raw.canSkip || false, skipCondition: raw.skipCondition || '',
     stageType: raw.stageType || '',
@@ -40,6 +110,14 @@ function normalizeStage(raw: any, order: number): WorkflowStageData {
     requiredFormFields: Array.isArray(raw.requiredFormFields || raw.requiredFormFieldIds) ? (raw.requiredFormFields || raw.requiredFormFieldIds) : [],
     documentTemplateIds: Array.isArray(raw.documentTemplateIds) ? raw.documentTemplateIds : [],
     role: raw.role || '', department: raw.department || '', requiresApproval: raw.requiresApproval || false,
+    supportAssignments: Array.isArray(raw.supportAssignments)
+      ? raw.supportAssignments
+          .map(normalizeSupportAssignment)
+          .filter(
+            (assignment: WorkflowStageSupportAssignmentData | null): assignment is WorkflowStageSupportAssignmentData =>
+              Boolean(assignment)
+          )
+      : [],
   }
 }
 
@@ -164,7 +242,12 @@ export default function NewWorkflowPage() {
   const handleStageDuplicate = (index: number) => {
     setStages(prev => {
       const copy = [...prev]
-      copy.splice(index + 1, 0, { ...copy[index], name: `${copy[index].name} (Cópia)` })
+      copy.splice(index + 1, 0, {
+        ...copy[index],
+        id: createStageId(),
+        name: `${copy[index].name} (Cópia)`,
+        supportAssignments: cloneSupportAssignments(copy[index].supportAssignments),
+      })
       return copy.map((s, i) => ({ ...s, order: i + 1 }))
     })
   }
@@ -191,6 +274,15 @@ export default function NewWorkflowPage() {
         skipCondition: s.skipCondition || undefined, description: s.description || undefined,
         requiredFormFieldIds: s.requiredFormFields,
         documentTemplateIds: s.documentTemplateIds?.length ? s.documentTemplateIds : undefined,
+        supportAssignments: s.supportAssignments.map(assignment => ({
+          id: assignment.id,
+          targetType: assignment.targetType,
+          mode: assignment.mode,
+          userId: assignment.userId,
+          organizationalUnitId: assignment.organizationalUnitId,
+          user: assignment.user,
+          organizationalUnit: assignment.organizationalUnit,
+        })),
       }))
 
       const response = await apiRequest('/service-workflows', {
@@ -322,7 +414,7 @@ export default function NewWorkflowPage() {
               <div className="space-y-3">
                 {stages.map((stage, index) => (
                   <WorkflowStageEditor
-                    key={`stage-${index}`}
+                    key={stage.id}
                     stage={stage}
                     index={index}
                     totalStages={stages.length}
@@ -330,6 +422,7 @@ export default function NewWorkflowPage() {
                     serviceFormFields={serviceFormFields}
                     departments={departments}
                     documentTemplates={documentTemplates}
+                    workflowDepartmentId={serviceInfo?.departmentId}
                     onChange={handleStageChange}
                     onRemove={handleStageRemove}
                     onMove={handleStageMove}

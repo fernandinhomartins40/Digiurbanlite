@@ -25,6 +25,33 @@ export type WorkflowStageAction =
   | 'REQUEST_INFO'      // Solicitar informações adicionais
   | 'SKIP'              // Pular etapa (se permitido)
 
+export type WorkflowStageSupportTargetType = 'USER' | 'ORGANIZATIONAL_UNIT'
+
+export type WorkflowStageSupportMode = 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT'
+
+export interface WorkflowStageSupportAssignment {
+  id?: string
+  targetType: WorkflowStageSupportTargetType
+  mode?: WorkflowStageSupportMode
+  userId?: string
+  organizationalUnitId?: string
+  user?: {
+    id: string
+    name: string
+    email?: string
+    departmentId?: string
+    departmentName?: string
+  }
+  organizationalUnit?: {
+    id: string
+    nome: string
+    sigla?: string
+    tipo?: string
+    departmentId?: string
+    departmentName?: string
+  }
+}
+
 /**
  * Etapa de workflow ALINHADA com serviços
  *
@@ -58,7 +85,10 @@ export interface WorkflowStage {
   role?: string;                         // Role necessária (ex: "MEDICO")
   department?: string;                   // Departamento responsável
   requiresApproval?: boolean;            // Requer aprovação manual?
+  supportAssignments?: WorkflowStageSupportAssignment[]; // Apoios externos por etapa
 }
+
+export type WorkflowStageInput = Omit<WorkflowStage, 'id'> & { id?: string }
 
 // ============================================================================
 // WORKFLOW DEFINITION
@@ -131,7 +161,7 @@ export interface CreateWorkflowData {
   name: string;
   description?: string;
   defaultSLA?: number;
-  stages: Omit<WorkflowStage, 'id'>[];
+  stages: WorkflowStageInput[];
   rules?: any;
 }
 
@@ -142,7 +172,7 @@ export interface UpdateWorkflowData {
   name?: string;
   description?: string;
   defaultSLA?: number;
-  stages?: Omit<WorkflowStage, 'id'>[];
+  stages?: WorkflowStageInput[];
   rules?: any;
 }
 
@@ -201,6 +231,4 @@ export interface ServiceForWorkflow {
 
 // ✅ FASE 2: WorkflowStatus enum removido (não era usado)
 // export { WorkflowStatus } from '@prisma/client';
-
-
 

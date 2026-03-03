@@ -11,7 +11,7 @@ import {
   ArrowLeft, Edit, Trash2, GitBranch, Clock, Layers, FileText,
   CheckCircle2, XCircle, AlertCircle, ChevronRight, Shield,
   Eye, Send, MessageSquare, MapPin, Database, ListChecks,
-  RefreshCw, Copy
+  RefreshCw, Copy, Building2, UserRound
 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 
@@ -170,6 +170,7 @@ export default function WorkflowViewPage() {
             const actions = stage.allowedActions || []
             const reqDocs = stage.requiredDocumentTypes || []
             const reqFields = stage.requiredFormFields || stage.requiredFormFieldIds || []
+            const supportAssignments = Array.isArray(stage.supportAssignments) ? stage.supportAssignments : []
 
             return (
               <div key={index} className="relative">
@@ -281,6 +282,27 @@ export default function WorkflowViewPage() {
                           <div className="flex flex-wrap gap-1">
                             {stage.role && <Badge variant="secondary" className="text-xs">Role: {stage.role}</Badge>}
                             {stage.department && <Badge variant="secondary" className="text-xs">Dept: {stage.department}</Badge>}
+                          </div>
+                        </div>
+                      )}
+
+                      {supportAssignments.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1">
+                            <Shield className="h-3 w-3" />Apoios da etapa
+                          </p>
+                          <div className="flex flex-wrap gap-1">
+                            {supportAssignments.map((assignment: any) => (
+                              <Badge key={assignment.id || `${assignment.targetType}-${assignment.userId || assignment.organizationalUnitId}`} variant="outline" className="text-xs bg-emerald-50 text-emerald-700 border-emerald-200">
+                                {assignment.targetType === 'USER' ? (
+                                  <UserRound className="h-3 w-3 mr-1" />
+                                ) : (
+                                  <Building2 className="h-3 w-3 mr-1" />
+                                )}
+                                {assignment.user?.name || assignment.organizationalUnit?.nome}
+                                {assignment.mode === 'SUGGEST_ASSIGNMENT' && ' · Sugestão'}
+                              </Badge>
+                            ))}
                           </div>
                         </div>
                       )}

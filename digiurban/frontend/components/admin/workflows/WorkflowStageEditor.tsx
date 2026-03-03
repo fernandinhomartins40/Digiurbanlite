@@ -12,9 +12,15 @@ import { Switch } from '@/components/ui/switch'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AdminUserAutocomplete, type AdminUser } from '@/components/admin/AdminUserAutocomplete'
+import {
+  OrganizationalUnitAutocomplete,
+  type OrganizationalUnitOption
+} from '@/components/admin/OrganizationalUnitAutocomplete'
 import {
   Trash2, MoveUp, MoveDown, ChevronDown, ChevronUp,
-  Settings, Eye, FileText, Shield, Copy, GripVertical
+  Settings, Eye, FileText, Shield, Copy, GripVertical,
+  Building2, UserRound, X
 } from 'lucide-react'
 
 // ============================================================================
@@ -22,6 +28,7 @@ import {
 // ============================================================================
 
 export interface WorkflowStageData {
+  id: string
   name: string
   description: string
   order: number
@@ -39,6 +46,21 @@ export interface WorkflowStageData {
   role: string
   department: string
   requiresApproval: boolean
+  supportAssignments: WorkflowStageSupportAssignmentData[]
+}
+
+export type WorkflowStageSupportTargetType = 'USER' | 'ORGANIZATIONAL_UNIT'
+export type WorkflowStageSupportMode = 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT'
+
+export interface WorkflowStageSupportAssignmentData {
+  id: string
+  targetType: WorkflowStageSupportTargetType
+  mode: WorkflowStageSupportMode
+  userId?: string
+  user?: AdminUser | null
+  organizationalUnitId?: string
+  organizationalUnit?: OrganizationalUnitOption | null
+  searchValue?: string
 }
 
 export interface DocumentTemplateOption {
@@ -57,10 +79,23 @@ interface WorkflowStageEditorProps {
   serviceFormFields: { id: string; label: string }[]
   departments: string[]
   documentTemplates: DocumentTemplateOption[]
+  workflowDepartmentId?: string
   onChange: (index: number, stage: WorkflowStageData) => void
   onRemove: (index: number) => void
   onMove: (index: number, direction: 'up' | 'down') => void
   onDuplicate: (index: number) => void
+}
+
+const createLocalId = () => globalThis.crypto?.randomUUID?.() || `tmp-${Math.random().toString(36).slice(2)}`
+
+export function createEmptyStageSupportAssignment(
+  targetType: WorkflowStageSupportTargetType
+): WorkflowStageSupportAssignmentData {
+  return {
+    id: createLocalId(),
+    targetType,
+    mode: 'REFERENCE_ONLY',
+  }
 }
 
 // ============================================================================
@@ -114,6 +149,7 @@ export function WorkflowStageEditor({
   serviceFormFields,
   departments,
   documentTemplates,
+  workflowDepartmentId,
   onChange,
   onRemove,
   onMove,
@@ -163,6 +199,29 @@ export function WorkflowStageEditor({
     update({ documentTemplateIds: ids })
   }
 
+  const addSupportAssignment = (targetType: WorkflowStageSupportTargetType) => {
+    update({
+      supportAssignments: [...stage.supportAssignments, createEmptyStageSupportAssignment(targetType)]
+    })
+  }
+
+  const updateSupportAssignment = (
+    assignmentId: string,
+    partial: Partial<WorkflowStageSupportAssignmentData>
+  ) => {
+    update({
+      supportAssignments: stage.supportAssignments.map(assignment =>
+        assignment.id === assignmentId ? { ...assignment, ...partial } : assignment
+      )
+    })
+  }
+
+  const removeSupportAssignment = (assignmentId: string) => {
+    update({
+      supportAssignments: stage.supportAssignments.filter(assignment => assignment.id !== assignmentId)
+    })
+  }
+
   const hasDocGenerationTabs = stage.availableTabs.some(t =>
     ['generated', 'document-generation', 'documentos-gerados', 'send', 'enviar'].includes(t)
   ) || stage.stageType === 'DOCUMENT_GENERATION' || stage.stageType === 'CONCLUSION'
@@ -187,6 +246,11 @@ export function WorkflowStageEditor({
                 )}
                 {stage.slaDays > 0 && <Badge variant="outline" className="text-[10px]">{stage.slaDays}d SLA</Badge>}
                 {stage.canSkip && <Badge variant="outline" className="text-[10px] bg-yellow-50">Pulável</Badge>}
+                {stage.supportAssignments.length > 0 && (
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700">
+                    {stage.supportAssignments.length} apoio{stage.supportAssignments.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
@@ -533,6 +597,123 @@ export function WorkflowStageEditor({
                   <p className="text-[10px] text-muted-foreground">Exige que um supervisor aprove antes de avançar</p>
                 </div>
                 <Switch checked={stage.requiresApproval} onCheckedChange={(v) => update({ requiresApproval: v })} />
+              </div>
+
+              <Separator />
+
+              <div className="space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                  <div>
+                    <Label className="text-xs font-medium">Apoios da etapa</Label>
+                    <p className="text-[10px] text-muted-foreground">
+                      Vincule servidores ou setores como referência da etapa sem alterar a estrutura do workflow.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => addSupportAssignment('USER')}>
+                      <UserRound className="h-3.5 w-3.5 mr-1" />Servidor
+                    </Button>
+                    <Button type="button" variant="outline" size="sm" className="h-8 text-xs" onClick={() => addSupportAssignment('ORGANIZATIONAL_UNIT')}>
+                      <Building2 className="h-3.5 w-3.5 mr-1" />Setor
+                    </Button>
+                  </div>
+                </div>
+
+                {stage.supportAssignments.length === 0 ? (
+                  <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
+                    Nenhum apoio configurado. Use esta área para sugerir servidores ou setores quando a etapa precisar passar por mais de um responsável.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {stage.supportAssignments.map((assignment) => (
+                      <div key={assignment.id} className="space-y-3 rounded-md border p-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <Badge variant="secondary" className="text-[10px]">
+                              {assignment.targetType === 'USER' ? 'Servidor' : 'Setor'}
+                            </Badge>
+                            <Badge variant="outline" className="text-[10px]">
+                              {assignment.mode === 'SUGGEST_ASSIGNMENT' ? 'Sugere atribuição' : 'Referência'}
+                            </Badge>
+                          </div>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 px-2 text-destructive hover:text-destructive"
+                            onClick={() => removeSupportAssignment(assignment.id)}
+                          >
+                            <X className="h-3.5 w-3.5 mr-1" />Remover
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-[10px] font-medium">Modo</Label>
+                            <Select
+                              value={assignment.mode}
+                              onValueChange={(value) =>
+                                updateSupportAssignment(assignment.id, {
+                                  mode: value === 'SUGGEST_ASSIGNMENT' ? 'SUGGEST_ASSIGNMENT' : 'REFERENCE_ONLY'
+                                })
+                              }
+                            >
+                              <SelectTrigger className="text-xs"><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="REFERENCE_ONLY">Somente referência</SelectItem>
+                                <SelectItem value="SUGGEST_ASSIGNMENT">Sugerir atribuição</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+
+                          <div className="md:col-span-2">
+                            {assignment.targetType === 'USER' ? (
+                              <AdminUserAutocomplete
+                                value={assignment.user || null}
+                                onChange={(user) =>
+                                  updateSupportAssignment(assignment.id, {
+                                    userId: user?.id,
+                                    user,
+                                  })
+                                }
+                                departmentId={workflowDepartmentId}
+                                label=""
+                                placeholder="Busque o servidor desta etapa"
+                              />
+                            ) : (
+                              <OrganizationalUnitAutocomplete
+                                value={assignment.searchValue ?? assignment.organizationalUnit?.nome ?? ''}
+                                onValueChange={(value) =>
+                                  updateSupportAssignment(assignment.id, {
+                                    searchValue: value,
+                                    organizationalUnitId:
+                                      value.trim() && value === assignment.organizationalUnit?.nome
+                                        ? assignment.organizationalUnitId
+                                        : undefined,
+                                    organizationalUnit:
+                                      value.trim() && value === assignment.organizationalUnit?.nome
+                                        ? assignment.organizationalUnit
+                                        : null,
+                                  })
+                                }
+                                onSelect={(unit) =>
+                                  updateSupportAssignment(assignment.id, {
+                                    organizationalUnitId: unit.id,
+                                    organizationalUnit: unit,
+                                    searchValue: unit.nome,
+                                  })
+                                }
+                                departmentId={workflowDepartmentId}
+                                label=""
+                                placeholder="Busque o setor desta etapa"
+                              />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </TabsContent>
           </Tabs>

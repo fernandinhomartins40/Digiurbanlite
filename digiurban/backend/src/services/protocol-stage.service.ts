@@ -5,6 +5,11 @@
 import { StageStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { checkAllDocumentsApproved } from './protocol-document.service';
+import {
+  buildStageSupportAssignmentsSnapshot,
+  getWorkflowByServiceId
+} from './service-workflow.service';
+import type { WorkflowStage } from '../types/workflow.types';
 
 /**
  * Interface para criação de etapa
@@ -30,6 +35,79 @@ export interface UpdateStageData {
   metadata?: any;
 }
 
+function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata: any }>(
+  stage: T,
+  workflowStagesById: Map<string, WorkflowStage>
+): T {
+  const metadata = (stage.metadata as Record<string, any> | null) || {};
+  const currentSupportAssignments = Array.isArray(metadata.stageSupportAssignments)
+    ? metadata.stageSupportAssignments
+    : [];
+
+  if (currentSupportAssignments.length > 0) {
+    return stage;
+  }
+
+  const workflowStageId =
+    typeof metadata.stageId === 'string' && metadata.stageId ? metadata.stageId : null;
+
+  if (!workflowStageId) {
+    return stage;
+  }
+
+  const workflowStage = workflowStagesById.get(workflowStageId);
+
+  if (!workflowStage || (workflowStage.supportAssignments?.length || 0) === 0) {
+    return stage;
+  }
+
+  return {
+    ...stage,
+    metadata: {
+      ...metadata,
+      requiredFormFields:
+        metadata.requiredFormFields ||
+        metadata.requiredFormFieldIds ||
+        workflowStage.requiredFormFieldIds ||
+        [],
+      stageSupportAssignments: buildStageSupportAssignmentsSnapshot(workflowStage)
+    }
+  };
+}
+
+async function hydrateProtocolStagesSupport<T extends { protocolId: string; metadata: any }>(
+  protocolId: string,
+  stages: T[]
+) {
+  if (stages.length === 0) {
+    return stages;
+  }
+
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: { serviceId: true }
+  });
+
+  if (!protocol) {
+    return stages;
+  }
+
+  const workflow = await getWorkflowByServiceId(protocol.serviceId);
+  const workflowStages = Array.isArray(workflow?.stages)
+    ? (workflow.stages as unknown as WorkflowStage[])
+    : [];
+
+  if (workflowStages.length === 0) {
+    return stages;
+  }
+
+  const workflowStagesById = new Map(
+    workflowStages.map(stage => [stage.id, stage])
+  );
+
+  return stages.map(stage => enrichStageWithWorkflowSupport(stage, workflowStagesById));
+}
+
 /**
  * Cria uma nova etapa de protocolo
  */
@@ -51,19 +129,28 @@ export async function createStage(data: CreateStageData) {
  * Lista todas as etapas de um protocolo
  */
 export async function getProtocolStages(protocolId: string) {
-  return await prisma.protocolStage.findMany({
+  const stages = await prisma.protocolStage.findMany({
     where: { protocolId },
     orderBy: { stageOrder: 'asc' }
         });
+
+  return await hydrateProtocolStagesSupport(protocolId, stages);
 }
 
 /**
  * Obtém uma etapa por ID
  */
 export async function getStageById(stageId: string) {
-  return await prisma.protocolStage.findUnique({
+  const stage = await prisma.protocolStage.findUnique({
     where: { id: stageId }
         });
+
+  if (!stage) {
+    return null;
+  }
+
+  const [hydratedStage] = await hydrateProtocolStagesSupport(stage.protocolId, [stage]);
+  return hydratedStage || null;
 }
 
 /**
@@ -206,7 +293,7 @@ export async function failStage(
  * Obtém a etapa atual do protocolo (primeira PENDING ou IN_PROGRESS)
  */
 export async function getCurrentStage(protocolId: string) {
-  return await prisma.protocolStage.findFirst({
+  const stage = await prisma.protocolStage.findFirst({
     where: {
       protocolId,
       status: {
@@ -215,6 +302,13 @@ export async function getCurrentStage(protocolId: string) {
         },
     orderBy: { stageOrder: 'asc' }
         });
+
+  if (!stage) {
+    return null;
+  }
+
+  const [hydratedStage] = await hydrateProtocolStagesSupport(protocolId, [stage]);
+  return hydratedStage || null;
 }
 
 /**
@@ -275,4 +369,3 @@ export async function deleteProtocolStages(protocolId: string) {
     where: { protocolId }
         });
 }
-

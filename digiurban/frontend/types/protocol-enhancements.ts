@@ -17,6 +17,32 @@ export enum StageStatus {
   FAILED = 'FAILED',
 }
 
+export interface ProtocolStageSupportAssignmentSnapshot {
+  id?: string
+  targetType: 'USER' | 'ORGANIZATIONAL_UNIT'
+  mode: 'REFERENCE_ONLY' | 'SUGGEST_ASSIGNMENT'
+  userId?: string
+  userName?: string
+  userEmail?: string
+  userDepartmentId?: string
+  userDepartmentName?: string
+  organizationalUnitId?: string
+  organizationalUnitName?: string
+  organizationalUnitSigla?: string
+  organizationalUnitType?: string
+  organizationalUnitDepartmentId?: string
+  organizationalUnitDepartmentName?: string
+}
+
+export interface ProtocolStageMetadata {
+  requiredDocumentTypes?: string[]
+  requiredFormFields?: string[]
+  requiredFormFieldIds?: string[]
+  allowedActions?: string[]
+  stageSupportAssignments?: ProtocolStageSupportAssignmentSnapshot[]
+  [key: string]: any
+}
+
 export interface ProtocolStage {
   id: string
   protocolId: string
@@ -38,7 +64,7 @@ export interface ProtocolStage {
   skippedAt?: Date
   failedAt?: Date
   notes?: string
-  metadata?: any // ✅ ADICIONADO: Metadados adicionais da etapa
+  metadata?: ProtocolStageMetadata
   createdAt: Date
   updatedAt: Date
 }
