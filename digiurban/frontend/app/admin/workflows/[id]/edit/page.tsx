@@ -291,8 +291,14 @@ export default function WorkflowEditPage() {
   const loadDepartments = useCallback(async () => {
     try {
       const response = await apiRequest('/departments')
-      if (response.success && Array.isArray(response.data)) {
-        setDepartments(response.data.map((d: any) => ({
+      const departmentsData = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : []
+
+      if (departmentsData.length > 0) {
+        setDepartments(departmentsData.map((d: any) => ({
           id: d.id,
           name: d.name,
           code: d.code || undefined,

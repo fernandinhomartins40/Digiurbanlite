@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -49,43 +49,62 @@ export function OrganizationalUnitAutocomplete({
   const [highlightedIndex, setHighlightedIndex] = useState(0)
   const wrapperRef = useRef<HTMLDivElement>(null)
 
+  const fetchUnits = useCallback(async (searchValue: string) => {
+    const search = searchValue.trim()
+
+    if (disabled) {
+      setUnits([])
+      setIsOpen(false)
+      return
+    }
+
+    if (search.length > 0 && search.length < 2) {
+      setUnits([])
+      setIsOpen(false)
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const params = new URLSearchParams({
+        isActive: 'true',
+      })
+
+      if (search) {
+        params.set('search', search)
+      }
+
+      if (departmentId) {
+        params.set('departmentId', departmentId)
+      }
+
+      const response = await apiRequest(`/organizational-units?${params.toString()}`)
+      const data = Array.isArray(response) ? response : (response?.data ?? [])
+      setUnits(data.slice(0, 10))
+      setIsOpen(true)
+      setHighlightedIndex(0)
+    } catch (error) {
+      console.error('Erro ao buscar unidades organizacionais:', error)
+      setUnits([])
+      setIsOpen(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [apiRequest, departmentId, disabled])
+
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      const search = value.trim()
+    const search = value.trim()
 
-      if (disabled || search.length < 2) {
-        setUnits([])
-        setIsOpen(false)
-        return
-      }
+    if (!search || search.length < 2) {
+      return
+    }
 
-      setIsLoading(true)
-      try {
-        const params = new URLSearchParams({
-          search,
-          isActive: 'true',
-        })
-
-        if (departmentId) {
-          params.set('departmentId', departmentId)
-        }
-
-        const response = await apiRequest(`/organizational-units?${params.toString()}`)
-        const data = Array.isArray(response) ? response : (response?.data ?? [])
-        setUnits(data.slice(0, 10))
-        setIsOpen(true)
-        setHighlightedIndex(0)
-      } catch (error) {
-        console.error('Erro ao buscar unidades organizacionais:', error)
-        setUnits([])
-        setIsOpen(false)
-      } finally {
-        setIsLoading(false)
-      }
+    const timer = setTimeout(() => {
+      fetchUnits(search)
     }, 300)
 
     return () => clearTimeout(timer)
-  }, [apiRequest, departmentId, disabled, value])
+  }, [fetchUnits, value])
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -150,8 +169,19 @@ export function OrganizationalUnitAutocomplete({
             }
           }}
           onFocus={() => {
-            if (value.trim().length >= 2 && units.length > 0) {
-              setIsOpen(true)
+            const search = value.trim()
+            if (!search) {
+              void fetchUnits('')
+              return
+            }
+
+            if (search.length >= 2) {
+              if (units.length > 0) {
+                setIsOpen(true)
+                return
+              }
+
+              void fetchUnits(search)
             }
           }}
           onKeyDown={handleKeyDown}

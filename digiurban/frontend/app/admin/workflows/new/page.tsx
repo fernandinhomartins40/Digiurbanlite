@@ -197,9 +197,15 @@ export default function NewWorkflowPage() {
   const loadDepartments = useCallback(async () => {
     try {
       const response = await apiRequest('/departments')
-      if (response.success) {
+      const departmentsData = Array.isArray(response)
+        ? response
+        : Array.isArray(response?.data)
+          ? response.data
+          : []
+
+      if (departmentsData.length > 0) {
         setDepartments(
-          (response.data || []).map((d: any) => ({
+          departmentsData.map((d: any) => ({
             id: d.id,
             name: d.name,
             code: d.code || undefined,

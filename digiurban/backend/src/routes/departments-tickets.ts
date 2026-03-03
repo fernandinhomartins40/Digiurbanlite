@@ -4,6 +4,7 @@
 
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
@@ -11,6 +12,55 @@ import { generateProtocolNumberSafe } from '../services/protocol-number.service'
 const router = Router();
 
 router.use(adminAuthMiddleware);
+
+// ============================================================================
+// GET /api/departments - Listar departamentos para selects administrativos
+// ============================================================================
+router.get('/', async (req: Request, res: Response) => {
+  try {
+    const { user, userRole } = req as Request & {
+      user?: { departmentId?: string | null };
+      userRole?: UserRole;
+    };
+
+    const where: Record<string, unknown> = {
+      isActive: true,
+    };
+
+    if (
+      userRole !== UserRole.ADMIN &&
+      userRole !== UserRole.SUPER_ADMIN &&
+      user?.departmentId
+    ) {
+      where.id = user.departmentId;
+    }
+
+    const departments = await prisma.department.findMany({
+      where,
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        isActive: true,
+      },
+      orderBy: {
+        name: 'asc',
+      },
+    });
+
+    res.json({
+      success: true,
+      data: departments,
+    });
+  } catch (error) {
+    console.error('Erro ao listar departamentos:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Erro ao listar departamentos',
+    });
+  }
+});
 
 // ============================================================================
 // GET /api/departments/tickets - Listar chamados pendentes da secretaria
