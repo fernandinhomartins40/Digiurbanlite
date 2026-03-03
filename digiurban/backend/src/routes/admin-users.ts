@@ -65,6 +65,44 @@ router.get('/search', authenticateAdmin, async (req, res) => {
             name: true,
           },
         },
+        userDepartments: {
+          where: {
+            isActive: true,
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' },
+          ],
+          select: {
+            departmentId: true,
+            isPrimary: true,
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+        assignments: {
+          where: {
+            situacao: SituacaoVinculo.ATIVO,
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' },
+          ],
+          select: {
+            departmentId: true,
+            isPrimary: true,
+            department: {
+              select: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
       },
       take: 10,
       orderBy: {
@@ -72,15 +110,24 @@ router.get('/search', authenticateAdmin, async (req, res) => {
       },
     });
 
-    // Transformar department de objeto para string
-    const formattedUsers = users.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      departmentId: user.departmentId || user.department?.id || undefined,
-      department: user.department?.name || undefined,
-    }));
+    // Resolver departamento do servidor usando o vínculo primário ativo quando o campo legado estiver vazio.
+    const formattedUsers = users.map(user => {
+      const linkedDepartment =
+        user.department ||
+        user.userDepartments.find(department => department.isPrimary)?.department ||
+        user.userDepartments[0]?.department ||
+        user.assignments.find(assignment => assignment.isPrimary)?.department ||
+        user.assignments[0]?.department;
+
+      return {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        departmentId: user.departmentId || linkedDepartment?.id || undefined,
+        department: linkedDepartment?.name || undefined,
+      };
+    });
 
     res.json({
       success: true,

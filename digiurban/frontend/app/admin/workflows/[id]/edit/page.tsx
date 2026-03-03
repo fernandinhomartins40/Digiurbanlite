@@ -245,6 +245,11 @@ export default function WorkflowEditPage() {
   const [showJsonImport, setShowJsonImport] = useState(false)
   const [jsonImportValue, setJsonImportValue] = useState('')
 
+  const workflowDepartmentId =
+    serviceInfo?.departmentId ||
+    workflow?.service?.department?.id ||
+    workflow?.service?.departmentId
+
   const loadWorkflow = useCallback(async () => {
     try {
       setLoading(true)
@@ -571,7 +576,7 @@ export default function WorkflowEditPage() {
                 serviceFormFields={serviceFormFields}
                 departments={departments}
                 documentTemplates={documentTemplates}
-                workflowDepartmentId={workflow.service?.department?.id}
+                workflowDepartmentId={workflowDepartmentId}
                 onChange={handleStageChange}
                 onRemove={handleStageRemove}
                 onMove={handleStageMove}
