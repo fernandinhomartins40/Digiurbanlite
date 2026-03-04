@@ -8,6 +8,7 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateAdmin } from '../middleware/auth';
+import { safeCreateAssignmentAudit } from '../utils/assignment-audit-safe';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -253,8 +254,9 @@ router.post(
       });
 
       // 5. Criar auditoria
-      await prisma.assignmentAudit.create({
-        data: {
+      await safeCreateAssignmentAudit(
+        prisma,
+        {
           assignmentId: assignment.id,
           tipo: 'CRIACAO',
           userId,
@@ -265,7 +267,8 @@ router.post(
             cnes: unidade.cnes || 'N/A',
           },
         },
-      });
+        'saude-unified-adapter:create-assignment'
+      );
 
       res.json({
         success: true,
@@ -321,8 +324,9 @@ router.put(
       });
 
       // Criar auditoria
-      await prisma.assignmentAudit.create({
-        data: {
+      await safeCreateAssignmentAudit(
+        prisma,
+        {
           assignmentId,
           tipo: 'ALTERACAO_CARGA_HORARIA',
           userId,
@@ -332,7 +336,8 @@ router.put(
             observacoes: observacoes || 'Dados do vínculo atualizados',
           },
         },
-      });
+        'saude-unified-adapter:update-assignment'
+      );
 
       res.json({ success: true, assignment: updated });
     } catch (error: any) {
@@ -377,15 +382,17 @@ router.delete(
       });
 
       // Criar auditoria
-      await prisma.assignmentAudit.create({
-        data: {
+      await safeCreateAssignmentAudit(
+        prisma,
+        {
           assignmentId,
           tipo: 'DESATIVACAO',
           userId,
           userName: (req as any).user?.name || 'Sistema',
           motivo: motivo || 'Encerramento de vínculo',
         },
-      });
+        'saude-unified-adapter:delete-assignment'
+      );
 
       res.json({ success: true, assignment: updated });
     } catch (error: any) {

@@ -179,7 +179,7 @@ export default function HierarquiasPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await apiRequest('/admin/team?limit=200');
+      const response = await apiRequest('/admin/team?limit=200&includeSuperAdmin=true');
       const teamMembers = response?.data?.teamMembers ?? [];
       setUsers(
         teamMembers.map((m: any) => ({

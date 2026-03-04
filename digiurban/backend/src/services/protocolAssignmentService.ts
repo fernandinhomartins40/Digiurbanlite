@@ -1,4 +1,5 @@
 import { PrismaClient, UserRole, TipoAtribuicaoProtocolo, SituacaoAtribuicao } from '@prisma/client';
+import { safeCreateAssignmentAudit } from '../utils/assignment-audit-safe';
 
 const prisma = new PrismaClient();
 
@@ -149,16 +150,18 @@ async function registerAssignmentAudit(
   motivo: string,
   detalhes: any
 ) {
-  await prisma.assignmentAudit.create({
-    data: {
+  await safeCreateAssignmentAudit(
+    prisma,
+    {
       assignmentId,
       tipo: tipo as any,
       userId,
       userName,
       motivo,
       detalhes
-    }
-  });
+    },
+    'protocol-assignment-service:register'
+  );
 }
 
 /**

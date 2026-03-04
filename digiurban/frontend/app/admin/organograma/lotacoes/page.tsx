@@ -244,7 +244,7 @@ export default function LotacoesPage() {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const res = await apiRequest('/admin/team?limit=200');
+      const res = await apiRequest('/admin/team?limit=200&includeSuperAdmin=true');
       const members = res?.data?.teamMembers ?? [];
       setUsers(members.map((m: any) => ({ id: m.id, name: m.name, email: m.email })));
     } catch {

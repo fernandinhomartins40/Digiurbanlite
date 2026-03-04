@@ -342,7 +342,9 @@ function createUserWhereClause(params: {
 
   if (params.excludeSuperAdmin) {
     andClauses.push({ role: { not: 'SUPER_ADMIN' as const } });
-  } else if (params.role) {
+  }
+
+  if (params.role) {
     andClauses.push({ role: params.role as any });
   }
 
@@ -868,12 +870,16 @@ router.get(
     const { user } = req;
     const role = getStringParam(req.query.role);
     const active = getStringParam(req.query.active);
+    const includeSuperAdmin = getBooleanParam(req.query.includeSuperAdmin);
     const page = getNumberParam(req.query.page) || 1;
     const limit = getNumberParam(req.query.limit) || 20;
 
     const skip = (page - 1) * limit;
 
     // Construir filtros baseados no nível de acesso
+    const canIncludeSuperAdmin =
+      includeSuperAdmin && (user.role === 'ADMIN' || user.role === 'SUPER_ADMIN');
+
     const whereParams: {
       departmentId?: string;
       departmentIds?: string[];
@@ -881,7 +887,7 @@ router.get(
       isActive?: boolean;
       excludeSuperAdmin: boolean;
     } = {
-      excludeSuperAdmin: true
+      excludeSuperAdmin: !canIncludeSuperAdmin
         };
 
     // Filtrar por departamento se não for ADMIN

@@ -6,6 +6,7 @@ import {
   assertDepartmentScopedEntities,
   OrganizationalIntegrityError,
 } from '../services/organizational-integrity.service';
+import { safeCreateAssignmentAudit, safeFindAssignmentAudits } from '../utils/assignment-audit-safe';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -130,10 +131,6 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
             valor: true,
           },
         },
-        auditorias: {
-          orderBy: { createdAt: 'desc' },
-          take: 10,
-        },
       },
     });
 
@@ -141,7 +138,20 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Vínculo não encontrado' });
     }
 
-    res.json(assignment);
+    const auditorias = await safeFindAssignmentAudits(
+      prisma,
+      {
+        where: { assignmentId: id },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      },
+      'employee-assignments:get-by-id'
+    );
+
+    res.json({
+      ...assignment,
+      auditorias,
+    });
   } catch (error) {
     console.error('Erro ao buscar vínculo:', error);
     res.status(500).json({ error: 'Erro ao buscar vínculo' });
@@ -286,8 +296,9 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
     });
 
     // Criar auditoria
-    await prisma.assignmentAudit.create({
-      data: {
+    await safeCreateAssignmentAudit(
+      prisma,
+      {
         assignmentId: assignment.id,
         tipo: 'CRIACAO',
         userId: assignment.userId,
@@ -308,7 +319,8 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
           percentualDedicacao,
         },
       },
-    });
+      'employee-assignments:create'
+    );
 
     // P0: Sincronizar UserDepartment automaticamente
     await syncUserDepartmentsFromAssignments(userId);
@@ -438,8 +450,9 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
     }
 
     // Criar auditoria
-    await prisma.assignmentAudit.create({
-      data: {
+    await safeCreateAssignmentAudit(
+      prisma,
+      {
         assignmentId: id,
         tipo: tipoAuditoria as any,
         userId: existingAssignment.userId,
@@ -458,7 +471,8 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
         motivo: observacoes,
         detalhes: updateData,
       },
-    });
+      'employee-assignments:update'
+    );
 
     // P0: Sincronizar UserDepartment automaticamente
     await syncUserDepartmentsFromAssignments(existingAssignment.userId);
@@ -509,8 +523,9 @@ router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => 
     });
 
     // Criar auditoria
-    await prisma.assignmentAudit.create({
-      data: {
+    await safeCreateAssignmentAudit(
+      prisma,
+      {
         assignmentId: id,
         tipo: 'DESATIVACAO',
         userId: assignment.userId,
@@ -524,7 +539,8 @@ router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => 
         motivo,
         dataEfetivacao: dataFim ? new Date(dataFim) : new Date(),
       },
-    });
+      'employee-assignments:delete'
+    );
 
     // P0: Sincronizar UserDepartment automaticamente
     await syncUserDepartmentsFromAssignments(assignment.userId);
@@ -547,10 +563,14 @@ router.get('/:id/audit', authenticateAdmin, async (req: Request, res: Response) 
   try {
     const { id } = req.params;
 
-    const audits = await prisma.assignmentAudit.findMany({
-      where: { assignmentId: id },
-      orderBy: { createdAt: 'desc' },
-    });
+    const audits = await safeFindAssignmentAudits(
+      prisma,
+      {
+        where: { assignmentId: id },
+        orderBy: { createdAt: 'desc' },
+      },
+      'employee-assignments:get-audit'
+    );
 
     res.json(audits);
   } catch (error) {

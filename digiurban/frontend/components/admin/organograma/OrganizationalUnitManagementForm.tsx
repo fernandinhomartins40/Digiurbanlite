@@ -117,7 +117,7 @@ export function OrganizationalUnitManagementForm({
     try {
       const [departmentsResponse, usersResponse] = await Promise.all([
         apiRequest('/admin/departments'),
-        apiRequest('/admin/team?limit=200'),
+        apiRequest('/admin/team?limit=200&includeSuperAdmin=true'),
       ]);
       setDepartments(departmentsResponse?.data?.departments ?? departmentsResponse?.departments ?? []);
       const teamMembers = usersResponse?.data?.teamMembers ?? [];

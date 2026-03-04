@@ -151,7 +151,7 @@ export default function OrganogramaPage() {
 
   const fetchUsers = async () => {
     try {
-      const response = await apiRequest('/admin/team?limit=200');
+      const response = await apiRequest('/admin/team?limit=200&includeSuperAdmin=true');
       const teamMembers = response?.data?.teamMembers ?? [];
       setUsers(teamMembers.map((m: any) => ({ id: m.id, name: m.name, email: m.email })));
     } catch {
