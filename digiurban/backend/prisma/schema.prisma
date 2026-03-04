@@ -65,13 +65,19 @@ model User {
   observacoes        String? // Observações gerais
 
   // Relacionamentos
-  agendaEvents                AgendaEvent[]            @relation("AgendaEventCreator")
+  agendaEvents                AgendaEvent[]                     @relation("AgendaEventCreator")
+  centralCalendarsOwned       CentralCalendar[]                 @relation("CentralCalendarOwner")
+  centralCalendarMemberships  CentralCalendarMember[]           @relation("CentralCalendarMemberUser")
+  centralCalendarMembersAdded CentralCalendarMember[]           @relation("CentralCalendarMemberAddedBy")
+  centralCalendarEventsOwned  CentralCalendarEvent[]            @relation("CentralCalendarEventOwner")
+  centralCalendarParticipants CentralCalendarEventParticipant[] @relation("CentralCalendarParticipantUser")
+  centralCalendarVisibility   CentralCalendarEventVisibility[]  @relation("CentralCalendarVisibilityUser")
   auditLogs                   AuditLog[]
   reviewedTransferRequests    CitizenTransferRequest[]
-  createdProtocolsSimplified  ProtocolSimplified[]     @relation("CreatedByUserSimplified")
-  assignedProtocolsSimplified ProtocolSimplified[]     @relation("AssignedUserSimplified")
-  department                  Department?              @relation("UserPrimaryDepartment", fields: [departmentId], references: [id])
-  person                      Person?                  @relation(fields: [personId], references: [id], onDelete: SetNull)
+  createdProtocolsSimplified  ProtocolSimplified[]              @relation("CreatedByUserSimplified")
+  assignedProtocolsSimplified ProtocolSimplified[]              @relation("AssignedUserSimplified")
+  department                  Department?                       @relation("UserPrimaryDepartment", fields: [departmentId], references: [id])
+  person                      Person?                           @relation(fields: [personId], references: [id], onDelete: SetNull)
 
   // ✅ NOVO: Múltiplos departamentos (N:N)
   userDepartments UserDepartment[]
@@ -305,6 +311,10 @@ model Department {
   // ✅ NOVO: Múltiplos usuários (N:N)
   userDepartments                 UserDepartment[]
   workflowStageSupportAssignments WorkflowStageSupportAssignment[]
+  centralCalendars                CentralCalendar[]                 @relation("CentralCalendarDepartment")
+  centralCalendarEvents           CentralCalendarEvent[]            @relation("CentralCalendarEventDepartment")
+  centralCalendarParticipants     CentralCalendarEventParticipant[] @relation("CentralCalendarParticipantDepartment")
+  centralCalendarVisibility       CentralCalendarEventVisibility[]  @relation("CentralCalendarVisibilityDepartment")
 
   // Chamados administrativos
   tickets AdminTicket[]
@@ -690,9 +700,11 @@ model ServiceSimplified {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  department Department           @relation(fields: [departmentId], references: [id])
-  protocols  ProtocolSimplified[]
-  tickets    AdminTicket[]
+  department            Department             @relation(fields: [departmentId], references: [id])
+  protocols             ProtocolSimplified[]
+  tickets               AdminTicket[]
+  centralCalendars      CentralCalendar[]      @relation("CentralCalendarService")
+  centralCalendarEvents CentralCalendarEvent[] @relation("CentralCalendarEventService")
 
   // ✅ NOVO: Workflow próprio do serviço
   workflow ServiceWorkflow?
@@ -772,6 +784,7 @@ model ProtocolSimplified {
   generatedDocuments      GeneratedDocument[]
   generatedCategories     CitizenCategoryAssignment[]      @relation("ProtocolGeneratedCategories")
   categoryProtocolHistory CitizenCategoryProtocolHistory[] @relation("CategoryProtocolHistory")
+  centralCalendarEvents   CentralCalendarEvent[]
 
   @@index([status])
   @@index([createdAt])
@@ -1255,8 +1268,9 @@ model ProtocolStage {
   notes    String?
   metadata Json?
 
-  protocol           ProtocolSimplified   @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  protocolsAsCurrent ProtocolSimplified[] @relation("CurrentStage")
+  protocol              ProtocolSimplified     @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  protocolsAsCurrent    ProtocolSimplified[]   @relation("CurrentStage")
+  centralCalendarEvents CentralCalendarEvent[] @relation("CentralCalendarEventStage")
 
   @@index([protocolId, stageOrder])
   @@index([protocolId])
@@ -2378,6 +2392,248 @@ model AgendaEvent {
   @@index([dataHoraInicio])
   @@index([status])
   @@map("agenda_events")
+}
+
+enum CentralCalendarType {
+  PERSONAL
+  SHARED
+  DEPARTMENT
+  ORGANIZATIONAL_UNIT
+  SERVICE
+  SYSTEM
+}
+
+enum CentralCalendarRole {
+  OWNER
+  EDITOR
+  VIEWER
+}
+
+enum CentralCalendarEventStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  CANCELED
+  NO_SHOW
+}
+
+enum CentralCalendarParticipantRole {
+  OWNER
+  RESPONSIBLE
+  ATTENDEE
+  OBSERVER
+}
+
+enum CentralCalendarParticipantStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  TENTATIVE
+}
+
+enum CentralCalendarSourceType {
+  MANUAL
+  GABINETE
+  HEALTH_SCHEDULE
+  TFD_EXTERNAL
+  PROTOCOL_STAGE
+  SYSTEM_INTEGRATION
+}
+
+enum CentralCalendarVisibilityScope {
+  OWNER_ONLY
+  USER
+  DEPARTMENT
+  ORGANIZATIONAL_UNIT
+  CALENDAR_MEMBERS
+}
+
+model CentralCalendar {
+  id          String              @id @default(cuid())
+  name        String
+  description String?
+  type        CentralCalendarType @default(PERSONAL)
+  isActive    Boolean             @default(true)
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  ownerUserId String?
+  ownerUser   User?   @relation("CentralCalendarOwner", fields: [ownerUserId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+  department   Department? @relation("CentralCalendarDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation("CentralCalendarOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
+  serviceId String?
+  service   ServiceSimplified? @relation("CentralCalendarService", fields: [serviceId], references: [id], onDelete: SetNull)
+
+  members CentralCalendarMember[]
+  events  CentralCalendarEvent[]
+
+  @@unique([type, ownerUserId])
+  @@unique([type, departmentId])
+  @@unique([type, organizationalUnitId])
+  @@unique([type, serviceId])
+  @@index([ownerUserId, isActive])
+  @@index([departmentId, isActive])
+  @@index([organizationalUnitId, isActive])
+  @@index([serviceId, isActive])
+  @@map("central_calendars")
+}
+
+model CentralCalendarMember {
+  id         String          @id @default(cuid())
+  calendarId String
+  calendar   CentralCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation("CentralCalendarMemberUser", fields: [userId], references: [id], onDelete: Cascade)
+
+  role CentralCalendarRole @default(VIEWER)
+
+  addedByUserId String?
+  addedByUser   User?   @relation("CentralCalendarMemberAddedBy", fields: [addedByUserId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([calendarId, userId])
+  @@index([userId, role])
+  @@map("central_calendar_members")
+}
+
+model CentralCalendarEvent {
+  id        String                     @id @default(cuid())
+  title     String
+  startAt   DateTime
+  endAt     DateTime
+  allDay    Boolean                    @default(false)
+  status    CentralCalendarEventStatus @default(SCHEDULED)
+  priority  Int                        @default(3)
+  createdAt DateTime                   @default(now())
+  updatedAt DateTime                   @updatedAt
+
+  description String?
+  eventType   String?
+  location    String?
+  notes       String?
+  metadata    Json?
+  isPrivate   Boolean @default(true)
+
+  sourceType        CentralCalendarSourceType @default(MANUAL)
+  sourceReferenceId String?
+
+  canceledAt  DateTime?
+  completedAt DateTime?
+
+  calendarId String
+  calendar   CentralCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+
+  ownerUserId String
+  ownerUser   User   @relation("CentralCalendarEventOwner", fields: [ownerUserId], references: [id], onDelete: Cascade)
+
+  protocolId String?
+  protocol   ProtocolSimplified? @relation(fields: [protocolId], references: [id], onDelete: SetNull)
+
+  protocolStageId String?
+  protocolStage   ProtocolStage? @relation("CentralCalendarEventStage", fields: [protocolStageId], references: [id], onDelete: SetNull)
+
+  serviceId String?
+  service   ServiceSimplified? @relation("CentralCalendarEventService", fields: [serviceId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+  department   Department? @relation("CentralCalendarEventDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation("CentralCalendarEventOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
+  participants     CentralCalendarEventParticipant[]
+  visibilityScopes CentralCalendarEventVisibility[]
+  links            CentralCalendarEventLink[]
+
+  @@unique([sourceType, sourceReferenceId])
+  @@index([calendarId, startAt])
+  @@index([ownerUserId, startAt])
+  @@index([status, startAt])
+  @@index([protocolId])
+  @@index([protocolStageId])
+  @@index([departmentId, startAt])
+  @@index([organizationalUnitId, startAt])
+  @@map("central_calendar_events")
+}
+
+model CentralCalendarEventParticipant {
+  id      String               @id @default(cuid())
+  eventId String
+  event   CentralCalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  targetType WorkflowStageSupportTargetType
+
+  userId String?
+  user   User?   @relation("CentralCalendarParticipantUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+  department   Department? @relation("CentralCalendarParticipantDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation("CentralCalendarParticipantOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
+  role       CentralCalendarParticipantRole   @default(ATTENDEE)
+  status     CentralCalendarParticipantStatus @default(PENDING)
+  isRequired Boolean                          @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([eventId, targetType])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([organizationalUnitId])
+  @@map("central_calendar_event_participants")
+}
+
+model CentralCalendarEventVisibility {
+  id      String               @id @default(cuid())
+  eventId String
+  event   CentralCalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  scope CentralCalendarVisibilityScope @default(OWNER_ONLY)
+
+  userId String?
+  user   User?   @relation("CentralCalendarVisibilityUser", fields: [userId], references: [id], onDelete: SetNull)
+
+  departmentId String?
+  department   Department? @relation("CentralCalendarVisibilityDepartment", fields: [departmentId], references: [id], onDelete: SetNull)
+
+  organizationalUnitId String?
+  organizationalUnit   OrganizationalUnit? @relation("CentralCalendarVisibilityOrgUnit", fields: [organizationalUnitId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId, scope])
+  @@index([userId])
+  @@index([departmentId])
+  @@index([organizationalUnitId])
+  @@map("central_calendar_event_visibility")
+}
+
+model CentralCalendarEventLink {
+  id      String               @id @default(cuid())
+  eventId String
+  event   CentralCalendarEvent @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  linkType String
+  linkedId String
+  metadata Json?
+
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@index([linkType, linkedId])
+  @@map("central_calendar_event_links")
 }
 
 enum UserRole {
@@ -7717,9 +7973,13 @@ model OrganizationalUnit {
   unidadeCRAS     UnidadeCRAS?     @relation("UnidadeCRASOrgUnit")
 
   // ✅ NOVO: Sistema de Atribuição de Protocolos
-  protocolAssignments             ProtocolServerAssignment[]       @relation("ProtocolUnitAssignments")
-  protocols                       ProtocolSimplified[]             @relation("ProtocolOrganizationalUnits")
+  protocolAssignments             ProtocolServerAssignment[]        @relation("ProtocolUnitAssignments")
+  protocols                       ProtocolSimplified[]              @relation("ProtocolOrganizationalUnits")
   workflowStageSupportAssignments WorkflowStageSupportAssignment[]
+  centralCalendars                CentralCalendar[]                 @relation("CentralCalendarOrgUnit")
+  centralCalendarEvents           CentralCalendarEvent[]            @relation("CentralCalendarEventOrgUnit")
+  centralCalendarParticipants     CentralCalendarEventParticipant[] @relation("CentralCalendarParticipantOrgUnit")
+  centralCalendarVisibility       CentralCalendarEventVisibility[]  @relation("CentralCalendarVisibilityOrgUnit")
 
   @@unique([departmentId, sigla])
   @@index([departmentId, tipo, isActive])

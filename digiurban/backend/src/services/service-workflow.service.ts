@@ -21,6 +21,7 @@ import {
   WorkflowStageSupportTargetType as DbWorkflowStageSupportTargetType
 } from '@prisma/client';
 import { randomUUID } from 'crypto';
+import { centralCalendarService } from './central-calendar.service';
 
 // ============================================================================
 // TYPES
@@ -643,6 +644,20 @@ export async function applyWorkflowToProtocol(protocolId: string) {
           metadata: buildProtocolStageMetadataFromWorkflowStage(stage)
         }
       });
+    })
+  );
+
+  await Promise.all(
+    createdStages.map(async (createdStage) => {
+      try {
+        await centralCalendarService.syncProtocolStageEventByStageId(createdStage.id);
+      } catch (error) {
+        console.warn('Falha ao sincronizar etapa inicial do protocolo com agenda centralizada', {
+          stageId: createdStage.id,
+          protocolId,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
     })
   );
 

@@ -2,6 +2,8 @@ import { Router, Request, Response, NextFunction } from 'express'
 import { prisma } from '../lib/prisma'
 import { adminAuthMiddleware } from '../middleware/admin-auth'
 import { GeocodingService } from '../services/geocoding.service'
+import { CentralCalendarSourceType } from '@prisma/client'
+import { centralCalendarService } from '../services/central-calendar.service'
 import logger from '../config/logger.config'
 const router = Router()
 
@@ -13,6 +15,17 @@ const requireAdmin = (req: Request, res: Response, next: NextFunction): void => 
     return
   }
   next()
+}
+
+async function syncLegacyAgendaWithCentral(legacyAgendaEventId: string) {
+  try {
+    await centralCalendarService.syncLegacyGabineteEventByLegacyId(legacyAgendaEventId)
+  } catch (error) {
+    logger.warn('Falha ao sincronizar agenda legada com agenda centralizada', {
+      legacyAgendaEventId,
+      error: error instanceof Error ? error.message : String(error)
+    })
+  }
 }
 
 // ============================================
@@ -129,6 +142,8 @@ router.post('/agenda', adminAuthMiddleware, requireAdmin, async (req: Request, r
       }
     })
 
+    await syncLegacyAgendaWithCentral(event.id)
+
     res.status(201).json({ success: true, data: event })
   } catch (error) {
     console.error('Erro ao criar evento:', error)
@@ -184,6 +199,8 @@ router.put('/agenda/:id', adminAuthMiddleware, requireAdmin, async (req: Request
       }
     })
 
+    await syncLegacyAgendaWithCentral(event.id)
+
     res.json({ success: true, data: event })
   } catch (error) {
     console.error('Erro ao atualizar evento:', error)
@@ -209,6 +226,15 @@ router.delete('/agenda/:id', adminAuthMiddleware, requireAdmin, async (req: Requ
     await prisma.agendaEvent.delete({
       where: { id }
     })
+
+    try {
+      await centralCalendarService.removeSourceEvent(CentralCalendarSourceType.GABINETE, id)
+    } catch (syncError) {
+      logger.warn('Falha ao remover evento legado da agenda centralizada', {
+        legacyAgendaEventId: id,
+        error: syncError instanceof Error ? syncError.message : String(syncError)
+      })
+    }
 
     res.json({ success: true, message: 'Evento excluído com sucesso' })
   } catch (error) {
@@ -240,6 +266,8 @@ router.patch('/agenda/:id/realize', adminAuthMiddleware, requireAdmin, async (re
       }
       }
     })
+
+    await syncLegacyAgendaWithCentral(updated.id)
 
     res.json({ success: true, data: updated })
   } catch (error) {

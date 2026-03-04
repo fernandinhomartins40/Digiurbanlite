@@ -1,10 +1,23 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateAdmin } from '../middleware/auth';
+import { isPrismaMissingTableError } from '../utils/prisma-missing-table';
+import { centralCalendarService } from '../services/central-calendar.service';
 
 const router = Router();
 const prisma = new PrismaClient();
 router.use(authenticateAdmin);
+
+async function syncAgendaMedicaWithCentral(agendaId: string) {
+  try {
+    await centralCalendarService.syncHealthAgendaById(agendaId);
+  } catch (error) {
+    console.warn('Falha ao sincronizar agenda médica com agenda centralizada', {
+      agendaId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
 
 // ============================================================
 // ROTAS DE ESTATÍSTICAS DOS CADASTROS
@@ -119,6 +132,13 @@ router.get('/agendas/stats', async (req: Request, res: Response) => {
 
     res.json({ total, ativas });
   } catch (error: any) {
+    if (isPrismaMissingTableError(error, ['agendas_medicas'])) {
+      console.warn(
+        '[saude-cadastros] tabela agendas_medicas ausente. Retornando estatisticas zeradas em /agendas/stats.'
+      );
+      return res.json({ total: 0, ativas: 0, indisponivel: true });
+    }
+
     console.error('Erro ao buscar stats de agendas:', error);
     res.status(500).json({ error: error.message });
   }
@@ -1110,13 +1130,44 @@ router.get('/agendas', async (req: Request, res: Response) => {
       orderBy: { createdAt: 'desc' },
     });
 
-    // Transformar para o formato esperado pelo frontend
+    const profissionalIds = Array.from(
+      new Set(agendas.map((agenda) => agenda.profissionalId).filter(Boolean))
+    );
+    const unidadeIds = Array.from(new Set(agendas.map((agenda) => agenda.unidadeId).filter(Boolean)));
+
+    const [profissionais, unidades] = await Promise.all([
+      profissionalIds.length > 0
+        ? prisma.user.findMany({
+            where: { id: { in: profissionalIds } },
+            select: {
+              id: true,
+              name: true,
+            },
+          })
+        : Promise.resolve([]),
+      unidadeIds.length > 0
+        ? prisma.unidadeSaude.findMany({
+            where: { id: { in: unidadeIds } },
+            select: {
+              id: true,
+              nome: true,
+            },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const profissionalById = new Map(profissionais.map((profissional) => [profissional.id, profissional.name]));
+    const unidadeById = new Map(unidades.map((unidade) => [unidade.id, unidade.nome]));
+
     const agendasFormatadas = agendas.map((agenda) => ({
       ...agenda,
-      profissionalNome: 'Profissional', // TODO: Buscar nome do profissional
-      unidadeNome: 'Unidade', // TODO: Buscar nome da unidade
+      profissionalNome: profissionalById.get(agenda.profissionalId) || 'Profissional não encontrado',
+      unidadeNome: unidadeById.get(agenda.unidadeId) || 'Unidade não encontrada',
       especialidade: agenda.especialidade,
       sala: agenda.sala,
+      salaNome: agenda.sala?.nome || null,
+      vagasPorDia: agenda.vagasDisponiveis,
+      duracaoConsulta: agenda.tempoPorConsulta,
     }));
 
     res.json(agendasFormatadas);
@@ -1206,6 +1257,8 @@ router.post('/agendas', async (req: Request, res: Response) => {
       },
     });
 
+    await syncAgendaMedicaWithCentral(agenda.id);
+
     res.status(201).json(agenda);
   } catch (error: any) {
     console.error('Erro ao criar agenda:', error);
@@ -1257,6 +1310,8 @@ router.put('/agendas/:id', async (req: Request, res: Response) => {
       data: updateData,
     });
 
+    await syncAgendaMedicaWithCentral(agenda.id);
+
     res.json(agenda);
   } catch (error: any) {
     console.error('Erro ao atualizar agenda:', error);
@@ -1277,6 +1332,8 @@ router.delete('/agendas/:id', async (req: Request, res: Response) => {
       where: { id },
       data: { isActive: false },
     });
+
+    await syncAgendaMedicaWithCentral(id);
 
     res.json({ message: 'Agenda removida com sucesso' });
   } catch (error: any) {

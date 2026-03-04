@@ -75,6 +75,14 @@ interface TicketsData {
   }
 }
 
+const EMPTY_TICKETS_DATA: TicketsData = {
+  tickets: [],
+  stats: {
+    total: 0,
+    byStatus: {},
+  },
+}
+
 export function PendingTicketsSection() {
   const [data, setData] = useState<TicketsData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
@@ -90,11 +98,24 @@ export function PendingTicketsSection() {
       const response = await api.get('/departments/tickets?status=PENDING')
 
       if (response.data.success) {
-        setData(response.data.data)
+        const payload = response.data.data || {}
+        setData({
+          tickets: Array.isArray(payload.tickets) ? payload.tickets : [],
+          stats: {
+            total: typeof payload.stats?.total === 'number' ? payload.stats.total : 0,
+            byStatus:
+              payload.stats?.byStatus && typeof payload.stats.byStatus === 'object'
+                ? payload.stats.byStatus
+                : {},
+          },
+        })
+      } else {
+        setData(EMPTY_TICKETS_DATA)
       }
     } catch (error) {
       console.error('Erro ao carregar chamados pendentes:', error)
       toast.error('Erro ao carregar chamados pendentes')
+      setData(EMPTY_TICKETS_DATA)
     } finally {
       setIsLoading(false)
     }
@@ -198,7 +219,7 @@ export function PendingTicketsSection() {
     return `${days} dias atrás`
   }
 
-  const pendingTickets = data?.tickets.filter(t => t.status === 'PENDING') || []
+  const pendingTickets = data?.tickets?.filter(t => t.status === 'PENDING') || []
 
   return (
     <>
@@ -211,7 +232,7 @@ export function PendingTicketsSection() {
                 Chamados do Prefeito
               </CardTitle>
               <CardDescription>
-                Chamados aguardando análise - {data?.stats.byStatus.PENDING || 0} pendente(s)
+                Chamados aguardando análise - {data?.stats?.byStatus?.PENDING || 0} pendente(s)
               </CardDescription>
             </div>
             <Button variant="outline" size="sm" onClick={loadTickets} disabled={isLoading}>

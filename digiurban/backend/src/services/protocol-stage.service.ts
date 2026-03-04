@@ -2,13 +2,14 @@
  * Serviço para gerenciamento de Etapas de Protocolos (Workflow)
  */
 
-import { SituacaoVinculo, StageStatus } from '@prisma/client';
+import { CentralCalendarSourceType, SituacaoVinculo, StageStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { checkAllDocumentsApproved } from './protocol-document.service';
 import {
   buildStageSupportAssignmentsSnapshot,
   getWorkflowByServiceId
 } from './service-workflow.service';
+import { centralCalendarService } from './central-calendar.service';
 import type {
   WorkflowStage,
   WorkflowStageSupportAssignment
@@ -42,6 +43,28 @@ export interface StageExecutionAccess {
   canExecute: boolean
   blockers: string[]
   requiredAssignments: WorkflowStageSupportAssignment[]
+}
+
+async function syncProtocolStageWithCentral(stageId: string) {
+  try {
+    await centralCalendarService.syncProtocolStageEventByStageId(stageId);
+  } catch (error) {
+    console.warn('Falha ao sincronizar etapa do protocolo com agenda centralizada', {
+      stageId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+}
+
+async function removeProtocolStageFromCentral(stageId: string) {
+  try {
+    await centralCalendarService.removeSourceEvent(CentralCalendarSourceType.PROTOCOL_STAGE, stageId);
+  } catch (error) {
+    console.warn('Falha ao remover etapa do protocolo da agenda centralizada', {
+      stageId,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 }
 
 function formatExecutionRule(assignment: WorkflowStageSupportAssignment) {
@@ -254,7 +277,7 @@ async function assertUserCanExecuteStage(stageId: string, userId: string) {
  * Cria uma nova etapa de protocolo
  */
 export async function createStage(data: CreateStageData) {
-  return await prisma.protocolStage.create({
+  const stage = await prisma.protocolStage.create({
     data: {
       protocolId: data.protocolId,
       stageName: data.stageName,
@@ -265,6 +288,10 @@ export async function createStage(data: CreateStageData) {
       status: StageStatus.PENDING
         }
         });
+
+  await syncProtocolStageWithCentral(stage.id);
+
+  return stage;
 }
 
 /**
@@ -299,10 +326,14 @@ export async function getStageById(stageId: string) {
  * Atualiza uma etapa
  */
 export async function updateStage(stageId: string, data: UpdateStageData) {
-  return await prisma.protocolStage.update({
+  const stage = await prisma.protocolStage.update({
     where: { id: stageId },
     data
         });
+
+  await syncProtocolStageWithCentral(stage.id);
+
+  return stage;
 }
 
 /**
@@ -328,6 +359,8 @@ export async function startStage(stageId: string, userId?: string) {
     where: { id: stage.protocolId },
     data: { currentStageId: stageId }
   });
+
+  await syncProtocolStageWithCentral(stage.id);
 
   return stage;
 }
@@ -385,6 +418,8 @@ export async function completeStage(
         }
         });
 
+  await syncProtocolStageWithCentral(completedStage.id);
+
   // ✨ NOVO: Disparar orquestrador de workflow
   const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
   await workflowOrchestrator.onStageCompleted(stageId, userId, result, notes);
@@ -402,7 +437,7 @@ export async function skipStage(
 ) {
   await assertUserCanExecuteStage(stageId, userId);
 
-  return await prisma.protocolStage.update({
+  const skippedStage = await prisma.protocolStage.update({
     where: { id: stageId },
     data: {
       status: StageStatus.SKIPPED,
@@ -411,6 +446,10 @@ export async function skipStage(
       notes: reason
         }
         });
+
+  await syncProtocolStageWithCentral(skippedStage.id);
+
+  return skippedStage;
 }
 
 /**
@@ -433,6 +472,8 @@ export async function failStage(
       notes: reason
         }
         });
+
+  await syncProtocolStageWithCentral(failedStage.id);
 
   // ✨ NOVO: Disparar orquestrador de workflow
   const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
@@ -508,16 +549,29 @@ export async function countStagesByStatus(protocolId: string) {
  * Deleta uma etapa
  */
 export async function deleteStage(stageId: string) {
-  return await prisma.protocolStage.delete({
+  const deletedStage = await prisma.protocolStage.delete({
     where: { id: stageId }
         });
+
+  await removeProtocolStageFromCentral(stageId);
+
+  return deletedStage;
 }
 
 /**
  * Deleta todas as etapas de um protocolo
  */
 export async function deleteProtocolStages(protocolId: string) {
-  return await prisma.protocolStage.deleteMany({
+  const stageIds = await prisma.protocolStage.findMany({
+    where: { protocolId },
+    select: { id: true },
+  });
+
+  const result = await prisma.protocolStage.deleteMany({
     where: { protocolId }
         });
+
+  await Promise.all(stageIds.map((stage) => removeProtocolStageFromCentral(stage.id)));
+
+  return result;
 }

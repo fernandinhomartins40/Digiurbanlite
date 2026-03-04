@@ -168,6 +168,9 @@ loadRoute('/api/admin/flows', './routes/admin-flows.routes');
 // Mensagens (conversas)
 loadRoute('/api/messages', './routes/messages');
 
+// Agenda centralizada
+loadRoute('/api/agenda', './routes/agenda.routes');
+
 // Avatar
 loadRoute('/api/avatar', './routes/avatar.routes');
 

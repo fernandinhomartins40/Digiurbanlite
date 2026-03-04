@@ -43,6 +43,7 @@
     "db:seed:superadmin": "tsx scripts/create-super-admin.ts",
     "db:seed:deploy-safe": "npm run db:seed:superadmin",
     "db:backfill:person-identity": "tsx prisma/seeds/backfill-person-identity.ts",
+    "db:backfill:central-calendar": "tsx prisma/seeds/backfill-central-calendar.ts",
     "db:sync:secretarias-organograma": "tsx prisma/seeds/sync-departments-organogram.ts",
     "db:seed:saude": "tsx prisma/seeds/apps/saude/master-seed-saude.ts",
     "db:seed:rename": "tsx prisma/seeds/seed-rename-medicamentos.ts",

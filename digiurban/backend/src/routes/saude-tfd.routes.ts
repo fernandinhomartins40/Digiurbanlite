@@ -405,7 +405,11 @@ router.get('/aprovacao-gestao/aguardando', async (req: Request, res: Response) =
  */
 router.post('/agendamento-externo', async (req: Request, res: Response) => {
   try {
-    const agendamento = await RegulacaoTFDService.criarAgendamentoExterno(req.body);
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Usuário autenticado é obrigatório para criar agendamento' });
+    }
+
+    const agendamento = await RegulacaoTFDService.criarAgendamentoExterno(req.body, req.userId);
     res.status(201).json(agendamento);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -431,7 +435,7 @@ router.get('/agendamento-externo/:id', async (req: Request, res: Response) => {
  */
 router.put('/agendamento-externo/:id', async (req: Request, res: Response) => {
   try {
-    const agendamento = await RegulacaoTFDService.atualizarAgendamento(req.params.id, req.body);
+    const agendamento = await RegulacaoTFDService.atualizarAgendamento(req.params.id, req.body, req.userId);
     res.json(agendamento);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -444,7 +448,7 @@ router.put('/agendamento-externo/:id', async (req: Request, res: Response) => {
  */
 router.put('/agendamento-externo/:id/confirmar', async (req: Request, res: Response) => {
   try {
-    const agendamento = await RegulacaoTFDService.confirmarAgendamento(req.params.id);
+    const agendamento = await RegulacaoTFDService.confirmarAgendamento(req.params.id, req.userId);
     res.json(agendamento);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -458,7 +462,7 @@ router.put('/agendamento-externo/:id/confirmar', async (req: Request, res: Respo
 router.put('/agendamento-externo/:id/cancelar', async (req: Request, res: Response) => {
   try {
     const { motivo } = req.body;
-    const agendamento = await RegulacaoTFDService.cancelarAgendamento(req.params.id, motivo);
+    const agendamento = await RegulacaoTFDService.cancelarAgendamento(req.params.id, motivo, req.userId);
     res.json(agendamento);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -475,7 +479,8 @@ router.put('/agendamento-externo/:id/comparecimento', async (req: Request, res: 
     const agendamento = await RegulacaoTFDService.registrarComparecimento(
       req.params.id,
       compareceu,
-      observacoes
+      observacoes,
+      req.userId
     );
     res.json(agendamento);
   } catch (error: any) {

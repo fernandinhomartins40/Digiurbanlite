@@ -78,6 +78,38 @@ const EMPTY_ASSIGNMENT: InitialAssignment = {
   observacoes: '',
 }
 
+const TEAM_ROLE_VALUES = new Set<string>(TEAM_ROLES as readonly string[])
+const TEAM_ROLE_NORMALIZATION_MAP = new Map<string, string>()
+
+function normalizeRoleToken(rawRole: string): string {
+  return rawRole
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[()]/g, '')
+    .replace(/[\s/-]+/g, '_')
+    .trim()
+    .toUpperCase()
+}
+
+for (const role of TEAM_ROLES as readonly string[]) {
+  TEAM_ROLE_NORMALIZATION_MAP.set(normalizeRoleToken(role), role)
+}
+
+for (const [role, label] of Object.entries(ROLE_DISPLAY_NAMES)) {
+  if (!TEAM_ROLE_VALUES.has(role)) continue
+  TEAM_ROLE_NORMALIZATION_MAP.set(normalizeRoleToken(label), role)
+}
+
+TEAM_ROLE_NORMALIZATION_MAP.set('SERVIDOR', 'USER')
+TEAM_ROLE_NORMALIZATION_MAP.set('DIRETOR', 'COORDINATOR')
+TEAM_ROLE_NORMALIZATION_MAP.set('SECRETARIO', 'MANAGER')
+TEAM_ROLE_NORMALIZATION_MAP.set('PREFEITO', 'ADMIN')
+
+function normalizeTeamRoleInput(value?: string | null): string | undefined {
+  if (!value) return undefined
+  return TEAM_ROLE_NORMALIZATION_MAP.get(normalizeRoleToken(value))
+}
+
 export function ServerManagementForm({
   mode,
   cancelHref,
@@ -155,8 +187,11 @@ export function ServerManagementForm({
     if (initialUser) {
       const departmentIds =
         initialUser.departmentIds || (initialUser.departmentId ? [initialUser.departmentId] : [])
+      const normalizedInitialRole =
+        normalizeTeamRoleInput(initialUser.role) || initialUser.role || 'USER'
       setFormData({
         ...initialUser,
+        role: normalizedInitialRole,
         departmentIds,
         primaryDepartmentId: initialUser.primaryDepartmentId || initialUser.departmentId,
         cpf: initialUser.cpf || '',
@@ -253,13 +288,20 @@ export function ServerManagementForm({
   }, [password])
 
   const validateForm = () => {
+    const normalizedRole = normalizeTeamRoleInput(formData.role)
     if (!formData.name?.trim()) return 'Nome e obrigatorio'
     if (!formData.email?.trim()) return 'Email e obrigatorio'
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email invalido'
     if (!formData.departmentIds?.length) return 'Selecione ao menos um departamento'
     if (!primaryDepartmentId) return 'Defina um departamento principal'
     if (formData.cpf && formData.cpf.replace(/\D/g, '').length !== 11) return 'CPF deve ter 11 digitos'
-    if ((ROLE_HIERARCHY[formData.role as keyof typeof ROLE_HIERARCHY] || 0) >= currentUserLevel) return 'Voce nao pode criar usuarios com role igual ou superior ao seu'
+    if (!normalizedRole && !isEditMode) return 'Perfil de acesso invalido'
+    if (
+      normalizedRole &&
+      (ROLE_HIERARCHY[normalizedRole as keyof typeof ROLE_HIERARCHY] || 0) >= currentUserLevel
+    ) {
+      return 'Voce nao pode criar usuarios com role igual ou superior ao seu'
+    }
     if (!isEditMode) {
       if (!password) return 'Senha e obrigatoria'
       if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
@@ -294,8 +336,13 @@ export function ServerManagementForm({
       const endpoint = isEditMode ? `/admin/team/${formData.id}` : '/admin/team'
       const method = isEditMode ? 'PUT' : 'POST'
       const cleanCpf = formData.cpf ? formData.cpf.replace(/\D/g, '') : null
+      const normalizedRole = normalizeTeamRoleInput(formData.role)
+      if (!normalizedRole && !isEditMode) {
+        throw new Error('Perfil de acesso invalido')
+      }
       const body = isEditMode ? {
-        name: formData.name.trim(), email: formData.email.trim(), role: formData.role,
+        name: formData.name.trim(), email: formData.email.trim(),
+        ...(normalizedRole ? { role: normalizedRole } : {}),
         departmentIds: formData.departmentIds, primaryDepartmentId, isActive: formData.isActive,
         cpf: cleanCpf, matricula: formData.matricula || null, rg: formData.rg || null,
         dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,
@@ -303,7 +350,7 @@ export function ServerManagementForm({
         situacaoFuncional: formData.situacaoFuncional || null, dataAdmissao: formData.dataAdmissao || null,
         observacoes: formData.observacoes || null,
       } : {
-        name: formData.name.trim(), email: formData.email.trim(), password, role: formData.role,
+        name: formData.name.trim(), email: formData.email.trim(), password, role: normalizedRole,
         departmentIds: formData.departmentIds, primaryDepartmentId,
         cpf: cleanCpf, matricula: formData.matricula || null, rg: formData.rg || null,
         dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,

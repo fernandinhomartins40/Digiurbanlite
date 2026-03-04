@@ -104,11 +104,11 @@ export default function SecretariaSaudePage() {
       growth: 0
     },
     professionals: {
-      total: saudeStats?.modules.communityHealthAgents || 0,
+      total: saudeStats?.modules?.communityHealthAgents || 0,
       doctors: 0
     },
     protocols: {
-      total: saudeStats?.totals.totalProtocols || 0,
+      total: saudeStats?.totals?.totalProtocols || 0,
       pending: 0,
       approved: 0
     }

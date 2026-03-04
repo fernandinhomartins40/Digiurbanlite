@@ -8,6 +8,7 @@ import { UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
+import { isPrismaMissingTableError } from '../utils/prisma-missing-table';
 
 const router = Router();
 
@@ -157,6 +158,23 @@ router.get('/tickets', async (req: Request, res: Response) => {
       }
     });
   } catch (error) {
+    if (isPrismaMissingTableError(error, ['admin_tickets'])) {
+      console.warn(
+        '[departments-tickets] tabela admin_tickets ausente. Retornando lista vazia para /departments/tickets.'
+      );
+      return res.json({
+        success: true,
+        data: {
+          tickets: [],
+          stats: {
+            total: 0,
+            byStatus: {},
+          },
+        },
+        degraded: true,
+      });
+    }
+
     console.error('Erro ao listar chamados da secretaria:', error);
     res.status(500).json({ error: 'Erro ao listar chamados' });
   }

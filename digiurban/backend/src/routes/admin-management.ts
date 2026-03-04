@@ -446,6 +446,48 @@ const optionalNullableStringSchema = z.string().nullish();
 const optionalNullableDateSchema = z.string().nullish();
 const optionalNullableJsonSchema = z.any().nullish();
 
+const TEAM_ROLE_VALUES = new Set<string>(TEAM_ROLES as readonly string[]);
+const TEAM_ROLE_NORMALIZATION_MAP = new Map<string, string>();
+
+function normalizeRoleToken(rawRole: string): string {
+  return rawRole
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[()]/g, '')
+    .replace(/[\s/-]+/g, '_')
+    .trim()
+    .toUpperCase();
+}
+
+for (const role of TEAM_ROLES as readonly string[]) {
+  TEAM_ROLE_NORMALIZATION_MAP.set(normalizeRoleToken(role), role);
+}
+
+for (const [role, label] of Object.entries(ROLE_DISPLAY_NAMES)) {
+  if (!TEAM_ROLE_VALUES.has(role)) {
+    continue;
+  }
+  TEAM_ROLE_NORMALIZATION_MAP.set(normalizeRoleToken(label), role);
+}
+
+TEAM_ROLE_NORMALIZATION_MAP.set('SERVIDOR', 'USER');
+TEAM_ROLE_NORMALIZATION_MAP.set('DIRETOR', 'COORDINATOR');
+TEAM_ROLE_NORMALIZATION_MAP.set('SECRETARIO', 'MANAGER');
+TEAM_ROLE_NORMALIZATION_MAP.set('PREFEITO', 'ADMIN');
+
+function normalizeTeamRoleInput(value: unknown): unknown {
+  if (typeof value !== 'string') {
+    return value;
+  }
+  const normalizedToken = normalizeRoleToken(value);
+  return TEAM_ROLE_NORMALIZATION_MAP.get(normalizedToken) || value.trim();
+}
+
+const teamRoleSchema = z.preprocess(
+  normalizeTeamRoleInput,
+  z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN'])
+);
+
 const initialAssignmentSchema = z.object({
   departmentId: z.string().min(1, 'Departamento da lotação é obrigatório'),
   organizationalUnitId: z.string().min(1, 'Unidade organizacional é obrigatória'),
@@ -461,7 +503,7 @@ const createUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
   password: strongPasswordSchema,
-  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']),
+  role: teamRoleSchema,
   // ✅ SUPORTA AMBOS: antigo e novo
   departmentId: z.string().optional(),           // Schema antigo (1 dept)
   departmentIds: z.array(z.string()).optional(), // Schema novo (N depts)
@@ -484,7 +526,7 @@ const createUserSchema = z.object({
 const updateUserSchema = z.object({
   name: z.string().min(2).optional(),
   email: z.string().email().optional(),
-  role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(),
+  role: teamRoleSchema.optional(),
   isActive: z.boolean().optional(),
   // ✅ SUPORTA AMBOS
   departmentId: optionalNullableStringSchema,

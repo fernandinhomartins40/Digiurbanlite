@@ -12,10 +12,25 @@ import {
   StatusSolicitacaoTFD,
   StatusAgendamentoExterno,
 } from '../../types/saude-tfd.types';
+import { centralCalendarService } from '../central-calendar.service';
 
 const prisma = new PrismaClient();
 
 export class RegulacaoTFDService {
+  private async syncAgendamentoExternoComAgendaCentral(
+    agendamentoId: string,
+    fallbackUserId?: string
+  ) {
+    try {
+      await centralCalendarService.syncTFDExternalScheduleById(agendamentoId, fallbackUserId);
+    } catch (error) {
+      console.warn('Falha ao sincronizar agendamento TFD com agenda centralizada', {
+        agendamentoId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
   // ============================================================================
   // PARECER DE REGULAÇÃO
   // ============================================================================
@@ -280,7 +295,7 @@ export class RegulacaoTFDService {
   /**
    * Criar agendamento externo
    */
-  async criarAgendamentoExterno(data: CreateAgendamentoExternoDTO) {
+  async criarAgendamentoExterno(data: CreateAgendamentoExternoDTO, usuarioAgendamentoId: string) {
     // Verificar se a solicitação está aprovada
     const solicitacao = await prisma.solicitacaoTFD.findUnique({
       where: { id: data.solicitacaoId },
@@ -310,7 +325,7 @@ export class RegulacaoTFDService {
         telefoneContato: data.telefoneContato,
         confirmado: false,
         observacoes: data.observacoes,
-        usuarioAgendamento: 'SYSTEM', // TODO: Pegar do contexto
+        usuarioAgendamento: usuarioAgendamentoId,
       },
     });
 
@@ -322,55 +337,132 @@ export class RegulacaoTFDService {
       },
     });
 
+    await this.syncAgendamentoExternoComAgendaCentral(agendamento.id, usuarioAgendamentoId);
+
     return agendamento;
   }
 
   /**
    * Atualizar agendamento
    */
-  async atualizarAgendamento(id: string, data: UpdateAgendamentoExternoDTO) {
-    return await prisma.agendamentoExternoTFD.update({
+  async atualizarAgendamento(
+    id: string,
+    data: UpdateAgendamentoExternoDTO,
+    fallbackUserId?: string
+  ) {
+    const agendamentoAtual = await prisma.agendamentoExternoTFD.findUnique({
       where: { id },
-      data,
     });
+
+    if (!agendamentoAtual) {
+      throw new Error('Agendamento não encontrado');
+    }
+
+    const updateData: Record<string, any> = {};
+
+    if (data.especialidade !== undefined) {
+      updateData.especialidade = data.especialidade;
+    }
+
+    if (data.localAtendimento !== undefined) {
+      updateData.hospitalDestino = data.localAtendimento;
+    }
+
+    if (data.enderecoCompleto !== undefined) {
+      updateData.endereco = data.enderecoCompleto;
+    }
+
+    if (data.telefoneContato !== undefined) {
+      updateData.telefoneContato = data.telefoneContato;
+    }
+
+    if (data.observacoes !== undefined) {
+      updateData.observacoes = data.observacoes;
+    }
+
+    if (data.dataAgendamento || data.horaAgendamento) {
+      const baseDate = data.dataAgendamento
+        ? new Date(data.dataAgendamento)
+        : new Date(agendamentoAtual.dataHoraConsulta);
+
+      if (data.horaAgendamento) {
+        const [hora, minuto] = data.horaAgendamento.split(':');
+        baseDate.setHours(parseInt(hora, 10), parseInt(minuto, 10), 0, 0);
+      } else {
+        baseDate.setHours(
+          agendamentoAtual.dataHoraConsulta.getHours(),
+          agendamentoAtual.dataHoraConsulta.getMinutes(),
+          0,
+          0
+        );
+      }
+
+      updateData.dataHoraConsulta = baseDate;
+    }
+
+    const agendamento = await prisma.agendamentoExternoTFD.update({
+      where: { id },
+      data: updateData,
+    });
+
+    await this.syncAgendamentoExternoComAgendaCentral(id, fallbackUserId);
+
+    return agendamento;
   }
 
   /**
    * Confirmar agendamento
    */
-  async confirmarAgendamento(id: string) {
-    return await prisma.agendamentoExternoTFD.update({
+  async confirmarAgendamento(id: string, fallbackUserId?: string) {
+    const agendamento = await prisma.agendamentoExternoTFD.update({
       where: { id },
       data: {
         confirmado: true,
       },
     });
+
+    await this.syncAgendamentoExternoComAgendaCentral(id, fallbackUserId);
+
+    return agendamento;
   }
 
   /**
    * Cancelar agendamento
    */
-  async cancelarAgendamento(id: string, motivo: string) {
-    return await prisma.agendamentoExternoTFD.update({
+  async cancelarAgendamento(id: string, motivo: string, fallbackUserId?: string) {
+    const agendamento = await prisma.agendamentoExternoTFD.update({
       where: { id },
       data: {
         confirmado: false,
         observacoes: `CANCELADO: ${motivo}`,
       },
     });
+
+    await this.syncAgendamentoExternoComAgendaCentral(id, fallbackUserId);
+
+    return agendamento;
   }
 
   /**
    * Registrar comparecimento
    */
-  async registrarComparecimento(id: string, compareceu: boolean, observacoes?: string) {
-    return await prisma.agendamentoExternoTFD.update({
+  async registrarComparecimento(
+    id: string,
+    compareceu: boolean,
+    observacoes?: string,
+    fallbackUserId?: string
+  ) {
+    const agendamento = await prisma.agendamentoExternoTFD.update({
       where: { id },
       data: {
         confirmado: compareceu,
         observacoes,
       },
     });
+
+    await this.syncAgendamentoExternoComAgendaCentral(id, fallbackUserId);
+
+    return agendamento;
   }
 
   /**
