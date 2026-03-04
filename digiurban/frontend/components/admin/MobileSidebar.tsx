@@ -56,10 +56,6 @@ import {
   ShieldAlert,
   Car,
   Bus,
-  FolderTree,
-  Briefcase,
-  UserCog,
-  Link2
 } from 'lucide-react'
 
 interface NavItem {
@@ -239,43 +235,6 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
           href: '/admin/organograma',
           icon: Network,
           minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Unidades Org.',
-          href: '/admin/organograma/unidades',
-          icon: FolderTree,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Cargos',
-          href: '/admin/organograma/cargos',
-          icon: Briefcase,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Lotações',
-          href: '/admin/organograma/lotacoes',
-          icon: UserCog,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Equipes/Grupos',
-          href: '/admin/organograma/equipes',
-          icon: UsersGroup,
-          minRole: 'COORDINATOR'
-        },
-        {
-          title: 'Hierarquias',
-          href: '/admin/organograma/hierarquias',
-          icon: GitBranch,
-          minRole: 'ADMIN'
-        },
-        {
-          title: 'Mapeamento',
-          href: '/admin/organograma/mapeamento',
-          icon: Link2,
-          minRole: 'ADMIN',
-          badge: 'NOVO'
         }
       ]
     },

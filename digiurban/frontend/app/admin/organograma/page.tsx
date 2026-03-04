@@ -12,7 +12,7 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Loader2, Building2, RefreshCw, Plus, Users, Briefcase, UserCog,
   ChevronRight, ChevronDown, Edit2, Trash2, Eye, Network, ArrowRight,
-  BarChart3, GitBranch, UserPlus as UserPlusIcon, FolderTree
+  BarChart3, GitBranch, UserPlus as UserPlusIcon, FolderTree, Link2
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
@@ -404,13 +404,32 @@ export default function OrganogramaPage() {
     );
   };
 
-  const quickLinks = [
-    { title: 'Unidades', desc: 'Gerenciar unidades organizacionais', icon: FolderTree, href: '/admin/organograma/unidades', color: 'text-blue-600 bg-blue-50' },
-    { title: 'Cargos', desc: 'Cadastro de cargos e funções', icon: Briefcase, href: '/admin/organograma/cargos', color: 'text-purple-600 bg-purple-50' },
-    { title: 'Lotações', desc: 'Vínculos funcionais de servidores', icon: UserCog, href: '/admin/organograma/lotacoes', color: 'text-green-600 bg-green-50' },
-    { title: 'Equipes', desc: 'Grupos de trabalho e comissões', icon: Users, href: '/admin/organograma/equipes', color: 'text-orange-600 bg-orange-50' },
-    { title: 'Funções', desc: 'Funções gratificadas e comissionadas', icon: BarChart3, href: '/admin/organograma/funcoes', color: 'text-pink-600 bg-pink-50' },
-    { title: 'Hierarquias', desc: 'Relações supervisor-subordinado', icon: GitBranch, href: '/admin/organograma/hierarquias', color: 'text-indigo-600 bg-indigo-50' },
+  const navigationGroups = [
+    {
+      title: 'Estrutura',
+      description: 'Cadastros e desenho da estrutura organizacional.',
+      items: [
+        { title: 'Unidades', desc: 'Secretarias, diretorias, divisões e setores', icon: FolderTree, href: '/admin/organograma/unidades', color: 'text-blue-600 bg-blue-50' },
+        { title: 'Cargos', desc: 'Catálogo central de cargos', icon: Briefcase, href: '/admin/organograma/cargos', color: 'text-purple-600 bg-purple-50' },
+        { title: 'Funções', desc: 'Funções gratificadas e comissionadas', icon: BarChart3, href: '/admin/organograma/funcoes', color: 'text-pink-600 bg-pink-50' },
+      ],
+    },
+    {
+      title: 'Pessoas e vínculos',
+      description: 'Operação diária de servidores, lotações e coordenação.',
+      items: [
+        { title: 'Lotações', desc: 'Vínculos funcionais de servidores', icon: UserCog, href: '/admin/organograma/lotacoes', color: 'text-green-600 bg-green-50' },
+        { title: 'Equipes', desc: 'Grupos de trabalho e comissões', icon: Users, href: '/admin/organograma/equipes', color: 'text-orange-600 bg-orange-50' },
+        { title: 'Hierarquias', desc: 'Relações supervisor-subordinado', icon: GitBranch, href: '/admin/organograma/hierarquias', color: 'text-indigo-600 bg-indigo-50' },
+      ],
+    },
+    {
+      title: 'Integração',
+      description: 'Convergência dos domínios setoriais para a estrutura central.',
+      items: [
+        { title: 'Mapeamento', desc: 'Unidades de Saúde, Educação e Assistência', icon: Link2, href: '/admin/organograma/mapeamento', color: 'text-cyan-600 bg-cyan-50' },
+      ],
+    },
   ];
 
   return (
@@ -437,18 +456,34 @@ export default function OrganogramaPage() {
           </div>
         </div>
 
-        {/* Quick Links */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
-          {quickLinks.map((link) => (
-            <Link key={link.href} href={link.href}>
-              <Card className="p-3 hover:shadow-md transition-shadow cursor-pointer h-full">
-                <div className={`rounded-lg p-2 w-fit ${link.color}`}>
-                  <link.icon className="h-5 w-5" />
-                </div>
-                <h3 className="font-semibold text-sm mt-2">{link.title}</h3>
-                <p className="text-xs text-gray-500 mt-0.5">{link.desc}</p>
-              </Card>
-            </Link>
+        {/* Navigation Hub */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-4 mb-6">
+          {navigationGroups.map((group) => (
+            <Card key={group.title} className="p-4">
+              <div className="mb-4">
+                <h2 className="text-base font-semibold text-gray-900">{group.title}</h2>
+                <p className="text-sm text-gray-500 mt-1">{group.description}</p>
+              </div>
+
+              <div className="space-y-3">
+                {group.items.map((link) => (
+                  <Link key={link.href} href={link.href}>
+                    <div className="flex items-start gap-3 rounded-xl border border-gray-100 p-3 transition-colors hover:border-gray-200 hover:bg-gray-50">
+                      <div className={`rounded-lg p-2 w-fit ${link.color}`}>
+                        <link.icon className="h-5 w-5" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <h3 className="font-semibold text-sm text-gray-900">{link.title}</h3>
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                        <p className="text-xs text-gray-500 mt-0.5">{link.desc}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </Card>
           ))}
         </div>
 
