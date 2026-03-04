@@ -25,6 +25,7 @@ import {
   getAccessibleDepartmentIdsForUser,
   reconcileAdministrativeDepartmentAssignments,
 } from '../services/organizational-context.service';
+import { assertDepartmentScopedEntities } from '../services/organizational-integrity.service';
 // Helpers implementados usando assignments como fonte primaria e
 // userDepartments/user.departmentId apenas como projecoes de compatibilidade.
 const getUserDepartments = (user: any) => {
@@ -436,6 +437,17 @@ const strongPasswordSchema = z.string()
   .regex(/\d/, 'Senha deve conter pelo menos um número')
   .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Senha deve conter pelo menos um caractere especial');
 
+const initialAssignmentSchema = z.object({
+  departmentId: z.string().min(1, 'Departamento da lotação é obrigatório'),
+  organizationalUnitId: z.string().min(1, 'Unidade organizacional é obrigatória'),
+  positionId: z.string().optional(),
+  functionId: z.string().optional(),
+  dataInicio: z.string().optional(),
+  cargaHoraria: z.number().nullable().optional(),
+  percentualDedicacao: z.number().nullable().optional(),
+  observacoes: z.string().optional()
+});
+
 const createUserSchema = z.object({
   name: z.string().min(2, 'Nome deve ter pelo menos 2 caracteres'),
   email: z.string().email('Email inválido'),
@@ -456,7 +468,8 @@ const createUserSchema = z.object({
   cargoEfetivo: z.string().optional(),
   situacaoFuncional: z.string().optional(),
   dataAdmissao: z.string().optional(), // ISO date string
-  observacoes: z.string().optional()
+  observacoes: z.string().optional(),
+  initialAssignment: initialAssignmentSchema.optional()
         });
 
 const updateUserSchema = z.object({
@@ -1059,6 +1072,7 @@ router.post(
     // ✅ MÚLTIPLOS DEPARTAMENTOS: Processar departmentIds (novo) ou departmentId (legado)
     let departmentIds: string[] = [];
     let primaryDepartmentId: string | null = null;
+    const initialAssignment = data.initialAssignment;
 
     if (data.departmentIds && data.departmentIds.length > 0) {
       // Schema novo: múltiplos departamentos
@@ -1070,6 +1084,21 @@ router.post(
       primaryDepartmentId = data.departmentId;
     }
 
+    if (initialAssignment) {
+      await assertDepartmentScopedEntities({
+        departmentId: initialAssignment.departmentId,
+        organizationalUnitId: initialAssignment.organizationalUnitId,
+        positionId: initialAssignment.positionId,
+        functionId: initialAssignment.functionId,
+      });
+
+      if (!departmentIds.includes(initialAssignment.departmentId)) {
+        departmentIds = [initialAssignment.departmentId, ...departmentIds];
+      }
+
+      primaryDepartmentId = initialAssignment.departmentId;
+    }
+
     // Se não é ADMIN, forçar apenas seus próprios departamentos
     if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
       const scopedDepartmentIds = await getAccessibleDepartmentIdsForUser({
@@ -1077,8 +1106,18 @@ router.post(
         role: user.role,
         departmentId: user.departmentId
       });
+
+      if (initialAssignment && !scopedDepartmentIds.includes(initialAssignment.departmentId)) {
+        return res.status(403).json(
+          createErrorResponse(
+            'FORBIDDEN',
+            'Você não pode criar um servidor com lotação inicial fora do seu escopo organizacional.'
+          )
+        );
+      }
+
       departmentIds = scopedDepartmentIds;
-      primaryDepartmentId = scopedDepartmentIds[0] || null;
+      primaryDepartmentId = initialAssignment?.departmentId || scopedDepartmentIds[0] || null;
     }
 
     // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se todos os departamentos existem e são oficiais
@@ -1107,60 +1146,80 @@ router.post(
     // Hash da senha
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    // Criar usuário COM múltiplos departamentos E dados de servidor
-    const newUser = await prisma.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        password: hashedPassword,
-        role: data.role,
-        isActive: true,
-        mustChangePassword: true,
-        // ✅ DADOS DE SERVIDOR PÚBLICO
-        cpf: data.cpf || null,
-        matricula: data.matricula || null,
-        rg: data.rg || null,
-        dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
-        telefone: data.telefone || null,
-        telefoneSecundario: data.telefoneSecundario || null,
-        endereco: data.endereco || null,
-        cargoEfetivo: data.cargoEfetivo || null,
-        situacaoFuncional: data.situacaoFuncional || 'ATIVO',
-        dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao) : null,
-        observacoes: data.observacoes || null,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        department: {
-          select: {
-            id: true,
-            name: true,
-            code: true
-        }
-      },
-        userDepartments: {
-          where: { isActive: true },
-          include: {
-            department: {
-              select: {
-                id: true,
-                name: true,
-                code: true
-              }
+    const newUser = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          name: data.name,
+          email: data.email,
+          password: hashedPassword,
+          role: data.role,
+          isActive: true,
+          mustChangePassword: true,
+          // ✅ DADOS DE SERVIDOR PÚBLICO
+          cpf: data.cpf || null,
+          matricula: data.matricula || null,
+          rg: data.rg || null,
+          dataNascimento: data.dataNascimento ? new Date(data.dataNascimento) : null,
+          telefone: data.telefone || null,
+          telefoneSecundario: data.telefoneSecundario || null,
+          endereco: data.endereco || null,
+          cargoEfetivo: data.cargoEfetivo || null,
+          situacaoFuncional: data.situacaoFuncional || 'ATIVO',
+          dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao) : null,
+          observacoes: data.observacoes || null,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
             }
           },
-          orderBy: [
-            { isPrimary: 'desc' },
-            { createdAt: 'asc' }
-          ]
+          userDepartments: {
+            where: { isActive: true },
+            include: {
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true
+                }
+              }
+            },
+            orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }]
+          }
         }
-        }
+      });
+
+      if (initialAssignment) {
+        await tx.employeeAssignment.create({
+          data: {
+            userId: createdUser.id,
+            departmentId: initialAssignment.departmentId,
+            organizationalUnitId: initialAssignment.organizationalUnitId,
+            positionId: initialAssignment.positionId || null,
+            functionId: initialAssignment.functionId || null,
+            tipo: 'LOTACAO',
+            situacao: 'ATIVO',
+            isPrimary: true,
+            dataInicio: initialAssignment.dataInicio ? new Date(initialAssignment.dataInicio) : new Date(),
+            cargaHoraria: initialAssignment.cargaHoraria ?? null,
+            percentualDedicacao: initialAssignment.percentualDedicacao ?? null,
+            observacoes: initialAssignment.observacoes || 'Lotação inicial criada no cadastro do servidor.',
+            createdBy: user.id
+          }
         });
+      }
+
+      return createdUser;
+    });
 
     // ✅ Adicionar campos computed
     await reconcileAdministrativeDepartmentAssignments({

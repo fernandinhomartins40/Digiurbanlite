@@ -1,24 +1,31 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react'
+import { Loader2, AlertCircle, Eye, EyeOff, ArrowRightLeft, Building2, Briefcase } from 'lucide-react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { getFullApiUrl } from '@/lib/api-config'
-import { ROLE_HIERARCHY, ROLE_DISPLAY_NAMES, TEAM_ROLES } from '@/types/roles'
+import { ROLE_DISPLAY_NAMES, ROLE_HIERARCHY, TEAM_ROLES } from '@/types/roles'
 
-interface Department {
+interface Department { id: string; name: string; code: string | null }
+interface OrgUnit { id: string; nome: string; sigla?: string }
+interface Position { id: string; nome: string }
+interface OrgFunction { id: string; nome: string }
+interface AssignmentSummary {
   id: string
-  name: string
-  code: string | null
+  isPrimary: boolean
+  situacao: string
+  organizationalUnit?: { id: string; nome: string; sigla?: string } | null
+  position?: { id: string; nome: string } | null
+  function?: { id: string; nome: string } | null
 }
-
 interface ServerData {
   id?: string
   name: string
@@ -28,7 +35,6 @@ interface ServerData {
   departmentIds?: string[]
   primaryDepartmentId?: string
   isActive?: boolean
-  // Dados de servidor público
   cpf?: string
   matricula?: string
   rg?: string
@@ -40,8 +46,8 @@ interface ServerData {
   situacaoFuncional?: string
   dataAdmissao?: string
   observacoes?: string
+  assignments?: AssignmentSummary[]
 }
-
 interface ServerManagementModalProps {
   open: boolean
   onClose: () => void
@@ -50,6 +56,26 @@ interface ServerManagementModalProps {
   currentUserRole: string
   currentUserDepartmentId?: string
 }
+interface InitialAssignment {
+  organizationalUnitId: string
+  positionId: string
+  functionId: string
+  dataInicio: string
+  cargaHoraria: string
+  percentualDedicacao: string
+  observacoes: string
+}
+
+const today = () => new Date().toISOString().slice(0, 10)
+const EMPTY_ASSIGNMENT: InitialAssignment = {
+  organizationalUnitId: '',
+  positionId: '',
+  functionId: '',
+  dataInicio: today(),
+  cargaHoraria: '',
+  percentualDedicacao: '',
+  observacoes: '',
+}
 
 export function ServerManagementModal({
   open,
@@ -57,69 +83,51 @@ export function ServerManagementModal({
   onSuccess,
   user,
   currentUserRole,
-  currentUserDepartmentId
+  currentUserDepartmentId,
 }: ServerManagementModalProps) {
+  const router = useRouter()
+  const isEditMode = !!user?.id
+  const currentUserLevel = ROLE_HIERARCHY[currentUserRole as keyof typeof ROLE_HIERARCHY] || 0
   const [formData, setFormData] = useState<ServerData>({
-    name: '',
-    email: '',
-    role: 'USER',
+    name: '', email: '', role: 'USER',
     departmentId: currentUserDepartmentId,
     departmentIds: currentUserDepartmentId ? [currentUserDepartmentId] : [],
     primaryDepartmentId: currentUserDepartmentId,
-    isActive: true,
-    cpf: '',
-    matricula: '',
-    rg: '',
-    dataNascimento: '',
-    telefone: '',
-    telefoneSecundario: '',
-    cargoEfetivo: '',
-    situacaoFuncional: 'ATIVO',
-    dataAdmissao: '',
-    observacoes: ''
+    isActive: true, cpf: '', matricula: '', rg: '', dataNascimento: '', telefone: '',
+    telefoneSecundario: '', cargoEfetivo: '', situacaoFuncional: 'ATIVO', dataAdmissao: '', observacoes: '',
   })
+  const [initialAssignment, setInitialAssignment] = useState<InitialAssignment>(EMPTY_ASSIGNMENT)
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [departments, setDepartments] = useState<Department[]>([])
+  const [organizationalUnits, setOrganizationalUnits] = useState<OrgUnit[]>([])
+  const [positions, setPositions] = useState<Position[]>([])
+  const [functions, setFunctions] = useState<OrgFunction[]>([])
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
   const [loadingDepartments, setLoadingDepartments] = useState(false)
+  const [loadingOrganogram, setLoadingOrganogram] = useState(false)
+  const [error, setError] = useState('')
 
-  const isEditMode = !!user?.id
-  const currentUserLevel = ROLE_HIERARCHY[currentUserRole as keyof typeof ROLE_HIERARCHY] || 0
+  const availableRoles = useMemo(
+    () =>
+      TEAM_ROLES.filter((role) => (ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY] || 0) < currentUserLevel)
+        .map((role) => ({ value: role, label: ROLE_DISPLAY_NAMES[role as keyof typeof ROLE_DISPLAY_NAMES] })),
+    [currentUserLevel]
+  )
 
-  const getPasswordStrength = (pwd: string): { score: number; label: string; color: string } => {
-    if (!pwd) return { score: 0, label: '', color: '' }
-    let score = 0
-    if (pwd.length >= 8) score++
-    if (pwd.length >= 12) score++
-    if (/[a-z]/.test(pwd)) score++
-    if (/[A-Z]/.test(pwd)) score++
-    if (/\d/.test(pwd)) score++
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++
-    if (score <= 2) return { score, label: 'Fraca', color: 'bg-red-500' }
-    if (score <= 4) return { score, label: 'Média', color: 'bg-yellow-500' }
-    return { score, label: 'Forte', color: 'bg-green-500' }
-  }
-
-  const passwordStrength = getPasswordStrength(password)
+  const primaryDepartmentId = formData.primaryDepartmentId || formData.departmentIds?.[0] || ''
+  const primaryDepartment = departments.find((department) => department.id === primaryDepartmentId)
+  const primaryAssignment = user?.assignments?.find((assignment) => assignment.isPrimary) || user?.assignments?.[0]
 
   useEffect(() => {
     if (user) {
-      const deptIds = user.departmentIds || (user.departmentId ? [user.departmentId] : [])
-      const primaryId = user.primaryDepartmentId || user.departmentId
-
+      const departmentIds = user.departmentIds || (user.departmentId ? [user.departmentId] : [])
       setFormData({
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        departmentId: user.departmentId,
-        departmentIds: deptIds,
-        primaryDepartmentId: primaryId,
-        isActive: user.isActive ?? true,
+        ...user,
+        departmentIds,
+        primaryDepartmentId: user.primaryDepartmentId || user.departmentId,
         cpf: user.cpf || '',
         matricula: user.matricula || '',
         rg: user.rg || '',
@@ -129,28 +137,18 @@ export function ServerManagementModal({
         cargoEfetivo: user.cargoEfetivo || '',
         situacaoFuncional: user.situacaoFuncional || 'ATIVO',
         dataAdmissao: user.dataAdmissao || '',
-        observacoes: user.observacoes || ''
+        observacoes: user.observacoes || '',
       })
     } else {
       setFormData({
-        name: '',
-        email: '',
-        role: 'USER',
+        name: '', email: '', role: 'USER',
         departmentId: currentUserDepartmentId,
         departmentIds: currentUserDepartmentId ? [currentUserDepartmentId] : [],
         primaryDepartmentId: currentUserDepartmentId,
-        isActive: true,
-        cpf: '',
-        matricula: '',
-        rg: '',
-        dataNascimento: '',
-        telefone: '',
-        telefoneSecundario: '',
-        cargoEfetivo: '',
-        situacaoFuncional: 'ATIVO',
-        dataAdmissao: '',
-        observacoes: ''
+        isActive: true, cpf: '', matricula: '', rg: '', dataNascimento: '', telefone: '',
+        telefoneSecundario: '', cargoEfetivo: '', situacaoFuncional: 'ATIVO', dataAdmissao: '', observacoes: '',
       })
+      setInitialAssignment(EMPTY_ASSIGNMENT)
       setPassword('')
       setConfirmPassword('')
       setShowPassword(false)
@@ -160,161 +158,149 @@ export function ServerManagementModal({
   }, [user, currentUserDepartmentId])
 
   useEffect(() => {
-    if (open) {
-      loadDepartments()
-    }
+    if (open) void loadDepartments()
   }, [open])
+
+  useEffect(() => {
+    if (!open || !primaryDepartmentId) {
+      setOrganizationalUnits([])
+      setPositions([])
+      setFunctions([])
+      return
+    }
+    void loadOrganogramOptions(primaryDepartmentId)
+  }, [open, primaryDepartmentId])
 
   const loadDepartments = async () => {
     setLoadingDepartments(true)
     try {
-      const endpoint = currentUserRole === 'SUPER_ADMIN'
-        ? '/super-admin/departments'
-        : '/admin/departments'
-      const url = getFullApiUrl(endpoint)
-      const response = await fetch(url, {
-        credentials: 'include'
-      })
-
-      if (!response.ok) throw new Error('Erro ao carregar departamentos')
-
+      const endpoint = currentUserRole === 'SUPER_ADMIN' ? '/super-admin/departments' : '/admin/departments'
+      const response = await fetch(getFullApiUrl(endpoint), { credentials: 'include', cache: 'no-store' })
       const data = await response.json()
-      if (data.success && data.data?.departments) {
-        setDepartments(data.data.departments)
-      }
-    } catch (err) {
-      console.error('Erro ao carregar departamentos:', err)
+      if (response.ok) setDepartments(data?.data?.departments || data?.departments || [])
     } finally {
       setLoadingDepartments(false)
     }
   }
 
-  const availableRoles = TEAM_ROLES
-    .filter((role) => {
-      const roleLevel = ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY]
-      return roleLevel < currentUserLevel
-    })
-    .map((role) => ({
-      value: role,
-      label: ROLE_DISPLAY_NAMES[role as keyof typeof ROLE_DISPLAY_NAMES],
-      level: ROLE_HIERARCHY[role as keyof typeof ROLE_HIERARCHY]
-    }))
-    .sort((a, b) => b.level - a.level)
-
-  const formatCPF = (value: string) => {
-    const numbers = value.replace(/\D/g, '')
-    return numbers
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d)/, '$1.$2')
-      .replace(/(\d{3})(\d{1,2})/, '$1-$2')
-      .replace(/(-\d{2})\d+?$/, '$1')
+  const loadOrganogramOptions = async (departmentId: string) => {
+    setLoadingOrganogram(true)
+    try {
+      const [orgUnitsRes, positionsRes, functionsRes] = await Promise.all([
+        fetch(getFullApiUrl(`/organizational-units?departmentId=${departmentId}`), { credentials: 'include', cache: 'no-store' }),
+        fetch(getFullApiUrl(`/positions?departmentId=${departmentId}&isActive=true`), { credentials: 'include', cache: 'no-store' }),
+        fetch(getFullApiUrl(`/functions?departmentId=${departmentId}&isActive=true`), { credentials: 'include', cache: 'no-store' }),
+      ])
+      const [orgUnitsData, positionsData, functionsData] = await Promise.all([
+        orgUnitsRes.json().catch(() => []),
+        positionsRes.json().catch(() => []),
+        functionsRes.json().catch(() => []),
+      ])
+      setOrganizationalUnits(Array.isArray(orgUnitsData) ? orgUnitsData : orgUnitsData?.data || [])
+      setPositions(Array.isArray(positionsData) ? positionsData : positionsData?.data || [])
+      setFunctions(Array.isArray(functionsData) ? functionsData : functionsData?.data || [])
+    } finally {
+      setLoadingOrganogram(false)
+    }
   }
 
-  const validateForm = (): string | null => {
-    if (!formData.name.trim()) return 'Nome é obrigatório'
-    if (!formData.email.trim()) return 'Email é obrigatório'
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email inválido'
+  const formatCPF = (value: string) =>
+    value.replace(/\D/g, '').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})/, '$1-$2').replace(/(-\d{2})\d+?$/, '$1')
 
+  const passwordStrength = useMemo(() => {
+    if (!password) return { score: 0, label: '', color: '' }
+    let score = 0
+    if (password.length >= 8) score++
+    if (password.length >= 12) score++
+    if (/[a-z]/.test(password)) score++
+    if (/[A-Z]/.test(password)) score++
+    if (/\d/.test(password)) score++
+    if (/[!@#$%^&*(),.?":{}|<>]/.test(password)) score++
+    if (score <= 2) return { score, label: 'Fraca', color: 'bg-red-500' }
+    if (score <= 4) return { score, label: 'Media', color: 'bg-yellow-500' }
+    return { score, label: 'Forte', color: 'bg-green-500' }
+  }, [password])
+
+  const validateForm = () => {
+    if (!formData.name?.trim()) return 'Nome e obrigatorio'
+    if (!formData.email?.trim()) return 'Email e obrigatorio'
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email invalido'
+    if (!formData.departmentIds?.length) return 'Selecione ao menos um departamento'
+    if (!primaryDepartmentId) return 'Defina um departamento principal'
+    if (formData.cpf && formData.cpf.replace(/\D/g, '').length !== 11) return 'CPF deve ter 11 digitos'
+    if ((ROLE_HIERARCHY[formData.role as keyof typeof ROLE_HIERARCHY] || 0) >= currentUserLevel) return 'Voce nao pode criar usuarios com role igual ou superior ao seu'
     if (!isEditMode) {
-      if (!password) return 'Senha é obrigatória'
-      if (password.length < 8) return 'Senha deve ter no mínimo 8 caracteres'
-      if (!/[A-Z]/.test(password)) return 'Senha deve conter ao menos uma letra maiúscula'
-      if (!/[a-z]/.test(password)) return 'Senha deve conter ao menos uma letra minúscula'
-      if (!/\d/.test(password)) return 'Senha deve conter ao menos um número'
-      if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) return 'Senha deve conter ao menos um caractere especial'
-      if (password !== confirmPassword) return 'As senhas não coincidem'
+      if (!password) return 'Senha e obrigatoria'
+      if (password.length < 8 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/\d/.test(password) || !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        return 'Senha nao atende aos requisitos minimos'
+      }
+      if (password !== confirmPassword) return 'As senhas nao coincidem'
+      if (!initialAssignment.organizationalUnitId) return 'A lotacao inicial no organograma e obrigatoria'
+      if (initialAssignment.percentualDedicacao && (Number(initialAssignment.percentualDedicacao) <= 0 || Number(initialAssignment.percentualDedicacao) > 100)) {
+        return 'Percentual de dedicacao deve estar entre 1 e 100'
+      }
     }
-
-    // Validação de CPF (básica)
-    if (formData.cpf && formData.cpf.replace(/\D/g, '').length !== 11) {
-      return 'CPF deve ter 11 dígitos'
-    }
-
-    const selectedRoleLevel = ROLE_HIERARCHY[formData.role as keyof typeof ROLE_HIERARCHY]
-    if (selectedRoleLevel >= currentUserLevel) {
-      return 'Você não pode criar usuários com role igual ou superior ao seu'
-    }
-
     return null
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+  const handleDepartmentToggle = (departmentId: string, checked: boolean) => {
+    const nextDepartmentIds = checked ? [...(formData.departmentIds || []), departmentId] : (formData.departmentIds || []).filter((id) => id !== departmentId)
+    const nextPrimaryDepartmentId = checked && nextDepartmentIds.length === 1 ? departmentId : formData.primaryDepartmentId === departmentId && !checked ? nextDepartmentIds[0] : formData.primaryDepartmentId
+    setFormData((current) => ({ ...current, departmentIds: nextDepartmentIds, primaryDepartmentId: nextPrimaryDepartmentId, departmentId: nextPrimaryDepartmentId }))
+    if (nextPrimaryDepartmentId !== primaryDepartmentId) setInitialAssignment((current) => ({ ...current, organizationalUnitId: '', positionId: '', functionId: '' }))
+  }
 
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault()
     const validationError = validateForm()
     if (validationError) {
       setError(validationError)
       return
     }
-
     setLoading(true)
-
+    setError('')
     try {
-      const endpoint = isEditMode
-        ? `/admin/team/${formData.id}`
-        : '/admin/team'
-
-      const url = getFullApiUrl(endpoint)
+      const endpoint = isEditMode ? `/admin/team/${formData.id}` : '/admin/team'
       const method = isEditMode ? 'PUT' : 'POST'
-
-      const body = isEditMode
-        ? {
-            name: formData.name,
-            email: formData.email,
-            role: formData.role,
-            departmentIds: formData.departmentIds,
-            primaryDepartmentId: formData.primaryDepartmentId,
-            isActive: formData.isActive,
-            cpf: formData.cpf || null,
-            matricula: formData.matricula || null,
-            rg: formData.rg || null,
-            dataNascimento: formData.dataNascimento || null,
-            telefone: formData.telefone || null,
-            telefoneSecundario: formData.telefoneSecundario || null,
-            cargoEfetivo: formData.cargoEfetivo || null,
-            situacaoFuncional: formData.situacaoFuncional || null,
-            dataAdmissao: formData.dataAdmissao || null,
-            observacoes: formData.observacoes || null
-          }
-        : {
-            name: formData.name,
-            email: formData.email,
-            password: password,
-            role: formData.role,
-            departmentIds: formData.departmentIds,
-            primaryDepartmentId: formData.primaryDepartmentId,
-            cpf: formData.cpf || null,
-            matricula: formData.matricula || null,
-            rg: formData.rg || null,
-            dataNascimento: formData.dataNascimento || null,
-            telefone: formData.telefone || null,
-            telefoneSecundario: formData.telefoneSecundario || null,
-            cargoEfetivo: formData.cargoEfetivo || null,
-            situacaoFuncional: formData.situacaoFuncional || 'ATIVO',
-            dataAdmissao: formData.dataAdmissao || null,
-            observacoes: formData.observacoes || null
-          }
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json'
+      const body = isEditMode ? {
+        name: formData.name, email: formData.email, role: formData.role,
+        departmentIds: formData.departmentIds, primaryDepartmentId, isActive: formData.isActive,
+        cpf: formData.cpf || null, matricula: formData.matricula || null, rg: formData.rg || null,
+        dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,
+        telefoneSecundario: formData.telefoneSecundario || null, cargoEfetivo: formData.cargoEfetivo || null,
+        situacaoFuncional: formData.situacaoFuncional || null, dataAdmissao: formData.dataAdmissao || null,
+        observacoes: formData.observacoes || null,
+      } : {
+        name: formData.name, email: formData.email, password, role: formData.role,
+        departmentIds: formData.departmentIds, primaryDepartmentId,
+        cpf: formData.cpf || null, matricula: formData.matricula || null, rg: formData.rg || null,
+        dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,
+        telefoneSecundario: formData.telefoneSecundario || null, cargoEfetivo: formData.cargoEfetivo || null,
+        situacaoFuncional: formData.situacaoFuncional || 'ATIVO', dataAdmissao: formData.dataAdmissao || null,
+        observacoes: formData.observacoes || null,
+        initialAssignment: {
+          departmentId: primaryDepartmentId,
+          organizationalUnitId: initialAssignment.organizationalUnitId,
+          positionId: initialAssignment.positionId || undefined,
+          functionId: initialAssignment.functionId || undefined,
+          dataInicio: initialAssignment.dataInicio || today(),
+          cargaHoraria: initialAssignment.cargaHoraria ? Number(initialAssignment.cargaHoraria) : null,
+          percentualDedicacao: initialAssignment.percentualDedicacao ? Number(initialAssignment.percentualDedicacao) : null,
+          observacoes: initialAssignment.observacoes || undefined,
         },
-        credentials: 'include',
-        body: JSON.stringify(body)
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Erro ao salvar servidor')
       }
-
+      const response = await fetch(getFullApiUrl(endpoint), {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify(body),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (!response.ok) throw new Error(data.message || data.error || 'Erro ao salvar servidor')
       onSuccess()
       onClose()
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar servidor')
+    } catch (submitError) {
+      setError(submitError instanceof Error ? submitError.message : 'Erro ao salvar servidor')
     } finally {
       setLoading(false)
     }
@@ -322,404 +308,174 @@ export function ServerManagementModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-[95vw] sm:max-w-[760px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-lg sm:text-xl">
-            {isEditMode ? 'Editar Servidor' : 'Novo Servidor'}
-          </DialogTitle>
-          <DialogDescription className="text-sm">
-            {isEditMode
-              ? 'Edite as informações do servidor público'
-              : 'Cadastre um novo servidor público municipal'
-            }
+          <DialogTitle>{isEditMode ? 'Editar servidor' : 'Novo servidor'}</DialogTitle>
+          <DialogDescription>
+            {isEditMode ? 'Atualize o cadastro administrativo. A lotacao operacional e gerenciada no organograma.' : 'Cadastre o servidor e defina a lotacao inicial no organograma.'}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && (
-            <Alert variant="destructive" className="text-sm">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription className="text-xs sm:text-sm">{error}</AlertDescription>
-            </Alert>
-          )}
+          {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
           <Tabs defaultValue="basico" className="w-full">
-            <TabsList className="grid w-full grid-cols-3">
-              <TabsTrigger value="basico">Básico</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="basico">Basico</TabsTrigger>
               <TabsTrigger value="pessoal">Pessoal</TabsTrigger>
+              <TabsTrigger value="organograma">Organograma</TabsTrigger>
               <TabsTrigger value="funcional">Funcional</TabsTrigger>
             </TabsList>
 
-            {/* Tab: Dados Básicos */}
             <TabsContent value="basico" className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="name">Nome Completo *</Label>
-                <Input
-                  id="name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome completo do servidor"
-                  disabled={loading}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email">Email *</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@servidor.gov.br"
-                  disabled={loading}
-                />
-              </div>
+              <div className="space-y-2"><Label htmlFor="name">Nome completo *</Label><Input id="name" value={formData.name} onChange={(event) => setFormData({ ...formData, name: event.target.value })} disabled={loading} /></div>
+              <div className="space-y-2"><Label htmlFor="email">Email *</Label><Input id="email" type="email" value={formData.email} onChange={(event) => setFormData({ ...formData, email: event.target.value })} disabled={loading} /></div>
 
               {!isEditMode && (
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="password">Senha *</Label>
                     <div className="relative">
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        placeholder="Mínimo 8 caracteres"
-                        disabled={loading}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                        tabIndex={-1}
-                      >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+                      <Input id="password" type={showPassword ? 'text' : 'password'} value={password} onChange={(event) => setPassword(event.target.value)} disabled={loading} className="pr-10" />
+                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" tabIndex={-1}>{showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
                     </div>
                     {password && (
                       <div className="space-y-1">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs text-muted-foreground">Força:</span>
-                          <span className={`text-xs font-medium ${
-                            passwordStrength.label === 'Forte' ? 'text-green-600' :
-                            passwordStrength.label === 'Média' ? 'text-yellow-600' : 'text-red-600'
-                          }`}>
-                            {passwordStrength.label}
-                          </span>
-                        </div>
-                        <div className="flex gap-1 h-1">
-                          {[...Array(6)].map((_, i) => (
-                            <div
-                              key={i}
-                              className={`flex-1 rounded-full ${
-                                i < passwordStrength.score ? passwordStrength.color : 'bg-gray-200'
-                              }`}
-                            />
-                          ))}
-                        </div>
+                        <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">Forca:</span><span className={`text-xs font-medium ${passwordStrength.label === 'Forte' ? 'text-green-600' : passwordStrength.label === 'Media' ? 'text-yellow-600' : 'text-red-600'}`}>{passwordStrength.label}</span></div>
+                        <div className="flex gap-1 h-1">{[...Array(6)].map((_, index) => <div key={index} className={`flex-1 rounded-full ${index < passwordStrength.score ? passwordStrength.color : 'bg-gray-200'}`} />)}</div>
                       </div>
                     )}
                   </div>
-
                   <div className="space-y-2">
-                    <Label htmlFor="confirmPassword">Confirmar Senha *</Label>
+                    <Label htmlFor="confirmPassword">Confirmar senha *</Label>
                     <div className="relative">
-                      <Input
-                        id="confirmPassword"
-                        type={showConfirmPassword ? 'text' : 'password'}
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        placeholder="Digite a senha novamente"
-                        disabled={loading}
-                        className="pr-10"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500"
-                        tabIndex={-1}
-                      >
-                        {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </button>
+                      <Input id="confirmPassword" type={showConfirmPassword ? 'text' : 'password'} value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} disabled={loading} className="pr-10" />
+                      <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500" tabIndex={-1}>{showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}</button>
                     </div>
-                    {confirmPassword && password === confirmPassword && (
-                      <p className="text-xs text-green-600">✓ As senhas coincidem</p>
-                    )}
                   </div>
                 </>
               )}
 
               <div className="space-y-2">
-                <Label htmlFor="role">Cargo no Sistema *</Label>
-                <Select
-                  value={formData.role}
-                  onValueChange={(value) => setFormData({ ...formData, role: value })}
-                  disabled={loading}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um cargo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableRoles.map((role) => (
-                      <SelectItem key={role.value} value={role.value}>
-                        {role.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                <Label htmlFor="role">Perfil de acesso *</Label>
+                <Select value={formData.role} onValueChange={(value) => setFormData({ ...formData, role: value })} disabled={loading}>
+                  <SelectTrigger id="role"><SelectValue placeholder="Selecione um perfil" /></SelectTrigger>
+                  <SelectContent>{availableRoles.map((role) => <SelectItem key={role.value} value={role.value}>{role.label}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label>Escopo administrativo (departamentos)</Label>
                 <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
-                  {loadingDepartments ? (
-                    <p className="text-sm text-muted-foreground">Carregando...</p>
-                  ) : departments.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum departamento disponível</p>
-                  ) : (
-                    departments.map((dept) => {
-                      const isSelected = formData.departmentIds?.includes(dept.id) || false
-                      const isPrimary = formData.primaryDepartmentId === dept.id
-
-                      return (
-                        <div key={dept.id} className="flex items-center justify-between">
-                          <div className="flex items-center space-x-2">
-                            <input
-                              type="checkbox"
-                              id={`dept-${dept.id}`}
-                              checked={isSelected}
-                              onChange={(e) => {
-                                const newDeptIds = e.target.checked
-                                  ? [...(formData.departmentIds || []), dept.id]
-                                  : (formData.departmentIds || []).filter(id => id !== dept.id)
-
-                                let newPrimaryId = formData.primaryDepartmentId
-                                if (!e.target.checked && isPrimary) {
-                                  newPrimaryId = newDeptIds[0] || undefined
-                                }
-                                if (e.target.checked && newDeptIds.length === 1) {
-                                  newPrimaryId = dept.id
-                                }
-
-                                setFormData({
-                                  ...formData,
-                                  departmentIds: newDeptIds,
-                                  primaryDepartmentId: newPrimaryId,
-                                  departmentId: newPrimaryId
-                                })
-                              }}
-                              disabled={loading}
-                              className="h-4 w-4"
-                            />
-                            <Label htmlFor={`dept-${dept.id}`} className={`cursor-pointer text-sm ${isPrimary ? 'font-semibold' : ''}`}>
-                              {dept.name}
-                              {isPrimary && <span className="ml-2 text-xs text-primary">★ Principal</span>}
-                            </Label>
-                          </div>
-
-                          {isSelected && !isPrimary && (
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                setFormData({
-                                  ...formData,
-                                  primaryDepartmentId: dept.id,
-                                  departmentId: dept.id
-                                })
-                              }}
-                              disabled={loading}
-                              className="h-7 text-xs"
-                            >
-                              Tornar principal
-                            </Button>
-                          )}
+                  {loadingDepartments ? <p className="text-sm text-muted-foreground">Carregando...</p> : departments.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum departamento disponivel</p> : departments.map((department) => {
+                    const isSelected = formData.departmentIds?.includes(department.id) || false
+                    const isPrimary = primaryDepartmentId === department.id
+                    return (
+                      <div key={department.id} className="flex items-center justify-between gap-2">
+                        <div className="flex items-center space-x-2">
+                          <input type="checkbox" id={`dept-${department.id}`} checked={isSelected} onChange={(event) => handleDepartmentToggle(department.id, event.target.checked)} disabled={loading} className="h-4 w-4" />
+                          <Label htmlFor={`dept-${department.id}`} className={`cursor-pointer text-sm ${isPrimary ? 'font-semibold' : ''}`}>{department.name}{isPrimary && <span className="ml-2 text-xs text-primary">Principal</span>}</Label>
                         </div>
-                      )
-                    })
-                  )}
+                        {isSelected && !isPrimary && <Button type="button" variant="ghost" size="sm" onClick={() => setFormData({ ...formData, primaryDepartmentId: department.id, departmentId: department.id })} disabled={loading} className="h-7 text-xs">Tornar principal</Button>}
+                      </div>
+                    )
+                  })}
                 </div>
-                <p className="text-xs text-muted-foreground">
-                  O departamento controla o escopo administrativo do usuário. Setor, cargo e função operacionais
-                  devem ser gerenciados nas lotações do organograma.
-                </p>
+                <p className="text-xs text-muted-foreground">O departamento controla o escopo administrativo do usuario. O setor, cargo e funcao operacionais ficam no organograma.</p>
               </div>
 
-              {isEditMode && (
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    id="isActive"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    disabled={loading}
-                    className="h-4 w-4"
-                  />
-                  <Label htmlFor="isActive" className="cursor-pointer">Servidor ativo</Label>
-                </div>
+              {isEditMode && <div className="flex items-center space-x-2"><input type="checkbox" id="isActive" checked={formData.isActive} onChange={(event) => setFormData({ ...formData, isActive: event.target.checked })} disabled={loading} className="h-4 w-4" /><Label htmlFor="isActive" className="cursor-pointer">Servidor ativo</Label></div>}
+            </TabsContent>
+
+            <TabsContent value="pessoal" className="space-y-3">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label htmlFor="cpf">CPF</Label><Input id="cpf" value={formData.cpf} onChange={(event) => setFormData({ ...formData, cpf: formatCPF(event.target.value) })} maxLength={14} disabled={loading} /></div>
+                <div className="space-y-2"><Label htmlFor="matricula">Matricula</Label><Input id="matricula" value={formData.matricula} onChange={(event) => setFormData({ ...formData, matricula: event.target.value })} disabled={loading} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label htmlFor="rg">RG</Label><Input id="rg" value={formData.rg} onChange={(event) => setFormData({ ...formData, rg: event.target.value })} disabled={loading} /></div>
+                <div className="space-y-2"><Label htmlFor="dataNascimento">Data de nascimento</Label><Input id="dataNascimento" type="date" value={formData.dataNascimento} onChange={(event) => setFormData({ ...formData, dataNascimento: event.target.value })} disabled={loading} /></div>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-2"><Label htmlFor="telefone">Telefone</Label><Input id="telefone" value={formData.telefone} onChange={(event) => setFormData({ ...formData, telefone: event.target.value })} disabled={loading} /></div>
+                <div className="space-y-2"><Label htmlFor="telefoneSecundario">Telefone secundario</Label><Input id="telefoneSecundario" value={formData.telefoneSecundario} onChange={(event) => setFormData({ ...formData, telefoneSecundario: event.target.value })} disabled={loading} /></div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="organograma" className="space-y-4">
+              {isEditMode ? (
+                <>
+                  <div className="rounded-lg border bg-slate-50 p-4 space-y-2">
+                    <h3 className="text-sm font-semibold text-slate-900">Lotacao operacional atual</h3>
+                    {primaryAssignment ? (
+                      <>
+                        <div className="flex items-center gap-2 text-sm text-slate-700"><Building2 className="h-4 w-4" />{primaryAssignment.organizationalUnit?.nome || 'Sem unidade organizacional definida'}</div>
+                        <div className="flex items-center gap-2 text-sm text-slate-700"><Briefcase className="h-4 w-4" />{primaryAssignment.position?.nome || 'Sem cargo operacional definido'}</div>
+                        {primaryAssignment.function?.nome && <p className="text-sm text-slate-600">Funcao: {primaryAssignment.function.nome}</p>}
+                        <p className="text-sm text-slate-600">Situacao: {primaryAssignment.situacao}</p>
+                      </>
+                    ) : (
+                      <p className="text-sm text-amber-700">Este servidor ainda nao possui lotacao operacional registrada no organograma.</p>
+                    )}
+                  </div>
+                  {user?.id && <Button type="button" variant="outline" onClick={() => { onClose(); router.push(`/admin/organograma/lotacoes?userId=${user.id}`) }}><ArrowRightLeft className="mr-2 h-4 w-4" />Gerenciar lotacoes</Button>}
+                </>
+              ) : (
+                <>
+                  <div className="rounded-lg border bg-blue-50 p-4"><h3 className="text-sm font-semibold text-blue-900">Lotacao inicial obrigatoria</h3><p className="mt-1 text-sm text-blue-800">O servidor sera criado ja alinhado ao organograma usando o departamento principal selecionado.</p></div>
+                  <div className="space-y-2"><Label>Departamento principal da lotacao</Label><div className="rounded-md border px-3 py-2 text-sm">{primaryDepartment ? primaryDepartment.name : 'Selecione um departamento principal na aba Basico'}</div></div>
+                  <div className="space-y-2">
+                    <Label htmlFor="organizationalUnitId">Setor / unidade organizacional *</Label>
+                    <Select value={initialAssignment.organizationalUnitId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, organizationalUnitId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
+                      <SelectTrigger id="organizationalUnitId"><SelectValue placeholder={loadingOrganogram ? 'Carregando...' : 'Selecione o setor'} /></SelectTrigger>
+                      <SelectContent>{organizationalUnits.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.sigla ? `${unit.sigla} - ${unit.nome}` : unit.nome}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor="positionId">Cargo operacional</Label>
+                      <Select value={initialAssignment.positionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, positionId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
+                        <SelectTrigger id="positionId"><SelectValue placeholder="Selecione um cargo" /></SelectTrigger>
+                        <SelectContent>{positions.map((position) => <SelectItem key={position.id} value={position.id}>{position.nome}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="functionId">Funcao</Label>
+                      <Select value={initialAssignment.functionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, functionId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
+                        <SelectTrigger id="functionId"><SelectValue placeholder="Selecione uma funcao" /></SelectTrigger>
+                        <SelectContent>{functions.map((func) => <SelectItem key={func.id} value={func.id}>{func.nome}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-3 gap-3">
+                    <div className="space-y-2"><Label htmlFor="assignmentStart">Inicio da lotacao</Label><Input id="assignmentStart" type="date" value={initialAssignment.dataInicio} onChange={(event) => setInitialAssignment({ ...initialAssignment, dataInicio: event.target.value })} disabled={loading} /></div>
+                    <div className="space-y-2"><Label htmlFor="assignmentHours">Carga horaria</Label><Input id="assignmentHours" type="number" min="1" value={initialAssignment.cargaHoraria} onChange={(event) => setInitialAssignment({ ...initialAssignment, cargaHoraria: event.target.value })} disabled={loading} /></div>
+                    <div className="space-y-2"><Label htmlFor="assignmentDedication">% dedicacao</Label><Input id="assignmentDedication" type="number" min="1" max="100" value={initialAssignment.percentualDedicacao} onChange={(event) => setInitialAssignment({ ...initialAssignment, percentualDedicacao: event.target.value })} disabled={loading} /></div>
+                  </div>
+                  <div className="space-y-2"><Label htmlFor="assignmentNotes">Observacoes da lotacao inicial</Label><Textarea id="assignmentNotes" value={initialAssignment.observacoes} onChange={(event) => setInitialAssignment({ ...initialAssignment, observacoes: event.target.value })} rows={3} disabled={loading} /></div>
+                </>
               )}
             </TabsContent>
 
-            {/* Tab: Dados Pessoais */}
-            <TabsContent value="pessoal" className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="cpf">CPF</Label>
-                  <Input
-                    id="cpf"
-                    value={formData.cpf}
-                    onChange={(e) => setFormData({ ...formData, cpf: formatCPF(e.target.value) })}
-                    placeholder="000.000.000-00"
-                    maxLength={14}
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="matricula">Matrícula</Label>
-                  <Input
-                    id="matricula"
-                    value={formData.matricula}
-                    onChange={(e) => setFormData({ ...formData, matricula: e.target.value })}
-                    placeholder="Matrícula funcional"
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="rg">RG</Label>
-                  <Input
-                    id="rg"
-                    value={formData.rg}
-                    onChange={(e) => setFormData({ ...formData, rg: e.target.value })}
-                    placeholder="Número do RG"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dataNascimento">Data de Nascimento</Label>
-                  <Input
-                    id="dataNascimento"
-                    type="date"
-                    value={formData.dataNascimento}
-                    onChange={(e) => setFormData({ ...formData, dataNascimento: e.target.value })}
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label htmlFor="telefone">Telefone</Label>
-                  <Input
-                    id="telefone"
-                    value={formData.telefone}
-                    onChange={(e) => setFormData({ ...formData, telefone: e.target.value })}
-                    placeholder="(00) 00000-0000"
-                    disabled={loading}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="telefoneSecundario">Telefone Secundário</Label>
-                  <Input
-                    id="telefoneSecundario"
-                    value={formData.telefoneSecundario}
-                    onChange={(e) => setFormData({ ...formData, telefoneSecundario: e.target.value })}
-                    placeholder="(00) 00000-0000"
-                    disabled={loading}
-                  />
-                </div>
-              </div>
-            </TabsContent>
-
-            {/* Tab: Dados Funcionais */}
             <TabsContent value="funcional" className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="cargoEfetivo">Cargo efetivo (informativo)</Label>
-                <Input
-                  id="cargoEfetivo"
-                  value={formData.cargoEfetivo}
-                  onChange={(e) => setFormData({ ...formData, cargoEfetivo: e.target.value })}
-                  placeholder="Ex: Médico, Professor, Engenheiro"
-                  disabled={loading}
-                />
-                <p className="text-xs text-muted-foreground">
-                  Campo legado apenas para referência. O cargo operacional atual vem do vínculo funcional centralizado.
-                </p>
-              </div>
-
+              <div className="space-y-2"><Label htmlFor="cargoEfetivo">Cargo efetivo (informativo)</Label><Input id="cargoEfetivo" value={formData.cargoEfetivo} onChange={(event) => setFormData({ ...formData, cargoEfetivo: event.target.value })} disabled={loading} /><p className="text-xs text-muted-foreground">Campo legado apenas para referencia. O cargo operacional atual vem do vinculo funcional centralizado.</p></div>
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="situacaoFuncional">Situação Funcional</Label>
-                  <Select
-                    value={formData.situacaoFuncional}
-                    onValueChange={(value) => setFormData({ ...formData, situacaoFuncional: value })}
-                    disabled={loading}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="ATIVO">Ativo</SelectItem>
-                      <SelectItem value="APOSENTADO">Aposentado</SelectItem>
-                      <SelectItem value="EXONERADO">Exonerado</SelectItem>
-                      <SelectItem value="LICENCA">Em Licença</SelectItem>
-                      <SelectItem value="AFASTADO">Afastado</SelectItem>
-                    </SelectContent>
+                  <Label htmlFor="situacaoFuncional">Situacao funcional</Label>
+                  <Select value={formData.situacaoFuncional} onValueChange={(value) => setFormData({ ...formData, situacaoFuncional: value })} disabled={loading}>
+                    <SelectTrigger id="situacaoFuncional"><SelectValue /></SelectTrigger>
+                    <SelectContent><SelectItem value="ATIVO">Ativo</SelectItem><SelectItem value="APOSENTADO">Aposentado</SelectItem><SelectItem value="EXONERADO">Exonerado</SelectItem><SelectItem value="LICENCA">Em licenca</SelectItem><SelectItem value="AFASTADO">Afastado</SelectItem></SelectContent>
                   </Select>
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="dataAdmissao">Data de Admissão</Label>
-                  <Input
-                    id="dataAdmissao"
-                    type="date"
-                    value={formData.dataAdmissao}
-                    onChange={(e) => setFormData({ ...formData, dataAdmissao: e.target.value })}
-                    disabled={loading}
-                  />
-                </div>
+                <div className="space-y-2"><Label htmlFor="dataAdmissao">Data de admissao</Label><Input id="dataAdmissao" type="date" value={formData.dataAdmissao} onChange={(event) => setFormData({ ...formData, dataAdmissao: event.target.value })} disabled={loading} /></div>
               </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="observacoes">Observações</Label>
-                <Textarea
-                  id="observacoes"
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData({ ...formData, observacoes: e.target.value })}
-                  placeholder="Observações gerais sobre o servidor"
-                  rows={4}
-                  disabled={loading}
-                />
-              </div>
+              <div className="space-y-2"><Label htmlFor="observacoes">Observacoes administrativas</Label><Textarea id="observacoes" value={formData.observacoes} onChange={(event) => setFormData({ ...formData, observacoes: event.target.value })} rows={4} disabled={loading} /></div>
             </TabsContent>
           </Tabs>
 
           <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              disabled={loading}
-              className="w-full sm:w-auto"
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading || availableRoles.length === 0}
-              className="w-full sm:w-auto"
-            >
-              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditMode ? 'Salvar Alterações' : 'Criar Servidor'}
-            </Button>
+            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="w-full sm:w-auto">Cancelar</Button>
+            <Button type="submit" disabled={loading || availableRoles.length === 0} className="w-full sm:w-auto">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditMode ? 'Salvar alteracoes' : 'Criar servidor'}</Button>
           </DialogFooter>
         </form>
       </DialogContent>

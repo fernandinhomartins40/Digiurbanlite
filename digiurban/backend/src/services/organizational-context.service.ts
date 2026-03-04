@@ -211,6 +211,9 @@ export async function reconcileAdministrativeDepartmentAssignments(params: {
   const activeManagedAssignments = managedAssignments.filter((assignment) =>
     ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES.includes(assignment.situacao)
   );
+  const activeNonManagedDepartmentIds = new Set(
+    activeNonManagedAssignments.map((assignment) => assignment.departmentId)
+  );
 
   const managedByDepartmentId = new Map<string, (typeof managedAssignments)[number]>();
   for (const assignment of managedAssignments) {
@@ -220,7 +223,11 @@ export async function reconcileAdministrativeDepartmentAssignments(params: {
   }
 
   const departmentsToDeactivate = activeManagedAssignments
-    .filter((assignment) => !normalizedDepartmentIds.includes(assignment.departmentId))
+    .filter(
+      (assignment) =>
+        !normalizedDepartmentIds.includes(assignment.departmentId) ||
+        activeNonManagedDepartmentIds.has(assignment.departmentId)
+    )
     .map((assignment) => assignment.id);
 
   if (departmentsToDeactivate.length > 0) {
@@ -235,6 +242,10 @@ export async function reconcileAdministrativeDepartmentAssignments(params: {
   }
 
   for (const departmentId of normalizedDepartmentIds) {
+    if (activeNonManagedDepartmentIds.has(departmentId)) {
+      continue;
+    }
+
     const existingAssignment = managedByDepartmentId.get(departmentId);
 
     if (existingAssignment) {

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,7 +78,7 @@ interface Assignment {
   organizationalUnitId?: string | null;
   positionId?: string | null;
   functionId?: string | null;
-  tipoVinculo: string;
+  tipo: string;
   situacao: string;
   isPrimary: boolean;
   dataInicio: string;
@@ -138,7 +139,7 @@ interface FormData {
   organizationalUnitId: string;
   positionId: string;
   functionId: string;
-  tipoVinculo: string;
+  tipo: string;
   situacao: string;
   isPrimary: boolean;
   dataInicio: string;
@@ -153,7 +154,7 @@ const INITIAL_FORM: FormData = {
   organizationalUnitId: '',
   positionId: '',
   functionId: '',
-  tipoVinculo: 'LOTACAO',
+  tipo: 'LOTACAO',
   situacao: 'ATIVO',
   isPrimary: false,
   dataInicio: '',
@@ -168,6 +169,8 @@ const INITIAL_FORM: FormData = {
 
 export default function LotacoesPage() {
   const { apiRequest } = useAdminAuth();
+  const searchParams = useSearchParams();
+  const filterUserId = searchParams.get('userId') || '';
 
   // Data lists
   const [assignments, setAssignments] = useState<Assignment[]>([]);
@@ -175,8 +178,6 @@ export default function LotacoesPage() {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [positions, setPositions] = useState<PositionOption[]>([]);
   const [functions, setFunctions] = useState<FunctionOption[]>([]);
-  const [orgUnits, setOrgUnits] = useState<OrgUnitOption[]>([]);
-
   // Filters
   const [filterDepartment, setFilterDepartment] = useState<string>('');
   const [filterTipo, setFilterTipo] = useState<string>('');
@@ -209,19 +210,25 @@ export default function LotacoesPage() {
     setError(null);
     try {
       const params = new URLSearchParams();
+      if (filterUserId) params.append('userId', filterUserId);
       if (filterDepartment) params.append('departmentId', filterDepartment);
-      if (filterTipo) params.append('tipoVinculo', filterTipo);
+      if (filterTipo) params.append('tipo', filterTipo);
       if (filterSituacao) params.append('situacao', filterSituacao);
       const qs = params.toString() ? `?${params.toString()}` : '';
       const res = await apiRequest(`/employee-assignments${qs}`);
       const list = Array.isArray(res) ? res : (res?.data ?? []);
-      setAssignments(list);
+      setAssignments(
+        list.map((assignment: any) => ({
+          ...assignment,
+          tipo: assignment.tipo || assignment.tipoVinculo || 'LOTACAO',
+        })),
+      );
     } catch (err: any) {
       setError(err.message || 'Erro ao carregar lotacoes');
     } finally {
       setLoading(false);
     }
-  }, [apiRequest, filterDepartment, filterTipo, filterSituacao]);
+  }, [apiRequest, filterDepartment, filterTipo, filterSituacao, filterUserId]);
 
   const fetchDepartments = useCallback(async () => {
     try {
@@ -322,6 +329,11 @@ export default function LotacoesPage() {
     );
   }, [functions, formData.departmentId]);
 
+  const filteredUser = useMemo(
+    () => users.find((user) => user.id === filterUserId) || null,
+    [users, filterUserId],
+  );
+
   // -----------------------------------------------------------------------
   // Local search filter (by user name)
   // -----------------------------------------------------------------------
@@ -341,7 +353,7 @@ export default function LotacoesPage() {
   // -----------------------------------------------------------------------
 
   const openCreate = () => {
-    setFormData(INITIAL_FORM);
+    setFormData({ ...INITIAL_FORM, userId: filterUserId });
     setFormOrgUnits([]);
     setCreateOpen(true);
   };
@@ -354,7 +366,7 @@ export default function LotacoesPage() {
       organizationalUnitId: assignment.organizationalUnitId || '',
       positionId: assignment.positionId || '',
       functionId: assignment.functionId || '',
-      tipoVinculo: assignment.tipoVinculo,
+      tipo: assignment.tipo,
       situacao: assignment.situacao,
       isPrimary: assignment.isPrimary,
       dataInicio: assignment.dataInicio ? assignment.dataInicio.slice(0, 10) : '',
@@ -382,7 +394,7 @@ export default function LotacoesPage() {
       organizationalUnitId: formData.organizationalUnitId || undefined,
       positionId: formData.positionId || undefined,
       functionId: formData.functionId || undefined,
-      tipoVinculo: formData.tipoVinculo,
+      tipo: formData.tipo,
       situacao: formData.situacao,
       isPrimary: formData.isPrimary,
       dataInicio: formData.dataInicio || undefined,
@@ -489,10 +501,11 @@ export default function LotacoesPage() {
           <Select
             value={formData.userId}
             onValueChange={(v) => setFormData({ ...formData, userId: v })}
+            disabled={Boolean(filterUserId)}
           >
             <SelectTrigger>
-              <SelectValue placeholder="Selecione o servidor" />
-            </SelectTrigger>
+                <SelectValue placeholder="Selecione o servidor" />
+              </SelectTrigger>
             <SelectContent>
               {users.map((u) => (
                 <SelectItem key={u.id} value={u.id}>
@@ -606,8 +619,8 @@ export default function LotacoesPage() {
         <div>
           <Label>Tipo de Vinculo *</Label>
           <Select
-            value={formData.tipoVinculo}
-            onValueChange={(v) => setFormData({ ...formData, tipoVinculo: v })}
+            value={formData.tipo}
+            onValueChange={(v) => setFormData({ ...formData, tipo: v })}
           >
             <SelectTrigger>
               <SelectValue />
@@ -738,6 +751,24 @@ export default function LotacoesPage() {
             </Button>
           </div>
         </div>
+
+        {filterUserId && (
+          <Card className="p-4 mb-6 border-blue-200 bg-blue-50">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-blue-900">Filtro por servidor ativo</p>
+                <p className="text-sm text-blue-800">
+                  {filteredUser
+                    ? `Mostrando lotacoes de ${filteredUser.name}.`
+                    : 'Mostrando lotacoes do servidor selecionado.'}
+                </p>
+              </div>
+              <Link href="/admin/organograma/lotacoes" className="text-sm font-medium text-blue-700 hover:text-blue-900">
+                Limpar filtro
+              </Link>
+            </div>
+          </Card>
+        )}
 
         {/* Filters */}
         <Card className="p-4 mb-6">
@@ -871,7 +902,7 @@ export default function LotacoesPage() {
                       {a.isPrimary && (
                         <Star className="h-4 w-4 text-yellow-500 fill-yellow-400 flex-shrink-0" />
                       )}
-                      {tipoBadge(a.tipoVinculo)}
+                      {tipoBadge(a.tipo)}
                       {situacaoBadge(a.situacao)}
                     </div>
                     <p className="text-sm text-gray-500 truncate mt-0.5">
@@ -955,7 +986,7 @@ export default function LotacoesPage() {
                   saving ||
                   !formData.userId ||
                   !formData.departmentId ||
-                  !formData.tipoVinculo ||
+                  !formData.tipo ||
                   !formData.situacao ||
                   !formData.dataInicio
                 }
@@ -992,7 +1023,7 @@ export default function LotacoesPage() {
                 disabled={
                   saving ||
                   !formData.departmentId ||
-                  !formData.tipoVinculo ||
+                  !formData.tipo ||
                   !formData.situacao ||
                   !formData.dataInicio
                 }
