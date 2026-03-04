@@ -50,7 +50,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import { ServerManagementModal } from '@/components/admin/ServerManagementModal'
 import { useToast } from '@/hooks/use-toast'
 
 interface OrganizationalUnit {
@@ -194,13 +193,11 @@ interface TeamMember {
 
 export default function ServidoresPage() {
   const router = useRouter()
-  const { user, apiRequest } = useAdminAuth()
+  const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([])
   const [loading, setLoading] = useState(true)
-  const [modalOpen, setModalOpen] = useState(false)
-  const [selectedUser, setSelectedUser] = useState<TeamMember | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [userToDelete, setUserToDelete] = useState<TeamMember | null>(null)
   const [deleting, setDeleting] = useState(false)
@@ -229,13 +226,11 @@ export default function ServidoresPage() {
   }
 
   const handleCreateUser = () => {
-    setSelectedUser(null)
-    setModalOpen(true)
+    router.push('/admin/servidores/novo')
   }
 
   const handleEditUser = (member: TeamMember) => {
-    setSelectedUser(member)
-    setModalOpen(true)
+    router.push(`/admin/servidores/${member.id}/editar`)
   }
 
   const handleViewProfile = (member: TeamMember) => {
@@ -278,14 +273,6 @@ export default function ServidoresPage() {
       setDeleteDialogOpen(false)
       setUserToDelete(null)
     }
-  }
-
-  const handleModalSuccess = () => {
-    toast({
-      title: 'Sucesso',
-      description: selectedUser ? 'Servidor atualizado com sucesso' : 'Servidor criado com sucesso',
-    })
-    loadTeamMembers()
   }
 
   const getPrimaryAssignment = (member: TeamMember) =>
@@ -597,18 +584,6 @@ export default function ServidoresPage() {
           </Table>
         </CardContent>
       </Card>
-
-      <ServerManagementModal
-        open={modalOpen}
-        onClose={() => {
-          setModalOpen(false)
-          setSelectedUser(null)
-        }}
-        onSuccess={handleModalSuccess}
-        user={selectedUser}
-        currentUserRole={user?.role || 'USER'}
-        currentUserDepartmentId={user?.primaryDepartment?.id || user?.departmentId}
-      />
 
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>

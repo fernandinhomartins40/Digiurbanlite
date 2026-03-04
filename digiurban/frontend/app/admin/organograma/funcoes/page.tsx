@@ -1,22 +1,31 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, BarChart3, Edit2, Loader2, Plus, Search, Trash2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { BarChart3, Plus, Search, Edit2, Trash2, Loader2, ArrowLeft, DollarSign } from 'lucide-react';
-import Link from 'next/link';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { TIPO_FUNCAO_COLORS, TIPO_FUNCAO_LABELS, TIPO_FUNCAO_OPTIONS } from '@/components/admin/organograma/organogram-options';
 
 interface Department {
   id: string;
   name: string;
-  code?: string;
+}
+
+interface PositionOption {
+  id: string;
+  nome: string;
+  organizationalUnit?: {
+    id: string;
+    nome: string;
+    sigla?: string | null;
+  } | null;
 }
 
 interface Funcao {
@@ -25,645 +34,317 @@ interface Funcao {
   descricao?: string;
   tipo: string;
   simbolo?: string;
-  valor?: number;
+  valor?: number | string;
   departmentId: string;
-  department?: {
-    id: string;
-    name: string;
-  };
+  positionId?: string | null;
+  department?: Department;
+  position?: PositionOption | null;
   _count?: {
     assignments?: number;
   };
 }
 
-const TIPO_FUNCAO_OPTIONS = ['GRATIFICADA', 'COMISSIONADA', 'DESIGNACAO', 'REPRESENTACAO'];
-
-const TIPO_FUNCAO_LABELS: Record<string, string> = {
-  GRATIFICADA: 'Gratificada',
-  COMISSIONADA: 'Comissionada',
-  DESIGNACAO: 'Designacao',
-  REPRESENTACAO: 'Representacao',
-};
-
-const TIPO_FUNCAO_COLORS: Record<string, string> = {
-  GRATIFICADA: 'bg-green-100 text-green-800 border-green-300',
-  COMISSIONADA: 'bg-blue-100 text-blue-800 border-blue-300',
-  DESIGNACAO: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  REPRESENTACAO: 'bg-purple-100 text-purple-800 border-purple-300',
-};
-
-const formatCurrency = (value: number) => {
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
-};
+const formatCurrency = (value: number | string) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(Number(value));
 
 export default function FuncoesPage() {
   const { apiRequest } = useAdminAuth();
-
-  // Data states
   const [funcoes, setFuncoes] = useState<Funcao[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [positions, setPositions] = useState<PositionOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Filter states
-  const [filterDepartment, setFilterDepartment] = useState<string>('');
-  const [filterTipo, setFilterTipo] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState('');
-
-  // Modal states
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [editDialogOpen, setEditDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [selectedFuncao, setSelectedFuncao] = useState<Funcao | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterPosition, setFilterPosition] = useState<string>('all');
+  const [filterTipo, setFilterTipo] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedFuncao, setSelectedFuncao] = useState<Funcao | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    nome: '',
-    descricao: '',
-    tipo: 'GRATIFICADA',
-    simbolo: '',
-    valor: '',
-    departmentId: '',
-  });
-
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  useEffect(() => {
-    fetchFuncoes();
-  }, [filterDepartment, filterTipo]);
-
-  const fetchDepartments = async () => {
+  const loadDepartments = async () => {
     try {
       const response = await apiRequest('/admin/departments');
-      const deptList = response?.data?.departments ?? response?.departments ?? [];
-      setDepartments(deptList);
-    } catch (err: any) {
-      console.error('Erro ao carregar departamentos:', err);
+      setDepartments(response?.data?.departments ?? response?.departments ?? []);
+    } catch {
+      setDepartments([]);
     }
   };
 
-  const fetchFuncoes = useCallback(async () => {
+  const loadPositions = async (departmentId: string) => {
+    try {
+      const response = await apiRequest(`/positions?departmentId=${departmentId}&isActive=true`);
+      const list = Array.isArray(response) ? response : response?.data ?? [];
+      setPositions(list);
+    } catch {
+      setPositions([]);
+    }
+  };
+
+  const loadFuncoes = async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
-      if (filterDepartment) params.append('departmentId', filterDepartment);
-      if (filterTipo) params.append('tipo', filterTipo);
-      if (searchTerm.trim()) params.append('search', searchTerm.trim());
-
-      const queryString = params.toString();
-      const url = `/functions${queryString ? `?${queryString}` : ''}`;
-      const response = await apiRequest(url);
-      const list = Array.isArray(response) ? response : (response?.data ?? []);
+      const params = new URLSearchParams({ isActive: 'true' });
+      if (filterDepartment !== 'all') params.set('departmentId', filterDepartment);
+      if (filterPosition !== 'all') params.set('positionId', filterPosition);
+      if (filterTipo !== 'all') params.set('tipo', filterTipo);
+      if (searchTerm.trim()) params.set('search', searchTerm.trim());
+      const response = await apiRequest(`/functions?${params.toString()}`);
+      const list = Array.isArray(response) ? response : response?.data ?? [];
       setFuncoes(list);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar funcoes');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar funcoes');
       setFuncoes([]);
     } finally {
       setLoading(false);
     }
-  }, [filterDepartment, filterTipo, searchTerm, apiRequest]);
-
-  const handleSearch = () => {
-    fetchFuncoes();
   };
 
-  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      fetchFuncoes();
+  useEffect(() => {
+    void loadDepartments();
+  }, []);
+
+  useEffect(() => {
+    if (filterDepartment === 'all') {
+      setPositions([]);
+      setFilterPosition('all');
+      return;
     }
-  };
+    void loadPositions(filterDepartment);
+  }, [filterDepartment]);
 
-  const resetForm = () => {
-    setFormData({
-      nome: '',
-      descricao: '',
-      tipo: 'GRATIFICADA',
-      simbolo: '',
-      valor: '',
-      departmentId: '',
-    });
-  };
+  useEffect(() => {
+    void loadFuncoes();
+  }, [filterDepartment, filterPosition, filterTipo, searchTerm]);
 
-  const openCreateDialog = () => {
-    resetForm();
-    setCreateDialogOpen(true);
-  };
-
-  const openEditDialog = (funcao: Funcao) => {
-    setSelectedFuncao(funcao);
-    setFormData({
-      nome: funcao.nome,
-      descricao: funcao.descricao || '',
-      tipo: funcao.tipo,
-      simbolo: funcao.simbolo || '',
-      valor: funcao.valor != null ? String(funcao.valor) : '',
-      departmentId: funcao.departmentId,
-    });
-    setEditDialogOpen(true);
-  };
-
-  const openDeleteDialog = (funcao: Funcao) => {
-    setSelectedFuncao(funcao);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleCreate = async () => {
-    if (!formData.nome || !formData.tipo || !formData.departmentId) return;
-    setSaving(true);
-    try {
-      await apiRequest('/functions', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: formData.nome,
-          descricao: formData.descricao || undefined,
-          tipo: formData.tipo,
-          simbolo: formData.simbolo || undefined,
-          valor: formData.valor ? parseFloat(formData.valor) : undefined,
-          departmentId: formData.departmentId,
-        }),
-      });
-      setCreateDialogOpen(false);
-      resetForm();
-      fetchFuncoes();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao criar funcao');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleEdit = async () => {
-    if (!selectedFuncao || !formData.nome || !formData.tipo || !formData.departmentId) return;
-    setSaving(true);
-    try {
-      await apiRequest(`/functions/${selectedFuncao.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          nome: formData.nome,
-          descricao: formData.descricao || undefined,
-          tipo: formData.tipo,
-          simbolo: formData.simbolo || undefined,
-          valor: formData.valor ? parseFloat(formData.valor) : undefined,
-          departmentId: formData.departmentId,
-        }),
-      });
-      setEditDialogOpen(false);
-      setSelectedFuncao(null);
-      resetForm();
-      fetchFuncoes();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao atualizar funcao');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const createHref = useMemo(() => {
+    const params = new URLSearchParams({ returnTo: '/admin/organograma/funcoes' });
+    if (filterDepartment !== 'all') params.set('departmentId', filterDepartment);
+    if (filterPosition !== 'all') params.set('positionId', filterPosition);
+    return `/admin/organograma/funcoes/nova?${params.toString()}`;
+  }, [filterDepartment, filterPosition]);
 
   const handleDelete = async () => {
     if (!selectedFuncao) return;
     setSaving(true);
     try {
-      await apiRequest(`/functions/${selectedFuncao.id}`, {
-        method: 'DELETE',
-      });
+      await apiRequest(`/functions/${selectedFuncao.id}`, { method: 'DELETE' });
       setDeleteDialogOpen(false);
       setSelectedFuncao(null);
-      fetchFuncoes();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao excluir funcao');
+      void loadFuncoes();
+    } catch (deleteError) {
+      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar funcao');
     } finally {
       setSaving(false);
     }
   };
 
-  const filteredFuncoes = funcoes.filter((f) => {
-    if (searchTerm.trim()) {
-      const term = searchTerm.toLowerCase();
-      const matchNome = f.nome.toLowerCase().includes(term);
-      const matchSimbolo = f.simbolo?.toLowerCase().includes(term);
-      const matchDescricao = f.descricao?.toLowerCase().includes(term);
-      if (!matchNome && !matchSimbolo && !matchDescricao) return false;
-    }
-    return true;
-  });
-
-  const getDepartmentName = (funcao: Funcao) => {
-    if (funcao.department?.name) return funcao.department.name;
-    const dept = departments.find((d) => d.id === funcao.departmentId);
-    return dept?.name || 'N/A';
-  };
-
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/admin/organograma"
-                className="inline-flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 transition-colors"
-              >
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/organograma">
+              <Button variant="ghost" size="sm" className="gap-1">
                 <ArrowLeft className="h-4 w-4" />
                 Voltar
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center justify-between flex-wrap gap-4 mt-3">
+              </Button>
+            </Link>
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                <BarChart3 className="h-7 w-7 md:h-8 md:w-8 text-pink-600" />
-                Funcoes Gratificadas
+              <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 md:text-3xl">
+                <BarChart3 className="h-7 w-7 text-pink-600 md:h-8 md:w-8" />
+                Funcoes
               </h1>
-              <p className="text-gray-600 mt-1 text-sm md:text-base">
-                Gerencie funcoes gratificadas, comissionadas e de designacao
+              <p className="mt-1 text-sm text-gray-600 md:text-base">
+                Cada funcao deve estar vinculada a um cargo especifico do organograma.
               </p>
             </div>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Funcao
-            </Button>
           </div>
+          <Link href={createHref}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Nova funcao
+            </Button>
+          </Link>
         </div>
 
-        {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-wrap items-end gap-4">
-            <div className="flex-1 min-w-[200px]">
-              <Label className="text-sm text-gray-600 mb-1 block">Departamento</Label>
+        <Card className="mb-6 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <div>
+              <Label className="sr-only">Secretaria</Label>
               <Select value={filterDepartment} onValueChange={setFilterDepartment}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os departamentos" />
+                  <SelectValue placeholder="Secretaria" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Todos os departamentos</SelectItem>
-                  {departments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
-                      {dept.name}
+                  <SelectItem value="all">Todas as secretarias</SelectItem>
+                  {departments.map((department) => (
+                    <SelectItem key={department.id} value={department.id}>
+                      {department.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1 min-w-[180px]">
-              <Label className="text-sm text-gray-600 mb-1 block">Tipo</Label>
+
+            <div>
+              <Label className="sr-only">Cargo</Label>
+              <Select
+                value={filterPosition}
+                onValueChange={setFilterPosition}
+                disabled={filterDepartment === 'all'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Cargo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os cargos</SelectItem>
+                  {positions.map((position) => (
+                    <SelectItem key={position.id} value={position.id}>
+                      {position.organizationalUnit?.sigla
+                        ? `${position.organizationalUnit.sigla} - ${position.nome}`
+                        : position.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="sr-only">Tipo</Label>
               <Select value={filterTipo} onValueChange={setFilterTipo}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Todos os tipos" />
+                  <SelectValue placeholder="Tipo" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">Todos os tipos</SelectItem>
-                  {TIPO_FUNCAO_OPTIONS.map((t) => (
-                    <SelectItem key={t} value={t}>
-                      {TIPO_FUNCAO_LABELS[t]}
+                  {TIPO_FUNCAO_OPTIONS.map((tipo) => (
+                    <SelectItem key={tipo} value={tipo}>
+                      {TIPO_FUNCAO_LABELS[tipo]}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div className="flex-1 min-w-[220px]">
-              <Label className="text-sm text-gray-600 mb-1 block">Buscar</Label>
-              <div className="flex gap-2">
-                <Input
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  onKeyDown={handleSearchKeyDown}
-                  placeholder="Nome, simbolo ou descricao..."
-                />
-                <Button variant="outline" size="icon" onClick={handleSearch}>
-                  <Search className="h-4 w-4" />
-                </Button>
-              </div>
+
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <Input
+                className="pl-9"
+                placeholder="Buscar funcao"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+              />
             </div>
           </div>
         </Card>
 
-        {/* Loading */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-pink-600" />
             <span className="ml-3 text-gray-600">Carregando funcoes...</span>
           </div>
         )}
 
-        {/* Error */}
-        {error && (
-          <Card className="p-6 bg-red-50 border-red-200 mb-6">
-            <p className="text-red-700">{error}</p>
-          </Card>
-        )}
+        {error && !loading && <Card className="border-red-200 bg-red-50 p-6 text-red-700">{error}</Card>}
 
-        {/* Empty state */}
-        {!loading && !error && filteredFuncoes.length === 0 && (
+        {!loading && !error && funcoes.length === 0 && (
           <Card className="p-8 text-center">
-            <BarChart3 className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhuma funcao encontrada
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || filterDepartment || filterTipo
-                ? 'Tente ajustar os filtros de busca.'
-                : 'Comece cadastrando a primeira funcao gratificada.'}
+            <BarChart3 className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">Nenhuma funcao encontrada</h3>
+            <p className="mb-4 text-gray-600">
+              Ajuste os filtros ou cadastre a primeira funcao vinculada a um cargo.
             </p>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Funcao
-            </Button>
+            <Link href={createHref}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova funcao
+              </Button>
+            </Link>
           </Card>
         )}
 
-        {/* Card Grid */}
-        {!loading && !error && filteredFuncoes.length > 0 && (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredFuncoes.map((funcao) => {
-              const colorClass = TIPO_FUNCAO_COLORS[funcao.tipo] || 'bg-gray-100 text-gray-800 border-gray-300';
-              return (
-                <Card key={funcao.id} className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-semibold text-gray-900 truncate">{funcao.nome}</h3>
-                      {funcao.descricao && (
-                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{funcao.descricao}</p>
-                      )}
-                    </div>
-                    <div className="flex items-center gap-1 ml-2 flex-shrink-0">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        title="Editar"
-                        onClick={() => openEditDialog(funcao)}
-                      >
+        {!loading && !error && funcoes.length > 0 && (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {funcoes.map((funcao) => (
+              <Card key={funcao.id} className="p-4 transition-shadow hover:shadow-md">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="truncate font-semibold text-gray-900">{funcao.nome}</h3>
+                    {funcao.descricao && (
+                      <p className="mt-1 line-clamp-2 text-sm text-gray-500">{funcao.descricao}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Link href={`/admin/organograma/funcoes/${funcao.id}/editar`}>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
                         <Edit2 className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
-                        title="Excluir"
-                        onClick={() => openDeleteDialog(funcao)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                      onClick={() => {
+                        setSelectedFuncao(funcao);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <Badge className={`text-xs ${colorClass}`}>
-                        {TIPO_FUNCAO_LABELS[funcao.tipo] || funcao.tipo}
-                      </Badge>
-                      {funcao.simbolo && (
-                        <Badge variant="outline" className="text-xs">
-                          {funcao.simbolo}
-                        </Badge>
-                      )}
-                    </div>
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  <Badge variant="outline" className={TIPO_FUNCAO_COLORS[funcao.tipo] || ''}>
+                    {TIPO_FUNCAO_LABELS[funcao.tipo] || funcao.tipo}
+                  </Badge>
+                  {funcao.simbolo && <Badge variant="outline">{funcao.simbolo}</Badge>}
+                </div>
 
-                    {funcao.valor != null && funcao.valor > 0 && (
-                      <div className="flex items-center gap-1.5 text-sm text-gray-700">
-                        <DollarSign className="h-3.5 w-3.5 text-green-600" />
-                        <span className="font-medium">{formatCurrency(funcao.valor)}</span>
-                      </div>
-                    )}
+                <div className="space-y-1.5 text-xs text-gray-600">
+                  <p>
+                    <strong>Secretaria:</strong> {funcao.department?.name || '-'}
+                  </p>
+                  <p>
+                    <strong>Cargo:</strong> {funcao.position?.nome || '-'}
+                  </p>
+                  {funcao.position?.organizationalUnit && (
+                    <p>
+                      <strong>Unidade:</strong> {funcao.position.organizationalUnit.nome}
+                    </p>
+                  )}
+                  {funcao.valor != null && (
+                    <p>
+                      <strong>Valor:</strong> {formatCurrency(funcao.valor)}
+                    </p>
+                  )}
+                </div>
 
-                    <div className="flex items-center justify-between text-xs text-gray-500 pt-2 border-t">
-                      <span className="truncate">{getDepartmentName(funcao)}</span>
-                      <span className="flex-shrink-0 ml-2">
-                        {funcao._count?.assignments ?? 0} lotacao(oes)
-                      </span>
-                    </div>
-                  </div>
-                </Card>
-              );
-            })}
+                <div className="mt-3 border-t pt-3 text-xs text-gray-500">
+                  {funcao._count?.assignments ?? 0} lotacoes vinculadas
+                </div>
+              </Card>
+            ))}
           </div>
         )}
 
-        {/* Create Dialog */}
-        <Dialog open={createDialogOpen} onOpenChange={setCreateDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Nova Funcao</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Nome *</Label>
-                <Input
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Nome da funcao"
-                />
-              </div>
-              <div>
-                <Label>Descricao</Label>
-                <Textarea
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  placeholder="Descricao da funcao (opcional)"
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Tipo *</Label>
-                  <Select
-                    value={formData.tipo}
-                    onValueChange={(v) => setFormData({ ...formData, tipo: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPO_FUNCAO_OPTIONS.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {TIPO_FUNCAO_LABELS[t]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Simbolo</Label>
-                  <Input
-                    value={formData.simbolo}
-                    onChange={(e) => setFormData({ ...formData, simbolo: e.target.value })}
-                    placeholder="Ex: FG-1, CC-2"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Valor (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.valor}
-                    onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                    placeholder="0,00"
-                  />
-                </div>
-                <div>
-                  <Label>Departamento *</Label>
-                  <Select
-                    value={formData.departmentId}
-                    onValueChange={(v) => setFormData({ ...formData, departmentId: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleCreate}
-                disabled={saving || !formData.nome || !formData.tipo || !formData.departmentId}
-              >
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Criar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Edit Dialog */}
-        <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>Editar Funcao</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Nome *</Label>
-                <Input
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Nome da funcao"
-                />
-              </div>
-              <div>
-                <Label>Descricao</Label>
-                <Textarea
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  placeholder="Descricao da funcao (opcional)"
-                  rows={3}
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Tipo *</Label>
-                  <Select
-                    value={formData.tipo}
-                    onValueChange={(v) => setFormData({ ...formData, tipo: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPO_FUNCAO_OPTIONS.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {TIPO_FUNCAO_LABELS[t]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Simbolo</Label>
-                  <Input
-                    value={formData.simbolo}
-                    onChange={(e) => setFormData({ ...formData, simbolo: e.target.value })}
-                    placeholder="Ex: FG-1, CC-2"
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Valor (R$)</Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.valor}
-                    onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                    placeholder="0,00"
-                  />
-                </div>
-                <div>
-                  <Label>Departamento *</Label>
-                  <Select
-                    value={formData.departmentId}
-                    onValueChange={(v) => setFormData({ ...formData, departmentId: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {departments.map((dept) => (
-                        <SelectItem key={dept.id} value={dept.id}>
-                          {dept.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setEditDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button
-                onClick={handleEdit}
-                disabled={saving || !formData.nome || !formData.tipo || !formData.departmentId}
-              >
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Salvar
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirmation Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Excluir Funcao</DialogTitle>
+              <DialogTitle>Desativar funcao</DialogTitle>
             </DialogHeader>
             <p className="text-gray-600">
-              Tem certeza que deseja excluir a funcao <strong>&quot;{selectedFuncao?.nome}&quot;</strong>?
-              Esta acao nao pode ser desfeita.
+              Tem certeza que deseja desativar <strong>{selectedFuncao?.nome}</strong>?
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
                 Cancelar
               </Button>
               <Button variant="destructive" onClick={handleDelete} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Excluir
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Desativar
               </Button>
             </DialogFooter>
           </DialogContent>

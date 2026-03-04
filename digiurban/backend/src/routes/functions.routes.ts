@@ -1,30 +1,22 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateAdmin } from '../middleware/auth';
+import {
+  assertDepartmentScopedEntities,
+  OrganizationalIntegrityError,
+} from '../services/organizational-integrity.service';
 
 const router = Router();
 const prisma = new PrismaClient();
 
-// ============================================
-// CRUD DE FUNÇÕES (GRATIFICADAS, COMISSIONADAS, ETC)
-// ============================================
-
-/**
- * GET /api/functions
- * Listar todas as funções
- */
 router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const {
-      departmentId,
-      tipo,
-      isActive,
-      search,
-    } = req.query;
+    const { departmentId, positionId, tipo, isActive, search } = req.query;
 
     const where: any = {};
 
     if (departmentId) where.departmentId = departmentId as string;
+    if (positionId) where.positionId = positionId as string;
     if (tipo) where.tipo = tipo as string;
     if (isActive !== undefined) where.isActive = isActive === 'true';
     if (search) {
@@ -41,6 +33,15 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
         department: {
           select: { id: true, name: true, code: true },
         },
+        position: {
+          select: {
+            id: true,
+            nome: true,
+            organizationalUnit: {
+              select: { id: true, nome: true, sigla: true, tipo: true },
+            },
+          },
+        },
         _count: {
           select: {
             assignments: true,
@@ -52,15 +53,11 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
 
     res.json(functions);
   } catch (error) {
-    console.error('Erro ao listar funções:', error);
-    res.status(500).json({ error: 'Erro ao listar funções' });
+    console.error('Erro ao listar funcoes:', error);
+    res.status(500).json({ error: 'Erro ao listar funcoes' });
   }
 });
 
-/**
- * GET /api/functions/:id
- * Buscar função específica
- */
 router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -70,6 +67,16 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       include: {
         department: {
           select: { id: true, name: true, code: true },
+        },
+        position: {
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+            organizationalUnit: {
+              select: { id: true, nome: true, sigla: true, tipo: true },
+            },
+          },
         },
         assignments: {
           where: { situacao: 'ATIVO' },
@@ -94,47 +101,31 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
     });
 
     if (!func) {
-      return res.status(404).json({ error: 'Função não encontrada' });
+      return res.status(404).json({ error: 'Funcao nao encontrada' });
     }
 
     res.json(func);
   } catch (error) {
-    console.error('Erro ao buscar função:', error);
-    res.status(500).json({ error: 'Erro ao buscar função' });
+    console.error('Erro ao buscar funcao:', error);
+    res.status(500).json({ error: 'Erro ao buscar funcao' });
   }
 });
 
-/**
- * POST /api/functions
- * Criar nova função
- */
 router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const {
-      nome,
-      descricao,
-      tipo,
-      simbolo,
-      valor,
-      departmentId,
-      requisitos,
-      atribuicoes,
-    } = req.body;
+    const { nome, descricao, tipo, simbolo, valor, departmentId, positionId, requisitos, atribuicoes } =
+      req.body;
 
-    // Validações
-    if (!nome || !tipo || !departmentId) {
+    if (!nome || !tipo || !departmentId || !positionId) {
       return res.status(400).json({
-        error: 'Nome, tipo e departamento são obrigatórios',
+        error: 'Nome, tipo, secretaria e cargo sao obrigatorios',
       });
     }
 
-    // Verificar se departamento existe
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId },
+    await assertDepartmentScopedEntities({
+      departmentId,
+      positionId,
     });
-    if (!department) {
-      return res.status(404).json({ error: 'Departamento não encontrado' });
-    }
 
     const func = await prisma.function.create({
       data: {
@@ -144,6 +135,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
         simbolo,
         valor,
         departmentId,
+        positionId,
         requisitos,
         atribuicoes,
         createdBy: (req.user as any)?.id,
@@ -152,27 +144,30 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
         department: {
           select: { id: true, name: true },
         },
+        position: {
+          select: { id: true, nome: true },
+        },
       },
     });
 
     res.status(201).json(func);
   } catch (error: any) {
-    console.error('Erro ao criar função:', error);
+    console.error('Erro ao criar funcao:', error);
+
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Já existe uma função com este símbolo neste departamento',
+        error: 'Ja existe uma funcao com este simbolo neste departamento',
       });
     }
 
-    res.status(500).json({ error: 'Erro ao criar função' });
+    res.status(500).json({ error: 'Erro ao criar funcao' });
   }
 });
 
-/**
- * PUT /api/functions/:id
- * Atualizar função
- */
 router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -182,30 +177,45 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       tipo,
       simbolo,
       valor,
+      departmentId,
+      positionId,
       requisitos,
       atribuicoes,
       isActive,
     } = req.body;
 
-    // Verificar se função existe
     const existingFunc = await prisma.function.findUnique({
       where: { id },
     });
     if (!existingFunc) {
-      return res.status(404).json({ error: 'Função não encontrada' });
+      return res.status(404).json({ error: 'Funcao nao encontrada' });
     }
 
-    // Update dinâmico
+    const resolvedDepartmentId = departmentId !== undefined ? departmentId : existingFunc.departmentId;
+    const resolvedPositionId = positionId !== undefined ? positionId : existingFunc.positionId;
+
+    if (!resolvedPositionId) {
+      return res.status(400).json({
+        error: 'Toda funcao deve estar vinculada a um cargo',
+      });
+    }
+
+    await assertDepartmentScopedEntities({
+      departmentId: resolvedDepartmentId,
+      positionId: resolvedPositionId,
+    });
+
     const updateData: any = {};
     if (nome !== undefined) updateData.nome = nome;
     if (descricao !== undefined) updateData.descricao = descricao;
     if (tipo !== undefined) updateData.tipo = tipo;
     if (simbolo !== undefined) updateData.simbolo = simbolo;
     if (valor !== undefined) updateData.valor = valor;
+    if (departmentId !== undefined) updateData.departmentId = departmentId;
+    if (positionId !== undefined) updateData.positionId = positionId;
     if (requisitos !== undefined) updateData.requisitos = requisitos;
     if (atribuicoes !== undefined) updateData.atribuicoes = atribuicoes;
     if (isActive !== undefined) updateData.isActive = isActive;
-
     updateData.updatedAt = new Date();
 
     const func = await prisma.function.update({
@@ -215,32 +225,34 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
         department: {
           select: { id: true, name: true },
         },
+        position: {
+          select: { id: true, nome: true },
+        },
       },
     });
 
     res.json(func);
   } catch (error: any) {
-    console.error('Erro ao atualizar função:', error);
+    console.error('Erro ao atualizar funcao:', error);
+
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Já existe uma função com este símbolo neste departamento',
+        error: 'Ja existe uma funcao com este simbolo neste departamento',
       });
     }
 
-    res.status(500).json({ error: 'Erro ao atualizar função' });
+    res.status(500).json({ error: 'Erro ao atualizar funcao' });
   }
 });
 
-/**
- * DELETE /api/functions/:id
- * Desativar função (soft delete)
- */
 router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Verificar se função existe
     const func = await prisma.function.findUnique({
       where: { id },
       include: {
@@ -251,29 +263,27 @@ router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => 
     });
 
     if (!func) {
-      return res.status(404).json({ error: 'Função não encontrada' });
+      return res.status(404).json({ error: 'Funcao nao encontrada' });
     }
 
-    // Validação: não pode desativar se houver servidores ativos com esta função
     if (func.assignments.length > 0) {
       return res.status(400).json({
-        error: 'Não é possível desativar uma função que possui servidores ativos vinculados',
+        error: 'Nao e possivel desativar uma funcao que possui servidores ativos vinculados',
       });
     }
 
-    // Desativar (soft delete)
     const deactivated = await prisma.function.update({
       where: { id },
       data: { isActive: false },
     });
 
     res.json({
-      message: 'Função desativada com sucesso',
+      message: 'Funcao desativada com sucesso',
       function: deactivated,
     });
   } catch (error) {
-    console.error('Erro ao desativar função:', error);
-    res.status(500).json({ error: 'Erro ao desativar função' });
+    console.error('Erro ao desativar funcao:', error);
+    res.status(500).json({ error: 'Erro ao desativar funcao' });
   }
 });
 

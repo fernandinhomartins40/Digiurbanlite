@@ -6,11 +6,6 @@ import { ArrowLeft, Building2, Edit2, Loader2, Plus, RefreshCw, ShieldCheck, Shu
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 
 interface RootUnitSummary {
@@ -34,30 +29,12 @@ interface Department {
   rootOrganizationalUnit?: RootUnitSummary | null;
 }
 
-type FormState = {
-  name: string;
-  code: string;
-  description: string;
-  isActive: 'true' | 'false';
-};
-
-const EMPTY_FORM: FormState = {
-  name: '',
-  code: '',
-  description: '',
-  isActive: 'true',
-};
-
 export default function SecretariasPage() {
   const { apiRequest } = useAdminAuth();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingDepartment, setEditingDepartment] = useState<Department | null>(null);
-  const [formData, setFormData] = useState<FormState>(EMPTY_FORM);
 
   const fetchDepartments = useCallback(async () => {
     setLoading(true);
@@ -78,62 +55,6 @@ export default function SecretariasPage() {
     fetchDepartments();
   }, [fetchDepartments]);
 
-  const openCreateDialog = () => {
-    setEditingDepartment(null);
-    setFormData(EMPTY_FORM);
-    setDialogOpen(true);
-  };
-
-  const openEditDialog = (department: Department) => {
-    setEditingDepartment(department);
-    setFormData({
-      name: department.name,
-      code: department.code || '',
-      description: department.description || '',
-      isActive: department.isActive ? 'true' : 'false',
-    });
-    setDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    if (!formData.name.trim()) {
-      return;
-    }
-
-    setSaving(true);
-    try {
-      const payload = {
-        name: formData.name.trim(),
-        code: formData.code.trim() || null,
-        description: formData.description.trim() || null,
-        isActive: formData.isActive === 'true',
-      };
-
-      if (editingDepartment) {
-        await apiRequest(`/admin/departments/${editingDepartment.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      } else {
-        await apiRequest('/admin/departments', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        });
-      }
-
-      setDialogOpen(false);
-      setEditingDepartment(null);
-      setFormData(EMPTY_FORM);
-      await fetchDepartments();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao salvar secretaria');
-    } finally {
-      setSaving(false);
-    }
-  };
-
   const handleSync = async (departmentId?: string) => {
     setSyncing(true);
     try {
@@ -153,23 +74,25 @@ export default function SecretariasPage() {
     }
   };
 
-  const stats = useMemo(() => {
-    return departments.reduce(
-      (acc, department) => {
-        acc.total += 1;
-        if (department.isActive) {
-          acc.active += 1;
-        }
-        if (department.rootUnitStatus === 'SYNCED') {
-          acc.synced += 1;
-        } else {
-          acc.missing += 1;
-        }
-        return acc;
-      },
-      { total: 0, active: 0, synced: 0, missing: 0 }
-    );
-  }, [departments]);
+  const stats = useMemo(
+    () =>
+      departments.reduce(
+        (acc, department) => {
+          acc.total += 1;
+          if (department.isActive) {
+            acc.active += 1;
+          }
+          if (department.rootUnitStatus === 'SYNCED') {
+            acc.synced += 1;
+          } else {
+            acc.missing += 1;
+          }
+          return acc;
+        },
+        { total: 0, active: 0, synced: 0, missing: 0 }
+      ),
+    [departments]
+  );
 
   return (
     <div className="min-h-screen bg-gray-50 p-4 md:p-6">
@@ -202,10 +125,12 @@ export default function SecretariasPage() {
               {syncing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Shuffle className="mr-2 h-4 w-4" />}
               Sincronizar raízes pendentes
             </Button>
-            <Button onClick={openCreateDialog}>
-              <Plus className="mr-2 h-4 w-4" />
-              Nova secretaria
-            </Button>
+            <Link href="/admin/organograma/secretarias/nova">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova secretaria
+              </Button>
+            </Link>
           </div>
         </div>
 
@@ -308,10 +233,12 @@ export default function SecretariasPage() {
                         Criar raiz
                       </Button>
                     )}
-                    <Button variant="outline" onClick={() => openEditDialog(department)}>
-                      <Edit2 className="mr-2 h-4 w-4" />
-                      Editar
-                    </Button>
+                    <Link href={`/admin/organograma/secretarias/${department.id}/editar`}>
+                      <Button variant="outline">
+                        <Edit2 className="mr-2 h-4 w-4" />
+                        Editar
+                      </Button>
+                    </Link>
                   </div>
                 </div>
               </Card>
@@ -324,75 +251,6 @@ export default function SecretariasPage() {
             )}
           </div>
         )}
-
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-          <DialogContent className="max-w-xl">
-            <DialogHeader>
-              <DialogTitle>{editingDepartment ? 'Editar secretaria' : 'Nova secretaria'}</DialogTitle>
-            </DialogHeader>
-
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="department-name">Nome *</Label>
-                <Input
-                  id="department-name"
-                  value={formData.name}
-                  onChange={(event) => setFormData((current) => ({ ...current, name: event.target.value }))}
-                  placeholder="Ex: Secretaria de Meio Ambiente"
-                />
-              </div>
-
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <Label htmlFor="department-code">Código</Label>
-                  <Input
-                    id="department-code"
-                    value={formData.code}
-                    onChange={(event) => setFormData((current) => ({ ...current, code: event.target.value }))}
-                    placeholder="Ex: MEIO_AMBIENTE"
-                  />
-                </div>
-
-                <div>
-                  <Label>Status</Label>
-                  <Select
-                    value={formData.isActive}
-                    onValueChange={(value) => setFormData((current) => ({ ...current, isActive: value as 'true' | 'false' }))}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="true">Ativa</SelectItem>
-                      <SelectItem value="false">Inativa</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="department-description">Descrição</Label>
-                <Textarea
-                  id="department-description"
-                  value={formData.description}
-                  onChange={(event) => setFormData((current) => ({ ...current, description: event.target.value }))}
-                  placeholder="Resumo da atuação da secretaria"
-                  rows={4}
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={saving || !formData.name.trim()}>
-                {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {editingDepartment ? 'Salvar alterações' : 'Criar secretaria'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

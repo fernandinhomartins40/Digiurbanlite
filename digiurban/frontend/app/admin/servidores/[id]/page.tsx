@@ -300,12 +300,20 @@ export default function PerfilServidorPage() {
               </p>
             </div>
           </div>
-          <Button asChild variant="outline">
-            <Link href={`/admin/organograma/lotacoes?userId=${user.id}`}>
-              <ArrowRightLeft className="mr-2 h-4 w-4" />
-              Gerenciar lotacoes
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button asChild variant="outline">
+              <Link href={`/admin/servidores/${user.id}/editar`}>
+                <Shield className="mr-2 h-4 w-4" />
+                Editar cadastro
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href={`/admin/organograma/lotacoes?userId=${user.id}`}>
+                <ArrowRightLeft className="mr-2 h-4 w-4" />
+                Gerenciar lotacoes
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card>

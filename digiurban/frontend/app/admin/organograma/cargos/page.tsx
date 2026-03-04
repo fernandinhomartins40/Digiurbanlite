@@ -1,22 +1,34 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
+import { ArrowLeft, Briefcase, Edit2, Loader2, Plus, Search, Trash2, Users } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Briefcase, Plus, Search, Edit2, Trash2, Loader2, ArrowLeft, Users } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
-import Link from 'next/link';
+import {
+  NIVEL_CARGO_COLORS,
+  NIVEL_CARGO_LABELS,
+  NIVEL_CARGO_OPTIONS,
+  TIPO_CARGO_COLORS,
+  TIPO_CARGO_LABELS,
+  TIPO_CARGO_OPTIONS,
+} from '@/components/admin/organograma/organogram-options';
 
 interface Department {
   id: string;
   name: string;
-  code: string;
+}
+
+interface OrganizationalUnit {
+  id: string;
+  nome: string;
+  sigla?: string | null;
 }
 
 interface Position {
@@ -28,625 +40,356 @@ interface Position {
   categoria?: string;
   nivel?: string;
   departmentId: string;
+  organizationalUnitId?: string | null;
   cargaHorariaPadrao?: number;
-  salarioBase?: number;
   isActive?: boolean;
-  department?: {
-    id: string;
-    name: string;
-  };
+  department?: Department;
+  organizationalUnit?: OrganizationalUnit | null;
   _count?: {
     assignments?: number;
+    functions?: number;
   };
 }
 
-const TIPO_CARGO_OPTIONS = [
-  'EFETIVO',
-  'COMISSIONADO',
-  'TEMPORARIO',
-  'CONTRATADO',
-  'ESTAGIARIO',
-  'VOLUNTARIO',
-];
-
-const TIPO_CARGO_LABELS: Record<string, string> = {
-  EFETIVO: 'Efetivo',
-  COMISSIONADO: 'Comissionado',
-  TEMPORARIO: 'Temporário',
-  CONTRATADO: 'Contratado',
-  ESTAGIARIO: 'Estagiário',
-  VOLUNTARIO: 'Voluntário',
-};
-
-const TIPO_CARGO_COLORS: Record<string, string> = {
-  EFETIVO: 'bg-blue-100 text-blue-800 border-blue-300',
-  COMISSIONADO: 'bg-purple-100 text-purple-800 border-purple-300',
-  TEMPORARIO: 'bg-yellow-100 text-yellow-800 border-yellow-300',
-  CONTRATADO: 'bg-green-100 text-green-800 border-green-300',
-  ESTAGIARIO: 'bg-orange-100 text-orange-800 border-orange-300',
-  VOLUNTARIO: 'bg-pink-100 text-pink-800 border-pink-300',
-};
-
-const NIVEL_CARGO_OPTIONS = [
-  'OPERACIONAL',
-  'TECNICO',
-  'ANALISTA',
-  'ESPECIALISTA',
-  'COORDENACAO',
-  'GERENCIA',
-  'DIRECAO',
-  'SECRETARIADO',
-];
-
-const NIVEL_CARGO_LABELS: Record<string, string> = {
-  OPERACIONAL: 'Operacional',
-  TECNICO: 'Técnico',
-  ANALISTA: 'Analista',
-  ESPECIALISTA: 'Especialista',
-  COORDENACAO: 'Coordenação',
-  GERENCIA: 'Gerência',
-  DIRECAO: 'Direção',
-  SECRETARIADO: 'Secretariado',
-};
-
-const NIVEL_CARGO_COLORS: Record<string, string> = {
-  OPERACIONAL: 'bg-gray-100 text-gray-700 border-gray-300',
-  TECNICO: 'bg-cyan-100 text-cyan-800 border-cyan-300',
-  ANALISTA: 'bg-blue-100 text-blue-800 border-blue-300',
-  ESPECIALISTA: 'bg-indigo-100 text-indigo-800 border-indigo-300',
-  COORDENACAO: 'bg-violet-100 text-violet-800 border-violet-300',
-  GERENCIA: 'bg-purple-100 text-purple-800 border-purple-300',
-  DIRECAO: 'bg-rose-100 text-rose-800 border-rose-300',
-  SECRETARIADO: 'bg-amber-100 text-amber-800 border-amber-300',
-};
-
 export default function CargosPage() {
   const { apiRequest } = useAdminAuth();
-
-  // Data
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [organizationalUnits, setOrganizationalUnits] = useState<OrganizationalUnit[]>([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Filters
-  const [filterDepartment, setFilterDepartment] = useState<string>('');
-  const [filterTipo, setFilterTipo] = useState<string>('');
-  const [filterNivel, setFilterNivel] = useState<string>('');
-  const [searchTerm, setSearchTerm] = useState<string>('');
-
-  // Modal states
-  const [formDialogOpen, setFormDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editingPosition, setEditingPosition] = useState<Position | null>(null);
-  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
   const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [filterDepartment, setFilterDepartment] = useState<string>('all');
+  const [filterOrganizationalUnit, setFilterOrganizationalUnit] = useState<string>('all');
+  const [filterTipo, setFilterTipo] = useState<string>('all');
+  const [filterNivel, setFilterNivel] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedPosition, setSelectedPosition] = useState<Position | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
-  // Form state
-  const [formData, setFormData] = useState({
-    nome: '',
-    descricao: '',
-    cbo: '',
-    tipo: 'EFETIVO',
-    categoria: '',
-    nivel: '',
-    departmentId: '',
-    cargaHorariaPadrao: '',
-    salarioBase: '',
-  });
-
-  useEffect(() => {
-    fetchDepartments();
-  }, []);
-
-  useEffect(() => {
-    fetchPositions();
-  }, [filterDepartment, filterTipo, filterNivel, searchTerm]);
-
-  const fetchDepartments = async () => {
+  const loadDepartments = async () => {
     try {
       const response = await apiRequest('/admin/departments');
-      const deptList = response?.data?.departments ?? response?.departments ?? [];
-      setDepartments(deptList);
-    } catch (err: any) {
-      console.error('Erro ao carregar departamentos:', err.message);
+      setDepartments(response?.data?.departments ?? response?.departments ?? []);
+    } catch {
+      setDepartments([]);
     }
   };
 
-  const fetchPositions = useCallback(async () => {
+  const loadOrganizationalUnits = async (departmentId: string) => {
+    try {
+      const response = await apiRequest(`/organizational-units?departmentId=${departmentId}&isActive=true`);
+      const list = Array.isArray(response) ? response : response?.data ?? [];
+      setOrganizationalUnits(list);
+    } catch {
+      setOrganizationalUnits([]);
+    }
+  };
+
+  const loadPositions = async () => {
     setLoading(true);
     setError(null);
     try {
-      const params = new URLSearchParams();
-      if (filterDepartment) params.append('departmentId', filterDepartment);
-      if (filterTipo) params.append('tipo', filterTipo);
-      if (filterNivel) params.append('nivel', filterNivel);
-      if (searchTerm) params.append('search', searchTerm);
-
-      const queryString = params.toString();
-      const url = `/positions${queryString ? `?${queryString}` : ''}`;
-      const response = await apiRequest(url);
-      const list = Array.isArray(response) ? response : (response?.data ?? []);
+      const params = new URLSearchParams({ isActive: 'true' });
+      if (filterDepartment !== 'all') params.set('departmentId', filterDepartment);
+      if (filterOrganizationalUnit !== 'all') params.set('organizationalUnitId', filterOrganizationalUnit);
+      if (filterTipo !== 'all') params.set('tipo', filterTipo);
+      if (filterNivel !== 'all') params.set('nivel', filterNivel);
+      if (searchTerm.trim()) params.set('search', searchTerm.trim());
+      const response = await apiRequest(`/positions?${params.toString()}`);
+      const list = Array.isArray(response) ? response : response?.data ?? [];
       setPositions(list);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao carregar cargos');
+    } catch (loadError) {
+      setError(loadError instanceof Error ? loadError.message : 'Erro ao carregar cargos');
       setPositions([]);
     } finally {
       setLoading(false);
     }
-  }, [filterDepartment, filterTipo, filterNivel, searchTerm, apiRequest]);
-
-  const openCreateDialog = () => {
-    setEditingPosition(null);
-    setFormData({
-      nome: '',
-      descricao: '',
-      cbo: '',
-      tipo: 'EFETIVO',
-      categoria: '',
-      nivel: '',
-      departmentId: '',
-      cargaHorariaPadrao: '',
-      salarioBase: '',
-    });
-    setFormDialogOpen(true);
   };
 
-  const openEditDialog = (position: Position) => {
-    setEditingPosition(position);
-    setFormData({
-      nome: position.nome,
-      descricao: position.descricao || '',
-      cbo: position.cbo || '',
-      tipo: position.tipo,
-      categoria: position.categoria || '',
-      nivel: position.nivel || '',
-      departmentId: position.departmentId,
-      cargaHorariaPadrao: position.cargaHorariaPadrao != null ? String(position.cargaHorariaPadrao) : '',
-      salarioBase: position.salarioBase != null ? String(position.salarioBase) : '',
-    });
-    setFormDialogOpen(true);
-  };
+  useEffect(() => {
+    void loadDepartments();
+  }, []);
 
-  const openDeleteDialog = (position: Position) => {
-    setSelectedPosition(position);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    try {
-      const body: Record<string, any> = {
-        nome: formData.nome,
-        tipo: formData.tipo,
-        departmentId: formData.departmentId,
-      };
-      if (formData.descricao) body.descricao = formData.descricao;
-      if (formData.cbo) body.cbo = formData.cbo;
-      if (formData.categoria) body.categoria = formData.categoria;
-      if (formData.nivel) body.nivel = formData.nivel;
-      if (formData.cargaHorariaPadrao) body.cargaHorariaPadrao = Number(formData.cargaHorariaPadrao);
-      if (formData.salarioBase) body.salarioBase = Number(formData.salarioBase);
-
-      if (editingPosition) {
-        await apiRequest(`/positions/${editingPosition.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      } else {
-        await apiRequest('/positions', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        });
-      }
-
-      setFormDialogOpen(false);
-      fetchPositions();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao salvar cargo');
-    } finally {
-      setSaving(false);
+  useEffect(() => {
+    if (filterDepartment === 'all') {
+      setOrganizationalUnits([]);
+      setFilterOrganizationalUnit('all');
+      return;
     }
-  };
+    void loadOrganizationalUnits(filterDepartment);
+  }, [filterDepartment]);
+
+  useEffect(() => {
+    void loadPositions();
+  }, [filterDepartment, filterOrganizationalUnit, filterTipo, filterNivel, searchTerm]);
+
+  const createHref = useMemo(() => {
+    const params = new URLSearchParams({ returnTo: '/admin/organograma/cargos' });
+    if (filterDepartment !== 'all') params.set('departmentId', filterDepartment);
+    if (filterOrganizationalUnit !== 'all') params.set('organizationalUnitId', filterOrganizationalUnit);
+    return `/admin/organograma/cargos/novo?${params.toString()}`;
+  }, [filterDepartment, filterOrganizationalUnit]);
 
   const handleDelete = async () => {
     if (!selectedPosition) return;
     setSaving(true);
     try {
-      await apiRequest(`/positions/${selectedPosition.id}`, {
-        method: 'DELETE',
-      });
+      await apiRequest(`/positions/${selectedPosition.id}`, { method: 'DELETE' });
       setDeleteDialogOpen(false);
       setSelectedPosition(null);
-      fetchPositions();
-    } catch (err: any) {
-      alert(err.message || 'Erro ao excluir cargo');
+      void loadPositions();
+    } catch (deleteError) {
+      alert(deleteError instanceof Error ? deleteError.message : 'Erro ao desativar cargo');
     } finally {
       setSaving(false);
     }
   };
 
-  const isFormValid = formData.nome.trim() !== '' && formData.tipo !== '' && formData.departmentId !== '';
-
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-gray-50">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/admin/organograma"
-                className="p-2 rounded-lg hover:bg-gray-200 transition-colors"
-                title="Voltar ao Organograma"
-              >
-                <ArrowLeft className="h-5 w-5 text-gray-600" />
-              </Link>
-              <div>
-                <h1 className="text-2xl md:text-3xl font-bold text-gray-900 flex items-center gap-3">
-                  <Briefcase className="h-7 w-7 md:h-8 md:w-8 text-purple-600" />
-                  Cargos
-                </h1>
-                <p className="text-gray-600 mt-1 text-sm md:text-base">
-                  Gerencie os cargos e funções da estrutura organizacional
-                </p>
-              </div>
+    <div className="min-h-screen bg-gray-50 p-4 md:p-6">
+      <div className="mx-auto max-w-7xl">
+        <div className="mb-6 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <Link href="/admin/organograma">
+              <Button variant="ghost" size="sm" className="gap-1">
+                <ArrowLeft className="h-4 w-4" />
+                Voltar
+              </Button>
+            </Link>
+            <div>
+              <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 md:text-3xl">
+                <Briefcase className="h-7 w-7 text-purple-600 md:h-8 md:w-8" />
+                Cargos
+              </h1>
+              <p className="mt-1 text-sm text-gray-600 md:text-base">
+                Cada cargo deve estar vinculado a uma unidade organizacional especifica.
+              </p>
             </div>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Novo Cargo
-            </Button>
           </div>
+          <Link href={createHref}>
+            <Button>
+              <Plus className="mr-2 h-4 w-4" />
+              Novo cargo
+            </Button>
+          </Link>
         </div>
 
-        {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            <Select value={filterDepartment} onValueChange={setFilterDepartment}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os departamentos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os departamentos</SelectItem>
-                {departments.map((dept) => (
-                  <SelectItem key={dept.id} value={dept.id}>
-                    {dept.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        <Card className="mb-6 p-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <div>
+              <Label className="sr-only">Secretaria</Label>
+              <Select value={filterDepartment} onValueChange={setFilterDepartment}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Secretaria" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as secretarias</SelectItem>
+                  {departments.map((department) => (
+                    <SelectItem key={department.id} value={department.id}>
+                      {department.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={filterTipo} onValueChange={setFilterTipo}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os tipos" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os tipos</SelectItem>
-                {TIPO_CARGO_OPTIONS.map((t) => (
-                  <SelectItem key={t} value={t}>
-                    {TIPO_CARGO_LABELS[t]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <Label className="sr-only">Unidade</Label>
+              <Select
+                value={filterOrganizationalUnit}
+                onValueChange={setFilterOrganizationalUnit}
+                disabled={filterDepartment === 'all'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Unidade / setor" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as unidades</SelectItem>
+                  {organizationalUnits.map((unit) => (
+                    <SelectItem key={unit.id} value={unit.id}>
+                      {unit.sigla ? `${unit.sigla} - ${unit.nome}` : unit.nome}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            <Select value={filterNivel} onValueChange={setFilterNivel}>
-              <SelectTrigger>
-                <SelectValue placeholder="Todos os niveis" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os niveis</SelectItem>
-                {NIVEL_CARGO_OPTIONS.map((n) => (
-                  <SelectItem key={n} value={n}>
-                    {NIVEL_CARGO_LABELS[n]}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <Label className="sr-only">Tipo</Label>
+              <Select value={filterTipo} onValueChange={setFilterTipo}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os tipos</SelectItem>
+                  {TIPO_CARGO_OPTIONS.map((tipo) => (
+                    <SelectItem key={tipo} value={tipo}>
+                      {TIPO_CARGO_LABELS[tipo]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="sr-only">Nivel</Label>
+              <Select value={filterNivel} onValueChange={setFilterNivel}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nivel" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos os niveis</SelectItem>
+                  {NIVEL_CARGO_OPTIONS.map((nivel) => (
+                    <SelectItem key={nivel} value={nivel}>
+                      {NIVEL_CARGO_LABELS[nivel]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
                 className="pl-9"
-                placeholder="Buscar cargo..."
+                placeholder="Buscar cargo"
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(event) => setSearchTerm(event.target.value)}
               />
             </div>
           </div>
         </Card>
 
-        {/* Loading */}
         {loading && (
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-16">
             <Loader2 className="h-8 w-8 animate-spin text-purple-600" />
             <span className="ml-3 text-gray-600">Carregando cargos...</span>
           </div>
         )}
 
-        {/* Error */}
-        {error && !loading && (
-          <Card className="p-6 bg-red-50 border-red-200">
-            <p className="text-red-700">{error}</p>
-          </Card>
-        )}
+        {error && !loading && <Card className="border-red-200 bg-red-50 p-6 text-red-700">{error}</Card>}
 
-        {/* Empty state */}
         {!loading && !error && positions.length === 0 && (
           <Card className="p-8 text-center">
-            <Briefcase className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              Nenhum cargo encontrado
-            </h3>
-            <p className="text-gray-600 mb-4">
-              {searchTerm || filterDepartment || filterTipo || filterNivel
-                ? 'Nenhum cargo corresponde aos filtros aplicados.'
-                : 'Nenhum cargo cadastrado ainda. Crie o primeiro cargo para começar.'}
+            <Briefcase className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-lg font-medium text-gray-900">Nenhum cargo encontrado</h3>
+            <p className="mb-4 text-gray-600">
+              Ajuste os filtros ou cadastre o primeiro cargo vinculado a uma unidade.
             </p>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" /> Novo Cargo
-            </Button>
+            <Link href={createHref}>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo cargo
+              </Button>
+            </Link>
           </Card>
         )}
 
-        {/* Card Grid */}
         {!loading && !error && positions.length > 0 && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {positions.map((position) => {
-              const tipoColor = TIPO_CARGO_COLORS[position.tipo] || 'bg-gray-100 text-gray-700 border-gray-300';
-              const nivelColor = position.nivel
-                ? NIVEL_CARGO_COLORS[position.nivel] || 'bg-gray-100 text-gray-700 border-gray-300'
-                : '';
-              const assignmentCount = position._count?.assignments ?? 0;
-
-              return (
-                <Card key={position.id} className="p-4 hover:shadow-md transition-shadow">
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                      <div className="bg-purple-100 p-2 rounded-lg flex-shrink-0">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {positions.map((position) => (
+              <Card key={position.id} className="p-4 transition-shadow hover:shadow-md">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="mb-1 flex items-center gap-2">
+                      <div className="rounded-lg bg-purple-100 p-2">
                         <Briefcase className="h-4 w-4 text-purple-600" />
                       </div>
-                      <h3 className="font-semibold text-gray-900 truncate">{position.nome}</h3>
+                      <h3 className="truncate font-semibold text-gray-900">{position.nome}</h3>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        title="Editar"
-                        onClick={() => openEditDialog(position)}
-                      >
+                    {position.descricao && (
+                      <p className="line-clamp-2 text-sm text-gray-500">{position.descricao}</p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Link href={`/admin/organograma/cargos/${position.id}/editar`}>
+                      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" title="Editar">
                         <Edit2 className="h-3.5 w-3.5" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
-                        title="Excluir"
-                        onClick={() => openDeleteDialog(position)}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    </Link>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 w-7 p-0 text-red-600 hover:text-red-700"
+                      title="Desativar"
+                      onClick={() => {
+                        setSelectedPosition(position);
+                        setDeleteDialogOpen(true);
+                      }}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
                   </div>
+                </div>
 
-                  {position.descricao && (
-                    <p className="text-sm text-gray-500 mb-3 line-clamp-2">{position.descricao}</p>
-                  )}
-
-                  <div className="flex flex-wrap gap-1.5 mb-3">
-                    <Badge variant="outline" className={`text-xs ${tipoColor}`}>
-                      {TIPO_CARGO_LABELS[position.tipo] || position.tipo}
+                <div className="mb-3 flex flex-wrap gap-1.5">
+                  <Badge variant="outline" className={TIPO_CARGO_COLORS[position.tipo] || ''}>
+                    {TIPO_CARGO_LABELS[position.tipo] || position.tipo}
+                  </Badge>
+                  {position.nivel && (
+                    <Badge variant="outline" className={NIVEL_CARGO_COLORS[position.nivel] || ''}>
+                      {NIVEL_CARGO_LABELS[position.nivel] || position.nivel}
                     </Badge>
-                    {position.nivel && (
-                      <Badge variant="outline" className={`text-xs ${nivelColor}`}>
-                        {NIVEL_CARGO_LABELS[position.nivel] || position.nivel}
-                      </Badge>
-                    )}
-                  </div>
+                  )}
+                </div>
 
-                  <div className="space-y-1.5 text-xs text-gray-500">
-                    {position.cbo && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-gray-600">CBO:</span>
-                        <span>{position.cbo}</span>
-                      </div>
-                    )}
-                    {position.department && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-gray-600">Departamento:</span>
-                        <span className="truncate">{position.department.name}</span>
-                      </div>
-                    )}
-                    {position.cargaHorariaPadrao != null && (
-                      <div className="flex items-center gap-1.5">
-                        <span className="font-medium text-gray-600">Carga horaria:</span>
-                        <span>{position.cargaHorariaPadrao}h</span>
-                      </div>
-                    )}
-                  </div>
+                <div className="space-y-1.5 text-xs text-gray-600">
+                  <p>
+                    <strong>Secretaria:</strong> {position.department?.name || '-'}
+                  </p>
+                  <p>
+                    <strong>Unidade:</strong>{' '}
+                    {position.organizationalUnit
+                      ? position.organizationalUnit.sigla
+                        ? `${position.organizationalUnit.sigla} - ${position.organizationalUnit.nome}`
+                        : position.organizationalUnit.nome
+                      : '-'}
+                  </p>
+                  {position.cbo && (
+                    <p>
+                      <strong>CBO:</strong> {position.cbo}
+                    </p>
+                  )}
+                  {position.cargaHorariaPadrao != null && (
+                    <p>
+                      <strong>Carga horaria:</strong> {position.cargaHorariaPadrao}h
+                    </p>
+                  )}
+                </div>
 
-                  <div className="mt-3 pt-3 border-t border-gray-100 flex items-center gap-1.5 text-xs text-gray-500">
+                <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-gray-500">
+                  <span className="flex items-center gap-1.5">
                     <Users className="h-3.5 w-3.5" />
-                    <span>
-                      {assignmentCount} {assignmentCount === 1 ? 'servidor vinculado' : 'servidores vinculados'}
-                    </span>
-                  </div>
-                </Card>
-              );
-            })}
+                    {position._count?.assignments ?? 0} lotacoes
+                  </span>
+                  <Link
+                    href={`/admin/organograma/funcoes/nova?departmentId=${position.departmentId}&positionId=${position.id}&returnTo=/admin/organograma/cargos`}
+                    className="font-medium text-purple-700 hover:text-purple-900"
+                  >
+                    Nova funcao
+                  </Link>
+                </div>
+              </Card>
+            ))}
           </div>
         )}
 
-        {/* Create/Edit Dialog */}
-        <Dialog open={formDialogOpen} onOpenChange={setFormDialogOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle>
-                {editingPosition ? 'Editar Cargo' : 'Novo Cargo'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-1">
-              <div>
-                <Label>Nome *</Label>
-                <Input
-                  value={formData.nome}
-                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                  placeholder="Nome do cargo"
-                />
-              </div>
-
-              <div>
-                <Label>Descricao</Label>
-                <Textarea
-                  value={formData.descricao}
-                  onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                  placeholder="Descricao do cargo (opcional)"
-                  rows={3}
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>CBO</Label>
-                  <Input
-                    value={formData.cbo}
-                    onChange={(e) => setFormData({ ...formData, cbo: e.target.value })}
-                    placeholder="Ex: 2521-05"
-                  />
-                </div>
-                <div>
-                  <Label>Categoria</Label>
-                  <Input
-                    value={formData.categoria}
-                    onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
-                    placeholder="Ex: Administrativo"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Tipo *</Label>
-                  <Select
-                    value={formData.tipo}
-                    onValueChange={(v) => setFormData({ ...formData, tipo: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {TIPO_CARGO_OPTIONS.map((t) => (
-                        <SelectItem key={t} value={t}>
-                          {TIPO_CARGO_LABELS[t]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label>Nivel</Label>
-                  <Select
-                    value={formData.nivel}
-                    onValueChange={(v) => setFormData({ ...formData, nivel: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o nivel" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhum</SelectItem>
-                      {NIVEL_CARGO_OPTIONS.map((n) => (
-                        <SelectItem key={n} value={n}>
-                          {NIVEL_CARGO_LABELS[n]}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label>Departamento *</Label>
-                <Select
-                  value={formData.departmentId}
-                  onValueChange={(v) => setFormData({ ...formData, departmentId: v })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione o departamento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.id}>
-                        {dept.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Carga Horaria Padrao</Label>
-                  <Input
-                    type="number"
-                    value={formData.cargaHorariaPadrao}
-                    onChange={(e) => setFormData({ ...formData, cargaHorariaPadrao: e.target.value })}
-                    placeholder="Ex: 40"
-                    min={0}
-                  />
-                </div>
-                <div>
-                  <Label>Salario Base (R$)</Label>
-                  <Input
-                    type="number"
-                    value={formData.salarioBase}
-                    onChange={(e) => setFormData({ ...formData, salarioBase: e.target.value })}
-                    placeholder="Ex: 3500.00"
-                    min={0}
-                    step="0.01"
-                  />
-                </div>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setFormDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave} disabled={saving || !isFormValid}>
-                {saving ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : editingPosition ? null : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                {editingPosition ? 'Salvar' : 'Criar'}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Delete Confirm Dialog */}
         <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Excluir Cargo</DialogTitle>
+              <DialogTitle>Desativar cargo</DialogTitle>
             </DialogHeader>
             <p className="text-gray-600">
-              Tem certeza que deseja excluir o cargo <strong>&quot;{selectedPosition?.nome}&quot;</strong>?
-              {(selectedPosition?._count?.assignments ?? 0) > 0 && (
-                <span className="block mt-2 text-red-600 text-sm">
-                  Atenao: este cargo possui {selectedPosition?._count?.assignments} servidor(es) vinculado(s).
-                </span>
-              )}
+              Tem certeza que deseja desativar <strong>{selectedPosition?.nome}</strong>?
             </p>
             <DialogFooter>
               <Button variant="outline" onClick={() => setDeleteDialogOpen(false)}>
                 Cancelar
               </Button>
               <Button variant="destructive" onClick={handleDelete} disabled={saving}>
-                {saving && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-                Excluir
+                {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Desativar
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
-import { Building2, Users, Briefcase, ArrowLeft, Loader2, ChevronRight } from 'lucide-react';
+import { Building2, Users, Briefcase, ArrowLeft, Loader2, ChevronRight, Edit2, Plus } from 'lucide-react';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import Link from 'next/link';
 
@@ -211,6 +211,13 @@ export default function UnitDetailPage() {
   const children = unit.children || [];
   const assignments = unit.assignments || [];
   const positions = unit.positions || [];
+  const canCreateChildUnit = Boolean(unit.departmentId);
+  const createChildUnitHref = `/admin/organograma/unidades/nova?departmentId=${unit.departmentId || ''}&parentId=${unit.id}&returnTo=/admin/organograma/unidades/${unit.id}`;
+  const createPositionHref = `/admin/organograma/cargos/novo?departmentId=${unit.departmentId || ''}&organizationalUnitId=${unit.id}&returnTo=/admin/organograma/unidades/${unit.id}`;
+  const editUnitHref =
+    unit.tipo === 'SECRETARIA' && !unit.parentId
+      ? `/admin/organograma/secretarias/${unit.departmentId}/editar`
+      : `/admin/organograma/unidades/${unit.id}/editar`;
 
   return (
     <div className="min-h-screen p-4 md:p-6 bg-gray-50">
@@ -254,6 +261,22 @@ export default function UnitDetailPage() {
                   </p>
                 )}
               </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Link href={editUnitHref}>
+                <Button variant="outline">
+                  <Edit2 className="h-4 w-4 mr-2" />
+                  {unit.tipo === 'SECRETARIA' && !unit.parentId ? 'Editar secretaria' : 'Editar unidade'}
+                </Button>
+              </Link>
+              {canCreateChildUnit && (
+                <Link href={createChildUnitHref}>
+                  <Button>
+                    <Plus className="h-4 w-4 mr-2" />
+                    {unit.tipo === 'SECRETARIA' && !unit.parentId ? 'Incluir unidade nesta secretaria' : 'Nova subunidade'}
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
         </Card>
@@ -362,7 +385,17 @@ export default function UnitDetailPage() {
           {/* Tab: Subunidades */}
           <TabsContent value="subunidades">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Subunidades</h2>
+              <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+                <h2 className="text-lg font-semibold text-gray-900">Subunidades</h2>
+                {canCreateChildUnit && (
+                  <Link href={createChildUnitHref}>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      {unit.tipo === 'SECRETARIA' && !unit.parentId ? 'Incluir unidade nesta secretaria' : 'Nova subunidade'}
+                    </Button>
+                  </Link>
+                )}
+              </div>
               {children.length === 0 ? (
                 <div className="text-center py-8">
                   <Building2 className="h-12 w-12 mx-auto text-gray-300 mb-3" />
@@ -479,7 +512,17 @@ export default function UnitDetailPage() {
           {/* Tab: Cargos */}
           <TabsContent value="cargos">
             <Card className="p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Cargos</h2>
+              <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
+                <h2 className="text-lg font-semibold text-gray-900">Cargos</h2>
+                {unit.departmentId && (
+                  <Link href={createPositionHref}>
+                    <Button size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Novo cargo desta unidade
+                    </Button>
+                  </Link>
+                )}
+              </div>
               {positions.length === 0 ? (
                 <div className="text-center py-8">
                   <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-3" />
@@ -492,7 +535,7 @@ export default function UnitDetailPage() {
                       key={position.id}
                       className="border rounded-lg p-4 hover:shadow-sm transition-all bg-white"
                     >
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between gap-3 flex-wrap">
                         <div className="flex items-center gap-3">
                           <div className="bg-purple-100 p-2 rounded-lg">
                             <Briefcase className="h-4 w-4 text-purple-600" />
@@ -515,6 +558,24 @@ export default function UnitDetailPage() {
                           </p>
                           <p className="text-xs text-gray-500">lotacoes</p>
                         </div>
+                      </div>
+                      <div className="mt-3 flex items-center justify-end gap-2">
+                        <Link href={`/admin/organograma/cargos/${position.id}/editar`}>
+                          <Button variant="outline" size="sm">
+                            <Edit2 className="h-4 w-4 mr-2" />
+                            Editar cargo
+                          </Button>
+                        </Link>
+                        {unit.departmentId && (
+                          <Link
+                            href={`/admin/organograma/funcoes/nova?departmentId=${unit.departmentId}&positionId=${position.id}&returnTo=/admin/organograma/unidades/${unit.id}`}
+                          >
+                            <Button size="sm">
+                              <Plus className="h-4 w-4 mr-2" />
+                              Nova funcao deste cargo
+                            </Button>
+                          </Link>
+                        )}
                       </div>
                     </div>
                   ))}

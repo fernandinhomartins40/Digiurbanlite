@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -16,8 +16,8 @@ import { ROLE_DISPLAY_NAMES, ROLE_HIERARCHY, TEAM_ROLES } from '@/types/roles'
 
 interface Department { id: string; name: string; code: string | null }
 interface OrgUnit { id: string; nome: string; sigla?: string }
-interface Position { id: string; nome: string }
-interface OrgFunction { id: string; nome: string }
+interface Position { id: string; nome: string; organizationalUnitId?: string | null }
+interface OrgFunction { id: string; nome: string; positionId?: string | null }
 interface AssignmentSummary {
   id: string
   isPrimary: boolean
@@ -26,7 +26,7 @@ interface AssignmentSummary {
   position?: { id: string; nome: string } | null
   function?: { id: string; nome: string } | null
 }
-interface ServerData {
+export interface ServerFormData {
   id?: string
   name: string
   email: string
@@ -48,11 +48,11 @@ interface ServerData {
   observacoes?: string
   assignments?: AssignmentSummary[]
 }
-interface ServerManagementModalProps {
-  open: boolean
-  onClose: () => void
-  onSuccess: () => void
-  user?: ServerData | null
+interface ServerManagementFormProps {
+  mode: 'create' | 'edit'
+  cancelHref: string
+  successHref?: string
+  initialUser?: ServerFormData | null
   currentUserRole: string
   currentUserDepartmentId?: string
 }
@@ -77,18 +77,18 @@ const EMPTY_ASSIGNMENT: InitialAssignment = {
   observacoes: '',
 }
 
-export function ServerManagementModal({
-  open,
-  onClose,
-  onSuccess,
-  user,
+export function ServerManagementForm({
+  mode,
+  cancelHref,
+  successHref,
+  initialUser,
   currentUserRole,
   currentUserDepartmentId,
-}: ServerManagementModalProps) {
+}: ServerManagementFormProps) {
   const router = useRouter()
-  const isEditMode = !!user?.id
+  const isEditMode = mode === 'edit'
   const currentUserLevel = ROLE_HIERARCHY[currentUserRole as keyof typeof ROLE_HIERARCHY] || 0
-  const [formData, setFormData] = useState<ServerData>({
+  const [formData, setFormData] = useState<ServerFormData>({
     name: '', email: '', role: 'USER',
     departmentId: currentUserDepartmentId,
     departmentIds: currentUserDepartmentId ? [currentUserDepartmentId] : [],
@@ -119,25 +119,54 @@ export function ServerManagementModal({
 
   const primaryDepartmentId = formData.primaryDepartmentId || formData.departmentIds?.[0] || ''
   const primaryDepartment = departments.find((department) => department.id === primaryDepartmentId)
-  const primaryAssignment = user?.assignments?.find((assignment) => assignment.isPrimary) || user?.assignments?.[0]
+  const primaryAssignment =
+    initialUser?.assignments?.find((assignment) => assignment.isPrimary) || initialUser?.assignments?.[0]
+
+  const filteredPositions = useMemo(
+    () =>
+      positions.filter((position) => {
+        if (
+          initialAssignment.organizationalUnitId &&
+          position.organizationalUnitId &&
+          position.organizationalUnitId !== initialAssignment.organizationalUnitId
+        ) {
+          return false
+        }
+        return true
+      }),
+    [initialAssignment.organizationalUnitId, positions]
+  )
+
+  const filteredFunctions = useMemo(
+    () =>
+      functions.filter((func) => {
+        if (!initialAssignment.positionId && func.positionId) return false
+        if (initialAssignment.positionId && func.positionId && func.positionId !== initialAssignment.positionId) {
+          return false
+        }
+        return true
+      }),
+    [functions, initialAssignment.positionId]
+  )
 
   useEffect(() => {
-    if (user) {
-      const departmentIds = user.departmentIds || (user.departmentId ? [user.departmentId] : [])
+    if (initialUser) {
+      const departmentIds =
+        initialUser.departmentIds || (initialUser.departmentId ? [initialUser.departmentId] : [])
       setFormData({
-        ...user,
+        ...initialUser,
         departmentIds,
-        primaryDepartmentId: user.primaryDepartmentId || user.departmentId,
-        cpf: user.cpf || '',
-        matricula: user.matricula || '',
-        rg: user.rg || '',
-        dataNascimento: user.dataNascimento || '',
-        telefone: user.telefone || '',
-        telefoneSecundario: user.telefoneSecundario || '',
-        cargoEfetivo: user.cargoEfetivo || '',
-        situacaoFuncional: user.situacaoFuncional || 'ATIVO',
-        dataAdmissao: user.dataAdmissao || '',
-        observacoes: user.observacoes || '',
+        primaryDepartmentId: initialUser.primaryDepartmentId || initialUser.departmentId,
+        cpf: initialUser.cpf || '',
+        matricula: initialUser.matricula || '',
+        rg: initialUser.rg || '',
+        dataNascimento: initialUser.dataNascimento || '',
+        telefone: initialUser.telefone || '',
+        telefoneSecundario: initialUser.telefoneSecundario || '',
+        cargoEfetivo: initialUser.cargoEfetivo || '',
+        situacaoFuncional: initialUser.situacaoFuncional || 'ATIVO',
+        dataAdmissao: initialUser.dataAdmissao || '',
+        observacoes: initialUser.observacoes || '',
       })
     } else {
       setFormData({
@@ -155,21 +184,21 @@ export function ServerManagementModal({
       setShowConfirmPassword(false)
     }
     setError('')
-  }, [user, currentUserDepartmentId])
+  }, [initialUser, currentUserDepartmentId])
 
   useEffect(() => {
-    if (open) void loadDepartments()
-  }, [open])
+    void loadDepartments()
+  }, [currentUserRole])
 
   useEffect(() => {
-    if (!open || !primaryDepartmentId) {
+    if (!primaryDepartmentId) {
       setOrganizationalUnits([])
       setPositions([])
       setFunctions([])
       return
     }
     void loadOrganogramOptions(primaryDepartmentId)
-  }, [open, primaryDepartmentId])
+  }, [primaryDepartmentId])
 
   const loadDepartments = async () => {
     setLoadingDepartments(true)
@@ -297,8 +326,9 @@ export function ServerManagementModal({
       })
       const data = await response.json().catch(() => ({}))
       if (!response.ok) throw new Error(data.message || data.error || 'Erro ao salvar servidor')
-      onSuccess()
-      onClose()
+      const targetId = data?.data?.id || data?.id || formData.id
+      router.push(successHref || (targetId ? `/admin/servidores/${targetId}` : '/admin/servidores'))
+      router.refresh()
     } catch (submitError) {
       setError(submitError instanceof Error ? submitError.message : 'Erro ao salvar servidor')
     } finally {
@@ -307,15 +337,16 @@ export function ServerManagementModal({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-[95vw] sm:max-w-[760px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{isEditMode ? 'Editar servidor' : 'Novo servidor'}</DialogTitle>
-          <DialogDescription>
-            {isEditMode ? 'Atualize o cadastro administrativo. A lotacao operacional e gerenciada no organograma.' : 'Cadastre o servidor e defina a lotacao inicial no organograma.'}
-          </DialogDescription>
-        </DialogHeader>
-
+    <Card>
+      <CardHeader>
+        <CardTitle>{isEditMode ? 'Editar servidor' : 'Novo servidor'}</CardTitle>
+        <CardDescription>
+          {isEditMode
+            ? 'Atualize o cadastro administrativo. A lotacao operacional e gerenciada no organograma.'
+            : 'Cadastre o servidor e defina a lotacao inicial no organograma.'}
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && <Alert variant="destructive"><AlertCircle className="h-4 w-4" /><AlertDescription>{error}</AlertDescription></Alert>}
 
@@ -415,10 +446,10 @@ export function ServerManagementModal({
                         <p className="text-sm text-slate-600">Situacao: {primaryAssignment.situacao}</p>
                       </>
                     ) : (
-                      <p className="text-sm text-amber-700">Este servidor ainda nao possui lotacao operacional registrada no organograma.</p>
-                    )}
+                        <p className="text-sm text-amber-700">Este servidor ainda nao possui lotacao operacional registrada no organograma.</p>
+                      )}
                   </div>
-                  {user?.id && <Button type="button" variant="outline" onClick={() => { onClose(); router.push(`/admin/organograma/lotacoes?userId=${user.id}`) }}><ArrowRightLeft className="mr-2 h-4 w-4" />Gerenciar lotacoes</Button>}
+                  {initialUser?.id && <Button type="button" variant="outline" onClick={() => router.push(`/admin/organograma/lotacoes?userId=${initialUser.id}`)}><ArrowRightLeft className="mr-2 h-4 w-4" />Gerenciar lotacoes</Button>}
                 </>
               ) : (
                 <>
@@ -426,7 +457,7 @@ export function ServerManagementModal({
                   <div className="space-y-2"><Label>Departamento principal da lotacao</Label><div className="rounded-md border px-3 py-2 text-sm">{primaryDepartment ? primaryDepartment.name : 'Selecione um departamento principal na aba Basico'}</div></div>
                   <div className="space-y-2">
                     <Label htmlFor="organizationalUnitId">Setor / unidade organizacional *</Label>
-                    <Select value={initialAssignment.organizationalUnitId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, organizationalUnitId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
+                    <Select value={initialAssignment.organizationalUnitId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, organizationalUnitId: value, positionId: '', functionId: '' })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
                       <SelectTrigger id="organizationalUnitId"><SelectValue placeholder={loadingOrganogram ? 'Carregando...' : 'Selecione o setor'} /></SelectTrigger>
                       <SelectContent>{organizationalUnits.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.sigla ? `${unit.sigla} - ${unit.nome}` : unit.nome}</SelectItem>)}</SelectContent>
                     </Select>
@@ -434,16 +465,16 @@ export function ServerManagementModal({
                   <div className="grid grid-cols-2 gap-3">
                     <div className="space-y-2">
                       <Label htmlFor="positionId">Cargo operacional</Label>
-                      <Select value={initialAssignment.positionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, positionId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
+                      <Select value={initialAssignment.positionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, positionId: value, functionId: '' })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
                         <SelectTrigger id="positionId"><SelectValue placeholder="Selecione um cargo" /></SelectTrigger>
-                        <SelectContent>{positions.map((position) => <SelectItem key={position.id} value={position.id}>{position.nome}</SelectItem>)}</SelectContent>
+                        <SelectContent>{filteredPositions.map((position) => <SelectItem key={position.id} value={position.id}>{position.nome}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="functionId">Funcao</Label>
-                      <Select value={initialAssignment.functionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, functionId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram}>
+                      <Select value={initialAssignment.functionId} onValueChange={(value) => setInitialAssignment({ ...initialAssignment, functionId: value })} disabled={loading || !primaryDepartmentId || loadingOrganogram || !initialAssignment.positionId}>
                         <SelectTrigger id="functionId"><SelectValue placeholder="Selecione uma funcao" /></SelectTrigger>
-                        <SelectContent>{functions.map((func) => <SelectItem key={func.id} value={func.id}>{func.nome}</SelectItem>)}</SelectContent>
+                        <SelectContent>{filteredFunctions.map((func) => <SelectItem key={func.id} value={func.id}>{func.nome}</SelectItem>)}</SelectContent>
                       </Select>
                     </div>
                   </div>
@@ -473,12 +504,12 @@ export function ServerManagementModal({
             </TabsContent>
           </Tabs>
 
-          <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0">
-            <Button type="button" variant="outline" onClick={onClose} disabled={loading} className="w-full sm:w-auto">Cancelar</Button>
+          <div className="flex flex-col sm:flex-row gap-2 sm:justify-end">
+            <Button type="button" variant="outline" onClick={() => router.push(cancelHref)} disabled={loading} className="w-full sm:w-auto">Cancelar</Button>
             <Button type="submit" disabled={loading || availableRoles.length === 0} className="w-full sm:w-auto">{loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}{isEditMode ? 'Salvar alteracoes' : 'Criar servidor'}</Button>
-          </DialogFooter>
+          </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </CardContent>
+    </Card>
   )
 }

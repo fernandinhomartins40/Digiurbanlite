@@ -9,25 +9,10 @@ import {
 const router = Router();
 const prisma = new PrismaClient();
 
-// ============================================
-// CRUD DE CARGOS
-// ============================================
-
-/**
- * GET /api/positions
- * Listar todos os cargos
- */
 router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const {
-      departmentId,
-      organizationalUnitId,
-      tipo,
-      nivel,
-      categoria,
-      isActive,
-      search,
-    } = req.query;
+    const { departmentId, organizationalUnitId, tipo, nivel, categoria, isActive, search } =
+      req.query;
 
     const where: any = {};
 
@@ -57,6 +42,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
         _count: {
           select: {
             assignments: true,
+            functions: true,
           },
         },
       },
@@ -70,10 +56,6 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/positions/:id
- * Buscar cargo específico
- */
 router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -86,6 +68,20 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
         },
         organizationalUnit: {
           select: { id: true, nome: true, sigla: true, tipo: true, nivel: true },
+        },
+        functions: {
+          where: { isActive: true },
+          select: {
+            id: true,
+            nome: true,
+            tipo: true,
+            simbolo: true,
+            valor: true,
+            _count: {
+              select: { assignments: true },
+            },
+          },
+          orderBy: { nome: 'asc' },
         },
         assignments: {
           where: { situacao: 'ATIVO' },
@@ -101,13 +97,14 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
         _count: {
           select: {
             assignments: true,
+            functions: true,
           },
         },
       },
     });
 
     if (!position) {
-      return res.status(404).json({ error: 'Cargo não encontrado' });
+      return res.status(404).json({ error: 'Cargo nao encontrado' });
     }
 
     res.json(position);
@@ -117,10 +114,6 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /api/positions
- * Criar novo cargo
- */
 router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
@@ -138,17 +131,13 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
       salarioBase,
     } = req.body;
 
-    // Validações
-    if (!nome || !tipo || !departmentId) {
+    if (!nome || !tipo || !departmentId || !organizationalUnitId) {
       return res.status(400).json({
-        error: 'Nome, tipo e departamento são obrigatórios',
+        error: 'Nome, tipo, secretaria e unidade organizacional sao obrigatorios',
       });
     }
 
-    await assertDepartmentScopedEntities({
-      departmentId,
-      organizationalUnitId,
-    });
+    await assertDepartmentScopedEntities({ departmentId, organizationalUnitId });
 
     const position = await prisma.position.create({
       data: {
@@ -186,7 +175,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Já existe um cargo com este nome neste departamento',
+        error: 'Ja existe um cargo com este nome neste departamento',
       });
     }
 
@@ -194,10 +183,6 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * PUT /api/positions/:id
- * Atualizar cargo
- */
 router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -216,21 +201,27 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       isActive,
     } = req.body;
 
-    // Verificar se cargo existe
     const existingPosition = await prisma.position.findUnique({
       where: { id },
     });
     if (!existingPosition) {
-      return res.status(404).json({ error: 'Cargo não encontrado' });
+      return res.status(404).json({ error: 'Cargo nao encontrado' });
+    }
+
+    const resolvedOrganizationalUnitId =
+      organizationalUnitId !== undefined ? organizationalUnitId : existingPosition.organizationalUnitId;
+
+    if (!resolvedOrganizationalUnitId) {
+      return res.status(400).json({
+        error: 'Todo cargo deve estar vinculado a uma unidade organizacional',
+      });
     }
 
     await assertDepartmentScopedEntities({
       departmentId: existingPosition.departmentId,
-      organizationalUnitId:
-        organizationalUnitId !== undefined ? organizationalUnitId : existingPosition.organizationalUnitId,
+      organizationalUnitId: resolvedOrganizationalUnitId,
     });
 
-    // Update dinâmico
     const updateData: any = {};
     if (nome !== undefined) updateData.nome = nome;
     if (descricao !== undefined) updateData.descricao = descricao;
@@ -244,7 +235,6 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
     if (cargaHorariaPadrao !== undefined) updateData.cargaHorariaPadrao = cargaHorariaPadrao;
     if (salarioBase !== undefined) updateData.salarioBase = salarioBase;
     if (isActive !== undefined) updateData.isActive = isActive;
-
     updateData.updatedAt = new Date();
 
     const position = await prisma.position.update({
@@ -270,7 +260,7 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Já existe um cargo com este nome neste departamento',
+        error: 'Ja existe um cargo com este nome neste departamento',
       });
     }
 
@@ -278,36 +268,38 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * DELETE /api/positions/:id
- * Desativar cargo (soft delete)
- */
 router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Verificar se cargo existe
     const position = await prisma.position.findUnique({
       where: { id },
       include: {
         assignments: {
           where: { situacao: 'ATIVO' },
         },
+        functions: {
+          where: { isActive: true },
+        },
       },
     });
 
     if (!position) {
-      return res.status(404).json({ error: 'Cargo não encontrado' });
+      return res.status(404).json({ error: 'Cargo nao encontrado' });
     }
 
-    // Validação: não pode desativar se houver servidores ativos com este cargo
     if (position.assignments.length > 0) {
       return res.status(400).json({
-        error: 'Não é possível desativar um cargo que possui servidores ativos vinculados',
+        error: 'Nao e possivel desativar um cargo que possui servidores ativos vinculados',
       });
     }
 
-    // Desativar (soft delete)
+    if (position.functions.length > 0) {
+      return res.status(400).json({
+        error: 'Nao e possivel desativar um cargo que possui funcoes ativas vinculadas',
+      });
+    }
+
     const deactivated = await prisma.position.update({
       where: { id },
       data: { isActive: false },

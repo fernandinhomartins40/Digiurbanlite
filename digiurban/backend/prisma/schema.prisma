@@ -7764,6 +7764,7 @@ model Position {
 
   // Relacionamentos
   assignments EmployeeAssignment[]
+  functions   Function[]
 
   @@unique([departmentId, nome])
   @@index([departmentId, tipo, isActive])
@@ -7803,6 +7804,9 @@ model Function {
   departmentId String
   department   Department @relation("DepartmentFunctions", fields: [departmentId], references: [id])
 
+  positionId String?
+  position   Position? @relation(fields: [positionId], references: [id])
+
   requisitos  Json?
   atribuicoes Json?
 
@@ -7819,6 +7823,7 @@ model Function {
 
   @@unique([departmentId, simbolo])
   @@index([departmentId, tipo, isActive])
+  @@index([positionId])
   @@map("functions")
 }
 

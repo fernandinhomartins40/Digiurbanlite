@@ -55,6 +55,7 @@ export async function assertDepartmentScopedEntities(params: {
             id: true,
             nome: true,
             departmentId: true,
+            positionId: true,
             isActive: true,
           },
         })
@@ -64,7 +65,7 @@ export async function assertDepartmentScopedEntities(params: {
   if (!department || !department.isActive) {
     throw new OrganizationalIntegrityError(
       'DEPARTMENT_NOT_FOUND',
-      'Departamento não encontrado ou inativo',
+      'Departamento nao encontrado ou inativo',
       404
     );
   }
@@ -72,7 +73,7 @@ export async function assertDepartmentScopedEntities(params: {
   if (params.organizationalUnitId && !organizationalUnit) {
     throw new OrganizationalIntegrityError(
       'ORGANIZATIONAL_UNIT_NOT_FOUND',
-      'Unidade organizacional não encontrada',
+      'Unidade organizacional nao encontrada',
       404
     );
   }
@@ -94,7 +95,7 @@ export async function assertDepartmentScopedEntities(params: {
   }
 
   if (params.positionId && !position) {
-    throw new OrganizationalIntegrityError('POSITION_NOT_FOUND', 'Cargo não encontrado', 404);
+    throw new OrganizationalIntegrityError('POSITION_NOT_FOUND', 'Cargo nao encontrado', 404);
   }
 
   if (position) {
@@ -123,25 +124,41 @@ export async function assertDepartmentScopedEntities(params: {
     if (!organizationalUnit && position.organizationalUnitId) {
       throw new OrganizationalIntegrityError(
         'POSITION_REQUIRES_UNIT',
-        'O cargo informado exige uma unidade organizacional compatível'
+        'O cargo informado exige uma unidade organizacional compativel'
       );
     }
   }
 
   if (params.functionId && !func) {
-    throw new OrganizationalIntegrityError('FUNCTION_NOT_FOUND', 'Função não encontrada', 404);
+    throw new OrganizationalIntegrityError('FUNCTION_NOT_FOUND', 'Funcao nao encontrada', 404);
   }
 
   if (func) {
     if (!func.isActive) {
-      throw new OrganizationalIntegrityError('FUNCTION_INACTIVE', 'Função inativa');
+      throw new OrganizationalIntegrityError('FUNCTION_INACTIVE', 'Funcao inativa');
     }
 
     if (func.departmentId !== params.departmentId) {
       throw new OrganizationalIntegrityError(
         'FUNCTION_SCOPE_MISMATCH',
-        'A função deve pertencer ao mesmo departamento informado'
+        'A funcao deve pertencer ao mesmo departamento informado'
       );
+    }
+
+    if (func.positionId) {
+      if (!position) {
+        throw new OrganizationalIntegrityError(
+          'FUNCTION_REQUIRES_POSITION',
+          'A funcao informada exige um cargo compativel'
+        );
+      }
+
+      if (func.positionId !== position.id) {
+        throw new OrganizationalIntegrityError(
+          'FUNCTION_POSITION_SCOPE_MISMATCH',
+          'A funcao informada pertence a outro cargo'
+        );
+      }
     }
   }
 
@@ -175,7 +192,7 @@ export async function assertUserAssignmentScope(params: {
   if (!user) {
     throw new OrganizationalIntegrityError(
       'USER_NOT_FOUND',
-      `${params.label || 'Usuário'} não encontrado`,
+      `${params.label || 'Usuario'} nao encontrado`,
       404
     );
   }
@@ -187,7 +204,7 @@ export async function assertUserAssignmentScope(params: {
   if (!matchingDepartmentAssignment) {
     throw new OrganizationalIntegrityError(
       'USER_SCOPE_MISMATCH',
-      `${params.label || 'Usuário'} precisa possuir vínculo ativo no departamento informado`
+      `${params.label || 'Usuario'} precisa possuir vinculo ativo no departamento informado`
     );
   }
 
@@ -201,7 +218,7 @@ export async function assertUserAssignmentScope(params: {
   ) {
     throw new OrganizationalIntegrityError(
       'USER_UNIT_SCOPE_MISMATCH',
-      `${params.label || 'Usuário'} precisa possuir vínculo ativo na unidade organizacional informada`
+      `${params.label || 'Usuario'} precisa possuir vinculo ativo na unidade organizacional informada`
     );
   }
 
@@ -242,11 +259,11 @@ export async function assertUsersShareActiveDepartmentScope(params: {
   ]);
 
   if (!subordinate) {
-    throw new OrganizationalIntegrityError('SUBORDINATE_NOT_FOUND', 'Subordinado não encontrado', 404);
+    throw new OrganizationalIntegrityError('SUBORDINATE_NOT_FOUND', 'Subordinado nao encontrado', 404);
   }
 
   if (!supervisor) {
-    throw new OrganizationalIntegrityError('SUPERVISOR_NOT_FOUND', 'Supervisor não encontrado', 404);
+    throw new OrganizationalIntegrityError('SUPERVISOR_NOT_FOUND', 'Supervisor nao encontrado', 404);
   }
 
   const subordinateDepartments = new Set(subordinate.assignments.map((item) => item.departmentId));

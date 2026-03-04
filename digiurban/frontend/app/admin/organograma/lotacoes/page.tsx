@@ -57,12 +57,14 @@ interface PositionOption {
   id: string;
   nome: string;
   departmentId?: string;
+  organizationalUnitId?: string | null;
 }
 
 interface FunctionOption {
   id: string;
   nome: string;
   departmentId?: string;
+  positionId?: string | null;
 }
 
 interface OrgUnitOption {
@@ -316,18 +318,35 @@ export default function LotacoesPage() {
   // -----------------------------------------------------------------------
 
   const filteredPositions = useMemo(() => {
-    if (!formData.departmentId) return positions;
-    return positions.filter(
-      (p) => !p.departmentId || p.departmentId === formData.departmentId,
-    );
-  }, [positions, formData.departmentId]);
+    return positions.filter((position) => {
+      if (formData.departmentId && position.departmentId && position.departmentId !== formData.departmentId) {
+        return false;
+      }
+      if (
+        formData.organizationalUnitId &&
+        position.organizationalUnitId &&
+        position.organizationalUnitId !== formData.organizationalUnitId
+      ) {
+        return false;
+      }
+      return true;
+    });
+  }, [formData.departmentId, formData.organizationalUnitId, positions]);
 
   const filteredFunctions = useMemo(() => {
-    if (!formData.departmentId) return functions;
-    return functions.filter(
-      (f) => !f.departmentId || f.departmentId === formData.departmentId,
-    );
-  }, [functions, formData.departmentId]);
+    return functions.filter((func) => {
+      if (formData.departmentId && func.departmentId && func.departmentId !== formData.departmentId) {
+        return false;
+      }
+      if (formData.positionId && func.positionId && func.positionId !== formData.positionId) {
+        return false;
+      }
+      if (!formData.positionId && func.positionId) {
+        return false;
+      }
+      return true;
+    });
+  }, [formData.departmentId, formData.positionId, functions]);
 
   const filteredUser = useMemo(
     () => users.find((user) => user.id === filterUserId) || null,
@@ -551,7 +570,12 @@ export default function LotacoesPage() {
         <Select
           value={formData.organizationalUnitId}
           onValueChange={(v) =>
-            setFormData({ ...formData, organizationalUnitId: v === '_none_' ? '' : v })
+            setFormData({
+              ...formData,
+              organizationalUnitId: v === '_none_' ? '' : v,
+              positionId: '',
+              functionId: '',
+            })
           }
         >
           <SelectTrigger>
@@ -574,7 +598,11 @@ export default function LotacoesPage() {
         <Select
           value={formData.positionId}
           onValueChange={(v) =>
-            setFormData({ ...formData, positionId: v === '_none_' ? '' : v })
+            setFormData({
+              ...formData,
+              positionId: v === '_none_' ? '' : v,
+              functionId: '',
+            })
           }
         >
           <SelectTrigger>
@@ -599,6 +627,7 @@ export default function LotacoesPage() {
           onValueChange={(v) =>
             setFormData({ ...formData, functionId: v === '_none_' ? '' : v })
           }
+          disabled={!formData.positionId}
         >
           <SelectTrigger>
             <SelectValue placeholder="Nenhuma" />
