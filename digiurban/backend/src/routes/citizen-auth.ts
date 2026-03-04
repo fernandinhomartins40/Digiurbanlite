@@ -14,6 +14,8 @@ import { sanitizeForLog } from '../utils/logger';
 import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
 import { getSystemEmail } from '../utils/email-domain.utils';
+import { syncCitizenPersonIdentity } from '../services/person-identity.service';
+import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const router = Router();
 
@@ -69,16 +71,20 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
     console.log('📝 Dados recebidos no cadastro:', sanitizeForLog(req.body));
 
     const data = registerSchema.parse(req.body);
+    const cleanCpf = normalizeCpf(data.cpf);
+    const normalizedEmail = normalizeEmail(data.email) || data.email;
+    const normalizedName = normalizeNullableString(data.name) || data.name;
+    const normalizedPhone = normalizeNullableString(data.phone);
 
     // Validar CPF
-    if (!validateCPF(data.cpf)) {
+    if (!cleanCpf || !validateCPF(cleanCpf)) {
       return res.status(400).json({ error: 'CPF inválido' });
     }
 
     // Verificar se já existe cidadão com esse CPF
     const existingCitizen = await prisma.citizen.findFirst({
       where: {
-        cpf: data.cpf
+        cpf: cleanCpf
         }
         });
 
@@ -89,7 +95,10 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
     // Verificar se já existe cidadão com esse email
     const existingEmail = await prisma.citizen.findFirst({
       where: {
-        email: data.email
+        email: {
+          equals: normalizedEmail,
+          mode: 'insensitive'
+        }
         }
         });
 
@@ -121,20 +130,36 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
     }
 
     // Criar cidadão com status de verificação pendente (Bronze)
-    const citizen = await prisma.citizen.create({
-      data: {
-        cpf: data.cpf,
-        name: data.name,
-        email: data.email,
-        phone: data.phone,
-        password: hashedPassword,
-        address: data.address,
-        municipioId: municipioId,
-        isActive: true,
-        verificationStatus: 'PENDING', // Bronze - pendente de validação administrativa
-        registrationSource: 'SELF', // Auto-cadastro pelo portal do cidadão
-      }
-        });
+    const citizen = await prisma.$transaction(async (tx) => {
+      const createdCitizen = await tx.citizen.create({
+        data: {
+          cpf: cleanCpf,
+          name: normalizedName,
+          email: normalizedEmail,
+          phone: normalizedPhone,
+          password: hashedPassword,
+          address: data.address,
+          municipioId: municipioId,
+          isActive: true,
+          verificationStatus: 'PENDING',
+          registrationSource: 'SELF',
+        }
+      });
+
+      await syncCitizenPersonIdentity(tx, {
+        citizenId: createdCitizen.id,
+        currentPersonId: createdCitizen.personId,
+        cpf: createdCitizen.cpf,
+        name: createdCitizen.name,
+        email: createdCitizen.email,
+        phone: createdCitizen.phone,
+        birthDate: createdCitizen.birthDate,
+        rg: createdCitizen.rg,
+        isActive: createdCitizen.isActive,
+      });
+
+      return createdCitizen;
+    });
 
     // Gerar token JWT com expiração configurada
     const token = jwt.sign(
@@ -280,11 +305,23 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
 router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asyncHandler(async (req: Request, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);
+    const rawLogin = data.login.trim();
+    const normalizedCpfLogin = isCpfLike(rawLogin) ? normalizeCpf(rawLogin) : null;
+    const normalizedEmailLogin = normalizeEmail(rawLogin);
+    const loginIdentifier = normalizedCpfLogin || normalizedEmailLogin || rawLogin;
+    const loginConditions = [
+      ...(normalizedCpfLogin ? [{ cpf: normalizedCpfLogin }] : []),
+      ...(normalizedEmailLogin ? [{ email: normalizedEmailLogin }] : []),
+    ];
+
+    if (loginConditions.length === 0) {
+      return res.status(401).json({ error: 'Credenciais inválidas' });
+    }
 
     // Buscar cidadão
     const citizen = await prisma.citizen.findFirst({
       where: {
-          OR: [{ cpf: data.login }, { email: data.login }],
+          OR: loginConditions,
         isActive: true
         }
         });
@@ -298,7 +335,7 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
         ip: req.ip || req.socket.remoteAddress,
         userAgent: req.headers['user-agent'],
         success: false,
-        details: { login: data.login, reason: 'Cidadão não encontrado' }
+        details: { login: loginIdentifier, reason: 'Cidadão não encontrado' }
       });
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
@@ -307,8 +344,8 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
     const validPassword = await bcrypt.compare(data.password, citizen.password);
     if (!validPassword) {
       // Registrar tentativa falhada
-      await recordFailedLogin('citizen', data.login);
-      await logLoginFailed(req, data.login, 'Senha incorreta');
+      await recordFailedLogin('citizen', loginIdentifier);
+      await logLoginFailed(req, loginIdentifier, 'Senha incorreta');
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
@@ -644,9 +681,13 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
 
     // Verificar se o email já está em uso por outro cidadão do mesmo tenant
     if (data.email && data.email !== citizen.email) {
+      const normalizedEmail = normalizeEmail(data.email) || data.email;
       const existingEmail = await prisma.citizen.findFirst({
         where: {
-          email: data.email,
+          email: {
+            equals: normalizedEmail,
+            mode: 'insensitive'
+          },
           id: { not: citizen.id }
         }
       });
@@ -662,14 +703,14 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
     const updateData: any = {};
 
     // ✅ Campos obrigatórios
-    if (data.name) updateData.name = data.name;
-    if (data.email) updateData.email = data.email;
+    if (data.name) updateData.name = data.name.trim();
+    if (data.email) updateData.email = normalizeEmail(data.email) || data.email;
 
     // ✅ Campos opcionais - aceita null para limpar valores
-    if (data.phone !== undefined) updateData.phone = data.phone || null;
+    if (data.phone !== undefined) updateData.phone = normalizeNullableString(data.phone) || null;
     if (data.phoneSecondary !== undefined) updateData.phoneSecondary = data.phoneSecondary || null;
     if (data.birthDate !== undefined) updateData.birthDate = data.birthDate ? new Date(data.birthDate) : null;
-    if (data.rg !== undefined) updateData.rg = data.rg || null;
+    if (data.rg !== undefined) updateData.rg = normalizeNullableString(data.rg) || null;
     if (data.motherName !== undefined) updateData.motherName = data.motherName || null;
     if (data.maritalStatus !== undefined) updateData.maritalStatus = data.maritalStatus || null;
     if (data.occupation !== undefined) updateData.occupation = data.occupation || null;
@@ -686,10 +727,26 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
     }
 
     // Atualizar cidadão
-    const updatedCitizen = await prisma.citizen.update({
-      where: { id: citizen.id },
-      data: updateData
-        });
+    const updatedCitizen = await prisma.$transaction(async (tx) => {
+      const updated = await tx.citizen.update({
+        where: { id: citizen.id },
+        data: updateData
+      });
+
+      await syncCitizenPersonIdentity(tx, {
+        citizenId: citizen.id,
+        currentPersonId: citizen.personId,
+        cpf: citizen.cpf,
+        name: updated.name,
+        email: updated.email,
+        phone: updated.phone,
+        rg: updated.rg,
+        birthDate: updated.birthDate,
+        isActive: updated.isActive,
+      });
+
+      return updated;
+    });
 
     // Log de auditoria: atualização de perfil
     await logAuditEvent({

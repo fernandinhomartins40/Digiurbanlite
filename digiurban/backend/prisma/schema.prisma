@@ -43,6 +43,7 @@ model User {
   role                UserRole  @default(USER)
   isActive            Boolean   @default(true)
   departmentId        String? // ✅ MANTIDO: compatibilidade (primary department)
+  personId            String?   @unique
   failedLoginAttempts Int       @default(0)
   lockedUntil         DateTime?
   mustChangePassword  Boolean   @default(false)
@@ -70,6 +71,7 @@ model User {
   createdProtocolsSimplified  ProtocolSimplified[]     @relation("CreatedByUserSimplified")
   assignedProtocolsSimplified ProtocolSimplified[]     @relation("AssignedUserSimplified")
   department                  Department?              @relation("UserPrimaryDepartment", fields: [departmentId], references: [id])
+  person                      Person?                  @relation(fields: [personId], references: [id], onDelete: SetNull)
 
   // ✅ NOVO: Múltiplos departamentos (N:N)
   userDepartments UserDepartment[]
@@ -322,6 +324,7 @@ model Citizen {
   cpf                 String
   name                String
   email               String
+  personId            String?            @unique
   phone               String?
   birthDate           DateTime?
   address             Json?
@@ -358,6 +361,7 @@ model Citizen {
   protocolsSimplified ProtocolSimplified[]
   documents           CitizenDocument[]        @relation("CitizenDocuments")
   linkedProtocols     ProtocolCitizenLink[]    @relation("LinkedCitizens")
+  person              Person?                  @relation(fields: [personId], references: [id], onDelete: SetNull)
   tickets             AdminTicket[]
 
   // Recuperação de senha
@@ -409,6 +413,26 @@ model Citizen {
   @@index([equipeId])
   @@index([microareaId])
   @@map("citizens")
+}
+
+model Person {
+  id        String    @id @default(cuid())
+  cpf       String?   @unique
+  name      String
+  email     String?
+  phone     String?
+  rg        String?
+  birthDate DateTime?
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  user    User?
+  citizen Citizen?
+
+  @@index([name])
+  @@index([email])
+  @@map("people")
 }
 
 // ========================================

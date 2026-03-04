@@ -17,6 +17,8 @@ import {
   extractPrimaryDepartmentIdFromOrganization,
   reconcileAdministrativeDepartmentAssignments,
 } from '../services/organizational-context.service';
+import { syncUserPersonIdentity } from '../services/person-identity.service';
+import { normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -1496,8 +1498,10 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
     console.log('[USERS] Criando novo usuário:', email);
 
     // Verificar se email já existe
+    const normalizedEmail = normalizeEmail(email) || email;
+
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     });
 
     if (existingUser) {
@@ -1520,14 +1524,26 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
         ? primaryDepartmentId
         : normalizedDepartmentIds[0] || null;
 
-    const user = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: role || 'USER',
-        isActive: isActive !== false
-      }
+    const user = await prisma.$transaction(async (tx) => {
+      const createdUser = await tx.user.create({
+        data: {
+          name: normalizeNullableString(name) || name,
+          email: normalizedEmail,
+          password: hashedPassword,
+          role: role || 'USER',
+          isActive: isActive !== false
+        }
+      });
+
+      await syncUserPersonIdentity(tx, {
+        userId: createdUser.id,
+        currentPersonId: createdUser.personId,
+        name: createdUser.name,
+        email: createdUser.email,
+        isActive: createdUser.isActive,
+      });
+
+      return createdUser;
     });
 
     console.log('[USERS] ✅ Usuário criado com sucesso:', user.id);
@@ -1625,8 +1641,8 @@ router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Reques
 
     // Preparar dados para atualização
     const updateData: any = {
-      name,
-      email,
+      name: normalizeNullableString(name) || name,
+      email: email ? normalizeEmail(email) || email : email,
       role,
       isActive
     };
@@ -1638,9 +1654,39 @@ router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Reques
     }
 
     // Atualizar usuário
-    const updatedUser = await prisma.user.update({
+    const existingTarget = await prisma.user.findUnique({
       where: { id },
-      data: updateData
+      select: {
+        id: true,
+        personId: true,
+        name: true,
+        email: true,
+        isActive: true,
+      }
+    });
+
+    if (!existingTarget) {
+      return res.status(404).json({
+        success: false,
+        error: 'Usuário não encontrado'
+      });
+    }
+
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id },
+        data: updateData
+      });
+
+      await syncUserPersonIdentity(tx, {
+        userId: id,
+        currentPersonId: existingTarget.personId,
+        name: updated.name,
+        email: updated.email,
+        isActive: updated.isActive,
+      });
+
+      return updated;
     });
 
     console.log('[USERS] ✅ Usuário atualizado com sucesso:', id);
@@ -1817,8 +1863,10 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
     }
 
     // Verificar se email já existe
+    const normalizedEmail = normalizeEmail(email) || email;
+
     const existingUser = await prisma.user.findUnique({
-      where: { email }
+      where: { email: normalizedEmail }
     });
 
     if (existingUser) {
@@ -1829,28 +1877,41 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Criar usuário
-    const newAdmin = await prisma.user.create({
-      data: {
-        name,
-        email,
-        password: hashedPassword,
-        role: 'SUPER_ADMIN',
-        isActive: true
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        createdAt: true,
-        department: {
-          select: {
-            id: true,
-            name: true
+    const newAdmin = await prisma.$transaction(async (tx) => {
+      const createdAdmin = await tx.user.create({
+        data: {
+          name: normalizeNullableString(name) || name,
+          email: normalizedEmail,
+          password: hashedPassword,
+          role: 'SUPER_ADMIN',
+          isActive: true
+        },
+        select: {
+          id: true,
+          personId: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          createdAt: true,
+          department: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
-      }
+      });
+
+      await syncUserPersonIdentity(tx, {
+        userId: createdAdmin.id,
+        currentPersonId: createdAdmin.personId,
+        name: createdAdmin.name,
+        email: createdAdmin.email,
+        isActive: createdAdmin.isActive,
+      });
+
+      return createdAdmin;
     });
 
     await reconcileAdministrativeDepartmentAssignments({
@@ -1896,27 +1957,54 @@ router.put('/users/admins/:id', adminAuthMiddleware, superAdminOnly, async (req:
     const { name, email, isActive, departmentId } = req.body;
 
     const updateData: any = {};
-    if (name) updateData.name = name;
-    if (email) updateData.email = email;
+    if (name) updateData.name = normalizeNullableString(name) || name;
+    if (email) updateData.email = normalizeEmail(email) || email;
     if (typeof isActive === 'boolean') updateData.isActive = isActive;
 
-    const updatedAdmin = await prisma.user.update({
+    const existingAdmin = await prisma.user.findUnique({
       where: { id },
-      data: updateData,
       select: {
         id: true,
+        personId: true,
         name: true,
         email: true,
-        role: true,
         isActive: true,
-        updatedAt: true,
-        department: {
-          select: {
-            id: true,
-            name: true
+      }
+    });
+
+    if (!existingAdmin) {
+      return res.status(404).json({ error: 'Usuário não encontrado' });
+    }
+
+    const updatedAdmin = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id },
+        data: updateData,
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          updatedAt: true,
+          department: {
+            select: {
+              id: true,
+              name: true
+            }
           }
         }
-      }
+      });
+
+      await syncUserPersonIdentity(tx, {
+        userId: id,
+        currentPersonId: existingAdmin.personId,
+        name: updated.name,
+        email: updated.email,
+        isActive: updated.isActive,
+      });
+
+      return updated;
     });
 
     if (departmentId !== undefined) {

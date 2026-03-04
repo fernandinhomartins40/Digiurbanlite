@@ -8,6 +8,11 @@ import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import { ACCOUNT_LOCKOUT } from '../config/security';
 import { logAccountLocked } from '../utils/audit-logger';
+import { isCpfLike, normalizeCpf, normalizeEmail } from '../utils/identity';
+
+function normalizeCitizenIdentifier(identifier: string): string {
+  return isCpfLike(identifier) ? normalizeCpf(identifier) || identifier : normalizeEmail(identifier) || identifier;
+}
 
 /**
  * Verifica se a conta está bloqueada por tentativas excessivas de login
@@ -20,12 +25,13 @@ export async function checkAccountLockout(
   identifier: string
 ): Promise<{ isLocked: boolean; remainingTime?: number }> {
   try {
+    const normalizedIdentifier = model === 'citizen' ? normalizeCitizenIdentifier(identifier) : normalizeEmail(identifier) || identifier;
     let account: { lockedUntil: Date | null } | null = null;
 
     if (model === 'user') {
       account = await prisma.user.findFirst({
         where: {
-          email: identifier
+          email: normalizedIdentifier
         },
         select: {
           lockedUntil: true
@@ -34,7 +40,7 @@ export async function checkAccountLockout(
     } else {
       account = await prisma.citizen.findFirst({
         where: {
-          OR: [{ cpf: identifier }, { email: identifier }]
+          OR: [{ cpf: normalizedIdentifier }, { email: normalizedIdentifier }]
         },
         select: {
           lockedUntil: true
@@ -56,7 +62,7 @@ export async function checkAccountLockout(
     if (model === 'user') {
       await prisma.user.updateMany({
         where: {
-          email: identifier
+          email: normalizedIdentifier
         },
         data: {
           lockedUntil: null,
@@ -66,7 +72,7 @@ export async function checkAccountLockout(
     } else {
       await prisma.citizen.updateMany({
         where: {
-          OR: [{ cpf: identifier }, { email: identifier }]
+          OR: [{ cpf: normalizedIdentifier }, { email: normalizedIdentifier }]
         },
         data: {
           lockedUntil: null,
@@ -93,12 +99,13 @@ export async function recordFailedLogin(
   identifier: string
 ): Promise<void> {
   try {
+    const normalizedIdentifier = model === 'citizen' ? normalizeCitizenIdentifier(identifier) : normalizeEmail(identifier) || identifier;
     let account: { id: string; failedLoginAttempts: number } | null = null;
 
     if (model === 'user') {
       account = await prisma.user.findFirst({
         where: {
-          email: identifier
+          email: normalizedIdentifier
         },
         select: {
           id: true,
@@ -108,7 +115,7 @@ export async function recordFailedLogin(
     } else {
       account = await prisma.citizen.findFirst({
         where: {
-          OR: [{ cpf: identifier }, { email: identifier }]
+          OR: [{ cpf: normalizedIdentifier }, { email: normalizedIdentifier }]
         },
         select: {
           id: true,

@@ -19,9 +19,11 @@ import {
   getWorkflowByServiceId
 } from '../services/service-workflow.service';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
+import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import type { WorkflowStage } from '../types/workflow.types';
 import * as protocolAssignmentService from '../services/protocolAssignmentService';
 import { runRevertExpiredDelegationsManually } from '../jobs/revertExpiredDelegations.job';
+import { normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const router = Router();
 
@@ -208,7 +210,9 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
         });
     }
 
-    if (!citizenData || !citizenData.cpf) {
+    const cleanCpf = normalizeCpf(citizenData?.cpf);
+
+    if (!citizenData || !cleanCpf) {
       return res.status(400).json({
         success: false,
         error: 'Dados do cidadão são obrigatórios (cpf mínimo)'
@@ -218,21 +222,37 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
     // Buscar ou criar cidadão
     let citizen = await prisma.citizen.findFirst({
       where: {
-        cpf: citizenData.cpf
+        cpf: cleanCpf
         }
         });
 
     if (!citizen) {
-      citizen = await prisma.citizen.create({
-        data: {
-          cpf: citizenData.cpf,
-          name: citizenData.name || 'Cidadão',
-          email: citizenData.email || `temp_${citizenData.cpf}@temp.com`,
-          phone: citizenData.phone,
-          password: 'TEMP_PASSWORD',
-          registrationSource: 'ADMIN'
-        }
+      citizen = await prisma.$transaction(async (tx) => {
+        const createdCitizen = await tx.citizen.create({
+          data: {
+            cpf: cleanCpf,
+            name: normalizeNullableString(citizenData.name) || 'Cidadão',
+            email: normalizeEmail(citizenData.email) || `temp_${cleanCpf}@temp.com`,
+            phone: normalizeNullableString(citizenData.phone),
+            password: 'TEMP_PASSWORD',
+            registrationSource: 'ADMIN'
+          }
         });
+
+        await syncCitizenPersonIdentity(tx, {
+          citizenId: createdCitizen.id,
+          currentPersonId: createdCitizen.personId,
+          cpf: createdCitizen.cpf,
+          name: createdCitizen.name,
+          email: createdCitizen.email,
+          phone: createdCitizen.phone,
+          birthDate: createdCitizen.birthDate,
+          rg: createdCitizen.rg,
+          isActive: createdCitizen.isActive,
+        });
+
+        return createdCitizen;
+      });
     }
 
     // ✅ VALIDAÇÃO DE UNICIDADE: Verificar se cidadão pode criar este protocolo

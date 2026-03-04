@@ -5,6 +5,8 @@ import { asyncHandler } from '../utils/express-helpers';
 import type { AuthenticatedRequest } from '../types';
 import * as bcrypt from 'bcryptjs';
 import { BCRYPT_ROUNDS } from '../config/security';
+import { syncCitizenPersonIdentity } from '../services/person-identity.service';
+import { normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const router = Router();
 
@@ -29,9 +31,12 @@ router.post(
     }
 
     // Limpar CPF (remover pontos e traços)
-    const cleanCpf = cpf.replace(/\D/g, '');
+    const cleanCpf = normalizeCpf(cpf);
+    const normalizedEmail = normalizeEmail(email);
+    const normalizedName = normalizeNullableString(name);
+    const normalizedPhone = normalizeNullableString(phone);
 
-    if (cleanCpf.length !== 11) {
+    if (!cleanCpf || cleanCpf.length !== 11) {
       res.status(400).json({
         success: false,
         error: 'CPF inválido'
@@ -57,7 +62,10 @@ router.post(
     // Verificar se email já existe
     const existingEmail = await prisma.citizen.findFirst({
       where: {
-          email: email.toLowerCase()
+          email: {
+            equals: normalizedEmail || email,
+            mode: 'insensitive'
+          }
         }
         });
 
@@ -80,34 +88,50 @@ router.post(
     }
 
     // Criar cidadão
-    const newCitizen = await prisma.citizen.create({
-      data: {
-        cpf: cleanCpf,
-        name,
-        email: email.toLowerCase(),
-        phone: phone || null,
-        birthDate: birthDate ? new Date(birthDate) : null,
-        password: hashedPassword,
-        address: address || null,
-        verificationStatus: 'VERIFIED',
-        registrationSource: 'ADMIN',
-        verifiedAt: new Date(),
-        verifiedBy: authReq.user.id,
-        isActive: true
+    const newCitizen = await prisma.$transaction(async (tx) => {
+      const createdCitizen = await tx.citizen.create({
+        data: {
+          cpf: cleanCpf,
+          name: normalizedName || name,
+          email: normalizedEmail || email,
+          phone: normalizedPhone,
+          birthDate: birthDate ? new Date(birthDate) : null,
+          password: hashedPassword,
+          address: address || null,
+          verificationStatus: 'VERIFIED',
+          registrationSource: 'ADMIN',
+          verifiedAt: new Date(),
+          verifiedBy: authReq.user.id,
+          isActive: true
         },
-      select: {
-        id: true,
-        cpf: true,
-        name: true,
-        email: true,
-        phone: true,
-        birthDate: true,
-        address: true,
-        verificationStatus: true,
-        registrationSource: true,
-        createdAt: true
+        select: {
+          id: true,
+          personId: true,
+          cpf: true,
+          name: true,
+          email: true,
+          phone: true,
+          birthDate: true,
+          address: true,
+          verificationStatus: true,
+          registrationSource: true,
+          createdAt: true
         }
       });
+
+      await syncCitizenPersonIdentity(tx, {
+        citizenId: createdCitizen.id,
+        currentPersonId: createdCitizen.personId,
+        cpf: createdCitizen.cpf,
+        name: createdCitizen.name,
+        email: createdCitizen.email,
+        phone: createdCitizen.phone,
+        birthDate: createdCitizen.birthDate,
+        isActive: true,
+      });
+
+      return createdCitizen;
+    });
 
     res.status(201).json({
       success: true,

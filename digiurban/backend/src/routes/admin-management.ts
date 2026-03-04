@@ -26,6 +26,9 @@ import {
   reconcileAdministrativeDepartmentAssignments,
 } from '../services/organizational-context.service';
 import { assertDepartmentScopedEntities } from '../services/organizational-integrity.service';
+import { syncUserPersonIdentity } from '../services/person-identity.service';
+import { normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
+import { validateCPF } from '../utils/validators';
 // Helpers implementados usando assignments como fonte primaria e
 // userDepartments/user.departmentId apenas como projecoes de compatibilidade.
 const getUserDepartments = (user: any) => {
@@ -437,15 +440,19 @@ const strongPasswordSchema = z.string()
   .regex(/\d/, 'Senha deve conter pelo menos um número')
   .regex(/[!@#$%^&*(),.?":{}|<>]/, 'Senha deve conter pelo menos um caractere especial');
 
+const optionalNullableStringSchema = z.string().nullish();
+const optionalNullableDateSchema = z.string().nullish();
+const optionalNullableJsonSchema = z.any().nullish();
+
 const initialAssignmentSchema = z.object({
   departmentId: z.string().min(1, 'Departamento da lotação é obrigatório'),
   organizationalUnitId: z.string().min(1, 'Unidade organizacional é obrigatória'),
-  positionId: z.string().optional(),
-  functionId: z.string().optional(),
-  dataInicio: z.string().optional(),
+  positionId: optionalNullableStringSchema,
+  functionId: optionalNullableStringSchema,
+  dataInicio: optionalNullableDateSchema,
   cargaHoraria: z.number().nullable().optional(),
   percentualDedicacao: z.number().nullable().optional(),
-  observacoes: z.string().optional()
+  observacoes: optionalNullableStringSchema
 });
 
 const createUserSchema = z.object({
@@ -456,19 +463,19 @@ const createUserSchema = z.object({
   // ✅ SUPORTA AMBOS: antigo e novo
   departmentId: z.string().optional(),           // Schema antigo (1 dept)
   departmentIds: z.array(z.string()).optional(), // Schema novo (N depts)
-  primaryDepartmentId: z.string().optional(),    // Qual é o principal
+  primaryDepartmentId: optionalNullableStringSchema,    // Qual é o principal
   // ✅ DADOS DE SERVIDOR PÚBLICO
-  cpf: z.string().optional(),
-  matricula: z.string().optional(),
-  rg: z.string().optional(),
-  dataNascimento: z.string().optional(), // ISO date string
-  telefone: z.string().optional(),
-  telefoneSecundario: z.string().optional(),
-  endereco: z.any().optional(), // JSON
-  cargoEfetivo: z.string().optional(),
-  situacaoFuncional: z.string().optional(),
-  dataAdmissao: z.string().optional(), // ISO date string
-  observacoes: z.string().optional(),
+  cpf: optionalNullableStringSchema,
+  matricula: optionalNullableStringSchema,
+  rg: optionalNullableStringSchema,
+  dataNascimento: optionalNullableDateSchema, // ISO date string
+  telefone: optionalNullableStringSchema,
+  telefoneSecundario: optionalNullableStringSchema,
+  endereco: optionalNullableJsonSchema, // JSON
+  cargoEfetivo: optionalNullableStringSchema,
+  situacaoFuncional: optionalNullableStringSchema,
+  dataAdmissao: optionalNullableDateSchema, // ISO date string
+  observacoes: optionalNullableStringSchema,
   initialAssignment: initialAssignmentSchema.optional()
         });
 
@@ -478,22 +485,109 @@ const updateUserSchema = z.object({
   role: z.enum(['USER', 'COORDINATOR', 'MANAGER', 'ADMIN']).optional(),
   isActive: z.boolean().optional(),
   // ✅ SUPORTA AMBOS
-  departmentId: z.string().optional(),
+  departmentId: optionalNullableStringSchema,
   departmentIds: z.array(z.string()).optional(),
-  primaryDepartmentId: z.string().optional(),
+  primaryDepartmentId: optionalNullableStringSchema,
   // ✅ DADOS DE SERVIDOR PÚBLICO
-  cpf: z.string().optional(),
-  matricula: z.string().optional(),
-  rg: z.string().optional(),
-  dataNascimento: z.string().optional(), // ISO date string
-  telefone: z.string().optional(),
-  telefoneSecundario: z.string().optional(),
-  endereco: z.any().optional(), // JSON
-  cargoEfetivo: z.string().optional(),
-  situacaoFuncional: z.string().optional(),
-  dataAdmissao: z.string().optional(), // ISO date string
-  observacoes: z.string().optional()
+  cpf: optionalNullableStringSchema,
+  matricula: optionalNullableStringSchema,
+  rg: optionalNullableStringSchema,
+  dataNascimento: optionalNullableDateSchema, // ISO date string
+  telefone: optionalNullableStringSchema,
+  telefoneSecundario: optionalNullableStringSchema,
+  endereco: optionalNullableJsonSchema, // JSON
+  cargoEfetivo: optionalNullableStringSchema,
+  situacaoFuncional: optionalNullableStringSchema,
+  dataAdmissao: optionalNullableDateSchema, // ISO date string
+  observacoes: optionalNullableStringSchema
         });
+
+function normalizeOptionalTextInput(value?: string | null): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  return normalizeNullableString(value);
+}
+
+function normalizeOptionalDateInput(value?: string | null): string | null | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  if (value === null) {
+    return null;
+  }
+
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+}
+
+function normalizeManagementUserInput<
+  T extends {
+    name?: string;
+    email?: string;
+    departmentId?: string | null;
+    departmentIds?: string[];
+    primaryDepartmentId?: string | null;
+    cpf?: string | null;
+    matricula?: string | null;
+    rg?: string | null;
+    dataNascimento?: string | null;
+    telefone?: string | null;
+    telefoneSecundario?: string | null;
+    cargoEfetivo?: string | null;
+    situacaoFuncional?: string | null;
+    dataAdmissao?: string | null;
+    observacoes?: string | null;
+    initialAssignment?: {
+      departmentId: string;
+      organizationalUnitId: string;
+      positionId?: string | null;
+      functionId?: string | null;
+      dataInicio?: string | null;
+      observacoes?: string | null;
+      cargaHoraria?: number | null;
+      percentualDedicacao?: number | null;
+    };
+  }
+>(data: T): T {
+  return {
+    ...data,
+    name: data.name?.trim() as T['name'],
+    email: (normalizeEmail(data.email) ?? data.email) as T['email'],
+    departmentId: normalizeOptionalTextInput(data.departmentId) as T['departmentId'],
+    departmentIds: data.departmentIds?.filter((departmentId) => departmentId.trim().length > 0) as T['departmentIds'],
+    primaryDepartmentId: normalizeOptionalTextInput(data.primaryDepartmentId) as T['primaryDepartmentId'],
+    cpf: (
+      data.cpf === undefined
+        ? undefined
+        : normalizeOptionalTextInput(normalizeCpf(data.cpf))
+    ) as T['cpf'],
+    matricula: normalizeOptionalTextInput(data.matricula) as T['matricula'],
+    rg: normalizeOptionalTextInput(data.rg) as T['rg'],
+    dataNascimento: normalizeOptionalDateInput(data.dataNascimento) as T['dataNascimento'],
+    telefone: normalizeOptionalTextInput(data.telefone) as T['telefone'],
+    telefoneSecundario: normalizeOptionalTextInput(data.telefoneSecundario) as T['telefoneSecundario'],
+    cargoEfetivo: normalizeOptionalTextInput(data.cargoEfetivo) as T['cargoEfetivo'],
+    situacaoFuncional: normalizeOptionalTextInput(data.situacaoFuncional) as T['situacaoFuncional'],
+    dataAdmissao: normalizeOptionalDateInput(data.dataAdmissao) as T['dataAdmissao'],
+    observacoes: normalizeOptionalTextInput(data.observacoes) as T['observacoes'],
+    initialAssignment: data.initialAssignment
+      ? {
+          ...data.initialAssignment,
+          positionId: normalizeOptionalTextInput(data.initialAssignment.positionId) ?? undefined,
+          functionId: normalizeOptionalTextInput(data.initialAssignment.functionId) ?? undefined,
+          dataInicio: normalizeOptionalDateInput(data.initialAssignment.dataInicio) ?? undefined,
+          observacoes: normalizeOptionalTextInput(data.initialAssignment.observacoes) ?? undefined,
+        }
+      : undefined,
+  };
+}
 
 // ====================== ROUTER SETUP ======================
 
@@ -1227,7 +1321,7 @@ router.post(
   requirePermission('team:manage'),
   auditLog('CREATE_TEAM_MEMBER'),
   handleAsyncRoute(async (req, res) => {
-    const data = createUserSchema.parse(req.body);
+    const data = normalizeManagementUserInput(createUserSchema.parse(req.body));
     const { user } = req;
 
     // ✅ VALIDAÇÃO: Verificar se é um role válido para equipe
@@ -1254,7 +1348,10 @@ router.post(
     // Verificar se o email já existe
     const existingUser = await prisma.user.findFirst({
       where: {
-          email: data.email
+          email: {
+            equals: data.email,
+            mode: 'insensitive'
+          }
         }
         });
 
@@ -1262,6 +1359,24 @@ router.post(
       return res.status(400).json(
         createErrorResponse('USER_EXISTS', 'Email já está em uso')
       );
+    }
+
+    if (data.cpf && !validateCPF(data.cpf)) {
+      return res.status(400).json(
+        createErrorResponse('INVALID_CPF', 'CPF inválido')
+      );
+    }
+
+    if (data.cpf) {
+      const existingUserByCpf = await prisma.user.findFirst({
+        where: { cpf: data.cpf }
+      });
+
+      if (existingUserByCpf) {
+        return res.status(400).json(
+          createErrorResponse('USER_CPF_EXISTS', 'Já existe um servidor com este CPF')
+        );
+      }
     }
 
     // ✅ MÚLTIPLOS DEPARTAMENTOS: Processar departmentIds (novo) ou departmentId (legado)
@@ -1365,6 +1480,7 @@ router.post(
         },
         select: {
           id: true,
+          personId: true,
           name: true,
           email: true,
           role: true,
@@ -1391,6 +1507,18 @@ router.post(
             orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }]
           }
         }
+      });
+
+      await syncUserPersonIdentity(tx, {
+        userId: createdUser.id,
+        currentPersonId: createdUser.personId,
+        cpf: data.cpf,
+        name: data.name,
+        email: data.email,
+        phone: data.telefone,
+        rg: data.rg,
+        birthDate: data.dataNascimento ? new Date(data.dataNascimento) : null,
+        isActive: true,
       });
 
       if (initialAssignment) {
@@ -1519,7 +1647,7 @@ router.put(
   requirePermission('team:manage'),
   auditLog('UPDATE_TEAM_MEMBER'),
   handleAsyncRoute(async (req, res) => {
-    const data = updateUserSchema.parse(req.body);
+    const data = normalizeManagementUserInput(updateUserSchema.parse(req.body));
     const { user } = req;
     const userId = getStringParam(req.params.id);
 
@@ -1586,6 +1714,45 @@ router.put(
       );
     }
 
+    if (data.email && data.email !== targetUser.email) {
+      const existingUserWithEmail = await prisma.user.findFirst({
+        where: {
+          email: {
+            equals: data.email,
+            mode: 'insensitive'
+          },
+          id: { not: userId }
+        }
+      });
+
+      if (existingUserWithEmail) {
+        return res.status(400).json(
+          createErrorResponse('USER_EXISTS', 'Email já está em uso')
+        );
+      }
+    }
+
+    if (data.cpf && !validateCPF(data.cpf)) {
+      return res.status(400).json(
+        createErrorResponse('INVALID_CPF', 'CPF inválido')
+      );
+    }
+
+    if (data.cpf) {
+      const existingUserWithCpf = await prisma.user.findFirst({
+        where: {
+          cpf: data.cpf,
+          id: { not: userId }
+        }
+      });
+
+      if (existingUserWithCpf) {
+        return res.status(400).json(
+          createErrorResponse('USER_CPF_EXISTS', 'Já existe um servidor com este CPF')
+        );
+      }
+    }
+
     // ✅ MÚLTIPLOS DEPARTAMENTOS: Processar departmentIds (novo) ou departmentId (legado)
     let departmentIds: string[] | undefined;
     let primaryDepartmentId: string | null | undefined;
@@ -1648,41 +1815,64 @@ router.put(
     if (data.dataAdmissao !== undefined) updateData.dataAdmissao = data.dataAdmissao ? new Date(data.dataAdmissao) : null;
     if (data.observacoes !== undefined) updateData.observacoes = data.observacoes || null;
 
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: updateData,
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        role: true,
-        isActive: true,
-        updatedAt: true,
-        department: {
-          select: {
-            id: true,
-            name: true,
-            code: true
-        }
-      },
-        userDepartments: {
-          where: { isActive: true },
-          include: {
-            department: {
-              select: {
-                id: true,
-                name: true,
-                code: true
-              }
+    const updatedUser = await prisma.$transaction(async (tx) => {
+      const updated = await tx.user.update({
+        where: { id: userId },
+        data: updateData
+      });
+
+      await syncUserPersonIdentity(tx, {
+        userId,
+        currentPersonId: targetUser.personId,
+        cpf: data.cpf !== undefined ? data.cpf : targetUser.cpf,
+        name: data.name ?? targetUser.name,
+        email: data.email ?? targetUser.email,
+        phone: data.telefone !== undefined ? data.telefone : targetUser.telefone,
+        rg: data.rg !== undefined ? data.rg : targetUser.rg,
+        birthDate:
+          data.dataNascimento !== undefined
+            ? data.dataNascimento
+              ? new Date(data.dataNascimento)
+              : null
+            : targetUser.dataNascimento,
+        isActive: data.isActive ?? updated.isActive,
+      });
+
+      return tx.user.findUnique({
+        where: { id: userId },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          updatedAt: true,
+          department: {
+            select: {
+              id: true,
+              name: true,
+              code: true
             }
           },
-          orderBy: [
-            { isPrimary: 'desc' },
-            { createdAt: 'asc' }
-          ]
+          userDepartments: {
+            where: { isActive: true },
+            include: {
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true
+                }
+              }
+            },
+            orderBy: [
+              { isPrimary: 'desc' },
+              { createdAt: 'asc' }
+            ]
+          }
         }
-        }
-        });
+      });
+    });
 
     // ✅ Adicionar campos computed
     if (departmentIds !== undefined) {

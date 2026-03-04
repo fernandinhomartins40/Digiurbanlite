@@ -291,9 +291,15 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         setUser(null)
         setStats(null)
         setPermissions([])
+        return false
       }
 
-      if (err instanceof Error && !err.message.includes('Authentication failed') && !err.message.includes('autenticado')) {
+      if (
+        err instanceof Error &&
+        !err.message.includes('Authentication failed') &&
+        !err.message.includes('autenticado') &&
+        !err.message.includes('Token não fornecido')
+      ) {
         console.error('Erro ao atualizar dados do usuário:', err)
       }
 

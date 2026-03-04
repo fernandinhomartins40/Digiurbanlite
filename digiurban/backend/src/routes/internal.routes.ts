@@ -12,6 +12,8 @@ import { DocumentUploadService } from '../services/document-upload.service';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
 import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
 import { protocolModuleService } from '../services/protocol-module.service';
+import { syncCitizenPersonIdentity } from '../services/person-identity.service';
+import { normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const router = Router();
 const documentUploadService = new DocumentUploadService();
@@ -124,9 +126,43 @@ router.put('/citizens/:citizenId', async (req: Request, res: Response) => {
       }
     }
 
-    const citizen = await prisma.citizen.update({
-      where: { id: citizenId },
-      data: dataToUpdate,
+    const citizen = await prisma.$transaction(async (tx) => {
+      const updatedCitizen = await tx.citizen.update({
+        where: { id: citizenId },
+        data: {
+          ...dataToUpdate,
+          name:
+            dataToUpdate.name !== undefined
+              ? normalizeNullableString(dataToUpdate.name) || dataToUpdate.name
+              : dataToUpdate.name,
+          email:
+            dataToUpdate.email !== undefined
+              ? normalizeEmail(dataToUpdate.email) || dataToUpdate.email
+              : dataToUpdate.email,
+          phone:
+            dataToUpdate.phone !== undefined
+              ? normalizeNullableString(dataToUpdate.phone) || null
+              : dataToUpdate.phone,
+          rg:
+            dataToUpdate.rg !== undefined
+              ? normalizeNullableString(dataToUpdate.rg) || null
+              : dataToUpdate.rg,
+        },
+      });
+
+      await syncCitizenPersonIdentity(tx, {
+        citizenId,
+        currentPersonId: updatedCitizen.personId,
+        cpf: updatedCitizen.cpf,
+        name: updatedCitizen.name,
+        email: updatedCitizen.email,
+        phone: updatedCitizen.phone,
+        rg: updatedCitizen.rg,
+        birthDate: updatedCitizen.birthDate,
+        isActive: updatedCitizen.isActive,
+      });
+
+      return updatedCitizen;
     });
 
     res.json(citizen);

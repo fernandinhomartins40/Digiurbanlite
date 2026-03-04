@@ -12,6 +12,7 @@ import { Loader2, AlertCircle, Eye, EyeOff, ArrowRightLeft, Building2, Briefcase
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Textarea } from '@/components/ui/textarea'
 import { getFullApiUrl } from '@/lib/api-config'
+import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { ROLE_DISPLAY_NAMES, ROLE_HIERARCHY, TEAM_ROLES } from '@/types/roles'
 
 interface Department { id: string; name: string; code: string | null }
@@ -86,6 +87,7 @@ export function ServerManagementForm({
   currentUserDepartmentId,
 }: ServerManagementFormProps) {
   const router = useRouter()
+  const { apiRequest } = useAdminAuth()
   const isEditMode = mode === 'edit'
   const currentUserLevel = ROLE_HIERARCHY[currentUserRole as keyof typeof ROLE_HIERARCHY] || 0
   const [formData, setFormData] = useState<ServerFormData>({
@@ -291,18 +293,19 @@ export function ServerManagementForm({
     try {
       const endpoint = isEditMode ? `/admin/team/${formData.id}` : '/admin/team'
       const method = isEditMode ? 'PUT' : 'POST'
+      const cleanCpf = formData.cpf ? formData.cpf.replace(/\D/g, '') : null
       const body = isEditMode ? {
-        name: formData.name, email: formData.email, role: formData.role,
+        name: formData.name.trim(), email: formData.email.trim(), role: formData.role,
         departmentIds: formData.departmentIds, primaryDepartmentId, isActive: formData.isActive,
-        cpf: formData.cpf || null, matricula: formData.matricula || null, rg: formData.rg || null,
+        cpf: cleanCpf, matricula: formData.matricula || null, rg: formData.rg || null,
         dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,
         telefoneSecundario: formData.telefoneSecundario || null, cargoEfetivo: formData.cargoEfetivo || null,
         situacaoFuncional: formData.situacaoFuncional || null, dataAdmissao: formData.dataAdmissao || null,
         observacoes: formData.observacoes || null,
       } : {
-        name: formData.name, email: formData.email, password, role: formData.role,
+        name: formData.name.trim(), email: formData.email.trim(), password, role: formData.role,
         departmentIds: formData.departmentIds, primaryDepartmentId,
-        cpf: formData.cpf || null, matricula: formData.matricula || null, rg: formData.rg || null,
+        cpf: cleanCpf, matricula: formData.matricula || null, rg: formData.rg || null,
         dataNascimento: formData.dataNascimento || null, telefone: formData.telefone || null,
         telefoneSecundario: formData.telefoneSecundario || null, cargoEfetivo: formData.cargoEfetivo || null,
         situacaoFuncional: formData.situacaoFuncional || 'ATIVO', dataAdmissao: formData.dataAdmissao || null,
@@ -318,14 +321,10 @@ export function ServerManagementForm({
           observacoes: initialAssignment.observacoes || undefined,
         },
       }
-      const response = await fetch(getFullApiUrl(endpoint), {
+      const data = await apiRequest(endpoint, {
         method,
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify(body),
       })
-      const data = await response.json().catch(() => ({}))
-      if (!response.ok) throw new Error(data.message || data.error || 'Erro ao salvar servidor')
       const targetId = data?.data?.id || data?.id || formData.id
       router.push(successHref || (targetId ? `/admin/servidores/${targetId}` : '/admin/servidores'))
       router.refresh()
