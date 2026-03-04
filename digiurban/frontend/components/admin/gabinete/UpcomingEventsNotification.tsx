@@ -1,63 +1,58 @@
-'use client'
+'use client';
 
-import { useState, useEffect } from 'react'
-import { Bell, X, Clock, MapPin } from 'lucide-react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { agendaService } from '@/lib/services/gabinete.service'
-import { formatDistanceToNow } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
+import { useEffect, useState } from 'react';
+import { Bell, X, Clock, MapPin } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import {
+  centralAgendaService,
+  type CentralAgendaEvent,
+} from '@/lib/services/central-agenda.service';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
-interface UpcomingEvent {
-  id: string
-  titulo: string
-  tipo: string
-  dataHoraInicio: string
-  dataHoraFim: string
-  local?: string
-  status: string
-}
+type UpcomingEvent = CentralAgendaEvent;
 
 export function UpcomingEventsNotification() {
-  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([])
-  const [isOpen, setIsOpen] = useState(false)
-  const [loading, setLoading] = useState(false)
+  const [upcomingEvents, setUpcomingEvents] = useState<UpcomingEvent[]>([]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const loadUpcomingEvents = async () => {
     try {
-      setLoading(true)
-      const response = await agendaService.getUpcomingEvents(24) // Próximas 24 horas
-      const events = response.data || []
-      setUpcomingEvents(events)
+      setLoading(true);
+      const now = new Date();
+      const next24Hours = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const events = await centralAgendaService.listEvents({
+        startAt: now.toISOString(),
+        endAt: next24Hours.toISOString(),
+        status: ['SCHEDULED', 'CONFIRMED', 'IN_PROGRESS'],
+      });
+      setUpcomingEvents(events);
 
-      // Abrir automaticamente se houver eventos próximos
       if (events.length > 0) {
-        setIsOpen(true)
+        setIsOpen(true);
       }
     } catch (error) {
-      console.error('Erro ao carregar eventos próximos:', error)
+      console.error('Erro ao carregar eventos próximos:', error);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadUpcomingEvents()
-
-    // Atualizar a cada 5 minutos
-    const interval = setInterval(loadUpcomingEvents, 5 * 60 * 1000)
-
-    return () => clearInterval(interval)
-  }, [])
+    loadUpcomingEvents();
+    const interval = setInterval(loadUpcomingEvents, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (loading || upcomingEvents.length === 0) {
-    return null
+    return null;
   }
 
   return (
     <>
-      {/* Badge flutuante de notificação */}
       {!isOpen && upcomingEvents.length > 0 && (
         <div className="fixed bottom-4 right-4 z-50">
           <Button
@@ -76,7 +71,6 @@ export function UpcomingEventsNotification() {
         </div>
       )}
 
-      {/* Painel de notificações */}
       {isOpen && (
         <Card className="fixed bottom-4 right-4 z-50 w-96 shadow-2xl">
           <CardHeader className="pb-3">
@@ -100,11 +94,11 @@ export function UpcomingEventsNotification() {
           </CardHeader>
           <CardContent className="space-y-3 max-h-96 overflow-y-auto">
             {upcomingEvents.map((event) => {
-              const startTime = new Date(event.dataHoraInicio)
+              const startTime = new Date(event.startAt);
               const timeUntil = formatDistanceToNow(startTime, {
                 locale: ptBR,
-                addSuffix: true
-              })
+                addSuffix: true,
+              });
 
               return (
                 <div
@@ -112,9 +106,9 @@ export function UpcomingEventsNotification() {
                   className="p-3 bg-blue-50 rounded-lg border border-blue-200 space-y-2"
                 >
                   <div className="flex items-start justify-between">
-                    <h4 className="font-semibold text-sm">{event.titulo}</h4>
+                    <h4 className="font-semibold text-sm">{event.title}</h4>
                     <Badge variant="outline" className="text-xs">
-                      {event.tipo.replace(/_/g, ' ')}
+                      {(event.eventType || event.sourceType).replace(/_/g, ' ')}
                     </Badge>
                   </div>
 
@@ -126,23 +120,23 @@ export function UpcomingEventsNotification() {
                         day: '2-digit',
                         month: '2-digit',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
                       })})
                     </span>
                   </div>
 
-                  {event.local && (
+                  {event.location && (
                     <div className="flex items-center gap-2 text-xs text-gray-600">
                       <MapPin className="h-3 w-3" />
-                      <span>{event.local}</span>
+                      <span>{event.location}</span>
                     </div>
                   )}
                 </div>
-              )
+              );
             })}
           </CardContent>
         </Card>
       )}
     </>
-  )
+  );
 }

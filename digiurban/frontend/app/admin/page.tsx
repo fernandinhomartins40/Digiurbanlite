@@ -58,7 +58,7 @@ const getSearchItems = () => [
   // Gabinete do Prefeito
   { title: 'Painel do Prefeito', description: 'Visão executiva municipal', href: '/admin/gabinete/painel-prefeito', category: 'Gabinete', keywords: ['prefeito', 'executivo', 'gestão'] },
   { title: 'Criar Chamado', description: 'Protocolo top-down para setores', href: '/admin/chamados', category: 'Gabinete', keywords: ['chamado', 'demanda', 'setor'] },
-  { title: 'Agenda Executiva', description: 'Agenda do gabinete', href: '/admin/gabinete/agenda', category: 'Gabinete', keywords: ['agenda', 'reunião', 'compromisso'] },
+  { title: 'Agenda Centralizada', description: 'Agenda unificada da gestão', href: '/admin/agenda', category: 'Gabinete', keywords: ['agenda', 'reunião', 'compromisso', 'calendário'] },
   { title: 'Mapa de Demandas', description: 'Visualização geográfica', href: '/admin/gabinete/mapa-demandas', category: 'Gabinete', keywords: ['mapa', 'geoprocessamento', 'demandas'] },
 
   // Gestão Municipal
@@ -249,13 +249,13 @@ export default function AdminPage() {
               />
 
               <DashboardCard
-                title="Agenda Executiva"
+                title="Agenda Centralizada"
                 description="Compromissos e reuniões"
-                href="/admin/gabinete/agenda"
+                href="/admin/agenda"
                 icon={Calendar}
                 iconColor="text-blue-600"
                 iconBgColor="bg-blue-50"
-                onClick={() => handleCardClick('Agenda Executiva', '/admin/gabinete/agenda', 'Gabinete')}
+                onClick={() => handleCardClick('Agenda Centralizada', '/admin/agenda', 'Gabinete')}
               />
 
               <DashboardCard

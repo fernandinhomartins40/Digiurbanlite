@@ -126,8 +126,8 @@ export function AdminSidebar() {
           minRole: 'ADMIN'
         },
         {
-          title: 'Agenda Executiva',
-          href: '/admin/gabinete/agenda',
+          title: 'Agenda Centralizada',
+          href: '/admin/agenda',
           icon: Calendar,
           minRole: 'ADMIN'
         },

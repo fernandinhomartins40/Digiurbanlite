@@ -64,15 +64,15 @@ export default function GabinetePage() {
           </Card>
         </Link>
 
-        {/* Agenda Executiva */}
-        <Link href="/admin/gabinete/agenda">
+        {/* Agenda Centralizada */}
+        <Link href="/admin/agenda">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <Calendar className="h-12 w-12 text-blue-600" />
                 <ArrowRight className="h-5 w-5 text-gray-400" />
               </div>
-              <CardTitle className="text-xl mt-4">Agenda Executiva</CardTitle>
+              <CardTitle className="text-xl mt-4">Agenda Centralizada</CardTitle>
               <CardDescription>
                 Gerencie compromissos oficiais, audiências públicas e eventos do gabinete
               </CardDescription>

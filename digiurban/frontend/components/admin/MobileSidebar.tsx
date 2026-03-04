@@ -124,8 +124,8 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
           minRole: 'ADMIN'
         },
         {
-          title: 'Agenda Executiva',
-          href: '/admin/gabinete/agenda',
+          title: 'Agenda Centralizada',
+          href: '/admin/agenda',
           icon: Calendar,
           minRole: 'ADMIN'
         },

@@ -256,7 +256,7 @@ export default function PainelPrefeitoPage() {
           </Card>
         </Link>
 
-        <Link href="/admin/gabinete/agenda">
+        <Link href="/admin/agenda">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer border-purple-200 bg-purple-50">
             <CardHeader className="p-4 sm:p-6">
               <div className="flex items-center gap-3">
@@ -264,7 +264,7 @@ export default function PainelPrefeitoPage() {
                   <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
                 </div>
                 <div className="min-w-0">
-                  <CardTitle className="text-base sm:text-lg">Agenda Executiva</CardTitle>
+                  <CardTitle className="text-base sm:text-lg">Agenda Centralizada</CardTitle>
                   <CardDescription className="text-purple-700 text-xs sm:text-sm">
                     Compromissos e eventos oficiais
                   </CardDescription>
