@@ -49,7 +49,7 @@ interface OrganizationalUnit {
 }
 
 const TIPO_UNIDADE_OPTIONS = [
-  'SECRETARIA', 'DIRETORIA', 'COORDENADORIA', 'DIVISAO', 'SETOR',
+  'DIRETORIA', 'COORDENADORIA', 'DIVISAO', 'SETOR',
   'NUCLEO', 'GERENCIA', 'UNIDADE_ESPECIAL', 'DEPARTAMENTO', 'ASSESSORIA'
 ];
 
@@ -110,6 +110,7 @@ export default function OrganogramaPage() {
   const [selectedUnit, setSelectedUnit] = useState<OrganizationalUnit | null>(null);
   const [parentForCreate, setParentForCreate] = useState<OrganizationalUnit | null>(null);
   const [saving, setSaving] = useState(false);
+  const [syncingRoot, setSyncingRoot] = useState(false);
   const [users, setUsers] = useState<{ id: string; name: string; email: string }[]>([]);
 
   // Form state
@@ -200,11 +201,15 @@ export default function OrganogramaPage() {
   };
 
   const openCreateModal = (parent: OrganizationalUnit | null) => {
+    if (!parent) {
+      return;
+    }
+
     setParentForCreate(parent);
     setFormData({
       nome: '',
       sigla: '',
-      tipo: parent ? 'SETOR' : 'SECRETARIA',
+      tipo: 'SETOR',
       descricao: '',
       responsavelId: '',
       endereco: '',
@@ -232,6 +237,26 @@ export default function OrganogramaPage() {
   const openDeleteConfirm = (unit: OrganizationalUnit) => {
     setSelectedUnit(unit);
     setDeleteConfirmOpen(true);
+  };
+
+  const syncSelectedDepartmentRoot = async () => {
+    if (!selectedDepartment) {
+      return;
+    }
+
+    setSyncingRoot(true);
+    try {
+      await apiRequest('/admin/departments/sync-root-units', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ departmentId: selectedDepartment }),
+      });
+      await fetchOrganogram();
+    } catch (err: any) {
+      alert(err.message || 'Erro ao sincronizar secretaria raiz');
+    } finally {
+      setSyncingRoot(false);
+    }
   };
 
   const handleCreate = async () => {
@@ -448,6 +473,9 @@ export default function OrganogramaPage() {
               </p>
             </div>
             <div className="flex items-center gap-2">
+              <Link href="/admin/organograma/secretarias">
+                <Button variant="outline">Secretarias</Button>
+              </Link>
               <Button variant="outline" onClick={fetchOrganogram} disabled={loading || !selectedDepartment}>
                 <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
                 Atualizar
@@ -552,8 +580,9 @@ export default function OrganogramaPage() {
               </SelectContent>
             </Select>
             {selectedDepartment && !orgData && !loading && (
-              <Button onClick={() => openCreateModal(null)} size="sm">
-                <Plus className="h-4 w-4 mr-1" /> Criar Secretaria
+              <Button onClick={syncSelectedDepartmentRoot} size="sm" disabled={syncingRoot}>
+                {syncingRoot ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-1" />}
+                Sincronizar Secretaria
               </Button>
             )}
           </div>
@@ -597,9 +626,15 @@ export default function OrganogramaPage() {
             <p className="text-gray-600 mb-4">
               Este departamento ainda não possui uma estrutura organizacional cadastrada.
             </p>
-            <Button onClick={() => openCreateModal(null)}>
-              <Plus className="h-4 w-4 mr-2" /> Criar Estrutura Organizacional
-            </Button>
+            <div className="flex flex-wrap items-center justify-center gap-2">
+              <Button onClick={syncSelectedDepartmentRoot} disabled={syncingRoot}>
+                {syncingRoot ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <RefreshCw className="h-4 w-4 mr-2" />}
+                Sincronizar secretaria raiz
+              </Button>
+              <Link href="/admin/organograma/secretarias">
+                <Button variant="outline">Gerenciar secretarias</Button>
+              </Link>
+            </div>
           </Card>
         )}
 

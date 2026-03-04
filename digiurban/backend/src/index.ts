@@ -227,6 +227,7 @@ loadRoute('/api', './routes/dynamic-services');
 
 // Admin - rotas especificas antes de genericas
 loadRoute('/api/admin/users', './routes/admin-users');
+loadRoute('/api/admin/departments', './routes/admin-departments');
 loadRoute('/api/admin', './routes/admin-management');
 loadRoute('/api/admin', './routes/admin-dynamic-services');
 

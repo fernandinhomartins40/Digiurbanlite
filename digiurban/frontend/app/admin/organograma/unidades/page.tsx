@@ -59,7 +59,7 @@ interface OrganizationalUnit {
 // ---------------------------------------------------------------------------
 
 const TIPO_UNIDADE_OPTIONS = [
-  'SECRETARIA', 'DIRETORIA', 'COORDENADORIA', 'DIVISAO', 'SETOR',
+  'DIRETORIA', 'COORDENADORIA', 'DIVISAO', 'SETOR',
   'NUCLEO', 'GERENCIA', 'UNIDADE_ESPECIAL', 'DEPARTAMENTO', 'ASSESSORIA',
 ];
 
@@ -245,18 +245,39 @@ export default function UnidadesPage() {
     );
   }, [units, formData.departmentId, editingUnit]);
 
+  const getDepartmentRootUnit = useCallback((departmentId?: string) => {
+    if (!departmentId) return null;
+    return (
+      units.find(
+        (unit) =>
+          unit.departmentId === departmentId &&
+          unit.tipo === 'SECRETARIA' &&
+          !unit.parentId &&
+          unit.isActive !== false
+      ) || null
+    );
+  }, [units]);
+
+  const isManagedRootSecretary = useCallback((unit: OrganizationalUnit) => {
+    return unit.tipo === 'SECRETARIA' && !unit.parentId;
+  }, []);
+
   // -------------------------------------------------------------------------
   // Dialog helpers
   // -------------------------------------------------------------------------
 
   const openCreateDialog = () => {
+    const nextDepartmentId =
+      filterDepartment !== 'all' ? filterDepartment : (departments[0]?.id ?? '');
+    const rootUnit = getDepartmentRootUnit(nextDepartmentId);
+
     setEditingUnit(null);
     setFormData({
       nome: '',
       sigla: '',
       tipo: 'SETOR',
-      departmentId: filterDepartment !== 'all' ? filterDepartment : (departments[0]?.id ?? ''),
-      parentId: '',
+      departmentId: nextDepartmentId,
+      parentId: rootUnit?.id || '',
       responsavelId: '',
       descricao: '',
     });
@@ -264,6 +285,11 @@ export default function UnidadesPage() {
   };
 
   const openEditDialog = (unit: OrganizationalUnit) => {
+    if (isManagedRootSecretary(unit)) {
+      router.push('/admin/organograma/secretarias');
+      return;
+    }
+
     setEditingUnit(unit);
     setFormData({
       nome: unit.nome,
@@ -288,6 +314,10 @@ export default function UnidadesPage() {
 
   const handleSave = async () => {
     if (!formData.nome.trim()) return;
+    if (formData.tipo === 'SECRETARIA') {
+      alert('Secretarias devem ser geridas pela página específica de secretarias.');
+      return;
+    }
     setSaving(true);
     try {
       const nivel = NIVEL_BY_TIPO[formData.tipo] || 5;
@@ -375,14 +405,19 @@ export default function UnidadesPage() {
                   Unidades Organizacionais
                 </h1>
                 <p className="text-gray-600 mt-1 text-sm md:text-base">
-                  Gerencie as unidades da estrutura organizacional
+                  Gerencie diretorias, divisões, setores e demais subunidades. Secretarias são geridas em cadastro próprio.
                 </p>
               </div>
             </div>
-            <Button onClick={openCreateDialog}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nova Unidade
-            </Button>
+            <div className="flex items-center gap-2">
+              <Link href="/admin/organograma/secretarias">
+                <Button variant="outline">Gerenciar Secretarias</Button>
+              </Link>
+              <Button onClick={openCreateDialog}>
+                <Plus className="h-4 w-4 mr-2" />
+                Nova Unidade
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -512,6 +547,7 @@ export default function UnidadesPage() {
                       {filteredUnits.map((unit) => {
                         const tipoColor = TIPO_COLORS[unit.tipo] || 'bg-gray-100 text-gray-700';
                         const isActive = unit.isActive !== false;
+                        const isManagedSecretary = isManagedRootSecretary(unit);
                         return (
                           <tr key={unit.id} className="border-b last:border-0 hover:bg-gray-50 transition-colors">
                             <td className="p-3 font-medium text-gray-900">{unit.nome}</td>
@@ -545,24 +581,34 @@ export default function UnidadesPage() {
                                     <Eye className="h-4 w-4" />
                                   </Button>
                                 </Link>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0"
-                                  title="Editar"
-                                  onClick={() => openEditDialog(unit)}
-                                >
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                                  title="Desativar"
-                                  onClick={() => openDeleteDialog(unit)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {isManagedSecretary ? (
+                                  <Link href="/admin/organograma/secretarias">
+                                    <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                                      Secretaria
+                                    </Button>
+                                  </Link>
+                                ) : (
+                                  <>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0"
+                                      title="Editar"
+                                      onClick={() => openEditDialog(unit)}
+                                    >
+                                      <Edit2 className="h-4 w-4" />
+                                    </Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                                      title="Desativar"
+                                      onClick={() => openDeleteDialog(unit)}
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                  </>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -579,6 +625,7 @@ export default function UnidadesPage() {
               {filteredUnits.map((unit) => {
                 const tipoColor = TIPO_COLORS[unit.tipo] || 'bg-gray-100 text-gray-700';
                 const isActive = unit.isActive !== false;
+                const isManagedSecretary = isManagedRootSecretary(unit);
                 return (
                   <Card key={unit.id} className="p-4">
                     <div className="flex items-start justify-between gap-2 mb-2">
@@ -616,24 +663,34 @@ export default function UnidadesPage() {
                           <Eye className="h-4 w-4" />
                         </Button>
                       </Link>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        title="Editar"
-                        onClick={() => openEditDialog(unit)}
-                      >
-                        <Edit2 className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
-                        title="Desativar"
-                        onClick={() => openDeleteDialog(unit)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {isManagedSecretary ? (
+                        <Link href="/admin/organograma/secretarias">
+                          <Button variant="ghost" size="sm" className="h-8 px-2 text-xs">
+                            Secretaria
+                          </Button>
+                        </Link>
+                      ) : (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0"
+                            title="Editar"
+                            onClick={() => openEditDialog(unit)}
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                            title="Desativar"
+                            onClick={() => openDeleteDialog(unit)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </>
+                      )}
                     </div>
                   </Card>
                 );
@@ -707,7 +764,7 @@ export default function UnidadesPage() {
                 <Select
                   value={formData.departmentId}
                   onValueChange={(v) =>
-                    setFormData({ ...formData, departmentId: v, parentId: '' })
+                    setFormData({ ...formData, departmentId: v, parentId: getDepartmentRootUnit(v)?.id || '' })
                   }
                 >
                   <SelectTrigger>

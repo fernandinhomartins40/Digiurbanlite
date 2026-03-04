@@ -1,28 +1,42 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { TipoUnidadeOrganizacional } from '@prisma/client';
 import { authenticateAdmin } from '../middleware/auth';
+import { prisma } from '../lib/prisma';
+import { findDepartmentRootOrganizationalUnit } from '../services/department-organogram.service';
 
 const router = Router();
-const prisma = new PrismaClient();
+
+async function resolveParentForWrite(
+  departmentId: string,
+  parentId: string | null | undefined
+) {
+  if (parentId) {
+    const parent = await prisma.organizationalUnit.findUnique({
+      where: { id: parentId },
+    });
+
+    if (!parent) {
+      throw new Error('PARENT_NOT_FOUND');
+    }
+
+    if (parent.departmentId !== departmentId) {
+      throw new Error('PARENT_DEPARTMENT_MISMATCH');
+    }
+
+    return parent.id;
+  }
+
+  const rootUnit = await findDepartmentRootOrganizationalUnit(prisma, departmentId);
+  return rootUnit?.id ?? null;
+}
 
 // ============================================
 // CRUD DE UNIDADES ORGANIZACIONAIS
 // ============================================
 
-/**
- * GET /api/organizational-units
- * Listar todas as unidades organizacionais
- */
 router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
-    const {
-      departmentId,
-      tipo,
-      parentId,
-      isActive,
-      nivel,
-      search,
-    } = req.query;
+    const { departmentId, tipo, parentId, isActive, nivel, search } = req.query;
 
     const where: any = {};
 
@@ -34,7 +48,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
       where.parentId = parentId as string;
     }
     if (isActive !== undefined) where.isActive = isActive === 'true';
-    if (nivel) where.nivel = parseInt(nivel as string);
+    if (nivel) where.nivel = parseInt(nivel as string, 10);
     if (search) {
       where.OR = [
         { nome: { contains: search as string, mode: 'insensitive' } },
@@ -65,10 +79,7 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
           },
         },
       },
-      orderBy: [
-        { nivel: 'asc' },
-        { nome: 'asc' },
-      ],
+      orderBy: [{ nivel: 'asc' }, { nome: 'asc' }],
     });
 
     res.json(units);
@@ -78,10 +89,6 @@ router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/organizational-units/:id
- * Buscar unidade organizacional específica
- */
 router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -155,22 +162,17 @@ router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
     }
 
-    res.json(unit);
+    return res.json(unit);
   } catch (error) {
     console.error('Erro ao buscar unidade organizacional:', error);
-    res.status(500).json({ error: 'Erro ao buscar unidade organizacional' });
+    return res.status(500).json({ error: 'Erro ao buscar unidade organizacional' });
   }
 });
 
-/**
- * GET /api/organizational-units/:id/hierarchy
- * Buscar organograma completo de uma unidade (hierarquia)
- */
 router.get('/:id/hierarchy', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Função recursiva para construir árvore
     const buildTree = async (unitId: string): Promise<any> => {
       const unit = await prisma.organizationalUnit.findUnique({
         where: { id: unitId },
@@ -186,16 +188,17 @@ router.get('/:id/hierarchy', authenticateAdmin, async (req: Request, res: Respon
             select: {
               assignments: { where: { situacao: 'ATIVO' } },
               positions: true,
+              teams: true,
             },
           },
         },
       });
 
-      if (!unit) return null;
+      if (!unit) {
+        return null;
+      }
 
-      const childrenWithTree = await Promise.all(
-        unit.children.map((child) => buildTree(child.id))
-      );
+      const childrenWithTree = await Promise.all(unit.children.map((child) => buildTree(child.id)));
 
       return {
         ...unit,
@@ -209,17 +212,13 @@ router.get('/:id/hierarchy', authenticateAdmin, async (req: Request, res: Respon
       return res.status(404).json({ error: 'Unidade não encontrada' });
     }
 
-    res.json(hierarchy);
+    return res.json(hierarchy);
   } catch (error) {
     console.error('Erro ao buscar hierarquia:', error);
-    res.status(500).json({ error: 'Erro ao buscar hierarquia' });
+    return res.status(500).json({ error: 'Erro ao buscar hierarquia' });
   }
 });
 
-/**
- * POST /api/organizational-units
- * Criar nova unidade organizacional
- */
 router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
@@ -237,14 +236,18 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
       email,
     } = req.body;
 
-    // Validações
     if (!nome || !tipo || nivel === undefined || !departmentId) {
       return res.status(400).json({
         error: 'Nome, tipo, nível e departamento são obrigatórios',
       });
     }
 
-    // Verificar se departamento existe
+    if (tipo === TipoUnidadeOrganizacional.SECRETARIA) {
+      return res.status(400).json({
+        error: 'Secretarias devem ser criadas pelo cadastro central de secretarias/departamentos',
+      });
+    }
+
     const department = await prisma.department.findUnique({
       where: { id: departmentId },
     });
@@ -252,17 +255,23 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Departamento não encontrado' });
     }
 
-    // Verificar se parent existe (se fornecido)
-    if (parentId) {
-      const parent = await prisma.organizationalUnit.findUnique({
-        where: { id: parentId },
-      });
-      if (!parent) {
-        return res.status(404).json({ error: 'Unidade pai não encontrada' });
+    let resolvedParentId: string | null = null;
+    try {
+      resolvedParentId = await resolveParentForWrite(departmentId, parentId);
+    } catch (error: any) {
+      if (error.message === 'PARENT_NOT_FOUND') {
+        return res.status(404).json({ error: 'Unidade superior não encontrada' });
       }
+
+      if (error.message === 'PARENT_DEPARTMENT_MISMATCH') {
+        return res.status(400).json({
+          error: 'A unidade superior deve pertencer à mesma secretaria',
+        });
+      }
+
+      throw error;
     }
 
-    // Verificar se responsável existe (se fornecido)
     if (responsavelId) {
       const responsavel = await prisma.user.findUnique({
         where: { id: responsavelId },
@@ -279,7 +288,7 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
         tipo,
         nivel,
         departmentId,
-        parentId,
+        parentId: resolvedParentId,
         responsavelId,
         descricao,
         competencias,
@@ -301,24 +310,20 @@ router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
       },
     });
 
-    res.status(201).json(unit);
+    return res.status(201).json(unit);
   } catch (error: any) {
     console.error('Erro ao criar unidade organizacional:', error);
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Já existe uma unidade com esta sigla neste departamento',
+        error: 'Já existe uma unidade com esta sigla nesta secretaria',
       });
     }
 
-    res.status(500).json({ error: 'Erro ao criar unidade organizacional' });
+    return res.status(500).json({ error: 'Erro ao criar unidade organizacional' });
   }
 });
 
-/**
- * PUT /api/organizational-units/:id
- * Atualizar unidade organizacional
- */
 router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -337,7 +342,6 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       isActive,
     } = req.body;
 
-    // Verificar se unidade existe
     const existingUnit = await prisma.organizationalUnit.findUnique({
       where: { id },
     });
@@ -345,18 +349,50 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Unidade não encontrada' });
     }
 
-    // Validação: não pode ser pai de si mesma
+    if (
+      existingUnit.tipo === TipoUnidadeOrganizacional.SECRETARIA &&
+      existingUnit.parentId === null
+    ) {
+      return res.status(400).json({
+        error: 'A secretaria raiz é gerenciada pelo cadastro central de secretarias/departamentos',
+      });
+    }
+
+    if (tipo === TipoUnidadeOrganizacional.SECRETARIA) {
+      return res.status(400).json({
+        error: 'A secretaria raiz é gerenciada pelo cadastro central de secretarias/departamentos',
+      });
+    }
+
     if (parentId === id) {
       return res.status(400).json({ error: 'Uma unidade não pode ser pai de si mesma' });
     }
 
-    // Update dinâmico
+    let resolvedParentId = existingUnit.parentId;
+    if (parentId !== undefined) {
+      try {
+        resolvedParentId = await resolveParentForWrite(existingUnit.departmentId, parentId);
+      } catch (error: any) {
+        if (error.message === 'PARENT_NOT_FOUND') {
+          return res.status(404).json({ error: 'Unidade superior não encontrada' });
+        }
+
+        if (error.message === 'PARENT_DEPARTMENT_MISMATCH') {
+          return res.status(400).json({
+            error: 'A unidade superior deve pertencer à mesma secretaria',
+          });
+        }
+
+        throw error;
+      }
+    }
+
     const updateData: any = {};
     if (nome !== undefined) updateData.nome = nome;
     if (sigla !== undefined) updateData.sigla = sigla;
     if (tipo !== undefined) updateData.tipo = tipo;
     if (nivel !== undefined) updateData.nivel = nivel;
-    if (parentId !== undefined) updateData.parentId = parentId;
+    if (parentId !== undefined) updateData.parentId = resolvedParentId;
     if (responsavelId !== undefined) updateData.responsavelId = responsavelId;
     if (descricao !== undefined) updateData.descricao = descricao;
     if (competencias !== undefined) updateData.competencias = competencias;
@@ -364,8 +400,6 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
     if (telefone !== undefined) updateData.telefone = telefone;
     if (email !== undefined) updateData.email = email;
     if (isActive !== undefined) updateData.isActive = isActive;
-
-    updateData.updatedAt = new Date();
 
     const unit = await prisma.organizationalUnit.update({
       where: { id },
@@ -383,29 +417,24 @@ router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
       },
     });
 
-    res.json(unit);
+    return res.json(unit);
   } catch (error: any) {
     console.error('Erro ao atualizar unidade organizacional:', error);
 
     if (error.code === 'P2002') {
       return res.status(409).json({
-        error: 'Já existe uma unidade com esta sigla neste departamento',
+        error: 'Já existe uma unidade com esta sigla nesta secretaria',
       });
     }
 
-    res.status(500).json({ error: 'Erro ao atualizar unidade organizacional' });
+    return res.status(500).json({ error: 'Erro ao atualizar unidade organizacional' });
   }
 });
 
-/**
- * DELETE /api/organizational-units/:id
- * Desativar unidade organizacional (soft delete)
- */
 router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
-    // Verificar se unidade existe
     const unit = await prisma.organizationalUnit.findUnique({
       where: { id },
       include: {
@@ -422,33 +451,36 @@ router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => 
       return res.status(404).json({ error: 'Unidade não encontrada' });
     }
 
-    // Validação: não pode desativar se tiver unidades filhas ativas
+    if (unit.tipo === TipoUnidadeOrganizacional.SECRETARIA && unit.parentId === null) {
+      return res.status(400).json({
+        error: 'A secretaria raiz é gerenciada pelo cadastro central de secretarias/departamentos',
+      });
+    }
+
     if (unit.children.length > 0) {
       return res.status(400).json({
         error: 'Não é possível desativar uma unidade que possui unidades subordinadas ativas',
       });
     }
 
-    // Validação: não pode desativar se tiver vínculos ativos
     if (unit.assignments.length > 0) {
       return res.status(400).json({
         error: 'Não é possível desativar uma unidade que possui servidores ativos vinculados',
       });
     }
 
-    // Desativar (soft delete)
     const deactivated = await prisma.organizationalUnit.update({
       where: { id },
       data: { isActive: false },
     });
 
-    res.json({
+    return res.json({
       message: 'Unidade organizacional desativada com sucesso',
       unit: deactivated,
     });
   } catch (error) {
     console.error('Erro ao desativar unidade organizacional:', error);
-    res.status(500).json({ error: 'Erro ao desativar unidade organizacional' });
+    return res.status(500).json({ error: 'Erro ao desativar unidade organizacional' });
   }
 });
 
