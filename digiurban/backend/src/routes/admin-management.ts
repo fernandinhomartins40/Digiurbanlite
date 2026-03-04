@@ -1003,12 +1003,201 @@ router.get(
         email: true,
         role: true,
         isActive: true,
+        createdAt: true,
+        lastLogin: true,
         departmentId: true,
+        cpf: true,
+        matricula: true,
+        rg: true,
+        dataNascimento: true,
+        telefone: true,
+        telefoneSecundario: true,
+        endereco: true,
+        cargoEfetivo: true,
+        situacaoFuncional: true,
+        dataAdmissao: true,
+        observacoes: true,
         department: {
           select: {
             id: true,
             name: true,
             code: true
+          }
+        },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' }
+          ]
+        },
+        assignments: {
+          include: {
+            department: {
+              select: { id: true, name: true, code: true }
+            },
+            organizationalUnit: {
+              select: {
+                id: true,
+                nome: true,
+                sigla: true,
+                tipo: true,
+                nivel: true
+              }
+            },
+            position: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                nivel: true
+              }
+            },
+            function: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                simbolo: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { dataInicio: 'desc' }
+          ]
+        },
+        supervisores: {
+          where: { ativo: true },
+          select: {
+            id: true,
+            tipo: true,
+            ativo: true,
+            organizationalUnit: {
+              select: {
+                id: true,
+                nome: true,
+                sigla: true
+              }
+            },
+            supervisor: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                assignments: {
+                  where: {
+                    situacao: { in: ['ATIVO', 'AFASTADO', 'LICENCA'] },
+                    isPrimary: true
+                  },
+                  include: {
+                    department: {
+                      select: { id: true, name: true, code: true }
+                    },
+                    organizationalUnit: {
+                      select: { id: true, nome: true, sigla: true }
+                    },
+                    position: {
+                      select: { id: true, nome: true }
+                    }
+                  },
+                  orderBy: [{ dataInicio: 'desc' }]
+                }
+              }
+            }
+          }
+        },
+        subordinados: {
+          where: { ativo: true },
+          select: {
+            id: true,
+            tipo: true,
+            ativo: true,
+            organizationalUnit: {
+              select: {
+                id: true,
+                nome: true,
+                sigla: true
+              }
+            },
+            subordinado: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                role: true,
+                assignments: {
+                  where: {
+                    situacao: { in: ['ATIVO', 'AFASTADO', 'LICENCA'] },
+                    isPrimary: true
+                  },
+                  include: {
+                    department: {
+                      select: { id: true, name: true, code: true }
+                    },
+                    organizationalUnit: {
+                      select: { id: true, nome: true, sigla: true }
+                    },
+                    position: {
+                      select: { id: true, nome: true }
+                    }
+                  },
+                  orderBy: [{ dataInicio: 'desc' }]
+                }
+              }
+            }
+          }
+        },
+        healthData: {
+          select: {
+            categoria: true,
+            registroProfissional: true,
+            tipoRegistro: true,
+            ufRegistro: true,
+            cns: true,
+            cbo: true,
+            especialidades: true,
+            status: true
+          }
+        },
+        educationData: {
+          select: {
+            categoria: true,
+            formacao: true,
+            disciplinas: true,
+            nivelEnsino: true
+          }
+        },
+        engineeringData: {
+          select: {
+            categoria: true,
+            registroProfissional: true,
+            tipoRegistro: true,
+            especialidades: true
+          }
+        },
+        socialAssistanceData: {
+          select: {
+            categoria: true,
+            registroProfissional: true,
+            tipoRegistro: true,
+            areasAtuacao: true
+          }
+        },
+        _count: {
+          select: {
+            assignedProtocolsSimplified: true,
+            subordinados: true
           }
         }
       }
@@ -1020,7 +1209,13 @@ router.get(
       );
     }
 
-    return res.json(createSuccessResponse({ user }));
+    const userWithDepartments = {
+      ...user,
+      departments: getUserDepartments(user as any),
+      primaryDepartment: getPrimaryDepartment(user as any)
+    };
+
+    return res.json(createSuccessResponse({ user: userWithDepartments }));
   })
 );
 
