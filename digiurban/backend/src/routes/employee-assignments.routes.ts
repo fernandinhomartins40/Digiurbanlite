@@ -1,7 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
 import { syncUserDepartmentsFromAssignments, syncAllUserDepartments } from '../services/assignment-sync.service';
+import {
+  assertDepartmentScopedEntities,
+  OrganizationalIntegrityError,
+} from '../services/organizational-integrity.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -14,7 +18,7 @@ const prisma = new PrismaClient();
  * GET /api/employee-assignments
  * Listar todos os vínculos funcionais
  */
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
+router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -82,7 +86,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/employee-assignments/:id
  * Buscar vínculo específico
  */
-router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -148,7 +152,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/employee-assignments/user/:userId
  * Buscar todos os vínculos de um servidor
  */
-router.get('/user/:userId', authenticateToken, async (req: Request, res: Response) => {
+router.get('/user/:userId', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { includeInactive } = req.query;
@@ -191,7 +195,7 @@ router.get('/user/:userId', authenticateToken, async (req: Request, res: Respons
  * POST /api/employee-assignments
  * Criar novo vínculo funcional
  */
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -223,37 +227,12 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Usuário não encontrado' });
     }
 
-    // Verificar se departamento existe
-    const department = await prisma.department.findUnique({ where: { id: departmentId } });
-    if (!department) {
-      return res.status(404).json({ error: 'Departamento não encontrado' });
-    }
-
-    // Verificar se unidade organizacional existe (se fornecida)
-    if (organizationalUnitId) {
-      const unit = await prisma.organizationalUnit.findUnique({
-        where: { id: organizationalUnitId },
-      });
-      if (!unit) {
-        return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
-      }
-    }
-
-    // Verificar se cargo existe (se fornecido)
-    if (positionId) {
-      const position = await prisma.position.findUnique({ where: { id: positionId } });
-      if (!position) {
-        return res.status(404).json({ error: 'Cargo não encontrado' });
-      }
-    }
-
-    // Verificar se função existe (se fornecida)
-    if (functionId) {
-      const func = await prisma.function.findUnique({ where: { id: functionId } });
-      if (!func) {
-        return res.status(404).json({ error: 'Função não encontrada' });
-      }
-    }
+    const { department } = await assertDepartmentScopedEntities({
+      departmentId,
+      organizationalUnitId,
+      positionId,
+      functionId,
+    });
 
     // Se isPrimary, remover o primary de outros vínculos do mesmo usuário
     if (isPrimary) {
@@ -338,6 +317,10 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro ao criar vínculo:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Já existe um vínculo com estas características',
@@ -352,7 +335,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  * PUT /api/employee-assignments/:id
  * Atualizar vínculo funcional
  */
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -383,6 +366,14 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     if (!existingAssignment) {
       return res.status(404).json({ error: 'Vínculo não encontrado' });
     }
+
+    await assertDepartmentScopedEntities({
+      departmentId: existingAssignment.departmentId,
+      organizationalUnitId:
+        organizationalUnitId !== undefined ? organizationalUnitId : existingAssignment.organizationalUnitId,
+      positionId: positionId !== undefined ? positionId : existingAssignment.positionId,
+      functionId: functionId !== undefined ? functionId : existingAssignment.functionId,
+    });
 
     // Se isPrimary, remover o primary de outros vínculos do mesmo usuário
     if (isPrimary && !existingAssignment.isPrimary) {
@@ -475,6 +466,11 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     res.json(assignment);
   } catch (error: any) {
     console.error('Erro ao atualizar vínculo:', error);
+
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     res.status(500).json({ error: 'Erro ao atualizar vínculo' });
   }
 });
@@ -483,7 +479,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
  * DELETE /api/employee-assignments/:id
  * Encerrar vínculo funcional
  */
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { motivo, dataFim } = req.body;
@@ -547,7 +543,7 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
  * GET /api/employee-assignments/:id/audit
  * Buscar histórico de auditoria de um vínculo
  */
-router.get('/:id/audit', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id/audit', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -567,7 +563,7 @@ router.get('/:id/audit', authenticateToken, async (req: Request, res: Response) 
  * POST /api/employee-assignments/sync-all
  * Sincronizar UserDepartments de TODOS os servidores (migração/reparo)
  */
-router.post('/sync-all', authenticateToken, async (req: Request, res: Response) => {
+router.post('/sync-all', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const result = await syncAllUserDepartments();
     res.json({

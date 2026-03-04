@@ -73,17 +73,21 @@ export function useSaudeStats() {
           axios.get(`${process.env.NEXT_PUBLIC_API_URL}/secretarias/saude/health-units/stats`, { headers })
         ]);
 
-        if (statsResponse.data.success) {
-          setStats(statsResponse.data.data);
-        }
+        const normalizePayload = <T,>(payload: any): T | null => {
+          if (payload?.success && payload?.data) {
+            return payload.data as T;
+          }
 
-        if (dashboardResponse.data.success) {
-          setDashboard(dashboardResponse.data.data);
-        }
+          if (payload && typeof payload === 'object') {
+            return payload as T;
+          }
 
-        if (healthUnitsResponse.data.success) {
-          setHealthUnitsStats(healthUnitsResponse.data.data);
-        }
+          return null;
+        };
+
+        setStats(normalizePayload<SaudeStats>(statsResponse.data));
+        setDashboard(normalizePayload<DashboardStats>(dashboardResponse.data));
+        setHealthUnitsStats(normalizePayload<HealthUnitsStats>(healthUnitsResponse.data));
 
         setError(null);
       } catch (err: any) {

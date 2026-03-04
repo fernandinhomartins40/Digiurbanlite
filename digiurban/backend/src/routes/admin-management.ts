@@ -18,16 +18,37 @@ import {
 } from '../types/roles';
 import { generateCompleteWorkflowBySubtype } from '../services/workflow-template.service';
 import { createServiceWorkflow } from '../services/service-workflow.service';
-// COMENTADO TEMPORARIAMENTE - arquivo não existe
-// import {
-//   getUserDepartments,
-//   getPrimaryDepartment,
-//   getUserDepartmentIds,
-//   syncUserDepartments
-// } from '../types/user-departments';
-
-// ✅ Helpers implementados usando userDepartments do Prisma
+import {
+  buildUserDepartmentScopeWhere,
+  extractDepartmentIdsFromOrganization,
+  extractPrimaryDepartmentIdFromOrganization,
+  getAccessibleDepartmentIdsForUser,
+  reconcileAdministrativeDepartmentAssignments,
+} from '../services/organizational-context.service';
+// Helpers implementados usando assignments como fonte primaria e
+// userDepartments/user.departmentId apenas como projecoes de compatibilidade.
 const getUserDepartments = (user: any) => {
+  const assignmentDepartments =
+    user.assignments
+      ?.filter((assignment: any) => ['ATIVO', 'AFASTADO', 'LICENCA'].includes(assignment.situacao))
+      .map((assignment: any) => ({
+        id: assignment.department.id,
+        name: assignment.department.name,
+        code: assignment.department.code,
+        isPrimary: assignment.isPrimary,
+        isActive: true
+      })) || [];
+
+  if (assignmentDepartments.length > 0) {
+    const uniqueDepartments = new Map<string, any>();
+    for (const department of assignmentDepartments) {
+      if (!uniqueDepartments.has(department.id) || department.isPrimary) {
+        uniqueDepartments.set(department.id, department);
+      }
+    }
+    return Array.from(uniqueDepartments.values());
+  }
+
   if (!user.userDepartments) return [];
   return user.userDepartments.map((ud: any) => ({
     id: ud.department.id,
@@ -39,21 +60,22 @@ const getUserDepartments = (user: any) => {
 };
 
 const getPrimaryDepartment = (user: any) => {
+  const primaryDepartmentId = extractPrimaryDepartmentIdFromOrganization(user);
+  if (!primaryDepartmentId) return null;
+
+  const primaryAssignment = user.assignments?.find(
+    (assignment: any) =>
+      assignment.departmentId === primaryDepartmentId &&
+      ['ATIVO', 'AFASTADO', 'LICENCA'].includes(assignment.situacao)
+  );
+
+  if (primaryAssignment?.department) {
+    return primaryAssignment.department;
+  }
+
   if (!user.userDepartments) return user.department || null;
-  const primary = user.userDepartments.find((ud: any) => ud.isPrimary && ud.isActive);
+  const primary = user.userDepartments.find((ud: any) => ud.departmentId === primaryDepartmentId);
   return primary ? primary.department : user.department || null;
-};
-
-const getUserDepartmentIds = async (userId: string): Promise<string[]> => {
-  const userDepts = await prisma.userDepartment.findMany({
-    where: { userId, isActive: true },
-    select: { departmentId: true }
-  });
-  return userDepts.map(ud => ud.departmentId);
-};
-
-const syncUserDepartments = async (userId: string, departmentIds: string[], primaryDeptId?: string) => {
-  // Esta função é chamada inline no código, então não precisa de implementação aqui
 };
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
@@ -130,7 +152,7 @@ interface UserPerformance {
 }
 
 interface ServiceWhereInput {
-  departmentId?: string;
+  departmentId?: string | { in: string[] };
   category?: string;
   isActive?: boolean;
 }
@@ -139,7 +161,7 @@ interface ServiceWhereInput {
 type UserWhereInput = Prisma.UserWhereInput;
 
 interface ProtocolFilterInput {
-  departmentId?: string;
+  departmentId?: string | { in: string[] };
   createdAt?: {
     gte: Date;
     lte: Date;
@@ -270,13 +292,16 @@ function normalizeServiceData<T extends { requiredDocuments?: any }>(service: T)
 }
 
 function createServiceWhereClause(params: {
-  departmentId?: string;
+  departmentId?: string | { in: string[] };
+  departmentIds?: string[];
   category?: string;
   isActive?: boolean;
 }): Omit<ServiceWhereInput, 'tenantId'> {
   const where: Omit<ServiceWhereInput, 'tenantId'> = {};
 
-  if (params.departmentId) {
+  if (params.departmentIds && params.departmentIds.length > 0) {
+    where.departmentId = { in: params.departmentIds };
+  } else if (params.departmentId) {
     where.departmentId = params.departmentId;
   }
 
@@ -293,28 +318,43 @@ function createServiceWhereClause(params: {
 
 function createUserWhereClause(params: {
   departmentId?: string;
+  departmentIds?: string[];
   role?: string;
   isActive?: boolean;
   excludeSuperAdmin?: boolean;
 }): UserWhereInput {
-  const where: UserWhereInput = {};
+  const andClauses: UserWhereInput[] = [];
+  const scopedDepartmentIds = Array.from(
+    new Set(
+      [params.departmentId, ...(params.departmentIds || [])].filter(
+        (departmentId): departmentId is string => Boolean(departmentId)
+      )
+    )
+  );
 
-  if (params.departmentId) {
-    where.departmentId = params.departmentId;
+  if (scopedDepartmentIds.length > 0) {
+    andClauses.push(buildUserDepartmentScopeWhere(scopedDepartmentIds));
   }
 
-  // Handle role filter with proper priority for excludeSuperAdmin
   if (params.excludeSuperAdmin) {
-    where.role = { not: 'SUPER_ADMIN' as const };
+    andClauses.push({ role: { not: 'SUPER_ADMIN' as const } });
   } else if (params.role) {
-    where.role = params.role as any; // Cast to handle UserRole enum
+    andClauses.push({ role: params.role as any });
   }
 
   if (params.isActive !== undefined) {
-    where.isActive = params.isActive;
+    andClauses.push({ isActive: params.isActive });
   }
 
-  return where;
+  if (andClauses.length === 0) {
+    return {};
+  }
+
+  if (andClauses.length === 1) {
+    return andClauses[0];
+  }
+
+  return { AND: andClauses };
 }
 
 // ====================== MIDDLEWARE FUNCTIONS ======================
@@ -468,14 +508,19 @@ router.get(
 
     // Construir filtros baseados no nível de acesso
     const whereParams: {
-      departmentId?: string;
+      departmentId?: string | { in: string[] };
+      departmentIds?: string[];
       category?: string;
       isActive?: boolean;
     } = {};
 
     // Filtrar por departamento se não for ADMIN
-    if (user.role !== 'ADMIN' && user.departmentId) {
-      whereParams.departmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      whereParams.departmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
     }
 
     if (category) {
@@ -540,9 +585,18 @@ router.post(
     const { user } = req;
 
     // Verificar se o usuário pode criar serviços no departamento
-    let departmentId = user.departmentId;
-    if (user.role === 'ADMIN' && data.departmentId) {
-      departmentId = data.departmentId;
+    let departmentId = data.departmentId || user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      const scopedDepartmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
+      if (scopedDepartmentIds.length === 0) {
+        departmentId = undefined;
+      } else if (!departmentId || !scopedDepartmentIds.includes(departmentId)) {
+        departmentId = scopedDepartmentIds[0];
+      }
     }
 
     if (!departmentId) {
@@ -633,11 +687,18 @@ router.put(
 
     // Verificar se o serviço existe e usuário tem acesso
     const serviceWhereParams: {
-      departmentId?: string;
+      departmentId?: string | { in: string[] };
     } = {};
 
-    if (user.role !== 'ADMIN' && user.departmentId) {
-      serviceWhereParams.departmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      const scopedDepartmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
+      if (scopedDepartmentIds.length > 0) {
+        serviceWhereParams.departmentId = { in: scopedDepartmentIds };
+      }
     }
 
     const service = await prisma.serviceSimplified.findFirst({
@@ -708,6 +769,7 @@ router.get(
     // Construir filtros baseados no nível de acesso
     const whereParams: {
       departmentId?: string;
+      departmentIds?: string[];
       role?: string;
       isActive?: boolean;
       excludeSuperAdmin: boolean;
@@ -716,8 +778,12 @@ router.get(
         };
 
     // Filtrar por departamento se não for ADMIN
-    if (user.role !== 'ADMIN' && user.departmentId) {
-      whereParams.departmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      whereParams.departmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
     }
 
     if (role) {
@@ -1005,9 +1071,14 @@ router.post(
     }
 
     // Se não é ADMIN, forçar apenas seus próprios departamentos
-    if (user.role !== 'ADMIN' && user.departmentId) {
-      departmentIds = [user.departmentId];
-      primaryDepartmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      const scopedDepartmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
+      departmentIds = scopedDepartmentIds;
+      primaryDepartmentId = scopedDepartmentIds[0] || null;
     }
 
     // ✅ VALIDAÇÃO PROFISSIONAL: Verificar se todos os departamentos existem e são oficiais
@@ -1043,7 +1114,6 @@ router.post(
         email: data.email,
         password: hashedPassword,
         role: data.role,
-        departmentId: primaryDepartmentId, // ✅ Manter compatibilidade
         isActive: true,
         mustChangePassword: true,
         // ✅ DADOS DE SERVIDOR PÚBLICO
@@ -1058,15 +1128,7 @@ router.post(
         situacaoFuncional: data.situacaoFuncional || 'ATIVO',
         dataAdmissao: data.dataAdmissao ? new Date(data.dataAdmissao) : null,
         observacoes: data.observacoes || null,
-        // ✅ NOVO: Criar userDepartments
-        userDepartments: {
-          create: departmentIds.map(deptId => ({
-            departmentId: deptId,
-            isPrimary: deptId === primaryDepartmentId,
-            isActive: true
-          }))
-        }
-        },
+      },
       select: {
         id: true,
         name: true,
@@ -1101,10 +1163,92 @@ router.post(
         });
 
     // ✅ Adicionar campos computed
+    await reconcileAdministrativeDepartmentAssignments({
+      userId: newUser.id,
+      departmentIds,
+      primaryDepartmentId,
+      executorId: user.id
+    });
+
+    const refreshedUser = await prisma.user.findUnique({
+      where: { id: newUser.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        departmentId: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' }
+          ]
+        },
+        assignments: {
+          where: {
+            situacao: { in: ['ATIVO', 'AFASTADO', 'LICENCA'] }
+          },
+          include: {
+            department: {
+              select: { id: true, name: true, code: true }
+            },
+            organizationalUnit: {
+              select: {
+                id: true,
+                nome: true,
+                sigla: true,
+                tipo: true,
+                nivel: true
+              }
+            },
+            position: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                nivel: true
+              }
+            },
+            function: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                simbolo: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { dataInicio: 'desc' }
+          ]
+        }
+      }
+    });
+
     const userWithDepartments = {
-      ...newUser,
-      departments: getUserDepartments(newUser as any),
-      primaryDepartment: getPrimaryDepartment(newUser as any)
+      ...(refreshedUser || newUser),
+      departments: getUserDepartments((refreshedUser || newUser) as any),
+      primaryDepartment: getPrimaryDepartment((refreshedUser || newUser) as any)
     };
 
     return res.status(201).json(
@@ -1134,13 +1278,18 @@ router.put(
     // Verificar se o usuário existe e tem acesso
     const userWhereParams: {
       departmentId?: string;
+      departmentIds?: string[];
       excludeSuperAdmin: boolean;
     } = {
       excludeSuperAdmin: true
         };
 
-    if (user.role !== 'ADMIN' && user.departmentId) {
-      userWhereParams.departmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      userWhereParams.departmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
     }
 
     const targetUser = await prisma.user.findFirst({
@@ -1232,11 +1381,6 @@ router.put(
     if (data.role) updateData.role = data.role;
     if (data.isActive !== undefined) updateData.isActive = data.isActive;
 
-    // ✅ Atualizar departmentId (compatibilidade)
-    if (primaryDepartmentId !== undefined) {
-      updateData.departmentId = primaryDepartmentId;
-    }
-
     // ✅ DADOS DE SERVIDOR PÚBLICO
     if (data.cpf !== undefined) updateData.cpf = data.cpf || null;
     if (data.matricula !== undefined) updateData.matricula = data.matricula || null;
@@ -1249,39 +1393,6 @@ router.put(
     if (data.situacaoFuncional !== undefined) updateData.situacaoFuncional = data.situacaoFuncional || null;
     if (data.dataAdmissao !== undefined) updateData.dataAdmissao = data.dataAdmissao ? new Date(data.dataAdmissao) : null;
     if (data.observacoes !== undefined) updateData.observacoes = data.observacoes || null;
-
-    // ✅ NOVO: Atualizar userDepartments se fornecido
-    if (departmentIds !== undefined) {
-      // Desativar todos os departamentos atuais
-      await prisma.userDepartment.updateMany({
-        where: { userId, isActive: true },
-        data: { isActive: false }
-      });
-
-      // Criar/reativar novos departamentos
-      if (departmentIds.length > 0) {
-        for (const deptId of departmentIds) {
-          await prisma.userDepartment.upsert({
-            where: {
-              userId_departmentId: {
-                userId,
-                departmentId: deptId
-              }
-            },
-            create: {
-              userId,
-              departmentId: deptId,
-              isPrimary: deptId === primaryDepartmentId,
-              isActive: true
-            },
-            update: {
-              isPrimary: deptId === primaryDepartmentId,
-              isActive: true
-            }
-          });
-        }
-      }
-    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -1320,10 +1431,94 @@ router.put(
         });
 
     // ✅ Adicionar campos computed
+    if (departmentIds !== undefined) {
+      await reconcileAdministrativeDepartmentAssignments({
+        userId,
+        departmentIds,
+        primaryDepartmentId,
+        executorId: user.id
+      });
+    }
+
+    const refreshedUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        updatedAt: true,
+        departmentId: true,
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { createdAt: 'asc' }
+          ]
+        },
+        assignments: {
+          where: {
+            situacao: { in: ['ATIVO', 'AFASTADO', 'LICENCA'] }
+          },
+          include: {
+            department: {
+              select: { id: true, name: true, code: true }
+            },
+            organizationalUnit: {
+              select: {
+                id: true,
+                nome: true,
+                sigla: true,
+                tipo: true,
+                nivel: true
+              }
+            },
+            position: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                nivel: true
+              }
+            },
+            function: {
+              select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                simbolo: true
+              }
+            }
+          },
+          orderBy: [
+            { isPrimary: 'desc' },
+            { dataInicio: 'desc' }
+          ]
+        }
+      }
+    });
+
     const userWithDepartments = {
-      ...updatedUser,
-      departments: getUserDepartments(updatedUser as any),
-      primaryDepartment: getPrimaryDepartment(updatedUser as any)
+      ...(refreshedUser || updatedUser),
+      departments: getUserDepartments((refreshedUser || updatedUser) as any),
+      primaryDepartment: getPrimaryDepartment((refreshedUser || updatedUser) as any)
     };
 
     return res.json(createSuccessResponse(userWithDepartments, 'Membro da equipe atualizado com sucesso'));
@@ -1350,13 +1545,18 @@ router.delete(
     // Verificar se o usuário existe e tem acesso
     const userWhereParams: {
       departmentId?: string;
+      departmentIds?: string[];
       excludeSuperAdmin: boolean;
     } = {
       excludeSuperAdmin: true
         };
 
-    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN' && user.departmentId) {
-      userWhereParams.departmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      userWhereParams.departmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
     }
 
     const targetUser = await prisma.user.findFirst({
@@ -1506,8 +1706,15 @@ router.get(
         };
 
     // Filtrar por departamento se não for ADMIN
-    if (user.role !== 'ADMIN' && user.departmentId) {
-      protocolFilter.departmentId = user.departmentId;
+    if (user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+      const scopedDepartmentIds = await getAccessibleDepartmentIdsForUser({
+        userId: user.id,
+        role: user.role,
+        departmentId: user.departmentId
+      });
+      if (scopedDepartmentIds.length > 0) {
+        protocolFilter.departmentId = { in: scopedDepartmentIds };
+      }
     }
 
     // Performance por usuário

@@ -472,7 +472,7 @@ export function ServerManagementModal({
               </div>
 
               <div className="space-y-2">
-                <Label>Departamentos</Label>
+                <Label>Escopo administrativo (departamentos)</Label>
                 <div className="border rounded-md p-3 max-h-[200px] overflow-y-auto space-y-2">
                   {loadingDepartments ? (
                     <p className="text-sm text-muted-foreground">Carregando...</p>
@@ -542,6 +542,10 @@ export function ServerManagementModal({
                     })
                   )}
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  O departamento controla o escopo administrativo do usuário. Setor, cargo e função operacionais
+                  devem ser gerenciados nas lotações do organograma.
+                </p>
               </div>
 
               {isEditMode && (
@@ -638,7 +642,7 @@ export function ServerManagementModal({
             {/* Tab: Dados Funcionais */}
             <TabsContent value="funcional" className="space-y-3">
               <div className="space-y-2">
-                <Label htmlFor="cargoEfetivo">Cargo Efetivo</Label>
+                <Label htmlFor="cargoEfetivo">Cargo efetivo (informativo)</Label>
                 <Input
                   id="cargoEfetivo"
                   value={formData.cargoEfetivo}
@@ -646,7 +650,9 @@ export function ServerManagementModal({
                   placeholder="Ex: Médico, Professor, Engenheiro"
                   disabled={loading}
                 />
-                <p className="text-xs text-muted-foreground">Cargo de concurso ou nomeação</p>
+                <p className="text-xs text-muted-foreground">
+                  Campo legado apenas para referência. O cargo operacional atual vem do vínculo funcional centralizado.
+                </p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -13,7 +13,7 @@ const prisma = new PrismaClient();
  * GET /api/functions
  * Listar todas as funções
  */
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
+router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       departmentId,
@@ -61,7 +61,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/functions/:id
  * Buscar função específica
  */
-router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -108,7 +108,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
  * POST /api/functions
  * Criar nova função
  */
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       nome,
@@ -173,7 +173,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  * PUT /api/functions/:id
  * Atualizar função
  */
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -236,7 +236,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
  * DELETE /api/functions/:id
  * Desativar função (soft delete)
  */
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

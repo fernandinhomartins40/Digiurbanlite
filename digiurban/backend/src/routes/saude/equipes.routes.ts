@@ -1,7 +1,9 @@
 import { Router } from 'express';
 import equipeService from '../../services/saude/equipe-saude.service';
+import { authenticateAdmin } from '../../middleware/auth';
 
 const router = Router();
+router.use(authenticateAdmin);
 
 // POST /api/saude/equipes - Criar equipe
 router.post('/', async (req, res) => {

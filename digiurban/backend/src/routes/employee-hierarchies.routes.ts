@@ -1,6 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
+import {
+  assertDepartmentScopedEntities,
+  assertUserAssignmentScope,
+  assertUsersShareActiveDepartmentScope,
+  OrganizationalIntegrityError,
+} from '../services/organizational-integrity.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -13,7 +19,7 @@ const prisma = new PrismaClient();
  * GET /api/employee-hierarchies
  * Listar todas as relações hierárquicas
  */
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
+router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       subordinadoId,
@@ -58,7 +64,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/employee-hierarchies/:id
  * Buscar hierarquia específica
  */
-router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -124,7 +130,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/employee-hierarchies/employee/:userId/subordinates
  * Buscar subordinados diretos de um servidor
  */
-router.get('/employee/:userId/subordinates', authenticateToken, async (req: Request, res: Response) => {
+router.get('/employee/:userId/subordinates', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { tipo, includeInactive } = req.query;
@@ -176,7 +182,7 @@ router.get('/employee/:userId/subordinates', authenticateToken, async (req: Requ
  * GET /api/employee-hierarchies/employee/:userId/supervisors
  * Buscar supervisores de um servidor
  */
-router.get('/employee/:userId/supervisors', authenticateToken, async (req: Request, res: Response) => {
+router.get('/employee/:userId/supervisors', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const { tipo, includeInactive } = req.query;
@@ -228,7 +234,7 @@ router.get('/employee/:userId/supervisors', authenticateToken, async (req: Reque
  * GET /api/employee-hierarchies/employee/:userId/org-chart
  * Buscar organograma completo de um servidor (hierarquia recursiva)
  */
-router.get('/employee/:userId/org-chart', authenticateToken, async (req: Request, res: Response) => {
+router.get('/employee/:userId/org-chart', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -322,7 +328,7 @@ router.get('/employee/:userId/org-chart', authenticateToken, async (req: Request
  * POST /api/employee-hierarchies
  * Criar nova relação hierárquica
  */
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       subordinadoId,
@@ -348,30 +354,44 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       });
     }
 
-    // Verificar se subordinado existe
-    const subordinado = await prisma.user.findUnique({
-      where: { id: subordinadoId },
-    });
-    if (!subordinado) {
-      return res.status(404).json({ error: 'Subordinado não encontrado' });
-    }
+    let resolvedDepartmentId: string | null = null;
 
-    // Verificar se supervisor existe
-    const supervisor = await prisma.user.findUnique({
-      where: { id: supervisorId },
-    });
-    if (!supervisor) {
-      return res.status(404).json({ error: 'Supervisor não encontrado' });
-    }
-
-    // Verificar se unidade organizacional existe (se fornecida)
     if (organizationalUnitId) {
-      const unit = await prisma.organizationalUnit.findUnique({
+      const organizationalUnit = await prisma.organizationalUnit.findUnique({
         where: { id: organizationalUnitId },
+        select: { departmentId: true },
       });
-      if (!unit) {
+
+      if (!organizationalUnit) {
         return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
       }
+
+      await assertDepartmentScopedEntities({
+        departmentId: organizationalUnit.departmentId,
+        organizationalUnitId,
+      });
+      resolvedDepartmentId = organizationalUnit?.departmentId || null;
+    } else {
+      const sharedScope = await assertUsersShareActiveDepartmentScope({
+        subordinateId: subordinadoId,
+        supervisorId,
+      });
+      resolvedDepartmentId = sharedScope.sharedDepartmentId;
+    }
+
+    if (resolvedDepartmentId) {
+      await assertUserAssignmentScope({
+        userId: subordinadoId,
+        departmentId: resolvedDepartmentId,
+        organizationalUnitId,
+        label: 'Subordinado',
+      });
+      await assertUserAssignmentScope({
+        userId: supervisorId,
+        departmentId: resolvedDepartmentId,
+        organizationalUnitId,
+        label: 'Supervisor',
+      });
     }
 
     // Verificar se já existe relação ativa do mesmo tipo
@@ -418,6 +438,10 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro ao criar hierarquia:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Já existe esta relação hierárquica',
@@ -432,7 +456,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  * PUT /api/employee-hierarchies/:id
  * Atualizar relação hierárquica
  */
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -450,6 +474,34 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
 
     if (!existingHierarchy) {
       return res.status(404).json({ error: 'Hierarquia não encontrada' });
+    }
+
+    if (organizationalUnitId !== undefined && organizationalUnitId !== null) {
+      const organizationalUnit = await prisma.organizationalUnit.findUnique({
+        where: { id: organizationalUnitId },
+        select: { departmentId: true },
+      });
+
+      if (!organizationalUnit) {
+        return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
+      }
+
+      await assertDepartmentScopedEntities({
+        departmentId: organizationalUnit.departmentId,
+        organizationalUnitId,
+      });
+      await assertUserAssignmentScope({
+        userId: existingHierarchy.subordinadoId,
+        departmentId: organizationalUnit.departmentId,
+        organizationalUnitId,
+        label: 'Subordinado',
+      });
+      await assertUserAssignmentScope({
+        userId: existingHierarchy.supervisorId,
+        departmentId: organizationalUnit.departmentId,
+        organizationalUnitId,
+        label: 'Supervisor',
+      });
     }
 
     // Update dinâmico
@@ -481,6 +533,11 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     res.json(hierarchy);
   } catch (error) {
     console.error('Erro ao atualizar hierarquia:', error);
+
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     res.status(500).json({ error: 'Erro ao atualizar hierarquia' });
   }
 });
@@ -489,7 +546,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
  * DELETE /api/employee-hierarchies/:id
  * Desativar relação hierárquica
  */
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { dataFim, motivo } = req.body;

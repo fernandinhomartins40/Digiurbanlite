@@ -1,8 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticateAdmin } from '../middleware/auth';
+import {
+  autoMapDomainUnits,
+  listDomainUnits,
+} from '../services/organizational-unit-mapping.service';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authenticateAdmin);
 
 /**
  * GET /api/secretarias/saude/dashboard
@@ -169,6 +175,29 @@ router.get('/health-units/stats', async (req: Request, res: Response) => {
     });
   } catch (error: any) {
     console.error('Erro nas stats de unidades de saúde:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.get('/health-units', async (_req: Request, res: Response) => {
+  try {
+    const units = await listDomainUnits({ model: 'unidadeSaude' });
+    res.json(units);
+  } catch (error: any) {
+    console.error('Erro ao listar unidades de saúde mapeadas:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/health-units/auto-map', async (_req: Request, res: Response) => {
+  try {
+    const result = await autoMapDomainUnits({
+      model: 'unidadeSaude',
+      departmentName: 'Secretaria de Saúde',
+    });
+    res.json(result);
+  } catch (error: any) {
+    console.error('Erro ao auto-mapear unidades de saúde:', error);
     res.status(500).json({ error: error.message });
   }
 });

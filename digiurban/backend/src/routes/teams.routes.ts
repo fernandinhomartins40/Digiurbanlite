@@ -1,6 +1,11 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
+import {
+  assertDepartmentScopedEntities,
+  assertUserAssignmentScope,
+  OrganizationalIntegrityError,
+} from '../services/organizational-integrity.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -13,7 +18,7 @@ const prisma = new PrismaClient();
  * GET /api/teams
  * Listar todas as equipes
  */
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
+router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       departmentId,
@@ -71,7 +76,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/teams/:id
  * Buscar equipe específica
  */
-router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -145,7 +150,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
  * POST /api/teams
  * Criar nova equipe
  */
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       nome,
@@ -166,32 +171,19 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       });
     }
 
-    // Verificar se departamento existe
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId },
+    await assertDepartmentScopedEntities({
+      departmentId,
+      organizationalUnitId,
     });
-    if (!department) {
-      return res.status(404).json({ error: 'Departamento não encontrado' });
-    }
-
-    // Verificar se unidade organizacional existe (se fornecida)
-    if (organizationalUnitId) {
-      const unit = await prisma.organizationalUnit.findUnique({
-        where: { id: organizationalUnitId },
-      });
-      if (!unit) {
-        return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
-      }
-    }
 
     // Verificar se coordenador existe (se fornecido)
     if (coordenadorId) {
-      const coordenador = await prisma.user.findUnique({
-        where: { id: coordenadorId },
+      await assertUserAssignmentScope({
+        userId: coordenadorId,
+        departmentId,
+        organizationalUnitId,
+        label: 'Coordenador',
       });
-      if (!coordenador) {
-        return res.status(404).json({ error: 'Coordenador não encontrado' });
-      }
     }
 
     const team = await prisma.team.create({
@@ -224,6 +216,10 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro ao criar equipe:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Já existe uma equipe com esta sigla neste departamento',
@@ -238,7 +234,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  * PUT /api/teams/:id
  * Atualizar equipe
  */
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -259,6 +255,22 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
 
     if (!existingTeam) {
       return res.status(404).json({ error: 'Equipe não encontrada' });
+    }
+
+    await assertDepartmentScopedEntities({
+      departmentId: existingTeam.departmentId,
+      organizationalUnitId:
+        organizationalUnitId !== undefined ? organizationalUnitId : existingTeam.organizationalUnitId,
+    });
+
+    if (coordenadorId !== undefined && coordenadorId !== null) {
+      await assertUserAssignmentScope({
+        userId: coordenadorId,
+        departmentId: existingTeam.departmentId,
+        organizationalUnitId:
+          organizationalUnitId !== undefined ? organizationalUnitId : existingTeam.organizationalUnitId,
+        label: 'Coordenador',
+      });
     }
 
     // Update dinâmico
@@ -294,6 +306,10 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro ao atualizar equipe:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Já existe uma equipe com esta sigla neste departamento',
@@ -308,7 +324,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
  * DELETE /api/teams/:id
  * Desativar equipe
  */
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { dataFim, motivo } = req.body;
@@ -360,7 +376,7 @@ router.delete('/:id', authenticateToken, async (req: Request, res: Response) => 
  * GET /api/teams/:id/members
  * Listar membros de uma equipe
  */
-router.get('/:id/members', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id/members', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const { includeInactive } = req.query;
@@ -407,7 +423,7 @@ router.get('/:id/members', authenticateToken, async (req: Request, res: Response
  * POST /api/teams/:id/members
  * Adicionar membro à equipe
  */
-router.post('/:id/members', authenticateToken, async (req: Request, res: Response) => {
+router.post('/:id/members', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -433,13 +449,12 @@ router.post('/:id/members', authenticateToken, async (req: Request, res: Respons
       return res.status(404).json({ error: 'Equipe não encontrada' });
     }
 
-    // Verificar se usuário existe
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
+    await assertUserAssignmentScope({
+      userId,
+      departmentId: team.departmentId,
+      organizationalUnitId: team.organizationalUnitId,
+      label: 'Usuário',
     });
-    if (!user) {
-      return res.status(404).json({ error: 'Usuário não encontrado' });
-    }
 
     // Verificar se já é membro ativo
     const existingMember = await prisma.teamMember.findFirst({
@@ -477,6 +492,10 @@ router.post('/:id/members', authenticateToken, async (req: Request, res: Respons
   } catch (error: any) {
     console.error('Erro ao adicionar membro:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Este membro já está registrado nesta equipe com esta data',
@@ -491,7 +510,7 @@ router.post('/:id/members', authenticateToken, async (req: Request, res: Respons
  * PUT /api/teams/:teamId/members/:memberId
  * Atualizar membro da equipe
  */
-router.put('/:teamId/members/:memberId', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:teamId/members/:memberId', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { memberId } = req.params;
     const {
@@ -540,7 +559,7 @@ router.put('/:teamId/members/:memberId', authenticateToken, async (req: Request,
  * DELETE /api/teams/:teamId/members/:memberId
  * Remover membro da equipe
  */
-router.delete('/:teamId/members/:memberId', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:teamId/members/:memberId', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { memberId } = req.params;
     const { dataFim, motivo } = req.body;

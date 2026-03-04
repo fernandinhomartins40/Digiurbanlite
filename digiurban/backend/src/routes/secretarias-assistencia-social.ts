@@ -1,8 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticateAdmin } from '../middleware/auth';
+import {
+  autoMapDomainUnits,
+  listDomainUnits,
+} from '../services/organizational-unit-mapping.service';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authenticateAdmin);
 
 // GET /dashboard
 router.get('/dashboard', async (req: Request, res: Response) => {
@@ -141,6 +147,29 @@ router.get('/social-units/stats', async (req: Request, res: Response) => {
     mapeadas,
     naoMapeadas,
   });
+});
+
+router.get('/social-units', async (_req: Request, res: Response) => {
+  try {
+    const units = await listDomainUnits({ model: 'unidadeCRAS' });
+    return res.json(units);
+  } catch (error: any) {
+    console.error('Erro ao listar unidades de assistência social:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/social-units/auto-map', async (_req: Request, res: Response) => {
+  try {
+    const result = await autoMapDomainUnits({
+      model: 'unidadeCRAS',
+      departmentName: 'Secretaria de Assistência Social',
+    });
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Erro ao auto-mapear unidades de assistência social:', error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

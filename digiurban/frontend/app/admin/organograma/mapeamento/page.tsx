@@ -1,12 +1,24 @@
 'use client'
-import { useState, useEffect, useCallback } from 'react'
+
+import { useCallback, useEffect, useState } from 'react'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Heart, GraduationCap, HandHeart, ArrowLeft, RefreshCw, Link2, CheckCircle, AlertCircle } from 'lucide-react'
+import {
+  AlertCircle,
+  ArrowLeft,
+  CheckCircle,
+  GraduationCap,
+  HandHeart,
+  Heart,
+  Link2,
+  RefreshCw,
+} from 'lucide-react'
 import Link from 'next/link'
+
+type DomainKey = 'saude' | 'educacao' | 'assistencia'
 
 interface DomainStats {
   total: number
@@ -14,8 +26,23 @@ interface DomainStats {
   unmapped: number
 }
 
+interface DomainUnit {
+  id: string
+  nome: string
+  tipo: string
+  bairro?: string | null
+  mapped: boolean
+  organizationalUnit?: {
+    id: string
+    nome: string
+    sigla?: string | null
+    tipo?: string | null
+  } | null
+}
+
 interface TabState {
   stats: DomainStats | null
+  units: DomainUnit[]
   loading: boolean
   error: string | null
   autoMapping: boolean
@@ -23,171 +50,221 @@ interface TabState {
 
 const initialTabState: TabState = {
   stats: null,
+  units: [],
   loading: false,
   error: null,
   autoMapping: false,
 }
 
-const MOCK_UNITS = [
-  { id: 1, name: 'Unidade Central', type: 'Principal', mapped: true, orgUnit: 'Secretaria Central' },
-  { id: 2, name: 'Unidade Norte', type: 'Regional', mapped: false, orgUnit: null },
-  { id: 3, name: 'Unidade Sul', type: 'Regional', mapped: true, orgUnit: 'Divisão Sul' },
-  { id: 4, name: 'Unidade Leste', type: 'Regional', mapped: false, orgUnit: null },
-  { id: 5, name: 'Unidade Oeste', type: 'Regional', mapped: true, orgUnit: 'Divisão Oeste' },
-]
+const DOMAIN_CONFIG: Record<
+  DomainKey,
+  {
+    label: string
+    icon: typeof Heart
+    statsEndpoint: string
+    unitsEndpoint: string
+    autoMapEndpoint: string
+    accent: string
+    chip: string
+  }
+> = {
+  saude: {
+    label: 'Saúde',
+    icon: Heart,
+    statsEndpoint: '/api/secretarias/saude/health-units/stats',
+    unitsEndpoint: '/api/secretarias/saude/health-units',
+    autoMapEndpoint: '/api/secretarias/saude/health-units/auto-map',
+    accent: 'border-l-red-400',
+    chip: 'bg-red-50 text-red-500',
+  },
+  educacao: {
+    label: 'Educação',
+    icon: GraduationCap,
+    statsEndpoint: '/api/secretarias/educacao/education-units/stats',
+    unitsEndpoint: '/api/secretarias/educacao/education-units',
+    autoMapEndpoint: '/api/secretarias/educacao/education-units/auto-map',
+    accent: 'border-l-blue-400',
+    chip: 'bg-blue-50 text-blue-500',
+  },
+  assistencia: {
+    label: 'Assistência Social',
+    icon: HandHeart,
+    statsEndpoint: '/api/secretarias/assistencia-social/social-units/stats',
+    unitsEndpoint: '/api/secretarias/assistencia-social/social-units',
+    autoMapEndpoint: '/api/secretarias/assistencia-social/social-units/auto-map',
+    accent: 'border-l-emerald-400',
+    chip: 'bg-emerald-50 text-emerald-500',
+  },
+}
+
+function unwrapPayload<T>(payload: any): T {
+  if (payload?.success && payload?.data !== undefined) {
+    return payload.data as T
+  }
+
+  return payload as T
+}
+
+function normalizeStats(payload: any): DomainStats {
+  const data = unwrapPayload<any>(payload)
+  const total = Number(data?.ativas ?? data?.total ?? 0)
+  const mapped = Number(data?.mapeadas ?? 0)
+  const unmapped = Number(data?.naoMapeadas ?? Math.max(total - mapped, 0))
+
+  return { total, mapped, unmapped }
+}
+
+function normalizeUnits(payload: any): DomainUnit[] {
+  const data = unwrapPayload<any[]>(payload)
+
+  if (!Array.isArray(data)) {
+    return []
+  }
+
+  return data.map((unit) => ({
+    id: String(unit.id),
+    nome: unit.nome || unit.name || 'Sem nome',
+    tipo: unit.tipo || unit.type || 'Não informado',
+    bairro: unit.bairro || null,
+    mapped: Boolean(unit.mapped || unit.organizationalUnitId),
+    organizationalUnit: unit.organizationalUnit || null,
+  }))
+}
 
 export default function MapeamentoPage() {
   const { apiRequest } = useAdminAuth()
+  const [activeTab, setActiveTab] = useState<DomainKey>('saude')
+  const [states, setStates] = useState<Record<DomainKey, TabState>>({
+    saude: { ...initialTabState },
+    educacao: { ...initialTabState },
+    assistencia: { ...initialTabState },
+  })
 
-  const [saudeState, setSaudeState] = useState<TabState>({ ...initialTabState })
-  const [educacaoState, setEducacaoState] = useState<TabState>({ ...initialTabState })
-  const [assistenciaState, setAssistenciaState] = useState<TabState>({ ...initialTabState })
-  const [activeTab, setActiveTab] = useState('saude')
+  const loadDomain = useCallback(
+    async (domain: DomainKey) => {
+      const config = DOMAIN_CONFIG[domain]
 
-  const fetchSaudeStats = useCallback(async () => {
-    setSaudeState(prev => ({ ...prev, loading: true, error: null }))
-    try {
-      const data = await apiRequest('/api/secretarias/saude/health-units/stats')
-      setSaudeState(prev => ({
+      setStates((prev) => ({
         ...prev,
-        loading: false,
-        stats: {
-          total: data?.ativas ?? data?.total ?? 0,
-          mapped: data?.mapeadas ?? 0,
-          unmapped: data?.naoMapeadas ?? 0,
+        [domain]: {
+          ...prev[domain],
+          loading: true,
+          error: null,
         },
       }))
-    } catch {
-      setSaudeState(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Não foi possível carregar as estatísticas de Saúde.',
-      }))
-    }
-  }, [apiRequest])
 
-  const fetchEducacaoStats = useCallback(async () => {
-    setEducacaoState(prev => ({ ...prev, loading: true, error: null }))
-    try {
-      const data = await apiRequest('/api/secretarias/educacao/education-units/stats')
-      setEducacaoState(prev => ({
+      try {
+        const [statsResponse, unitsResponse] = await Promise.all([
+          apiRequest(config.statsEndpoint),
+          apiRequest(config.unitsEndpoint),
+        ])
+
+        setStates((prev) => ({
+          ...prev,
+          [domain]: {
+            ...prev[domain],
+            loading: false,
+            stats: normalizeStats(statsResponse),
+            units: normalizeUnits(unitsResponse),
+          },
+        }))
+      } catch (error) {
+        setStates((prev) => ({
+          ...prev,
+          [domain]: {
+            ...prev[domain],
+            loading: false,
+            error: `Não foi possível carregar ${config.label.toLowerCase()}.`,
+          },
+        }))
+      }
+    },
+    [apiRequest]
+  )
+
+  useEffect(() => {
+    void loadDomain('saude')
+    void loadDomain('educacao')
+    void loadDomain('assistencia')
+  }, [loadDomain])
+
+  const handleAutoMap = useCallback(
+    async (domain: DomainKey) => {
+      const config = DOMAIN_CONFIG[domain]
+
+      setStates((prev) => ({
         ...prev,
-        loading: false,
-        stats: {
-          total: data?.ativas ?? data?.total ?? 0,
-          mapped: data?.mapeadas ?? 0,
-          unmapped: data?.naoMapeadas ?? 0,
+        [domain]: {
+          ...prev[domain],
+          autoMapping: true,
+          error: null,
         },
       }))
-    } catch {
-      setEducacaoState(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Não foi possível carregar as estatísticas de Educação.',
-      }))
-    }
-  }, [apiRequest])
 
-  const fetchAssistenciaStats = useCallback(async () => {
-    setAssistenciaState(prev => ({ ...prev, loading: true, error: null }))
-    try {
-      const data = await apiRequest('/api/secretarias/assistencia-social/social-units/stats')
-      setAssistenciaState(prev => ({
-        ...prev,
-        loading: false,
-        stats: {
-          total: data?.ativas ?? data?.total ?? 0,
-          mapped: data?.mapeadas ?? 0,
-          unmapped: data?.naoMapeadas ?? 0,
-        },
-      }))
-    } catch {
-      setAssistenciaState(prev => ({
-        ...prev,
-        loading: false,
-        error: 'Não foi possível carregar as estatísticas de Assistência Social.',
-      }))
-    }
-  }, [apiRequest])
+      try {
+        await apiRequest(config.autoMapEndpoint, { method: 'POST' })
+        await loadDomain(domain)
+      } catch {
+        setStates((prev) => ({
+          ...prev,
+          [domain]: {
+            ...prev[domain],
+            error: `Não foi possível executar o auto-mapeamento de ${config.label.toLowerCase()}.`,
+          },
+        }))
+      } finally {
+        setStates((prev) => ({
+          ...prev,
+          [domain]: {
+            ...prev[domain],
+            autoMapping: false,
+          },
+        }))
+      }
+    },
+    [apiRequest, loadDomain]
+  )
 
-  useEffect(() => {
-    fetchSaudeStats()
-  }, [fetchSaudeStats])
-
-  useEffect(() => {
-    if (activeTab === 'educacao') {
-      fetchEducacaoStats()
-    }
-  }, [activeTab, fetchEducacaoStats])
-
-  useEffect(() => {
-    if (activeTab === 'assistencia') {
-      fetchAssistenciaStats()
-    }
-  }, [activeTab, fetchAssistenciaStats])
-
-  const handleAutoMap = async (domain: 'saude' | 'educacao' | 'assistencia') => {
-    const endpoints: Record<string, string> = {
-      saude: '/api/secretarias/saude/health-units/auto-map',
-      educacao: '/api/secretarias/educacao/education-units/auto-map',
-      assistencia: '/api/secretarias/assistencia-social/social-units/auto-map',
-    }
-    const setters: Record<string, React.Dispatch<React.SetStateAction<TabState>>> = {
-      saude: setSaudeState,
-      educacao: setEducacaoState,
-      assistencia: setAssistenciaState,
-    }
-    const setter = setters[domain]
-    setter(prev => ({ ...prev, autoMapping: true }))
-    try {
-      await apiRequest(endpoints[domain], { method: 'POST' })
-      if (domain === 'saude') fetchSaudeStats()
-      if (domain === 'educacao') fetchEducacaoStats()
-      if (domain === 'assistencia') fetchAssistenciaStats()
-    } catch {
-      // silently fail, stats will remain unchanged
-    } finally {
-      setter(prev => ({ ...prev, autoMapping: false }))
-    }
-  }
-
-  function StatsBar({ state }: { state: TabState }) {
-    if (state.loading) {
+  const renderStatsBar = (state: TabState) => {
+    if (state.loading && !state.stats) {
       return (
-        <div className="flex items-center gap-2 text-sm text-muted-foreground py-2">
+        <div className="flex items-center gap-2 py-2 text-sm text-muted-foreground">
           <RefreshCw className="h-4 w-4 animate-spin" />
           Carregando estatísticas...
         </div>
       )
     }
+
     if (state.error) {
       return (
-        <div className="flex items-center gap-2 text-sm text-destructive py-2">
+        <div className="flex items-center gap-2 py-2 text-sm text-destructive">
           <AlertCircle className="h-4 w-4" />
           {state.error}
         </div>
       )
     }
-    if (!state.stats) return null
+
+    if (!state.stats) {
+      return null
+    }
+
     return (
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">Total:</span>
-          <Badge variant="outline" className="text-sm font-semibold">
-            {state.stats.total}
-          </Badge>
+          <Badge variant="outline">{state.stats.total}</Badge>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">Mapeadas:</span>
-          <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100 text-sm font-semibold">
-            <CheckCircle className="h-3 w-3 mr-1" />
+          <Badge className="border-green-200 bg-green-100 text-green-800 hover:bg-green-100">
+            <CheckCircle className="mr-1 h-3 w-3" />
             {state.stats.mapped}
           </Badge>
         </div>
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-muted-foreground">Pendentes:</span>
-          <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100 text-sm font-semibold">
-            <AlertCircle className="h-3 w-3 mr-1" />
+          <Badge className="border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100">
+            <AlertCircle className="mr-1 h-3 w-3" />
             {state.stats.unmapped}
           </Badge>
         </div>
@@ -195,223 +272,177 @@ export default function MapeamentoPage() {
     )
   }
 
-  function UnitsTable({ domain }: { domain: 'saude' | 'educacao' | 'assistencia' }) {
-    return (
-      <div className="mt-4">
-        <div className="rounded-md border bg-muted/30 p-4 mb-4 flex items-start gap-2">
-          <AlertCircle className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
-          <p className="text-sm text-muted-foreground">
-            Configure os endpoints de listagem para ver os detalhes completos das unidades.
-            Os dados abaixo são ilustrativos. Integre com{' '}
-            <code className="bg-muted px-1 py-0.5 rounded text-xs font-mono">
-              /api/secretarias/{domain === 'saude' ? 'saude/health-units' : domain === 'educacao' ? 'educacao/education-units' : 'assistencia-social/social-units'}
-            </code>{' '}
-            para exibir dados reais.
-          </p>
-        </div>
+  const renderUnitsTable = (domain: DomainKey, state: TabState) => {
+    if (state.loading && state.units.length === 0) {
+      return null
+    }
 
-        <div className="rounded-md border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b bg-muted/50">
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Nome</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tipo</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Unidade Org.</th>
-                  <th className="px-4 py-3 text-left font-medium text-muted-foreground">Ações</th>
+    const rows = [...state.units].sort((left, right) => {
+      if (left.mapped === right.mapped) {
+        return left.nome.localeCompare(right.nome)
+      }
+
+      return left.mapped ? -1 : 1
+    })
+
+    return (
+      <div className="mt-4 rounded-md border">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b bg-muted/50">
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Unidade</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Tipo</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Bairro</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Status</th>
+                <th className="px-4 py-3 text-left font-medium text-muted-foreground">Unidade organizacional</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-4 py-8 text-center text-muted-foreground">
+                    Nenhuma unidade encontrada para {DOMAIN_CONFIG[domain].label.toLowerCase()}.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {MOCK_UNITS.map((unit, index) => (
-                  <tr
-                    key={unit.id}
-                    className={`border-b last:border-0 ${index % 2 === 0 ? 'bg-background' : 'bg-muted/20'} hover:bg-muted/40 transition-colors`}
-                  >
-                    <td className="px-4 py-3 font-medium">{unit.name}</td>
-                    <td className="px-4 py-3 text-muted-foreground">{unit.type}</td>
+              ) : (
+                rows.map((unit) => (
+                  <tr key={unit.id} className="border-b last:border-0">
+                    <td className="px-4 py-3 font-medium">{unit.nome}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{unit.tipo}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{unit.bairro || '—'}</td>
                     <td className="px-4 py-3">
                       {unit.mapped ? (
-                        <Badge className="bg-green-100 text-green-800 border-green-200 hover:bg-green-100">
-                          <CheckCircle className="h-3 w-3 mr-1" />
+                        <Badge className="border-green-200 bg-green-100 text-green-800 hover:bg-green-100">
+                          <CheckCircle className="mr-1 h-3 w-3" />
                           Mapeada
                         </Badge>
                       ) : (
-                        <Badge className="bg-red-100 text-red-800 border-red-200 hover:bg-red-100">
-                          <AlertCircle className="h-3 w-3 mr-1" />
+                        <Badge className="border-amber-200 bg-amber-100 text-amber-800 hover:bg-amber-100">
+                          <AlertCircle className="mr-1 h-3 w-3" />
                           Pendente
                         </Badge>
                       )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
-                      {unit.orgUnit ?? <span className="text-muted-foreground/50">—</span>}
-                    </td>
-                    <td className="px-4 py-3">
-                      {unit.mapped ? (
-                        <Button variant="outline" size="sm" className="h-7 text-xs">
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Ver
-                        </Button>
-                      ) : (
-                        <Button variant="outline" size="sm" className="h-7 text-xs border-blue-200 text-blue-700 hover:bg-blue-50">
-                          <Link2 className="h-3 w-3 mr-1" />
-                          Mapear
-                        </Button>
-                      )}
+                      {unit.organizationalUnit
+                        ? `${unit.organizationalUnit.nome}${unit.organizationalUnit.sigla ? ` (${unit.organizationalUnit.sigla})` : ''}`
+                        : '—'}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     )
   }
 
-  function TabBody({
-    domain,
-    state,
-    onRefresh,
-  }: {
-    domain: 'saude' | 'educacao' | 'assistencia'
-    state: TabState
-    onRefresh: () => void
-  }) {
+  const renderTab = (domain: DomainKey) => {
+    const state = states[domain]
+
     return (
       <div className="space-y-4 pt-4">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          <StatsBar state={state} />
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          {renderStatsBar(state)}
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="sm"
-              onClick={onRefresh}
+              onClick={() => void loadDomain(domain)}
               disabled={state.loading}
               className="h-8"
             >
-              <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${state.loading ? 'animate-spin' : ''}`} />
+              <RefreshCw className={`mr-1.5 h-3.5 w-3.5 ${state.loading ? 'animate-spin' : ''}`} />
               Atualizar
             </Button>
             <Button
               size="sm"
-              onClick={() => handleAutoMap(domain)}
+              onClick={() => void handleAutoMap(domain)}
               disabled={state.autoMapping || state.loading}
-              className="h-8 bg-blue-600 hover:bg-blue-700 text-white"
+              className="h-8 bg-blue-600 text-white hover:bg-blue-700"
             >
               {state.autoMapping ? (
-                <RefreshCw className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                <RefreshCw className="mr-1.5 h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Link2 className="h-3.5 w-3.5 mr-1.5" />
+                <Link2 className="mr-1.5 h-3.5 w-3.5" />
               )}
-              Mapear Todas Automaticamente
+              Auto-mapear pendentes
             </Button>
           </div>
         </div>
 
-        <UnitsTable domain={domain} />
+        {renderUnitsTable(domain, state)}
       </div>
     )
   }
 
   return (
-    <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+    <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Link href="/admin/organograma">
               <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:text-foreground">
-                <ArrowLeft className="h-4 w-4 mr-1" />
+                <ArrowLeft className="mr-1 h-4 w-4" />
                 Voltar
               </Button>
             </Link>
           </div>
-          <h1 className="text-2xl font-bold tracking-tight flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-bold tracking-tight">
             <Link2 className="h-6 w-6 text-blue-600" />
-            Mapeamento de Unidades → Organograma
+            Mapeamento de Unidades para o Organograma
           </h1>
-          <p className="text-muted-foreground text-sm max-w-2xl">
-            Visualize quais unidades dos domínios setoriais (Saúde, Educação, Assistência Social) estão
-            vinculadas ao organograma unificado e gerencie os mapeamentos pendentes.
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Acompanhe a convergência das unidades setoriais para o organograma centralizado e execute o
+            auto-mapeamento dos registros pendentes.
           </p>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <Card className="border-l-4 border-l-red-400">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-red-50">
-                <Heart className="h-5 w-5 text-red-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Saúde</p>
-                <p className="text-sm font-semibold">
-                  {saudeState.stats
-                    ? `${saudeState.stats.mapped}/${saudeState.stats.total} mapeadas`
-                    : saudeState.loading
-                    ? 'Carregando...'
-                    : 'Sem dados'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        {(Object.keys(DOMAIN_CONFIG) as DomainKey[]).map((domain) => {
+          const config = DOMAIN_CONFIG[domain]
+          const Icon = config.icon
+          const state = states[domain]
 
-        <Card className="border-l-4 border-l-blue-400">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-blue-50">
-                <GraduationCap className="h-5 w-5 text-blue-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Educação</p>
-                <p className="text-sm font-semibold">
-                  {educacaoState.stats
-                    ? `${educacaoState.stats.mapped}/${educacaoState.stats.total} mapeadas`
-                    : educacaoState.loading
-                    ? 'Carregando...'
-                    : 'Sem dados'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="border-l-4 border-l-purple-400">
-          <CardContent className="pt-4 pb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-lg bg-purple-50">
-                <HandHeart className="h-5 w-5 text-purple-500" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wide">Assistência Social</p>
-                <p className="text-sm font-semibold">
-                  {assistenciaState.stats
-                    ? `${assistenciaState.stats.mapped}/${assistenciaState.stats.total} mapeadas`
-                    : assistenciaState.loading
-                    ? 'Carregando...'
-                    : 'Sem dados'}
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+          return (
+            <Card key={domain} className={`border-l-4 ${config.accent}`}>
+              <CardContent className="pt-4">
+                <div className="flex items-center gap-3">
+                  <div className={`rounded-lg p-2 ${config.chip}`}>
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                      {config.label}
+                    </p>
+                    <p className="text-sm font-semibold">
+                      {state.stats
+                        ? `${state.stats.mapped}/${state.stats.total} mapeadas`
+                        : state.loading
+                        ? 'Carregando...'
+                        : 'Sem dados'}
+                    </p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )
+        })}
       </div>
 
-      {/* Tabs */}
       <Card>
         <CardHeader className="pb-0">
-          <CardTitle className="text-lg">Unidades por Domínio</CardTitle>
+          <CardTitle className="text-lg">Unidades por domínio</CardTitle>
           <CardDescription>
-            Selecione um domínio para ver e gerenciar os mapeamentos das suas unidades.
+            Cada domínio lista as unidades reais e o vínculo atual com a estrutura central de setores.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-4">
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as DomainKey)}>
+            <TabsList className="grid max-w-md grid-cols-3">
               <TabsTrigger value="saude" className="flex items-center gap-1.5">
                 <Heart className="h-3.5 w-3.5" />
                 Saúde
@@ -422,33 +453,13 @@ export default function MapeamentoPage() {
               </TabsTrigger>
               <TabsTrigger value="assistencia" className="flex items-center gap-1.5">
                 <HandHeart className="h-3.5 w-3.5" />
-                Assistência Social
+                Assistência
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="saude">
-              <TabBody
-                domain="saude"
-                state={saudeState}
-                onRefresh={fetchSaudeStats}
-              />
-            </TabsContent>
-
-            <TabsContent value="educacao">
-              <TabBody
-                domain="educacao"
-                state={educacaoState}
-                onRefresh={fetchEducacaoStats}
-              />
-            </TabsContent>
-
-            <TabsContent value="assistencia">
-              <TabBody
-                domain="assistencia"
-                state={assistenciaState}
-                onRefresh={fetchAssistenciaStats}
-              />
-            </TabsContent>
+            <TabsContent value="saude">{renderTab('saude')}</TabsContent>
+            <TabsContent value="educacao">{renderTab('educacao')}</TabsContent>
+            <TabsContent value="assistencia">{renderTab('assistencia')}</TabsContent>
           </Tabs>
         </CardContent>
       </Card>

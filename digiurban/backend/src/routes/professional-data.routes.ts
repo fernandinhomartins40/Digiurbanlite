@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -14,7 +14,7 @@ const prisma = new PrismaClient();
  * Estatísticas de profissionais de saúde do sistema unificado
  * IMPORTANTE: Esta rota deve vir ANTES da rota /health/:userId para evitar conflitos
  */
-router.get('/health/stats', authenticateToken, async (req: Request, res: Response) => {
+router.get('/health/stats', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const [total, ativos, porCategoria] = await Promise.all([
       prisma.healthProfessionalData.count(),
@@ -44,7 +44,7 @@ router.get('/health/stats', authenticateToken, async (req: Request, res: Respons
  * GET /api/professional-data/health
  * Listar servidores com dados de saúde
  */
-router.get('/health', authenticateToken, async (req: Request, res: Response) => {
+router.get('/health', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { categoria, ativo, search } = req.query;
 
@@ -105,7 +105,7 @@ router.get('/health', authenticateToken, async (req: Request, res: Response) => 
  * GET /api/professional-data/health/:userId
  * Buscar dados de saúde de um servidor
  */
-router.get('/health/:userId', authenticateToken, async (req: Request, res: Response) => {
+router.get('/health/:userId', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -152,7 +152,7 @@ router.get('/health/:userId', authenticateToken, async (req: Request, res: Respo
  * POST /api/professional-data/health
  * Criar dados de saúde para um servidor
  */
-router.post('/health', authenticateToken, async (req: Request, res: Response) => {
+router.post('/health', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -234,7 +234,7 @@ router.post('/health', authenticateToken, async (req: Request, res: Response) =>
  * PUT /api/professional-data/health/:userId
  * Atualizar dados de saúde
  */
-router.put('/health/:userId', authenticateToken, async (req: Request, res: Response) => {
+router.put('/health/:userId', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
     const {
@@ -314,7 +314,7 @@ router.put('/health/:userId', authenticateToken, async (req: Request, res: Respo
  * GET /api/professional-data/education
  * Listar servidores com dados de educação
  */
-router.get('/education', authenticateToken, async (req: Request, res: Response) => {
+router.get('/education', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { categoria, ativo } = req.query;
 
@@ -362,7 +362,7 @@ router.get('/education', authenticateToken, async (req: Request, res: Response) 
  * POST /api/professional-data/education
  * Criar dados de educação para um servidor
  */
-router.post('/education', authenticateToken, async (req: Request, res: Response) => {
+router.post('/education', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -434,7 +434,7 @@ router.post('/education', authenticateToken, async (req: Request, res: Response)
  * GET /api/professional-data/engineering
  * Listar servidores com dados de engenharia
  */
-router.get('/engineering', authenticateToken, async (req: Request, res: Response) => {
+router.get('/engineering', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { categoria, ativo } = req.query;
 
@@ -482,7 +482,7 @@ router.get('/engineering', authenticateToken, async (req: Request, res: Response
  * POST /api/professional-data/engineering
  * Criar dados de engenharia para um servidor
  */
-router.post('/engineering', authenticateToken, async (req: Request, res: Response) => {
+router.post('/engineering', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       userId,
@@ -559,7 +559,7 @@ router.post('/engineering', authenticateToken, async (req: Request, res: Respons
  * GET /api/professional-data/social-assistance
  * Listar servidores com dados de assistência social
  */
-router.get('/social-assistance', authenticateToken, async (req: Request, res: Response) => {
+router.get('/social-assistance', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { categoria, ativo } = req.query;
 
@@ -607,7 +607,7 @@ router.get('/social-assistance', authenticateToken, async (req: Request, res: Re
  * POST /api/professional-data/social-assistance
  * Criar dados de assistência social para um servidor
  */
-router.post('/social-assistance', authenticateToken, async (req: Request, res: Response) => {
+router.post('/social-assistance', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       userId,

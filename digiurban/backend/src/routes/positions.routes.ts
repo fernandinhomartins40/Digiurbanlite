@@ -1,6 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
+import {
+  assertDepartmentScopedEntities,
+  OrganizationalIntegrityError,
+} from '../services/organizational-integrity.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -13,7 +17,7 @@ const prisma = new PrismaClient();
  * GET /api/positions
  * Listar todos os cargos
  */
-router.get('/', authenticateToken, async (req: Request, res: Response) => {
+router.get('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       departmentId,
@@ -70,7 +74,7 @@ router.get('/', authenticateToken, async (req: Request, res: Response) => {
  * GET /api/positions/:id
  * Buscar cargo específico
  */
-router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.get('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 
@@ -117,7 +121,7 @@ router.get('/:id', authenticateToken, async (req: Request, res: Response) => {
  * POST /api/positions
  * Criar novo cargo
  */
-router.post('/', authenticateToken, async (req: Request, res: Response) => {
+router.post('/', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const {
       nome,
@@ -141,23 +145,10 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
       });
     }
 
-    // Verificar se departamento existe
-    const department = await prisma.department.findUnique({
-      where: { id: departmentId },
+    await assertDepartmentScopedEntities({
+      departmentId,
+      organizationalUnitId,
     });
-    if (!department) {
-      return res.status(404).json({ error: 'Departamento não encontrado' });
-    }
-
-    // Verificar se unidade organizacional existe (se fornecida)
-    if (organizationalUnitId) {
-      const unit = await prisma.organizationalUnit.findUnique({
-        where: { id: organizationalUnitId },
-      });
-      if (!unit) {
-        return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
-      }
-    }
 
     const position = await prisma.position.create({
       data: {
@@ -189,6 +180,10 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro ao criar cargo:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Já existe um cargo com este nome neste departamento',
@@ -203,7 +198,7 @@ router.post('/', authenticateToken, async (req: Request, res: Response) => {
  * PUT /api/positions/:id
  * Atualizar cargo
  */
-router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.put('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
     const {
@@ -228,6 +223,12 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
     if (!existingPosition) {
       return res.status(404).json({ error: 'Cargo não encontrado' });
     }
+
+    await assertDepartmentScopedEntities({
+      departmentId: existingPosition.departmentId,
+      organizationalUnitId:
+        organizationalUnitId !== undefined ? organizationalUnitId : existingPosition.organizationalUnitId,
+    });
 
     // Update dinâmico
     const updateData: any = {};
@@ -263,6 +264,10 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
   } catch (error: any) {
     console.error('Erro ao atualizar cargo:', error);
 
+    if (error instanceof OrganizationalIntegrityError) {
+      return res.status(error.statusCode).json({ error: error.message, code: error.code });
+    }
+
     if (error.code === 'P2002') {
       return res.status(409).json({
         error: 'Já existe um cargo com este nome neste departamento',
@@ -277,7 +282,7 @@ router.put('/:id', authenticateToken, async (req: Request, res: Response) => {
  * DELETE /api/positions/:id
  * Desativar cargo (soft delete)
  */
-router.delete('/:id', authenticateToken, async (req: Request, res: Response) => {
+router.delete('/:id', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
 

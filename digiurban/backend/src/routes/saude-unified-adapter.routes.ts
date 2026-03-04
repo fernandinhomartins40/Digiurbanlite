@@ -7,10 +7,11 @@
 
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateAdmin } from '../middleware/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authenticateAdmin);
 
 // ============================================================
 // ROTAS DE SERVIDORES DE SAÚDE (HealthProfessionalData)
@@ -21,7 +22,7 @@ const prisma = new PrismaClient();
  * Listar todos os servidores com dados de saúde (HealthProfessionalData)
  * Query params: categoria, status, search
  */
-router.get('/servidores', authenticateToken, async (req: Request, res: Response) => {
+router.get('/servidores', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { categoria, status, search } = req.query;
 
@@ -102,7 +103,7 @@ router.get('/servidores', authenticateToken, async (req: Request, res: Response)
  * GET /api/saude/servidores/:userId
  * Buscar dados completos de um servidor de saúde
  */
-router.get('/servidores/:userId', authenticateToken, async (req: Request, res: Response) => {
+router.get('/servidores/:userId', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -160,11 +161,11 @@ router.get('/servidores/:userId', authenticateToken, async (req: Request, res: R
  */
 router.post(
   '/servidores/:userId/vincular-unidade',
-  authenticateToken,
+  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
-      const { unidadeId, dataInicio, dataFim, cargaHoraria, percentualDedicacao, observacoes } =
+      const { unidadeId, positionId, dataInicio, dataFim, cargaHoraria, percentualDedicacao, observacoes } =
         req.body;
 
       // Validações
@@ -204,34 +205,42 @@ router.post(
         });
       }
 
-      // 3. Buscar ou criar Position baseada na categoria
-      let position = await prisma.position.findFirst({
-        where: {
-          departmentId: healthData.user.departmentId!,
-          nome: healthData.categoria,
-        },
-      });
+      const assignmentDepartmentId =
+        unidade.organizationalUnit.departmentId || healthData.user.departmentId;
 
-      if (!position) {
-        position = await prisma.position.create({
-          data: {
-            nome: healthData.categoria,
-            descricao: `Cargo: ${healthData.categoria}`,
-            tipo: 'EFETIVO',
-            nivel: 'OPERACIONAL',
-            departmentId: healthData.user.departmentId!,
+      if (!assignmentDepartmentId) {
+        return res.status(400).json({
+          error: 'Nao foi possivel determinar o departamento do vinculo da unidade.',
+        });
+      }
+
+      let resolvedPositionId: string | undefined;
+      if (positionId) {
+        const position = await prisma.position.findFirst({
+          where: {
+            id: positionId,
+            departmentId: assignmentDepartmentId,
             isActive: true,
           },
+          select: { id: true },
         });
+
+        if (!position) {
+          return res.status(400).json({
+            error: 'Cargo informado nao pertence ao departamento da unidade ou esta inativo.',
+          });
+        }
+
+        resolvedPositionId = position.id;
       }
 
       // 4. Criar EmployeeAssignment (Sistema Unificado V2.0)
       const assignment = await prisma.employeeAssignment.create({
         data: {
           userId,
-          departmentId: healthData.user.departmentId!,
+          departmentId: assignmentDepartmentId,
           organizationalUnitId: unidade.organizationalUnitId!,
-          positionId: position.id,
+          positionId: resolvedPositionId,
           tipo: 'LOTACAO',
           situacao: 'ATIVO',
           isPrimary: false,
@@ -281,7 +290,7 @@ router.post(
  */
 router.put(
   '/servidores/:userId/vinculos/:assignmentId',
-  authenticateToken,
+  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId, assignmentId } = req.params;
@@ -339,7 +348,7 @@ router.put(
  */
 router.delete(
   '/servidores/:userId/vinculos/:assignmentId',
-  authenticateToken,
+  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId, assignmentId } = req.params;
@@ -396,7 +405,7 @@ router.delete(
  */
 router.post(
   '/servidores/:userId/vincular-equipe',
-  authenticateToken,
+  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
@@ -472,7 +481,7 @@ router.post(
  */
 router.delete(
   '/servidores/:userId/equipes/:memberId',
-  authenticateToken,
+  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId, memberId } = req.params;
@@ -515,7 +524,7 @@ router.delete(
  * GET /api/saude/stats
  * Estatísticas gerais dos servidores de saúde
  */
-router.get('/stats', authenticateToken, async (req: Request, res: Response) => {
+router.get('/stats', authenticateAdmin, async (req: Request, res: Response) => {
   try {
     const [
       totalServidores,

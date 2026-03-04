@@ -423,7 +423,7 @@ export function UserManagementModal({
 
           {/* ✅ NOVO: Seleção de múltiplos departamentos com checkboxes */}
           <div className="space-y-1.5 sm:space-y-2">
-            <Label className="text-sm">Departamentos</Label>
+            <Label className="text-sm">Escopo administrativo (departamentos)</Label>
             <div className="border rounded-md p-2 sm:p-3 max-h-[180px] sm:max-h-[200px] overflow-y-auto space-y-2">
               {loadingDepartments ? (
                 <p className="text-xs sm:text-sm text-muted-foreground">Carregando departamentos...</p>
@@ -513,6 +513,9 @@ export function UserManagementModal({
                 {formData.departmentIds.length} departamento(s) selecionado(s)
               </p>
             )}
+            <p className="text-xs text-muted-foreground">
+              Setor, cargo e função do servidor são definidos nas lotações do organograma centralizado.
+            </p>
           </div>
 
           {isEditMode && (

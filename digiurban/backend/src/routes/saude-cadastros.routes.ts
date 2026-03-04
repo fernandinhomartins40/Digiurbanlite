@@ -1,8 +1,10 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticateAdmin } from '../middleware/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authenticateAdmin);
 
 // ============================================================
 // ROTAS DE ESTATÍSTICAS DOS CADASTROS

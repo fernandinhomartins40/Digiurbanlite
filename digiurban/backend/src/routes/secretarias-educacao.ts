@@ -1,8 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
+import { authenticateAdmin } from '../middleware/auth';
+import {
+  autoMapDomainUnits,
+  listDomainUnits,
+} from '../services/organizational-unit-mapping.service';
 
 const router = Router();
 const prisma = new PrismaClient();
+router.use(authenticateAdmin);
 
 // GET /dashboard
 router.get('/dashboard', async (req: Request, res: Response) => {
@@ -145,6 +151,29 @@ router.get('/education-units/stats', async (req: Request, res: Response) => {
     mapeadas,
     naoMapeadas,
   });
+});
+
+router.get('/education-units', async (_req: Request, res: Response) => {
+  try {
+    const units = await listDomainUnits({ model: 'unidadeEducacao' });
+    return res.json(units);
+  } catch (error: any) {
+    console.error('Erro ao listar unidades de educação:', error);
+    return res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/education-units/auto-map', async (_req: Request, res: Response) => {
+  try {
+    const result = await autoMapDomainUnits({
+      model: 'unidadeEducacao',
+      departmentName: 'Secretaria de Educação',
+    });
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Erro ao auto-mapear unidades de educação:', error);
+    return res.status(500).json({ error: error.message });
+  }
 });
 
 export default router;

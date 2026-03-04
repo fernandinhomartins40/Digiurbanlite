@@ -12,6 +12,11 @@ import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
 import emailServerRouter from './email-server';
+import {
+  ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES,
+  extractPrimaryDepartmentIdFromOrganization,
+  reconcileAdministrativeDepartmentAssignments,
+} from '../services/organizational-context.service';
 
 const execAsync = promisify(exec);
 const router = Router();
@@ -1379,6 +1384,24 @@ router.get('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, r
               { createdAt: 'asc' }
             ]
           },
+          assignments: {
+            where: {
+              situacao: { in: ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES }
+            },
+            include: {
+              department: {
+                select: {
+                  id: true,
+                  name: true,
+                  code: true
+                }
+              }
+            },
+            orderBy: [
+              { isPrimary: 'desc' },
+              { dataInicio: 'desc' }
+            ]
+          },
           _count: {
             select: {
               assignedProtocolsSimplified: true
@@ -1394,14 +1417,34 @@ router.get('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, r
 
     // Processar departamentos
     const usersWithDepartments = users.map(user => {
-      const departments = user.userDepartments.map(ud => ({
+      const assignmentDepartments = user.assignments.map((assignment) => ({
+        id: assignment.department.id,
+        name: assignment.department.name,
+        code: assignment.department.code,
+        isPrimary: assignment.isPrimary
+      }));
+
+      const fallbackDepartments = user.userDepartments.map(ud => ({
         id: ud.department.id,
         name: ud.department.name,
         code: ud.department.code,
         isPrimary: ud.isPrimary
       }));
 
-      const primaryDepartment = user.userDepartments.find(ud => ud.isPrimary)?.department || user.department;
+      const departments =
+        assignmentDepartments.length > 0
+          ? Array.from(
+              new Map(
+                assignmentDepartments.map((department) => [department.id, department])
+              ).values()
+            )
+          : fallbackDepartments;
+
+      const primaryDepartmentId = extractPrimaryDepartmentIdFromOrganization(user);
+      const primaryDepartment =
+        user.assignments.find((assignment) => assignment.departmentId === primaryDepartmentId)?.department ||
+        user.userDepartments.find((ud) => ud.departmentId === primaryDepartmentId)?.department ||
+        user.department;
 
       return {
         ...user,
@@ -1440,7 +1483,15 @@ router.get('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, r
 // POST /api/super-admin/users - Criar novo usuário
 router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    const { name, email, password, role, departmentIds, primaryDepartmentId, isActive } = req.body;
+    const {
+      name,
+      email,
+      password,
+      role,
+      departmentIds,
+      primaryDepartmentId,
+      isActive
+    } = req.body;
 
     console.log('[USERS] Criando novo usuário:', email);
 
@@ -1461,39 +1512,78 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     // Criar usuário
+    const normalizedDepartmentIds = Array.from(
+      new Set(Array.isArray(departmentIds) ? departmentIds.filter(Boolean) : [])
+    );
+    const resolvedPrimaryDepartmentId =
+      normalizedDepartmentIds.includes(primaryDepartmentId)
+        ? primaryDepartmentId
+        : normalizedDepartmentIds[0] || null;
+
     const user = await prisma.user.create({
       data: {
         name,
         email,
         password: hashedPassword,
         role: role || 'USER',
-        departmentId: primaryDepartmentId || departmentIds?.[0],
         isActive: isActive !== false
       }
     });
 
-    // Se houver múltiplos departamentos, criar userDepartments
-    if (departmentIds && departmentIds.length > 0) {
-      await Promise.all(
-        departmentIds.map((deptId: string) =>
-          prisma.userDepartment.create({
-            data: {
-              userId: user.id,
-              departmentId: deptId,
-              isPrimary: deptId === primaryDepartmentId,
-              isActive: true
-            }
-          })
-        )
-      );
-    }
-
     console.log('[USERS] ✅ Usuário criado com sucesso:', user.id);
+
+    await reconcileAdministrativeDepartmentAssignments({
+      userId: user.id,
+      departmentIds: normalizedDepartmentIds,
+      primaryDepartmentId: resolvedPrimaryDepartmentId,
+      executorId: (req as any).user?.id || null
+    });
+
+    const hydratedUser = await prisma.user.findUnique({
+      where: { id: user.id },
+      include: {
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }]
+        },
+        assignments: {
+          where: {
+            situacao: { in: ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES }
+          },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [{ isPrimary: 'desc' }, { dataInicio: 'desc' }]
+        }
+      }
+    });
 
     return res.json({
       success: true,
       message: 'Usuário criado com sucesso',
-      data: { user }
+      data: { user: hydratedUser || user }
     });
   } catch (error: any) {
     console.error('[USERS] ❌ Erro ao criar usuário:', error);
@@ -1509,7 +1599,15 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
 router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { name, email, role, departmentIds, primaryDepartmentId, isActive, password } = req.body;
+    const {
+      name,
+      email,
+      role,
+      departmentIds,
+      primaryDepartmentId,
+      isActive,
+      password
+    } = req.body;
 
     console.log('[USERS] Atualizando usuário:', id);
 
@@ -1530,7 +1628,6 @@ router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Reques
       name,
       email,
       role,
-      departmentId: primaryDepartmentId || departmentIds?.[0],
       isActive
     };
 
@@ -1546,51 +1643,70 @@ router.put('/users/:id', adminAuthMiddleware, superAdminOnly, async (req: Reques
       data: updateData
     });
 
-    // Atualizar departamentos se fornecidos
-    if (departmentIds && departmentIds.length > 0) {
-      // Desativar todos os departamentos atuais
-      await prisma.userDepartment.updateMany({
-        where: { userId: id },
-        data: { isActive: false }
-      });
+    console.log('[USERS] ✅ Usuário atualizado com sucesso:', id);
 
-      // Criar/reativar departamentos
-      await Promise.all(
-        departmentIds.map(async (deptId: string) => {
-          const existing = await prisma.userDepartment.findFirst({
-            where: { userId: id, departmentId: deptId }
-          });
-
-          if (existing) {
-            // Reativar
-            await prisma.userDepartment.update({
-              where: { id: existing.id },
-              data: {
-                isPrimary: deptId === primaryDepartmentId,
-                isActive: true
-              }
-            });
-          } else {
-            // Criar novo
-            await prisma.userDepartment.create({
-              data: {
-                userId: id,
-                departmentId: deptId,
-                isPrimary: deptId === primaryDepartmentId,
-                isActive: true
-              }
-            });
-          }
-        })
+    if (departmentIds !== undefined || primaryDepartmentId !== undefined) {
+      const normalizedDepartmentIds = Array.from(
+        new Set(Array.isArray(departmentIds) ? departmentIds.filter(Boolean) : [])
       );
+      const resolvedPrimaryDepartmentId =
+        normalizedDepartmentIds.includes(primaryDepartmentId)
+          ? primaryDepartmentId
+          : normalizedDepartmentIds[0] || null;
+
+      await reconcileAdministrativeDepartmentAssignments({
+        userId: id,
+        departmentIds: normalizedDepartmentIds,
+        primaryDepartmentId: resolvedPrimaryDepartmentId,
+        executorId: (req as any).user?.id || null
+      });
     }
 
-    console.log('[USERS] ✅ Usuário atualizado com sucesso:', id);
+    const hydratedUser = await prisma.user.findUnique({
+      where: { id },
+      include: {
+        department: {
+          select: {
+            id: true,
+            name: true,
+            code: true
+          }
+        },
+        userDepartments: {
+          where: { isActive: true },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [{ isPrimary: 'desc' }, { createdAt: 'asc' }]
+        },
+        assignments: {
+          where: {
+            situacao: { in: ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES }
+          },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
+            }
+          },
+          orderBy: [{ isPrimary: 'desc' }, { dataInicio: 'desc' }]
+        }
+      }
+    });
 
     return res.json({
       success: true,
       message: 'Usuário atualizado com sucesso',
-      data: { user: updatedUser }
+      data: { user: hydratedUser || updatedUser }
     });
   } catch (error: any) {
     console.error('[USERS] ❌ Erro ao atualizar usuário:', error);
@@ -1719,9 +1835,33 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
         email,
         password: hashedPassword,
         role: 'SUPER_ADMIN',
-        departmentId: departmentId || null,
         isActive: true
       },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        createdAt: true,
+        department: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
+    await reconcileAdministrativeDepartmentAssignments({
+      userId: newAdmin.id,
+      departmentIds: departmentId ? [departmentId] : [],
+      primaryDepartmentId: departmentId || null,
+      executorId: (req as any).user?.id || null
+    });
+
+    const hydratedAdmin = await prisma.user.findUnique({
+      where: { id: newAdmin.id },
       select: {
         id: true,
         name: true,
@@ -1741,7 +1881,7 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
     return res.json({
       success: true,
       message: 'Super Admin criado com sucesso',
-      data: newAdmin
+      data: hydratedAdmin || newAdmin
     });
   } catch (error) {
     console.error('Erro ao criar super admin:', error);
@@ -1759,7 +1899,6 @@ router.put('/users/admins/:id', adminAuthMiddleware, superAdminOnly, async (req:
     if (name) updateData.name = name;
     if (email) updateData.email = email;
     if (typeof isActive === 'boolean') updateData.isActive = isActive;
-    if (departmentId !== undefined) updateData.departmentId = departmentId;
 
     const updatedAdmin = await prisma.user.update({
       where: { id },
@@ -1780,10 +1919,37 @@ router.put('/users/admins/:id', adminAuthMiddleware, superAdminOnly, async (req:
       }
     });
 
+    if (departmentId !== undefined) {
+      await reconcileAdministrativeDepartmentAssignments({
+        userId: id,
+        departmentIds: departmentId ? [departmentId] : [],
+        primaryDepartmentId: departmentId || null,
+        executorId: (req as any).user?.id || null
+      });
+    }
+
+    const hydratedAdmin = await prisma.user.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        updatedAt: true,
+        department: {
+          select: {
+            id: true,
+            name: true
+          }
+        }
+      }
+    });
+
     return res.json({
       success: true,
       message: 'Super Admin atualizado com sucesso',
-      data: updatedAdmin
+      data: hydratedAdmin || updatedAdmin
     });
   } catch (error) {
     console.error('Erro ao atualizar super admin:', error);
