@@ -13,6 +13,7 @@ import {
         } from '../middleware/admin-auth';
 import { generateTicketNumberSafe } from '../services/ticket-number.service';
 import { log } from '../config/logger.config';
+import { isPrismaMissingTableError } from '../utils/prisma-missing-table';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -192,7 +193,8 @@ router.post(
     }
 
     // Verificar se o cidadão existe e está ativo
-    const citizen = await prisma.citizen.findFirst({
+    try {
+      const citizen = await prisma.citizen.findFirst({
       where: {
         id: data.citizenId,
         isActive: true
@@ -324,6 +326,21 @@ router.post(
         createdAt: ticket.createdAt
       }
     }));
+    } catch (error) {
+      if (isPrismaMissingTableError(error, ['admin_tickets'])) {
+        log.error('[admin-chamados] Estrutura de banco ausente: tabela admin_tickets nÃ£o encontrada');
+        res.status(503).json(
+          createErrorResponse(
+            'DATABASE_SCHEMA_MISMATCH',
+            'Estrutura de chamados indisponÃ­vel no banco. Execute as migraÃ§Ãµes pendentes.'
+          )
+        );
+        return;
+      }
+
+      log.error('Erro inesperado ao criar chamado administrativo', { error });
+      res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro ao criar chamado administrativo'));
+    }
   })
 );
 
@@ -368,7 +385,8 @@ router.get(
     }
 
     // Buscar tickets com paginação
-    const [tickets, total] = await Promise.all([
+    try {
+      const [tickets, total] = await Promise.all([
       prisma.adminTicket.findMany({
         where,
         include: {
@@ -459,6 +477,32 @@ router.get(
         pages: Math.ceil(total / limit)
       }
     }));
+    } catch (error) {
+      if (isPrismaMissingTableError(error, ['admin_tickets'])) {
+        log.warn('[admin-chamados] tabela admin_tickets ausente. Retornando lista vazia em modo degradado.');
+        res.json({
+          success: true,
+          data: {
+            tickets: [],
+            stats: {
+              total: 0,
+              byStatus: {}
+            },
+            pagination: {
+              page,
+              limit,
+              total: 0,
+              pages: 0
+            }
+          },
+          degraded: true
+        });
+        return;
+      }
+
+      log.error('Erro inesperado ao listar chamados administrativos', { error });
+      res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro ao carregar chamados'));
+    }
   })
 );
 
