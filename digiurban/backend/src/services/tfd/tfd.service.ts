@@ -67,7 +67,8 @@ export interface CreateVeiculoDTO {
 }
 
 export interface CreateMotoristaDTO {
-  userId: string;
+  userId?: string;
+  cpf?: string;
   nome: string;
   cnh: string;
   categoriaCnh: string;
@@ -307,7 +308,7 @@ export class TFDService {
     }
 
     if (
-      ![' APROVADO_REGULACAO', 'AGUARDANDO_APROVACAO_GESTAO'].includes(solicitacao.status)
+      !['APROVADO_REGULACAO', 'AGUARDANDO_APROVACAO_GESTAO'].includes(solicitacao.status)
     ) {
       throw new Error(
         `Solicitação não está aguardando aprovação da gestão. Status: ${solicitacao.status}`
@@ -676,11 +677,15 @@ export class TFDService {
    * Criar motorista
    */
   async createMotorista(data: CreateMotoristaDTO) {
+    if (!data.userId && !data.cpf) {
+      throw new Error('Informe userId ou cpf para cadastrar motorista');
+    }
+
     return await prisma.motoristaTFD.create({
       data: {
-        userId: data.userId,
+        userId: data.userId || data.cpf!,
         nome: data.nome,
-        cpf: data.userId, // CPF não existe no DTO, usar userId
+        cpf: data.cpf || data.userId!,
         cnh: data.cnh,
         categoriaCNH: data.categoriaCnh,
         validadeCNH: data.validadeCnh,

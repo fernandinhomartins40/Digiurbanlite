@@ -52,10 +52,13 @@ export class TriagemEnfermagemService {
 
   private mapearPrioridadeManchester(classificacao: string): PrioridadeFila {
     switch (classificacao) {
+      case 'VERMELHO':
       case 'EMERGENCIA':
         return PrioridadeFila.EMERGENCIA;
+      case 'LARANJA':
       case 'MUITO_URGENTE':
         return PrioridadeFila.MUITO_URGENTE;
+      case 'AMARELO':
       case 'URGENTE':
         return PrioridadeFila.URGENTE;
       default:

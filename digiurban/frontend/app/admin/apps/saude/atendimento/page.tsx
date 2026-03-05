@@ -216,7 +216,7 @@ export default function ListaAtendimentosPage() {
         router.push(`/admin/apps/saude/atendimento/enfermagem?filaId=${atendimento.id}`);
         break;
       case 'escuta-inicial':
-        router.push(`/admin/apps/saude/atendimento/escuta-inicial/${atendimento.id}`);
+        router.push(`/admin/apps/saude/atendimento/enfermagem?filaId=${atendimento.id}`);
         break;
       case 'triagem':
         router.push(`/admin/apps/saude/atendimento/enfermagem?filaId=${atendimento.id}`);
@@ -257,7 +257,7 @@ export default function ListaAtendimentosPage() {
 
       // Depreciados mas mantidos
       EM_ESCUTA_INICIAL: [
-        { label: 'Continuar Escuta', acao: 'escuta-inicial', variante: 'default' },
+        { label: 'Continuar Enfermagem', acao: 'escuta-inicial', variante: 'default' },
         { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
       EM_TRIAGEM: [

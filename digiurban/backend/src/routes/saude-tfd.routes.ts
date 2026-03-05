@@ -7,10 +7,38 @@ import {
   SolicitacoesTFDService,
   RegulacaoTFDService,
   ViagensTFDService,
+  TFDService,
 } from '../services/tfd';
 import { authenticateToken } from '../middleware/auth';
 
 const router = Router();
+
+function normalizeSolicitacaoPayload(req: Request) {
+  const body = req.body || {};
+
+  return {
+    citizenId: body.citizenId || body.cidadaoId,
+    acompanhanteId: body.acompanhanteId,
+    especialidade: body.especialidade || body.especialidadeNome || body.especialidadeId || 'Nao informado',
+    procedimento: body.procedimento || body.tipoAtendimento || 'CONSULTA',
+    cid10: body.cid10,
+    justificativa: body.justificativa || '',
+    encaminhamentoMedicoUrl: body.encaminhamentoMedicoUrl || '',
+    examesUrls: body.examesUrls || [],
+    prioridade: body.prioridade || 'MEDIA',
+    cidadeDestino: body.cidadeDestino || body.destinoCidade || '',
+    estadoDestino: body.estadoDestino || body.destinoEstado || '',
+    hospitalDestino: body.hospitalDestino,
+    observacoes: body.observacoes,
+  };
+}
+
+function parseDateParam(value: unknown): Date | undefined {
+  if (!value || typeof value !== 'string') return undefined;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return undefined;
+  return parsed;
+}
 
 // Middleware de autenticação para todas as rotas de TFD
 router.use(authenticateToken);
@@ -25,7 +53,9 @@ router.use(authenticateToken);
  */
 router.post('/solicitacao', async (req: Request, res: Response) => {
   try {
-    const solicitacao = await SolicitacoesTFDService.criarSolicitacao(req.body);
+    const solicitacao = await SolicitacoesTFDService.criarSolicitacao(
+      normalizeSolicitacaoPayload(req) as any
+    );
     res.status(201).json(solicitacao);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -69,11 +99,47 @@ router.get('/solicitacao', async (req: Request, res: Response) => {
       unidadeOrigemId: req.query.unidadeOrigemId as string,
       status: req.query.status as any,
       urgente: req.query.urgente === 'true' ? true : req.query.urgente === 'false' ? false : undefined,
-      dataInicio: req.query.dataInicio ? new Date(req.query.dataInicio as string) : undefined,
-      dataFim: req.query.dataFim ? new Date(req.query.dataFim as string) : undefined,
+      dataInicio: parseDateParam(req.query.dataInicio),
+      dataFim: parseDateParam(req.query.dataFim),
     };
     const solicitacoes = await SolicitacoesTFDService.listarSolicitacoes(filtros);
     res.json(solicitacoes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Aliases para compatibilidade com frontends existentes
+router.post('/solicitacoes', async (req: Request, res: Response) => {
+  try {
+    const solicitacao = await SolicitacoesTFDService.criarSolicitacao(
+      normalizeSolicitacaoPayload(req) as any
+    );
+    res.status(201).json(solicitacao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/solicitacoes', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      citizenId: (req.query.citizenId || req.query.cidadaoId) as string,
+      status: req.query.status as any,
+      dataInicio: parseDateParam(req.query.dataInicio),
+      dataFim: parseDateParam(req.query.dataFim),
+    };
+    const solicitacoes = await SolicitacoesTFDService.listarSolicitacoes(filtros);
+    res.json(solicitacoes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/solicitacoes/:id', async (req: Request, res: Response) => {
+  try {
+    const solicitacao = await SolicitacoesTFDService.buscarSolicitacao(req.params.id);
+    res.json(solicitacao);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -92,6 +158,50 @@ router.put('/solicitacao/:id/status', async (req: Request, res: Response) => {
       observacoes
     );
     res.json(solicitacao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/solicitacao/:id/aprovar', async (req: Request, res: Response) => {
+  try {
+    const reguladorId = req.userId || (req.user as any)?.id;
+    if (!reguladorId) {
+      return res.status(401).json({ error: 'Usuario autenticado e obrigatorio' });
+    }
+
+    const parecer = await RegulacaoTFDService.criarParecer({
+      solicitacaoId: req.params.id,
+      reguladorId,
+      aprovado: true,
+      prioridade: 'MEDIA' as any,
+      justificativa: req.body?.parecerMedico || req.body?.parecer,
+      observacoes: req.body?.recomendacoes || req.body?.observacoes,
+    } as any);
+
+    res.json(parecer);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/solicitacao/:id/negar', async (req: Request, res: Response) => {
+  try {
+    const reguladorId = req.userId || (req.user as any)?.id;
+    if (!reguladorId) {
+      return res.status(401).json({ error: 'Usuario autenticado e obrigatorio' });
+    }
+
+    const parecer = await RegulacaoTFDService.criarParecer({
+      solicitacaoId: req.params.id,
+      reguladorId,
+      aprovado: false,
+      prioridade: 'MEDIA' as any,
+      justificativa: req.body?.motivoNegacao || req.body?.justificativa,
+      observacoes: req.body?.observacoes,
+    } as any);
+
+    res.json(parecer);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -248,6 +358,15 @@ router.post('/parecer', async (req: Request, res: Response) => {
   }
 });
 
+router.post('/regulacao/parecer', async (req: Request, res: Response) => {
+  try {
+    const parecer = await RegulacaoTFDService.criarParecer(req.body);
+    res.status(201).json(parecer);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 /**
  * GET /api/saude/tfd/parecer/:id
  * Buscar parecer
@@ -292,6 +411,19 @@ router.get('/parecer/solicitacao/:solicitacaoId', async (req: Request, res: Resp
  * Listar solicitações aguardando regulação
  */
 router.get('/regulacao/aguardando', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      urgente: req.query.urgente === 'true' ? true : req.query.urgente === 'false' ? false : undefined,
+      especialidade: req.query.especialidade as string,
+    };
+    const solicitacoes = await RegulacaoTFDService.listarAguardandoRegulacao(filtros);
+    res.json(solicitacoes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/regulacao/fila', async (req: Request, res: Response) => {
   try {
     const filtros = {
       urgente: req.query.urgente === 'true' ? true : req.query.urgente === 'false' ? false : undefined,
@@ -356,6 +488,15 @@ router.post('/aprovacao-gestao', async (req: Request, res: Response) => {
   }
 });
 
+router.post('/regulacao/aprovacao-gestao', async (req: Request, res: Response) => {
+  try {
+    const aprovacao = await RegulacaoTFDService.criarAprovacaoGestao(req.body);
+    res.status(201).json(aprovacao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 /**
  * GET /api/saude/tfd/aprovacao-gestao/:id
  * Buscar aprovação
@@ -407,6 +548,19 @@ router.post('/agendamento-externo', async (req: Request, res: Response) => {
   try {
     if (!req.userId) {
       return res.status(401).json({ error: 'Usuário autenticado é obrigatório para criar agendamento' });
+    }
+
+    const agendamento = await RegulacaoTFDService.criarAgendamentoExterno(req.body, req.userId);
+    res.status(201).json(agendamento);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/regulacao/agendamento-externo', async (req: Request, res: Response) => {
+  try {
+    if (!req.userId) {
+      return res.status(401).json({ error: 'Usuario autenticado e obrigatorio para criar agendamento' });
     }
 
     const agendamento = await RegulacaoTFDService.criarAgendamentoExterno(req.body, req.userId);
@@ -641,11 +795,30 @@ router.put('/viagem/:id/iniciar', async (req: Request, res: Response) => {
   }
 });
 
+router.post('/viagem/:id/iniciar', async (req: Request, res: Response) => {
+  try {
+    const viagem = await ViagensTFDService.iniciarViagem(req.params.id);
+    res.json(viagem);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
 /**
  * PUT /api/saude/tfd/viagem/:id/concluir
  * Concluir viagem
  */
 router.put('/viagem/:id/concluir', async (req: Request, res: Response) => {
+  try {
+    const { observacoes } = req.body;
+    const viagem = await ViagensTFDService.concluirViagem(req.params.id, observacoes);
+    res.json(viagem);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/viagem/:id/finalizar', async (req: Request, res: Response) => {
   try {
     const { observacoes } = req.body;
     const viagem = await ViagensTFDService.concluirViagem(req.params.id, observacoes);
@@ -709,6 +882,15 @@ router.get('/viagem/estatisticas', async (req: Request, res: Response) => {
  * Adicionar passageiro à viagem
  */
 router.post('/passageiro', async (req: Request, res: Response) => {
+  try {
+    const passageiro = await ViagensTFDService.adicionarPassageiro(req.body);
+    res.status(201).json(passageiro);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/viagem/passageiro', async (req: Request, res: Response) => {
   try {
     const passageiro = await ViagensTFDService.adicionarPassageiro(req.body);
     res.status(201).json(passageiro);
@@ -855,6 +1037,289 @@ router.get('/prestacao-contas', async (req: Request, res: Response) => {
     };
     const prestacoes = await ViagensTFDService.listarPrestacoesContas(filtros);
     res.json(prestacoes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// CONFIGURACOES E FROTA
+// ============================================================================
+
+router.get('/dashboard/stats', async (_req: Request, res: Response) => {
+  try {
+    const stats = await TFDService.getDashboardStats();
+    res.json(stats);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/veiculos', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : true,
+      status: req.query.status as string | undefined,
+    };
+    const veiculos = await TFDService.listarVeiculos(filtros);
+    res.json(veiculos);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/veiculos/:id', async (req: Request, res: Response) => {
+  try {
+    const veiculo = await TFDService.findVeiculoById(req.params.id);
+    if (!veiculo) {
+      return res.status(404).json({ error: 'Veiculo nao encontrado' });
+    }
+    res.json(veiculo);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/veiculos', async (req: Request, res: Response) => {
+  try {
+    const payload = {
+      placa: req.body.placa,
+      modelo: req.body.modelo,
+      capacidade: Number(req.body.capacidade || 0),
+      ano: req.body.ano ? Number(req.body.ano) : undefined,
+      km: req.body.km ? Number(req.body.km) : undefined,
+      acessibilidade: req.body.acessibilidade === true,
+      status: req.body.status || 'DISPONIVEL',
+      isActive: req.body.isActive !== undefined ? req.body.isActive === true : true,
+    };
+
+    if (!payload.placa || !payload.modelo || !payload.capacidade) {
+      return res.status(400).json({ error: 'placa, modelo e capacidade sao obrigatorios' });
+    }
+
+    const veiculo = await TFDService.createVeiculo(payload as any);
+    res.status(201).json(veiculo);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/veiculos/:id', async (req: Request, res: Response) => {
+  try {
+    const updateData: any = {};
+    if (req.body.placa !== undefined) updateData.placa = req.body.placa;
+    if (req.body.modelo !== undefined) updateData.modelo = req.body.modelo;
+    if (req.body.capacidade !== undefined) updateData.capacidade = Number(req.body.capacidade);
+    if (req.body.ano !== undefined) updateData.ano = Number(req.body.ano);
+    if (req.body.km !== undefined) updateData.km = Number(req.body.km);
+    if (req.body.acessibilidade !== undefined) updateData.acessibilidade = req.body.acessibilidade === true;
+    if (req.body.status !== undefined) updateData.status = req.body.status;
+    if (req.body.isActive !== undefined) updateData.isActive = req.body.isActive === true;
+
+    const veiculo = await TFDService.updateVeiculo(req.params.id, updateData);
+    res.json(veiculo);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete('/veiculos/:id', async (req: Request, res: Response) => {
+  try {
+    await TFDService.deleteVeiculo(req.params.id);
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/motoristas', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      isActive: req.query.isActive !== undefined ? req.query.isActive === 'true' : true,
+      status: req.query.status as string | undefined,
+    };
+    const motoristas = await TFDService.listarMotoristas(filtros);
+    res.json(motoristas);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/motoristas/:id', async (req: Request, res: Response) => {
+  try {
+    const motorista = await TFDService.findMotoristaById(req.params.id);
+    if (!motorista) {
+      return res.status(404).json({ error: 'Motorista nao encontrado' });
+    }
+    res.json(motorista);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/motoristas', async (req: Request, res: Response) => {
+  try {
+    const payload = {
+      userId: req.body.userId || req.body.cpf || req.userId,
+      cpf: req.body.cpf,
+      nome: req.body.nome,
+      cnh: req.body.cnh,
+      categoriaCnh: req.body.categoriaCNH || req.body.categoriaCnh,
+      validadeCnh: req.body.validadeCNH ? new Date(req.body.validadeCNH) : new Date(req.body.validadeCnh),
+      telefone: req.body.telefone,
+      status: req.body.status || 'DISPONIVEL',
+      isActive: req.body.isActive !== undefined ? req.body.isActive === true : true,
+    };
+
+    if (!payload.nome || !payload.cnh || !payload.categoriaCnh || !payload.validadeCnh || !payload.telefone) {
+      return res
+        .status(400)
+        .json({ error: 'nome, cnh, categoriaCNH, validadeCNH e telefone sao obrigatorios' });
+    }
+
+    const motorista = await TFDService.createMotorista(payload as any);
+    res.status(201).json(motorista);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/motoristas/:id', async (req: Request, res: Response) => {
+  try {
+    const updateData: any = {};
+    if (req.body.nome !== undefined) updateData.nome = req.body.nome;
+    if (req.body.cpf !== undefined) updateData.cpf = req.body.cpf;
+    if (req.body.cnh !== undefined) updateData.cnh = req.body.cnh;
+    if (req.body.categoriaCNH !== undefined) updateData.categoriaCNH = req.body.categoriaCNH;
+    if (req.body.validadeCNH !== undefined) updateData.validadeCNH = new Date(req.body.validadeCNH);
+    if (req.body.telefone !== undefined) updateData.telefone = req.body.telefone;
+    if (req.body.status !== undefined) updateData.status = req.body.status;
+    if (req.body.isActive !== undefined) updateData.isActive = req.body.isActive === true;
+
+    const motorista = await TFDService.updateMotorista(req.params.id, updateData);
+    res.json(motorista);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete('/motoristas/:id', async (req: Request, res: Response) => {
+  try {
+    await TFDService.deleteMotorista(req.params.id);
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/especialidades', async (req: Request, res: Response) => {
+  try {
+    const apenasAtivas = req.query.apenasAtivas !== 'false';
+    const especialidades = await TFDService.listarEspecialidades(apenasAtivas);
+    res.json(especialidades);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/especialidades', async (req: Request, res: Response) => {
+  try {
+    const { nome, descricao, ordem } = req.body;
+    if (!nome) {
+      return res.status(400).json({ error: 'nome e obrigatorio' });
+    }
+    const especialidade = await TFDService.createEspecialidade({ nome, descricao, ordem });
+    res.status(201).json(especialidade);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/especialidades/:id', async (req: Request, res: Response) => {
+  try {
+    const especialidade = await TFDService.updateEspecialidade(req.params.id, req.body);
+    res.json(especialidade);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete('/especialidades/:id', async (req: Request, res: Response) => {
+  try {
+    await TFDService.deleteEspecialidade(req.params.id);
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/destinos', async (req: Request, res: Response) => {
+  try {
+    const apenasAtivos = req.query.apenasAtivos !== 'false';
+    const destinos = await TFDService.listarDestinos(apenasAtivos);
+    res.json(destinos);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.post('/destinos', async (req: Request, res: Response) => {
+  try {
+    const { cidade, estado, hospital, especialidades, distanciaKm, tempoViagem, observacoes } = req.body;
+    if (!cidade || !estado) {
+      return res.status(400).json({ error: 'cidade e estado sao obrigatorios' });
+    }
+    const destino = await TFDService.createDestino({
+      cidade,
+      estado,
+      hospital,
+      especialidades,
+      distanciaKm: distanciaKm !== undefined ? Number(distanciaKm) : undefined,
+      tempoViagem,
+      observacoes,
+    });
+    res.status(201).json(destino);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.put('/destinos/:id', async (req: Request, res: Response) => {
+  try {
+    const updateData: any = { ...req.body };
+    if (updateData.distanciaKm !== undefined) {
+      updateData.distanciaKm = Number(updateData.distanciaKm);
+    }
+    const destino = await TFDService.updateDestino(req.params.id, updateData);
+    res.json(destino);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.delete('/destinos/:id', async (req: Request, res: Response) => {
+  try {
+    await TFDService.deleteDestino(req.params.id);
+    res.status(204).send();
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+// Aliases para telas legadas de configuracao
+router.get('/configuracoes/especialidades', async (req: Request, res: Response) => {
+  try {
+    const especialidades = await TFDService.listarEspecialidades(req.query.apenasAtivas !== 'false');
+    res.json(especialidades);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+router.get('/configuracoes/destinos', async (req: Request, res: Response) => {
+  try {
+    const destinos = await TFDService.listarDestinos(req.query.apenasAtivos !== 'false');
+    res.json(destinos);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }

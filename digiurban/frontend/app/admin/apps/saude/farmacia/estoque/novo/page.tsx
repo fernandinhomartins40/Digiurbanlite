@@ -89,7 +89,7 @@ export default function NovoEstoquePage() {
         payload.isRename = false;
       }
 
-      const response = await fetch('/api/apps/saude/farmacia/estoque', {
+      const response = await fetch('/api/saude/farmacia/estoque', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

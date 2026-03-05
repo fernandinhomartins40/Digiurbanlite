@@ -1,8 +1,42 @@
 /**
- * API Service - Atendimento Médico
+ * API Service - Atendimento Saude
  */
 
-const API_BASE = '/api/saude/atendimento';
+const SAUDE_BASE = '/api/saude';
+const CONSULTA_BASE = '/api/saude/consulta-medica';
+
+async function requestJson(url: string, init?: RequestInit) {
+  const res = await fetch(url, {
+    credentials: 'include',
+    ...init,
+  });
+
+  if (!res.ok) {
+    throw new Error(await res.text());
+  }
+
+  if (res.status === 204) {
+    return null;
+  }
+
+  return res.json();
+}
+
+function normalizeClassificacaoRisco(classificacao: string | undefined) {
+  switch (classificacao) {
+    case 'VERMELHO':
+      return 'EMERGENCIA';
+    case 'LARANJA':
+      return 'MUITO_URGENTE';
+    case 'AMARELO':
+      return 'URGENTE';
+    case 'VERDE':
+    case 'AZUL':
+      return 'NORMAL';
+    default:
+      return classificacao || 'NORMAL';
+  }
+}
 
 // ============================================================================
 // FILA DE ATENDIMENTO
@@ -10,36 +44,29 @@ const API_BASE = '/api/saude/atendimento';
 
 export async function realizarCheckIn(data: {
   unidadeId: string;
-  consultaId: string;
+  consultaId?: string;
   prioridade?: number;
+  citizenId?: string;
+  tipoAtendimento?: string;
+  motivoBusca?: string;
 }) {
-  const res = await fetch(`${API_BASE}/fila/checkin`, {
+  return requestJson(`${SAUDE_BASE}/fila-atendimento`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function obterFilaUnidade(unidadeId: string) {
-  const res = await fetch(`/api/saude/fila-atendimento?unidadeId=${unidadeId}`, {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${SAUDE_BASE}/fila-atendimento?unidadeId=${unidadeId}`);
 }
 
 export async function chamarProximo(unidadeId: string, profissionalId: string) {
-  const res = await fetch(`/api/saude/fila-atendimento/chamar-proximo`, {
+  return requestJson(`${SAUDE_BASE}/fila-atendimento/chamar-proximo`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ unidadeId, profissionalId }),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 // ============================================================================
@@ -52,32 +79,32 @@ export async function iniciarAtendimento(data: {
   profissionalId: string;
   tipoAtendimento: string;
   consultaId?: string;
+  motivoBusca?: string;
 }) {
-  const res = await fetch(`${API_BASE}/atendimento`, {
+  return requestJson(`${SAUDE_BASE}/fila-atendimento`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-    credentials: 'include',
+    body: JSON.stringify({
+      citizenId: data.citizenId,
+      unidadeId: data.unidadeId,
+      profissionalId: data.profissionalId,
+      tipoAtendimento: data.tipoAtendimento,
+      motivoBusca: data.motivoBusca || 'Atendimento em fila',
+      prioridade: data.consultaId ? 50 : 0,
+    }),
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function buscarAtendimento(id: string) {
-  const res = await fetch(`${API_BASE}/atendimento/${id}`, {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${SAUDE_BASE}/fila-atendimento/${id}`);
 }
 
 export async function finalizarAtendimento(id: string) {
-  const res = await fetch(`${API_BASE}/atendimento/${id}/finalizar`, {
-    method: 'POST',
-    credentials: 'include',
+  return requestJson(`${SAUDE_BASE}/fila-atendimento/${id}/status`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ status: 'FINALIZADO' }),
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 // ============================================================================
@@ -85,10 +112,12 @@ export async function finalizarAtendimento(id: string) {
 // ============================================================================
 
 export async function realizarTriagem(data: {
-  atendimentoId: string;
+  atendimentoId?: string;
+  filaAtendimentoId?: string;
   profissionalId: string;
   pressaoArterial?: string;
   frequenciaCardiaca?: number;
+  frequenciaRespiratoria?: number;
   temperatura?: number;
   saturacaoO2?: number;
   peso?: number;
@@ -97,44 +126,49 @@ export async function realizarTriagem(data: {
   queixaPrincipal: string;
   observacoes?: string;
 }) {
-  const res = await fetch(`${API_BASE}/triagem`, {
+  const filaAtendimentoId = data.filaAtendimentoId || data.atendimentoId;
+  if (!filaAtendimentoId) {
+    throw new Error('filaAtendimentoId e obrigatorio para triagem');
+  }
+
+  return requestJson(`${SAUDE_BASE}/triagem`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data),
-    credentials: 'include',
+    body: JSON.stringify({
+      filaAtendimentoId,
+      enfermeiroId: data.profissionalId,
+      pressaoArterial: data.pressaoArterial,
+      frequenciaCardiaca: data.frequenciaCardiaca,
+      frequenciaRespiratoria: data.frequenciaRespiratoria,
+      temperatura: data.temperatura,
+      saturacaoO2: data.saturacaoO2,
+      peso: data.peso,
+      altura: data.altura,
+      classificacaoRisco: normalizeClassificacaoRisco(data.classificacaoRisco),
+      queixaPrincipal: data.queixaPrincipal,
+      observacoes: data.observacoes,
+    }),
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
-// Alias para compatibilidade
 export const criarTriagem = realizarTriagem;
 
 // ============================================================================
-// PRONTUÁRIO
+// PRONTUARIO
 // ============================================================================
 
 export async function buscarProntuario(citizenId: string) {
-  const res = await fetch(`${API_BASE}/prontuario/${citizenId}`, {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/prontuario/${citizenId}`);
 }
 
-// Alias para compatibilidade
 export const obterProntuarioCidadao = buscarProntuario;
 
 export async function obterTimelineProntuario(citizenId: string) {
-  const res = await fetch(`${API_BASE}/prontuario/${citizenId}/timeline`, {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/prontuario/${citizenId}/timeline`);
 }
 
 // ============================================================================
-// ESTATÍSTICAS
+// ESTATISTICAS
 // ============================================================================
 
 export async function obterEstatisticasAtendimento(filtros: {
@@ -142,149 +176,96 @@ export async function obterEstatisticasAtendimento(filtros: {
   dataInicio: string;
   dataFim: string;
 }) {
-  const params = new URLSearchParams(filtros as any);
-  const res = await fetch(`${API_BASE}/atendimento/estatisticas?${params}`, {
-    credentials: 'include',
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const params = new URLSearchParams(filtros as Record<string, string>);
+  return requestJson(`${SAUDE_BASE}/fila-atendimento/estatisticas?${params.toString()}`);
 }
 
 // ============================================================================
-// CONSULTA MÉDICA — PEC e-SUS
+// CONSULTA MEDICA - PEC e-SUS
 // ============================================================================
 
-const CONSULTA_BASE = '/api/saude/consulta-medica';
-
-// Contexto completo da fila (paciente + problemas + histórico)
 export async function buscarContextoFila(filaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/contexto-fila/${filaId}`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/contexto-fila/${filaId}`);
 }
 
-// Buscar consulta já existente para esta entrada na fila
 export async function buscarConsultaPorFila(filaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/fila/${filaId}`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/fila/${filaId}`);
 }
 
-// Criar consulta médica (SOAP)
 export async function criarConsultaMedica(data: Record<string, any>) {
-  const res = await fetch(`${CONSULTA_BASE}`, {
+  return requestJson(`${CONSULTA_BASE}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
-// Finalizar consulta (atualiza status fila → FINALIZADO)
 export async function finalizarConsulta(filaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/finalizar/${filaId}`, {
+  return requestJson(`${CONSULTA_BASE}/finalizar/${filaId}`, {
     method: 'POST',
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
-// ── Prescrições ──
 export async function criarPrescricao(consultaId: string, data: Record<string, any>) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/prescricao`, {
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/prescricao`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function listarPrescricoes(consultaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/prescricoes`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/prescricoes`);
 }
 
-// ── Exames ──
 export async function criarExame(consultaId: string, data: Record<string, any>) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/exame`, {
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/exame`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function listarExames(consultaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/exames`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/exames`);
 }
 
-// ── Encaminhamentos ──
 export async function criarEncaminhamento(consultaId: string, data: Record<string, any>) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/encaminhamento`, {
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/encaminhamento`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function listarEncaminhamentos(consultaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/encaminhamentos`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/encaminhamentos`);
 }
 
-// ── Atestados ──
 export async function criarAtestado(consultaId: string, data: Record<string, any>) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/atestado`, {
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/atestado`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
 export async function listarAtestados(consultaId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/${consultaId}/atestados`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/${consultaId}/atestados`);
 }
 
-// ── Problemas / Condições ──
 export async function buscarProblemasCidadao(citizenId: string) {
-  const res = await fetch(`${CONSULTA_BASE}/problemas/${citizenId}`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/problemas/${citizenId}`);
 }
 
 export async function criarProblema(citizenId: string, data: Record<string, any>) {
-  const res = await fetch(`${CONSULTA_BASE}/problemas/${citizenId}`, {
+  return requestJson(`${CONSULTA_BASE}/problemas/${citizenId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
-    credentials: 'include',
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
 }
 
-// ── Medicamentos (autocomplete) ──
 export async function buscarMedicamentos(q: string) {
-  const res = await fetch(`${CONSULTA_BASE}/medicamentos/busca?q=${encodeURIComponent(q)}`, { credentials: 'include' });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  return requestJson(`${CONSULTA_BASE}/medicamentos/busca?q=${encodeURIComponent(q)}`);
 }

@@ -29,7 +29,9 @@ export default function EspecialidadesPage() {
 
   const loadEspecialidades = async () => {
     try {
-      const response = await fetch('/api/tfd/especialidades?apenasAtivas=false');
+      const response = await fetch('/api/saude/tfd/especialidades?apenasAtivas=false', {
+        credentials: 'include',
+      });
       const data = await response.json();
       setEspecialidades(data);
     } catch (error) {
@@ -45,12 +47,15 @@ export default function EspecialidadesPage() {
   const handleSave = async () => {
     try {
       const method = editando ? 'PUT' : 'POST';
-      const url = editando ? `/api/tfd/especialidades/${editando.id}` : '/api/tfd/especialidades';
+      const url = editando
+        ? `/api/saude/tfd/especialidades/${editando.id}`
+        : '/api/saude/tfd/especialidades';
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao salvar especialidade');
@@ -76,8 +81,9 @@ export default function EspecialidadesPage() {
     if (!confirm('Deseja realmente excluir esta especialidade?')) return;
 
     try {
-      const response = await fetch(`/api/tfd/especialidades/${id}`, {
+      const response = await fetch(`/api/saude/tfd/especialidades/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao excluir especialidade');

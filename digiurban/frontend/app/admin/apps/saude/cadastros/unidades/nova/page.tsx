@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,22 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { ArrowLeft, Save } from 'lucide-react';
 
+interface OrganizationalUnitOption {
+  id: string;
+  nome: string;
+  sigla?: string | null;
+  tipo: string;
+  department?: {
+    id: string;
+    name: string;
+  };
+}
+
 export default function NovaUnidade() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [loadingOrganograma, setLoadingOrganograma] = useState(false);
+  const [organizationalUnits, setOrganizationalUnits] = useState<OrganizationalUnitOption[]>([]);
   const [formData, setFormData] = useState({
     nome: '',
     tipo: 'UBS',
@@ -23,14 +36,44 @@ export default function NovaUnidade() {
     telefone: '',
     email: '',
     horarioFuncionamento: '',
+    organizationalUnitId: '',
     isActive: true,
   });
+
+  useEffect(() => {
+    const loadOrganograma = async () => {
+      try {
+        setLoadingOrganograma(true);
+        const response = await fetch('/api/organizational-units?isActive=true', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Falha ao carregar unidades organizacionais');
+        }
+
+        const data = await response.json();
+        setOrganizationalUnits(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Erro ao carregar organograma:', error);
+      } finally {
+        setLoadingOrganograma(false);
+      }
+    };
+
+    void loadOrganograma();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.nome) {
       alert('Nome é obrigatório');
+      return;
+    }
+
+    if (!formData.organizationalUnitId) {
+      alert('Selecione o setor/unidade organizacional');
       return;
     }
 
@@ -101,6 +144,25 @@ export default function NovaUnidade() {
                       <SelectItem value="Hospital">Hospital</SelectItem>
                       <SelectItem value="Clínica">Clínica</SelectItem>
                       <SelectItem value="Posto">Posto de Saúde</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="col-span-2">
+                  <Label htmlFor="organizationalUnitId">Setor / Unidade Organizacional *</Label>
+                  <Select
+                    value={formData.organizationalUnitId}
+                    onValueChange={(value) => setFormData({ ...formData, organizationalUnitId: value })}
+                  >
+                    <SelectTrigger id="organizationalUnitId">
+                      <SelectValue placeholder={loadingOrganograma ? 'Carregando...' : 'Selecione o setor'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizationalUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.sigla ? `${unit.sigla} - ${unit.nome}` : unit.nome}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

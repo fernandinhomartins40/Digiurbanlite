@@ -22,7 +22,9 @@ export default function MotoristasPage() {
 
   const loadMotoristas = async () => {
     try {
-      const response = await fetch('/api/tfd/motoristas');
+      const response = await fetch('/api/saude/tfd/motoristas', {
+        credentials: 'include',
+      });
       const data = await response.json();
       setMotoristas(data);
     } catch (error) {
@@ -38,12 +40,13 @@ export default function MotoristasPage() {
   const handleSave = async (data: any) => {
     try {
       const method = 'POST';
-      const url = '/api/tfd/motoristas';
+      const url = '/api/saude/tfd/motoristas';
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao salvar motorista');
@@ -67,8 +70,9 @@ export default function MotoristasPage() {
     if (!confirm('Deseja realmente excluir este motorista?')) return;
 
     try {
-      const response = await fetch(`/api/tfd/motoristas/${id}`, {
+      const response = await fetch(`/api/saude/tfd/motoristas/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao excluir motorista');

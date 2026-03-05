@@ -246,6 +246,17 @@ router.get('/unidades', async (req: Request, res: Response) => {
 
     const unidades = await prisma.unidadeSaude.findMany({
       where,
+      include: {
+        organizationalUnit: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+          },
+        },
+      },
       orderBy: { nome: 'asc' },
     });
 
@@ -266,6 +277,17 @@ router.get('/unidades/:id', async (req: Request, res: Response) => {
 
     const unidade = await prisma.unidadeSaude.findUnique({
       where: { id },
+      include: {
+        organizationalUnit: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+          },
+        },
+      },
     });
 
     if (!unidade) {
@@ -285,7 +307,19 @@ router.get('/unidades/:id', async (req: Request, res: Response) => {
  */
 router.post('/unidades', async (req: Request, res: Response) => {
   try {
-    const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento, isActive } = req.body;
+    const {
+      nome,
+      tipo,
+      cnes,
+      endereco,
+      bairro,
+      cep,
+      telefone,
+      email,
+      horarioFuncionamento,
+      organizationalUnitId,
+      isActive,
+    } = req.body;
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
@@ -293,6 +327,41 @@ router.post('/unidades', async (req: Request, res: Response) => {
 
     if (!tipo) {
       return res.status(400).json({ error: 'Tipo é obrigatório' });
+    }
+
+    if (!organizationalUnitId) {
+      return res.status(400).json({ error: 'organizationalUnitId Ã© obrigatÃ³rio' });
+    }
+
+    const organizationalUnit = await prisma.organizationalUnit.findUnique({
+      where: { id: organizationalUnitId },
+      select: {
+        id: true,
+        nome: true,
+        sigla: true,
+        tipo: true,
+        departmentId: true,
+        isActive: true,
+      },
+    });
+
+    if (!organizationalUnit) {
+      return res.status(404).json({ error: 'Unidade organizacional nÃ£o encontrada' });
+    }
+
+    if (!organizationalUnit.isActive) {
+      return res.status(400).json({ error: 'A unidade organizacional estÃ¡ inativa' });
+    }
+
+    const unidadeVinculada = await prisma.unidadeSaude.findFirst({
+      where: { organizationalUnitId },
+      select: { id: true, nome: true },
+    });
+
+    if (unidadeVinculada) {
+      return res.status(400).json({
+        error: `A unidade organizacional jÃ¡ estÃ¡ vinculada Ã  unidade de saÃºde \"${unidadeVinculada.nome}\"`,
+      });
     }
 
     const unidade = await prisma.unidadeSaude.create({
@@ -306,7 +375,19 @@ router.post('/unidades', async (req: Request, res: Response) => {
         telefone: telefone || null,
         email: email || null,
         horario: horarioFuncionamento || null,
+        organizationalUnitId,
         isActive: isActive !== undefined ? isActive : true,
+      },
+      include: {
+        organizationalUnit: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+          },
+        },
       },
     });
 
@@ -324,10 +405,74 @@ router.post('/unidades', async (req: Request, res: Response) => {
 router.put('/unidades/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { nome, tipo, cnes, endereco, bairro, cep, telefone, email, horarioFuncionamento, isActive } = req.body;
+    const {
+      nome,
+      tipo,
+      cnes,
+      endereco,
+      bairro,
+      cep,
+      telefone,
+      email,
+      horarioFuncionamento,
+      organizationalUnitId,
+      isActive,
+    } = req.body;
 
     if (!nome) {
       return res.status(400).json({ error: 'Nome é obrigatório' });
+    }
+
+    const unidadeExistente = await prisma.unidadeSaude.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        nome: true,
+        organizationalUnitId: true,
+      },
+    });
+
+    if (!unidadeExistente) {
+      return res.status(404).json({ error: 'Unidade nÃ£o encontrada' });
+    }
+
+    const resolvedOrganizationalUnitId = organizationalUnitId ?? unidadeExistente.organizationalUnitId;
+    if (!resolvedOrganizationalUnitId) {
+      return res.status(400).json({ error: 'organizationalUnitId Ã© obrigatÃ³rio' });
+    }
+
+    const organizationalUnit = await prisma.organizationalUnit.findUnique({
+      where: { id: resolvedOrganizationalUnitId },
+      select: {
+        id: true,
+        nome: true,
+        sigla: true,
+        tipo: true,
+        departmentId: true,
+        isActive: true,
+      },
+    });
+
+    if (!organizationalUnit) {
+      return res.status(404).json({ error: 'Unidade organizacional nÃ£o encontrada' });
+    }
+
+    if (!organizationalUnit.isActive) {
+      return res.status(400).json({ error: 'A unidade organizacional estÃ¡ inativa' });
+    }
+
+    const unidadeVinculada = await prisma.unidadeSaude.findFirst({
+      where: {
+        organizationalUnitId: resolvedOrganizationalUnitId,
+        id: { not: id },
+      },
+      select: { id: true, nome: true },
+    });
+
+    if (unidadeVinculada) {
+      return res.status(400).json({
+        error: `A unidade organizacional jÃ¡ estÃ¡ vinculada Ã  unidade de saÃºde "${unidadeVinculada.nome}"`,
+      });
     }
 
     const updateData: any = {};
@@ -340,11 +485,23 @@ router.put('/unidades/:id', async (req: Request, res: Response) => {
     if (telefone !== undefined) updateData.telefone = telefone || null;
     if (email !== undefined) updateData.email = email || null;
     if (horarioFuncionamento !== undefined) updateData.horario = horarioFuncionamento || null;
+    if (organizationalUnitId !== undefined) updateData.organizationalUnitId = organizationalUnitId;
     if (isActive !== undefined) updateData.isActive = isActive;
 
     const unidade = await prisma.unidadeSaude.update({
       where: { id },
       data: updateData,
+      include: {
+        organizationalUnit: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+          },
+        },
+      },
     });
 
     res.json(unidade);
@@ -1367,6 +1524,18 @@ router.get('/equipes', async (req: Request, res: Response) => {
             id: true,
             nome: true,
             tipo: true,
+            organizationalUnitId: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+            organizationalUnitId: true,
+            ativo: true,
           },
         },
         profissionais: {
@@ -1424,7 +1593,19 @@ router.get('/equipes/:id', async (req: Request, res: Response) => {
             id: true,
             nome: true,
             tipo: true,
+            organizationalUnitId: true,
             fluxoAtendimento: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+            organizationalUnitId: true,
+            ativo: true,
           },
         },
         profissionais: {
@@ -1481,10 +1662,10 @@ router.get('/equipes/:id', async (req: Request, res: Response) => {
  */
 router.post('/equipes', async (req: Request, res: Response) => {
   try {
-    const { ine, nome, tipo, unidadeId, createdBy, ativo } = req.body;
+    const { ine, nome, tipo, unidadeId, teamId, createdBy, ativo } = req.body;
 
     // Validações
-    if (!ine || !nome || !tipo || !unidadeId) {
+    if (!ine || !nome || !tipo || !unidadeId || !teamId) {
       return res.status(400).json({
         error: 'Campos obrigatórios: ine, nome, tipo, unidadeId',
       });
@@ -1510,12 +1691,51 @@ router.post('/equipes', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Unidade de saúde não encontrada' });
     }
 
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      select: {
+        id: true,
+        nome: true,
+        ativo: true,
+        organizationalUnitId: true,
+      },
+    });
+
+    if (!team) {
+      return res.status(404).json({ error: 'Equipe organizacional nÃ£o encontrada' });
+    }
+
+    if (!team.ativo) {
+      return res.status(400).json({ error: 'A equipe organizacional estÃ¡ inativa' });
+    }
+
+    if (unidade.organizationalUnitId && team.organizationalUnitId) {
+      if (unidade.organizationalUnitId !== team.organizationalUnitId) {
+        return res.status(400).json({
+          error:
+            'A equipe organizacional selecionada deve pertencer ao mesmo setor da unidade de saÃºde',
+        });
+      }
+    }
+
+    const equipeVinculada = await prisma.equipeSaude.findFirst({
+      where: { teamId },
+      select: { id: true, nome: true },
+    });
+
+    if (equipeVinculada) {
+      return res.status(400).json({
+        error: `A equipe organizacional jÃ¡ estÃ¡ vinculada Ã  equipe de saÃºde "${equipeVinculada.nome}"`,
+      });
+    }
+
     const equipe = await prisma.equipeSaude.create({
       data: {
         ine,
         nome,
         tipo,
         unidadeId,
+        teamId,
         createdBy,
         ativo: ativo !== undefined ? ativo : true,
       },
@@ -1525,6 +1745,18 @@ router.post('/equipes', async (req: Request, res: Response) => {
             id: true,
             nome: true,
             tipo: true,
+            organizationalUnitId: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+            organizationalUnitId: true,
+            ativo: true,
           },
         },
       },
@@ -1544,7 +1776,7 @@ router.post('/equipes', async (req: Request, res: Response) => {
 router.put('/equipes/:id', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { ine, nome, tipo, ativo } = req.body;
+    const { ine, nome, tipo, teamId, ativo } = req.body;
 
     // Validações obrigatórias
     if (!nome) {
@@ -1580,10 +1812,66 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
       }
     }
 
+    const resolvedTeamId = teamId ?? equipeExistente.teamId;
+    if (!resolvedTeamId) {
+      return res.status(400).json({ error: 'teamId Ã© obrigatÃ³rio' });
+    }
+
+    const team = await prisma.team.findUnique({
+      where: { id: resolvedTeamId },
+      select: {
+        id: true,
+        nome: true,
+        ativo: true,
+        organizationalUnitId: true,
+      },
+    });
+
+    if (!team) {
+      return res.status(404).json({ error: 'Equipe organizacional nÃ£o encontrada' });
+    }
+
+    if (!team.ativo) {
+      return res.status(400).json({ error: 'A equipe organizacional estÃ¡ inativa' });
+    }
+
+    const unidade = await prisma.unidadeSaude.findUnique({
+      where: { id: equipeExistente.unidadeId },
+      select: {
+        id: true,
+        nome: true,
+        organizationalUnitId: true,
+      },
+    });
+
+    if (unidade?.organizationalUnitId && team.organizationalUnitId) {
+      if (unidade.organizationalUnitId !== team.organizationalUnitId) {
+        return res.status(400).json({
+          error:
+            'A equipe organizacional selecionada deve pertencer ao mesmo setor da unidade de saÃºde',
+        });
+      }
+    }
+
+    const equipeVinculada = await prisma.equipeSaude.findFirst({
+      where: {
+        teamId: resolvedTeamId,
+        id: { not: id },
+      },
+      select: { id: true, nome: true },
+    });
+
+    if (equipeVinculada) {
+      return res.status(400).json({
+        error: `A equipe organizacional jÃ¡ estÃ¡ vinculada Ã  equipe de saÃºde "${equipeVinculada.nome}"`,
+      });
+    }
+
     const updateData: any = {};
     if (ine !== undefined) updateData.ine = ine;
     if (nome !== undefined) updateData.nome = nome;
     if (tipo !== undefined) updateData.tipo = tipo;
+    updateData.teamId = resolvedTeamId;
     if (ativo !== undefined) updateData.ativo = ativo;
 
     const equipe = await prisma.equipeSaude.update({
@@ -1595,6 +1883,18 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
             id: true,
             nome: true,
             tipo: true,
+            organizationalUnitId: true,
+          },
+        },
+        team: {
+          select: {
+            id: true,
+            nome: true,
+            sigla: true,
+            tipo: true,
+            departmentId: true,
+            organizationalUnitId: true,
+            ativo: true,
           },
         },
         _count: {

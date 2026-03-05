@@ -23,7 +23,9 @@ export default function VeiculosPage() {
 
   const loadVeiculos = async () => {
     try {
-      const response = await fetch('/api/tfd/veiculos');
+      const response = await fetch('/api/saude/tfd/veiculos', {
+        credentials: 'include',
+      });
       const data = await response.json();
       setVeiculos(data);
     } catch (error) {
@@ -39,12 +41,15 @@ export default function VeiculosPage() {
   const handleSave = async (data: any) => {
     try {
       const method = editando ? 'PUT' : 'POST';
-      const url = editando ? `/api/tfd/veiculos/${editando.id}` : '/api/tfd/veiculos';
+      const url = editando
+        ? `/api/saude/tfd/veiculos/${editando.id}`
+        : '/api/saude/tfd/veiculos';
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao salvar veículo');
@@ -69,8 +74,9 @@ export default function VeiculosPage() {
     if (!confirm('Deseja realmente excluir este veículo?')) return;
 
     try {
-      const response = await fetch(`/api/tfd/veiculos/${id}`, {
+      const response = await fetch(`/api/saude/tfd/veiculos/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao excluir veículo');

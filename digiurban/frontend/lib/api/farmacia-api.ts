@@ -21,10 +21,16 @@ export async function listarEstoque(unidadeId?: string) {
 }
 
 export async function buscarMedicamento(medicamentoId: string, unidadeId: string) {
-  const res = await fetch(
-    `${API_BASE}/estoque/${medicamentoId}?unidadeId=${unidadeId}`,
-    { credentials: 'include' }
-  );
+  const res = await fetch(`${API_BASE}/estoque/verificar-disponibilidade`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      medicamentoId,
+      unidadeId,
+      quantidade: 1,
+    }),
+    credentials: 'include',
+  });
   if (!res.ok) throw new Error(await res.text());
   return res.json();
 }

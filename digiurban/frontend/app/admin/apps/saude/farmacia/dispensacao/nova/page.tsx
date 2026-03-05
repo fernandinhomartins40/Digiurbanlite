@@ -51,7 +51,9 @@ export default function NovaDispensacaoPage() {
 
   const loadEstoque = async () => {
     try {
-      const response = await fetch('/api/apps/saude/farmacia/estoque?status=DISPONIVEL');
+      const response = await fetch('/api/saude/farmacia/estoque?status=DISPONIVEL', {
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = await response.json();
         setEstoque(data);
@@ -63,7 +65,12 @@ export default function NovaDispensacaoPage() {
 
   const loadPrescricoes = async (cidadaoId: string) => {
     try {
-      const response = await fetch(`/api/apps/saude/atendimento/prescricoes?cidadaoId=${cidadaoId}&status=ATIVA`);
+      const response = await fetch(
+        `/api/saude/consulta-medica/prescricoes/pendentes?cidadaoId=${cidadaoId}&status=ATIVA`,
+        {
+          credentials: 'include',
+        }
+      );
       if (response.ok) {
         const data = await response.json();
         setPrescricoes(data);
@@ -179,7 +186,7 @@ export default function NovaDispensacaoPage() {
     setLoading(true);
 
     try {
-      const response = await fetch('/api/apps/saude/farmacia/dispensacoes', {
+      const response = await fetch('/api/saude/farmacia/dispensacao', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

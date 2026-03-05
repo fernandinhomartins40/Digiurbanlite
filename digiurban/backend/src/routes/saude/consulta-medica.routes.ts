@@ -1,5 +1,6 @@
 import { Router } from 'express';
 import consultaMedicaService from '../../services/saude/consulta-medica.service';
+import { prisma } from '../../lib/prisma';
 
 const router = Router();
 
@@ -163,6 +164,239 @@ router.get('/medicamentos/busca', async (req, res) => {
   } catch (error) {
     console.error('Erro ao buscar medicamentos:', error);
     res.status(500).json({ error: 'Erro ao buscar medicamentos' });
+  }
+});
+
+// Prontuario consolidado do cidadao
+router.get('/prontuario/:citizenId', async (req, res) => {
+  try {
+    const { citizenId } = req.params;
+
+    const cidadao = await prisma.citizen.findUnique({
+      where: { id: citizenId },
+      select: {
+        id: true,
+        name: true,
+        cpf: true,
+        birthDate: true,
+        phone: true,
+      },
+    });
+
+    if (!cidadao) {
+      return res.status(404).json({ error: 'Cidadao nao encontrado' });
+    }
+
+    const atendimentos = await prisma.atendimentoMedico.findMany({
+      where: { citizenId },
+      orderBy: { dataAtendimento: 'desc' },
+      take: 100,
+    });
+
+    const consultas = await prisma.consultaMedica.findMany({
+      where: {
+        atendimento: {
+          citizenId,
+        },
+      },
+      orderBy: { dataHora: 'desc' },
+      take: 200,
+    });
+
+    const medicoIds = Array.from(new Set(consultas.map((consulta) => consulta.medicoId).filter(Boolean)));
+    const medicos = medicoIds.length
+      ? await prisma.user.findMany({
+          where: { id: { in: medicoIds } },
+          select: { id: true, name: true },
+        })
+      : [];
+    const medicosById = new Map(medicos.map((medico) => [medico.id, medico]));
+    const consultasComMedico = consultas.map((consulta) => ({
+      ...consulta,
+      medico: medicosById.has(consulta.medicoId)
+        ? {
+            id: consulta.medicoId,
+            name: medicosById.get(consulta.medicoId)?.name || 'NÃ£o informado',
+          }
+        : null,
+    }));
+
+    const consultaIds = consultas.map((consulta) => consulta.id);
+
+    const [prescricoes, exames, encaminhamentos, atestados] = await Promise.all([
+      prisma.prescricao.findMany({
+        where: { consultaId: { in: consultaIds } },
+        orderBy: { dataHora: 'desc' },
+      }),
+      prisma.exameSolicitado.findMany({
+        where: { consultaId: { in: consultaIds } },
+        orderBy: { dataHora: 'desc' },
+      }),
+      prisma.encaminhamento.findMany({
+        where: { consultaId: { in: consultaIds } },
+        orderBy: { dataHora: 'desc' },
+      }),
+      prisma.atestado.findMany({
+        where: { consultaId: { in: consultaIds } },
+        orderBy: { dataHora: 'desc' },
+      }),
+    ]);
+
+    return res.json({
+      cidadao,
+      atendimentos,
+      consultas: consultasComMedico,
+      prescricoes,
+      exames,
+      encaminhamentos,
+      atestados,
+    });
+  } catch (error) {
+    console.error('Erro ao buscar prontuario:', error);
+    return res.status(500).json({ error: 'Erro ao buscar prontuario' });
+  }
+});
+
+router.get('/prontuario/:citizenId/timeline', async (req, res) => {
+  try {
+    const { citizenId } = req.params;
+
+    const consultas = await prisma.consultaMedica.findMany({
+      where: {
+        atendimento: {
+          citizenId,
+        },
+      },
+      select: {
+        id: true,
+        dataHora: true,
+        motivoConsulta: true,
+        diagnosticoPrincipal: true,
+      },
+      orderBy: { dataHora: 'desc' },
+      take: 200,
+    });
+
+    const timeline = consultas.map((consulta) => ({
+      id: consulta.id,
+      tipo: 'CONSULTA',
+      dataHora: consulta.dataHora,
+      titulo: consulta.motivoConsulta || 'Consulta medica',
+      descricao: consulta.diagnosticoPrincipal || null,
+    }));
+
+    return res.json(timeline);
+  } catch (error) {
+    console.error('Erro ao buscar timeline do prontuario:', error);
+    return res.status(500).json({ error: 'Erro ao buscar timeline do prontuario' });
+  }
+});
+
+router.get('/prescricoes/pendentes', async (req, res) => {
+  try {
+    const { cidadaoId, unidadeId, status } = req.query;
+
+    const where: any = {
+      dispensada: false,
+      consulta: {
+        atendimento: {},
+      },
+    };
+
+    if (cidadaoId) {
+      where.consulta.atendimento.citizenId = cidadaoId as string;
+    }
+
+    if (unidadeId) {
+      where.consulta.atendimento.unidadeId = unidadeId as string;
+    }
+
+    if (status === 'ATIVA') {
+      where.validade = { gte: new Date() };
+    }
+
+    const prescricoes = await prisma.prescricao.findMany({
+      where,
+      include: {
+        consulta: {
+          select: {
+            id: true,
+            medicoId: true,
+            profissionalSaudeId: true,
+            atendimento: {
+              select: {
+                id: true,
+                citizenId: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { dataHora: 'desc' },
+      take: 200,
+    });
+
+    const medicoIds = Array.from(
+      new Set(prescricoes.map((prescricao) => prescricao.consulta.medicoId).filter(Boolean))
+    );
+    const citizenIds = Array.from(
+      new Set(
+        prescricoes
+          .map((prescricao) => prescricao.consulta.atendimento.citizenId)
+          .filter((id): id is string => Boolean(id))
+      )
+    );
+
+    const [medicos, cidadaos] = await Promise.all([
+      medicoIds.length
+        ? prisma.user.findMany({
+            where: { id: { in: medicoIds } },
+            select: { id: true, name: true },
+          })
+        : Promise.resolve([]),
+      citizenIds.length
+        ? prisma.citizen.findMany({
+            where: { id: { in: citizenIds } },
+            select: { id: true, name: true, cpf: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const medicosById = new Map(medicos.map((medico) => [medico.id, medico]));
+    const cidadaosById = new Map(cidadaos.map((cidadao) => [cidadao.id, cidadao]));
+
+    const payload = prescricoes.map((prescricao, index) => {
+      const medico = medicosById.get(prescricao.consulta.medicoId);
+      const cidadao = cidadaosById.get(prescricao.consulta.atendimento.citizenId);
+
+      return {
+        id: prescricao.id,
+        numero: `RX-${String(index + 1).padStart(4, '0')}`,
+        dataEmissao: prescricao.dataHora,
+        validade: prescricao.validade,
+        medicamentos: prescricao.medicamentos,
+        observacoes: prescricao.observacoes,
+        medico: medico
+          ? {
+              id: medico.id,
+              nome: medico.name,
+            }
+          : null,
+        citizen: cidadao
+          ? {
+              id: cidadao.id,
+              name: cidadao.name,
+              cpf: cidadao.cpf,
+            }
+          : null,
+        atendimentoId: prescricao.consulta.atendimento.id,
+      };
+    });
+
+    return res.json(payload);
+  } catch (error) {
+    console.error('Erro ao listar prescricoes pendentes:', error);
+    return res.status(500).json({ error: 'Erro ao listar prescricoes pendentes' });
   }
 });
 

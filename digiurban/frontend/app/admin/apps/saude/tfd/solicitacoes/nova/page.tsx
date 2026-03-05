@@ -40,7 +40,9 @@ export default function NovaSolicitacaoTFDPage() {
 
   const loadEspecialidades = async () => {
     try {
-      const response = await fetch('/api/apps/saude/tfd/configuracoes/especialidades');
+      const response = await fetch('/api/saude/tfd/configuracoes/especialidades', {
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = await response.json();
         setEspecialidades(data);
@@ -52,7 +54,9 @@ export default function NovaSolicitacaoTFDPage() {
 
   const loadDestinos = async () => {
     try {
-      const response = await fetch('/api/apps/saude/tfd/configuracoes/destinos');
+      const response = await fetch('/api/saude/tfd/configuracoes/destinos', {
+        credentials: 'include',
+      });
       if (response.ok) {
         const data = await response.json();
         setDestinos(data);
@@ -90,26 +94,32 @@ export default function NovaSolicitacaoTFDPage() {
     setLoading(true);
 
     try {
-      // Criar FormData para upload de arquivos
-      const formDataToSend = new FormData();
-      formDataToSend.append('cidadaoId', selectedCidadao.id);
-      formDataToSend.append('especialidadeId', formData.especialidadeId);
-      formDataToSend.append('destinoId', formData.destinoId);
-      formDataToSend.append('tipoAtendimento', formData.tipoAtendimento);
-      formDataToSend.append('justificativa', formData.justificativa);
-      if (formData.observacoes) {
-        formDataToSend.append('observacoes', formData.observacoes);
+      const especialidadeSelecionada = especialidades.find(
+        (item) => item.id === formData.especialidadeId
+      );
+      const destinoSelecionado = destinos.find((item) => item.id === formData.destinoId);
+
+      if (!especialidadeSelecionada || !destinoSelecionado) {
+        throw new Error('Especialidade e destino sao obrigatorios');
       }
 
-      // Anexar documentos
-      formData.documentos.forEach((file, index) => {
-        formDataToSend.append(`documento_${index}`, file);
-      });
-
-      const response = await fetch('/api/apps/saude/tfd/solicitacoes', {
+      const response = await fetch('/api/saude/tfd/solicitacao', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: formDataToSend,
+        body: JSON.stringify({
+          citizenId: selectedCidadao.id,
+          especialidade: especialidadeSelecionada.nome,
+          procedimento: formData.tipoAtendimento,
+          justificativa: formData.justificativa,
+          prioridade: 'MEDIA',
+          cidadeDestino: destinoSelecionado.cidade,
+          estadoDestino: destinoSelecionado.estado,
+          hospitalDestino: destinoSelecionado.hospital || undefined,
+          observacoes: formData.observacoes || undefined,
+          encaminhamentoMedicoUrl: '',
+          examesUrls: [],
+        }),
       });
 
       if (!response.ok) {
@@ -117,6 +127,31 @@ export default function NovaSolicitacaoTFDPage() {
       }
 
       const solicitacao = await response.json();
+
+      if (formData.documentos.length > 0 && solicitacao?.id) {
+        await Promise.all(
+          formData.documentos.map(async (file) => {
+            const fileForm = new FormData();
+            fileForm.append('file', file);
+            fileForm.append('tipoDocumento', 'OUTRO');
+            fileForm.append('descricao', file.name);
+
+            const uploadResponse = await fetch(
+              `/api/saude/tfd/solicitacao/${solicitacao.id}/upload-documento`,
+              {
+                method: 'POST',
+                credentials: 'include',
+                body: fileForm,
+              }
+            );
+
+            if (!uploadResponse.ok) {
+              const uploadError = await uploadResponse.text();
+              throw new Error(uploadError || `Falha ao enviar ${file.name}`);
+            }
+          })
+        );
+      }
 
       alert('Solicitação TFD criada com sucesso!');
       router.push('/admin/apps/saude/tfd/solicitacoes');

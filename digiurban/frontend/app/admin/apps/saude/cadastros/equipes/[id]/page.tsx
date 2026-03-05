@@ -21,16 +21,34 @@ interface Equipe {
   nome: string;
   tipo: string;
   ativo: boolean;
+  teamId?: string | null;
+  team?: {
+    id: string;
+    nome: string;
+    sigla?: string | null;
+    tipo: string;
+    organizationalUnitId?: string | null;
+  } | null;
   unidade: {
     id: string;
     nome: string;
     tipo: string;
+    organizationalUnitId?: string | null;
   };
   _count: {
     profissionais: number;
     microareas: number;
     citizens: number;
   };
+}
+
+interface TeamOption {
+  id: string;
+  nome: string;
+  sigla?: string | null;
+  tipo: string;
+  ativo: boolean;
+  organizationalUnitId?: string | null;
 }
 
 export default function EditarEquipeESF() {
@@ -40,16 +58,20 @@ export default function EditarEquipeESF() {
 
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingTeams, setLoadingTeams] = useState(false);
+  const [teams, setTeams] = useState<TeamOption[]>([]);
   const [equipe, setEquipe] = useState<Equipe | null>(null);
   const [formData, setFormData] = useState({
     ine: '',
     nome: '',
     tipo: 'eSF',
+    teamId: '',
     ativo: true,
   });
 
   useEffect(() => {
     loadEquipe();
+    loadTeams();
   }, [id]);
 
   const loadEquipe = async () => {
@@ -69,6 +91,7 @@ export default function EditarEquipeESF() {
         ine: data.ine,
         nome: data.nome,
         tipo: data.tipo,
+        teamId: data.teamId || data.team?.id || '',
         ativo: data.ativo,
       });
     } catch (error) {
@@ -80,10 +103,37 @@ export default function EditarEquipeESF() {
     }
   };
 
+  const loadTeams = async () => {
+    try {
+      setLoadingTeams(true);
+      const response = await fetch('/api/teams?ativo=true', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao carregar equipes organizacionais');
+      }
+
+      const data = await response.json();
+      setTeams(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar equipes organizacionais:', error);
+      setTeams([]);
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const teamsFiltrados = teams.filter((team) => {
+    if (!team.ativo) return false;
+    if (!equipe?.unidade?.organizationalUnitId || !team.organizationalUnitId) return true;
+    return equipe.unidade.organizationalUnitId === team.organizationalUnitId;
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.ine || !formData.nome || !formData.tipo) {
+    if (!formData.ine || !formData.nome || !formData.tipo || !formData.teamId) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
@@ -262,6 +312,29 @@ export default function EditarEquipeESF() {
                     placeholder="Ex: Equipe ESF Bairro Centro"
                     required
                   />
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="teamId">
+                    Equipe Organizacional <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.teamId}
+                    onValueChange={(value) => setFormData({ ...formData, teamId: value })}
+                  >
+                    <SelectTrigger id="teamId">
+                      <SelectValue
+                        placeholder={loadingTeams ? 'Carregando equipes...' : 'Selecione a equipe organizacional'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teamsFiltrados.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.sigla ? `${team.sigla} - ${team.nome}` : team.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 {/* Status */}

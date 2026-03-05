@@ -21,7 +21,21 @@ interface Unidade {
   telefone: string | null;
   email: string | null;
   horario: string | null;
+  organizationalUnitId?: string | null;
+  organizationalUnit?: {
+    id: string;
+    nome: string;
+    sigla?: string | null;
+    tipo: string;
+  } | null;
   isActive: boolean;
+}
+
+interface OrganizationalUnitOption {
+  id: string;
+  nome: string;
+  sigla?: string | null;
+  tipo: string;
 }
 
 export default function EditarUnidade() {
@@ -31,6 +45,8 @@ export default function EditarUnidade() {
 
   const [loading, setLoading] = useState(false);
   const [loadingData, setLoadingData] = useState(true);
+  const [loadingOrganograma, setLoadingOrganograma] = useState(false);
+  const [organizationalUnits, setOrganizationalUnits] = useState<OrganizationalUnitOption[]>([]);
   const [formData, setFormData] = useState({
     nome: '',
     tipo: 'UBS',
@@ -41,6 +57,7 @@ export default function EditarUnidade() {
     telefone: '',
     email: '',
     horarioFuncionamento: '',
+    organizationalUnitId: '',
     isActive: true,
   });
 
@@ -48,7 +65,36 @@ export default function EditarUnidade() {
     loadUnidade();
   }, [id]);
 
+  useEffect(() => {
+    const loadOrganograma = async () => {
+      try {
+        setLoadingOrganograma(true);
+        const response = await fetch('/api/organizational-units?isActive=true', {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Falha ao carregar unidades organizacionais');
+        }
+
+        const data = await response.json();
+        setOrganizationalUnits(Array.isArray(data) ? data : []);
+      } catch (error) {
+        console.error('Erro ao carregar organograma:', error);
+      } finally {
+        setLoadingOrganograma(false);
+      }
+    };
+
+    void loadOrganograma();
+  }, []);
+
   const loadUnidade = async () => {
+    if (!formData.organizationalUnitId) {
+      alert('Selecione o setor/unidade organizacional');
+      return;
+    }
+
     try {
       setLoadingData(true);
       const response = await fetch(`/api/apps/saude/cadastros/unidades/${id}`, {
@@ -70,6 +116,7 @@ export default function EditarUnidade() {
         telefone: data.telefone || '',
         email: data.email || '',
         horarioFuncionamento: data.horario || '',
+        organizationalUnitId: data.organizationalUnitId || data.organizationalUnit?.id || '',
         isActive: data.isActive,
       });
     } catch (error) {
@@ -170,6 +217,25 @@ export default function EditarUnidade() {
                       <SelectItem value="Hospital">Hospital</SelectItem>
                       <SelectItem value="Clínica">Clínica</SelectItem>
                       <SelectItem value="Posto">Posto de Saúde</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="col-span-2">
+                  <Label htmlFor="organizationalUnitId">Setor / Unidade Organizacional *</Label>
+                  <Select
+                    value={formData.organizationalUnitId}
+                    onValueChange={(value) => setFormData({ ...formData, organizationalUnitId: value })}
+                  >
+                    <SelectTrigger id="organizationalUnitId">
+                      <SelectValue placeholder={loadingOrganograma ? 'Carregando...' : 'Selecione o setor'} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {organizationalUnits.map((unit) => (
+                        <SelectItem key={unit.id} value={unit.id}>
+                          {unit.sigla ? `${unit.sigla} - ${unit.nome}` : unit.nome}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>

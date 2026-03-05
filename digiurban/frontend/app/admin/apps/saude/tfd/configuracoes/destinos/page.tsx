@@ -32,7 +32,9 @@ export default function DestinosPage() {
 
   const loadDestinos = async () => {
     try {
-      const response = await fetch('/api/tfd/destinos?apenasAtivos=false');
+      const response = await fetch('/api/saude/tfd/destinos?apenasAtivos=false', {
+        credentials: 'include',
+      });
       const data = await response.json();
       setDestinos(data);
     } catch (error) {
@@ -48,12 +50,15 @@ export default function DestinosPage() {
   const handleSave = async () => {
     try {
       const method = editando ? 'PUT' : 'POST';
-      const url = editando ? `/api/tfd/destinos/${editando.id}` : '/api/tfd/destinos';
+      const url = editando
+        ? `/api/saude/tfd/destinos/${editando.id}`
+        : '/api/saude/tfd/destinos';
 
       const response = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao salvar destino');
@@ -86,8 +91,9 @@ export default function DestinosPage() {
     if (!confirm('Deseja realmente excluir este destino?')) return;
 
     try {
-      const response = await fetch(`/api/tfd/destinos/${id}`, {
+      const response = await fetch(`/api/saude/tfd/destinos/${id}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
 
       if (!response.ok) throw new Error('Falha ao excluir destino');

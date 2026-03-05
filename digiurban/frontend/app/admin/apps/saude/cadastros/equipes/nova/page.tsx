@@ -19,22 +19,36 @@ interface UnidadeSaude {
   id: string;
   nome: string;
   tipo: string;
+  organizationalUnitId?: string | null;
+}
+
+interface TeamOption {
+  id: string;
+  nome: string;
+  sigla?: string | null;
+  tipo: string;
+  ativo: boolean;
+  organizationalUnitId?: string | null;
 }
 
 export default function NovaEquipeESF() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [unidades, setUnidades] = useState<UnidadeSaude[]>([]);
+  const [teams, setTeams] = useState<TeamOption[]>([]);
+  const [loadingTeams, setLoadingTeams] = useState(false);
   const [formData, setFormData] = useState({
     ine: '',
     nome: '',
     tipo: 'eSF',
     unidadeId: '',
+    teamId: '',
     ativo: true,
   });
 
   useEffect(() => {
     loadUnidades();
+    loadTeams();
   }, []);
 
   const loadUnidades = async () => {
@@ -49,10 +63,38 @@ export default function NovaEquipeESF() {
     }
   };
 
+  const loadTeams = async () => {
+    try {
+      setLoadingTeams(true);
+      const response = await fetch('/api/teams?ativo=true', {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Falha ao carregar equipes organizacionais');
+      }
+
+      const data = await response.json();
+      setTeams(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error('Erro ao carregar equipes organizacionais:', error);
+      setTeams([]);
+    } finally {
+      setLoadingTeams(false);
+    }
+  };
+
+  const unidadeSelecionada = unidades.find((item) => item.id === formData.unidadeId);
+  const teamsFiltrados = teams.filter((team) => {
+    if (!team.ativo) return false;
+    if (!unidadeSelecionada?.organizationalUnitId || !team.organizationalUnitId) return true;
+    return unidadeSelecionada.organizationalUnitId === team.organizationalUnitId;
+  });
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.ine || !formData.nome || !formData.tipo || !formData.unidadeId) {
+    if (!formData.ine || !formData.nome || !formData.tipo || !formData.unidadeId || !formData.teamId) {
       alert('Preencha todos os campos obrigatórios');
       return;
     }
@@ -169,7 +211,9 @@ export default function NovaEquipeESF() {
                   </Label>
                   <Select
                     value={formData.unidadeId}
-                    onValueChange={(value) => setFormData({ ...formData, unidadeId: value })}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, unidadeId: value, teamId: '' })
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione a unidade..." />
@@ -187,6 +231,29 @@ export default function NovaEquipeESF() {
                       Nenhuma unidade cadastrada. Cadastre uma unidade primeiro.
                     </p>
                   )}
+                </div>
+
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="teamId">
+                    Equipe Organizacional <span className="text-red-500">*</span>
+                  </Label>
+                  <Select
+                    value={formData.teamId}
+                    onValueChange={(value) => setFormData({ ...formData, teamId: value })}
+                  >
+                    <SelectTrigger id="teamId">
+                      <SelectValue
+                        placeholder={loadingTeams ? 'Carregando equipes...' : 'Selecione a equipe organizacional'}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {teamsFiltrados.map((team) => (
+                        <SelectItem key={team.id} value={team.id}>
+                          {team.sigla ? `${team.sigla} - ${team.nome}` : team.nome}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 

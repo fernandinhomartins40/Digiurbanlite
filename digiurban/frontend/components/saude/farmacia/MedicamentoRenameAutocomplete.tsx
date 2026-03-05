@@ -57,7 +57,7 @@ export default function MedicamentoRenameAutocomplete({
     setLoading(true);
     try {
       const response = await fetch(
-        `/api/apps/saude/farmacia/medicamentos/rename/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
+        `/api/saude/farmacia/medicamentos/rename/search?q=${encodeURIComponent(searchQuery)}&limit=20`,
         {
           credentials: 'include',
         }
