@@ -147,9 +147,25 @@ try {
 // ============================================================
 function loadRoute(prefix: string, modulePath: string) {
   try {
-    app.use(prefix, require(modulePath).default);
+    const loaded = require(modulePath);
+    const router = loaded?.default || loaded;
+
+    if (typeof router !== 'function') {
+      throw new Error(`Route module "${modulePath}" does not export a router function`);
+    }
+
+    app.use(prefix, router);
   } catch (error) {
-    logger.error(`Failed to load route: ${prefix} (${modulePath})`, { error });
+    const normalizedError =
+      error instanceof Error
+        ? {
+            name: error.name,
+            message: error.message,
+            stack: error.stack,
+          }
+        : { message: String(error) };
+
+    logger.error(`Failed to load route: ${prefix} (${modulePath})`, { error: normalizedError });
   }
 }
 
