@@ -73,6 +73,7 @@ const getSearchItems = () => [
   { title: 'Meus Documentos', description: 'Documentos pessoais', href: '/admin/meus-documentos', category: 'Documentos', keywords: ['documento', 'arquivo', 'pdf'] },
   { title: 'Assinaturas Digitais', description: 'Gerenciar assinaturas', href: '/admin/assinaturas-digitais', category: 'Documentos', keywords: ['assinatura', 'digital', 'eletrônica'] },
   { title: 'Templates de Documentos', description: 'Modelos de documentos', href: '/admin/templates-documentos', category: 'Documentos', keywords: ['template', 'modelo', 'documento'] },
+  { title: 'IA Centralizada', description: 'Chat e API da IA municipal', href: '/admin/ia', category: 'Automação', keywords: ['ia', 'chat', 'qwen', 'api'] },
   { title: 'Certificados Digitais', description: 'Certificados ICP-Brasil', href: '/admin/certificados-digitais', category: 'Documentos', keywords: ['certificado', 'icp', 'brasil'] },
   { title: 'Fluxos do Bot', description: 'Automação de processos', href: '/admin/bot-flows', category: 'Automação', keywords: ['bot', 'automação', 'ia'] },
 
@@ -407,6 +408,18 @@ export default function AdminPage() {
                 iconColor="text-purple-600"
                 iconBgColor="bg-purple-50"
                 onClick={() => handleCardClick('Templates de Documentos', '/admin/templates-documentos', 'Documentos')}
+              />
+
+              <DashboardCard
+                title="IA Centralizada"
+                description="Chat operacional e API da IA municipal"
+                href="/admin/ia"
+                icon={Bot}
+                iconColor="text-cyan-600"
+                iconBgColor="bg-cyan-50"
+                badge="NOVO"
+                badgeVariant="new"
+                onClick={() => handleCardClick('IA Centralizada', '/admin/ia', 'Automação')}
               />
 
               <DashboardCard

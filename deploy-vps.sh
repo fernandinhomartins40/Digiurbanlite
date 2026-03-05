@@ -117,6 +117,8 @@ docker stop digiurban-redis 2>/dev/null || true
 docker rm digiurban-redis 2>/dev/null || true
 docker stop digiurban-flow 2>/dev/null || true
 docker rm digiurban-flow 2>/dev/null || true
+docker stop digiurban-ai 2>/dev/null || true
+docker rm digiurban-ai 2>/dev/null || true
 docker stop digiurban-prices 2>/dev/null || true
 docker rm digiurban-prices 2>/dev/null || true
 
@@ -253,13 +255,15 @@ docker images | grep -i frontend-builder | awk '{print $3}' | xargs -r docker rm
 docker images | grep -i runner | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
 # Remover imagens dos módulos isolados pelo nome exato que o docker-compose gera
-echo "🗑️  Removendo imagens dos módulos flow e prices..."
+echo "🗑️  Removendo imagens dos módulos flow, prices e ai..."
 docker rmi -f digiurban-digiurban-flow 2>/dev/null || true
 docker rmi -f digiurban-digiurban-prices 2>/dev/null || true
+docker rmi -f digiurban-digiurban-ai 2>/dev/null || true
 docker rmi -f digiurban_digiurban-flow 2>/dev/null || true
 docker rmi -f digiurban_digiurban-prices 2>/dev/null || true
-# Remover qualquer imagem que contenha "flow" ou "prices" no nome
-docker images | grep -E "flow|prices" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+docker rmi -f digiurban_digiurban-ai 2>/dev/null || true
+# Remover qualquer imagem que contenha "flow", "prices" ou "ai" no nome
+docker images | grep -E "flow|prices|digiurban-ai" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
 # 2. Remover imagens base do Node.js (força download novo)
 echo "🗑️  Removendo imagens base do Node.js..."
@@ -489,6 +493,7 @@ docker-compose -f docker-compose.vps.yml up -d \
   ollama \
   ultrazend-messages \
   digiurban-flow \
+  digiurban-ai \
   digiurban-opensearch
 
 wait_for_container_health digiurban-postgres 30 5
@@ -497,6 +502,7 @@ wait_for_container_health ultrazend-smtp 30 5
 wait_for_container_health digiurban-ollama 40 10
 wait_for_container_health ultrazend-messages 30 5
 wait_for_container_health digiurban-flow 30 5
+wait_for_container_health digiurban-ai 30 5
 wait_for_container_health digiurban-opensearch 36 10
 
 echo "Iniciando modulo de precos..."
@@ -535,7 +541,7 @@ echo ""
 # ETAPA 13: CONFIGURAR OLLAMA (QWEN2.5-3B)
 # ============================================================================
 
-echo "=== Configurando Ollama com Qwen2.5-3B ==="
+echo "=== Configurando Ollama com Qwen 3.5:9B ==="
 echo ""
 
 # Aguardar Ollama ficar disponível
@@ -549,37 +555,32 @@ for i in {1..30}; do
   sleep 5
 done
 
-# Verificar se modelo Qwen2.5:3b já está instalado
-if docker exec digiurban-ollama ollama list | grep -q "qwen2.5:3b"; then
-  echo "✅ Modelo Qwen2.5:3b já instalado"
-  MODEL_NAME="qwen2.5"
+# Verificar se modelo Qwen3.5:9b já está instalado
+if docker exec digiurban-ollama ollama list | grep -q "qwen3.5:9b"; then
+  echo "✅ Modelo Qwen3.5:9b já instalado"
+  MODEL_NAME="qwen3.5:9b"
 else
-  echo "📥 Baixando modelo Qwen2.5:3b (3B - ~2.5GB, pode levar alguns minutos)..."
-  docker exec digiurban-ollama ollama pull qwen2.5:3b || echo "⚠️ Falha ao baixar Qwen2.5:3b, tentando SmolLM2:1.7b..."
+  echo "📥 Baixando modelo Qwen3.5:9b (~6-7GB, pode levar alguns minutos)..."
+  docker exec digiurban-ollama ollama pull qwen3.5:9b || echo "⚠️ Falha ao baixar Qwen3.5:9b, tentando fallback qwen2.5:7b..."
 
-  # Fallback para SmolLM2:1.7b se Qwen2.5 falhar
-  if ! docker exec digiurban-ollama ollama list | grep -q "qwen2.5:3b"; then
-    echo "📥 Baixando modelo SmolLM2:1.7b (1.7B - ~1.5GB)..."
-    docker exec digiurban-ollama ollama pull smollm2:1.7b
-    # Atualizar .env para usar SmolLM2
-    sed -i 's/OLLAMA_MODEL=digibot-qwen2.5/OLLAMA_MODEL=digibot-smollm2/' .env
-    MODEL_NAME="smollm2"
+  # Fallback para Qwen2.5:7b se Qwen3.5 falhar
+  if ! docker exec digiurban-ollama ollama list | grep -q "qwen3.5:9b"; then
+    echo "📥 Baixando modelo fallback Qwen2.5:7b..."
+    docker exec digiurban-ollama ollama pull qwen2.5:7b
+    sed -i 's/OLLAMA_MODEL=.*/OLLAMA_MODEL=qwen2.5:7b/' .env
+    sed -i 's/AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=qwen2.5:7b/' .env
+    MODEL_NAME="qwen2.5:7b"
   else
-    MODEL_NAME="qwen2.5"
+    sed -i 's/OLLAMA_MODEL=.*/OLLAMA_MODEL=qwen3.5:9b/' .env
+    sed -i 's/AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=qwen3.5:9b/' .env
+    MODEL_NAME="qwen3.5:9b"
   fi
 fi
 
-# Copiar Modelfile para container e criar modelo customizado
-echo "🤖 Criando modelo customizado DigiBot..."
-docker cp Modelfile digiurban-ollama:/tmp/Modelfile 2>/dev/null || echo "⚠️ Modelfile não encontrado, usando configuração padrão"
-
-# Criar ou atualizar modelo
-MODEL_NAME="${MODEL_NAME:-qwen2.5}"
-docker exec digiurban-ollama ollama create digibot-${MODEL_NAME} -f /tmp/Modelfile 2>/dev/null || echo "⚠️ Usando modelo base sem customização"
-
-# Testar modelo
-echo "🧪 Testando modelo DigiBot..."
-docker exec digiurban-ollama ollama run digibot-${MODEL_NAME} "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo falhou, mas continuando..."
+# Testar modelo base
+MODEL_NAME="${MODEL_NAME:-qwen3.5:9b}"
+echo "🧪 Testando modelo ${MODEL_NAME}..."
+docker exec digiurban-ollama ollama run "${MODEL_NAME}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo falhou, mas continuando..."
 
 # Reiniciar backend para aplicar configurações Ollama
 echo "🔄 Reiniciando backend para aplicar configurações Ollama..."
@@ -601,7 +602,7 @@ docker exec digiurban-postgres psql -U digiurban -d digiurban -c "\dt message_*"
 echo ""
 
 # ============================================================================
-# ETAPA 14b: VERIFICAR MIGRATIONS DO DIGIURBAN-FLOW E DIGIURBAN-PRICES
+# ETAPA 14b: VERIFICAR MIGRATIONS DO DIGIURBAN-FLOW, DIGIURBAN-PRICES E DIGIURBAN-AI
 # ============================================================================
 
 echo "=== Verificando migrations do digiurban-flow ==="
@@ -624,6 +625,16 @@ echo "=== Tabelas prices_* no banco ==="
 docker exec digiurban-postgres psql -U digiurban -d digiurban \
   -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'prices_%' ORDER BY tablename;" \
   || echo "⚠️ Não foi possível verificar tabelas prices"
+echo ""
+
+echo "=== Verificando migrations do digiurban-ai ==="
+docker logs digiurban-ai --tail=40 2>&1 | grep -E "migration|error|Error|table|Starting" || true
+echo ""
+
+echo "=== Tabelas ai_* no banco ==="
+docker exec digiurban-postgres psql -U digiurban -d digiurban \
+  -c "SELECT tablename FROM pg_tables WHERE schemaname='public' AND tablename LIKE 'ai_%' ORDER BY tablename;" \
+  || echo "⚠️ Não foi possível verificar tabelas ai"
 echo ""
 
 # ============================================================================

@@ -49,6 +49,8 @@ jobs:
             docker rm digiurban-postgres 2>/dev/null || true
             docker stop digiurban-redis 2>/dev/null || true
             docker rm digiurban-redis 2>/dev/null || true
+            docker stop digiurban-ai 2>/dev/null || true
+            docker rm digiurban-ai 2>/dev/null || true
 
             # ===== ATUALIZAR CÓDIGO DO GITHUB =====
             echo "=== Atualizando código do GitHub ==="
@@ -268,6 +270,7 @@ jobs:
               ollama \
               ultrazend-messages \
               digiurban-flow \
+              digiurban-ai \
               digiurban-opensearch
 
             wait_for_container_health digiurban-postgres 30 5
@@ -276,6 +279,7 @@ jobs:
             wait_for_container_health digiurban-ollama 40 10
             wait_for_container_health ultrazend-messages 30 5
             wait_for_container_health digiurban-flow 30 5
+            wait_for_container_health digiurban-ai 30 5
             wait_for_container_health digiurban-opensearch 36 10
 
             echo "Iniciando modulo de precos..."
@@ -299,8 +303,8 @@ jobs:
             docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "⚠️ Seed de fluxos falhou mas continuando deploy"
             echo "✅ Fluxos do bot populados"
 
-            # ===== CONFIGURAR OLLAMA (QWEN2.5-3B) =====
-            echo "=== Configurando Ollama com Qwen2.5-3B ==="
+            # ===== CONFIGURAR OLLAMA (QWEN 3.5 9B) =====
+            echo "=== Configurando Ollama com Qwen3.5:9b ==="
 
             # Aguardar Ollama ficar disponível
             echo "Aguardando Ollama iniciar..."
@@ -313,37 +317,32 @@ jobs:
               sleep 5
             done
 
-            # Verificar se modelo Qwen2.5:3b já está instalado
-            if docker exec digiurban-ollama ollama list | grep -q "qwen2.5:3b"; then
-              echo "✅ Modelo Qwen2.5:3b já instalado"
-              MODEL_NAME="qwen2.5"
+            # Verificar se modelo Qwen3.5:9b já está instalado
+            if docker exec digiurban-ollama ollama list | grep -q "qwen3.5:9b"; then
+              echo "✅ Modelo Qwen3.5:9b já instalado"
+              MODEL_NAME="qwen3.5:9b"
             else
-              echo "📥 Baixando modelo Qwen2.5:3b (3B - ~2.5GB, pode levar alguns minutos)..."
-              docker exec digiurban-ollama ollama pull qwen2.5:3b || echo "⚠️ Falha ao baixar Qwen2.5:3b, tentando SmolLM2:1.7b..."
+              echo "📥 Baixando modelo Qwen3.5:9b (~6-7GB, pode levar alguns minutos)..."
+              docker exec digiurban-ollama ollama pull qwen3.5:9b || echo "⚠️ Falha ao baixar Qwen3.5:9b, tentando fallback qwen2.5:7b..."
 
-              # Fallback para SmolLM2:1.7b se Qwen2.5 falhar
-              if ! docker exec digiurban-ollama ollama list | grep -q "qwen2.5:3b"; then
-                echo "📥 Baixando modelo SmolLM2:1.7b (1.7B - ~1.5GB)..."
-                docker exec digiurban-ollama ollama pull smollm2:1.7b
-                # Atualizar .env para usar SmolLM2
-                sed -i 's/OLLAMA_MODEL=digibot-qwen2.5/OLLAMA_MODEL=digibot-smollm2/' .env
-                MODEL_NAME="smollm2"
+              # Fallback para Qwen2.5:7b se Qwen3.5 falhar
+              if ! docker exec digiurban-ollama ollama list | grep -q "qwen3.5:9b"; then
+                echo "📥 Baixando modelo fallback Qwen2.5:7b..."
+                docker exec digiurban-ollama ollama pull qwen2.5:7b
+                sed -i 's/OLLAMA_MODEL=.*/OLLAMA_MODEL=qwen2.5:7b/' .env
+                sed -i 's/AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=qwen2.5:7b/' .env
+                MODEL_NAME="qwen2.5:7b"
               else
-                MODEL_NAME="qwen2.5"
+                sed -i 's/OLLAMA_MODEL=.*/OLLAMA_MODEL=qwen3.5:9b/' .env
+                sed -i 's/AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=qwen3.5:9b/' .env
+                MODEL_NAME="qwen3.5:9b"
               fi
             fi
 
-            # Copiar Modelfile para container e criar modelo customizado
-            echo "🤖 Criando modelo customizado DigiBot..."
-            docker cp Modelfile digiurban-ollama:/tmp/Modelfile 2>/dev/null || echo "⚠️ Modelfile não encontrado, usando configuração padrão"
-
-            # Criar ou atualizar modelo
-            MODEL_NAME="${MODEL_NAME:-qwen2.5}"
-            docker exec digiurban-ollama ollama create digibot-${MODEL_NAME} -f /tmp/Modelfile 2>/dev/null || echo "⚠️ Usando modelo base sem customização"
-
-            # Testar modelo
-            echo "🧪 Testando modelo DigiBot..."
-            docker exec digiurban-ollama ollama run digibot-${MODEL_NAME} "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo falhou, mas continuando..."
+            # Testar modelo base
+            MODEL_NAME="${MODEL_NAME:-qwen3.5:9b}"
+            echo "🧪 Testando modelo ${MODEL_NAME}..."
+            docker exec digiurban-ollama ollama run "${MODEL_NAME}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo falhou, mas continuando..."
 
             # Reiniciar backend para aplicar configurações Ollama
             echo "🔄 Reiniciando backend para aplicar configurações Ollama..."

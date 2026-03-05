@@ -1,0 +1,186 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AiMessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+  TOOL
+}
+
+enum AiConversationVisibility {
+  PRIVATE
+  SHARED_TEAM
+  SHARED_DEPARTMENT
+}
+
+enum AiKnowledgeSourceType {
+  SYSTEM_TABLE
+  SQL_QUERY
+  MANUAL_TEXT
+  HTTP_ENDPOINT
+}
+
+enum AiPlanType {
+  INTERNAL
+  MUNICIPALITY
+}
+
+enum AiApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+model AiConversation {
+  id          String                   @id @default(cuid())
+  tenantId    String                   @default("default")
+  title       String?
+  userId      String
+  departmentId String?
+  visibility  AiConversationVisibility @default(PRIVATE)
+  metadata    Json?
+  createdAt   DateTime                 @default(now())
+  updatedAt   DateTime                 @updatedAt
+  lastMessageAt DateTime               @default(now())
+
+  messages    AiMessage[]
+  tokenUsages AiTokenUsage[]
+
+  @@index([tenantId, userId, lastMessageAt])
+  @@index([tenantId, createdAt])
+  @@map("ai_conversations")
+}
+
+model AiMessage {
+  id              String        @id @default(cuid())
+  conversationId  String
+  role            AiMessageRole
+  content         String        @db.Text
+  model           String?
+  promptTokens    Int           @default(0)
+  completionTokens Int          @default(0)
+  totalTokens     Int           @default(0)
+  latencyMs       Int?
+  metadata        Json?
+  createdAt       DateTime      @default(now())
+
+  conversation AiConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId, createdAt])
+  @@map("ai_messages")
+}
+
+model AiKnowledgeSource {
+  id             String               @id @default(cuid())
+  tenantId       String               @default("default")
+  name           String
+  type           AiKnowledgeSourceType
+  config         Json?
+  isActive       Boolean              @default(true)
+  lastIngestedAt DateTime?
+  createdBy      String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  chunks AiKnowledgeChunk[]
+
+  @@index([tenantId, isActive])
+  @@unique([tenantId, name])
+  @@map("ai_knowledge_sources")
+}
+
+model AiKnowledgeChunk {
+  id         String   @id @default(cuid())
+  sourceId   String
+  tenantId   String   @default("default")
+  hash       String
+  content    String   @db.Text
+  tokenCount Int      @default(0)
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  source AiKnowledgeSource @relation(fields: [sourceId], references: [id], onDelete: Cascade)
+
+  @@unique([sourceId, hash])
+  @@index([tenantId, createdAt])
+  @@index([sourceId, createdAt])
+  @@map("ai_knowledge_chunks")
+}
+
+model AiApiPlan {
+  id                   String      @id @default(cuid())
+  tenantId             String      @default("default")
+  name                 String
+  planType             AiPlanType  @default(MUNICIPALITY)
+  requestLimitPerMinute Int        @default(60)
+  monthlyBudgetTokens  Int         @default(1000000)
+  inputTokenLimit      Int         @default(500000)
+  outputTokenLimit     Int         @default(500000)
+  isActive             Boolean     @default(true)
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+
+  apiKeys AiApiKey[]
+  usages  AiTokenUsage[]
+
+  @@index([tenantId, isActive])
+  @@unique([tenantId, name])
+  @@map("ai_api_plans")
+}
+
+model AiApiKey {
+  id          String        @id @default(cuid())
+  tenantId    String        @default("default")
+  planId      String
+  name        String
+  keyPrefix   String
+  keyHash     String        @unique
+  status      AiApiKeyStatus @default(ACTIVE)
+  expiresAt   DateTime?
+  allowedIps  Json?
+  lastUsedAt  DateTime?
+  createdBy   String?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  plan   AiApiPlan     @relation(fields: [planId], references: [id], onDelete: Restrict)
+  usages AiTokenUsage[]
+
+  @@index([tenantId, status])
+  @@index([keyPrefix])
+  @@index([planId, status])
+  @@map("ai_api_keys")
+}
+
+model AiTokenUsage {
+  id             String   @id @default(cuid())
+  tenantId       String   @default("default")
+  planId         String?
+  apiKeyId       String?
+  conversationId String?
+  userId         String?
+  source         String
+  model          String?
+  inputTokens    Int      @default(0)
+  outputTokens   Int      @default(0)
+  totalTokens    Int      @default(0)
+  estimatedCostCents Int  @default(0)
+  createdAt      DateTime @default(now())
+
+  plan         AiApiPlan?      @relation(fields: [planId], references: [id], onDelete: SetNull)
+  apiKey       AiApiKey?       @relation(fields: [apiKeyId], references: [id], onDelete: SetNull)
+  conversation AiConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt])
+  @@index([apiKeyId, createdAt])
+  @@index([planId, createdAt])
+  @@index([conversationId, createdAt])
+  @@map("ai_token_usage")
+}

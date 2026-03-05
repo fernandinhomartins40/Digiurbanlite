@@ -232,6 +232,13 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     {
       title: 'Análises e Inteligência',
       items: [
+        {
+          title: 'IA Centralizada',
+          href: '/admin/ia',
+          icon: Bot,
+          minRole: 'ADMIN',
+          badge: 'NOVO',
+        },
         { title: 'Analytics', href: '/admin/analytics', icon: BarChart3, minRole: 'COORDINATOR' },
         {
           title: 'Relatórios',

@@ -34,6 +34,7 @@ docker compose -f docker-compose.vps.yml up -d \
   ollama \
   ultrazend-messages \
   digiurban-flow \
+  digiurban-ai \
   digiurban-opensearch
 
 wait_for_container_health digiurban-postgres 30 5
@@ -42,6 +43,7 @@ wait_for_container_health ultrazend-smtp 30 5
 wait_for_container_health digiurban-ollama 40 10
 wait_for_container_health ultrazend-messages 30 5
 wait_for_container_health digiurban-flow 30 5
+wait_for_container_health digiurban-ai 30 5
 wait_for_container_health digiurban-opensearch 36 10
 
 echo "Starting application services..."

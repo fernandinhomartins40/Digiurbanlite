@@ -1,0 +1,44 @@
+import dotenv from 'dotenv';
+dotenv.config();
+
+export const config = {
+  port: parseInt(process.env.PORT || '9004', 10),
+  host: process.env.HOST || '0.0.0.0',
+  nodeEnv: process.env.NODE_ENV || 'development',
+
+  databaseUrl: process.env.DATABASE_URL || '',
+
+  aiServiceToken: process.env.AI_SERVICE_TOKEN || 'digiurban-ai-service-token',
+  digiurbanApiUrl: process.env.DIGIURBAN_API_URL || 'http://digiurban-vps:3001/api',
+  digiurbanServiceToken: process.env.DIGIURBAN_SERVICE_TOKEN || '',
+
+  ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
+  ollamaModel: process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
+  ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '120000', 10),
+  ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
+  ollamaTopP: parseFloat(process.env.AI_OLLAMA_TOP_P || '0.9'),
+  ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '8192', 10),
+
+  defaultTenantId: process.env.AI_DEFAULT_TENANT_ID || 'default',
+  maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '8', 10),
+  maxChunkSizeChars: parseInt(process.env.AI_MAX_CHUNK_SIZE_CHARS || '1200', 10),
+  chunkOverlapChars: parseInt(process.env.AI_CHUNK_OVERLAP_CHARS || '120', 10),
+  maxConversationMessagesContext: parseInt(
+    process.env.AI_MAX_CONVERSATION_MESSAGES_CONTEXT || '12',
+    10,
+  ),
+
+  corsOrigin: process.env.CORS_ORIGIN || '*',
+  rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
+  rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '120', 10),
+};
+
+export function validateConfig(): void {
+  const required: Array<[string, string]> = [['DATABASE_URL', config.databaseUrl]];
+
+  for (const [name, value] of required) {
+    if (!value) {
+      throw new Error(`FATAL: ${name} environment variable is required`);
+    }
+  }
+}

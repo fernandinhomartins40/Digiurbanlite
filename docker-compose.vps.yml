@@ -272,6 +272,54 @@ services:
       retries: 3
       start_period: 90s
 
+  # ─────────────────────────────────────────────────────────────
+  # MÓDULO: digiurban-ai — Plataforma de IA Centralizada (Qwen 3.5 9B)
+  # ─────────────────────────────────────────────────────────────
+  digiurban-ai:
+    build:
+      context: ./digiurban-ai
+      dockerfile: Dockerfile
+    container_name: digiurban-ai
+    ports:
+      - "9004:9004"
+    environment:
+      - NODE_ENV=production
+      - PORT=9004
+      - HOST=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
+      - AI_DEFAULT_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
+      - AI_OLLAMA_BASE_URL=http://ollama:11434
+      - AI_OLLAMA_MODEL=${AI_OLLAMA_MODEL:-qwen3.5:9b}
+      - AI_OLLAMA_TIMEOUT_MS=120000
+      - AI_OLLAMA_TEMPERATURE=0.2
+      - AI_OLLAMA_TOP_P=0.9
+      - AI_OLLAMA_NUM_CTX=8192
+      - AI_MAX_CONTEXT_CHUNKS=8
+      - AI_MAX_CHUNK_SIZE_CHARS=1200
+      - AI_CHUNK_OVERLAP_CHARS=120
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=150
+      - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
+      - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+    volumes:
+      - ai_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9004/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+
   digiurban:
     build:
       context: .
@@ -341,7 +389,7 @@ services:
       # Ollama AI (DigiBot Enhanced)
       - USE_OLLAMA=true
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=digibot-qwen2.5
+      - OLLAMA_MODEL=${AI_OLLAMA_MODEL:-qwen3.5:9b}
       - OLLAMA_TIMEOUT=15000
 
       # Módulo de Preços (proxy interno)
@@ -351,6 +399,10 @@ services:
       # Módulo de Processos Internos (proxy interno)
       - FLOW_API_URL=http://digiurban-flow:9003/api/v1
       - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:-digiurban-flow-service-token}
+
+      # Módulo de IA Centralizada (proxy interno)
+      - AI_API_URL=http://digiurban-ai:9004/api/v1
+      - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
 
     volumes:
       - digiurban_uploads:/app/uploads
@@ -371,6 +423,8 @@ services:
       digiurban-prices:
         condition: service_started
       digiurban-flow:
+        condition: service_started
+      digiurban-ai:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
@@ -409,6 +463,8 @@ volumes:
   flow_uploads:
     driver: local
   flow_logs:
+    driver: local
+  ai_logs:
     driver: local
 
 networks:

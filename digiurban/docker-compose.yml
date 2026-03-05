@@ -46,8 +46,10 @@ services:
       - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
       - USE_OLLAMA=true
       - OLLAMA_BASE_URL=http://ollama:11434
-      - OLLAMA_MODEL=digibot-phi4
+      - OLLAMA_MODEL=qwen3.5:9b
       - OLLAMA_TIMEOUT=5000
+      - AI_API_URL=http://digiurban-ai:9004/api/v1
+      - AI_SERVICE_TOKEN=digiurban-ai-service-token
     volumes:
       - backend_data:/app/data
       - backend_uploads:/app/uploads
@@ -60,6 +62,13 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+      digiurban-ai:
+        condition: service_healthy
     networks:
       - digiurban
 
@@ -118,6 +127,52 @@ services:
         reservations:
           memory: 8G
 
+  # DigiUrban AI Platform (Qwen 3.5 Small 9B)
+  digiurban-ai:
+    build:
+      context: ../digiurban-ai
+      dockerfile: Dockerfile
+    container_name: digiurban-ai
+    ports:
+      - "9004:9004"
+    environment:
+      - NODE_ENV=production
+      - PORT=9004
+      - HOST=0.0.0.0
+      - DATABASE_URL=postgresql://digiurban:digiurban_dev_2025@postgres:5432/digiurban
+      - CORS_ORIGIN=http://localhost:3000
+      - AI_SERVICE_TOKEN=digiurban-ai-service-token
+      - AI_DEFAULT_TENANT_ID=default
+      - AI_OLLAMA_BASE_URL=http://ollama:11434
+      - AI_OLLAMA_MODEL=qwen3.5:9b
+      - AI_OLLAMA_TIMEOUT_MS=120000
+      - AI_OLLAMA_TEMPERATURE=0.2
+      - AI_OLLAMA_TOP_P=0.9
+      - AI_OLLAMA_NUM_CTX=8192
+      - AI_MAX_CONTEXT_CHUNKS=8
+      - AI_MAX_CHUNK_SIZE_CHARS=1200
+      - AI_CHUNK_OVERLAP_CHARS=120
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=150
+      - DIGIURBAN_API_URL=http://backend:3001/api
+      - DIGIURBAN_SERVICE_TOKEN=digiurban-ai-service-token
+    depends_on:
+      postgres:
+        condition: service_healthy
+      ollama:
+        condition: service_healthy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9004/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    volumes:
+      - ai_logs:/app/logs
+    networks:
+      - digiurban
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -150,6 +205,8 @@ volumes:
   nginx_logs:
     driver: local
   ollama_data:
+    driver: local
+  ai_logs:
     driver: local
 
 networks:

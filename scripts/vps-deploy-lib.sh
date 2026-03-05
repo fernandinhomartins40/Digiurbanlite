@@ -155,7 +155,15 @@ BUILD_TIMESTAMP=$(date +%s)
 # Ollama AI (DigiBot Enhanced)
 USE_OLLAMA=true
 OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_MODEL=digibot-qwen2.5
+OLLAMA_MODEL=qwen3.5:9b
 OLLAMA_TIMEOUT=15000
+
+# AI Platform (digiurban-ai)
+AI_API_URL=http://digiurban-ai:9004/api/v1
+AI_SERVICE_TOKEN=digiurban-ai-service-token
+AI_DEFAULT_TENANT_ID=default
+AI_OLLAMA_BASE_URL=http://ollama:11434
+AI_OLLAMA_MODEL=qwen3.5:9b
+AI_OLLAMA_TIMEOUT_MS=120000
 EOF
 }
