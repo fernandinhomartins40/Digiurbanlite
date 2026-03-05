@@ -271,6 +271,7 @@ loadRoute('/api/protocols', './routes/protocols-simplified.routes');
 loadRoute('/api/admin/chamados', './routes/admin-chamados');
 loadRoute('/api/departments', './routes/departments-tickets');
 loadRoute('/api/admin/relatorios', './routes/admin-reports');
+loadRoute('/api/admin/gabinete/agenda', './routes/admin-gabinete-agenda-central.routes');
 loadRoute('/api/admin/gabinete', './routes/admin-gabinete');
 loadRoute('/api/admin/gabinete/painel-prefeito', './routes/admin-gabinete-painel');
 loadRoute('/api/admin/citizens', './routes/admin-citizens');
