@@ -59,6 +59,8 @@ interface CitizenFamilyCompositionEnhancedProps {
   canEdit?: boolean
 }
 
+const NO_EDUCATION_VALUE = '__NO_EDUCATION__'
+
 export function CitizenFamilyCompositionEnhanced({
   citizenId,
   citizenName,
@@ -748,14 +750,19 @@ export function CitizenFamilyCompositionEnhanced({
             <div>
               <Label htmlFor="editEducation">Escolaridade</Label>
               <Select
-                value={formData.education}
-                onValueChange={(value) => setFormData({ ...formData, education: value })}
+                value={formData.education || NO_EDUCATION_VALUE}
+                onValueChange={(value) =>
+                  setFormData({
+                    ...formData,
+                    education: value === NO_EDUCATION_VALUE ? '' : value
+                  })
+                }
               >
                 <SelectTrigger>
-                  <SelectValue />
+                  <SelectValue placeholder="Selecione a escolaridade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Não informado</SelectItem>
+                  <SelectItem value={NO_EDUCATION_VALUE}>Não informado</SelectItem>
                   <SelectItem value="Sem escolaridade">Sem escolaridade</SelectItem>
                   <SelectItem value="Ensino Fundamental Incompleto">Ensino Fundamental Incompleto</SelectItem>
                   <SelectItem value="Ensino Fundamental Completo">Ensino Fundamental Completo</SelectItem>

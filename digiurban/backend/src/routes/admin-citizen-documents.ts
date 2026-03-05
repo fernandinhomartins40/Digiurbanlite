@@ -21,6 +21,28 @@ const router = Router();
 // Apply middleware
 router.use(adminAuthMiddleware);
 
+const PERSONAL_DOCUMENT_WHERE = {
+  AND: [
+    {
+      OR: [
+        { sourceType: null },
+        { sourceType: 'UPLOAD' }
+      ]
+    },
+    {
+      NOT: {
+        documentType: {
+          startsWith: 'Protocolo:'
+        }
+      }
+    }
+  ]
+};
+
+function isProtocolGeneratedDocument(document: { sourceType?: string | null; documentType?: string }): boolean {
+  return document.sourceType === 'PROTOCOL' || (document.documentType || '').startsWith('Protocolo:');
+}
+
 // ============================================================================
 // ROTAS
 // ============================================================================
@@ -40,24 +62,31 @@ router.get(
     const limitNum = parseInt(limit as string);
     const skip = (pageNum - 1) * limitNum;
 
-    // Construir filtros
+    // Construir filtros: somente documentos pessoais
     const where: any = {
-      status: {
-        in: ['PENDING', 'UNDER_REVIEW']
-      }
+      AND: [
+        PERSONAL_DOCUMENT_WHERE,
+        {
+          status: {
+            in: ['PENDING', 'UNDER_REVIEW']
+          }
+        }
+      ]
     };
 
     if (documentType) {
-      where.documentType = documentType;
+      where.AND.push({ documentType });
     }
 
     if (citizenName) {
-      where.citizen = {
-        name: {
-          contains: citizenName as string,
-          mode: 'insensitive'
+      where.AND.push({
+        citizen: {
+          name: {
+            contains: citizenName as string,
+            mode: 'insensitive'
+          }
         }
-      };
+      });
     }
 
     // Buscar documentos
@@ -112,7 +141,10 @@ router.get(
     const { citizenId } = authReq.params;
 
     const documents = await prisma.citizenDocument.findMany({
-      where: { citizenId },
+      where: {
+        citizenId,
+        ...PERSONAL_DOCUMENT_WHERE
+      },
       orderBy: { uploadedAt: 'desc' }
     });
 
@@ -164,6 +196,14 @@ router.get(
       res.status(404).json({
         success: false,
         error: 'Documento não encontrado'
+      });
+      return;
+    }
+
+    if (isProtocolGeneratedDocument(document)) {
+      res.status(400).json({
+        success: false,
+        error: 'Documento gerado por protocolo nao faz parte do fluxo de aprovacao pessoal'
       });
       return;
     }
@@ -275,6 +315,14 @@ router.post(
     }
 
     // 2. Verificar se já está aprovado
+    if (isProtocolGeneratedDocument(document)) {
+      res.status(400).json({
+        success: false,
+        error: 'Documento gerado por protocolo nao pode ser aprovado manualmente'
+      });
+      return;
+    }
+
     if (document.status === 'APPROVED') {
       res.status(400).json({
         success: false,
@@ -404,6 +452,14 @@ router.post(
     }
 
     // 2. Realizar rejeição em transação
+    if (isProtocolGeneratedDocument(document)) {
+      res.status(400).json({
+        success: false,
+        error: 'Documento gerado por protocolo nao pode ser rejeitado manualmente'
+      });
+      return;
+    }
+
     const result = await prisma.$transaction(async (tx) => {
       // 2.1. Rejeitar documento
       const rejectedDoc = await tx.citizenDocument.update({
@@ -476,6 +532,14 @@ router.put(
       res.status(404).json({
         success: false,
         error: 'Documento não encontrado'
+      });
+      return;
+    }
+
+    if (isProtocolGeneratedDocument(document)) {
+      res.status(400).json({
+        success: false,
+        error: 'Documento gerado por protocolo nao entra em analise manual'
       });
       return;
     }

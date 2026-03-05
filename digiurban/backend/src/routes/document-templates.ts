@@ -655,12 +655,15 @@ router.post('/generated-documents/send-multiple', authenticateToken, uploadDocum
               fileUrl: doc.fileUrl || undefined,
               fileSize: doc.fileSize,
               mimeType: doc.mimeType,
+              status: 'APPROVED',
               sourceType: 'PROTOCOL',
               sourceDocumentId: doc.id,
               notes: message || `Documento gerado a partir do protocolo ${protocolNumber}`,
               isVerified: true,
               verifiedAt: new Date(),
-              verifiedBy: req.user!.id
+              verifiedBy: req.user!.id,
+              reviewedBy: req.user!.id,
+              reviewedAt: new Date()
             }
           });
           results.documentsAdded++;
@@ -688,11 +691,14 @@ router.post('/generated-documents/send-multiple', authenticateToken, uploadDocum
             filePath: relativePath,
             fileSize: stats.size,
             mimeType: file.mimetype,
+            status: 'APPROVED',
             sourceType: 'PROTOCOL',
             notes: message || `Arquivo enviado junto com protocolo ${protocolNumber}`,
             isVerified: true,
             verifiedAt: new Date(),
-            verifiedBy: req.user!.id
+            verifiedBy: req.user!.id,
+            reviewedBy: req.user!.id,
+            reviewedAt: new Date()
           }
         });
         results.documentsAdded++;
@@ -766,4 +772,3 @@ router.get('/document-stats', authenticateToken, requireAdmin, async (req, res) 
 });
 
 export default router;
-

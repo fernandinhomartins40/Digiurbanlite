@@ -655,9 +655,20 @@ router.get(
         },
         documents: {
           where: {
-            OR: [
-              { sourceType: null },
-              { sourceType: 'UPLOAD' }
+            AND: [
+              {
+                OR: [
+                  { sourceType: null },
+                  { sourceType: 'UPLOAD' }
+                ]
+              },
+              {
+                NOT: {
+                  documentType: {
+                    startsWith: 'Protocolo:'
+                  }
+                }
+              }
             ]
           },
           orderBy: { uploadedAt: 'desc' },
@@ -719,6 +730,13 @@ router.get(
       }
     });
 
+    const normalizedGeneratedDocuments = generatedDocuments.map((doc) => ({
+      ...doc,
+      status: (doc.status === 'PENDING' || doc.status === 'UNDER_REVIEW' || doc.status === 'UPLOADED')
+        ? 'APPROVED'
+        : doc.status
+    }));
+
     // Mapear campos dos protocolos para o formato esperado pelo frontend
     const protocols = (citizen as any).protocolsSimplified?.map((p: any) => ({
       id: p.id,
@@ -735,8 +753,12 @@ router.get(
       data: {
         citizen: {
           ...citizen,
+          _count: {
+            ...citizen._count,
+            documents: citizen.documents.length
+          },
           protocols,
-          generatedDocuments,
+          generatedDocuments: normalizedGeneratedDocuments,
           protocolsSimplified: undefined
         }
       }

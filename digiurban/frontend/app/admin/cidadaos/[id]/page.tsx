@@ -445,6 +445,22 @@ export default function CitizenDetailsPage() {
     return <Badge variant={config.variant}>{config.label}</Badge>
   }
 
+  const getGeneratedDocumentStatusBadge = (status: string) => {
+    const normalizedStatus = ['PENDING', 'UPLOADED', 'UNDER_REVIEW'].includes(status) ? 'APPROVED' : status
+
+    const statusConfig = {
+      APPROVED: { label: 'Gerado', variant: 'default' as const },
+      REJECTED: { label: 'Rejeitado', variant: 'destructive' as const },
+      EXPIRED: { label: 'Expirado', variant: 'destructive' as const },
+    }
+
+    const config = statusConfig[normalizedStatus as keyof typeof statusConfig] || statusConfig.APPROVED
+    return <Badge variant={config.variant}>{config.label}</Badge>
+  }
+
+  const isGeneratedDocument = (doc: any) =>
+    doc?.sourceType === 'PROTOCOL' || doc?._isGenerated === true || String(doc?.documentType || '').startsWith('Protocolo:')
+
   if (loading) {
     return (
       <div className="p-8">
@@ -540,7 +556,7 @@ export default function CitizenDetailsPage() {
               <FileText className="h-8 w-8 text-indigo-600" />
               <div>
                 <div className="text-2xl font-bold">{citizen._count.documents || 0}</div>
-                <div className="text-sm text-gray-500">Documentos</div>
+                <div className="text-sm text-gray-500">Documentos Pessoais</div>
               </div>
             </div>
           </CardContent>
@@ -845,6 +861,9 @@ export default function CitizenDetailsPage() {
                 Documentos Gerados
                 <Badge variant="secondary" className="ml-2">{citizen.generatedDocuments?.length || 0}</Badge>
               </CardTitle>
+              <p className="text-sm text-gray-500">
+                Documentos gerados por protocolos nao entram em fluxo de aprovacao de documentos pessoais.
+              </p>
             </CardHeader>
             <CardContent>
               {citizen.generatedDocuments && citizen.generatedDocuments.length > 0 ? (
@@ -872,7 +891,7 @@ export default function CitizenDetailsPage() {
                             <h3 className="font-semibold text-gray-900">
                               {getDocumentLabel(doc.documentType)}
                             </h3>
-                            {getDocumentStatusBadge(doc.status)}
+                            {getGeneratedDocumentStatusBadge(doc.status)}
                           </div>
                           <p className="text-sm text-gray-600">{doc.fileName}</p>
                           <p className="text-xs text-gray-500 mt-1">
@@ -1100,7 +1119,9 @@ export default function CitizenDetailsPage() {
               </div>
 
               <div className="mb-4 flex items-center gap-3">
-                {getDocumentStatusBadge(previewDocument.status)}
+                {isGeneratedDocument(previewDocument)
+                  ? getGeneratedDocumentStatusBadge(previewDocument.status)
+                  : getDocumentStatusBadge(previewDocument.status)}
 
                 {/* Controles de Zoom (somente para imagens) */}
                 {getDocumentTypeInfo(previewDocument.mimeType, previewDocument.fileName).type === 'image' && (
@@ -1191,7 +1212,7 @@ export default function CitizenDetailsPage() {
                   <Download className="w-4 h-4 mr-2" />
                   Baixar
                 </Button>
-                {previewDocument.status === 'PENDING' && canVerifyDocuments && (
+                {previewDocument.status === 'PENDING' && canVerifyDocuments && !isGeneratedDocument(previewDocument) && (
                   <>
                     <Button
                       variant="outline"

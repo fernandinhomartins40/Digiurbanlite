@@ -27,6 +27,24 @@ export const GOLD_REQUIREMENTS = {
   }
 };
 
+const PERSONAL_DOCUMENT_WHERE = {
+  AND: [
+    {
+      OR: [
+        { sourceType: null },
+        { sourceType: 'UPLOAD' }
+      ]
+    },
+    {
+      NOT: {
+        documentType: {
+          startsWith: 'Protocolo:'
+        }
+      }
+    }
+  ]
+};
+
 // ============================================================================
 // INTERFACES
 // ============================================================================
@@ -105,7 +123,8 @@ export async function checkGoldEligibility(
     include: {
       documents: {
         where: {
-          status: 'APPROVED'
+          status: 'APPROVED',
+          ...PERSONAL_DOCUMENT_WHERE
         }
       }
     }
@@ -273,16 +292,16 @@ export async function autoPromoteToGold(
  */
 export async function getDocumentStats() {
   const [pending, underReview, approved, rejected] = await Promise.all([
-    prisma.citizenDocument.count({ where: { status: 'PENDING' } }),
-    prisma.citizenDocument.count({ where: { status: 'UNDER_REVIEW' } }),
-    prisma.citizenDocument.count({ where: { status: 'APPROVED' } }),
-    prisma.citizenDocument.count({ where: { status: 'REJECTED' } })
+    prisma.citizenDocument.count({ where: { status: 'PENDING', ...PERSONAL_DOCUMENT_WHERE } }),
+    prisma.citizenDocument.count({ where: { status: 'UNDER_REVIEW', ...PERSONAL_DOCUMENT_WHERE } }),
+    prisma.citizenDocument.count({ where: { status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE } }),
+    prisma.citizenDocument.count({ where: { status: 'REJECTED', ...PERSONAL_DOCUMENT_WHERE } })
   ]);
 
   // Cidadãos elegíveis para promoção
   const verifiedCitizens = await prisma.citizen.findMany({
     where: { verificationStatus: 'VERIFIED' },
-    include: { documents: { where: { status: 'APPROVED' } } }
+    include: { documents: { where: { status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE } } }
   });
 
   let eligibleForGold = 0;
@@ -314,7 +333,7 @@ export async function getEligibleCitizensForGold() {
     },
     include: {
       documents: {
-        where: { status: 'APPROVED' }
+        where: { status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE }
       }
     }
   });
