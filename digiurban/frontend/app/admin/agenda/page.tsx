@@ -365,20 +365,21 @@ export default function AdminCentralAgendaPage() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="relative space-y-6 pb-6">
+      <div className="pointer-events-none absolute inset-x-0 top-0 -z-10 h-44 rounded-3xl bg-gradient-to-r from-sky-100/70 via-cyan-50/30 to-emerald-100/70 blur-3xl" />
+      <div className="flex flex-col gap-4 rounded-2xl border border-slate-200/80 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-5 py-5 shadow-sm sm:flex-row sm:items-end sm:justify-between sm:px-6 sm:py-6">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold">Agenda Centralizada</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">Agenda Centralizada</h1>
+          <p className="text-sm sm:text-base text-slate-600 mt-1">
             Visão única de compromissos manuais e integrações de protocolos, saúde e TFD.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToICS}>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" className="bg-white/80 hover:bg-white" onClick={exportToICS}>
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
-          <Button onClick={handleNewEvent}>
+          <Button className="shadow-sm" onClick={handleNewEvent}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Evento
           </Button>
@@ -386,10 +387,10 @@ export default function AdminCentralAgendaPage() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
-        <Card>
+        <Card className="border-slate-200/80 bg-white/95 shadow-sm">
           <CardHeader className="pb-2">
-            <CardDescription>Total</CardDescription>
-            <CardTitle className="text-2xl">{stats.total}</CardTitle>
+            <CardDescription className="text-xs uppercase tracking-wide text-slate-500">Total</CardDescription>
+            <CardTitle className="text-2xl text-slate-900">{stats.total}</CardTitle>
           </CardHeader>
         </Card>
         <Card>
@@ -418,7 +419,7 @@ export default function AdminCentralAgendaPage() {
         </Card>
       </div>
 
-      <Card>
+      <Card className="border-slate-200/80 shadow-sm">
         <CardContent className="pt-6">
           <div className="flex flex-col gap-3">
             <div className="flex flex-col lg:flex-row lg:items-center gap-3">
@@ -445,11 +446,11 @@ export default function AdminCentralAgendaPage() {
                 placeholder="Buscar por título, descrição, calendário, responsável..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full lg:max-w-md"
+                className="w-full lg:max-w-md rounded-lg border-slate-300 bg-white/90"
               />
 
               {isAdmin && (
-                <div className="flex items-center gap-2 ml-auto">
+                <div className="flex items-center gap-2 ml-auto rounded-md border border-slate-200 bg-white/90 px-3 py-1.5">
                   <span className="text-sm text-muted-foreground">Ver todos</span>
                   <Switch checked={includeAll} onCheckedChange={setIncludeAll} />
                 </div>
@@ -462,7 +463,7 @@ export default function AdminCentralAgendaPage() {
             </div>
 
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-3 pt-3 border-t border-slate-200/80">
                 <div>
                   <label className="text-sm font-medium mb-1 block">Status</label>
                   <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as 'all' | CentralCalendarEventStatus)}>
@@ -549,9 +550,9 @@ export default function AdminCentralAgendaPage() {
       />
 
       {viewMode === 'calendar' ? (
-        <Card>
-          <CardContent className="pt-6 overflow-x-auto">
-            <div className="min-w-[640px]">
+        <Card className="border-slate-200/80 shadow-sm">
+          <CardContent className="central-agenda-calendar pt-6 overflow-x-auto">
+            <div className="min-w-[640px] rounded-xl border border-slate-200/80 bg-white p-3 shadow-inner sm:p-4">
               <BigCalendar
                 localizer={localizer}
                 events={calendarEvents}
@@ -599,7 +600,7 @@ export default function AdminCentralAgendaPage() {
       ) : (
         <div className="grid gap-4">
           {filteredEvents.length === 0 ? (
-            <Card>
+            <Card className="border-slate-200/80 shadow-sm">
               <CardContent className="flex flex-col items-center justify-center py-12 text-center">
                 <CalendarIcon className="h-12 w-12 text-muted-foreground mb-3" />
                 <p className="text-muted-foreground">Nenhum evento encontrado com os filtros atuais.</p>
@@ -610,7 +611,7 @@ export default function AdminCentralAgendaPage() {
               .slice()
               .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
               .map((event) => (
-                <Card key={event.id}>
+                <Card key={event.id} className="border-slate-200/80 shadow-sm transition-shadow hover:shadow-md">
                   <CardHeader className="pb-3">
                     <div className="flex flex-col lg:flex-row lg:items-start lg:justify-between gap-3">
                       <div>

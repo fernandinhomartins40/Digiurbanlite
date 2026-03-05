@@ -39,8 +39,8 @@ export interface ProtocolStageSupportAssignmentSnapshot {
 
 export interface ProtocolStageMetadata {
   requiredDocumentTypes?: string[]
-  requiredFormFields?: string[]
-  requiredFormFieldIds?: string[]
+  requiredInputFieldIds?: string[]
+  requiredStageOutputs?: string[]
   allowedActions?: string[]
   stageSupportAssignments?: ProtocolStageSupportAssignmentSnapshot[]
   [key: string]: any

@@ -109,11 +109,11 @@ function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata
     ...stage,
     metadata: {
       ...metadata,
-      requiredFormFields:
-        metadata.requiredFormFields ||
-        metadata.requiredFormFieldIds ||
-        workflowStage.requiredFormFieldIds ||
+      requiredInputFieldIds:
+        metadata.requiredInputFieldIds ||
+        workflowStage.requiredInputFieldIds ||
         [],
+      requiredStageOutputs: metadata.requiredStageOutputs || workflowStage.requiredStageOutputs || [],
       stageSupportAssignments: buildStageSupportAssignmentsSnapshot(workflowStage)
     }
   };

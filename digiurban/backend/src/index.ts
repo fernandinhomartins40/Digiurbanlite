@@ -302,8 +302,7 @@ loadRoute('/api/integrations', './routes/integrations');
 loadRoute('/api/municipality', './routes/municipality-config');
 loadRoute('/api/apresentacao', './routes/apresentacao-export');
 
-// Workflows
-loadRoute('/api/workflows', './routes/module-workflows');
+// Workflows (fonte única: service-workflows)
 loadRoute('/api/service-workflows', './routes/service-workflows.routes');
 
 // Notificações

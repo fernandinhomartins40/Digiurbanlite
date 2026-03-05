@@ -128,7 +128,7 @@ function createEmptyStage(order: number): WorkflowStageData {
     name: '', description: '', order, slaDays: 3, canSkip: false, skipCondition: '',
     stageType: '', availableTabs: ['resumo', 'documentos', 'comunicacao'], primaryTab: 'resumo',
     allowedActions: ['APPROVE'], actionLabels: {}, requiredDocumentTypes: [],
-    requiredFormFields: [], documentTemplateIds: [], role: '', department: '', requiresApproval: false,
+    requiredInputFieldIds: [], requiredStageOutputs: [], documentTemplateIds: [], role: '', department: '', requiresApproval: false,
     supportAssignments: [],
   }
 }
@@ -144,7 +144,10 @@ function normalizeStage(raw: any, order: number): WorkflowStageData {
     allowedActions: Array.isArray(raw.allowedActions) ? raw.allowedActions : ['APPROVE'],
     actionLabels: raw.actionLabels || {},
     requiredDocumentTypes: Array.isArray(raw.requiredDocumentTypes) ? raw.requiredDocumentTypes : [],
-    requiredFormFields: Array.isArray(raw.requiredFormFields || raw.requiredFormFieldIds) ? (raw.requiredFormFields || raw.requiredFormFieldIds) : [],
+    requiredInputFieldIds: Array.isArray(raw.requiredInputFieldIds)
+      ? raw.requiredInputFieldIds
+      : [],
+    requiredStageOutputs: Array.isArray(raw.requiredStageOutputs) ? raw.requiredStageOutputs : [],
     documentTemplateIds: Array.isArray(raw.documentTemplateIds) ? raw.documentTemplateIds : [],
     role: raw.role || '', department: raw.department || '', requiresApproval: raw.requiresApproval || false,
     supportAssignments: Array.isArray(raw.supportAssignments)
@@ -324,7 +327,8 @@ export default function NewWorkflowPage() {
         stageType: s.stageType === 'default' || s.stageType === '' ? undefined : s.stageType,
         role: s.role || undefined, department: s.department || undefined,
         skipCondition: s.skipCondition || undefined, description: s.description || undefined,
-        requiredFormFieldIds: s.requiredFormFields,
+        requiredInputFieldIds: s.requiredInputFieldIds,
+        requiredStageOutputs: s.requiredStageOutputs,
         documentTemplateIds: s.documentTemplateIds?.length ? s.documentTemplateIds : undefined,
         supportAssignments: s.supportAssignments.map(assignment => ({
           id: assignment.id,

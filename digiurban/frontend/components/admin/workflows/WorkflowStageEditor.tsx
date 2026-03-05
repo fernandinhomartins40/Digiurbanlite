@@ -41,7 +41,8 @@ export interface WorkflowStageData {
   allowedActions: string[]
   actionLabels: Record<string, string>
   requiredDocumentTypes: string[]
-  requiredFormFields: string[]
+  requiredInputFieldIds: string[]
+  requiredStageOutputs: string[]
   documentTemplateIds: string[]
   role: string
   department: string
@@ -194,10 +195,22 @@ export function WorkflowStageEditor({
   }
 
   const toggleFormField = (fieldId: string) => {
-    const fields = stage.requiredFormFields.includes(fieldId)
-      ? stage.requiredFormFields.filter(f => f !== fieldId)
-      : [...stage.requiredFormFields, fieldId]
-    update({ requiredFormFields: fields })
+    const fields = stage.requiredInputFieldIds.includes(fieldId)
+      ? stage.requiredInputFieldIds.filter(f => f !== fieldId)
+      : [...stage.requiredInputFieldIds, fieldId]
+    update({ requiredInputFieldIds: fields })
+  }
+
+  const addRequiredStageOutput = (outputKey: string) => {
+    const normalized = outputKey.trim()
+    if (!normalized || stage.requiredStageOutputs.includes(normalized)) return
+    update({ requiredStageOutputs: [...stage.requiredStageOutputs, normalized] })
+  }
+
+  const removeRequiredStageOutput = (outputKey: string) => {
+    update({
+      requiredStageOutputs: stage.requiredStageOutputs.filter(output => output !== outputKey)
+    })
   }
 
   const toggleDocumentTemplate = (templateId: string) => {
@@ -483,19 +496,19 @@ export function WorkflowStageEditor({
 
               <Separator />
 
-              {/* Required Form Fields */}
+              {/* Required Input Fields */}
               <div>
-                <Label className="text-xs font-medium mb-2 block">Campos de formulário obrigatórios</Label>
-                <p className="text-[10px] text-muted-foreground mb-2">Campos que devem estar preenchidos/aprovados nesta etapa</p>
+                <Label className="text-xs font-medium mb-2 block">Campos de entrada obrigatórios</Label>
+                <p className="text-[10px] text-muted-foreground mb-2">Campos do serviço que precisam estar aprovados para avançar</p>
                 {serviceFormFields.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     {serviceFormFields.map(field => (
                       <div
                         key={field.id}
-                        className={`flex items-center gap-2 p-2 rounded border cursor-pointer text-xs transition-colors ${stage.requiredFormFields.includes(field.id) ? 'bg-purple-50 border-purple-200' : 'hover:bg-muted/50'}`}
+                        className={`flex items-center gap-2 p-2 rounded border cursor-pointer text-xs transition-colors ${stage.requiredInputFieldIds.includes(field.id) ? 'bg-purple-50 border-purple-200' : 'hover:bg-muted/50'}`}
                         onClick={() => toggleFormField(field.id)}
                       >
-                        <Checkbox checked={stage.requiredFormFields.includes(field.id)} onCheckedChange={() => {}} />
+                        <Checkbox checked={stage.requiredInputFieldIds.includes(field.id)} onCheckedChange={() => {}} />
                         <span>{field.label}</span>
                         <span className="text-[10px] text-muted-foreground font-mono">({field.id})</span>
                       </div>
@@ -511,17 +524,17 @@ export function WorkflowStageEditor({
                         onKeyDown={(e) => {
                           if (e.key === 'Enter') {
                             const val = (e.target as HTMLInputElement).value.trim()
-                            if (val && !stage.requiredFormFields.includes(val)) {
-                              update({ requiredFormFields: [...stage.requiredFormFields, val] })
+                            if (val && !stage.requiredInputFieldIds.includes(val)) {
+                              update({ requiredInputFieldIds: [...stage.requiredInputFieldIds, val] })
                               ;(e.target as HTMLInputElement).value = ''
                             }
                           }
                         }}
                       />
                     </div>
-                    {stage.requiredFormFields.length > 0 && (
+                    {stage.requiredInputFieldIds.length > 0 && (
                       <div className="flex flex-wrap gap-1 mt-2">
-                        {stage.requiredFormFields.map(field => (
+                        {stage.requiredInputFieldIds.map(field => (
                           <Badge key={field} variant="secondary" className="text-xs cursor-pointer font-mono hover:bg-destructive/20" onClick={() => toggleFormField(field)}>
                             {field} &times;
                           </Badge>
@@ -529,6 +542,47 @@ export function WorkflowStageEditor({
                       </div>
                     )}
                   </div>
+                )}
+              </div>
+
+              <Separator />
+
+              {/* Required Stage Outputs */}
+              <div>
+                <Label className="text-xs font-medium mb-2 block">Saídas obrigatórias da etapa</Label>
+                <p className="text-[10px] text-muted-foreground mb-2">
+                  Use quando a etapa precisa gerar dados internos antes de ser aprovada.
+                </p>
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Chave da saída (ex: parecerTecnico)"
+                    className="text-xs"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const value = (e.target as HTMLInputElement).value
+                        addRequiredStageOutput(value)
+                        ;(e.target as HTMLInputElement).value = ''
+                      }
+                    }}
+                  />
+                </div>
+                {stage.requiredStageOutputs.length > 0 ? (
+                  <div className="flex flex-wrap gap-1 mt-2">
+                    {stage.requiredStageOutputs.map(output => (
+                      <Badge
+                        key={output}
+                        variant="secondary"
+                        className="text-xs cursor-pointer font-mono hover:bg-destructive/20"
+                        onClick={() => removeRequiredStageOutput(output)}
+                      >
+                        {output} &times;
+                      </Badge>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    Nenhuma saída obrigatória configurada.
+                  </p>
                 )}
               </div>
 

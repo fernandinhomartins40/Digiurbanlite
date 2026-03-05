@@ -44,8 +44,7 @@ export function StageFocusCard({
   pendings = []
 }: StageFocusCardProps) {
   const requiredDocs = currentStage.metadata?.requiredDocumentTypes || []
-  const requiredFields =
-    currentStage.metadata?.requiredFormFields || currentStage.metadata?.requiredFormFieldIds || []
+  const requiredFields = currentStage.metadata?.requiredInputFieldIds || []
   const allowedActions = currentStage.metadata?.allowedActions || []
   const supportAssignments = currentStage.metadata?.stageSupportAssignments || []
   const requiredExecutionAssignments = supportAssignments.filter(assignment => assignment.mode === 'REQUIRED_EXECUTION')

@@ -189,7 +189,7 @@ export async function validateStageConditions(
   }
 
   // ===== VALIDAR CAMPOS DO FORMULÁRIO =====
-  const requiredFieldIds = metadata?.requiredFormFieldIds || [];
+  const requiredFieldIds = metadata?.requiredInputFieldIds || [];
 
   if (requiredFieldIds.length > 0 && stage.protocol.customData) {
     const customData = stage.protocol.customData as any;

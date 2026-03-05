@@ -169,7 +169,8 @@ export default function WorkflowViewPage() {
             const tabs = stage.availableTabs || []
             const actions = stage.allowedActions || []
             const reqDocs = stage.requiredDocumentTypes || []
-            const reqFields = stage.requiredFormFields || stage.requiredFormFieldIds || []
+            const reqFields = stage.requiredInputFieldIds || []
+            const reqStageOutputs = stage.requiredStageOutputs || []
             const supportAssignments = Array.isArray(stage.supportAssignments) ? stage.supportAssignments : []
 
             return (
@@ -258,6 +259,20 @@ export default function WorkflowViewPage() {
                           <div className="flex flex-wrap gap-1">
                             {reqFields.map((field: string) => (
                               <Badge key={field} variant="outline" className="text-xs font-mono">{field}</Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Required Stage Outputs */}
+                      {reqStageOutputs.length > 0 && (
+                        <div>
+                          <p className="text-xs font-medium text-muted-foreground mb-1.5 flex items-center gap-1"><ListChecks className="h-3 w-3" />Saídas obrigatórias</p>
+                          <div className="flex flex-wrap gap-1">
+                            {reqStageOutputs.map((output: string) => (
+                              <Badge key={output} variant="outline" className="text-xs font-mono">
+                                {output}
+                              </Badge>
                             ))}
                           </div>
                         </div>

@@ -102,7 +102,7 @@ export function ChecklistTab({
   }
 
   const requiredDocs = currentStage.metadata?.requiredDocumentTypes || []
-  const requiredFields = currentStage.metadata?.requiredFormFieldIds || []
+  const requiredFields = currentStage.metadata?.requiredInputFieldIds || []
 
   return (
     <div className="space-y-6">

@@ -7,7 +7,7 @@
  * - availableTabs: Quais abas mostrar na UI
  * - primaryTab: Qual aba destacar
  * - requiredDocumentTypes: Documentos obrigatórios
- * - requiredFormFields: Campos de formulário obrigatórios
+ * - requiredInputFieldIds: Campos de formulário obrigatórios
  * - allowedActions: Ações permitidas
  *
  * Isso permite que o WORKFLOW defina completamente a estrutura da UI
@@ -48,7 +48,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -64,7 +64,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
 
         // Requisitos
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
 
         // Ações
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -79,7 +79,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -94,7 +94,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['parecer_medico', 'cid_principal', 'procedimento_solicitado'],
+        requiredInputFieldIds: ['parecer_medico', 'cid_principal', 'procedimento_solicitado'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -109,7 +109,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'resumo',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REJECT'],
@@ -124,7 +124,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['data_agendamento', 'hora_agendamento', 'veiculo'],
+        requiredInputFieldIds: ['data_agendamento', 'hora_agendamento', 'veiculo'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE'],
@@ -147,7 +147,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -161,7 +161,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         requiredDocumentTypes: ['Atestado Médico', 'Comprovante de Endereço', 'Cartão SUS'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -175,7 +175,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -190,7 +190,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['tipo_transporte', 'justificativa'],
+        requiredInputFieldIds: ['tipo_transporte', 'justificativa'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
@@ -205,7 +205,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['data_transporte', 'hora_transporte', 'destino'],
+        requiredInputFieldIds: ['data_transporte', 'hora_transporte', 'destino'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE'],
@@ -220,7 +220,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE'],
@@ -244,7 +244,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -259,7 +259,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -273,7 +273,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['tipo_producao', 'area_propriedade', 'produtos_principais'],
+        requiredInputFieldIds: ['tipo_producao', 'area_propriedade', 'produtos_principais'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -288,7 +288,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'pendencias', 'comunicacao'],
         primaryTab: 'resumo',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REJECT'],
@@ -303,7 +303,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE'],
@@ -329,7 +329,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -343,7 +343,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -359,7 +359,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         requiredDocumentTypes: [],
-        requiredFormFields: ['area_construir', 'tipo_obra', 'uso'],
+        requiredInputFieldIds: ['area_construir', 'tipo_obra', 'uso'],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -373,7 +373,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['data_vistoria', 'parecer_vistoria', 'responsavel_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'parecer_vistoria', 'responsavel_vistoria'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -388,7 +388,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['valor_taxa', 'validade_licenca'],
+        requiredInputFieldIds: ['valor_taxa', 'validade_licenca'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REJECT'],
@@ -403,7 +403,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE'],
@@ -428,7 +428,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Comprovante de Endereço do Estabelecimento', 'Planta Baixa'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -442,7 +442,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -458,7 +458,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         primaryTab: 'documentos',
 
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_atividade', 'area_estabelecimento', 'numero_funcionarios'],
+        requiredInputFieldIds: ['tipo_atividade', 'area_estabelecimento', 'numero_funcionarios'],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -472,7 +472,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: ['data_vistoria', 'parecer_vigilancia', 'parecer_bombeiros'],
+        requiredInputFieldIds: ['data_vistoria', 'parecer_vigilancia', 'parecer_bombeiros'],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -487,7 +487,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE'],
@@ -511,7 +511,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -523,7 +523,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['especialidade', 'data_preferencial', 'turno'],
+        requiredInputFieldIds: ['especialidade', 'data_preferencial', 'turno'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -534,7 +534,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_consulta', 'horario', 'profissional'],
+        requiredInputFieldIds: ['data_consulta', 'horario', 'profissional'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -565,7 +565,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -589,7 +589,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -602,7 +602,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_coleta', 'local_coleta'],
+        requiredInputFieldIds: ['data_coleta', 'local_coleta'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -633,7 +633,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -645,7 +645,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'RG ou CNH'],
-        requiredFormFields: ['nome_completo', 'data_nascimento', 'nome_mae'],
+        requiredInputFieldIds: ['nome_completo', 'data_nascimento', 'nome_mae'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -658,7 +658,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -703,7 +703,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -715,7 +715,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina'],
-        requiredFormFields: ['nome_aluno', 'data_nascimento', 'serie_pretendida'],
+        requiredInputFieldIds: ['nome_aluno', 'data_nascimento', 'serie_pretendida'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -726,7 +726,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['escola_escolhida', 'turno'],
+        requiredInputFieldIds: ['escola_escolhida', 'turno'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -757,7 +757,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -769,7 +769,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Histórico Escolar', 'Declaração de Transferência'],
-        requiredFormFields: ['escola_origem', 'escola_destino', 'motivo'],
+        requiredInputFieldIds: ['escola_origem', 'escola_destino', 'motivo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -820,7 +820,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -832,7 +832,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
         requiredDocumentTypes: ['Comprovante de Residência', 'Comprovante de Matrícula'],
-        requiredFormFields: ['endereco_completo', 'escola', 'distancia_km'],
+        requiredInputFieldIds: ['endereco_completo', 'escola', 'distancia_km'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -845,7 +845,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -899,7 +899,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -911,7 +911,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Documento da Propriedade (opcional)'],
-        requiredFormFields: ['tipo_assistencia', 'area_propriedade'],
+        requiredInputFieldIds: ['tipo_assistencia', 'area_propriedade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -924,7 +924,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -937,7 +937,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['data_visita', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['data_visita', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -949,7 +949,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['parecer_tecnico', 'recomendacoes'],
+        requiredInputFieldIds: ['parecer_tecnico', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -961,7 +961,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -984,7 +984,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -996,7 +996,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Escritura ou Contrato', 'CAR - Cadastro Ambiental Rural (opcional)', 'ITR - Imposto Territorial Rural (opcional)'],
-        requiredFormFields: ['area_total', 'localizacao'],
+        requiredInputFieldIds: ['area_total', 'localizacao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1007,7 +1007,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['coordenadas_gps', 'uso_solo', 'benfeitorias'],
+        requiredInputFieldIds: ['coordenadas_gps', 'uso_solo', 'benfeitorias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1019,7 +1019,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1031,7 +1031,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -1054,7 +1054,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1066,7 +1066,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['programa_escolhido', 'area_producao'],
+        requiredInputFieldIds: ['programa_escolhido', 'area_producao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1077,7 +1077,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1089,7 +1089,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -1101,7 +1101,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1123,7 +1123,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1135,7 +1135,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
-        requiredFormFields: ['produtos_comercializar', 'tipo_banca'],
+        requiredInputFieldIds: ['produtos_comercializar', 'tipo_banca'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1146,7 +1146,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_sanitario'],
+        requiredInputFieldIds: ['parecer_sanitario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1158,7 +1158,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_banca', 'localizacao_feira'],
+        requiredInputFieldIds: ['numero_banca', 'localizacao_feira'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1170,7 +1170,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1192,7 +1192,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1204,7 +1204,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto do Evento', 'CPF'],
-        requiredFormFields: ['tipo_evento', 'data_evento', 'publico_estimado'],
+        requiredInputFieldIds: ['tipo_evento', 'data_evento', 'publico_estimado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1217,7 +1217,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1230,7 +1230,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['parecer_vistoria', 'infraestrutura'],
+        requiredInputFieldIds: ['parecer_vistoria', 'infraestrutura'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1242,7 +1242,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['plano_seguranca', 'plano_sanitario'],
+        requiredInputFieldIds: ['plano_seguranca', 'plano_sanitario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1254,7 +1254,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -1277,7 +1277,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1289,7 +1289,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: ['tipo_analise', 'area_amostra'],
+        requiredInputFieldIds: ['tipo_analise', 'area_amostra'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1302,7 +1302,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1315,7 +1315,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_coleta', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['data_coleta', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1327,7 +1327,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resultados_analise'],
+        requiredInputFieldIds: ['resultados_analise'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1339,7 +1339,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -1361,7 +1361,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_atendimento', 'descricao'],
+        requiredInputFieldIds: ['tipo_atendimento', 'descricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1375,7 +1375,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1388,7 +1388,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1400,7 +1400,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['providencias_tomadas'],
+        requiredInputFieldIds: ['providencias_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1412,7 +1412,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1434,7 +1434,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1446,7 +1446,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_maquina', 'area_trabalho', 'finalidade'],
+        requiredInputFieldIds: ['tipo_maquina', 'area_trabalho', 'finalidade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1459,7 +1459,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1472,7 +1472,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['parecer_vistoria', 'viabilidade'],
+        requiredInputFieldIds: ['parecer_vistoria', 'viabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1484,7 +1484,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_agendamento', 'maquina_alocada', 'operador'],
+        requiredInputFieldIds: ['data_agendamento', 'maquina_alocada', 'operador'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1496,7 +1496,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1519,7 +1519,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1530,7 +1530,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_demanda', 'situacao_familiar'],
+        requiredInputFieldIds: ['tipo_demanda', 'situacao_familiar'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1544,7 +1544,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1557,7 +1557,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'encaminhamentos'],
+        requiredInputFieldIds: ['parecer_social', 'encaminhamentos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1569,7 +1569,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['servicos_encaminhados'],
+        requiredInputFieldIds: ['servicos_encaminhados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1581,7 +1581,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1603,7 +1603,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1615,7 +1615,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
-        requiredFormFields: ['composicao_familiar', 'renda_per_capita'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_per_capita'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1628,7 +1628,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1641,7 +1641,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'situacao_emergencial'],
+        requiredInputFieldIds: ['parecer_social', 'situacao_emergencial'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1653,7 +1653,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['valor_auxilio', 'periodo'],
+        requiredInputFieldIds: ['valor_auxilio', 'periodo'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -1665,7 +1665,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1687,7 +1687,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1699,7 +1699,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais', 'Comprovante de Renda'],
-        requiredFormFields: ['composicao_familiar'],
+        requiredInputFieldIds: ['composicao_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
@@ -1710,7 +1710,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_familia', 'renda_familiar', 'condicoes_moradia'],
+        requiredInputFieldIds: ['dados_familia', 'renda_familiar', 'condicoes_moradia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1722,7 +1722,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1734,7 +1734,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1756,7 +1756,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1768,7 +1768,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
-        requiredFormFields: ['grupo_interesse', 'faixa_etaria'],
+        requiredInputFieldIds: ['grupo_interesse', 'faixa_etaria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1779,7 +1779,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1791,7 +1791,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['turma_disponivel'],
+        requiredInputFieldIds: ['turma_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1803,7 +1803,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1825,7 +1825,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1837,7 +1837,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais'],
-        requiredFormFields: ['programa_solicitado'],
+        requiredInputFieldIds: ['programa_solicitado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1850,7 +1850,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1863,7 +1863,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'perfil_familiar'],
+        requiredInputFieldIds: ['parecer_social', 'perfil_familiar'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1875,7 +1875,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios'],
+        requiredInputFieldIds: ['atende_criterios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -1887,7 +1887,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1909,7 +1909,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -1921,7 +1921,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_beneficio'],
+        requiredInputFieldIds: ['tipo_beneficio'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -1934,7 +1934,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -1947,7 +1947,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_social', 'conclusao'],
+        requiredInputFieldIds: ['relatorio_social', 'conclusao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -1959,7 +1959,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['parecer_gestor'],
+        requiredInputFieldIds: ['parecer_gestor'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -1971,7 +1971,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -1993,7 +1993,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2004,7 +2004,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['motivo_visita', 'endereco_completo'],
+        requiredInputFieldIds: ['motivo_visita', 'endereco_completo'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -2018,7 +2018,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2031,7 +2031,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['data_visita', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2043,7 +2043,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['relatorio_visita', 'condicoes_moradia'],
+        requiredInputFieldIds: ['relatorio_visita', 'condicoes_moradia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2055,7 +2055,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -2079,7 +2079,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2091,7 +2091,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG'],
-        requiredFormFields: ['nome_artistico', 'categoria_artistica'],
+        requiredInputFieldIds: ['nome_artistico', 'categoria_artistica'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2104,7 +2104,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2117,7 +2117,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['area_atuacao', 'experiencia'],
+        requiredInputFieldIds: ['area_atuacao', 'experiencia'],
         requiredDocumentTypes: ['RG', 'CPF', 'Projeto do Evento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2129,7 +2129,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2141,7 +2141,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -2164,7 +2164,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2176,7 +2176,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_evento', 'data_evento', 'tipo_evento', 'publico_estimado'],
+        requiredInputFieldIds: ['nome_evento', 'data_evento', 'tipo_evento', 'publico_estimado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2189,7 +2189,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2202,7 +2202,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'infraestrutura_necessaria'],
+        requiredInputFieldIds: ['parecer_tecnico', 'infraestrutura_necessaria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2214,7 +2214,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['parecer_vistoria'],
+        requiredInputFieldIds: ['parecer_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2226,7 +2226,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2238,7 +2238,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2260,7 +2260,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2272,7 +2272,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Documentos dos Integrantes', 'Portfólio do Grupo', 'Estatuto (opcional)'],
-        requiredFormFields: ['nome_grupo', 'categoria', 'numero_integrantes'],
+        requiredInputFieldIds: ['nome_grupo', 'categoria', 'numero_integrantes'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2285,7 +2285,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2298,7 +2298,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['area_atuacao', 'historico_grupo'],
+        requiredInputFieldIds: ['area_atuacao', 'historico_grupo'],
         requiredDocumentTypes: ['Portfólio do Grupo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2310,7 +2310,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2322,7 +2322,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2344,7 +2344,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2356,7 +2356,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
-        requiredFormFields: ['oficina_escolhida', 'faixa_etaria'],
+        requiredInputFieldIds: ['oficina_escolhida', 'faixa_etaria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2367,7 +2367,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['turma_disponivel', 'horario'],
+        requiredInputFieldIds: ['turma_disponivel', 'horario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -2379,7 +2379,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2391,7 +2391,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2413,7 +2413,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2425,7 +2425,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Documentação Histórica', 'Fotos', 'Depoimentos'],
-        requiredFormFields: ['nome_manifestacao', 'tipo', 'historico'],
+        requiredInputFieldIds: ['nome_manifestacao', 'tipo', 'historico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2438,7 +2438,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2451,7 +2451,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['pesquisa_historica', 'documentacao_fotografica'],
+        requiredInputFieldIds: ['pesquisa_historica', 'documentacao_fotografica'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -2463,7 +2463,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_comissao'],
+        requiredInputFieldIds: ['parecer_comissao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2475,7 +2475,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2497,7 +2497,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2509,7 +2509,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['espaco_solicitado', 'data_evento', 'tipo_atividade'],
+        requiredInputFieldIds: ['espaco_solicitado', 'data_evento', 'tipo_atividade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2520,7 +2520,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['disponibilidade_confirmada'],
+        requiredInputFieldIds: ['disponibilidade_confirmada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -2532,7 +2532,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['termo_responsabilidade'],
+        requiredInputFieldIds: ['termo_responsabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2544,7 +2544,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2556,7 +2556,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2578,7 +2578,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2590,7 +2590,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: ['tipo_apoio', 'valor_solicitado'],
+        requiredInputFieldIds: ['tipo_apoio', 'valor_solicitado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2603,7 +2603,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2616,7 +2616,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'relevancia_cultural'],
+        requiredInputFieldIds: ['parecer_tecnico', 'relevancia_cultural'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2628,7 +2628,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_orcamentario', 'valor_aprovado'],
+        requiredInputFieldIds: ['parecer_orcamentario', 'valor_aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2640,7 +2640,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2661,7 +2661,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_atendimento', 'descricao'],
+        requiredInputFieldIds: ['tipo_atendimento', 'descricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -2675,7 +2675,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2688,7 +2688,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -2700,7 +2700,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['providencias_tomadas'],
+        requiredInputFieldIds: ['providencias_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2712,7 +2712,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2734,7 +2734,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2746,7 +2746,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Orçamento', 'CPF'],
-        requiredFormFields: ['titulo_projeto', 'objetivo', 'publico_alvo'],
+        requiredInputFieldIds: ['titulo_projeto', 'objetivo', 'publico_alvo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2759,7 +2759,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2772,7 +2772,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'viabilidade'],
+        requiredInputFieldIds: ['parecer_tecnico', 'viabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2784,7 +2784,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_financeiro'],
+        requiredInputFieldIds: ['parecer_financeiro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2796,7 +2796,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2808,7 +2808,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2831,7 +2831,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2843,7 +2843,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência'],
-        requiredFormFields: ['nome_completo', 'disciplina', 'nivel_ensino'],
+        requiredInputFieldIds: ['nome_completo', 'disciplina', 'nivel_ensino'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -2856,7 +2856,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -2869,7 +2869,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_pedagogico', 'formacao_adequada'],
+        requiredInputFieldIds: ['parecer_pedagogico', 'formacao_adequada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2881,7 +2881,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['situacao_cadastral'],
+        requiredInputFieldIds: ['situacao_cadastral'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -2893,7 +2893,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2915,7 +2915,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2926,7 +2926,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nome_aluno', 'matricula', 'vinculo'],
+        requiredInputFieldIds: ['nome_aluno', 'matricula', 'vinculo'],
         requiredDocumentTypes: ['Diploma', 'Currículo', 'Comprovante de Residência'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2938,7 +2938,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['periodo_consulta'],
+        requiredInputFieldIds: ['periodo_consulta'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -2951,7 +2951,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -2973,7 +2973,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -2984,7 +2984,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nome_curso', 'turma', 'turno'],
+        requiredInputFieldIds: ['nome_curso', 'turma', 'turno'],
         requiredDocumentTypes: ['RG', 'CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -2996,7 +2996,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3008,7 +3008,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['numero_matricula'],
+        requiredInputFieldIds: ['numero_matricula'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3020,7 +3020,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3041,7 +3041,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_ocorrencia', 'descricao', 'envolvidos'],
+        requiredInputFieldIds: ['tipo_ocorrencia', 'descricao', 'envolvidos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3055,7 +3055,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3068,7 +3068,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_pedagogico', 'providencias'],
+        requiredInputFieldIds: ['parecer_pedagogico', 'providencias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -3080,7 +3080,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['acoes_tomadas'],
+        requiredInputFieldIds: ['acoes_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3092,7 +3092,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3114,7 +3114,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3125,7 +3125,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_documento', 'nome_aluno', 'matricula'],
+        requiredInputFieldIds: ['tipo_documento', 'nome_aluno', 'matricula'],
         requiredDocumentTypes: ['RG'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3137,7 +3137,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_localizados'],
+        requiredInputFieldIds: ['dados_localizados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -3149,7 +3149,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -3162,7 +3162,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3185,7 +3185,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3197,7 +3197,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico'],
-        requiredFormFields: ['nome_completo', 'modalidade', 'categoria'],
+        requiredInputFieldIds: ['nome_completo', 'modalidade', 'categoria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3210,7 +3210,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3223,7 +3223,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_medico', 'apto'],
+        requiredInputFieldIds: ['parecer_medico', 'apto'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3235,7 +3235,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3247,7 +3247,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3269,7 +3269,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3280,7 +3280,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nome_competicao', 'modalidade', 'categoria'],
+        requiredInputFieldIds: ['nome_competicao', 'modalidade', 'categoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3292,7 +3292,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3304,7 +3304,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['numero_inscricao'],
+        requiredInputFieldIds: ['numero_inscricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3316,7 +3316,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3338,7 +3338,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3349,7 +3349,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['modalidade', 'turma', 'turno'],
+        requiredInputFieldIds: ['modalidade', 'turma', 'turno'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3361,7 +3361,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3373,7 +3373,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['numero_matricula'],
+        requiredInputFieldIds: ['numero_matricula'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3385,7 +3385,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3407,7 +3407,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3418,7 +3418,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['espaco_solicitado', 'data', 'horario', 'finalidade'],
+        requiredInputFieldIds: ['espaco_solicitado', 'data', 'horario', 'finalidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3432,7 +3432,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3445,7 +3445,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_uso'],
+        requiredInputFieldIds: ['parecer_uso'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3457,7 +3457,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3469,7 +3469,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3492,7 +3492,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3504,7 +3504,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto Arquitetônico', 'Matrícula do Imóvel', 'ART (Anotação de Responsabilidade Técnica)'],
-        requiredFormFields: ['area_construir', 'endereco', 'tipo_construcao'],
+        requiredInputFieldIds: ['area_construir', 'endereco', 'tipo_construcao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3517,7 +3517,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3530,7 +3530,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'conformidade_plano_diretor'],
+        requiredInputFieldIds: ['parecer_tecnico', 'conformidade_plano_diretor'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3542,7 +3542,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria'],
+        requiredInputFieldIds: ['laudo_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3554,7 +3554,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3566,7 +3566,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3588,7 +3588,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3600,7 +3600,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de Endereço'],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3613,7 +3613,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3626,7 +3626,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'pontuacao'],
+        requiredInputFieldIds: ['parecer_social', 'pontuacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3638,7 +3638,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria'],
+        requiredInputFieldIds: ['laudo_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -3650,7 +3650,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3662,7 +3662,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3684,7 +3684,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3696,7 +3696,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de Residência'],
-        requiredFormFields: ['tempo_ocupacao', 'area_terreno'],
+        requiredInputFieldIds: ['tempo_ocupacao', 'area_terreno'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3709,7 +3709,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3722,7 +3722,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico', 'area_medida'],
+        requiredInputFieldIds: ['laudo_tecnico', 'area_medida'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3734,7 +3734,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_juridico'],
+        requiredInputFieldIds: ['parecer_juridico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3746,7 +3746,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3758,7 +3758,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3780,7 +3780,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3792,7 +3792,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda'],
-        requiredFormFields: ['valor_aluguel', 'renda_familiar'],
+        requiredInputFieldIds: ['valor_aluguel', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -3805,7 +3805,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3818,7 +3818,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'situacao_emergencial'],
+        requiredInputFieldIds: ['parecer_social', 'situacao_emergencial'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3830,7 +3830,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria'],
+        requiredInputFieldIds: ['laudo_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -3842,7 +3842,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['valor_aprovado', 'prazo_beneficio'],
+        requiredInputFieldIds: ['valor_aprovado', 'prazo_beneficio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -3854,7 +3854,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3876,7 +3876,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3887,7 +3887,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['endereco', 'motivo_vistoria', 'data_preferencial'],
+        requiredInputFieldIds: ['endereco', 'motivo_vistoria', 'data_preferencial'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -3901,7 +3901,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3914,7 +3914,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico', 'fotos'],
+        requiredInputFieldIds: ['laudo_tecnico', 'fotos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3926,7 +3926,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'recomendacoes'],
+        requiredInputFieldIds: ['parecer_final', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3938,7 +3938,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -3961,7 +3961,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -3972,7 +3972,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['endereco', 'tipo_solicitacao', 'motivo'],
+        requiredInputFieldIds: ['endereco', 'tipo_solicitacao', 'motivo'],
         requiredDocumentTypes: ['Comprovante de Propriedade'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -3986,7 +3986,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -3999,7 +3999,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico', 'especie', 'estado_arvore'],
+        requiredInputFieldIds: ['laudo_tecnico', 'especie', 'estado_arvore'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4011,7 +4011,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_ambiental', 'medidas_compensatorias'],
+        requiredInputFieldIds: ['parecer_ambiental', 'medidas_compensatorias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4023,7 +4023,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4035,7 +4035,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4057,7 +4057,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4068,7 +4068,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nome_programa', 'tipo_participacao'],
+        requiredInputFieldIds: ['nome_programa', 'tipo_participacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4082,7 +4082,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4095,7 +4095,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_requisitos'],
+        requiredInputFieldIds: ['atende_requisitos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4107,7 +4107,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4119,7 +4119,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4140,7 +4140,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_denuncia', 'descricao', 'localizacao'],
+        requiredInputFieldIds: ['tipo_denuncia', 'descricao', 'localizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4154,7 +4154,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4167,7 +4167,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria', 'irregularidade_confirmada'],
+        requiredInputFieldIds: ['laudo_vistoria', 'irregularidade_confirmada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4179,7 +4179,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'providencias'],
+        requiredInputFieldIds: ['parecer_tecnico', 'providencias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4191,7 +4191,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['acoes_tomadas'],
+        requiredInputFieldIds: ['acoes_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4203,7 +4203,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4225,7 +4225,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4237,7 +4237,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto', 'ART'],
-        requiredFormFields: ['tipo_atividade', 'porte_empreendimento'],
+        requiredInputFieldIds: ['tipo_atividade', 'porte_empreendimento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4250,7 +4250,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4263,7 +4263,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico'],
+        requiredInputFieldIds: ['laudo_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4275,7 +4275,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_ambiental', 'condicionantes'],
+        requiredInputFieldIds: ['parecer_ambiental', 'condicionantes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4287,7 +4287,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4299,7 +4299,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4321,7 +4321,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4332,7 +4332,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['endereco', 'motivo_vistoria', 'data_preferencial'],
+        requiredInputFieldIds: ['endereco', 'motivo_vistoria', 'data_preferencial'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -4346,7 +4346,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4359,7 +4359,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria', 'fotos'],
+        requiredInputFieldIds: ['laudo_vistoria', 'fotos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4371,7 +4371,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'recomendacoes'],
+        requiredInputFieldIds: ['parecer_tecnico', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4383,7 +4383,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4406,7 +4406,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4418,7 +4418,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['endereco', 'area_demolir'],
+        requiredInputFieldIds: ['endereco', 'area_demolir'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4431,7 +4431,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4444,7 +4444,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico', 'riscos'],
+        requiredInputFieldIds: ['laudo_tecnico', 'riscos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4456,7 +4456,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_seguranca', 'medidas_protecao'],
+        requiredInputFieldIds: ['parecer_seguranca', 'medidas_protecao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4468,7 +4468,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4480,7 +4480,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4502,7 +4502,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4513,7 +4513,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['endereco', 'tipo_intervencao', 'periodo'],
+        requiredInputFieldIds: ['endereco', 'tipo_intervencao', 'periodo'],
         requiredDocumentTypes: ['Projeto de Intervenção', 'ART'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4527,7 +4527,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4540,7 +4540,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'impacto_transito'],
+        requiredInputFieldIds: ['parecer_tecnico', 'impacto_transito'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4552,7 +4552,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_seguranca'],
+        requiredInputFieldIds: ['parecer_seguranca'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4564,7 +4564,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4576,7 +4576,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4597,7 +4597,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['endereco', 'tipo_reparo', 'descricao'],
+        requiredInputFieldIds: ['endereco', 'tipo_reparo', 'descricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4611,7 +4611,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4624,7 +4624,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria', 'urgencia'],
+        requiredInputFieldIds: ['laudo_vistoria', 'urgencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4636,7 +4636,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['orcamento', 'prazo_execucao'],
+        requiredInputFieldIds: ['orcamento', 'prazo_execucao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4648,7 +4648,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4660,7 +4660,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4683,7 +4683,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4695,7 +4695,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto de Parcelamento', 'Matrícula do Imóvel', 'ART do Responsável Técnico'],
-        requiredFormFields: ['area_total', 'numero_lotes'],
+        requiredInputFieldIds: ['area_total', 'numero_lotes'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4708,7 +4708,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4721,7 +4721,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_urbanistico', 'conformidade_plano_diretor'],
+        requiredInputFieldIds: ['parecer_urbanistico', 'conformidade_plano_diretor'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4733,7 +4733,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_ambiental'],
+        requiredInputFieldIds: ['parecer_ambiental'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4745,7 +4745,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_infraestrutura'],
+        requiredInputFieldIds: ['parecer_infraestrutura'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4757,7 +4757,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4769,7 +4769,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4791,7 +4791,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4803,7 +4803,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto Arquitetônico', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4816,7 +4816,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4829,7 +4829,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'location', 'pendencias', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4841,7 +4841,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4853,7 +4853,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4865,7 +4865,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -4887,7 +4887,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4899,7 +4899,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Matrícula do Imóvel'],
-        requiredFormFields: ['endereco', 'area_terreno', 'tipo_empreendimento'],
+        requiredInputFieldIds: ['endereco', 'area_terreno', 'tipo_empreendimento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4912,7 +4912,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -4925,7 +4925,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'location', 'dados', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -4937,7 +4937,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4949,7 +4949,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -4971,7 +4971,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -4983,7 +4983,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'location', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -4996,7 +4996,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5009,7 +5009,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'location', 'pendencias', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5021,7 +5021,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5033,7 +5033,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5045,7 +5045,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 8,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5066,7 +5066,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['endereco', 'descricao', 'tipo_irregularidade'],
+        requiredInputFieldIds: ['endereco', 'descricao', 'tipo_irregularidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5080,7 +5080,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5093,7 +5093,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria', 'irregularidade_confirmada'],
+        requiredInputFieldIds: ['laudo_vistoria', 'irregularidade_confirmada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5105,7 +5105,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'gravidade'],
+        requiredInputFieldIds: ['parecer_tecnico', 'gravidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5117,7 +5117,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
-        requiredFormFields: ['prazo_regularizacao'],
+        requiredInputFieldIds: ['prazo_regularizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5129,7 +5129,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['situacao_final'],
+        requiredInputFieldIds: ['situacao_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5141,7 +5141,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5164,7 +5164,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5175,7 +5175,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nome_campanha', 'vacina', 'dose'],
+        requiredInputFieldIds: ['nome_campanha', 'vacina', 'dose'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5189,7 +5189,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5202,7 +5202,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['lote_vacina', 'profissional'],
+        requiredInputFieldIds: ['lote_vacina', 'profissional'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5214,7 +5214,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5236,7 +5236,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5247,7 +5247,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['medicamento', 'dosagem', 'quantidade'],
+        requiredInputFieldIds: ['medicamento', 'dosagem', 'quantidade'],
         requiredDocumentTypes: ['Receita Médica', 'RG ou CPF', 'Cartão SUS'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5259,7 +5259,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['disponibilidade', 'local_retirada'],
+        requiredInputFieldIds: ['disponibilidade', 'local_retirada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -5271,7 +5271,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_retirada', 'farmaceutico_responsavel'],
+        requiredInputFieldIds: ['data_retirada', 'farmaceutico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5293,7 +5293,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5304,7 +5304,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['programa', 'unidade_saude'],
+        requiredInputFieldIds: ['programa', 'unidade_saude'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5318,7 +5318,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5331,7 +5331,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_medico', 'criterios_atendidos'],
+        requiredInputFieldIds: ['parecer_medico', 'criterios_atendidos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5343,7 +5343,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5366,7 +5366,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5377,7 +5377,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_alerta', 'nivel_urgencia', 'descricao'],
+        requiredInputFieldIds: ['tipo_alerta', 'nivel_urgencia', 'descricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5389,7 +5389,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['verificacao', 'acao_imediata'],
+        requiredInputFieldIds: ['verificacao', 'acao_imediata'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -5401,7 +5401,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['equipe_acionada', 'resultado'],
+        requiredInputFieldIds: ['equipe_acionada', 'resultado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5423,7 +5423,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5434,7 +5434,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['tipo_evento', 'data_evento', 'publico_esperado', 'local'],
+        requiredInputFieldIds: ['tipo_evento', 'data_evento', 'publico_esperado', 'local'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5448,7 +5448,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5461,7 +5461,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['efetivo_necessario', 'pontos_criticos', 'plano_contingencia'],
+        requiredInputFieldIds: ['efetivo_necessario', 'pontos_criticos', 'plano_contingencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -5473,7 +5473,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_vistoria', 'adequacoes_necessarias'],
+        requiredInputFieldIds: ['relatorio_vistoria', 'adequacoes_necessarias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5485,7 +5485,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5507,7 +5507,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5518,7 +5518,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['tipo_ocorrencia', 'descricao', 'frequencia'],
+        requiredInputFieldIds: ['tipo_ocorrencia', 'descricao', 'frequencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -5532,7 +5532,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5545,7 +5545,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nivel_criticidade', 'medidas_sugeridas', 'prioridade'],
+        requiredInputFieldIds: ['nivel_criticidade', 'medidas_sugeridas', 'prioridade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -5557,7 +5557,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5579,7 +5579,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5590,7 +5590,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_denuncia', 'gravidade', 'encaminhamento'],
+        requiredInputFieldIds: ['tipo_denuncia', 'gravidade', 'encaminhamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -5604,7 +5604,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5617,7 +5617,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['verificacao_fatos', 'procedencia'],
+        requiredInputFieldIds: ['verificacao_fatos', 'procedencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -5629,7 +5629,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['orgao_destino'],
+        requiredInputFieldIds: ['orgao_destino'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5651,7 +5651,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5662,7 +5662,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['tipo_vistoria', 'finalidade'],
+        requiredInputFieldIds: ['tipo_vistoria', 'finalidade'],
         requiredDocumentTypes: ['Alvará de Funcionamento', 'CNPJ'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5676,7 +5676,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5689,7 +5689,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['data_vistoria', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5701,7 +5701,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['itens_verificados', 'conformidades', 'nao_conformidades'],
+        requiredInputFieldIds: ['itens_verificados', 'conformidades', 'nao_conformidades'],
         requiredDocumentTypes: ['Alvará de Funcionamento', 'CNPJ'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -5713,7 +5713,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5735,7 +5735,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5746,7 +5746,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_ocorrencia', 'descricao', 'data_hora'],
+        requiredInputFieldIds: ['tipo_ocorrencia', 'descricao', 'data_hora'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5760,7 +5760,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5773,7 +5773,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gravidade', 'categoria', 'prioridade'],
+        requiredInputFieldIds: ['gravidade', 'categoria', 'prioridade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5785,7 +5785,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['equipe_responsavel', 'providencias_tomadas'],
+        requiredInputFieldIds: ['equipe_responsavel', 'providencias_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5797,7 +5797,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['resultado_final'],
+        requiredInputFieldIds: ['resultado_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5819,7 +5819,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5830,7 +5830,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['justificativa', 'local_proposto', 'area_cobertura'],
+        requiredInputFieldIds: ['justificativa', 'local_proposto', 'area_cobertura'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5844,7 +5844,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5857,7 +5857,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['viabilidade_tecnica', 'custos', 'prioridade'],
+        requiredInputFieldIds: ['viabilidade_tecnica', 'custos', 'prioridade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5869,7 +5869,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['orcamento_aprovado', 'previsao_instalacao'],
+        requiredInputFieldIds: ['orcamento_aprovado', 'previsao_instalacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -5881,7 +5881,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_instalacao'],
+        requiredInputFieldIds: ['data_instalacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5903,7 +5903,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5914,7 +5914,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['area_solicitada', 'motivo', 'periodo_desejado'],
+        requiredInputFieldIds: ['area_solicitada', 'motivo', 'periodo_desejado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5928,7 +5928,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -5941,7 +5941,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['viabilidade', 'frequencia_patrulha', 'efetivo_disponivel'],
+        requiredInputFieldIds: ['viabilidade', 'frequencia_patrulha', 'efetivo_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -5953,7 +5953,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_inicio'],
+        requiredInputFieldIds: ['data_inicio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -5976,7 +5976,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -5987,7 +5987,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['descricao_problema', 'nivel_obstrucao'],
+        requiredInputFieldIds: ['descricao_problema', 'nivel_obstrucao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6001,7 +6001,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6014,7 +6014,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_vistoria', 'equipamentos_necessarios'],
+        requiredInputFieldIds: ['relatorio_vistoria', 'equipamentos_necessarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6026,7 +6026,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_execucao', 'equipe_responsavel'],
+        requiredInputFieldIds: ['data_execucao', 'equipe_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6038,7 +6038,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6060,7 +6060,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6071,7 +6071,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['tipo_solicitacao', 'descricao'],
+        requiredInputFieldIds: ['tipo_solicitacao', 'descricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6085,7 +6085,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6098,7 +6098,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['diagnostico', 'materiais_necessarios'],
+        requiredInputFieldIds: ['diagnostico', 'materiais_necessarios'],
         requiredDocumentTypes: ['Foto do Problema'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6110,7 +6110,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_execucao', 'equipe'],
+        requiredInputFieldIds: ['data_execucao', 'equipe'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6122,7 +6122,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6144,7 +6144,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6155,7 +6155,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['tipo_limpeza', 'descricao_area'],
+        requiredInputFieldIds: ['tipo_limpeza', 'descricao_area'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6169,7 +6169,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6182,7 +6182,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['area_abrangencia', 'recursos_necessarios', 'data_prevista'],
+        requiredInputFieldIds: ['area_abrangencia', 'recursos_necessarios', 'data_prevista'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6194,7 +6194,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_execucao', 'equipe_responsavel'],
+        requiredInputFieldIds: ['data_execucao', 'equipe_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6206,7 +6206,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6228,7 +6228,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6239,7 +6239,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['tipo_problema', 'descricao'],
+        requiredInputFieldIds: ['tipo_problema', 'descricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6253,7 +6253,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6266,7 +6266,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['categoria', 'setor_responsavel', 'prioridade'],
+        requiredInputFieldIds: ['categoria', 'setor_responsavel', 'prioridade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6278,7 +6278,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_resolucao', 'providencias_tomadas'],
+        requiredInputFieldIds: ['data_resolucao', 'providencias_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6290,7 +6290,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6312,7 +6312,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6323,7 +6323,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'location',
-        requiredFormFields: ['tipo_servico', 'descricao_area'],
+        requiredInputFieldIds: ['tipo_servico', 'descricao_area'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6337,7 +6337,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6350,7 +6350,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['area_total', 'tipo_vegetacao', 'equipamentos_necessarios'],
+        requiredInputFieldIds: ['area_total', 'tipo_vegetacao', 'equipamentos_necessarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -6362,7 +6362,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_prevista', 'equipe', 'recursos'],
+        requiredInputFieldIds: ['data_prevista', 'equipe', 'recursos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6374,7 +6374,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'location', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: ['data_execucao'],
+        requiredInputFieldIds: ['data_execucao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6386,7 +6386,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6409,7 +6409,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6420,7 +6420,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['nome_estabelecimento', 'categoria', 'tipo_servico'],
+        requiredInputFieldIds: ['nome_estabelecimento', 'categoria', 'tipo_servico'],
         requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6434,7 +6434,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6447,7 +6447,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'location', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_vistoria', 'adequacoes_necessarias', 'classificacao'],
+        requiredInputFieldIds: ['relatorio_vistoria', 'adequacoes_necessarias', 'classificacao'],
         requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6459,7 +6459,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['adequacoes_realizadas'],
+        requiredInputFieldIds: ['adequacoes_realizadas'],
         requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: true
@@ -6471,7 +6471,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6493,7 +6493,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6504,7 +6504,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['nome_completo', 'idiomas', 'especializacao'],
+        requiredInputFieldIds: ['nome_completo', 'idiomas', 'especializacao'],
         requiredDocumentTypes: ['CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6518,7 +6518,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6531,7 +6531,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['experiencia', 'areas_atuacao', 'avaliacacao'],
+        requiredInputFieldIds: ['experiencia', 'areas_atuacao', 'avaliacacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6543,7 +6543,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_teste', 'resultado', 'parecer'],
+        requiredInputFieldIds: ['data_teste', 'resultado', 'parecer'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -6555,7 +6555,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6577,7 +6577,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -6588,7 +6588,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nome_evento', 'tipo', 'data_realizacao', 'publico_esperado'],
+        requiredInputFieldIds: ['nome_evento', 'tipo', 'data_realizacao', 'publico_esperado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6602,7 +6602,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
 
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
@@ -6615,7 +6615,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relevancia_turistica', 'impacto_esperado', 'apoio_secretaria'],
+        requiredInputFieldIds: ['relevancia_turistica', 'impacto_esperado', 'apoio_secretaria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -6627,7 +6627,7 @@ const specificWorkflows: Record<string, SpecificWorkflow> = {
         slaDays: 4,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -6650,7 +6650,7 @@ ACIONAMENTO_SIRENE: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['motivo_acionamento', 'localizacao', 'nivel_risco'],
+      requiredInputFieldIds: ['motivo_acionamento', 'localizacao', 'nivel_risco'],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
     },
@@ -6661,7 +6661,7 @@ ACIONAMENTO_SIRENE: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -6683,7 +6683,7 @@ ALERTA_EMERGENCIA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_alerta', 'area_afetada', 'gravidade'],
+      requiredInputFieldIds: ['tipo_alerta', 'area_afetada', 'gravidade'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6694,7 +6694,7 @@ ALERTA_EMERGENCIA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6716,7 +6716,7 @@ REMOCAO_PREVENTIVA: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6727,7 +6727,7 @@ REMOCAO_PREVENTIVA: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['nivel_risco', 'parecer_tecnico', 'familias_afetadas'],
+      requiredInputFieldIds: ['nivel_risco', 'parecer_tecnico', 'familias_afetadas'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -6739,7 +6739,7 @@ REMOCAO_PREVENTIVA: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6763,7 +6763,7 @@ SOLICITACAO_AMBULANCIA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_urgencia', 'localizacao', 'condicao_paciente'],
+      requiredInputFieldIds: ['tipo_urgencia', 'localizacao', 'condicao_paciente'],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
     },
@@ -6774,7 +6774,7 @@ SOLICITACAO_AMBULANCIA: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['veiculo', 'equipe'],
+      requiredInputFieldIds: ['veiculo', 'equipe'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6798,7 +6798,7 @@ SOS_MULHER: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['situacao_risco', 'localizacao'],
+      requiredInputFieldIds: ['situacao_risco', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6809,7 +6809,7 @@ SOS_MULHER: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['providencias_tomadas'],
+      requiredInputFieldIds: ['providencias_tomadas'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6831,7 +6831,7 @@ CANAL_ESCUTA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['relato', 'encaminhamento_necessario'],
+      requiredInputFieldIds: ['relato', 'encaminhamento_necessario'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6842,7 +6842,7 @@ CANAL_ESCUTA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6866,7 +6866,7 @@ DENUNCIA_ADMINISTRATIVA: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6877,7 +6877,7 @@ DENUNCIA_ADMINISTRATIVA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['tipo_irregularidade', 'setor_responsavel', 'gravidade'],
+      requiredInputFieldIds: ['tipo_irregularidade', 'setor_responsavel', 'gravidade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -6889,7 +6889,7 @@ DENUNCIA_ADMINISTRATIVA: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['resultado_investigacao'],
+      requiredInputFieldIds: ['resultado_investigacao'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO'],
       canSkip: false
@@ -6901,7 +6901,7 @@ DENUNCIA_ADMINISTRATIVA: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6923,7 +6923,7 @@ DENUNCIA_AREA_RISCO: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6934,7 +6934,7 @@ DENUNCIA_AREA_RISCO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['nivel_risco', 'tipo_risco', 'parecer_tecnico'],
+      requiredInputFieldIds: ['nivel_risco', 'tipo_risco', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -6946,7 +6946,7 @@ DENUNCIA_AREA_RISCO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6958,7 +6958,7 @@ DENUNCIA_AREA_RISCO: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -6980,7 +6980,7 @@ DENUNCIA_ASSEDIO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_assedio', 'local_trabalho'],
+      requiredInputFieldIds: ['tipo_assedio', 'local_trabalho'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -6991,7 +6991,7 @@ DENUNCIA_ASSEDIO: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['relatorio_apuracao'],
+      requiredInputFieldIds: ['relatorio_apuracao'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO'],
       canSkip: false
@@ -7003,7 +7003,7 @@ DENUNCIA_ASSEDIO: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7025,7 +7025,7 @@ DENUNCIA_COMERCIO_IRREGULAR: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7036,7 +7036,7 @@ DENUNCIA_COMERCIO_IRREGULAR: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['situacao_encontrada', 'tipo_irregularidade'],
+      requiredInputFieldIds: ['situacao_encontrada', 'tipo_irregularidade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7048,7 +7048,7 @@ DENUNCIA_COMERCIO_IRREGULAR: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: true
@@ -7060,7 +7060,7 @@ DENUNCIA_COMERCIO_IRREGULAR: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7082,7 +7082,7 @@ DENUNCIA_CONSTRUCAO: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7093,7 +7093,7 @@ DENUNCIA_CONSTRUCAO: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['nivel_risco', 'situacao_construcao', 'parecer_tecnico'],
+      requiredInputFieldIds: ['nivel_risco', 'situacao_construcao', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7105,7 +7105,7 @@ DENUNCIA_CONSTRUCAO: {
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: true
@@ -7117,7 +7117,7 @@ DENUNCIA_CONSTRUCAO: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7139,7 +7139,7 @@ DENUNCIA_DESCARTE_IRREGULAR: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7150,7 +7150,7 @@ DENUNCIA_DESCARTE_IRREGULAR: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['tipo_residuo', 'volume_aproximado'],
+      requiredInputFieldIds: ['tipo_residuo', 'volume_aproximado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7162,7 +7162,7 @@ DENUNCIA_DESCARTE_IRREGULAR: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7174,7 +7174,7 @@ DENUNCIA_DESCARTE_IRREGULAR: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7196,7 +7196,7 @@ DENUNCIA_POLUICAO_SONORA: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7207,7 +7207,7 @@ DENUNCIA_POLUICAO_SONORA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['nivel_ruido', 'fonte_ruido'],
+      requiredInputFieldIds: ['nivel_ruido', 'fonte_ruido'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7219,7 +7219,7 @@ DENUNCIA_POLUICAO_SONORA: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7231,7 +7231,7 @@ DENUNCIA_POLUICAO_SONORA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7253,7 +7253,7 @@ DENUNCIA_PROBLEMA: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['sistema_afetado', 'tipo_problema'],
+      requiredInputFieldIds: ['sistema_afetado', 'tipo_problema'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7264,7 +7264,7 @@ DENUNCIA_PROBLEMA: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['diagnostico', 'solucao_proposta'],
+      requiredInputFieldIds: ['diagnostico', 'solucao_proposta'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7276,7 +7276,7 @@ DENUNCIA_PROBLEMA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7298,7 +7298,7 @@ DENUNCIA_QUEIMADA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'dimensao_aproximada'],
+      requiredInputFieldIds: ['localizacao', 'dimensao_aproximada'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7309,7 +7309,7 @@ DENUNCIA_QUEIMADA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['equipe_acionada'],
+      requiredInputFieldIds: ['equipe_acionada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7321,7 +7321,7 @@ DENUNCIA_QUEIMADA: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: true
@@ -7343,7 +7343,7 @@ DENUNCIA_SANITARIA: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7354,7 +7354,7 @@ DENUNCIA_SANITARIA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['tipo_irregularidade', 'nivel_gravidade', 'laudo_sanitario'],
+      requiredInputFieldIds: ['tipo_irregularidade', 'nivel_gravidade', 'laudo_sanitario'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7366,7 +7366,7 @@ DENUNCIA_SANITARIA: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: true
@@ -7378,7 +7378,7 @@ DENUNCIA_SANITARIA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7400,7 +7400,7 @@ DENUNCIA_TRANSPORTE_CLANDESTINO: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_veiculo', 'localizacao'],
+      requiredInputFieldIds: ['tipo_veiculo', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7411,7 +7411,7 @@ DENUNCIA_TRANSPORTE_CLANDESTINO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['situacao_encontrada'],
+      requiredInputFieldIds: ['situacao_encontrada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7423,7 +7423,7 @@ DENUNCIA_TRANSPORTE_CLANDESTINO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: true
@@ -7445,7 +7445,7 @@ DENUNCIA_VEICULO_ABANDONADO: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'tipo_veiculo'],
+      requiredInputFieldIds: ['localizacao', 'tipo_veiculo'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7456,7 +7456,7 @@ DENUNCIA_VEICULO_ABANDONADO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['placa', 'condicoes_veiculo'],
+      requiredInputFieldIds: ['placa', 'condicoes_veiculo'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7468,7 +7468,7 @@ DENUNCIA_VEICULO_ABANDONADO: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7480,7 +7480,7 @@ DENUNCIA_VEICULO_ABANDONADO: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7502,7 +7502,7 @@ DENUNCIA_VIOLENCIA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['situacao_risco', 'tipo_violencia'],
+      requiredInputFieldIds: ['situacao_risco', 'tipo_violencia'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7513,7 +7513,7 @@ DENUNCIA_VIOLENCIA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['providencias_tomadas', 'orgaos_acionados'],
+      requiredInputFieldIds: ['providencias_tomadas', 'orgaos_acionados'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7525,7 +7525,7 @@ DENUNCIA_VIOLENCIA: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7547,7 +7547,7 @@ DENUNCIA_VIOLENCIA_DOMESTICA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['situacao_risco', 'tipo_violencia', 'vitima_protegida'],
+      requiredInputFieldIds: ['situacao_risco', 'tipo_violencia', 'vitima_protegida'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7558,7 +7558,7 @@ DENUNCIA_VIOLENCIA_DOMESTICA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['providencias_tomadas', 'orgaos_acionados'],
+      requiredInputFieldIds: ['providencias_tomadas', 'orgaos_acionados'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7570,7 +7570,7 @@ DENUNCIA_VIOLENCIA_DOMESTICA: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7594,7 +7594,7 @@ COLETA_ELETRONICO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_equipamento', 'quantidade', 'localizacao'],
+      requiredInputFieldIds: ['tipo_equipamento', 'quantidade', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7605,7 +7605,7 @@ COLETA_ELETRONICO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_coleta', 'equipe_responsavel'],
+      requiredInputFieldIds: ['data_coleta', 'equipe_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7617,7 +7617,7 @@ COLETA_ELETRONICO: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7639,7 +7639,7 @@ CONTENTOR_LIXO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'capacidade_solicitada'],
+      requiredInputFieldIds: ['localizacao', 'capacidade_solicitada'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7650,7 +7650,7 @@ CONTENTOR_LIXO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'viabilidade'],
+      requiredInputFieldIds: ['parecer_tecnico', 'viabilidade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7662,7 +7662,7 @@ CONTENTOR_LIXO: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7674,7 +7674,7 @@ CONTENTOR_LIXO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7696,7 +7696,7 @@ DEDETIZACAO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_praga', 'localizacao', 'area_aproximada'],
+      requiredInputFieldIds: ['tipo_praga', 'localizacao', 'area_aproximada'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7707,7 +7707,7 @@ DEDETIZACAO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['nivel_infestacao', 'tratamento_recomendado'],
+      requiredInputFieldIds: ['nivel_infestacao', 'tratamento_recomendado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7719,7 +7719,7 @@ DEDETIZACAO: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: ['produtos_utilizados'],
+      requiredInputFieldIds: ['produtos_utilizados'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7741,7 +7741,7 @@ LIMPEZA_BOCA_LOBO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao'],
+      requiredInputFieldIds: ['localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7752,7 +7752,7 @@ LIMPEZA_BOCA_LOBO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_prevista'],
+      requiredInputFieldIds: ['data_prevista'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7764,7 +7764,7 @@ LIMPEZA_BOCA_LOBO: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7786,7 +7786,7 @@ LIMPEZA_FEIRA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'dia_feira'],
+      requiredInputFieldIds: ['localizacao', 'dia_feira'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7797,7 +7797,7 @@ LIMPEZA_FEIRA: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['equipe_responsavel', 'horario'],
+      requiredInputFieldIds: ['equipe_responsavel', 'horario'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7809,7 +7809,7 @@ LIMPEZA_FEIRA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7831,7 +7831,7 @@ LIMPEZA_TERRENO_ABANDONADO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'area_aproximada'],
+      requiredInputFieldIds: ['localizacao', 'area_aproximada'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7842,7 +7842,7 @@ LIMPEZA_TERRENO_ABANDONADO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['situacao_terreno', 'proprietario_identificado'],
+      requiredInputFieldIds: ['situacao_terreno', 'proprietario_identificado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7854,7 +7854,7 @@ LIMPEZA_TERRENO_ABANDONADO: {
       slaDays: 5,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7866,7 +7866,7 @@ LIMPEZA_TERRENO_ABANDONADO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7888,7 +7888,7 @@ CONSERTO_CALCAMENTO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'extensao_dano'],
+      requiredInputFieldIds: ['localizacao', 'extensao_dano'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7899,7 +7899,7 @@ CONSERTO_CALCAMENTO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['tipo_intervencao', 'orcamento_estimado'],
+      requiredInputFieldIds: ['tipo_intervencao', 'orcamento_estimado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7911,7 +7911,7 @@ CONSERTO_CALCAMENTO: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7923,7 +7923,7 @@ CONSERTO_CALCAMENTO: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7945,7 +7945,7 @@ PINTURA_MEIO_FIO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'extensao'],
+      requiredInputFieldIds: ['localizacao', 'extensao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -7956,7 +7956,7 @@ PINTURA_MEIO_FIO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['prioridade'],
+      requiredInputFieldIds: ['prioridade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -7968,7 +7968,7 @@ PINTURA_MEIO_FIO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_prevista'],
+      requiredInputFieldIds: ['data_prevista'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -7980,7 +7980,7 @@ PINTURA_MEIO_FIO: {
       slaDays: 7,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8002,7 +8002,7 @@ VARRICAO_RUA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao'],
+      requiredInputFieldIds: ['localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8013,7 +8013,7 @@ VARRICAO_RUA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_prevista'],
+      requiredInputFieldIds: ['data_prevista'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8025,7 +8025,7 @@ VARRICAO_RUA: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8047,7 +8047,7 @@ REMOCAO_ANIMAL: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'tipo_animal'],
+      requiredInputFieldIds: ['localizacao', 'tipo_animal'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8058,7 +8058,7 @@ REMOCAO_ANIMAL: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['equipe_acionada'],
+      requiredInputFieldIds: ['equipe_acionada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8070,7 +8070,7 @@ REMOCAO_ANIMAL: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8092,7 +8092,7 @@ ECOPONTO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'justificativa'],
+      requiredInputFieldIds: ['localizacao', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8103,7 +8103,7 @@ ECOPONTO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'viabilidade', 'demanda_estimada'],
+      requiredInputFieldIds: ['parecer_tecnico', 'viabilidade', 'demanda_estimada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8115,7 +8115,7 @@ ECOPONTO: {
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8127,7 +8127,7 @@ ECOPONTO: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8151,7 +8151,7 @@ APROVACAO_CALCADA: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8163,7 +8163,7 @@ APROVACAO_CALCADA: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -8174,7 +8174,7 @@ APROVACAO_CALCADA: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'conforme_normas'],
+      requiredInputFieldIds: ['parecer_tecnico', 'conforme_normas'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -8186,7 +8186,7 @@ APROVACAO_CALCADA: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8198,7 +8198,7 @@ APROVACAO_CALCADA: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8220,7 +8220,7 @@ APROVACAO_MURO: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8232,7 +8232,7 @@ APROVACAO_MURO: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -8243,7 +8243,7 @@ APROVACAO_MURO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'altura_muro', 'conforme_normas'],
+      requiredInputFieldIds: ['parecer_tecnico', 'altura_muro', 'conforme_normas'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -8255,7 +8255,7 @@ APROVACAO_MURO: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8267,7 +8267,7 @@ APROVACAO_MURO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8289,7 +8289,7 @@ APROVACAO_TERRAPLENO: {
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8301,7 +8301,7 @@ APROVACAO_TERRAPLENO: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -8312,7 +8312,7 @@ APROVACAO_TERRAPLENO: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'impacto_ambiental', 'conformidade_tecnica'],
+      requiredInputFieldIds: ['parecer_tecnico', 'impacto_ambiental', 'conformidade_tecnica'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -8324,7 +8324,7 @@ APROVACAO_TERRAPLENO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_ambiental'],
+      requiredInputFieldIds: ['parecer_ambiental'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
@@ -8336,7 +8336,7 @@ APROVACAO_TERRAPLENO: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8348,7 +8348,7 @@ APROVACAO_TERRAPLENO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8370,7 +8370,7 @@ VISTORIA_ESTRUTURAL: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['motivo_vistoria', 'localizacao'],
+      requiredInputFieldIds: ['motivo_vistoria', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8381,7 +8381,7 @@ VISTORIA_ESTRUTURAL: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_vistoria', 'engenheiro_responsavel'],
+      requiredInputFieldIds: ['data_vistoria', 'engenheiro_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8393,7 +8393,7 @@ VISTORIA_ESTRUTURAL: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['laudo_tecnico', 'situacao_estrutural', 'risco_identificado'],
+      requiredInputFieldIds: ['laudo_tecnico', 'situacao_estrutural', 'risco_identificado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8405,7 +8405,7 @@ VISTORIA_ESTRUTURAL: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8427,7 +8427,7 @@ VISTORIA_TECNICA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_vistoria', 'localizacao'],
+      requiredInputFieldIds: ['tipo_vistoria', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8438,7 +8438,7 @@ VISTORIA_TECNICA: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_vistoria', 'tecnico_responsavel'],
+      requiredInputFieldIds: ['data_vistoria', 'tecnico_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8450,7 +8450,7 @@ VISTORIA_TECNICA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'conformidade'],
+      requiredInputFieldIds: ['parecer_tecnico', 'conformidade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8462,7 +8462,7 @@ VISTORIA_TECNICA: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8484,7 +8484,7 @@ MANUTENCAO_JARDIM: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'tipo_servico'],
+      requiredInputFieldIds: ['localizacao', 'tipo_servico'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8495,7 +8495,7 @@ MANUTENCAO_JARDIM: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['situacao_jardim', 'servicos_necessarios'],
+      requiredInputFieldIds: ['situacao_jardim', 'servicos_necessarios'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8507,7 +8507,7 @@ MANUTENCAO_JARDIM: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_prevista', 'equipe_responsavel'],
+      requiredInputFieldIds: ['data_prevista', 'equipe_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8519,7 +8519,7 @@ MANUTENCAO_JARDIM: {
       slaDays: 7,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8541,7 +8541,7 @@ PODA_CANTEIRO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'tipo_arvore'],
+      requiredInputFieldIds: ['localizacao', 'tipo_arvore'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8552,7 +8552,7 @@ PODA_CANTEIRO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['tipo_poda', 'urgencia', 'parecer_tecnico'],
+      requiredInputFieldIds: ['tipo_poda', 'urgencia', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8564,7 +8564,7 @@ PODA_CANTEIRO: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8576,7 +8576,7 @@ PODA_CANTEIRO: {
       slaDays: 7,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8598,7 +8598,7 @@ RECUPERACAO_PRACA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'problemas_identificados'],
+      requiredInputFieldIds: ['localizacao', 'problemas_identificados'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8609,7 +8609,7 @@ RECUPERACAO_PRACA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['estado_conservacao', 'intervencoes_necessarias', 'orcamento_estimado'],
+      requiredInputFieldIds: ['estado_conservacao', 'intervencoes_necessarias', 'orcamento_estimado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8621,7 +8621,7 @@ RECUPERACAO_PRACA: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: ['projeto_elaborado'],
+      requiredInputFieldIds: ['projeto_elaborado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO'],
       canSkip: false
@@ -8633,7 +8633,7 @@ RECUPERACAO_PRACA: {
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8645,7 +8645,7 @@ RECUPERACAO_PRACA: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8669,7 +8669,7 @@ RECLAMACAO_TRANSITO: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_reclamacao', 'localizacao'],
+      requiredInputFieldIds: ['tipo_reclamacao', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8680,7 +8680,7 @@ RECLAMACAO_TRANSITO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['procedencia', 'providencias_necessarias'],
+      requiredInputFieldIds: ['procedencia', 'providencias_necessarias'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8692,7 +8692,7 @@ RECLAMACAO_TRANSITO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico'],
+      requiredInputFieldIds: ['parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: true
@@ -8704,7 +8704,7 @@ RECLAMACAO_TRANSITO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8726,7 +8726,7 @@ RECLAMACAO_TRANSPORTE: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_reclamacao', 'linha_transporte'],
+      requiredInputFieldIds: ['tipo_reclamacao', 'linha_transporte'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8737,7 +8737,7 @@ RECLAMACAO_TRANSPORTE: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['procedencia', 'providencias_necessarias'],
+      requiredInputFieldIds: ['procedencia', 'providencias_necessarias'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8749,7 +8749,7 @@ RECLAMACAO_TRANSPORTE: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: true
@@ -8761,7 +8761,7 @@ RECLAMACAO_TRANSPORTE: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8783,7 +8783,7 @@ SINALIZACAO_TRANSITO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_sinalizacao', 'localizacao', 'justificativa'],
+      requiredInputFieldIds: ['tipo_sinalizacao', 'localizacao', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8794,7 +8794,7 @@ SINALIZACAO_TRANSITO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_tecnico', 'viabilidade', 'tipo_sinalizacao_recomendada'],
+      requiredInputFieldIds: ['parecer_tecnico', 'viabilidade', 'tipo_sinalizacao_recomendada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8806,7 +8806,7 @@ SINALIZACAO_TRANSITO: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8818,7 +8818,7 @@ SINALIZACAO_TRANSITO: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8840,7 +8840,7 @@ SOLICITACAO_LOMBADA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'justificativa'],
+      requiredInputFieldIds: ['localizacao', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8851,7 +8851,7 @@ SOLICITACAO_LOMBADA: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['estudo_fluxo', 'velocidade_media', 'acidentes_registrados', 'parecer_tecnico'],
+      requiredInputFieldIds: ['estudo_fluxo', 'velocidade_media', 'acidentes_registrados', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8863,7 +8863,7 @@ SOLICITACAO_LOMBADA: {
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8875,7 +8875,7 @@ SOLICITACAO_LOMBADA: {
       slaDays: 20,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8897,7 +8897,7 @@ SOLICITACAO_SEMAFORO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'justificativa'],
+      requiredInputFieldIds: ['localizacao', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8908,7 +8908,7 @@ SOLICITACAO_SEMAFORO: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['contagem_veiculos', 'contagem_pedestres', 'acidentes_registrados', 'parecer_tecnico'],
+      requiredInputFieldIds: ['contagem_veiculos', 'contagem_pedestres', 'acidentes_registrados', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8920,7 +8920,7 @@ SOLICITACAO_SEMAFORO: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['orcamento', 'recurso_disponivel'],
+      requiredInputFieldIds: ['orcamento', 'recurso_disponivel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8932,7 +8932,7 @@ SOLICITACAO_SEMAFORO: {
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8944,7 +8944,7 @@ SOLICITACAO_SEMAFORO: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -8966,7 +8966,7 @@ SOLICITACAO_PONTO_ONIBUS: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'justificativa'],
+      requiredInputFieldIds: ['localizacao', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -8977,7 +8977,7 @@ SOLICITACAO_PONTO_ONIBUS: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['demanda_estimada', 'viabilidade_local', 'parecer_tecnico'],
+      requiredInputFieldIds: ['demanda_estimada', 'viabilidade_local', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -8989,7 +8989,7 @@ SOLICITACAO_PONTO_ONIBUS: {
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9001,7 +9001,7 @@ SOLICITACAO_PONTO_ONIBUS: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9023,7 +9023,7 @@ SUGESTAO_LINHA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['origem', 'destino', 'justificativa'],
+      requiredInputFieldIds: ['origem', 'destino', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9034,7 +9034,7 @@ SUGESTAO_LINHA: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['demanda_estimada', 'viabilidade_preliminar'],
+      requiredInputFieldIds: ['demanda_estimada', 'viabilidade_preliminar'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9046,7 +9046,7 @@ SUGESTAO_LINHA: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['estudo_demanda', 'viabilidade_operacional', 'viabilidade_financeira'],
+      requiredInputFieldIds: ['estudo_demanda', 'viabilidade_operacional', 'viabilidade_financeira'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9058,7 +9058,7 @@ SUGESTAO_LINHA: {
       slaDays: 10,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9070,7 +9070,7 @@ SUGESTAO_LINHA: {
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9094,7 +9094,7 @@ OUVIDORIA: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_manifestacao', 'setor_responsavel'],
+      requiredInputFieldIds: ['tipo_manifestacao', 'setor_responsavel'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9105,7 +9105,7 @@ OUVIDORIA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['classificacao', 'area_responsavel'],
+      requiredInputFieldIds: ['classificacao', 'area_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9117,7 +9117,7 @@ OUVIDORIA: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_area', 'providencias_tomadas'],
+      requiredInputFieldIds: ['parecer_area', 'providencias_tomadas'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO'],
       canSkip: false
@@ -9129,7 +9129,7 @@ OUVIDORIA: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9151,7 +9151,7 @@ SIC: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['informacao_solicitada', 'setor_responsavel'],
+      requiredInputFieldIds: ['informacao_solicitada', 'setor_responsavel'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9162,7 +9162,7 @@ SIC: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['area_responsavel', 'complexidade'],
+      requiredInputFieldIds: ['area_responsavel', 'complexidade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9174,7 +9174,7 @@ SIC: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['informacao_encontrada'],
+      requiredInputFieldIds: ['informacao_encontrada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO'],
       canSkip: false
@@ -9186,7 +9186,7 @@ SIC: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9208,7 +9208,7 @@ ATENDIMENTO_CRAS_GERAL: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_demanda', 'situacao_familia'],
+      requiredInputFieldIds: ['tipo_demanda', 'situacao_familia'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9219,7 +9219,7 @@ ATENDIMENTO_CRAS_GERAL: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['diagnostico_social', 'encaminhamentos_necessarios'],
+      requiredInputFieldIds: ['diagnostico_social', 'encaminhamentos_necessarios'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9231,7 +9231,7 @@ ATENDIMENTO_CRAS_GERAL: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['servicos_encaminhados'],
+      requiredInputFieldIds: ['servicos_encaminhados'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9253,7 +9253,7 @@ DOCUMENTACAO_CIVIL: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_documento', 'justificativa_gratuidade'],
+      requiredInputFieldIds: ['tipo_documento', 'justificativa_gratuidade'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9265,7 +9265,7 @@ DOCUMENTACAO_CIVIL: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: ['RG'],
-      requiredFormFields: ['situacao_economica_verificada'],
+      requiredInputFieldIds: ['situacao_economica_verificada'],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -9276,7 +9276,7 @@ DOCUMENTACAO_CIVIL: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9288,7 +9288,7 @@ DOCUMENTACAO_CIVIL: {
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9300,7 +9300,7 @@ DOCUMENTACAO_CIVIL: {
       slaDays: 10,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9322,7 +9322,7 @@ AGENDAMENTO_GERAL: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_servico', 'data_preferencial'],
+      requiredInputFieldIds: ['tipo_servico', 'data_preferencial'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9333,7 +9333,7 @@ AGENDAMENTO_GERAL: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_agendada', 'horario', 'local'],
+      requiredInputFieldIds: ['data_agendada', 'horario', 'local'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9345,7 +9345,7 @@ AGENDAMENTO_GERAL: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9367,7 +9367,7 @@ CALENDARIO_COLETA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['endereco', 'informacao_fornecida'],
+      requiredInputFieldIds: ['endereco', 'informacao_fornecida'],
       allowedActions: ['APPROVE'],
       canSkip: false
     }
@@ -9388,7 +9388,7 @@ CALENDARIO_ESCOLAR: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['ano_letivo', 'escola', 'informacao_fornecida'],
+      requiredInputFieldIds: ['ano_letivo', 'escola', 'informacao_fornecida'],
       allowedActions: ['APPROVE'],
       canSkip: false
     }
@@ -9409,7 +9409,7 @@ DOACAO_DESABRIGADOS: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_necessidade', 'numero_familias', 'localizacao'],
+      requiredInputFieldIds: ['tipo_necessidade', 'numero_familias', 'localizacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9420,7 +9420,7 @@ DOACAO_DESABRIGADOS: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['situacao_verificada', 'itens_necessarios'],
+      requiredInputFieldIds: ['situacao_verificada', 'itens_necessarios'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9432,7 +9432,7 @@ DOACAO_DESABRIGADOS: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['doacoes_arrecadadas'],
+      requiredInputFieldIds: ['doacoes_arrecadadas'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9444,7 +9444,7 @@ DOACAO_DESABRIGADOS: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9466,7 +9466,7 @@ PATRULHA_ESCOLAR: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['escola', 'horarios_necessarios', 'justificativa'],
+      requiredInputFieldIds: ['escola', 'horarios_necessarios', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9477,7 +9477,7 @@ PATRULHA_ESCOLAR: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['parecer_seguranca', 'viabilidade_operacional'],
+      requiredInputFieldIds: ['parecer_seguranca', 'viabilidade_operacional'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9489,7 +9489,7 @@ PATRULHA_ESCOLAR: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9501,7 +9501,7 @@ PATRULHA_ESCOLAR: {
       slaDays: 7,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9523,7 +9523,7 @@ ILUMINACAO_SEGURANCA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao', 'justificativa'],
+      requiredInputFieldIds: ['localizacao', 'justificativa'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9534,7 +9534,7 @@ ILUMINACAO_SEGURANCA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['situacao_atual', 'tipo_intervencao', 'orcamento'],
+      requiredInputFieldIds: ['situacao_atual', 'tipo_intervencao', 'orcamento'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9546,7 +9546,7 @@ ILUMINACAO_SEGURANCA: {
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9558,7 +9558,7 @@ ILUMINACAO_SEGURANCA: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9582,7 +9582,7 @@ CADASTRO_BALCAO_EMPREGOS: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['qualificacao', 'area_interesse', 'disponibilidade'],
+      requiredInputFieldIds: ['qualificacao', 'area_interesse', 'disponibilidade'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9593,7 +9593,7 @@ CADASTRO_BALCAO_EMPREGOS: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['perfil_mapeado', 'vagas_compativeis'],
+      requiredInputFieldIds: ['perfil_mapeado', 'vagas_compativeis'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9605,7 +9605,7 @@ CADASTRO_BALCAO_EMPREGOS: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9627,7 +9627,7 @@ CADASTRO_CAMERAS_BAIRRO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['localizacao_cameras', 'numero_cameras', 'tipo_equipamento'],
+      requiredInputFieldIds: ['localizacao_cameras', 'numero_cameras', 'tipo_equipamento'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9639,7 +9639,7 @@ CADASTRO_CAMERAS_BAIRRO: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: ['Justificativa', 'Projeto ou Memorial', 'Autorização do Responsável'],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -9650,7 +9650,7 @@ CADASTRO_CAMERAS_BAIRRO: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['qualidade_imagem', 'cobertura_area', 'parecer_tecnico'],
+      requiredInputFieldIds: ['qualidade_imagem', 'cobertura_area', 'parecer_tecnico'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9662,7 +9662,7 @@ CADASTRO_CAMERAS_BAIRRO: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9684,7 +9684,7 @@ GRUPO_WHATSAPP_VIZINHANCA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['bairro', 'rua', 'telefone'],
+      requiredInputFieldIds: ['bairro', 'rua', 'telefone'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9695,7 +9695,7 @@ GRUPO_WHATSAPP_VIZINHANCA: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['dados_validados'],
+      requiredInputFieldIds: ['dados_validados'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9707,7 +9707,7 @@ GRUPO_WHATSAPP_VIZINHANCA: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9729,7 +9729,7 @@ GRUPOS_APOIO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_grupo', 'necessidade_especifica'],
+      requiredInputFieldIds: ['tipo_grupo', 'necessidade_especifica'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9740,7 +9740,7 @@ GRUPOS_APOIO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['perfil_participante', 'grupo_recomendado'],
+      requiredInputFieldIds: ['perfil_participante', 'grupo_recomendado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9752,7 +9752,7 @@ GRUPOS_APOIO: {
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: ['data_inicio', 'horarios'],
+      requiredInputFieldIds: ['data_inicio', 'horarios'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9774,7 +9774,7 @@ INSCRICAO_QUALIFICACAO: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['curso_interesse', 'escolaridade', 'disponibilidade'],
+      requiredInputFieldIds: ['curso_interesse', 'escolaridade', 'disponibilidade'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9786,7 +9786,7 @@ INSCRICAO_QUALIFICACAO: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -9797,7 +9797,7 @@ INSCRICAO_QUALIFICACAO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['perfil_adequado', 'curso_compativel'],
+      requiredInputFieldIds: ['perfil_adequado', 'curso_compativel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9809,7 +9809,7 @@ INSCRICAO_QUALIFICACAO: {
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9831,7 +9831,7 @@ INSCRICAO_HACKATHON: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['nome_equipe', 'membros', 'area_interesse'],
+      requiredInputFieldIds: ['nome_equipe', 'membros', 'area_interesse'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9843,7 +9843,7 @@ INSCRICAO_HACKATHON: {
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
@@ -9854,7 +9854,7 @@ INSCRICAO_HACKATHON: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['inscricao_validada'],
+      requiredInputFieldIds: ['inscricao_validada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9876,7 +9876,7 @@ OFICINAS_WORKSHOPS: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['oficina_interesse', 'faixa_etaria'],
+      requiredInputFieldIds: ['oficina_interesse', 'faixa_etaria'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9887,7 +9887,7 @@ OFICINAS_WORKSHOPS: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['vagas_disponiveis', 'turma_alocada'],
+      requiredInputFieldIds: ['vagas_disponiveis', 'turma_alocada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -9899,7 +9899,7 @@ OFICINAS_WORKSHOPS: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9921,7 +9921,7 @@ AGENDAMENTO_SALA_EMPREENDEDOR: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_atendimento', 'data_preferencial', 'descricao_necessidade'],
+      requiredInputFieldIds: ['tipo_atendimento', 'data_preferencial', 'descricao_necessidade'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -9932,7 +9932,7 @@ AGENDAMENTO_SALA_EMPREENDEDOR: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_agendada', 'horario', 'profissional_responsavel'],
+      requiredInputFieldIds: ['data_agendada', 'horario', 'profissional_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9944,7 +9944,7 @@ AGENDAMENTO_SALA_EMPREENDEDOR: {
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -9968,7 +9968,7 @@ PAGAMENTO_IPTU: {
       availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
       requiredDocumentTypes: [],
-      requiredFormFields: ['inscricao_municipal', 'ano_exercicio'],
+      requiredInputFieldIds: ['inscricao_municipal', 'ano_exercicio'],
       allowedActions: ['APPROVE'],
       canSkip: false
     }
@@ -9989,7 +9989,7 @@ PAGAMENTO_ISS: {
       availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
       requiredDocumentTypes: [],
-      requiredFormFields: ['inscricao_municipal', 'periodo_referencia', 'valor_servicos'],
+      requiredInputFieldIds: ['inscricao_municipal', 'periodo_referencia', 'valor_servicos'],
       allowedActions: ['APPROVE'],
       canSkip: false
     }
@@ -10010,7 +10010,7 @@ PAGAMENTO_TAXA_LIXO: {
       availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
       requiredDocumentTypes: [],
-      requiredFormFields: ['inscricao_municipal', 'ano_exercicio'],
+      requiredInputFieldIds: ['inscricao_municipal', 'ano_exercicio'],
       allowedActions: ['APPROVE'],
       canSkip: false
     }
@@ -10033,7 +10033,7 @@ ATRACAO_EMPRESAS: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_empresa', 'area_atuacao', 'investimento_estimado'],
+      requiredInputFieldIds: ['tipo_empresa', 'area_atuacao', 'investimento_estimado'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -10044,7 +10044,7 @@ ATRACAO_EMPRESAS: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['viabilidade', 'incentivos_aplicaveis'],
+      requiredInputFieldIds: ['viabilidade', 'incentivos_aplicaveis'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -10056,7 +10056,7 @@ ATRACAO_EMPRESAS: {
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
       primaryTab: 'document-generation',
-      requiredFormFields: ['proposta_elaborada'],
+      requiredInputFieldIds: ['proposta_elaborada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10068,7 +10068,7 @@ ATRACAO_EMPRESAS: {
       slaDays: 20,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'comunicacao',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -10090,7 +10090,7 @@ SOLICITACAO_CONSULTORIA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['tipo_consultoria', 'area_necessidade', 'descricao_problema'],
+      requiredInputFieldIds: ['tipo_consultoria', 'area_necessidade', 'descricao_problema'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -10101,7 +10101,7 @@ SOLICITACAO_CONSULTORIA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['tipo_atendimento', 'consultor_alocado'],
+      requiredInputFieldIds: ['tipo_atendimento', 'consultor_alocado'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -10113,7 +10113,7 @@ SOLICITACAO_CONSULTORIA: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_agendada', 'horario'],
+      requiredInputFieldIds: ['data_agendada', 'horario'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10125,7 +10125,7 @@ SOLICITACAO_CONSULTORIA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10147,7 +10147,7 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['area_criativa', 'tipo_orientacao'],
+      requiredInputFieldIds: ['area_criativa', 'tipo_orientacao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -10158,7 +10158,7 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['perfil_mapeado', 'orientacoes_necessarias'],
+      requiredInputFieldIds: ['perfil_mapeado', 'orientacoes_necessarias'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10170,7 +10170,7 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['data_agendada', 'especialista_responsavel'],
+      requiredInputFieldIds: ['data_agendada', 'especialista_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10182,7 +10182,7 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10206,7 +10206,7 @@ SUGESTAO_MELHORIA: {
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['sistema_afetado', 'descricao_sugestao'],
+      requiredInputFieldIds: ['sistema_afetado', 'descricao_sugestao'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -10217,7 +10217,7 @@ SUGESTAO_MELHORIA: {
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['viabilidade_tecnica', 'complexidade', 'prioridade'],
+      requiredInputFieldIds: ['viabilidade_tecnica', 'complexidade', 'prioridade'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -10229,7 +10229,7 @@ SUGESTAO_MELHORIA: {
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REJECT'],
       canSkip: false
@@ -10241,7 +10241,7 @@ SUGESTAO_MELHORIA: {
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: true
@@ -10263,7 +10263,7 @@ SUPORTE_TECNICO: {
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
       requiredDocumentTypes: [],
-      requiredFormFields: ['sistema_afetado', 'tipo_problema', 'urgencia'],
+      requiredInputFieldIds: ['sistema_afetado', 'tipo_problema', 'urgencia'],
       allowedActions: ['APPROVE'],
       canSkip: false
     },
@@ -10274,7 +10274,7 @@ SUPORTE_TECNICO: {
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['prioridade', 'tecnico_responsavel'],
+      requiredInputFieldIds: ['prioridade', 'tecnico_responsavel'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE'],
       canSkip: false
@@ -10286,7 +10286,7 @@ SUPORTE_TECNICO: {
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
-      requiredFormFields: ['solucao_aplicada'],
+      requiredInputFieldIds: ['solucao_aplicada'],
       requiredDocumentTypes: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO'],
       canSkip: false
@@ -10309,7 +10309,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nomeAluno', 'unidadeEscolar', 'tipoProblema', 'descricaoProblema'],
+        requiredInputFieldIds: ['nomeAluno', 'unidadeEscolar', 'tipoProblema', 'descricaoProblema'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10320,7 +10320,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -10332,7 +10332,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['providencias_tomadas'],
+        requiredInputFieldIds: ['providencias_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10355,7 +10355,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipoReclamacao', 'linha', 'descricao'],
+        requiredInputFieldIds: ['tipoReclamacao', 'linha', 'descricao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10366,7 +10366,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -10378,7 +10378,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['empresa_responsavel'],
+        requiredInputFieldIds: ['empresa_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10390,7 +10390,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['providencias_tomadas'],
+        requiredInputFieldIds: ['providencias_tomadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10414,7 +10414,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['idadeAluno', 'ultimaSerieCompleta', 'escolaPreferencial'],
+        requiredInputFieldIds: ['idadeAluno', 'ultimaSerieCompleta', 'escolaPreferencial'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10426,7 +10426,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -10437,7 +10437,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nivel_sugerido', 'escola_destino'],
+        requiredInputFieldIds: ['nivel_sugerido', 'escola_destino'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -10449,7 +10449,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['numero_matricula'],
+        requiredInputFieldIds: ['numero_matricula'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10462,7 +10462,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10485,7 +10485,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['anoLetivo', 'tipoConsulta'],
+        requiredInputFieldIds: ['anoLetivo', 'tipoConsulta'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10496,7 +10496,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10519,7 +10519,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10531,7 +10531,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Laudo Técnico', 'Comprovante de Endereço'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -10542,7 +10542,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_urbanistico', 'zoneamento_verificado'],
+        requiredInputFieldIds: ['parecer_urbanistico', 'zoneamento_verificado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -10554,7 +10554,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resultado_vistoria', 'data_vistoria'],
+        requiredInputFieldIds: ['resultado_vistoria', 'data_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -10566,7 +10566,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10579,7 +10579,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10603,7 +10603,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_atendimento', 'demanda_principal'],
+        requiredInputFieldIds: ['tipo_atendimento', 'demanda_principal'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10614,7 +10614,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'situacao_familiar'],
+        requiredInputFieldIds: ['parecer_social', 'situacao_familiar'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -10626,7 +10626,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['servicos_encaminhados'],
+        requiredInputFieldIds: ['servicos_encaminhados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10638,7 +10638,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10661,7 +10661,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_emergencia', 'descricao_situacao'],
+        requiredInputFieldIds: ['tipo_emergencia', 'descricao_situacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10673,7 +10673,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -10684,7 +10684,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'valor_sugerido'],
+        requiredInputFieldIds: ['parecer_social', 'valor_sugerido'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -10696,7 +10696,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['valor_aprovado'],
+        requiredInputFieldIds: ['valor_aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10719,7 +10719,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10731,7 +10731,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Documentos Pessoais'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -10742,7 +10742,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['composicao_familiar', 'renda_familiar'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10754,7 +10754,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nis_gerado'],
+        requiredInputFieldIds: ['nis_gerado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10777,7 +10777,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['programa_escolhido'],
+        requiredInputFieldIds: ['programa_escolhido'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10789,7 +10789,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -10800,7 +10800,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_requisitos', 'parecer'],
+        requiredInputFieldIds: ['atende_requisitos', 'parecer'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -10812,7 +10812,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10825,7 +10825,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10848,7 +10848,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_beneficio'],
+        requiredInputFieldIds: ['tipo_beneficio'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10860,7 +10860,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -10871,7 +10871,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'relatorio_visita'],
+        requiredInputFieldIds: ['data_visita', 'relatorio_visita'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10883,7 +10883,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'recomendacao'],
+        requiredInputFieldIds: ['parecer_final', 'recomendacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -10895,7 +10895,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10908,7 +10908,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10931,7 +10931,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['motivo_visita'],
+        requiredInputFieldIds: ['motivo_visita'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -10942,7 +10942,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'hora_visita', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['data_visita', 'hora_visita', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10954,7 +10954,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_visita', 'conclusoes'],
+        requiredInputFieldIds: ['relatorio_visita', 'conclusoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -10966,7 +10966,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -10989,7 +10989,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_oficina', 'turno_preferencial'],
+        requiredInputFieldIds: ['nome_oficina', 'turno_preferencial'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11000,7 +11000,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11012,7 +11012,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11025,7 +11025,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11049,7 +11049,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_artistico', 'area_atuacao'],
+        requiredInputFieldIds: ['nome_artistico', 'area_atuacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11061,7 +11061,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11072,7 +11072,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11085,7 +11085,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11108,7 +11108,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_evento', 'data_evento', 'local_evento'],
+        requiredInputFieldIds: ['nome_evento', 'data_evento', 'local_evento'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11119,7 +11119,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11131,7 +11131,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11144,7 +11144,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11167,7 +11167,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['oficina_escolhida', 'turma_preferencial'],
+        requiredInputFieldIds: ['oficina_escolhida', 'turma_preferencial'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11178,7 +11178,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11190,7 +11190,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11203,7 +11203,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11226,7 +11226,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['espaco_solicitado', 'data_reserva', 'finalidade'],
+        requiredInputFieldIds: ['espaco_solicitado', 'data_reserva', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11237,7 +11237,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['disponibilidade'],
+        requiredInputFieldIds: ['disponibilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11249,7 +11249,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer'],
+        requiredInputFieldIds: ['parecer'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11261,7 +11261,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11274,7 +11274,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11297,7 +11297,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['titulo_projeto', 'area_cultural'],
+        requiredInputFieldIds: ['titulo_projeto', 'area_cultural'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11309,7 +11309,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto Detalhado', 'Orçamento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11320,7 +11320,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'pontuacao'],
+        requiredInputFieldIds: ['parecer_tecnico', 'pontuacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11332,7 +11332,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_cultural', 'recomendacao'],
+        requiredInputFieldIds: ['parecer_cultural', 'recomendacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11344,7 +11344,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11357,7 +11357,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11380,7 +11380,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_apoio', 'nome_evento'],
+        requiredInputFieldIds: ['tipo_apoio', 'nome_evento'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11391,7 +11391,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_viabilidade'],
+        requiredInputFieldIds: ['parecer_viabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11403,7 +11403,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['tipo_apoio_aprovado'],
+        requiredInputFieldIds: ['tipo_apoio_aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11416,7 +11416,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11439,7 +11439,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_grupo', 'tipo_arte', 'numero_integrantes'],
+        requiredInputFieldIds: ['nome_grupo', 'tipo_arte', 'numero_integrantes'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11451,7 +11451,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Portfólio do Grupo'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11462,7 +11462,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11475,7 +11475,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11498,7 +11498,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_manifestacao', 'tipo_manifestacao', 'historico'],
+        requiredInputFieldIds: ['nome_manifestacao', 'tipo_manifestacao', 'historico'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11509,7 +11509,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_pesquisa'],
+        requiredInputFieldIds: ['relatorio_pesquisa'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -11521,7 +11521,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11533,7 +11533,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11546,7 +11546,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11569,7 +11569,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_atendimento', 'assunto'],
+        requiredInputFieldIds: ['tipo_atendimento', 'assunto'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11580,7 +11580,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resposta'],
+        requiredInputFieldIds: ['resposta'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -11592,7 +11592,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11616,7 +11616,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['modalidade', 'categoria'],
+        requiredInputFieldIds: ['modalidade', 'categoria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11628,7 +11628,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11639,7 +11639,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11652,7 +11652,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11675,7 +11675,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['competicao', 'categoria'],
+        requiredInputFieldIds: ['competicao', 'categoria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11686,7 +11686,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['elegivel'],
+        requiredInputFieldIds: ['elegivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11698,7 +11698,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11711,7 +11711,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11734,7 +11734,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['modalidade', 'turno'],
+        requiredInputFieldIds: ['modalidade', 'turno'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11746,7 +11746,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11757,7 +11757,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11769,7 +11769,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11782,7 +11782,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11805,7 +11805,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['espaco_solicitado', 'data_reserva', 'horario'],
+        requiredInputFieldIds: ['espaco_solicitado', 'data_reserva', 'horario'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11816,7 +11816,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['disponibilidade'],
+        requiredInputFieldIds: ['disponibilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -11828,7 +11828,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11841,7 +11841,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11865,7 +11865,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11877,7 +11877,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11888,7 +11888,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'area_medida', 'confrontantes'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'area_medida', 'confrontantes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -11900,7 +11900,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_juridico', 'viabilidade_regularizacao', 'tipo_regularizacao'],
+        requiredInputFieldIds: ['parecer_juridico', 'viabilidade_regularizacao', 'tipo_regularizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -11912,7 +11912,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['planta_elaborada', 'memorial_descritivo'],
+        requiredInputFieldIds: ['planta_elaborada', 'memorial_descritivo'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -11924,7 +11924,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['aprovado_por', 'data_aprovacao'],
+        requiredInputFieldIds: ['aprovado_por', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -11936,7 +11936,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11949,7 +11949,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -11972,7 +11972,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['programaInteresse', 'rendaFamiliarTotal', 'numeroMoradores', 'situacaoAtual'],
+        requiredInputFieldIds: ['programaInteresse', 'rendaFamiliarTotal', 'numeroMoradores', 'situacaoAtual'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -11984,7 +11984,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico', 'Comprovante de Endereço'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -11995,7 +11995,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'pontuacao_social', 'grupo_prioritario'],
+        requiredInputFieldIds: ['parecer_social', 'pontuacao_social', 'grupo_prioritario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12007,7 +12007,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'condicoes_moradia'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'condicoes_moradia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12019,7 +12019,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'justificativa_elegibilidade', 'faixa_renda'],
+        requiredInputFieldIds: ['atende_criterios', 'justificativa_elegibilidade', 'faixa_renda'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12031,7 +12031,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['posicao_lista', 'pontuacao_final'],
+        requiredInputFieldIds: ['posicao_lista', 'pontuacao_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12043,7 +12043,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12056,7 +12056,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12079,7 +12079,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['motivoSolicitacao', 'descricaoSituacao', 'valorAluguel'],
+        requiredInputFieldIds: ['motivoSolicitacao', 'descricaoSituacao', 'valorAluguel'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12091,7 +12091,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Declaração de Vulnerabilidade'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12102,7 +12102,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_confirmada'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_confirmada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12114,7 +12114,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'renda_per_capita', 'grau_vulnerabilidade'],
+        requiredInputFieldIds: ['parecer_social', 'renda_per_capita', 'grau_vulnerabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12126,7 +12126,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['valor_aprovado', 'prazo_beneficio', 'condicoes_beneficio'],
+        requiredInputFieldIds: ['valor_aprovado', 'prazo_beneficio', 'condicoes_beneficio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12138,7 +12138,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador'],
+        requiredInputFieldIds: ['gestor_aprovador'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12150,7 +12150,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12163,7 +12163,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12186,7 +12186,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['numeroLote', 'areaConstruir', 'tipoConstrucao'],
+        requiredInputFieldIds: ['numeroLote', 'areaConstruir', 'tipoConstrucao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12198,7 +12198,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto Arquitetônico', 'ART (Anotação de Responsabilidade Técnica)', 'Matrícula do Imóvel'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12209,7 +12209,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'conformidade_codigo_obras', 'conformidade_zoneamento'],
+        requiredInputFieldIds: ['parecer_tecnico', 'conformidade_codigo_obras', 'conformidade_zoneamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12221,7 +12221,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['taxa_ocupacao', 'coeficiente_aproveitamento', 'recuos_verificados'],
+        requiredInputFieldIds: ['taxa_ocupacao', 'coeficiente_aproveitamento', 'recuos_verificados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12233,7 +12233,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'resultado_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'resultado_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12245,7 +12245,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12258,7 +12258,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12281,7 +12281,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['motivoVistoria', 'descricaoSolicitacao'],
+        requiredInputFieldIds: ['motivoVistoria', 'descricaoSolicitacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12293,7 +12293,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Endereço'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12304,7 +12304,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_agendada', 'hora_agendada', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['data_agendada', 'hora_agendada', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12316,7 +12316,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_realizada', 'condicoes_estruturais', 'condicoes_instalacoes', 'habitabilidade'],
+        requiredInputFieldIds: ['data_realizada', 'condicoes_estruturais', 'condicoes_instalacoes', 'habitabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12328,7 +12328,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['laudo_tecnico', 'conclusao', 'recomendacoes'],
+        requiredInputFieldIds: ['laudo_tecnico', 'conclusao', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12340,7 +12340,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12353,7 +12353,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12376,7 +12376,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['rendaFamiliarTotal', 'numeroMoradores', 'faixaRenda', 'inscritoCadUnico'],
+        requiredInputFieldIds: ['rendaFamiliarTotal', 'numeroMoradores', 'faixaRenda', 'inscritoCadUnico'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12388,7 +12388,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico', 'Comprovante de Endereço', 'Certidão de Casamento (se aplicável)'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12399,7 +12399,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['possui_imovel_cadastro', 'situacao_cadunico', 'pendencias_encontradas'],
+        requiredInputFieldIds: ['possui_imovel_cadastro', 'situacao_cadunico', 'pendencias_encontradas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12411,7 +12411,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'pontuacao', 'grupo_prioritario'],
+        requiredInputFieldIds: ['parecer_social', 'pontuacao', 'grupo_prioritario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12423,7 +12423,7 @@ SUPORTE_TECNICO: {
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'condicoes_moradia_atual'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'condicoes_moradia_atual'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12435,7 +12435,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['pontuacao_final', 'posicao_lista', 'faixa_enquadramento'],
+        requiredInputFieldIds: ['pontuacao_final', 'posicao_lista', 'faixa_enquadramento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12447,7 +12447,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12460,7 +12460,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12483,7 +12483,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['enderecoImovel', 'areaTerreno', 'tempoPosse'],
+        requiredInputFieldIds: ['enderecoImovel', 'areaTerreno', 'tempoPosse'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12495,7 +12495,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Ocupação', 'Declaração de Posse', 'Croqui do Terreno'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12506,7 +12506,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'area_medida', 'confrontantes', 'situacao_posse'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'area_medida', 'confrontantes', 'situacao_posse'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12518,7 +12518,7 @@ SUPORTE_TECNICO: {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_juridico', 'natureza_posse', 'viabilidade_regularizacao'],
+        requiredInputFieldIds: ['parecer_juridico', 'natureza_posse', 'viabilidade_regularizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12530,7 +12530,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resultado_pesquisa_cartorio', 'proprietario_registrado', 'onus_reais'],
+        requiredInputFieldIds: ['resultado_pesquisa_cartorio', 'proprietario_registrado', 'onus_reais'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -12542,7 +12542,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['planta_elaborada', 'memorial_descritivo', 'art_profissional'],
+        requiredInputFieldIds: ['planta_elaborada', 'memorial_descritivo', 'art_profissional'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12554,7 +12554,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['aprovado_por', 'data_aprovacao', 'tipo_regularizacao'],
+        requiredInputFieldIds: ['aprovado_por', 'data_aprovacao', 'tipo_regularizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12566,7 +12566,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12579,7 +12579,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12602,7 +12602,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['enderecoImovel', 'areaTotal', 'tempoPosse', 'tipoUsucapiao'],
+        requiredInputFieldIds: ['enderecoImovel', 'areaTotal', 'tempoPosse', 'tipoUsucapiao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12614,7 +12614,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Declaração de Posse Mansa e Pacífica', 'Comprovantes de Residência', 'Declaração de Testemunhas'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12625,7 +12625,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_tecnico', 'area_medida', 'limites_confrontantes', 'benfeitorias'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_tecnico', 'area_medida', 'limites_confrontantes', 'benfeitorias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12637,7 +12637,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_juridico_preliminar', 'tipo_posse', 'requisitos_atendidos'],
+        requiredInputFieldIds: ['parecer_juridico_preliminar', 'tipo_posse', 'requisitos_atendidos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12649,7 +12649,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resultado_pesquisa_imoveis', 'matriculas_encontradas', 'proprietarios_registrados'],
+        requiredInputFieldIds: ['resultado_pesquisa_imoveis', 'matriculas_encontradas', 'proprietarios_registrados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -12661,7 +12661,7 @@ SUPORTE_TECNICO: {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_oitiva', 'testemunhas_ouvidas', 'relatorio_oitiva'],
+        requiredInputFieldIds: ['data_oitiva', 'testemunhas_ouvidas', 'relatorio_oitiva'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12673,7 +12673,7 @@ SUPORTE_TECNICO: {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'planta_situacao', 'memorial_descritivo'],
+        requiredInputFieldIds: ['parecer_final', 'planta_situacao', 'memorial_descritivo'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12685,7 +12685,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_juridico_final', 'conclusao_usucapiao', 'recomendacao'],
+        requiredInputFieldIds: ['parecer_juridico_final', 'conclusao_usucapiao', 'recomendacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12697,7 +12697,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12709,7 +12709,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['processo_judicial', 'data_encaminhamento'],
+        requiredInputFieldIds: ['processo_judicial', 'data_encaminhamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12721,7 +12721,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12745,7 +12745,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipoMaquina', 'dataDesejada', 'areaTrabalho'],
+        requiredInputFieldIds: ['tipoMaquina', 'dataDesejada', 'areaTrabalho'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12757,7 +12757,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12768,7 +12768,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['maquina_disponivel', 'data_disponibilidade'],
+        requiredInputFieldIds: ['maquina_disponivel', 'data_disponibilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12780,7 +12780,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_agendada', 'operador_responsavel', 'horario'],
+        requiredInputFieldIds: ['data_agendada', 'operador_responsavel', 'horario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12792,7 +12792,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_execucao', 'horas_trabalhadas', 'area_efetiva'],
+        requiredInputFieldIds: ['data_execucao', 'horas_trabalhadas', 'area_efetiva'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12804,7 +12804,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12827,7 +12827,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_produtos', 'quantidade_estimada'],
+        requiredInputFieldIds: ['tipo_produtos', 'quantidade_estimada'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12839,7 +12839,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12850,7 +12850,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['produtos_aprovados', 'parecer_tecnico'],
+        requiredInputFieldIds: ['produtos_aprovados', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12862,7 +12862,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_barraca', 'localizacao', 'tamanho_espaco'],
+        requiredInputFieldIds: ['numero_barraca', 'localizacao', 'tamanho_espaco'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12874,7 +12874,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12887,7 +12887,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12911,7 +12911,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipoAtividade', 'areaImpacto', 'medidasMitigacao'],
+        requiredInputFieldIds: ['tipoAtividade', 'areaImpacto', 'medidasMitigacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -12923,7 +12923,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto', 'Estudo de Impacto Ambiental', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -12934,7 +12934,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_preliminar', 'classificacao_impacto', 'necessita_eia_rima'],
+        requiredInputFieldIds: ['parecer_preliminar', 'classificacao_impacto', 'necessita_eia_rima'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12946,7 +12946,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'impactos_identificados'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'impactos_identificados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -12958,7 +12958,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico_final', 'viabilidade_ambiental', 'condicoes_licenca'],
+        requiredInputFieldIds: ['parecer_tecnico_final', 'viabilidade_ambiental', 'condicoes_licenca'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12970,7 +12970,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'tipo_licenca', 'validade_licenca'],
+        requiredInputFieldIds: ['gestor_aprovador', 'tipo_licenca', 'validade_licenca'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -12982,7 +12982,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -12995,7 +12995,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13018,7 +13018,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipoSolicitacao', 'localArvore', 'quantidadeArvores'],
+        requiredInputFieldIds: ['tipoSolicitacao', 'localArvore', 'quantidadeArvores'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13030,7 +13030,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade', 'Fotos do Local'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13041,7 +13041,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'especie_identificada', 'estado_arvore', 'risco_iminente'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'especie_identificada', 'estado_arvore', 'risco_iminente'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13053,7 +13053,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'tipo_intervencao_recomendada', 'compensacao_ambiental'],
+        requiredInputFieldIds: ['parecer_tecnico', 'tipo_intervencao_recomendada', 'compensacao_ambiental'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13065,7 +13065,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_autorizacao', 'condicoes'],
+        requiredInputFieldIds: ['tipo_autorizacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13077,7 +13077,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13090,7 +13090,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13114,7 +13114,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['especialidade', 'preferencia_data'],
+        requiredInputFieldIds: ['especialidade', 'preferencia_data'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13125,7 +13125,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_consulta', 'hora_consulta', 'unidade_saude', 'medico'],
+        requiredInputFieldIds: ['data_consulta', 'hora_consulta', 'unidade_saude', 'medico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13137,7 +13137,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13150,7 +13150,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13173,7 +13173,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_exame'],
+        requiredInputFieldIds: ['tipo_exame'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13185,7 +13185,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Pedido Médico', 'Cartão SUS'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13196,7 +13196,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_exame', 'hora_exame', 'local_exame'],
+        requiredInputFieldIds: ['data_exame', 'hora_exame', 'local_exame'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13208,7 +13208,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13221,7 +13221,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13244,7 +13244,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13256,7 +13256,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG ou CNH', 'CPF', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13267,7 +13267,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cns', 'data_cadastro'],
+        requiredInputFieldIds: ['numero_cns', 'data_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13279,7 +13279,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13292,7 +13292,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13316,7 +13316,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'serie_pretendida', 'escola_preferencia'],
+        requiredInputFieldIds: ['nome_aluno', 'serie_pretendida', 'escola_preferencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13328,7 +13328,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Certidão de Nascimento', 'RG do Responsável', 'Comprovante de Residência', 'Cartão de Vacina'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13339,7 +13339,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['escola_disponivel', 'turma_disponivel', 'turno'],
+        requiredInputFieldIds: ['escola_disponivel', 'turma_disponivel', 'turno'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13351,7 +13351,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_matricula', 'data_inicio'],
+        requiredInputFieldIds: ['numero_matricula', 'data_inicio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13363,7 +13363,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13376,7 +13376,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13399,7 +13399,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['escola_origem', 'escola_destino', 'motivo_transferencia'],
+        requiredInputFieldIds: ['escola_origem', 'escola_destino', 'motivo_transferencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13410,7 +13410,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma_destino'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma_destino'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13422,7 +13422,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_pedagogico', 'serie_adequada'],
+        requiredInputFieldIds: ['parecer_pedagogico', 'serie_adequada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13434,7 +13434,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['data_transferencia'],
+        requiredInputFieldIds: ['data_transferencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13447,7 +13447,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13470,7 +13470,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'escola', 'endereco_embarque'],
+        requiredInputFieldIds: ['nome_aluno', 'escola', 'endereco_embarque'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13482,7 +13482,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Comprovante de Matrícula', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13493,7 +13493,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['distancia_calculada', 'atende_criterios', 'rota_disponivel'],
+        requiredInputFieldIds: ['distancia_calculada', 'atende_criterios', 'rota_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13505,7 +13505,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['rota_alocada', 'veiculo', 'ponto_embarque', 'horarios'],
+        requiredInputFieldIds: ['rota_alocada', 'veiculo', 'ponto_embarque', 'horarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13517,7 +13517,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13530,7 +13530,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13554,7 +13554,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipoParcelamento', 'matriculaImovel', 'areaTotal', 'numeroLotes'],
+        requiredInputFieldIds: ['tipoParcelamento', 'matriculaImovel', 'areaTotal', 'numeroLotes'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13566,7 +13566,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'CNPJ (se empresa)', 'Matrícula do Imóvel', 'Projeto de Parcelamento', 'ART do Responsável Técnico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13577,7 +13577,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['conformidade_plano_diretor', 'conformidade_zoneamento', 'conformidade_lei_parcelamento'],
+        requiredInputFieldIds: ['conformidade_plano_diretor', 'conformidade_zoneamento', 'conformidade_lei_parcelamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13589,7 +13589,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['infraestrutura_agua', 'infraestrutura_esgoto', 'infraestrutura_drenagem', 'infraestrutura_energia', 'pavimentacao'],
+        requiredInputFieldIds: ['infraestrutura_agua', 'infraestrutura_esgoto', 'infraestrutura_drenagem', 'infraestrutura_energia', 'pavimentacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -13601,7 +13601,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'viabilidade', 'condicoes_aprovacao'],
+        requiredInputFieldIds: ['parecer_tecnico', 'viabilidade', 'condicoes_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13613,7 +13613,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13625,7 +13625,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13638,7 +13638,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13662,7 +13662,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['area_propriedade', 'tipo_exploracao'],
+        requiredInputFieldIds: ['area_propriedade', 'tipo_exploracao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13674,7 +13674,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Escritura ou Contrato', 'CAR - Cadastro Ambiental Rural (opcional)'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13685,7 +13685,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'area_verificada', 'atividades_desenvolvidas'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'area_verificada', 'atividades_desenvolvidas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13697,7 +13697,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cadastro', 'data_cadastro'],
+        requiredInputFieldIds: ['numero_cadastro', 'data_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13709,7 +13709,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13722,7 +13722,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13745,7 +13745,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['programa_escolhido'],
+        requiredInputFieldIds: ['programa_escolhido'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13757,7 +13757,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13768,7 +13768,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'parecer_tecnico'],
+        requiredInputFieldIds: ['atende_criterios', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13780,7 +13780,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13792,7 +13792,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13805,7 +13805,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13828,7 +13828,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_evento', 'data_evento', 'local_evento', 'publico_esperado'],
+        requiredInputFieldIds: ['tipo_evento', 'data_evento', 'local_evento', 'publico_esperado'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13840,7 +13840,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Projeto do Evento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -13851,7 +13851,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_local', 'adequacao_evento'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_local', 'adequacao_evento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13863,7 +13863,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'recomendacoes'],
+        requiredInputFieldIds: ['parecer_tecnico', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -13875,7 +13875,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13888,7 +13888,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13911,7 +13911,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['area_analise', 'finalidade'],
+        requiredInputFieldIds: ['area_analise', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -13922,7 +13922,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_coleta', 'responsavel_coleta'],
+        requiredInputFieldIds: ['data_coleta', 'responsavel_coleta'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13934,7 +13934,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_coleta_realizada', 'numero_amostras', 'profundidade'],
+        requiredInputFieldIds: ['data_coleta_realizada', 'numero_amostras', 'profundidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13946,7 +13946,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_analise', 'laboratorio'],
+        requiredInputFieldIds: ['data_analise', 'laboratorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13958,7 +13958,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['resultado_analise', 'recomendacoes'],
+        requiredInputFieldIds: ['resultado_analise', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -13970,7 +13970,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -13983,7 +13983,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14006,7 +14006,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_atendimento', 'assunto'],
+        requiredInputFieldIds: ['tipo_atendimento', 'assunto'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14017,7 +14017,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'orientacoes'],
+        requiredInputFieldIds: ['parecer_tecnico', 'orientacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14029,7 +14029,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resposta'],
+        requiredInputFieldIds: ['resposta'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14041,7 +14041,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14064,7 +14064,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_assistencia', 'area_necessidade'],
+        requiredInputFieldIds: ['tipo_assistencia', 'area_necessidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14075,7 +14075,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_demanda', 'tecnico_responsavel'],
+        requiredInputFieldIds: ['tipo_demanda', 'tecnico_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14087,7 +14087,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'hora_visita'],
+        requiredInputFieldIds: ['data_visita', 'hora_visita'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14099,7 +14099,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_realizada', 'relatorio_visita', 'diagnostico'],
+        requiredInputFieldIds: ['data_realizada', 'relatorio_visita', 'diagnostico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14111,7 +14111,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['plano_acao', 'recomendacoes'],
+        requiredInputFieldIds: ['plano_acao', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14123,7 +14123,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14147,7 +14147,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade', 'categoria'],
+        requiredInputFieldIds: ['nome_aluno', 'idade', 'categoria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14159,7 +14159,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14170,7 +14170,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14182,7 +14182,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14195,7 +14195,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14218,7 +14218,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade', 'categoria'],
+        requiredInputFieldIds: ['nome_aluno', 'idade', 'categoria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14230,7 +14230,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14241,7 +14241,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14253,7 +14253,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14266,7 +14266,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14289,7 +14289,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade', 'categoria'],
+        requiredInputFieldIds: ['nome_aluno', 'idade', 'categoria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14301,7 +14301,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14312,7 +14312,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14324,7 +14324,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14337,7 +14337,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14360,7 +14360,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade', 'nivel_natacao'],
+        requiredInputFieldIds: ['nome_aluno', 'idade', 'nivel_natacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14372,7 +14372,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14383,7 +14383,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma', 'horario'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma', 'horario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14395,7 +14395,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14408,7 +14408,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14431,7 +14431,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade', 'faixa_atual'],
+        requiredInputFieldIds: ['nome_aluno', 'idade', 'faixa_atual'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14443,7 +14443,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14454,7 +14454,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14466,7 +14466,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14479,7 +14479,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14502,7 +14502,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade'],
+        requiredInputFieldIds: ['nome_aluno', 'idade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14514,7 +14514,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14525,7 +14525,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14537,7 +14537,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14550,7 +14550,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14573,7 +14573,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'idade', 'graduacao_atual'],
+        requiredInputFieldIds: ['nome_aluno', 'idade', 'graduacao_atual'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14585,7 +14585,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14596,7 +14596,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14608,7 +14608,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14621,7 +14621,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14644,7 +14644,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['modalidade', 'categoria'],
+        requiredInputFieldIds: ['modalidade', 'categoria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14656,7 +14656,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Histórico Esportivo'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14667,7 +14667,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'pontuacao', 'nivel_atleta'],
+        requiredInputFieldIds: ['parecer_tecnico', 'pontuacao', 'nivel_atleta'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14679,7 +14679,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'renda_familiar'],
+        requiredInputFieldIds: ['parecer_social', 'renda_familiar'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14691,7 +14691,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['valor_bolsa', 'periodo_vigencia'],
+        requiredInputFieldIds: ['valor_bolsa', 'periodo_vigencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14703,7 +14703,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14716,7 +14716,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14740,7 +14740,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_crianca', 'data_nascimento', 'creche_preferencia'],
+        requiredInputFieldIds: ['nome_crianca', 'data_nascimento', 'creche_preferencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14752,7 +14752,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14763,7 +14763,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social', 'pontuacao', 'grupo_prioritario'],
+        requiredInputFieldIds: ['parecer_social', 'pontuacao', 'grupo_prioritario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14775,7 +14775,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['posicao_lista', 'pontuacao_final'],
+        requiredInputFieldIds: ['posicao_lista', 'pontuacao_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14787,7 +14787,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14800,7 +14800,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14823,7 +14823,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['area_atuacao', 'formacao'],
+        requiredInputFieldIds: ['area_atuacao', 'formacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14835,7 +14835,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -14846,7 +14846,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_curricular', 'experiencia_anos', 'titulacao'],
+        requiredInputFieldIds: ['parecer_curricular', 'experiencia_anos', 'titulacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14858,7 +14858,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cadastro', 'data_cadastro'],
+        requiredInputFieldIds: ['numero_cadastro', 'data_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14870,7 +14870,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14883,7 +14883,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14906,7 +14906,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_documento', 'nome_aluno', 'escola'],
+        requiredInputFieldIds: ['tipo_documento', 'nome_aluno', 'escola'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14917,7 +14917,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['aluno_encontrado', 'historico_verificado'],
+        requiredInputFieldIds: ['aluno_encontrado', 'historico_verificado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -14929,7 +14929,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['documento_elaborado'],
+        requiredInputFieldIds: ['documento_elaborado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -14941,7 +14941,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14954,7 +14954,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -14977,7 +14977,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_ocorrencia', 'escola', 'descricao'],
+        requiredInputFieldIds: ['tipo_ocorrencia', 'escola', 'descricao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -14988,7 +14988,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gravidade', 'necessita_intervencao'],
+        requiredInputFieldIds: ['gravidade', 'necessita_intervencao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15000,7 +15000,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_investigacao', 'envolvidos'],
+        requiredInputFieldIds: ['relatorio_investigacao', 'envolvidos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15012,7 +15012,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['providencias_tomadas', 'responsavel'],
+        requiredInputFieldIds: ['providencias_tomadas', 'responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15035,7 +15035,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_aluno', 'escola'],
+        requiredInputFieldIds: ['nome_aluno', 'escola'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15046,7 +15046,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_encontrados'],
+        requiredInputFieldIds: ['dados_encontrados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15069,7 +15069,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['curso_escolhido', 'turma_preferencial'],
+        requiredInputFieldIds: ['curso_escolhido', 'turma_preferencial'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15080,7 +15080,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis'],
+        requiredInputFieldIds: ['vagas_disponiveis'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15092,7 +15092,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15105,7 +15105,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15129,7 +15129,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['especialidade', 'urgencia'],
+        requiredInputFieldIds: ['especialidade', 'urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15141,7 +15141,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG e CPF', 'Documentos relacionados ao assunto do agendamento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -15152,7 +15152,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_regulacao', 'prioridade'],
+        requiredInputFieldIds: ['parecer_regulacao', 'prioridade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15164,7 +15164,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_consulta', 'hora_consulta', 'local', 'medico'],
+        requiredInputFieldIds: ['data_consulta', 'hora_consulta', 'local', 'medico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15176,7 +15176,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15189,7 +15189,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15212,7 +15212,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_atendimento', 'urgencia'],
+        requiredInputFieldIds: ['tipo_atendimento', 'urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15223,7 +15223,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['prioridade', 'tipo_procedimento'],
+        requiredInputFieldIds: ['prioridade', 'tipo_procedimento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15235,7 +15235,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_consulta', 'hora_consulta', 'unidade_saude', 'dentista'],
+        requiredInputFieldIds: ['data_consulta', 'hora_consulta', 'unidade_saude', 'dentista'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15247,7 +15247,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15260,7 +15260,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15283,7 +15283,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['medicamento_solicitado'],
+        requiredInputFieldIds: ['medicamento_solicitado'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15295,7 +15295,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Receita Médica Especial', 'Laudo Médico', 'Exames Complementares', 'Cartão SUS', 'RG ou CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -15306,7 +15306,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_farmaceutico', 'indicacao_aprovada'],
+        requiredInputFieldIds: ['parecer_farmaceutico', 'indicacao_aprovada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15318,7 +15318,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_medico', 'protocolo_clinico_atendido'],
+        requiredInputFieldIds: ['parecer_medico', 'protocolo_clinico_atendido'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15330,7 +15330,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['quantidade_aprovada', 'periodo_tratamento'],
+        requiredInputFieldIds: ['quantidade_aprovada', 'periodo_tratamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15342,7 +15342,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15355,7 +15355,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15379,7 +15379,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['area_supressao', 'justificativa'],
+        requiredInputFieldIds: ['area_supressao', 'justificativa'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15391,7 +15391,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -15402,7 +15402,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'area_verificada', 'especies_encontradas'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'area_verificada', 'especies_encontradas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15414,7 +15414,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'viabilidade', 'compensacao_ambiental_necessaria'],
+        requiredInputFieldIds: ['parecer_tecnico', 'viabilidade', 'compensacao_ambiental_necessaria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15426,7 +15426,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['area_autorizada', 'condicoes', 'medidas_compensatorias'],
+        requiredInputFieldIds: ['area_autorizada', 'condicoes', 'medidas_compensatorias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15438,7 +15438,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15451,7 +15451,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15474,7 +15474,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: ['atividade', 'porte_empreendimento'],
+        requiredInputFieldIds: ['atividade', 'porte_empreendimento'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15486,7 +15486,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Projeto Simplificado'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -15497,7 +15497,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'impacto_ambiental', 'medidas_mitigadoras'],
+        requiredInputFieldIds: ['parecer_tecnico', 'impacto_ambiental', 'medidas_mitigadoras'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15509,7 +15509,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15521,7 +15521,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_licenca', 'validade', 'condicoes'],
+        requiredInputFieldIds: ['tipo_licenca', 'validade', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15533,7 +15533,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15546,7 +15546,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15569,7 +15569,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['fonte_captacao', 'vazao_solicitada', 'finalidade'],
+        requiredInputFieldIds: ['fonte_captacao', 'vazao_solicitada', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15581,7 +15581,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Projeto Hidráulico', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -15592,7 +15592,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_hidrologico', 'disponibilidade_hidrica', 'vazao_autorizada'],
+        requiredInputFieldIds: ['parecer_hidrologico', 'disponibilidade_hidrica', 'vazao_autorizada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -15604,7 +15604,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'fonte_verificada'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'fonte_verificada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15616,7 +15616,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vazao_outorgada', 'periodo_validade', 'condicoes'],
+        requiredInputFieldIds: ['vazao_outorgada', 'periodo_validade', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -15628,7 +15628,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15641,7 +15641,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15665,7 +15665,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['motivo_acolhimento', 'situacao_risco', 'grau_urgencia'],
+        requiredInputFieldIds: ['motivo_acolhimento', 'situacao_risco', 'grau_urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15676,7 +15676,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_social', 'composicao_familiar', 'historico_violencia'],
+        requiredInputFieldIds: ['relatorio_social', 'composicao_familiar', 'historico_violencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15688,7 +15688,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_psicologico', 'estado_emocional', 'necessidades_atendimento'],
+        requiredInputFieldIds: ['parecer_psicologico', 'estado_emocional', 'necessidades_atendimento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15700,7 +15700,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['objetivos_acolhimento', 'acoes_planejadas', 'prazo_estimado', 'responsavel_caso'],
+        requiredInputFieldIds: ['objetivos_acolhimento', 'acoes_planejadas', 'prazo_estimado', 'responsavel_caso'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15712,7 +15712,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_acompanhamento', 'evolucao_caso'],
+        requiredInputFieldIds: ['relatorio_acompanhamento', 'evolucao_caso'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15724,7 +15724,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15747,7 +15747,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['familia', 'motivo_acompanhamento', 'vulnerabilidades'],
+        requiredInputFieldIds: ['familia', 'motivo_acompanhamento', 'vulnerabilidades'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15758,7 +15758,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['situacao_habitacional', 'situacao_economica', 'situacao_saude', 'situacao_educacao'],
+        requiredInputFieldIds: ['situacao_habitacional', 'situacao_economica', 'situacao_saude', 'situacao_educacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15770,7 +15770,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['objetivos', 'acoes_planejadas', 'periodicidade_visitas', 'responsavel_tecnico'],
+        requiredInputFieldIds: ['objetivos', 'acoes_planejadas', 'periodicidade_visitas', 'responsavel_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15782,7 +15782,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['visitas_realizadas', 'evolucao_familia', 'encaminhamentos'],
+        requiredInputFieldIds: ['visitas_realizadas', 'evolucao_familia', 'encaminhamentos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15794,7 +15794,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['objetivos_alcancados', 'necessidade_continuidade'],
+        requiredInputFieldIds: ['objetivos_alcancados', 'necessidade_continuidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15806,7 +15806,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15830,7 +15830,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['aluno', 'escola', 'tipo_necessidade', 'serie'],
+        requiredInputFieldIds: ['aluno', 'escola', 'tipo_necessidade', 'serie'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15841,7 +15841,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relatorio_pedagogico', 'necessidades_identificadas', 'potencialidades'],
+        requiredInputFieldIds: ['relatorio_pedagogico', 'necessidades_identificadas', 'potencialidades'],
         requiredDocumentTypes: ['Laudo Médico'],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15853,7 +15853,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['objetivos_aee', 'recursos_necessarios', 'periodicidade_atendimento', 'profissional_responsavel'],
+        requiredInputFieldIds: ['objetivos_aee', 'recursos_necessarios', 'periodicidade_atendimento', 'profissional_responsavel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15865,7 +15865,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -15877,7 +15877,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15890,7 +15890,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15914,7 +15914,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['paciente', 'tipo_caps', 'motivo_atendimento'],
+        requiredInputFieldIds: ['paciente', 'tipo_caps', 'motivo_atendimento'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15925,7 +15925,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gravidade_caso', 'urgencia', 'encaminhamento_necessario'],
+        requiredInputFieldIds: ['gravidade_caso', 'urgencia', 'encaminhamento_necessario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15937,7 +15937,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_atendimento', 'horario', 'profissional_responsavel', 'modalidade_atendimento'],
+        requiredInputFieldIds: ['data_atendimento', 'horario', 'profissional_responsavel', 'modalidade_atendimento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -15949,7 +15949,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15962,7 +15962,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -15985,7 +15985,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['paciente', 'especialidade', 'centro_referencia'],
+        requiredInputFieldIds: ['paciente', 'especialidade', 'centro_referencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -15997,7 +15997,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16008,7 +16008,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['prioridade', 'classificacao_risco', 'observacoes_regulacao'],
+        requiredInputFieldIds: ['prioridade', 'classificacao_risco', 'observacoes_regulacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16020,7 +16020,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_consulta', 'horario', 'profissional', 'unidade'],
+        requiredInputFieldIds: ['data_consulta', 'horario', 'profissional', 'unidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16032,7 +16032,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16045,7 +16045,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16069,7 +16069,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['endereco_imovel', 'tipo_reforma', 'area_reforma'],
+        requiredInputFieldIds: ['endereco_imovel', 'tipo_reforma', 'area_reforma'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16081,7 +16081,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto de Reforma', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16092,7 +16092,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['conformidade_codigo_obras', 'conformidade_zoneamento', 'parecer_tecnico'],
+        requiredInputFieldIds: ['conformidade_codigo_obras', 'conformidade_zoneamento', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16104,7 +16104,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'situacao_encontrada'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'situacao_encontrada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16116,7 +16116,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'observacoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'observacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16128,7 +16128,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16141,7 +16141,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16164,7 +16164,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['endereco', 'tipo_edificacao', 'area_construcao', 'numero_pavimentos'],
+        requiredInputFieldIds: ['endereco', 'tipo_edificacao', 'area_construcao', 'numero_pavimentos'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16176,7 +16176,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto Arquitetônico', 'ART', 'Planta de Situação'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16187,7 +16187,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['conformidade_plano_diretor', 'conformidade_zoneamento', 'taxa_ocupacao', 'coeficiente_aproveitamento', 'recuos'],
+        requiredInputFieldIds: ['conformidade_plano_diretor', 'conformidade_zoneamento', 'taxa_ocupacao', 'coeficiente_aproveitamento', 'recuos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16199,7 +16199,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['conformidade_codigo_obras', 'conformidade_acessibilidade', 'conformidade_incendio', 'parecer_tecnico'],
+        requiredInputFieldIds: ['conformidade_codigo_obras', 'conformidade_acessibilidade', 'conformidade_incendio', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16211,7 +16211,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_consolidado', 'gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['parecer_consolidado', 'gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16223,7 +16223,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16236,7 +16236,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16259,7 +16259,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['localizacao', 'area_total', 'numero_lotes', 'area_lotes', 'infraestrutura_prevista'],
+        requiredInputFieldIds: ['localizacao', 'area_total', 'numero_lotes', 'area_lotes', 'infraestrutura_prevista'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16271,7 +16271,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto de Loteamento', 'Memorial Descritivo', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16282,7 +16282,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['conformidade_plano_diretor', 'conformidade_lei_parcelamento', 'areas_publicas', 'sistema_viario'],
+        requiredInputFieldIds: ['conformidade_plano_diretor', 'conformidade_lei_parcelamento', 'areas_publicas', 'sistema_viario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16294,7 +16294,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_ambiental', 'areas_preservacao', 'drenagem', 'impactos_identificados'],
+        requiredInputFieldIds: ['parecer_ambiental', 'areas_preservacao', 'drenagem', 'impactos_identificados'],
         requiredDocumentTypes: ['Licença Ambiental'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16306,7 +16306,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['agua_esgoto', 'energia_eletrica', 'pavimentacao', 'drenagem_pluvial', 'arborizacao'],
+        requiredInputFieldIds: ['agua_esgoto', 'energia_eletrica', 'pavimentacao', 'drenagem_pluvial', 'arborizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -16318,7 +16318,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['parecer_final', 'gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16330,7 +16330,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16343,7 +16343,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16366,7 +16366,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['endereco_imovel', 'matricula', 'finalidade_certidao'],
+        requiredInputFieldIds: ['endereco_imovel', 'matricula', 'finalidade_certidao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16378,7 +16378,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Matrícula do Imóvel'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16389,7 +16389,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['zona', 'uso_permitido', 'indices_urbanisticos', 'restricoes'],
+        requiredInputFieldIds: ['zona', 'uso_permitido', 'indices_urbanisticos', 'restricoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16401,7 +16401,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['responsavel_tecnico', 'data_elaboracao'],
+        requiredInputFieldIds: ['responsavel_tecnico', 'data_elaboracao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16413,7 +16413,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16426,7 +16426,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16450,7 +16450,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_empreendimento', 'localizacao', 'area_necessaria', 'investimento_previsto'],
+        requiredInputFieldIds: ['tipo_empreendimento', 'localizacao', 'area_necessaria', 'investimento_previsto'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16462,7 +16462,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16473,7 +16473,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['viabilidade_financeira', 'retorno_investimento', 'geracoes_emprego'],
+        requiredInputFieldIds: ['viabilidade_financeira', 'retorno_investimento', 'geracoes_emprego'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -16485,7 +16485,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['compatibilidade_zoneamento', 'infraestrutura_disponivel', 'impacto_urbano'],
+        requiredInputFieldIds: ['compatibilidade_zoneamento', 'infraestrutura_disponivel', 'impacto_urbano'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -16497,7 +16497,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'recomendacoes', 'responsavel_parecer'],
+        requiredInputFieldIds: ['parecer_final', 'recomendacoes', 'responsavel_parecer'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16509,7 +16509,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16522,7 +16522,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16546,7 +16546,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['sistema_origem', 'finalidade_integracao', 'apis_necessarias'],
+        requiredInputFieldIds: ['sistema_origem', 'finalidade_integracao', 'apis_necessarias'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16557,7 +16557,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['requisitos_tecnicos', 'volume_requisicoes', 'dados_necessarios'],
+        requiredInputFieldIds: ['requisitos_tecnicos', 'volume_requisicoes', 'dados_necessarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16569,7 +16569,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_seguranca', 'riscos_identificados', 'medidas_protecao'],
+        requiredInputFieldIds: ['parecer_seguranca', 'riscos_identificados', 'medidas_protecao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16581,7 +16581,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16593,7 +16593,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['credenciais_geradas', 'ambiente', 'documentacao_fornecida'],
+        requiredInputFieldIds: ['credenciais_geradas', 'ambiente', 'documentacao_fornecida'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16605,7 +16605,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16618,7 +16618,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16642,7 +16642,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_evento', 'data_evento', 'local_evento', 'publico_esperado', 'apoio_solicitado'],
+        requiredInputFieldIds: ['tipo_evento', 'data_evento', 'local_evento', 'publico_esperado', 'apoio_solicitado'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16654,7 +16654,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF ou CNPJ', 'Projeto do Evento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16665,7 +16665,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['recursos_disponiveis', 'impacto_agricultura', 'parecer_tecnico'],
+        requiredInputFieldIds: ['recursos_disponiveis', 'impacto_agricultura', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16677,7 +16677,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_apoio_aprovado', 'recursos_liberados', 'gestor_aprovador'],
+        requiredInputFieldIds: ['tipo_apoio_aprovado', 'recursos_liberados', 'gestor_aprovador'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16689,7 +16689,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: ['termo_compromisso', 'condicoes'],
+        requiredInputFieldIds: ['termo_compromisso', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16701,7 +16701,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16714,7 +16714,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16738,7 +16738,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['endereco_imovel', 'area_demolicao', 'motivo_demolicao'],
+        requiredInputFieldIds: ['endereco_imovel', 'area_demolicao', 'motivo_demolicao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16750,7 +16750,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto de Demolição', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16761,7 +16761,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_estrutural', 'seguranca_demolicao', 'medidas_protecao'],
+        requiredInputFieldIds: ['parecer_estrutural', 'seguranca_demolicao', 'medidas_protecao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16773,7 +16773,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'recomendacoes'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'recomendacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16785,7 +16785,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16797,7 +16797,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16810,7 +16810,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16833,7 +16833,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['localizacao', 'area_total', 'tipo_urbanizacao', 'populacao_beneficiada'],
+        requiredInputFieldIds: ['localizacao', 'area_total', 'tipo_urbanizacao', 'populacao_beneficiada'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16845,7 +16845,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto de Urbanização', 'Memorial Descritivo', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -16856,7 +16856,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['conformidade_plano_diretor', 'adequacao_infraestrutura', 'sistema_viario', 'areas_publicas'],
+        requiredInputFieldIds: ['conformidade_plano_diretor', 'adequacao_infraestrutura', 'sistema_viario', 'areas_publicas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16868,7 +16868,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_ambiental', 'drenagem', 'saneamento', 'areas_verdes'],
+        requiredInputFieldIds: ['parecer_ambiental', 'drenagem', 'saneamento', 'areas_verdes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -16880,7 +16880,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['impacto_social', 'participacao_comunidade', 'equipamentos_comunitarios'],
+        requiredInputFieldIds: ['impacto_social', 'participacao_comunidade', 'equipamentos_comunitarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -16892,7 +16892,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'viabilidade', 'condicoes', 'gestor_aprovador'],
+        requiredInputFieldIds: ['parecer_final', 'viabilidade', 'condicoes', 'gestor_aprovador'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16904,7 +16904,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16917,7 +16917,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16941,7 +16941,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['paciente', 'endereco', 'motivo_solicitacao', 'grau_urgencia'],
+        requiredInputFieldIds: ['paciente', 'endereco', 'motivo_solicitacao', 'grau_urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -16952,7 +16952,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['criterios_elegibilidade', 'prioridade', 'tipo_atendimento_necessario'],
+        requiredInputFieldIds: ['criterios_elegibilidade', 'prioridade', 'tipo_atendimento_necessario'],
         requiredDocumentTypes: ['Cartão SUS'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -16964,7 +16964,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'horario', 'profissional_designado', 'equipe'],
+        requiredInputFieldIds: ['data_visita', 'horario', 'profissional_designado', 'equipe'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -16976,7 +16976,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -16989,7 +16989,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17013,7 +17013,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['cnpj', 'dados_atualizar', 'motivo_atualizacao'],
+        requiredInputFieldIds: ['cnpj', 'dados_atualizar', 'motivo_atualizacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17025,7 +17025,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Contrato Social Atualizado', 'Comprovante de Endereço Comercial'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17036,7 +17036,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_verificados', 'inconsistencias'],
+        requiredInputFieldIds: ['dados_verificados', 'inconsistencias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -17048,7 +17048,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['responsavel_atualizacao', 'data_atualizacao'],
+        requiredInputFieldIds: ['responsavel_atualizacao', 'data_atualizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -17060,7 +17060,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17073,7 +17073,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17097,7 +17097,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['inscricao_imobiliaria', 'dados_atualizar', 'motivo_atualizacao'],
+        requiredInputFieldIds: ['inscricao_imobiliaria', 'dados_atualizar', 'motivo_atualizacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17109,7 +17109,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Escritura ou Contrato de Compra e Venda', 'RG e CPF do Proprietário', 'Comprovante de Endereço', 'Carnê de IPTU'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17120,7 +17120,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_atuais', 'dados_novos', 'inconsistencias'],
+        requiredInputFieldIds: ['dados_atuais', 'dados_novos', 'inconsistencias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -17132,7 +17132,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
+        requiredInputFieldIds: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: true
@@ -17144,7 +17144,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['responsavel_atualizacao', 'data_atualizacao'],
+        requiredInputFieldIds: ['responsavel_atualizacao', 'data_atualizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -17156,7 +17156,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17169,7 +17169,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17193,7 +17193,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_evento', 'data_evento', 'local_evento', 'horario_inicio', 'horario_fim', 'publico_esperado'],
+        requiredInputFieldIds: ['tipo_evento', 'data_evento', 'local_evento', 'horario_inicio', 'horario_fim', 'publico_esperado'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17205,7 +17205,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Projeto do Evento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17216,7 +17216,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['impacto_transito', 'desvios_necessarios', 'sinalizacao_necessaria', 'parecer_transito'],
+        requiredInputFieldIds: ['impacto_transito', 'desvios_necessarios', 'sinalizacao_necessaria', 'parecer_transito'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17228,7 +17228,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['efetivo_necessario', 'medidas_seguranca', 'parecer_seguranca'],
+        requiredInputFieldIds: ['efetivo_necessario', 'medidas_seguranca', 'parecer_seguranca'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17240,7 +17240,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'adequacao_local'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'relatorio_vistoria', 'adequacao_local'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17252,7 +17252,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17264,7 +17264,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17277,7 +17277,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17301,7 +17301,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['especie', 'localizacao', 'motivo_manejo', 'procedimento_pretendido'],
+        requiredInputFieldIds: ['especie', 'localizacao', 'motivo_manejo', 'procedimento_pretendido'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17313,7 +17313,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17324,7 +17324,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['especie_ameacada', 'metodo_adequado', 'impacto_ambiental', 'parecer_tecnico'],
+        requiredInputFieldIds: ['especie_ameacada', 'metodo_adequado', 'impacto_ambiental', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17336,7 +17336,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_local', 'relatorio_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_local', 'relatorio_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17348,7 +17348,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17360,7 +17360,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17373,7 +17373,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17397,7 +17397,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['proprietario_veiculo', 'placa', 'capacidade', 'rotas_pretendidas'],
+        requiredInputFieldIds: ['proprietario_veiculo', 'placa', 'capacidade', 'rotas_pretendidas'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17409,7 +17409,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Seguro do Veículo'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17420,7 +17420,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_seguranca', 'aprovado_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_seguranca', 'aprovado_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17432,7 +17432,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['rotas_aprovadas', 'horarios', 'pontos_parada'],
+        requiredInputFieldIds: ['rotas_aprovadas', 'horarios', 'pontos_parada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -17444,7 +17444,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17456,7 +17456,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17469,7 +17469,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17493,7 +17493,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_veiculo', 'placa', 'capacidade', 'roteiros_turisticos'],
+        requiredInputFieldIds: ['tipo_veiculo', 'placa', 'capacidade', 'roteiros_turisticos'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17505,7 +17505,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ', 'Seguro dos Veículos'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17516,7 +17516,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos', 'aprovado'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos', 'aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17528,7 +17528,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17540,7 +17540,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17553,7 +17553,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17577,7 +17577,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'situacao_moradia_atual', 'motivo_solicitacao'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'situacao_moradia_atual', 'motivo_solicitacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17589,7 +17589,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17600,7 +17600,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17612,7 +17612,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -17624,7 +17624,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'valor_auxilio', 'periodo_concessao'],
+        requiredInputFieldIds: ['atende_criterios', 'valor_auxilio', 'periodo_concessao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17636,7 +17636,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17649,7 +17649,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17672,7 +17672,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'possui_terreno', 'tipo_auxilio'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'possui_terreno', 'tipo_auxilio'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17684,7 +17684,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17695,7 +17695,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17707,7 +17707,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'viabilidade_construcao', 'relatorio_tecnico'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'viabilidade_construcao', 'relatorio_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17719,7 +17719,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'tipo_auxilio_aprovado', 'valor_estimado'],
+        requiredInputFieldIds: ['atende_criterios', 'tipo_auxilio_aprovado', 'valor_estimado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17731,7 +17731,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17743,7 +17743,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17756,7 +17756,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17780,7 +17780,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['cnpj', 'motivo_baixa', 'data_encerramento_atividades'],
+        requiredInputFieldIds: ['cnpj', 'motivo_baixa', 'data_encerramento_atividades'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17792,7 +17792,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Certidões Negativas (Tributos Municipais, Estaduais e Federais)', 'CNPJ'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17803,7 +17803,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['possui_debitos', 'valor_debitos', 'situacao_regularizacao'],
+        requiredInputFieldIds: ['possui_debitos', 'valor_debitos', 'situacao_regularizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17815,7 +17815,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
+        requiredInputFieldIds: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: true
@@ -17827,7 +17827,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17839,7 +17839,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['responsavel_processamento', 'data_baixa_sistema'],
+        requiredInputFieldIds: ['responsavel_processamento', 'data_baixa_sistema'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -17851,7 +17851,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17864,7 +17864,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17888,7 +17888,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_beneficio', 'motivo_solicitacao', 'grau_urgencia'],
+        requiredInputFieldIds: ['tipo_beneficio', 'motivo_solicitacao', 'grau_urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17900,7 +17900,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17911,7 +17911,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['situacao_socioeconomica', 'vulnerabilidade', 'parecer_social'],
+        requiredInputFieldIds: ['situacao_socioeconomica', 'vulnerabilidade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -17923,7 +17923,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'tipo_beneficio_aprovado'],
+        requiredInputFieldIds: ['atende_criterios', 'tipo_beneficio_aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -17935,7 +17935,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17948,7 +17948,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -17971,7 +17971,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'situacao_moradia'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'situacao_moradia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -17983,7 +17983,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda Familiar', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -17994,7 +17994,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'pontuacao', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'pontuacao', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18006,7 +18006,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18018,7 +18018,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'prioridade', 'valor_beneficio'],
+        requiredInputFieldIds: ['atende_criterios', 'prioridade', 'valor_beneficio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -18030,7 +18030,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18043,7 +18043,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18067,7 +18067,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_agroindustria', 'tipo_producao', 'localizacao', 'capacidade_producao'],
+        requiredInputFieldIds: ['nome_agroindustria', 'tipo_producao', 'localizacao', 'capacidade_producao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18079,7 +18079,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Propriedade'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18090,7 +18090,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'equipamentos', 'condicoes_higiene', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'equipamentos', 'condicoes_higiene', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18102,7 +18102,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['processo_produtivo', 'controle_qualidade', 'parecer_tecnico'],
+        requiredInputFieldIds: ['processo_produtivo', 'controle_qualidade', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18114,7 +18114,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -18126,7 +18126,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18139,7 +18139,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18163,7 +18163,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_atracao', 'tipo_atracao', 'localizacao', 'descricao'],
+        requiredInputFieldIds: ['nome_atracao', 'tipo_atracao', 'localizacao', 'descricao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18175,7 +18175,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF ou CNPJ', 'Fotos do Local'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18186,7 +18186,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'acessibilidade', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'acessibilidade', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -18198,7 +18198,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -18210,7 +18210,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18223,7 +18223,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18247,7 +18247,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_contribuinte', 'cpf_cnpj', 'nome_razao_social'],
+        requiredInputFieldIds: ['tipo_contribuinte', 'cpf_cnpj', 'nome_razao_social'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18259,7 +18259,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18270,7 +18270,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_verificados', 'inconsistencias'],
+        requiredInputFieldIds: ['dados_verificados', 'inconsistencias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -18282,7 +18282,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['inscricao_municipal', 'responsavel_cadastro', 'data_cadastro'],
+        requiredInputFieldIds: ['inscricao_municipal', 'responsavel_cadastro', 'data_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18294,7 +18294,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18307,7 +18307,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18331,7 +18331,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'situacao_moradia_atual'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'situacao_moradia_atual'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18343,7 +18343,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18354,7 +18354,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'pontuacao', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'pontuacao', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -18366,7 +18366,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18378,7 +18378,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18391,7 +18391,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18415,7 +18415,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'tipo_risco', 'grau_urgencia'],
+        requiredInputFieldIds: ['composicao_familiar', 'tipo_risco', 'grau_urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18426,7 +18426,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['riscos_identificados', 'vulnerabilidades', 'prioridade', 'necessidade_protecao_imediata'],
+        requiredInputFieldIds: ['riscos_identificados', 'vulnerabilidades', 'prioridade', 'necessidade_protecao_imediata'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18438,7 +18438,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'relatorio_visita', 'situacao_constatada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18450,7 +18450,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['acoes_imediatas', 'servicos_encaminhados', 'responsavel_caso', 'periodicidade_acompanhamento'],
+        requiredInputFieldIds: ['acoes_imediatas', 'servicos_encaminhados', 'responsavel_caso', 'periodicidade_acompanhamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18462,7 +18462,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18475,7 +18475,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18498,7 +18498,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['razao_social', 'cnpj', 'ramo_atividade', 'produtos_servicos'],
+        requiredInputFieldIds: ['razao_social', 'cnpj', 'ramo_atividade', 'produtos_servicos'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18510,7 +18510,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Certidões Negativas'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18521,7 +18521,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dados_verificados', 'situacao_fiscal', 'capacidade_tecnica'],
+        requiredInputFieldIds: ['dados_verificados', 'situacao_fiscal', 'capacidade_tecnica'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -18533,7 +18533,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['habilitado', 'categorias_fornecimento', 'restricoes'],
+        requiredInputFieldIds: ['habilitado', 'categorias_fornecimento', 'restricoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -18545,7 +18545,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cadastro', 'responsavel_cadastro', 'data_cadastro', 'validade'],
+        requiredInputFieldIds: ['numero_cadastro', 'responsavel_cadastro', 'data_cadastro', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18557,7 +18557,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18570,7 +18570,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18594,7 +18594,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['razao_social', 'tipo_residuo', 'volume_mensal', 'destinacao_atual'],
+        requiredInputFieldIds: ['razao_social', 'tipo_residuo', 'volume_mensal', 'destinacao_atual'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18606,7 +18606,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Projeto de Manejo', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18617,7 +18617,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'armazenamento_residuos', 'segregacao', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'armazenamento_residuos', 'segregacao', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18629,7 +18629,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['pgrs_adequado', 'destinacao_adequada', 'parecer_tecnico'],
+        requiredInputFieldIds: ['pgrs_adequado', 'destinacao_adequada', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18641,7 +18641,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -18653,7 +18653,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18666,7 +18666,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18690,7 +18690,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['cpf', 'email', 'telefone'],
+        requiredInputFieldIds: ['cpf', 'email', 'telefone'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18701,7 +18701,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['cpf_valido', 'email_validado', 'telefone_validado'],
+        requiredInputFieldIds: ['cpf_valido', 'email_validado', 'telefone_validado'],
         requiredDocumentTypes: ['CPF', 'RG'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18713,7 +18713,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18726,7 +18726,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18749,7 +18749,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'atividade_principal', 'endereco_atuacao'],
+        requiredInputFieldIds: ['nome', 'cpf', 'atividade_principal', 'endereco_atuacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18761,7 +18761,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG e CPF', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18772,7 +18772,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['zoneamento_permite', 'atividade_permitida', 'parecer_viabilidade'],
+        requiredInputFieldIds: ['zoneamento_permite', 'atividade_permitida', 'parecer_viabilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18784,7 +18784,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
+        requiredInputFieldIds: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: true
@@ -18796,7 +18796,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['inscricao_municipal', 'responsavel_cadastro', 'data_cadastro'],
+        requiredInputFieldIds: ['inscricao_municipal', 'responsavel_cadastro', 'data_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -18808,7 +18808,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18821,7 +18821,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18845,7 +18845,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_empreendimento', 'localizacao', 'area_lamina_agua', 'especies_cultivadas'],
+        requiredInputFieldIds: ['nome_empreendimento', 'localizacao', 'area_lamina_agua', 'especies_cultivadas'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18857,7 +18857,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18868,7 +18868,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'manejo', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'manejo', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18880,7 +18880,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['viabilidade_tecnica', 'impacto_ambiental', 'parecer_tecnico'],
+        requiredInputFieldIds: ['viabilidade_tecnica', 'impacto_ambiental', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18892,7 +18892,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -18904,7 +18904,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18917,7 +18917,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -18941,7 +18941,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_ponto', 'tipo_manifestacao', 'localizacao', 'publico_atendido'],
+        requiredInputFieldIds: ['nome_ponto', 'tipo_manifestacao', 'localizacao', 'publico_atendido'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -18953,7 +18953,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Portfólio'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -18964,7 +18964,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['relevancia_cultural', 'impacto_comunidade', 'viabilidade', 'parecer_tecnico'],
+        requiredInputFieldIds: ['relevancia_cultural', 'impacto_comunidade', 'viabilidade', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -18976,7 +18976,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
+        requiredInputFieldIds: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: true
@@ -18988,7 +18988,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19000,7 +19000,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19013,7 +19013,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19037,7 +19037,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_startup', 'cnpj', 'area_atuacao', 'estagio_desenvolvimento', 'modelo_negocio'],
+        requiredInputFieldIds: ['nome_startup', 'cnpj', 'area_atuacao', 'estagio_desenvolvimento', 'modelo_negocio'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19049,7 +19049,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ da Empresa', 'Contrato Social'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19060,7 +19060,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['carater_inovador', 'potencial_escalabilidade', 'mercado_alvo', 'parecer_tecnico'],
+        requiredInputFieldIds: ['carater_inovador', 'potencial_escalabilidade', 'mercado_alvo', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19072,7 +19072,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'beneficios_oferecidos'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'beneficios_oferecidos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19084,7 +19084,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19097,7 +19097,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19121,7 +19121,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_viveiro', 'localizacao', 'area_total', 'capacidade_producao', 'especies_produzidas'],
+        requiredInputFieldIds: ['nome_viveiro', 'localizacao', 'area_total', 'capacidade_producao', 'especies_produzidas'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19133,7 +19133,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19144,7 +19144,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'sistema_irrigacao', 'procedencia_sementes', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'sistema_irrigacao', 'procedencia_sementes', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19156,7 +19156,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['especies_nativas', 'qualidade_mudas', 'manejo_adequado', 'parecer_tecnico'],
+        requiredInputFieldIds: ['especies_nativas', 'qualidade_mudas', 'manejo_adequado', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19168,7 +19168,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_cadastro'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19180,7 +19180,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19193,7 +19193,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19217,7 +19217,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'area_interesse', 'disponibilidade', 'experiencia'],
+        requiredInputFieldIds: ['nome', 'cpf', 'area_interesse', 'disponibilidade', 'experiencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19229,7 +19229,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19240,7 +19240,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_entrevista', 'responsavel_entrevista', 'perfil_adequado', 'observacoes'],
+        requiredInputFieldIds: ['data_entrevista', 'responsavel_entrevista', 'perfil_adequado', 'observacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19252,7 +19252,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_capacitacao', 'temas_abordados', 'aprovado'],
+        requiredInputFieldIds: ['data_capacitacao', 'temas_abordados', 'aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19264,7 +19264,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19277,7 +19277,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19301,7 +19301,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['modalidade', 'categoria', 'nome_equipe', 'responsavel'],
+        requiredInputFieldIds: ['modalidade', 'categoria', 'nome_equipe', 'responsavel'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19313,7 +19313,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Documentos dos Atletas'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19324,7 +19324,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['idade_categoria', 'documentos_regulares', 'atende_requisitos'],
+        requiredInputFieldIds: ['idade_categoria', 'documentos_regulares', 'atende_requisitos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19336,7 +19336,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['inscricao_homologada', 'numero_inscricao', 'chave_campeonato'],
+        requiredInputFieldIds: ['inscricao_homologada', 'numero_inscricao', 'chave_campeonato'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19348,7 +19348,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19361,7 +19361,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19385,7 +19385,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['aluno', 'escola', 'serie', 'turno'],
+        requiredInputFieldIds: ['aluno', 'escola', 'serie', 'turno'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19397,7 +19397,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG ou CPF', 'Declaração de Matrícula', 'Foto 3x4 recente'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19408,7 +19408,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['matricula_ativa', 'frequencia_regular'],
+        requiredInputFieldIds: ['matricula_ativa', 'frequencia_regular'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19420,7 +19420,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cartao', 'data_producao'],
+        requiredInputFieldIds: ['numero_cartao', 'data_producao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19432,7 +19432,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19445,7 +19445,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19468,7 +19468,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'tipo_deficiencia', 'grau_deficiencia'],
+        requiredInputFieldIds: ['nome', 'cpf', 'tipo_deficiencia', 'grau_deficiencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19480,7 +19480,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Laudo Médico', 'Comprovante de Residência', 'Foto 3x4 recente'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19491,7 +19491,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_valido', 'cid', 'tipo_deficiencia_confirmado', 'parecer_medico'],
+        requiredInputFieldIds: ['laudo_valido', 'cid', 'tipo_deficiencia_confirmado', 'parecer_medico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19503,7 +19503,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'beneficios_concedidos'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'beneficios_concedidos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19515,7 +19515,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cartao', 'data_producao'],
+        requiredInputFieldIds: ['numero_cartao', 'data_producao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19527,7 +19527,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19540,7 +19540,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19563,7 +19563,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_cartao', 'nome', 'cpf'],
+        requiredInputFieldIds: ['tipo_cartao', 'nome', 'cpf'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19575,7 +19575,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG ou CPF', 'Comprovante de Residência', 'Foto 3x4 recente'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19586,7 +19586,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'tipo_beneficio'],
+        requiredInputFieldIds: ['atende_criterios', 'tipo_beneficio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19598,7 +19598,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cartao', 'data_producao'],
+        requiredInputFieldIds: ['numero_cartao', 'data_producao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19610,7 +19610,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19623,7 +19623,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19647,7 +19647,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_idoso', 'idade', 'situacao_saude', 'situacao_familiar', 'grau_dependencia'],
+        requiredInputFieldIds: ['nome_idoso', 'idade', 'situacao_saude', 'situacao_familiar', 'grau_dependencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19659,7 +19659,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19670,7 +19670,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vinculos_familiares', 'situacao_vulnerabilidade', 'necessidade_institucional', 'parecer_social'],
+        requiredInputFieldIds: ['vinculos_familiares', 'situacao_vulnerabilidade', 'necessidade_institucional', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -19682,7 +19682,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['condicoes_saude', 'medicamentos_uso', 'necessidades_cuidados', 'parecer_medico'],
+        requiredInputFieldIds: ['condicoes_saude', 'medicamentos_uso', 'necessidades_cuidados', 'parecer_medico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -19694,7 +19694,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'prioridade'],
+        requiredInputFieldIds: ['atende_criterios', 'prioridade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19706,7 +19706,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19719,7 +19719,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19743,7 +19743,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['identificacao_bem', 'localizacao', 'finalidade_certidao'],
+        requiredInputFieldIds: ['identificacao_bem', 'localizacao', 'finalidade_certidao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19755,7 +19755,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19766,7 +19766,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['bem_tombado', 'numero_processo_tombamento', 'data_tombamento', 'restricoes'],
+        requiredInputFieldIds: ['bem_tombado', 'numero_processo_tombamento', 'data_tombamento', 'restricoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19778,7 +19778,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['responsavel_tecnico', 'data_elaboracao'],
+        requiredInputFieldIds: ['responsavel_tecnico', 'data_elaboracao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19790,7 +19790,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19803,7 +19803,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19827,7 +19827,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_certificado', 'cpf_cnpj', 'finalidade'],
+        requiredInputFieldIds: ['tipo_certificado', 'cpf_cnpj', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19839,7 +19839,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19850,7 +19850,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_validacao', 'responsavel_validacao', 'identidade_confirmada', 'biometria_coletada'],
+        requiredInputFieldIds: ['data_validacao', 'responsavel_validacao', 'identidade_confirmada', 'biometria_coletada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19862,7 +19862,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['numero_serie', 'data_validade', 'tipo_midia'],
+        requiredInputFieldIds: ['numero_serie', 'data_validade', 'tipo_midia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19874,7 +19874,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19887,7 +19887,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19911,7 +19911,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'motivo_solicitacao', 'grau_urgencia'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'motivo_solicitacao', 'grau_urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -19923,7 +19923,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -19934,7 +19934,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['situacao_vulnerabilidade', 'necessidade_imediata', 'parecer_social'],
+        requiredInputFieldIds: ['situacao_vulnerabilidade', 'necessidade_imediata', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -19946,7 +19946,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['quantidade_cestas', 'local_retirada', 'data_disponivel'],
+        requiredInputFieldIds: ['quantidade_cestas', 'local_retirada', 'data_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -19958,7 +19958,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19971,7 +19971,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -19995,7 +19995,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'renda_familiar', 'categoria_pretendida'],
+        requiredInputFieldIds: ['nome', 'cpf', 'renda_familiar', 'categoria_pretendida'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20007,7 +20007,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Comprovante de Renda Familiar'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20018,7 +20018,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'atende_criterios', 'pontuacao', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'atende_criterios', 'pontuacao', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20030,7 +20030,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_entrevista', 'responsavel_entrevista', 'motivacao', 'perfil_adequado'],
+        requiredInputFieldIds: ['data_entrevista', 'responsavel_entrevista', 'motivacao', 'perfil_adequado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20042,7 +20042,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'auto_escola_conveniada'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'auto_escola_conveniada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20054,7 +20054,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20067,7 +20067,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20091,7 +20091,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['produtor', 'produtos_ofertados', 'quantidade_disponivel', 'periodicidade_entrega'],
+        requiredInputFieldIds: ['produtor', 'produtos_ofertados', 'quantidade_disponivel', 'periodicidade_entrega'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20103,7 +20103,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20114,7 +20114,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'producao_verificada', 'qualidade_produtos', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'producao_verificada', 'qualidade_produtos', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20126,7 +20126,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['capacidade_fornecimento', 'regularidade', 'produtos_aprovados', 'parecer_tecnico'],
+        requiredInputFieldIds: ['capacidade_fornecimento', 'regularidade', 'produtos_aprovados', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20138,7 +20138,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'limite_fornecimento'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'limite_fornecimento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20150,7 +20150,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20163,7 +20163,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20187,7 +20187,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['identificacao_bem', 'localizacao', 'area_solicitada', 'finalidade_uso', 'tempo_ocupacao'],
+        requiredInputFieldIds: ['identificacao_bem', 'localizacao', 'area_solicitada', 'finalidade_uso', 'tempo_ocupacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20199,7 +20199,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20210,7 +20210,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['bem_publico', 'titularidade', 'restricoes_uso'],
+        requiredInputFieldIds: ['bem_publico', 'titularidade', 'restricoes_uso'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20222,7 +20222,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'situacao_encontrada', 'tempo_ocupacao_constatado', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'situacao_encontrada', 'tempo_ocupacao_constatado', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20234,7 +20234,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_requisitos_legais', 'finalidade_social', 'parecer_juridico'],
+        requiredInputFieldIds: ['atende_requisitos_legais', 'finalidade_social', 'parecer_juridico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20246,7 +20246,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['viabilidade', 'area_concedida', 'prazo_concessao', 'condicoes', 'parecer_final'],
+        requiredInputFieldIds: ['viabilidade', 'area_concedida', 'prazo_concessao', 'condicoes', 'parecer_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20258,7 +20258,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20270,7 +20270,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20283,7 +20283,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20307,7 +20307,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['numero_processo', 'tipo_copia', 'quantidade_paginas'],
+        requiredInputFieldIds: ['numero_processo', 'tipo_copia', 'quantidade_paginas'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20318,7 +20318,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['processo_localizado', 'localizacao_atual', 'responsavel_localizacao'],
+        requiredInputFieldIds: ['processo_localizado', 'localizacao_atual', 'responsavel_localizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20330,7 +20330,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['possui_acesso', 'vinculo_processo', 'observacoes'],
+        requiredInputFieldIds: ['possui_acesso', 'vinculo_processo', 'observacoes'],
         requiredDocumentTypes: ['RG e CPF'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20342,7 +20342,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['paginas_copiadas', 'valor_cobrar', 'responsavel_reproducao'],
+        requiredInputFieldIds: ['paginas_copiadas', 'valor_cobrar', 'responsavel_reproducao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -20354,7 +20354,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20367,7 +20367,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20391,7 +20391,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['razao_social', 'cnpj', 'cadastur', 'servicos_oferecidos'],
+        requiredInputFieldIds: ['razao_social', 'cnpj', 'cadastur', 'servicos_oferecidos'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20403,7 +20403,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Cadastur', 'Alvará de Funcionamento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20414,7 +20414,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'equipe_qualificada', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'equipe_qualificada', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20426,7 +20426,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20438,7 +20438,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20451,7 +20451,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20474,7 +20474,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'area_atuacao', 'experiencia'],
+        requiredInputFieldIds: ['nome', 'cpf', 'area_atuacao', 'experiencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20486,7 +20486,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Currículo', 'Certificados'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20497,7 +20497,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['formacao_adequada', 'experiencia_comprovada', 'parecer_tecnico'],
+        requiredInputFieldIds: ['formacao_adequada', 'experiencia_comprovada', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20509,7 +20509,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_entrevista', 'responsavel_entrevista', 'avaliacao', 'aprovado'],
+        requiredInputFieldIds: ['data_entrevista', 'responsavel_entrevista', 'avaliacao', 'aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20521,7 +20521,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'areas_aprovadas'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'areas_aprovadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20533,7 +20533,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20546,7 +20546,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20570,7 +20570,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'placa_moto', 'experiencia_conducao'],
+        requiredInputFieldIds: ['nome', 'cpf', 'placa_moto', 'experiencia_conducao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20582,7 +20582,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNH Categoria A (mínimo)', 'Certidão de Antecedentes Criminais'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20593,7 +20593,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_curso', 'carga_horaria', 'aprovado_curso'],
+        requiredInputFieldIds: ['data_curso', 'carga_horaria', 'aprovado_curso'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20605,7 +20605,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_seguranca', 'aprovado_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_seguranca', 'aprovado_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20617,7 +20617,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_credencial', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_credencial', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20629,7 +20629,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20642,7 +20642,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20665,7 +20665,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'area_artistica', 'modalidade', 'experiencia'],
+        requiredInputFieldIds: ['nome', 'cpf', 'area_artistica', 'modalidade', 'experiencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20677,7 +20677,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20688,7 +20688,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['formacao_adequada', 'experiencia_comprovada', 'qualidade_trabalho', 'parecer_tecnico'],
+        requiredInputFieldIds: ['formacao_adequada', 'experiencia_comprovada', 'qualidade_trabalho', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20700,7 +20700,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_avaliacao', 'responsavel_avaliacao', 'desempenho', 'aprovado'],
+        requiredInputFieldIds: ['data_avaliacao', 'responsavel_avaliacao', 'desempenho', 'aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20712,7 +20712,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'modalidades_aprovadas'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'modalidades_aprovadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20724,7 +20724,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20737,7 +20737,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20760,7 +20760,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'placa_veiculo', 'experiencia_conducao'],
+        requiredInputFieldIds: ['nome', 'cpf', 'placa_veiculo', 'experiencia_conducao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20772,7 +20772,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNH Categoria B (mínimo)', 'Certidão de Antecedentes Criminais'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20783,7 +20783,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_curso', 'carga_horaria', 'aprovado_curso'],
+        requiredInputFieldIds: ['data_curso', 'carga_horaria', 'aprovado_curso'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20795,7 +20795,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_obrigatorios', 'aprovado_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_obrigatorios', 'aprovado_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20807,7 +20807,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_credencial', 'ponto_atribuido', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_credencial', 'ponto_atribuido', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20819,7 +20819,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20832,7 +20832,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20855,7 +20855,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome_motorista', 'cpf', 'placa_veiculo', 'capacidade', 'rotas_interesse'],
+        requiredInputFieldIds: ['nome_motorista', 'cpf', 'placa_veiculo', 'capacidade', 'rotas_interesse'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20867,7 +20867,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNH Categoria D', 'CRLV', 'Seguro Obrigatório', 'Certidão de Antecedentes Criminais', 'Curso de Transporte Escolar'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20878,7 +20878,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_seguranca', 'identificacao_veicular', 'aprovado_vistoria'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_veiculo', 'equipamentos_seguranca', 'identificacao_veicular', 'aprovado_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20890,7 +20890,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['rotas_atribuidas', 'escolas_atendidas', 'horarios', 'numero_alunos'],
+        requiredInputFieldIds: ['rotas_atribuidas', 'escolas_atendidas', 'horarios', 'numero_alunos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -20902,7 +20902,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'numero_credencial', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'numero_credencial', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20914,7 +20914,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20927,7 +20927,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -20950,7 +20950,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'curso_interesse', 'escolaridade'],
+        requiredInputFieldIds: ['nome', 'cpf', 'curso_interesse', 'escolaridade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -20962,7 +20962,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -20973,7 +20973,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_requisitos', 'disponibilidade_horarios'],
+        requiredInputFieldIds: ['atende_requisitos', 'disponibilidade_horarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20985,7 +20985,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma_atribuida', 'data_inicio'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma_atribuida', 'data_inicio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -20997,7 +20997,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21010,7 +21010,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21033,7 +21033,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'idade', 'nivel_conhecimento'],
+        requiredInputFieldIds: ['nome', 'cpf', 'idade', 'nivel_conhecimento'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21045,7 +21045,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG ou CPF', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21056,7 +21056,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'prioridade', 'disponibilidade'],
+        requiredInputFieldIds: ['atende_criterios', 'prioridade', 'disponibilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21068,7 +21068,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['turma_atribuida', 'local', 'horario', 'data_inicio'],
+        requiredInputFieldIds: ['turma_atribuida', 'local', 'horario', 'data_inicio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -21080,7 +21080,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21093,7 +21093,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21117,7 +21117,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['produtor', 'cpf', 'propriedade', 'tipo_producao'],
+        requiredInputFieldIds: ['produtor', 'cpf', 'propriedade', 'tipo_producao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21129,7 +21129,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21140,7 +21140,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['area_total', 'atividades_desenvolvidas', 'renda_bruta_anual', 'mao_obra'],
+        requiredInputFieldIds: ['area_total', 'atividades_desenvolvidas', 'renda_bruta_anual', 'mao_obra'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -21152,7 +21152,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['enquadrado_pronaf', 'grupo_pronaf', 'parecer_tecnico'],
+        requiredInputFieldIds: ['enquadrado_pronaf', 'grupo_pronaf', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21164,7 +21164,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21177,7 +21177,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21201,7 +21201,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_declaracao', 'finalidade'],
+        requiredInputFieldIds: ['tipo_declaracao', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21213,7 +21213,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21224,7 +21224,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['informacoes_verificadas', 'dados_corretos'],
+        requiredInputFieldIds: ['informacoes_verificadas', 'dados_corretos'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -21236,7 +21236,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21249,7 +21249,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21272,7 +21272,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['numero_auto', 'tipo_infracao', 'data_autuacao'],
+        requiredInputFieldIds: ['numero_auto', 'tipo_infracao', 'data_autuacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21284,7 +21284,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNH', 'CRLV', 'Notificação de Autuação', 'Comprovantes (se houver)'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21295,7 +21295,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['argumentos_procedentes', 'verificacao_infracao', 'parecer_tecnico'],
+        requiredInputFieldIds: ['argumentos_procedentes', 'verificacao_infracao', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -21307,7 +21307,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['decisao', 'fundamentacao', 'gestor_decisor', 'data_decisao'],
+        requiredInputFieldIds: ['decisao', 'fundamentacao', 'gestor_decisor', 'data_decisao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -21319,7 +21319,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21332,7 +21332,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21355,7 +21355,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['solicitante', 'especies_solicitadas', 'quantidade', 'finalidade'],
+        requiredInputFieldIds: ['solicitante', 'especies_solicitadas', 'quantidade', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21366,7 +21366,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['especies_disponiveis', 'quantidade_disponivel'],
+        requiredInputFieldIds: ['especies_disponiveis', 'quantidade_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -21378,7 +21378,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['finalidade_adequada', 'local_plantio', 'parecer_tecnico'],
+        requiredInputFieldIds: ['finalidade_adequada', 'local_plantio', 'parecer_tecnico'],
         requiredDocumentTypes: ['Comprovante de Propriedade ou Posse'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21390,7 +21390,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['especies_aprovadas', 'quantidade_aprovada', 'data_retirada'],
+        requiredInputFieldIds: ['especies_aprovadas', 'quantidade_aprovada', 'data_retirada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -21402,7 +21402,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21415,7 +21415,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21438,7 +21438,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['produtor', 'sementes_solicitadas', 'quantidade', 'area_plantio'],
+        requiredInputFieldIds: ['produtor', 'sementes_solicitadas', 'quantidade', 'area_plantio'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21450,7 +21450,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21461,7 +21461,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['sementes_disponiveis', 'quantidade_disponivel'],
+        requiredInputFieldIds: ['sementes_disponiveis', 'quantidade_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -21473,7 +21473,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['adequacao_regiao', 'epoca_plantio', 'parecer_tecnico'],
+        requiredInputFieldIds: ['adequacao_regiao', 'epoca_plantio', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21485,7 +21485,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['sementes_aprovadas', 'quantidade_aprovada', 'data_retirada'],
+        requiredInputFieldIds: ['sementes_aprovadas', 'quantidade_aprovada', 'data_retirada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -21497,7 +21497,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21510,7 +21510,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21534,7 +21534,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['solicitante', 'materiais_solicitados', 'quantidade', 'finalidade', 'data_evento', 'data_devolucao'],
+        requiredInputFieldIds: ['solicitante', 'materiais_solicitados', 'quantidade', 'finalidade', 'data_evento', 'data_devolucao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21545,7 +21545,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['materiais_disponiveis', 'conflito_agenda'],
+        requiredInputFieldIds: ['materiais_disponiveis', 'conflito_agenda'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21557,7 +21557,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['finalidade_adequada', 'responsavel_evento', 'parecer_tecnico'],
+        requiredInputFieldIds: ['finalidade_adequada', 'responsavel_evento', 'parecer_tecnico'],
         requiredDocumentTypes: ['CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21569,7 +21569,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes_emprestimo'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes_emprestimo'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21581,7 +21581,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21594,7 +21594,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21618,7 +21618,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['estabelecimento', 'endereco', 'atividade', 'horario_funcionamento', 'metragem_solicitada'],
+        requiredInputFieldIds: ['estabelecimento', 'endereco', 'atividade', 'horario_funcionamento', 'metragem_solicitada'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21630,7 +21630,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Alvará de Funcionamento'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21641,7 +21641,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'viabilidade_tecnica', 'metragem_aprovada', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'viabilidade_tecnica', 'metragem_aprovada', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21653,7 +21653,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['impacto_transito', 'restricoes_horario', 'parecer_transito'],
+        requiredInputFieldIds: ['impacto_transito', 'restricoes_horario', 'parecer_transito'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21665,7 +21665,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21677,7 +21677,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21690,7 +21690,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21714,7 +21714,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'renda_familiar', 'atividade_interesse', 'experiencia'],
+        requiredInputFieldIds: ['nome', 'cpf', 'renda_familiar', 'atividade_interesse', 'experiencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21726,7 +21726,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda (se houver)', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21737,7 +21737,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'potencial_empreendedor', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'potencial_empreendedor', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21749,7 +21749,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_entrevista', 'responsavel_entrevista', 'perfil_adequado', 'atividade_recomendada'],
+        requiredInputFieldIds: ['data_entrevista', 'responsavel_entrevista', 'perfil_adequado', 'atividade_recomendada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21761,7 +21761,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'modalidade_programa'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'modalidade_programa'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21773,7 +21773,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21786,7 +21786,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21810,7 +21810,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_bem', 'descricao', 'finalidade_guarda', 'prazo_estimado'],
+        requiredInputFieldIds: ['tipo_bem', 'descricao', 'finalidade_guarda', 'prazo_estimado'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21821,7 +21821,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['condicoes_bem', 'valor_estimado', 'necessidades_conservacao'],
+        requiredInputFieldIds: ['condicoes_bem', 'valor_estimado', 'necessidades_conservacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21833,7 +21833,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['espaco_disponivel', 'local_guarda', 'condicoes_armazenamento'],
+        requiredInputFieldIds: ['espaco_disponivel', 'local_guarda', 'condicoes_armazenamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21845,7 +21845,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'prazo_guarda', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'prazo_guarda', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21857,7 +21857,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21870,7 +21870,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21894,7 +21894,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['empreendimento', 'tipo_atracao', 'circuito_interesse', 'infraestrutura_disponivel'],
+        requiredInputFieldIds: ['empreendimento', 'tipo_atracao', 'circuito_interesse', 'infraestrutura_disponivel'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -21906,7 +21906,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ ou CPF', 'Cadastur (se aplicável)'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -21917,7 +21917,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'acessibilidade', 'qualidade_servico', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'acessibilidade', 'qualidade_servico', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21929,7 +21929,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['adequacao_circuito', 'potencial_turistico', 'parecer_tecnico'],
+        requiredInputFieldIds: ['adequacao_circuito', 'potencial_turistico', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -21941,7 +21941,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'circuito_atribuido'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'circuito_atribuido'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -21953,7 +21953,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21966,7 +21966,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -21989,7 +21989,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'cargo_pretendido', 'escolaridade'],
+        requiredInputFieldIds: ['nome', 'cpf', 'cargo_pretendido', 'escolaridade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22001,7 +22001,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG e CPF', 'Comprovante de Escolaridade'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22012,7 +22012,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_requisitos', 'observacoes'],
+        requiredInputFieldIds: ['atende_requisitos', 'observacoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22024,7 +22024,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['inscricao_homologada', 'numero_inscricao'],
+        requiredInputFieldIds: ['inscricao_homologada', 'numero_inscricao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -22036,7 +22036,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22049,7 +22049,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22072,7 +22072,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'categoria', 'percurso', 'tamanho_camiseta'],
+        requiredInputFieldIds: ['nome', 'cpf', 'categoria', 'percurso', 'tamanho_camiseta'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22084,7 +22084,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Atestado Médico'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22095,7 +22095,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'numero_peito'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'numero_peito'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22107,7 +22107,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['inscricao_confirmada', 'local_retirada_kit'],
+        requiredInputFieldIds: ['inscricao_confirmada', 'local_retirada_kit'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -22119,7 +22119,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22132,7 +22132,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22155,7 +22155,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'curso_interesse', 'escolaridade', 'experiencia'],
+        requiredInputFieldIds: ['nome', 'cpf', 'curso_interesse', 'escolaridade', 'experiencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22167,7 +22167,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22178,7 +22178,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_requisitos', 'disponibilidade_horarios'],
+        requiredInputFieldIds: ['atende_requisitos', 'disponibilidade_horarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22190,7 +22190,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['vagas_disponiveis', 'turma_atribuida', 'data_inicio'],
+        requiredInputFieldIds: ['vagas_disponiveis', 'turma_atribuida', 'data_inicio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22202,7 +22202,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22215,7 +22215,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22238,7 +22238,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['empresa', 'cnpj', 'area_atuacao', 'estagio_desenvolvimento', 'modelo_negocio'],
+        requiredInputFieldIds: ['empresa', 'cnpj', 'area_atuacao', 'estagio_desenvolvimento', 'modelo_negocio'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22250,7 +22250,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ (se já constituída)', 'Pitch Deck (Apresentação)'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22261,7 +22261,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['inovacao', 'viabilidade', 'potencial_crescimento', 'equipe_adequada', 'parecer_tecnico'],
+        requiredInputFieldIds: ['inovacao', 'viabilidade', 'potencial_crescimento', 'equipe_adequada', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22273,7 +22273,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_apresentacao', 'responsavel_avaliacao', 'avaliacao_pitch', 'pontuacao'],
+        requiredInputFieldIds: ['data_apresentacao', 'responsavel_avaliacao', 'avaliacao_pitch', 'pontuacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22285,7 +22285,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'modalidade_incubacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'modalidade_incubacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22297,7 +22297,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22310,7 +22310,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22334,7 +22334,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'idade', 'tipo_isencao_solicitada'],
+        requiredInputFieldIds: ['nome', 'cpf', 'idade', 'tipo_isencao_solicitada'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22346,7 +22346,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22357,7 +22357,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['idade_minima', 'renda_compativel', 'atende_criterios'],
+        requiredInputFieldIds: ['idade_minima', 'renda_compativel', 'atende_criterios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22369,7 +22369,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'tipo_isencao_concedida', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'tipo_isencao_concedida', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22381,7 +22381,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22394,7 +22394,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22417,7 +22417,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['inscricao_imobiliaria', 'endereco_imovel', 'motivo_isencao', 'valor_venal'],
+        requiredInputFieldIds: ['inscricao_imobiliaria', 'endereco_imovel', 'motivo_isencao', 'valor_venal'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22429,7 +22429,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['RG e CPF', 'Comprovante de Renda'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22440,7 +22440,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
+        requiredInputFieldIds: ['necessita_vistoria', 'data_vistoria', 'responsavel_vistoria', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: true
@@ -22452,7 +22452,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'tipo_isencao', 'percentual_isencao'],
+        requiredInputFieldIds: ['atende_criterios', 'tipo_isencao', 'percentual_isencao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22464,7 +22464,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22476,7 +22476,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['responsavel_lancamento', 'data_lancamento'],
+        requiredInputFieldIds: ['responsavel_lancamento', 'data_lancamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -22488,7 +22488,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22501,7 +22501,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22524,7 +22524,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'motivo_isencao', 'idade'],
+        requiredInputFieldIds: ['nome', 'cpf', 'motivo_isencao', 'idade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22536,7 +22536,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22547,7 +22547,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'tipo_beneficio'],
+        requiredInputFieldIds: ['atende_criterios', 'tipo_beneficio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22559,7 +22559,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22571,7 +22571,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_cartao', 'data_producao'],
+        requiredInputFieldIds: ['numero_cartao', 'data_producao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -22583,7 +22583,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22596,7 +22596,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22620,7 +22620,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['empresa', 'atividade', 'localizacao', 'porte_empreendimento', 'potencial_poluidor'],
+        requiredInputFieldIds: ['empresa', 'atividade', 'localizacao', 'porte_empreendimento', 'potencial_poluidor'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22632,7 +22632,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ', 'Projeto Técnico', 'ART'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22643,7 +22643,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['tipo_poluicao', 'medidas_controle', 'impacto_ambiental', 'parecer_tecnico'],
+        requiredInputFieldIds: ['tipo_poluicao', 'medidas_controle', 'impacto_ambiental', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22655,7 +22655,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'condicoes_local', 'sistemas_controle', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'condicoes_local', 'sistemas_controle', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22667,7 +22667,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_final', 'viabilidade_ambiental', 'condicoes_licenca'],
+        requiredInputFieldIds: ['parecer_final', 'viabilidade_ambiental', 'condicoes_licenca'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22679,7 +22679,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22691,7 +22691,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22704,7 +22704,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22727,7 +22727,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['empreendimento', 'tipo_atividade', 'localizacao', 'capacidade_atendimento'],
+        requiredInputFieldIds: ['empreendimento', 'tipo_atividade', 'localizacao', 'capacidade_atendimento'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22739,7 +22739,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF ou CNPJ'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22750,7 +22750,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['adequacao_atividade', 'seguranca', 'impacto_turismo', 'parecer_tecnico'],
+        requiredInputFieldIds: ['adequacao_atividade', 'seguranca', 'impacto_turismo', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22762,7 +22762,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'seguranca_verificada', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'infraestrutura', 'seguranca_verificada', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22774,7 +22774,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'validade', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'validade', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22786,7 +22786,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22799,7 +22799,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22822,7 +22822,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['localizacao', 'profundidade_estimada', 'vazao_pretendida', 'finalidade'],
+        requiredInputFieldIds: ['localizacao', 'profundidade_estimada', 'vazao_pretendida', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22834,7 +22834,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -22845,7 +22845,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['aquifero', 'viabilidade_perfuracao', 'vazao_estimada', 'parecer_hidrogeologo'],
+        requiredInputFieldIds: ['aquifero', 'viabilidade_perfuracao', 'vazao_estimada', 'parecer_hidrogeologo'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22857,7 +22857,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'responsavel_vistoria', 'local_adequado', 'distancias_seguranca', 'relatorio'],
+        requiredInputFieldIds: ['data_vistoria', 'responsavel_vistoria', 'local_adequado', 'distancias_seguranca', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22869,7 +22869,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['impacto_ambiental', 'medidas_mitigadoras', 'parecer_ambiental'],
+        requiredInputFieldIds: ['impacto_ambiental', 'medidas_mitigadoras', 'parecer_ambiental'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22881,7 +22881,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22893,7 +22893,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22906,7 +22906,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22930,7 +22930,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['solicitante', 'equipamento_solicitado', 'finalidade', 'data_evento', 'data_devolucao'],
+        requiredInputFieldIds: ['solicitante', 'equipamento_solicitado', 'finalidade', 'data_evento', 'data_devolucao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -22941,7 +22941,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['equipamento_disponivel', 'conflito_agenda'],
+        requiredInputFieldIds: ['equipamento_disponivel', 'conflito_agenda'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22953,7 +22953,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['finalidade_adequada', 'responsavel_evento', 'parecer_tecnico'],
+        requiredInputFieldIds: ['finalidade_adequada', 'responsavel_evento', 'parecer_tecnico'],
         requiredDocumentTypes: ['Projeto do Evento', 'CPF'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -22965,7 +22965,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'valor_locacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'valor_locacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -22977,7 +22977,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -22990,7 +22990,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23014,7 +23014,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'materiais_solicitados', 'finalidade'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'materiais_solicitados', 'finalidade'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23026,7 +23026,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23037,7 +23037,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23049,7 +23049,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'viabilidade_obra', 'materiais_necessarios', 'relatorio'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'viabilidade_obra', 'materiais_necessarios', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23061,7 +23061,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'materiais_aprovados'],
+        requiredInputFieldIds: ['atende_criterios', 'materiais_aprovados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23073,7 +23073,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'data_entrega'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'data_entrega'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23085,7 +23085,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23098,7 +23098,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23122,7 +23122,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['aluno', 'escola', 'serie', 'renda_familiar'],
+        requiredInputFieldIds: ['aluno', 'escola', 'serie', 'renda_familiar'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23134,7 +23134,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Comprovante de Matrícula'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23145,7 +23145,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'renda_compativel'],
+        requiredInputFieldIds: ['atende_criterios', 'renda_compativel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23157,7 +23157,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['kit_aprovado', 'local_retirada', 'data_disponivel'],
+        requiredInputFieldIds: ['kit_aprovado', 'local_retirada', 'data_disponivel'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23169,7 +23169,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23182,7 +23182,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23206,7 +23206,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['vitima', 'situacao_risco', 'grau_urgencia', 'agressor'],
+        requiredInputFieldIds: ['vitima', 'situacao_risco', 'grau_urgencia', 'agressor'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23217,7 +23217,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nivel_risco', 'violencias_sofridas', 'necessidade_abrigo', 'parecer_equipe'],
+        requiredInputFieldIds: ['nivel_risco', 'violencias_sofridas', 'necessidade_abrigo', 'parecer_equipe'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23229,7 +23229,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['medidas_orientadas', 'procedimentos_judiciais', 'documentos_necessarios'],
+        requiredInputFieldIds: ['medidas_orientadas', 'procedimentos_judiciais', 'documentos_necessarios'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23241,7 +23241,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['delegacia_mulher', 'defensoria', 'rede_apoio', 'abrigo_temporario'],
+        requiredInputFieldIds: ['delegacia_mulher', 'defensoria', 'rede_apoio', 'abrigo_temporario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23253,7 +23253,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23266,7 +23266,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23289,7 +23289,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'situacao_moradia', 'melhorias_necessarias'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'situacao_moradia', 'melhorias_necessarias'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23301,7 +23301,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23312,7 +23312,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23324,7 +23324,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'condicoes_moradia', 'melhorias_identificadas', 'orcamento_estimado', 'relatorio'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'condicoes_moradia', 'melhorias_identificadas', 'orcamento_estimado', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23336,7 +23336,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'melhorias_aprovadas'],
+        requiredInputFieldIds: ['atende_criterios', 'melhorias_aprovadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23348,7 +23348,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'valor_aprovado'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'valor_aprovado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23360,7 +23360,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23373,7 +23373,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23396,7 +23396,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['aluno', 'escola', 'tipo_restricao', 'dieta_necessaria'],
+        requiredInputFieldIds: ['aluno', 'escola', 'tipo_restricao', 'dieta_necessaria'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23408,7 +23408,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Comprovante de Matrícula'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23419,7 +23419,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['cardapio_adequado', 'substituicoes_necessarias', 'parecer_nutricionista'],
+        requiredInputFieldIds: ['cardapio_adequado', 'substituicoes_necessarias', 'parecer_nutricionista'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -23431,7 +23431,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['dieta_aprovada', 'data_inicio', 'validade'],
+        requiredInputFieldIds: ['dieta_aprovada', 'data_inicio', 'validade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23443,7 +23443,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23456,7 +23456,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23480,7 +23480,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_transacao', 'inscricao_imobiliaria', 'valor_transacao'],
+        requiredInputFieldIds: ['tipo_transacao', 'inscricao_imobiliaria', 'valor_transacao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23492,7 +23492,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23503,7 +23503,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['base_calculo', 'aliquota', 'valor_itbi', 'deducoes'],
+        requiredInputFieldIds: ['base_calculo', 'aliquota', 'valor_itbi', 'deducoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23515,7 +23515,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['numero_guia', 'data_vencimento', 'valor_final'],
+        requiredInputFieldIds: ['numero_guia', 'data_vencimento', 'valor_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23527,7 +23527,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23540,7 +23540,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23563,7 +23563,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['contribuinte', 'tipo_debito', 'valor_total', 'numero_parcelas_solicitadas'],
+        requiredInputFieldIds: ['contribuinte', 'tipo_debito', 'valor_total', 'numero_parcelas_solicitadas'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23575,7 +23575,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23586,7 +23586,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['capacidade_pagamento', 'numero_parcelas_aprovadas', 'valor_parcela', 'juros_multa'],
+        requiredInputFieldIds: ['capacidade_pagamento', 'numero_parcelas_aprovadas', 'valor_parcela', 'juros_multa'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23598,7 +23598,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao', 'condicoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23610,7 +23610,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['numero_parcelamento', 'data_vencimento_primeira_parcela'],
+        requiredInputFieldIds: ['numero_parcelamento', 'data_vencimento_primeira_parcela'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23622,7 +23622,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23635,7 +23635,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23659,7 +23659,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['produtor', 'feira_interesse', 'produtos_comercializar', 'espaco_necessario'],
+        requiredInputFieldIds: ['produtor', 'feira_interesse', 'produtos_comercializar', 'espaco_necessario'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23671,7 +23671,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Catálogo de Produtos/Serviços (se houver)'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23682,7 +23682,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['produtos_adequados', 'qualidade_produtos', 'parecer_tecnico'],
+        requiredInputFieldIds: ['produtos_adequados', 'qualidade_produtos', 'parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23694,7 +23694,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['espaco_atribuido', 'numero_barraca', 'localizacao'],
+        requiredInputFieldIds: ['espaco_atribuido', 'numero_barraca', 'localizacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23706,7 +23706,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23719,7 +23719,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23743,7 +23743,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'tipo_deficiencia', 'renda_familiar'],
+        requiredInputFieldIds: ['nome', 'cpf', 'tipo_deficiencia', 'renda_familiar'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23755,7 +23755,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Laudo Médico (modelo específico)', 'Comprovante de Residência', 'Foto 3x4 recente'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23766,7 +23766,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_valido', 'deficiencia_comprovada', 'grau_deficiencia', 'parecer_medico'],
+        requiredInputFieldIds: ['laudo_valido', 'deficiencia_comprovada', 'grau_deficiencia', 'parecer_medico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23778,7 +23778,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'atende_criterios_renda'],
+        requiredInputFieldIds: ['renda_per_capita', 'atende_criterios_renda'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23790,7 +23790,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['gestor_aprovador', 'data_aprovacao'],
+        requiredInputFieldIds: ['gestor_aprovador', 'data_aprovacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23802,7 +23802,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23815,7 +23815,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23839,7 +23839,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['solicitante', 'motivo_pericia', 'grau_urgencia'],
+        requiredInputFieldIds: ['solicitante', 'motivo_pericia', 'grau_urgencia'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23850,7 +23850,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['necessidade_pericia', 'tipo_avaliacao'],
+        requiredInputFieldIds: ['necessidade_pericia', 'tipo_avaliacao'],
         requiredDocumentTypes: ['RG', 'CPF', 'Processo Judicial', 'Encaminhamento do Juizado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -23862,7 +23862,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_pericia', 'horario', 'local', 'profissionais_designados'],
+        requiredInputFieldIds: ['data_pericia', 'horario', 'local', 'profissionais_designados'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23874,7 +23874,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_realizada', 'profissionais_presentes', 'avaliacao_realizada'],
+        requiredInputFieldIds: ['data_realizada', 'profissionais_presentes', 'avaliacao_realizada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23886,7 +23886,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['laudo_psicologico', 'parecer_social', 'conclusoes'],
+        requiredInputFieldIds: ['laudo_psicologico', 'parecer_social', 'conclusoes'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23898,7 +23898,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23911,7 +23911,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -23935,7 +23935,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['nome', 'cpf', 'renda_familiar', 'experiencia_agricultura'],
+        requiredInputFieldIds: ['nome', 'cpf', 'renda_familiar', 'experiencia_agricultura'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -23947,7 +23947,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -23958,7 +23958,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'prioridade', 'horta_proxima'],
+        requiredInputFieldIds: ['atende_criterios', 'prioridade', 'horta_proxima'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23970,7 +23970,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_entrevista', 'responsavel_entrevista', 'perfil_adequado', 'disponibilidade'],
+        requiredInputFieldIds: ['data_entrevista', 'responsavel_entrevista', 'perfil_adequado', 'disponibilidade'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -23982,7 +23982,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['horta_atribuida', 'numero_lote', 'area_lote'],
+        requiredInputFieldIds: ['horta_atribuida', 'numero_lote', 'area_lote'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -23994,7 +23994,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_capacitacao', 'temas_abordados', 'presenca_confirmada'],
+        requiredInputFieldIds: ['data_capacitacao', 'temas_abordados', 'presenca_confirmada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24006,7 +24006,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24019,7 +24019,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24043,7 +24043,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['crianca', 'idade_crianca', 'responsavel', 'composicao_familiar', 'renda_familiar'],
+        requiredInputFieldIds: ['crianca', 'idade_crianca', 'responsavel', 'composicao_familiar', 'renda_familiar'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -24055,7 +24055,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -24066,7 +24066,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24078,7 +24078,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'situacao_familia', 'necessidades_identificadas', 'relatorio'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'situacao_familia', 'necessidades_identificadas', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24090,7 +24090,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'acoes_recomendadas'],
+        requiredInputFieldIds: ['atende_criterios', 'acoes_recomendadas'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24102,7 +24102,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atividades_oferecidas', 'cronograma', 'responsavel_acompanhamento'],
+        requiredInputFieldIds: ['atividades_oferecidas', 'cronograma', 'responsavel_acompanhamento'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24114,7 +24114,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24127,7 +24127,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24151,7 +24151,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'endereco', 'area_cobertura'],
+        requiredInputFieldIds: ['composicao_familiar', 'endereco', 'area_cobertura'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -24163,7 +24163,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['Cartão SUS', 'RG ou CPF'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -24174,7 +24174,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'equipe', 'situacao_saude_familia', 'necessidades_identificadas', 'relatorio'],
+        requiredInputFieldIds: ['data_visita', 'equipe', 'situacao_saude_familia', 'necessidades_identificadas', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24186,7 +24186,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['equipe_responsavel', 'unidade_saude', 'agente_comunitario'],
+        requiredInputFieldIds: ['equipe_responsavel', 'unidade_saude', 'agente_comunitario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24198,7 +24198,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24211,7 +24211,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24235,7 +24235,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['composicao_familiar', 'renda_familiar', 'possui_terreno', 'area_construcao'],
+        requiredInputFieldIds: ['composicao_familiar', 'renda_familiar', 'possui_terreno', 'area_construcao'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
@@ -24247,7 +24247,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda'],
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
@@ -24258,7 +24258,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
+        requiredInputFieldIds: ['renda_per_capita', 'vulnerabilidades', 'prioridade', 'parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24270,7 +24270,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_visita', 'responsavel_visita', 'caracteristicas_terreno', 'viabilidade_construcao', 'relatorio'],
+        requiredInputFieldIds: ['data_visita', 'responsavel_visita', 'caracteristicas_terreno', 'viabilidade_construcao', 'relatorio'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24282,7 +24282,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['atende_criterios', 'tipo_projeto_adequado'],
+        requiredInputFieldIds: ['atende_criterios', 'tipo_projeto_adequado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24294,7 +24294,7 @@ SUPORTE_TECNICO: {
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: ['arquiteto_responsavel', 'data_elaboracao', 'projeto_pronto'],
+        requiredInputFieldIds: ['arquiteto_responsavel', 'data_elaboracao', 'projeto_pronto'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24306,7 +24306,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'generated', 'document-generation', 'send', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24319,7 +24319,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24342,7 +24342,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_documento', 'destinatario', 'assunto'],
+        requiredInputFieldIds: ['tipo_documento', 'destinatario', 'assunto'],
         allowedActions: ['APPROVE'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24354,7 +24354,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24366,7 +24366,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24389,7 +24389,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação'],
-        requiredFormFields: ['inscricao_imobiliaria', 'tipo_obra', 'area_construida'],
+        requiredInputFieldIds: ['inscricao_imobiliaria', 'tipo_obra', 'area_construida'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24401,7 +24401,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24413,7 +24413,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico', 'parecer_vistoria'],
+        requiredInputFieldIds: ['laudo_tecnico', 'parecer_vistoria'],
         requiredDocumentTypes: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24425,7 +24425,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24437,7 +24437,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24449,7 +24449,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24462,7 +24462,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24485,7 +24485,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['inscricoes_lotes', 'area_total', 'justificativa'],
+        requiredInputFieldIds: ['inscricoes_lotes', 'area_total', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24497,7 +24497,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico'],
+        requiredInputFieldIds: ['parecer_tecnico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24509,7 +24509,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24521,7 +24521,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24533,7 +24533,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24546,7 +24546,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24569,7 +24569,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['CNH Atualizada', 'CRLV Atualizado', 'Vistoria em Dia', 'Certidão Negativa de Multas'],
-        requiredFormFields: ['tipo_credenciamento', 'numero_credenciamento_atual'],
+        requiredInputFieldIds: ['tipo_credenciamento', 'numero_credenciamento_atual'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24581,7 +24581,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24593,7 +24593,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24605,7 +24605,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24617,7 +24617,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24630,7 +24630,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24653,7 +24653,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência'],
-        requiredFormFields: ['tipo_reurb', 'area_ocupacao', 'numero_familias'],
+        requiredInputFieldIds: ['tipo_reurb', 'area_ocupacao', 'numero_familias'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24665,7 +24665,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24677,7 +24677,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['levantamento_topografico'],
+        requiredInputFieldIds: ['levantamento_topografico'],
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -24689,7 +24689,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24701,7 +24701,7 @@ SUPORTE_TECNICO: {
         slaDays: 45,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['projeto_regularizacao'],
+        requiredInputFieldIds: ['projeto_regularizacao'],
         requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -24713,7 +24713,7 @@ SUPORTE_TECNICO: {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24725,7 +24725,7 @@ SUPORTE_TECNICO: {
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24737,7 +24737,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24760,7 +24760,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['Carnê de IPTU', 'Fotos do Imóvel', 'Laudo de Avaliação (se houver)', 'Escritura do Imóvel'],
-        requiredFormFields: ['inscricao_imobiliaria', 'motivo_revisao', 'ano_exercicio'],
+        requiredInputFieldIds: ['inscricao_imobiliaria', 'motivo_revisao', 'ano_exercicio'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24772,7 +24772,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24784,7 +24784,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: true
@@ -24796,7 +24796,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24808,7 +24808,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['decisao', 'novo_valor_iptu'],
+        requiredInputFieldIds: ['decisao', 'novo_valor_iptu'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24820,7 +24820,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24843,7 +24843,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['CPF', 'DAP'],
-        requiredFormFields: ['area_plantada', 'cultura', 'ano_agricola'],
+        requiredInputFieldIds: ['area_plantada', 'cultura', 'ano_agricola'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24855,7 +24855,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24867,7 +24867,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria'],
+        requiredInputFieldIds: ['laudo_vistoria'],
         requiredDocumentTypes: ['CPF', 'DAP', 'Comprovante de Área Plantada'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24879,7 +24879,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24891,7 +24891,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24903,7 +24903,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -24915,7 +24915,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24938,7 +24938,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['motivo_solicitacao', 'numero_pessoas', 'situacao_vulnerabilidade'],
+        requiredInputFieldIds: ['motivo_solicitacao', 'numero_pessoas', 'situacao_vulnerabilidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -24950,7 +24950,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social'],
+        requiredInputFieldIds: ['parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24962,7 +24962,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['abrigo_destinado', 'data_entrada'],
+        requiredInputFieldIds: ['abrigo_destinado', 'data_entrada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -24974,7 +24974,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -24997,7 +24997,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG ou CPF'],
-        requiredFormFields: ['tipo_tratamento', 'frequencia_semanal'],
+        requiredInputFieldIds: ['tipo_tratamento', 'frequencia_semanal'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25009,7 +25009,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25021,7 +25021,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_inicio', 'horario', 'unidade_saude'],
+        requiredInputFieldIds: ['data_inicio', 'horario', 'unidade_saude'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -25033,7 +25033,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25056,7 +25056,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['distrito_interesse', 'tamanho_lote', 'finalidade'],
+        requiredInputFieldIds: ['distrito_interesse', 'tamanho_lote', 'finalidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25068,7 +25068,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_socioeconomico'],
+        requiredInputFieldIds: ['parecer_socioeconomico'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25080,7 +25080,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25092,7 +25092,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25104,7 +25104,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['lote_designado'],
+        requiredInputFieldIds: ['lote_designado'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25116,7 +25116,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25129,7 +25129,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25152,7 +25152,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['valor_solicitado', 'finalidade', 'prazo_pagamento'],
+        requiredInputFieldIds: ['valor_solicitado', 'finalidade', 'prazo_pagamento'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25164,7 +25164,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25176,7 +25176,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['score_credito', 'parecer_analista'],
+        requiredInputFieldIds: ['score_credito', 'parecer_analista'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25188,7 +25188,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25200,7 +25200,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['valor_aprovado', 'taxa_juros', 'prazo_final'],
+        requiredInputFieldIds: ['valor_aprovado', 'taxa_juros', 'prazo_final'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25212,7 +25212,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25225,7 +25225,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25248,7 +25248,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['CPF'],
-        requiredFormFields: ['numero_instalacao', 'renda_familiar'],
+        requiredInputFieldIds: ['numero_instalacao', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25260,7 +25260,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_social'],
+        requiredInputFieldIds: ['parecer_social'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25272,7 +25272,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25284,7 +25284,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25296,7 +25296,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -25308,7 +25308,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25331,7 +25331,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG', 'CPF', 'Fotos'],
-        requiredFormFields: ['tipo_bem', 'endereco', 'justificativa'],
+        requiredInputFieldIds: ['tipo_bem', 'endereco', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25343,7 +25343,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25355,7 +25355,7 @@ SUPORTE_TECNICO: {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['pesquisa_historica'],
+        requiredInputFieldIds: ['pesquisa_historica'],
         requiredDocumentTypes: ['CPF', 'RG', 'Documentação Histórica', 'Fotos', 'Laudo Técnico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -25367,7 +25367,7 @@ SUPORTE_TECNICO: {
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_tecnico'],
+        requiredInputFieldIds: ['laudo_tecnico'],
         requiredDocumentTypes: ['Laudo Técnico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -25379,7 +25379,7 @@ SUPORTE_TECNICO: {
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_conselho'],
+        requiredInputFieldIds: ['parecer_conselho'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25391,7 +25391,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25403,7 +25403,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -25415,7 +25415,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25438,7 +25438,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['Credencial de Taxista', 'Certidão Negativa de Multas', 'Justificativa'],
-        requiredFormFields: ['ponto_atual', 'ponto_destino', 'justificativa'],
+        requiredInputFieldIds: ['ponto_atual', 'ponto_destino', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25450,7 +25450,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25462,7 +25462,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25474,7 +25474,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25486,7 +25486,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25499,7 +25499,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25522,7 +25522,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG ou Certidão de Nascimento', 'CPF', 'Comprovante de Residência'],
-        requiredFormFields: ['nome_aluno', 'escola', 'serie', 'turno', 'endereco'],
+        requiredInputFieldIds: ['nome_aluno', 'escola', 'serie', 'turno', 'endereco'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25534,7 +25534,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25546,7 +25546,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['rota_designada', 'horario'],
+        requiredInputFieldIds: ['rota_designada', 'horario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25558,7 +25558,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25570,7 +25570,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25593,7 +25593,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG ou CPF'],
-        requiredFormFields: ['tipo_treinamento', 'disponibilidade'],
+        requiredInputFieldIds: ['tipo_treinamento', 'disponibilidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25605,7 +25605,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25617,7 +25617,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_treinamento', 'local', 'horario'],
+        requiredInputFieldIds: ['data_treinamento', 'local', 'horario'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -25629,7 +25629,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25641,7 +25641,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25664,7 +25664,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['Comprovante de Matrícula', 'Declaração de Baixa Renda (se aplicável)'],
-        requiredFormFields: ['nome_aluno', 'escola', 'serie', 'tamanho'],
+        requiredInputFieldIds: ['nome_aluno', 'escola', 'serie', 'tamanho'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25676,7 +25676,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25688,7 +25688,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -25700,7 +25700,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_entrega'],
+        requiredInputFieldIds: ['data_entrega'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -25712,7 +25712,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25735,7 +25735,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['tipo_evento', 'local', 'data_evento', 'horario', 'publico_esperado'],
+        requiredInputFieldIds: ['tipo_evento', 'local', 'data_evento', 'horario', 'publico_esperado'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25747,7 +25747,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25759,7 +25759,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25771,7 +25771,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25783,7 +25783,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25796,7 +25796,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25819,7 +25819,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG', 'CPF'],
-        requiredFormFields: ['data_solicitada', 'horario', 'finalidade', 'numero_pessoas'],
+        requiredInputFieldIds: ['data_solicitada', 'horario', 'finalidade', 'numero_pessoas'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25831,7 +25831,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25843,7 +25843,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25855,7 +25855,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25868,7 +25868,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25891,7 +25891,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: [],
-        requiredFormFields: ['endereco_vaga', 'justificativa', 'placa_veiculo'],
+        requiredInputFieldIds: ['endereco_vaga', 'justificativa', 'placa_veiculo'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25903,7 +25903,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25915,7 +25915,7 @@ SUPORTE_TECNICO: {
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria'],
+        requiredInputFieldIds: ['laudo_vistoria'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25927,7 +25927,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -25939,7 +25939,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_implantacao'],
+        requiredInputFieldIds: ['data_implantacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -25951,7 +25951,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -25974,7 +25974,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Comprovante de Residência'],
-        requiredFormFields: ['endereco_vaga', 'tipo_deficiencia', 'placa_veiculo'],
+        requiredInputFieldIds: ['endereco_vaga', 'tipo_deficiencia', 'placa_veiculo'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -25986,7 +25986,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -25998,7 +25998,7 @@ SUPORTE_TECNICO: {
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -26010,7 +26010,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria'],
+        requiredInputFieldIds: ['laudo_vistoria'],
         requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Laudo Médico', 'Documento do Veículo', 'Comprovante de Residência'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -26022,7 +26022,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -26034,7 +26034,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_implantacao'],
+        requiredInputFieldIds: ['data_implantacao'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -26046,7 +26046,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -26069,7 +26069,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['RG ou CPF'],
-        requiredFormFields: ['endereco', 'tipo_risco', 'descricao_situacao'],
+        requiredInputFieldIds: ['endereco', 'tipo_risco', 'descricao_situacao'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -26081,7 +26081,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['nivel_urgencia'],
+        requiredInputFieldIds: ['nivel_urgencia'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -26093,7 +26093,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'equipe_designada'],
+        requiredInputFieldIds: ['data_vistoria', 'equipe_designada'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -26105,7 +26105,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['laudo_vistoria', 'medidas_recomendadas'],
+        requiredInputFieldIds: ['laudo_vistoria', 'medidas_recomendadas'],
         requiredDocumentTypes: ['Fotos do Local (se possível)'],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -26117,7 +26117,7 @@ SUPORTE_TECNICO: {
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['parecer_tecnico', 'acoes_necessarias'],
+        requiredInputFieldIds: ['parecer_tecnico', 'acoes_necessarias'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false
@@ -26129,7 +26129,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -26152,7 +26152,7 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredDocumentTypes: ['CRLV'],
-        requiredFormFields: ['placa_veiculo', 'tipo_vistoria', 'finalidade'],
+        requiredInputFieldIds: ['placa_veiculo', 'tipo_vistoria', 'finalidade'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
@@ -26164,7 +26164,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['data_vistoria', 'horario', 'local'],
+        requiredInputFieldIds: ['data_vistoria', 'horario', 'local'],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -26176,7 +26176,7 @@ SUPORTE_TECNICO: {
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredFormFields: ['resultado_vistoria', 'observacoes'],
+        requiredInputFieldIds: ['resultado_vistoria', 'observacoes'],
         requiredDocumentTypes: ['CRLV', 'Comprovante de Pagamento de Taxas'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
@@ -26188,7 +26188,7 @@ SUPORTE_TECNICO: {
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'generated', 'document-generation', 'comunicacao'],
         primaryTab: 'document-generation',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -26201,7 +26201,7 @@ SUPORTE_TECNICO: {
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
-        requiredFormFields: [],
+        requiredInputFieldIds: [],
         requiredDocumentTypes: [],
         allowedActions: ['APPROVE'],
         canSkip: false,
@@ -26280,7 +26280,7 @@ function generateGenericWorkflow(service: any): any[] {
     description: 'Recebimento e verificação de documentos',
     slaDays: 2,
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false,
     ...generateContextualUIMetadata(service, 'Recepção e Análise Documental', 1)
@@ -26292,7 +26292,7 @@ function generateGenericWorkflow(service: any): any[] {
     description: 'Análise técnica da solicitação',
     slaDays: 3,
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false,
     ...generateContextualUIMetadata(service, 'Análise Técnica', 2)
@@ -26307,7 +26307,7 @@ function generateGenericWorkflow(service: any): any[] {
       description: 'Vistoria técnica in loco',
       slaDays: 5,
       requiredDocumentTypes: [],
-      requiredFormFields: [],
+      requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false,
       ...generateContextualUIMetadata(service, 'Vistoria/Inspeção', 3)
@@ -26320,7 +26320,7 @@ function generateGenericWorkflow(service: any): any[] {
     description: 'Processamento e preparação',
     slaDays: 5,
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false,
     ...generateContextualUIMetadata(service, 'Processamento', stages.length + 1)
@@ -26332,7 +26332,7 @@ function generateGenericWorkflow(service: any): any[] {
     description: 'Aprovação final do gestor',
     slaDays: 2,
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REJECT'],
     canSkip: false,
     ...generateContextualUIMetadata(service, 'Aprovação Final', stages.length + 1)
@@ -26344,7 +26344,7 @@ function generateGenericWorkflow(service: any): any[] {
     description: 'Emissão de documento ou finalização',
     slaDays: 1,
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE'],
     canSkip: false,
     availableTabs: ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'],
@@ -26371,7 +26371,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
     primaryTab: 'resumo',
 
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE'],
     canSkip: false
   },
@@ -26385,7 +26385,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
     primaryTab: 'resumo',
 
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false
   },
@@ -26399,7 +26399,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
     primaryTab: 'resumo',
 
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false
   },
@@ -26413,7 +26413,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
     primaryTab: 'resumo',
 
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REJECT'],
     canSkip: false
   },
@@ -26427,7 +26427,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
     primaryTab: 'document-generation',
 
     requiredDocumentTypes: [],
-    requiredFormFields: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE'],
     canSkip: false,
     stageType: 'DOCUMENT_GENERATION'
@@ -26439,6 +26439,149 @@ const genericWorkflowStages: Prisma.JsonValue = [
  * FUNÇÃO PRINCIPAL DE SEED
  * ============================================================================
  */
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const item of value) {
+    if (typeof item !== 'string') continue;
+    const trimmed = item.trim();
+    if (!trimmed || seen.has(trimmed)) continue;
+    seen.add(trimmed);
+    normalized.push(trimmed);
+  }
+
+  return normalized;
+}
+
+function parseJsonObject(value: unknown): Record<string, any> | null {
+  if (!value) return null;
+  if (typeof value === 'string') {
+    try {
+      const parsed = JSON.parse(value);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+  return typeof value === 'object' ? (value as Record<string, any>) : null;
+}
+
+function normalizeLookupToken(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function snakeToCamel(value: string): string {
+  return value.replace(/_([a-zA-Z0-9])/g, (_, char) => String(char).toUpperCase());
+}
+
+function buildServiceFieldCatalog(service: any): Set<string> {
+  const fieldIds = new Set<string>();
+  const formSchema = parseJsonObject(service?.formSchema);
+  const properties =
+    formSchema &&
+    typeof formSchema.properties === 'object' &&
+    formSchema.properties !== null
+      ? (formSchema.properties as Record<string, unknown>)
+      : {};
+
+  for (const fieldId of Object.keys(properties)) {
+    if (fieldId.trim()) {
+      fieldIds.add(fieldId.trim());
+    }
+  }
+
+  const formFieldsConfig = Array.isArray(service?.formFieldsConfig) ? service.formFieldsConfig : [];
+  for (const field of formFieldsConfig) {
+    if (!field || typeof field !== 'object') continue;
+    const fieldRecord = field as Record<string, any>;
+    const rawId = fieldRecord.id ?? fieldRecord.key ?? fieldRecord.name;
+    const fieldId = typeof rawId === 'string' ? rawId.trim() : '';
+    if (fieldId) {
+      fieldIds.add(fieldId);
+    }
+  }
+
+  return fieldIds;
+}
+
+function resolveFieldId(rawFieldId: string, fieldCatalog: Set<string>): string | null {
+  const trimmed = rawFieldId.trim();
+  if (!trimmed) return null;
+  if (fieldCatalog.has(trimmed)) return trimmed;
+
+  const snakeCandidate = snakeToCamel(trimmed);
+  if (fieldCatalog.has(snakeCandidate)) return snakeCandidate;
+
+  const normalizedTarget = normalizeLookupToken(trimmed);
+  if (!normalizedTarget) return null;
+
+  let match: string | null = null;
+  for (const fieldId of fieldCatalog) {
+    if (normalizeLookupToken(fieldId) === normalizedTarget) {
+      if (match && match !== fieldId) return null;
+      match = fieldId;
+    }
+  }
+
+  return match;
+}
+
+function sanitizeStageRequirementsForService(service: any, stages: any[]) {
+  const fieldCatalog = buildServiceFieldCatalog(service);
+  let unresolvedInputCount = 0;
+  let movedOutputCount = 0;
+
+  const sanitizedStages = stages.map((stage) => {
+    const stageRecord = stage && typeof stage === 'object' ? (stage as Record<string, any>) : {};
+    const rawRequiredInputs = normalizeStringArray(stageRecord.requiredInputFieldIds ?? []);
+    const existingRequiredOutputs = normalizeStringArray(stageRecord.requiredStageOutputs ?? []);
+
+    const resolvedRequiredInputs: string[] = [];
+    const unresolvedRequiredInputs: string[] = [];
+    const resolvedSeen = new Set<string>();
+
+    for (const fieldId of rawRequiredInputs) {
+      const resolved = resolveFieldId(fieldId, fieldCatalog);
+      if (!resolved) {
+        unresolvedRequiredInputs.push(fieldId);
+        continue;
+      }
+      if (resolvedSeen.has(resolved)) continue;
+      resolvedSeen.add(resolved);
+      resolvedRequiredInputs.push(resolved);
+    }
+
+    unresolvedInputCount += unresolvedRequiredInputs.length;
+
+    const normalizedRequiredOutputs = Array.from(
+      new Set([...existingRequiredOutputs, ...unresolvedRequiredInputs])
+    );
+    movedOutputCount += Math.max(normalizedRequiredOutputs.length - existingRequiredOutputs.length, 0);
+
+    const {
+      requiredInputFieldIds,
+      requiredStageOutputs,
+      ...stageWithoutRequirements
+    } = stageRecord;
+
+    return {
+      ...stageWithoutRequirements,
+      requiredDocumentTypes: normalizeStringArray(stageRecord.requiredDocumentTypes ?? []),
+      requiredInputFieldIds: resolvedRequiredInputs,
+      requiredStageOutputs: normalizedRequiredOutputs
+    };
+  });
+
+  return {
+    sanitizedStages,
+    unresolvedInputCount,
+    movedOutputCount
+  };
+}
+
 function normalizeWorkflowStages(stages: any[]): any[] {
   const normalized = (stages || []).map(stage => ({ ...stage }));
   const normalizeName = (value: string) => String(value || '').toLowerCase();
@@ -26498,8 +26641,8 @@ function normalizeWorkflowStages(stages: any[]): any[] {
     availableTabs: ['resumo', 'documentos', 'comunicacao'],
     primaryTab: 'resumo',
     requiredDocumentTypes: [],
-    requiredFormFields: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
+    requiredStageOutputs: [],
     allowedActions: ['APPROVE'],
     canSkip: false,
     stageType: 'RECEPTION',
@@ -26514,8 +26657,8 @@ function normalizeWorkflowStages(stages: any[]): any[] {
     availableTabs: ['resumo', 'comunicacao'],
     primaryTab: 'resumo',
     requiredDocumentTypes: [],
-    requiredFormFields: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
+    requiredStageOutputs: [],
     allowedActions: ['APPROVE'],
     canSkip: false,
     stageType: 'CONCLUSION',
@@ -26561,9 +26704,21 @@ function normalizeWorkflowStages(stages: any[]): any[] {
   return normalized.map((stage, index) => {
     const isGeneration = isGenerationStage(stage?.name);
     const generationTabs = ['resumo', 'documentos', 'generated', 'document-generation', 'send', 'comunicacao'];
+    const stageRecord = stage && typeof stage === 'object' ? (stage as Record<string, any>) : {};
+    const requiredInputFieldIds = normalizeStringArray(stageRecord.requiredInputFieldIds ?? []);
+    const requiredStageOutputs = normalizeStringArray(stageRecord.requiredStageOutputs ?? []);
+    const {
+      requiredInputFieldIds: _rawRequiredInputFieldIds,
+      requiredStageOutputs: _rawRequiredStageOutputs,
+      ...stageWithoutRequirements
+    } = stageRecord;
+
     return {
-      ...stage,
+      ...stageWithoutRequirements,
       order: index + 1,
+      requiredDocumentTypes: normalizeStringArray(stageRecord.requiredDocumentTypes ?? []),
+      requiredInputFieldIds,
+      requiredStageOutputs,
       availableTabs: isGeneration ? mergeTabs(stage?.availableTabs, generationTabs) : stage?.availableTabs,
       primaryTab: isGeneration ? stage?.primaryTab || 'document-generation' : stage?.primaryTab,
       stageType: isGeneration ? stage?.stageType || 'DOCUMENT_GENERATION' : stage?.stageType
@@ -26616,6 +26771,16 @@ export async function seedServiceWorkflows() {
         workflowName = `Workflow - ${service.name}`;
         workflowDescription = `Fluxo padrão para ${service.name}`;
         defaultSLA = service.estimatedDays || 10;
+      }
+
+      const { sanitizedStages, unresolvedInputCount, movedOutputCount } =
+        sanitizeStageRequirementsForService(service, workflowStages as any[]);
+      workflowStages = sanitizedStages;
+
+      if (unresolvedInputCount > 0) {
+        console.warn(
+          `   âš ï¸ ${service.name}: ${unresolvedInputCount} campo(s) de entrada nÃ£o mapeado(s) movido(s) para requiredStageOutputs (${movedOutputCount} novo(s)).`
+        );
       }
 
       if (existing) {
@@ -26678,5 +26843,3 @@ if (require.main === module) {
       await prisma.$disconnect();
     });
 }
-
-

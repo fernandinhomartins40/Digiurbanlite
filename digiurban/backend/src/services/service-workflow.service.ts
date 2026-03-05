@@ -100,6 +100,268 @@ type WorkflowStageSupportRecord = Prisma.WorkflowStageSupportAssignmentGetPayloa
   include: typeof workflowStageSupportInclude;
 }>;
 
+interface ServiceFormFieldDescriptor {
+  id: string;
+  label: string;
+  type: string;
+  required: boolean;
+}
+
+interface ServiceFormFieldCatalog {
+  fields: ServiceFormFieldDescriptor[];
+  byId: Map<string, ServiceFormFieldDescriptor>;
+}
+
+export class WorkflowValidationError extends Error {
+  public readonly statusCode: number;
+
+  constructor(message: string, statusCode = 400) {
+    super(message);
+    this.name = 'WorkflowValidationError';
+    this.statusCode = statusCode;
+  }
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  const normalized: string[] = [];
+  const seen = new Set<string>();
+
+  for (const item of value) {
+    if (typeof item !== 'string') {
+      continue;
+    }
+
+    const trimmed = item.trim();
+    if (!trimmed || seen.has(trimmed)) {
+      continue;
+    }
+
+    seen.add(trimmed);
+    normalized.push(trimmed);
+  }
+
+  return normalized;
+}
+
+function parseJsonObject(input: unknown): Record<string, any> | null {
+  if (!input) {
+    return null;
+  }
+
+  if (typeof input === 'string') {
+    try {
+      const parsed = JSON.parse(input);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      return null;
+    }
+  }
+
+  return typeof input === 'object' ? (input as Record<string, any>) : null;
+}
+
+function normalizeLookupToken(value: string): string {
+  return value.toLowerCase().replace(/[^a-z0-9]/g, '');
+}
+
+function snakeToCamel(value: string): string {
+  return value.replace(/_([a-zA-Z0-9])/g, (_, char) => String(char).toUpperCase());
+}
+
+function extractServiceFormFields(service: {
+  formSchema?: unknown;
+  formFieldsConfig?: unknown;
+}): ServiceFormFieldCatalog {
+  const byId = new Map<string, ServiceFormFieldDescriptor>();
+  const formSchema = parseJsonObject(service.formSchema);
+  const requiredFromSchema = new Set(
+    Array.isArray(formSchema?.required)
+      ? formSchema.required.filter((value: unknown): value is string => typeof value === 'string')
+      : []
+  );
+
+  const properties =
+    formSchema &&
+    typeof formSchema.properties === 'object' &&
+    formSchema.properties !== null
+      ? (formSchema.properties as Record<string, any>)
+      : {};
+
+  for (const [fieldId, fieldDefinition] of Object.entries(properties)) {
+    const fieldObject =
+      fieldDefinition && typeof fieldDefinition === 'object'
+        ? (fieldDefinition as Record<string, any>)
+        : {};
+
+    if (!fieldId.trim()) {
+      continue;
+    }
+
+    byId.set(fieldId, {
+      id: fieldId,
+      label:
+        (typeof fieldObject.title === 'string' && fieldObject.title) ||
+        (typeof fieldObject.label === 'string' && fieldObject.label) ||
+        fieldId,
+      type:
+        (typeof fieldObject.type === 'string' && fieldObject.type) ||
+        (typeof fieldObject.widget === 'string' && fieldObject.widget) ||
+        'text',
+      required: requiredFromSchema.has(fieldId)
+    });
+  }
+
+  if (byId.size === 0) {
+    const formFieldsConfig = Array.isArray(service.formFieldsConfig) ? service.formFieldsConfig : [];
+    for (const field of formFieldsConfig) {
+      if (!field || typeof field !== 'object') {
+        continue;
+      }
+
+      const fieldRecord = field as Record<string, any>;
+      const rawId = fieldRecord.id ?? fieldRecord.key ?? fieldRecord.name;
+      const fieldId = typeof rawId === 'string' ? rawId.trim() : '';
+      if (!fieldId) {
+        continue;
+      }
+
+      byId.set(fieldId, {
+        id: fieldId,
+        label:
+          (typeof fieldRecord.label === 'string' && fieldRecord.label) ||
+          (typeof fieldRecord.title === 'string' && fieldRecord.title) ||
+          fieldId,
+        type: typeof fieldRecord.type === 'string' && fieldRecord.type ? fieldRecord.type : 'text',
+        required: Boolean(fieldRecord.required)
+      });
+    }
+  }
+
+  return {
+    fields: Array.from(byId.values()),
+    byId
+  };
+}
+
+function resolveServiceFormFieldId(rawFieldId: string, catalog: ServiceFormFieldCatalog): string | null {
+  const trimmed = rawFieldId.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  if (catalog.byId.has(trimmed)) {
+    return trimmed;
+  }
+
+  const snakeCandidate = snakeToCamel(trimmed);
+  if (catalog.byId.has(snakeCandidate)) {
+    return snakeCandidate;
+  }
+
+  const normalizedTarget = normalizeLookupToken(trimmed);
+  if (!normalizedTarget) {
+    return null;
+  }
+
+  let matchedId: string | null = null;
+  for (const field of catalog.fields) {
+    if (normalizeLookupToken(field.id) === normalizedTarget) {
+      if (matchedId && matchedId !== field.id) {
+        return null;
+      }
+      matchedId = field.id;
+    }
+  }
+
+  return matchedId;
+}
+
+function getRequiredInputFieldIds(stage: WorkflowStage | Record<string, any>): string[] {
+  return normalizeStringArray((stage as any).requiredInputFieldIds ?? []);
+}
+
+function getRequiredStageOutputs(stage: WorkflowStage | Record<string, any>): string[] {
+  return normalizeStringArray((stage as any).requiredStageOutputs ?? []);
+}
+
+function hasFilledValue(value: unknown): boolean {
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  if (typeof value === 'string') {
+    return value.trim().length > 0;
+  }
+
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
+
+  if (typeof value === 'object') {
+    return Object.keys(value as Record<string, unknown>).length > 0;
+  }
+
+  return true;
+}
+
+function mapFieldIdsToLabels(fieldIds: string[], catalog: ServiceFormFieldCatalog): string[] {
+  return fieldIds.map(fieldId => catalog.byId.get(fieldId)?.label || fieldId);
+}
+
+function assertStagesAlignedWithService(
+  service: {
+    name: string;
+    formSchema?: unknown;
+    formFieldsConfig?: unknown;
+  },
+  stages: WorkflowStage[]
+) {
+  const catalog = extractServiceFormFields(service);
+
+  if (catalog.fields.length === 0) {
+    const hasInputRequirements = stages.some(stage => (stage.requiredInputFieldIds || []).length > 0);
+    if (hasInputRequirements) {
+      throw new WorkflowValidationError(
+        `Workflow inválido para "${service.name}": o serviço não possui campos em formSchema/formFieldsConfig, mas há campos de entrada obrigatórios nas etapas.`
+      );
+    }
+    return;
+  }
+
+  const invalidByStage = stages
+    .map(stage => {
+      const invalidFieldIds = (stage.requiredInputFieldIds || []).filter(
+        fieldId => !catalog.byId.has(fieldId)
+      );
+      if (invalidFieldIds.length === 0) {
+        return null;
+      }
+
+      return {
+        stageName: stage.name || `Etapa ${stage.order}`,
+        invalidFieldIds
+      };
+    })
+    .filter((item): item is { stageName: string; invalidFieldIds: string[] } => Boolean(item));
+
+  if (invalidByStage.length === 0) {
+    return;
+  }
+
+  const availableFieldIds = catalog.fields.map(field => field.id).sort();
+  const details = invalidByStage
+    .map(item => `${item.stageName}: ${item.invalidFieldIds.join(', ')}`)
+    .join(' | ');
+
+  throw new WorkflowValidationError(
+    `Workflow inválido para "${service.name}". Campos de entrada não encontrados no serviço: ${details}. Campos válidos: ${availableFieldIds.join(', ')}`
+  );
+}
+
 function normalizeStageSupportAssignment(
   assignment: WorkflowStageSupportAssignment | Record<string, any> | null | undefined
 ): WorkflowStageSupportAssignment | null {
@@ -163,20 +425,22 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
     typeof stage.primaryTab === 'string' && stage.primaryTab
       ? stage.primaryTab
       : availableTabs[0] || 'resumo';
-  const requiredFormFieldIds = Array.isArray(stage.requiredFormFieldIds)
-    ? stage.requiredFormFieldIds
-    : Array.isArray((stage as any).requiredFormFields)
-      ? (stage as any).requiredFormFields
-      : [];
+  const requiredInputFieldIds = getRequiredInputFieldIds(stage);
+  const requiredStageOutputs = getRequiredStageOutputs(stage);
 
   const supportAssignments = Array.isArray(stage.supportAssignments)
     ? stage.supportAssignments
         .map(normalizeStageSupportAssignment)
         .filter((assignment): assignment is WorkflowStageSupportAssignment => Boolean(assignment))
     : [];
+  const {
+    requiredInputFieldIds: _rawRequiredInputFieldIds,
+    requiredStageOutputs: _rawRequiredStageOutputs,
+    ...stageWithoutRequirements
+  } = stage as Record<string, any>;
 
   return {
-    ...(stage as WorkflowStage),
+    ...(stageWithoutRequirements as WorkflowStage),
     id: typeof stage.id === 'string' && stage.id ? stage.id : randomUUID(),
     name: typeof stage.name === 'string' ? stage.name : '',
     description: typeof stage.description === 'string' && stage.description ? stage.description : undefined,
@@ -184,8 +448,9 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
     slaDays: typeof stage.slaDays === 'number' && stage.slaDays > 0 ? stage.slaDays : undefined,
     availableTabs,
     primaryTab,
-    requiredDocumentTypes: Array.isArray(stage.requiredDocumentTypes) ? stage.requiredDocumentTypes : [],
-    requiredFormFieldIds,
+    requiredDocumentTypes: normalizeStringArray((stage as any).requiredDocumentTypes),
+    requiredInputFieldIds,
+    requiredStageOutputs,
     allowedActions: Array.isArray(stage.allowedActions) ? stage.allowedActions : [],
     canSkip: Boolean(stage.canSkip),
     skipCondition:
@@ -393,8 +658,8 @@ export function buildProtocolStageMetadataFromWorkflowStage(stage: WorkflowStage
     availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
     primaryTab: stage.primaryTab || 'resumo',
     requiredDocumentTypes: stage.requiredDocumentTypes || [],
-    requiredFormFields: stage.requiredFormFieldIds || [],
-    requiredFormFieldIds: stage.requiredFormFieldIds || [],
+    requiredInputFieldIds: stage.requiredInputFieldIds || [],
+    requiredStageOutputs: stage.requiredStageOutputs || [],
     allowedActions: stage.allowedActions || [],
     canSkip: stage.canSkip || false,
     skipCondition: stage.skipCondition,
@@ -432,6 +697,7 @@ export async function createServiceWorkflow(data: CreateServiceWorkflowData) {
   }
 
   const stages = getWorkflowStagesFromJson(data.stages);
+  assertStagesAlignedWithService(service, stages);
   const stagesForStorage = stages.map(({ supportAssignments, ...stage }) => stage);
 
   const workflow = await prisma.$transaction(async (tx) => {
@@ -520,6 +786,14 @@ export async function updateServiceWorkflow(
   serviceId: string,
   data: UpdateServiceWorkflowData
 ) {
+  const service = await prisma.serviceSimplified.findUnique({
+    where: { id: serviceId }
+  });
+
+  if (!service) {
+    throw new Error(`Serviço não encontrado: ${serviceId}`);
+  }
+
   const updateData: any = {};
   let normalizedStages: WorkflowStage[] | undefined;
 
@@ -531,6 +805,7 @@ export async function updateServiceWorkflow(
 
   if (data.stages) {
     normalizedStages = getWorkflowStagesFromJson(data.stages);
+    assertStagesAlignedWithService(service, normalizedStages);
     updateData.stages = normalizedStages.map(({ supportAssignments, ...stage }) => stage);
   }
 
@@ -743,7 +1018,21 @@ export async function validateStageConditions(
   }
 
   // ===== VALIDAR CAMPOS DO FORMULÁRIO (usando ProtocolDataField.status) =====
-  const requiredFieldIds = metadata?.requiredFormFieldIds || [];
+  const serviceFormFieldCatalog = extractServiceFormFields(service || {});
+  const allRequiredFieldIds = getRequiredInputFieldIds(metadata || {});
+  const unresolvedRequiredFieldIds = allRequiredFieldIds.filter(
+    fieldId => !serviceFormFieldCatalog.byId.has(fieldId)
+  );
+
+  if (unresolvedRequiredFieldIds.length > 0) {
+    warnings.push(
+      `Campos de entrada não mapeados no serviço (ignorados nesta validação): ${unresolvedRequiredFieldIds.join(', ')}`
+    );
+  }
+
+  const requiredFieldIds = allRequiredFieldIds.filter(fieldId =>
+    serviceFormFieldCatalog.byId.has(fieldId)
+  );
 
   if (requiredFieldIds.length > 0) {
     // ✅ CORREÇÃO: Buscar status dos ProtocolDataField ao invés de verificar customData
@@ -754,9 +1043,6 @@ export async function validateStageConditions(
       }
     });
 
-    // Campos aprovados
-    const approvedFields = dataFields.filter(f => f.status === 'APPROVED');
-    const approvedFieldKeys = approvedFields.map(f => f.fieldKey);
 
     // Campos pendentes (não aprovados ou rejeitados)
     const pendingOrRejectedFields = dataFields.filter(f => f.status !== 'APPROVED');
@@ -774,26 +1060,24 @@ export async function validateStageConditions(
 
     if (unapprovedFieldIds.length > 0) {
       // Buscar labels do formSchema para exibição amigável
-      let formSchemaRaw = service?.formSchema as any;
-      if (typeof formSchemaRaw === 'string') {
-        try {
-          formSchemaRaw = JSON.parse(formSchemaRaw);
-        } catch (e) {
-          formSchemaRaw = null;
-        }
-      }
-
-      const fieldLabels = unapprovedFieldIds.map((fieldId: string) => {
-        const field = formSchemaRaw?.properties?.[fieldId];
-        return field?.title || fieldId;
-      });
-
+      const fieldLabels = mapFieldIdsToLabels(unapprovedFieldIds, serviceFormFieldCatalog);
       missingFormFields.push(...fieldLabels);
-      blockers.push(`Campos não aprovados: ${fieldLabels.join(', ')}`);
+      blockers.push(`Campos de entrada não aprovados: ${fieldLabels.join(', ')}`);
     }
   }
 
   // ===== VALIDAR PENDÊNCIAS BLOQUEANTES =====
+  const requiredStageOutputs = getRequiredStageOutputs(metadata || {});
+  const stageOutputs =
+    metadata?.stageOutputs && typeof metadata.stageOutputs === 'object'
+      ? (metadata.stageOutputs as Record<string, unknown>)
+      : {};
+  const missingStageOutputs = requiredStageOutputs.filter(outputKey => !hasFilledValue(stageOutputs[outputKey]));
+
+  if (missingStageOutputs.length > 0) {
+    blockers.push(`Saídas obrigatórias da etapa pendentes: ${missingStageOutputs.join(', ')}`);
+  }
+
   const blockingPendings = await prisma.protocolPending.count({
     where: {
       protocolId,
@@ -811,7 +1095,8 @@ export async function validateStageConditions(
     blockers,
     warnings,
     missingDocuments,
-    missingFormFields
+    missingFormFields,
+    missingStageOutputs
   };
 }
 
@@ -898,15 +1183,7 @@ export async function getServiceForWorkflow(serviceId: string) {
     : [];
 
   // Extrair campos do formulário
-  const formFieldsConfig = service.formFieldsConfig as any;
-  const formFields = Array.isArray(formFieldsConfig)
-    ? formFieldsConfig.map(field => ({
-        id: field.id,
-        label: field.label,
-        type: field.type,
-        required: field.required || false
-      }))
-    : [];
+  const formFields = extractServiceFormFields(service).fields;
 
   return {
     id: service.id,

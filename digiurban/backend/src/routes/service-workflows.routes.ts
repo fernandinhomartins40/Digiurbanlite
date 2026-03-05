@@ -161,9 +161,14 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.ADMIN), async (req
     });
   } catch (error) {
     console.error('Erro ao criar workflow:', error);
-    return res.status(500).json({
+    const statusCode =
+      error instanceof serviceWorkflowService.WorkflowValidationError ? error.statusCode : 500;
+    return res.status(statusCode).json({
       success: false,
-      error: 'Erro ao criar workflow',
+      error:
+        error instanceof serviceWorkflowService.WorkflowValidationError
+          ? error.message
+          : 'Erro ao criar workflow',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }
@@ -194,9 +199,14 @@ router.put('/service/:serviceId', adminAuthMiddleware, requireMinRole(UserRole.A
     });
   } catch (error) {
     console.error('Erro ao atualizar workflow:', error);
-    return res.status(500).json({
+    const statusCode =
+      error instanceof serviceWorkflowService.WorkflowValidationError ? error.statusCode : 500;
+    return res.status(statusCode).json({
       success: false,
-      error: 'Erro ao atualizar workflow',
+      error:
+        error instanceof serviceWorkflowService.WorkflowValidationError
+          ? error.message
+          : 'Erro ao atualizar workflow',
       details: error instanceof Error ? error.message : 'Erro desconhecido'
     });
   }

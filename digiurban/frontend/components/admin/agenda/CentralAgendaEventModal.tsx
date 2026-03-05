@@ -197,15 +197,16 @@ export function CentralAgendaEventModal({
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden border-slate-200/80 p-0 shadow-xl">
+        <DialogHeader className="border-b border-slate-200/80 bg-gradient-to-r from-sky-50 via-white to-emerald-50 px-6 py-5">
           <DialogTitle>{event?.id ? 'Editar Evento' : 'Novo Evento'}</DialogTitle>
           <DialogDescription>
             Evento da agenda centralizada. Disponível conforme regras de visibilidade e participantes.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="flex flex-col">
+          <div className="central-agenda-modal-scroll max-h-[calc(90vh-170px)] space-y-4 overflow-y-auto px-6 py-5">
           {error && (
             <Alert variant="destructive">
               <AlertDescription>{error}</AlertDescription>
@@ -330,7 +331,9 @@ export function CentralAgendaEventModal({
             </div>
           </div>
 
-          <DialogFooter>
+          </div>
+
+          <DialogFooter className="border-t border-slate-200/80 bg-white/95 px-6 py-4">
             <Button type="button" variant="outline" onClick={onClose} disabled={isLoading}>
               Cancelar
             </Button>

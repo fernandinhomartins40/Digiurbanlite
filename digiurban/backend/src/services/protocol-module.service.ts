@@ -43,6 +43,51 @@ export interface RejectProtocolInput {
   reason: string;
 }
 
+function extractRequiredInputFieldsFromService(service: {
+  formSchema?: unknown;
+  formFieldsConfig?: unknown;
+}): string[] {
+  const requiredFieldIds = new Set<string>();
+
+  let formSchema: Record<string, any> | null = null;
+  if (typeof service.formSchema === 'string') {
+    try {
+      const parsed = JSON.parse(service.formSchema);
+      formSchema = parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      formSchema = null;
+    }
+  } else if (service.formSchema && typeof service.formSchema === 'object') {
+    formSchema = service.formSchema as Record<string, any>;
+  }
+
+  if (Array.isArray(formSchema?.required)) {
+    for (const fieldId of formSchema.required) {
+      if (typeof fieldId === 'string' && fieldId.trim()) {
+        requiredFieldIds.add(fieldId.trim());
+      }
+    }
+  }
+
+  const formFieldsConfig = Array.isArray(service.formFieldsConfig) ? service.formFieldsConfig : [];
+  for (const field of formFieldsConfig) {
+    if (!field || typeof field !== 'object') {
+      continue;
+    }
+
+    const fieldRecord = field as Record<string, any>;
+    const rawId = fieldRecord.id ?? fieldRecord.key ?? fieldRecord.name;
+    const fieldId = typeof rawId === 'string' ? rawId.trim() : '';
+    if (!fieldId || !fieldRecord.required) {
+      continue;
+    }
+
+    requiredFieldIds.add(fieldId);
+  }
+
+  return Array.from(requiredFieldIds);
+}
+
 // ============================================================================
 // SERVICE CLASS
 // ============================================================================
@@ -212,7 +257,7 @@ export class ProtocolModuleService {
         const dataFieldService = await import('./protocol-data-field.service');
 
         // Determinar quais campos são obrigatórios (pode vir do schema do serviço)
-        const requiredFields: string[] = []; // TODO: puxar do serviceSchema se existir
+        const requiredFields = extractRequiredInputFieldsFromService(service);
 
         await dataFieldService.createDataFieldsFromCustomData({
           protocolId: result.protocol.id,

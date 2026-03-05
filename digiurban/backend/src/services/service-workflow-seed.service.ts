@@ -622,7 +622,7 @@ const genericWorkflowStages = [
     description: 'Protocolo recebido e aguardando análise inicial',
     slaDays: 2,
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE'],
     canSkip: false
   },
@@ -632,7 +632,7 @@ const genericWorkflowStages = [
     description: 'Análise da solicitação',
     slaDays: 3,
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false
   },
@@ -642,7 +642,7 @@ const genericWorkflowStages = [
     description: 'Processamento da solicitação',
     slaDays: 5,
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false
   },
@@ -652,7 +652,7 @@ const genericWorkflowStages = [
     description: 'Aprovação final',
     slaDays: 2,
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REJECT'],
     canSkip: false
   },
@@ -662,7 +662,7 @@ const genericWorkflowStages = [
     description: 'Emissão de documento ou conclusão do atendimento',
     slaDays: 1,
     requiredDocumentTypes: [],
-    requiredFormFieldIds: [],
+    requiredInputFieldIds: [],
     allowedActions: ['APPROVE'],
     canSkip: false
   }

@@ -903,6 +903,94 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
  * POST /api/protocols-simplified/:id/comments
  * Adiciona comentário ao protocolo
  */
+// ========================================
+// SOLICITAR AGILIDADE (COBRANCA DE ATUALIZACAO)
+// ========================================
+
+/**
+ * POST /api/protocols/:id/request-update
+ * Registra cobranca de agilidade para o protocolo.
+ */
+router.post('/:id/request-update', requireMinRole(UserRole.ADMIN), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = req.params;
+    const message =
+      typeof req.body?.message === 'string' && req.body.message.trim().length > 0
+        ? req.body.message.trim()
+        : 'Solicitacao de agilidade na resolucao deste protocolo.';
+
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        number: true,
+        status: true,
+        assignedUserId: true,
+        departmentId: true,
+      },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({
+        success: false,
+        error: 'Protocolo nao encontrado',
+      });
+    }
+
+    if (protocol.status === 'CONCLUIDO') {
+      return res.status(400).json({
+        success: false,
+        error: 'Nao e possivel solicitar atualizacao de protocolo concluido',
+      });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.protocolHistorySimplified.create({
+        data: {
+          protocolId: id,
+          action: 'REQUEST_UPDATE',
+          comment: message,
+          userId: authReq.userId,
+          metadata: {
+            requestedByRole: authReq.user?.role || UserRole.ADMIN,
+            requestedByName: authReq.user?.name || 'Administrador',
+            assignedUserId: protocol.assignedUserId,
+            departmentId: protocol.departmentId,
+          } as any,
+        },
+      });
+
+      await tx.protocolInteraction.create({
+        data: {
+          protocolId: id,
+          type: 'URGENCY_REQUEST',
+          authorType: 'SERVER',
+          authorId: authReq.userId,
+          authorName: authReq.user?.name || 'Administrador',
+          message: `Cobranca de agilidade registrada: ${message}`,
+          isInternal: true,
+          metadata: {
+            action: 'REQUEST_UPDATE',
+            protocolNumber: protocol.number,
+          } as any,
+        },
+      });
+    });
+
+    return res.json({
+      success: true,
+      message: 'Solicitacao de atualizacao registrada com sucesso',
+    });
+  } catch (error: any) {
+    console.error('Erro ao solicitar atualizacao do protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao solicitar atualizacao',
+    });
+  }
+});
+
 router.post('/:id/comments', async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
@@ -1580,8 +1668,8 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'pendencias',
         requiredDocumentTypes: [],
-        requiredFormFields: [],
-        requiredFormFieldIds: [],
+        requiredInputFieldIds: [],
+        requiredStageOutputs: [],
         allowedActions: ['REQUEST_INFO', 'CREATE_PENDING', 'APPROVE', 'REJECT'],
         canSkip: false
       };

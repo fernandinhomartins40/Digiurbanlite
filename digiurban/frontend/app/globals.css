@@ -92,4 +92,43 @@
   .tap-highlight-none {
     -webkit-tap-highlight-color: transparent;
   }
+
+  /* Scrollbar customizada para modais da agenda */
+  .central-agenda-modal-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(14, 116, 144, 0.55) rgba(226, 232, 240, 0.75);
+  }
+  .central-agenda-modal-scroll::-webkit-scrollbar {
+    width: 10px;
+  }
+  .central-agenda-modal-scroll::-webkit-scrollbar-track {
+    background: linear-gradient(180deg, rgba(241, 245, 249, 0.95), rgba(226, 232, 240, 0.95));
+    border-radius: 9999px;
+  }
+  .central-agenda-modal-scroll::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(2, 132, 199, 0.85), rgba(13, 148, 136, 0.85));
+    border: 2px solid rgba(241, 245, 249, 0.95);
+    border-radius: 9999px;
+  }
+  .central-agenda-modal-scroll::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(3, 105, 161, 0.95), rgba(15, 118, 110, 0.95));
+  }
+
+  /* Ajustes visuais do calendario centralizado */
+  .central-agenda-calendar .rbc-toolbar {
+    margin-bottom: 0.75rem;
+    padding: 0.5rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 0.75rem;
+    background: linear-gradient(90deg, rgba(248, 250, 252, 0.95), rgba(255, 255, 255, 0.95));
+  }
+  .central-agenda-calendar .rbc-toolbar button {
+    border-radius: 0.5rem;
+  }
+  .central-agenda-calendar .rbc-month-view,
+  .central-agenda-calendar .rbc-time-view {
+    border-color: rgba(226, 232, 240, 0.9);
+    border-radius: 0.75rem;
+    overflow: hidden;
+  }
 }

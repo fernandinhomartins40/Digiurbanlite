@@ -22,9 +22,9 @@ interface WorkflowStage {
   order: number;
   description?: string;
   slaDays?: number;
+  requiredInputFieldIds?: string[];
+  requiredStageOutputs?: string[];
   requiredDocumentTypes?: string[];
-  requiredFormFields?: string[];
-  requiredFormFieldIds?: string[];
   allowedActions?: string[];
   availableTabs?: string[];
   primaryTab?: string;
@@ -121,8 +121,14 @@ async function migrateProtocolStagesMetadata() {
 
               // Atualizar requisitos
               requiredDocumentTypes: templateStage.requiredDocumentTypes || [],
-              requiredFormFields: templateStage.requiredFormFields || [],
-              requiredFormFieldIds: templateStage.requiredFormFieldIds || currentMetadata.requiredFormFieldIds || [],
+              requiredInputFieldIds:
+                templateStage.requiredInputFieldIds ||
+                currentMetadata.requiredInputFieldIds ||
+                [],
+              requiredStageOutputs:
+                templateStage.requiredStageOutputs ||
+                currentMetadata.requiredStageOutputs ||
+                [],
 
               // Atualizar ações
               allowedActions: templateStage.allowedActions || currentMetadata.allowedActions || [],

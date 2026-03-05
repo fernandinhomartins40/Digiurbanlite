@@ -21,7 +21,8 @@ export interface ProtocolViewModeResult {
     status: string
     metadata?: {
       requiredDocumentTypes?: string[]
-      requiredFormFields?: string[]
+      requiredInputFieldIds?: string[]
+      requiredStageOutputs?: string[]
       allowedActions?: string[]
       [key: string]: any
     }
@@ -121,7 +122,8 @@ export function getContextualTabs(
     stageName: string
     metadata?: {
       requiredDocumentTypes?: string[]
-      requiredFormFields?: string[]
+      requiredInputFieldIds?: string[]
+      requiredStageOutputs?: string[]
       availableTabs?: string[]
     }
   } | null,
@@ -166,8 +168,10 @@ export function getContextualTabs(
   }
 
   // Se requer campos de formulário, mostrar aba de dados
-  if (currentStage.metadata?.requiredFormFields &&
-      currentStage.metadata.requiredFormFields.length > 0) {
+  const requiredInputFieldIds =
+    currentStage.metadata?.requiredInputFieldIds ||
+    []
+  if (requiredInputFieldIds.length > 0) {
     tabs.push('dados')
   }
 
@@ -205,7 +209,8 @@ export function getPrimaryTab(
     stageName: string
     metadata?: {
       requiredDocumentTypes?: string[]
-      requiredFormFields?: string[]
+      requiredInputFieldIds?: string[]
+      requiredStageOutputs?: string[]
       primaryTab?: string
     }
   } | null

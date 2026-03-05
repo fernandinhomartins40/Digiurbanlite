@@ -155,7 +155,7 @@ export default function AdminDashboard() {
   const requestUpdate = async (protocolId: string) => {
     try {
       setRequestingUpdate(protocolId)
-      await apiRequest(`/api/admin/protocols/${protocolId}/request-update`, {
+      await apiRequest(`/protocols/${protocolId}/request-update`, {
         method: 'POST',
         body: JSON.stringify({
           message: 'Solicitação de agilidade na resolução deste protocolo.'

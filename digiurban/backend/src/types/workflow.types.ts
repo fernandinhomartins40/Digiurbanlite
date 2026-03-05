@@ -82,7 +82,8 @@ export interface WorkflowStage {
 
   // ✅ NOVO: Referências aos requisitos do SERVIÇO
   requiredDocumentTypes: string[];      // Tipos de documentos do serviço
-  requiredFormFieldIds: string[];       // IDs de campos do formulário do serviço
+  requiredInputFieldIds?: string[];     // IDs de campos de entrada (formSchema.properties)
+  requiredStageOutputs?: string[];      // Chaves de saídas obrigatórias da etapa
 
   // Configurações da etapa
   allowedActions: WorkflowStageAction[]; // Ações permitidas
@@ -159,6 +160,7 @@ export interface StageValidationResult {
   warnings: string[];                   // Avisos
   missingDocuments: string[];           // Documentos faltantes
   missingFormFields: string[];          // Campos de formulário não preenchidos
+  missingStageOutputs?: string[];       // Saídas obrigatórias da etapa não preenchidas
 }
 
 // ============================================================================
