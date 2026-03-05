@@ -185,7 +185,23 @@ export async function obterEstatisticasAtendimento(filtros: {
 // ============================================================================
 
 export async function buscarContextoFila(filaId: string) {
-  return requestJson(`${CONSULTA_BASE}/contexto-fila/${filaId}`);
+  try {
+    return await requestJson(`${CONSULTA_BASE}/contexto-fila/${filaId}`);
+  } catch (error) {
+    const fila = await requestJson(`${SAUDE_BASE}/fila-atendimento/${filaId}`);
+
+    return {
+      fila: {
+        ...fila,
+        escutaInicial: fila.escutaInicial ?? null,
+        triagem: fila.triagem ?? null,
+      },
+      problemas: [],
+      consultasAnteriores: [],
+      contextoParcial: true,
+      contextoErroOriginal: error instanceof Error ? error.message : String(error),
+    };
+  }
 }
 
 export async function buscarConsultaPorFila(filaId: string) {

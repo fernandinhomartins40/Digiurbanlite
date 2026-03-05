@@ -1,9 +1,85 @@
 import { PrismaClient } from '@prisma/client';
+import { isPrismaMissingTableError } from '../../utils/prisma-missing-table';
 
 const prisma = new PrismaClient();
 
 export class ConsultaMedicaService {
-  // ─── Buscar dados completos da entrada na fila (paciente + histórico) ───────
+  private async buscarEscutaInicialSegura(filaAtendimentoId: string) {
+    try {
+      return await prisma.escutaInicial.findUnique({
+        where: { filaAtendimentoId },
+      });
+    } catch (error) {
+      if (isPrismaMissingTableError(error, ['escutas_iniciais'])) {
+        console.warn(
+          '[consulta-medica] tabela escutas_iniciais ausente. Retornando escuta inicial nula em contexto-fila.'
+        );
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  private async buscarTriagemSegura(filaAtendimentoId: string) {
+    try {
+      return await prisma.triagemEnfermagem.findUnique({
+        where: { filaAtendimentoId },
+      });
+    } catch (error) {
+      if (isPrismaMissingTableError(error, ['triagens_enfermagem'])) {
+        console.warn(
+          '[consulta-medica] tabela triagens_enfermagem ausente. Retornando triagem nula em contexto-fila.'
+        );
+        return null;
+      }
+
+      throw error;
+    }
+  }
+
+  private async listarProblemasAtivosSegura(citizenId: string) {
+    try {
+      return await prisma.problemaCondicao.findMany({
+        where: { citizenId, status: 'ATIVO' },
+        orderBy: { dataInicio: 'desc' },
+      });
+    } catch (error) {
+      if (isPrismaMissingTableError(error, ['problemas_condicoes'])) {
+        console.warn(
+          '[consulta-medica] tabela problemas_condicoes ausente. Retornando problemas vazios em contexto-fila.'
+        );
+        return [];
+      }
+
+      throw error;
+    }
+  }
+
+  private async listarConsultasAnterioresSegura(citizenId: string) {
+    try {
+      return await prisma.consultaMedica.findMany({
+        where: {
+          atendimento: { citizenId },
+        },
+        include: {
+          atendimento: { select: { dataAtendimento: true } },
+        },
+        orderBy: { dataHora: 'desc' },
+        take: 5,
+      });
+    } catch (error) {
+      if (isPrismaMissingTableError(error, ['consultas_medicas', 'atendimentos_medicos'])) {
+        console.warn(
+          '[consulta-medica] tabelas de consultas indisponiveis. Retornando historico vazio em contexto-fila.'
+        );
+        return [];
+      }
+
+      throw error;
+    }
+  }
+
   async buscarContextoFila(filaAtendimentoId: string) {
     const fila = await prisma.filaAtendimento.findUnique({
       where: { id: filaAtendimentoId },
@@ -12,35 +88,29 @@ export class ConsultaMedicaService {
         profissional: { select: { id: true, name: true } },
         equipe: true,
         unidade: true,
-        escutaInicial: true,
-        triagem: true,
       },
     });
 
     if (!fila) return null;
 
-    // Problemas ativos do cidadão
-    const problemas = await prisma.problemaCondicao.findMany({
-      where: { citizenId: fila.citizenId, status: 'ATIVO' },
-      orderBy: { dataInicio: 'desc' },
-    });
+    const [escutaInicial, triagem, problemas, consultasAnteriores] = await Promise.all([
+      this.buscarEscutaInicialSegura(fila.id),
+      this.buscarTriagemSegura(fila.id),
+      this.listarProblemasAtivosSegura(fila.citizenId),
+      this.listarConsultasAnterioresSegura(fila.citizenId),
+    ]);
 
-    // Últimas 5 consultas do cidadão
-    const consultasAnteriores = await prisma.consultaMedica.findMany({
-      where: {
-        atendimento: { citizenId: fila.citizenId },
+    return {
+      fila: {
+        ...fila,
+        escutaInicial,
+        triagem,
       },
-      include: {
-        atendimento: { select: { dataAtendimento: true } },
-      },
-      orderBy: { dataHora: 'desc' },
-      take: 5,
-    });
-
-    return { fila, problemas, consultasAnteriores };
+      problemas,
+      consultasAnteriores,
+    };
   }
 
-  // ─── Criar consulta médica (método SOAP) ──────────────────────────────────
   async criar(data: {
     filaAtendimentoId: string;
     medicoId: string;
@@ -62,7 +132,6 @@ export class ConsultaMedicaService {
     prazoRetornoDias?: number;
     observacoes?: string;
   }) {
-    // Buscar ou criar AtendimentoMedico vinculado à fila
     let atendimento = await prisma.atendimentoMedico.findFirst({
       where: { filaAtendimentoId: data.filaAtendimentoId },
     });
@@ -71,7 +140,7 @@ export class ConsultaMedicaService {
       const fila = await prisma.filaAtendimento.findUnique({
         where: { id: data.filaAtendimentoId },
       });
-      if (!fila) throw new Error('Entrada na fila não encontrada');
+      if (!fila) throw new Error('Entrada na fila nao encontrada');
 
       atendimento = await prisma.atendimentoMedico.create({
         data: {
@@ -111,7 +180,6 @@ export class ConsultaMedicaService {
       },
     });
 
-    // Atualizar status da fila para EM_CONSULTA
     await prisma.filaAtendimento.update({
       where: { id: data.filaAtendimentoId },
       data: { status: 'EM_CONSULTA', dataHoraInicio: new Date() },
@@ -120,7 +188,6 @@ export class ConsultaMedicaService {
     return consulta;
   }
 
-  // ─── Finalizar consulta ────────────────────────────────────────────────────
   async finalizar(filaAtendimentoId: string) {
     await prisma.filaAtendimento.update({
       where: { id: filaAtendimentoId },
@@ -141,7 +208,6 @@ export class ConsultaMedicaService {
     return { ok: true };
   }
 
-  // ─── Buscar consulta por fila ──────────────────────────────────────────────
   async buscarPorFila(filaAtendimentoId: string) {
     const atendimento = await prisma.atendimentoMedico.findFirst({
       where: { filaAtendimentoId },
@@ -159,12 +225,14 @@ export class ConsultaMedicaService {
     });
   }
 
-  // ─── Prescrição ────────────────────────────────────────────────────────────
-  async criarPrescricao(consultaId: string, data: {
-    medicamentos: Record<string, any>;
-    observacoes?: string;
-    validade: string;
-  }) {
+  async criarPrescricao(
+    consultaId: string,
+    data: {
+      medicamentos: Record<string, any>;
+      observacoes?: string;
+      validade: string;
+    }
+  ) {
     return await prisma.prescricao.create({
       data: {
         consultaId,
@@ -182,12 +250,14 @@ export class ConsultaMedicaService {
     });
   }
 
-  // ─── Exames ────────────────────────────────────────────────────────────────
-  async criarExame(consultaId: string, data: {
-    tipoExame: string;
-    justificativa?: string;
-    prioridade: string;
-  }) {
+  async criarExame(
+    consultaId: string,
+    data: {
+      tipoExame: string;
+      justificativa?: string;
+      prioridade: string;
+    }
+  ) {
     return await prisma.exameSolicitado.create({
       data: {
         consultaId,
@@ -206,12 +276,14 @@ export class ConsultaMedicaService {
     });
   }
 
-  // ─── Encaminhamentos ───────────────────────────────────────────────────────
-  async criarEncaminhamento(consultaId: string, data: {
-    especialidade: string;
-    motivo: string;
-    prioridade: string;
-  }) {
+  async criarEncaminhamento(
+    consultaId: string,
+    data: {
+      especialidade: string;
+      motivo: string;
+      prioridade: string;
+    }
+  ) {
     return await prisma.encaminhamento.create({
       data: {
         consultaId,
@@ -230,15 +302,17 @@ export class ConsultaMedicaService {
     });
   }
 
-  // ─── Atestados ─────────────────────────────────────────────────────────────
-  async criarAtestado(consultaId: string, data: {
-    tipo: string;
-    cid10?: string;
-    diasAfastamento: number;
-    dataInicio: string;
-    dataFim: string;
-    observacoes?: string;
-  }) {
+  async criarAtestado(
+    consultaId: string,
+    data: {
+      tipo: string;
+      cid10?: string;
+      diasAfastamento: number;
+      dataInicio: string;
+      dataFim: string;
+      observacoes?: string;
+    }
+  ) {
     return await prisma.atestado.create({
       data: {
         consultaId,
@@ -259,13 +333,15 @@ export class ConsultaMedicaService {
     });
   }
 
-  // ─── Problemas / Condições do cidadão ─────────────────────────────────────
-  async criarProblema(citizenId: string, data: {
-    tipo: string;
-    codigo: string;
-    descricao: string;
-    gravidade?: string;
-  }) {
+  async criarProblema(
+    citizenId: string,
+    data: {
+      tipo: string;
+      codigo: string;
+      descricao: string;
+      gravidade?: string;
+    }
+  ) {
     return await prisma.problemaCondicao.create({
       data: {
         citizenId,
@@ -286,7 +362,6 @@ export class ConsultaMedicaService {
     });
   }
 
-  // ─── Buscar medicamentos (autocomplete) ───────────────────────────────────
   async buscarMedicamentos(busca: string) {
     return await prisma.medicamento.findMany({
       where: {

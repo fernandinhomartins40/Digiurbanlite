@@ -294,13 +294,21 @@ export function AdminAuthProvider({ children }: AdminAuthProviderProps) {
         return false
       }
 
-      if (
-        err instanceof Error &&
-        !err.message.includes('Authentication failed') &&
-        !err.message.includes('autenticado') &&
-        !err.message.includes('Token não fornecido')
-      ) {
-        console.error('Erro ao atualizar dados do usuário:', err)
+      if (err instanceof Error) {
+        const normalizedMessage = err.message
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+
+        const isExpectedAuthError =
+          normalizedMessage.includes('authentication failed') ||
+          normalizedMessage.includes('autenticado') ||
+          normalizedMessage.includes('token nao fornecido') ||
+          normalizedMessage.includes('nao autenticado')
+
+        if (!isExpectedAuthError) {
+          console.error('Erro ao atualizar dados do usuário:', err)
+        }
       }
 
       return false
