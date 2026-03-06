@@ -100,6 +100,9 @@ write_vps_env_file() {
   local env_path="${1:-.env}"
   local backup_path="${2:-.env.backup}"
   local jwt_secret
+  local flow_service_token
+  local messages_service_token
+  local ai_service_token
 
   jwt_secret="$(read_env_value JWT_SECRET "${backup_path}")"
   if [[ -n "${jwt_secret}" && "${jwt_secret}" == *'$('* ]]; then
@@ -108,6 +111,30 @@ write_vps_env_file() {
 
   if [ -z "${jwt_secret}" ]; then
     jwt_secret="$(generate_random_secret "digiurban-production-secret")"
+  fi
+
+  flow_service_token="$(read_env_value FLOW_SERVICE_TOKEN "${backup_path}")"
+  if [[ -n "${flow_service_token}" && "${flow_service_token}" == *'$('* ]]; then
+    flow_service_token=""
+  fi
+  if [ -z "${flow_service_token}" ]; then
+    flow_service_token="$(generate_random_secret "digiurban-flow-service-token")"
+  fi
+
+  messages_service_token="$(read_env_value MESSAGES_SERVICE_TOKEN "${backup_path}")"
+  if [[ -n "${messages_service_token}" && "${messages_service_token}" == *'$('* ]]; then
+    messages_service_token=""
+  fi
+  if [ -z "${messages_service_token}" ]; then
+    messages_service_token="$(generate_random_secret "ultrazend-messages-service-token")"
+  fi
+
+  ai_service_token="$(read_env_value AI_SERVICE_TOKEN "${backup_path}")"
+  if [[ -n "${ai_service_token}" && "${ai_service_token}" == *'$('* ]]; then
+    ai_service_token=""
+  fi
+  if [ -z "${ai_service_token}" ]; then
+    ai_service_token="$(generate_random_secret "digiurban-ai-service-token")"
   fi
 
   cat > "${env_path}" <<EOF
@@ -140,6 +167,11 @@ JWT_EXPIRES_IN=7d
 JWT_ADMIN_EXPIRES_IN=8h
 JWT_CITIZEN_EXPIRES_IN=30d
 
+# Service tokens (internos)
+FLOW_SERVICE_TOKEN=${flow_service_token}
+MESSAGES_SERVICE_TOKEN=${messages_service_token}
+AI_SERVICE_TOKEN=${ai_service_token}
+
 # CORS
 FRONTEND_URL=https://www.digiurban.com.br
 CORS_ORIGIN=https://www.digiurban.com.br
@@ -160,7 +192,6 @@ OLLAMA_TIMEOUT=15000
 
 # AI Platform (digiurban-ai)
 AI_API_URL=http://digiurban-ai:9004/api/v1
-AI_SERVICE_TOKEN=digiurban-ai-service-token
 AI_DEFAULT_TENANT_ID=default
 AI_OLLAMA_BASE_URL=http://ollama:11434
 AI_OLLAMA_MODEL=qwen3.5:9b

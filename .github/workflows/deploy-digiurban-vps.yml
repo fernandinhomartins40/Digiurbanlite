@@ -113,6 +113,16 @@ jobs:
             echo "Criando arquivo .env..."
             write_vps_env_file ".env" ".env.backup"
 
+            # Validar variáveis críticas para interpolação do docker-compose
+            echo "Validando variáveis críticas do .env..."
+            for required_var in FLOW_SERVICE_TOKEN MESSAGES_SERVICE_TOKEN AI_SERVICE_TOKEN; do
+              if ! grep -q "^${required_var}=.\\+" .env; then
+                echo "❌ ERRO: ${required_var} ausente no .env"
+                exit 1
+              fi
+            done
+            echo "✅ Variáveis críticas presentes no .env"
+
             # Remover arquivos .db SQLite antigos (não usamos mais)
             echo "Removendo arquivos .db do código-fonte..."
             find . -name "*.db" -type f ! -path "*/node_modules/*" -delete || true
