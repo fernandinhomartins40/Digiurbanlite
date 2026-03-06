@@ -4,6 +4,7 @@ import prisma from '../utils/prisma';
 import { apiKeyService } from './api-key.service';
 import { knowledgeService } from './knowledge.service';
 import { ollamaService } from './ollama.service';
+import { webSearchService, WebSearchResult } from './web-search.service';
 import { ChatCompletionResult, ChatMessageInput } from '../types';
 import logger from '../utils/logger';
 
@@ -124,6 +125,8 @@ function buildSystemPrompt(params: {
   userName?: string;
   departmentId?: string;
   retrievedContext: string[];
+  webContext: string[];
+  webSearchEnabled: boolean;
   extraInstruction?: string;
 }): string {
   const contextBlock = params.retrievedContext.length
@@ -131,29 +134,77 @@ function buildSystemPrompt(params: {
         .map((chunk, index) => `[Contexto ${index + 1}]\n${chunk}`)
         .join('\n\n')
     : 'Nenhum contexto recuperado no momento.';
+  const webContextBlock =
+    params.webSearchEnabled && params.webContext.length
+      ? params.webContext
+          .map((chunk, index) => `[Web ${index + 1}]\n${chunk}`)
+          .join('\n\n')
+      : 'Sem contexto web nesta solicitacao.';
 
   const persona = [
-    'Você é a DigiUrban IA, assistente operacional para gestão pública municipal.',
-    'Responda em português do Brasil com clareza, objetividade e foco em execução.',
+    'Voce e a DigiUrban IA, assistente operacional para gestao publica municipal.',
+    'Responda em portugues do Brasil com clareza, objetividade e foco em execucao.',
     'Use prioritariamente o contexto fornecido.',
-    'Se faltar evidência no contexto, diga explicitamente que não há dados suficientes.',
-    'Nunca invente IDs, normas, status de protocolo ou informações de cidadão.',
+    'Se faltar evidencia no contexto, diga explicitamente que nao ha dados suficientes.',
+    'Nunca invente IDs, normas, status de protocolo ou informacoes de cidadania.',
+    'Quando usar contexto web, cite os links relevantes de forma objetiva.',
   ].join(' ');
 
   const operator =
     params.userName || params.departmentId
-      ? `Servidor atual: ${params.userName || 'não informado'}; departamento: ${
-          params.departmentId || 'não informado'
+      ? `Servidor atual: ${params.userName || 'nao informado'}; departamento: ${
+          params.departmentId || 'nao informado'
         }.`
-      : 'Servidor atual não identificado.';
+      : 'Servidor atual nao identificado.';
 
   const extra = params.extraInstruction?.trim()
-    ? `Instrução adicional: ${params.extraInstruction.trim()}`
+    ? `Instrucao adicional: ${params.extraInstruction.trim()}`
     : '';
 
-  return [persona, operator, extra, `Base de conhecimento:\n${contextBlock}`]
+  return [
+    persona,
+    operator,
+    extra,
+    `Base de conhecimento:\n${contextBlock}`,
+    `Contexto web:\n${webContextBlock}`,
+  ]
     .filter(Boolean)
     .join('\n\n');
+}
+
+function buildWebContextChunks(results: WebSearchResult[]): string[] {
+  if (!results.length) return [];
+
+  return results.map((result) => {
+    const snippet = result.snippet ? `Resumo: ${result.snippet}` : 'Resumo: sem resumo disponivel.';
+    return `Titulo: ${result.title}\nURL: ${result.url}\n${snippet}`;
+  });
+}
+
+type WebSearchMetadata = {
+  enabled: boolean;
+  provider: string;
+  resultCount: number;
+  sources: Array<{
+    title: string;
+    url: string;
+    source: string;
+  }>;
+};
+
+function buildWebSearchMetadata(results: WebSearchResult[], enabled: boolean): WebSearchMetadata | undefined {
+  if (!enabled && !results.length) return undefined;
+
+  return {
+    enabled,
+    provider: config.webSearchProvider,
+    resultCount: results.length,
+    sources: results.slice(0, 6).map((item) => ({
+      title: item.title,
+      url: item.url,
+      source: item.source,
+    })),
+  };
 }
 
 interface MessageAttachmentInput {
@@ -263,6 +314,44 @@ function buildPerformanceMetadata(completion: ChatCompletionResult): Record<stri
   };
 }
 
+async function resolveWebSearchContext(params: {
+  query: string;
+  tenantId: string;
+  conversationId?: string;
+  source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
+  requested?: boolean;
+}): Promise<{ enabled: boolean; results: WebSearchResult[] }> {
+  const requested =
+    typeof params.requested === 'boolean' ? params.requested : config.webSearchDefault;
+
+  if (!requested) {
+    return { enabled: false, results: [] };
+  }
+
+  if (!config.webSearchEnabled) {
+    logger.warn('Web search requested but disabled by configuration', {
+      tenantId: params.tenantId,
+      conversationId: params.conversationId,
+      source: params.source,
+    });
+    return { enabled: false, results: [] };
+  }
+
+  try {
+    const results = await webSearchService.search(params.query, config.webSearchMaxResults);
+    return { enabled: true, results };
+  } catch (error) {
+    logger.warn('Web search lookup failed', {
+      tenantId: params.tenantId,
+      conversationId: params.conversationId,
+      source: params.source,
+      provider: config.webSearchProvider,
+      error: error instanceof Error ? error.message : String(error),
+    });
+    return { enabled: true, results: [] };
+  }
+}
+
 export class ChatService {
   async listConversations(params: {
     tenantId: string;
@@ -328,6 +417,7 @@ export class ChatService {
     content: string;
     model?: string;
     think?: boolean;
+    webSearch?: boolean;
     extraInstruction?: string;
     attachments?: MessageAttachmentInput[];
   }): Promise<{
@@ -390,10 +480,20 @@ export class ChatService {
       });
     }
 
+    const webSearch = await resolveWebSearchContext({
+      query: normalized,
+      tenantId: params.tenantId,
+      conversationId: params.conversationId,
+      source: 'ADMIN_CHAT',
+      requested: params.webSearch,
+    });
+
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
       retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
+      webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
+      webSearchEnabled: webSearch.enabled,
       extraInstruction: params.extraInstruction,
     });
 
@@ -427,6 +527,7 @@ export class ChatService {
           thinking: completion.thinking || undefined,
           performance: buildPerformanceMetadata(completion),
           contextSources: relevantChunks.slice(0, 5).map((item) => item.sourceId),
+          webSearch: buildWebSearchMetadata(webSearch.results, webSearch.enabled),
         },
       },
     });
@@ -478,6 +579,7 @@ export class ChatService {
     content: string;
     model?: string;
     think?: boolean;
+    webSearch?: boolean;
     extraInstruction?: string;
     attachments?: MessageAttachmentInput[];
     onThinkingDelta?: (delta: string) => void;
@@ -542,10 +644,20 @@ export class ChatService {
       });
     }
 
+    const webSearch = await resolveWebSearchContext({
+      query: normalized,
+      tenantId: params.tenantId,
+      conversationId: params.conversationId,
+      source: 'ADMIN_CHAT',
+      requested: params.webSearch,
+    });
+
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
       retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
+      webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
+      webSearchEnabled: webSearch.enabled,
       extraInstruction: params.extraInstruction,
     });
 
@@ -586,6 +698,7 @@ export class ChatService {
           thinking: completion.thinking || undefined,
           performance: buildPerformanceMetadata(completion),
           contextSources: relevantChunks.slice(0, 5).map((item) => item.sourceId),
+          webSearch: buildWebSearchMetadata(webSearch.results, webSearch.enabled),
         },
       },
     });
@@ -636,6 +749,7 @@ export class ChatService {
     prompt: string;
     model?: string;
     think?: boolean;
+    webSearch?: boolean;
     extraInstruction?: string;
     source: 'INTERNAL_API' | 'PUBLIC_API' | 'ADMIN_CHAT';
     apiKeyId?: string;
@@ -675,10 +789,19 @@ export class ChatService {
       });
     }
 
+    const webSearch = await resolveWebSearchContext({
+      query: prompt,
+      tenantId: params.tenantId,
+      source: params.source,
+      requested: params.webSearch,
+    });
+
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
       retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
+      webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
+      webSearchEnabled: webSearch.enabled,
       extraInstruction: params.extraInstruction,
     });
 
@@ -731,3 +854,4 @@ export class ChatService {
 }
 
 export const chatService = new ChatService();
+

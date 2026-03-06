@@ -15,6 +15,7 @@ const sendMessageSchema = z.object({
   content: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
   think: z.boolean().optional(),
+  webSearch: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
   attachments: z
     .array(
@@ -33,6 +34,7 @@ const completionSchema = z.object({
   prompt: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
   think: z.boolean().optional(),
+  webSearch: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
 });
 
@@ -104,6 +106,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
       content: payload.content,
       model: payload.model,
       think: payload.think,
+      webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
       attachments: payload.attachments,
     });
@@ -160,6 +163,7 @@ router.post('/conversations/:id/messages/stream', async (req, res) => {
       content: payload.content,
       model: payload.model,
       think: payload.think,
+      webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
       attachments: payload.attachments,
       onThinkingDelta: (delta) => {
@@ -224,6 +228,7 @@ router.post('/chat/completions', async (req, res) => {
       prompt: payload.prompt,
       model: payload.model,
       think: payload.think,
+      webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
       source: 'ADMIN_CHAT',
     });

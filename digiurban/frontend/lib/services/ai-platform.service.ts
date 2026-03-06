@@ -34,6 +34,7 @@ export interface AiMessageMetadata {
   finishReason?: string;
   contextSources?: string[];
   performance?: AiPerformanceMetrics;
+  webSearch?: AiWebSearchMetadata;
 }
 
 export interface AiPerformanceMetrics {
@@ -43,6 +44,17 @@ export interface AiPerformanceMetrics {
   promptEvalDurationMs?: number;
   evalDurationMs?: number;
   tokensPerSecond?: number;
+}
+
+export interface AiWebSearchMetadata {
+  enabled?: boolean;
+  provider?: string;
+  resultCount?: number;
+  sources?: Array<{
+    title: string;
+    url: string;
+    source?: string;
+  }>;
 }
 
 export interface AiStreamEvent {
@@ -143,6 +155,7 @@ export const aiPlatformService = {
     content: string;
     model?: string;
     think?: boolean;
+    webSearch?: boolean;
     extraInstruction?: string;
     attachments?: AiMessageAttachment[];
   }): Promise<{
@@ -167,6 +180,7 @@ export const aiPlatformService = {
     prompt: string;
     model?: string;
     think?: boolean;
+    webSearch?: boolean;
     extraInstruction?: string;
   }): Promise<{
     content: string;
@@ -200,6 +214,7 @@ export const aiPlatformService = {
       content: string;
       model?: string;
       think?: boolean;
+      webSearch?: boolean;
       extraInstruction?: string;
       attachments?: AiMessageAttachment[];
     },

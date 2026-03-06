@@ -132,6 +132,7 @@ export default function AdminAiPage() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0].value);
   const [thinkMode, setThinkMode] = useState(false);
+  const [webSearchMode, setWebSearchMode] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -342,6 +343,7 @@ export default function AdminAiPage() {
           content,
           model: selectedModel,
           think: thinkMode,
+          webSearch: webSearchMode,
           attachments: attachmentPayload,
         },
         {
@@ -451,6 +453,16 @@ export default function AdminAiPage() {
               />
               Modo think (mostrar raciocinio)
             </label>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={webSearchMode}
+                onChange={(event) => setWebSearchMode(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              Busca web para contexto
+            </label>
           </div>
 
           <div className="grid gap-2 rounded-xl border bg-slate-50 p-3 text-xs text-slate-700 md:grid-cols-3">
@@ -492,11 +504,13 @@ export default function AdminAiPage() {
                 const metadata = getMetadata(message);
                 const messageAttachments = getMessageAttachments(message);
                 const performance = metadata.performance;
+                const webSearch = metadata.webSearch;
                 const thinkingText = typeof metadata.thinking === 'string' ? metadata.thinking.trim() : '';
                 const thinkingStatus = metadata.thinkingStatus;
                 const isThinkingNow = !isUser && thinkingStatus === 'processing';
                 const showThinkingPanel = !isUser && (isThinkingNow || thinkingText.length > 0);
                 const visibleContent = (message.content || '').trim();
+                const webSources = Array.isArray(webSearch?.sources) ? webSearch.sources : [];
 
                 return (
                   <div
@@ -561,6 +575,28 @@ export default function AdminAiPage() {
                         <span className="rounded border bg-white px-2 py-1">
                           {formatTps(performance.tokensPerSecond)}
                         </span>
+                      </div>
+                    ) : null}
+
+                    {!isUser && webSources.length > 0 ? (
+                      <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
+                        <p className="mb-2 font-semibold text-slate-700">
+                          Fontes web ({webSearch?.provider || 'provider'}):
+                        </p>
+                        <ul className="space-y-1">
+                          {webSources.slice(0, 5).map((source, index) => (
+                            <li key={`${message.id}-web-${index}`}>
+                              <a
+                                href={source.url}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="text-cyan-700 underline decoration-cyan-300 underline-offset-2 hover:text-cyan-800"
+                              >
+                                {source.title || source.url}
+                              </a>
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     ) : null}
 

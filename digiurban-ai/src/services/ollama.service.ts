@@ -313,17 +313,22 @@ export class OllamaService {
       options.main_gpu = config.ollamaMainGpu;
     }
 
-    return {
+    const payload: Record<string, unknown> = {
       model: attempt.model,
       stream,
       think: attempt.think,
-      keep_alive: config.ollamaKeepAlive,
       messages: messages.map((msg) => ({
         role: msg.role,
         content: msg.content,
       })),
       options,
     };
+
+    if (config.ollamaKeepAlive) {
+      payload.keep_alive = config.ollamaKeepAlive;
+    }
+
+    return payload;
   }
 
   private async warmupModel(model: string): Promise<void> {
@@ -513,6 +518,10 @@ export class OllamaService {
         logger.warn('Ollama rejected request payload', {
           model: attempt.model,
           status: responseStatus,
+          error:
+            responseData && typeof responseData === 'object'
+              ? JSON.stringify(responseData)
+              : String(responseData ?? ''),
         });
         return new OllamaServiceError('Requisicao invalida para o modelo de IA', 502);
       }

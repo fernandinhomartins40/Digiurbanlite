@@ -19,6 +19,30 @@ function parseOptionalFloat(value?: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+function normalizeOllamaKeepAlive(value?: string): string | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return undefined;
+  }
+
+  const normalized = value.trim();
+
+  // Legacy sentinel previously used in this project. Avoid sending invalid duration to Ollama.
+  if (normalized === '-1') {
+    return undefined;
+  }
+
+  // Convert plain positive integer to seconds to keep backward compatibility.
+  if (/^\d+$/.test(normalized)) {
+    const seconds = Number.parseInt(normalized, 10);
+    if (Number.isFinite(seconds) && seconds > 0) {
+      return `${seconds}s`;
+    }
+    return undefined;
+  }
+
+  return normalized;
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '9004', 10),
   host: process.env.HOST || '0.0.0.0',
@@ -46,13 +70,23 @@ export const config = {
   ollamaNumGpu: parseOptionalInt(process.env.AI_OLLAMA_NUM_GPU),
   ollamaMainGpu: parseOptionalInt(process.env.AI_OLLAMA_MAIN_GPU),
   ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '320', 10),
-  ollamaKeepAlive:
-    process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE || '-1',
+  ollamaKeepAlive: normalizeOllamaKeepAlive(
+    process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE,
+  ),
   ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
   ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
   ollamaWarmupPrompt: process.env.AI_OLLAMA_WARMUP_PROMPT || 'Responda apenas: ok',
   ollamaWarmupTimeoutMs: parseInt(process.env.AI_OLLAMA_WARMUP_TIMEOUT_MS || '90000', 10),
   ollamaWarmupThink: (process.env.AI_OLLAMA_WARMUP_THINK || 'false').toLowerCase() === 'true',
+  webSearchEnabled: (process.env.AI_WEB_SEARCH_ENABLED || 'false').toLowerCase() === 'true',
+  webSearchDefault: (process.env.AI_WEB_SEARCH_DEFAULT || 'false').toLowerCase() === 'true',
+  webSearchProvider: (process.env.AI_WEB_SEARCH_PROVIDER || 'duckduckgo').toLowerCase(),
+  webSearchTimeoutMs: parseInt(process.env.AI_WEB_SEARCH_TIMEOUT_MS || '12000', 10),
+  webSearchMaxResults: parseInt(process.env.AI_WEB_SEARCH_MAX_RESULTS || '5', 10),
+  webSearchSerperApiKey: process.env.AI_WEB_SEARCH_SERPER_API_KEY || '',
+  webSearchUserAgent:
+    process.env.AI_WEB_SEARCH_USER_AGENT ||
+    'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
 
   defaultTenantId: process.env.AI_DEFAULT_TENANT_ID || 'default',
   maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '4', 10),

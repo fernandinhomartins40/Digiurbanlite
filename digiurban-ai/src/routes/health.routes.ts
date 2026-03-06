@@ -10,6 +10,8 @@ router.get('/health', (_req, res) => {
     model: config.ollamaModel,
     fallbackModel: config.ollamaFallbackModel,
     warmupEnabled: config.ollamaWarmupEnabled,
+    webSearchEnabled: config.webSearchEnabled,
+    webSearchProvider: config.webSearchProvider,
     timestamp: new Date().toISOString(),
   });
 });

@@ -41,6 +41,8 @@ class DigiUrbanAIServer {
           ollamaNumCtx: config.ollamaNumCtx,
           ollamaMaxTokens: config.ollamaMaxTokens,
           ollamaWarmupEnabled: config.ollamaWarmupEnabled,
+          webSearchEnabled: config.webSearchEnabled,
+          webSearchProvider: config.webSearchProvider,
         });
       });
 
