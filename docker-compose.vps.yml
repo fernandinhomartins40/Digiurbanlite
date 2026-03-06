@@ -244,7 +244,7 @@ services:
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET:-digiurban-super-secret-change-in-production}
-      - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:-digiurban-flow-service-token}
+      - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:?FLOW_SERVICE_TOKEN is required}
       - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
@@ -398,7 +398,7 @@ services:
 
       # Módulo de Processos Internos (proxy interno)
       - FLOW_API_URL=http://digiurban-flow:9003/api/v1
-      - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:-digiurban-flow-service-token}
+      - FLOW_SERVICE_TOKEN=${FLOW_SERVICE_TOKEN:?FLOW_SERVICE_TOKEN is required}
 
       # Módulo de IA Centralizada (proxy interno)
       - AI_API_URL=http://digiurban-ai:9004/api/v1

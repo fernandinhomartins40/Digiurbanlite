@@ -72,6 +72,7 @@ import {
   ProcessDetail,
   ProcessType,
   DashboardData,
+  BottleneckItem,
   WorkflowInstanceDetail,
   WorkflowStep,
 } from '@/lib/flow-client'
@@ -180,8 +181,8 @@ function DispatchDialog({
   const [loading, setLoading] = useState(false)
   const [loadingWorkflow, setLoadingWorkflow] = useState(false)
   const [mode, setMode] = useState<'livre' | 'fluxo'>('livre')
-  const [toSectorId, setToSectorId] = useState('')
-  const [toSectorName, setToSectorName] = useState('')
+  const [toOrganizationalUnitId, setToOrganizationalUnitId] = useState('')
+  const [toOrganizationalUnitName, setToOrganizationalUnitName] = useState('')
   const [note, setNote] = useState('')
   const [action, setAction] = useState('ENCAMINHADO')
   const [resolvedWorkflowInstance, setResolvedWorkflowInstance] = useState<WorkflowInstanceDetail | undefined>(workflowInstance)
@@ -230,13 +231,13 @@ function DispatchDialog({
   // Quando muda para modo fluxo, pré-preenche campos
   useEffect(() => {
     if (mode === 'fluxo' && nextStep) {
-      setToSectorId(nextStep.sectorId || nextStep.sectorName || '')
-      setToSectorName(nextStep.sectorName || '')
+      setToOrganizationalUnitId(nextStep.organizationalUnitId || '')
+      setToOrganizationalUnitName(nextStep.organizationalUnitName || '')
       setAction(nextStep.actions[0] || 'ENCAMINHADO')
     }
     if (mode === 'livre') {
-      setToSectorId('')
-      setToSectorName('')
+      setToOrganizationalUnitId('')
+      setToOrganizationalUnitName('')
       setAction('ENCAMINHADO')
     }
   }, [mode, nextStep])
@@ -245,24 +246,24 @@ function DispatchDialog({
   useEffect(() => {
     if (!process) {
       setMode('livre')
-      setToSectorId('')
-      setToSectorName('')
+      setToOrganizationalUnitId('')
+      setToOrganizationalUnitName('')
       setNote('')
       setAction('ENCAMINHADO')
     }
   }, [process])
 
   const handleDispatch = async () => {
-    if (!process || !toSectorName) {
-      toast({ title: 'Informe o setor de destino', variant: 'destructive' })
+    if (!process || !toOrganizationalUnitId || !toOrganizationalUnitName) {
+      toast({ title: 'Selecione a unidade de destino', variant: 'destructive' })
       return
     }
     setLoading(true)
     try {
       // Despachar o processo
       await flowClient.dispatchProcess(process.id, {
-        toSectorId: toSectorId || toSectorName,
-        toSectorName,
+        toOrganizationalUnitId,
+        toOrganizationalUnitName,
         note: note || undefined,
         action,
       })
@@ -276,7 +277,7 @@ function DispatchDialog({
         }
       }
 
-      toast({ title: `Processo ${process.number} encaminhado para ${toSectorName}` })
+      toast({ title: `Processo ${process.number} encaminhado para ${toOrganizationalUnitName}` })
       onDone()
       onClose()
     } catch (error) {
@@ -370,28 +371,28 @@ function DispatchDialog({
                     <Label className="text-xs text-gray-500">Próxima etapa: <strong>{nextStep.name}</strong></Label>
                     <OrganizationalUnitAutocomplete
                       label=""
-                      value={toSectorName}
+                      value={toOrganizationalUnitName}
                       onValueChange={value => {
-                        setToSectorId(value)
-                        setToSectorName(value)
+                        setToOrganizationalUnitName(value)
+                        setToOrganizationalUnitId('')
                       }}
                       onSelect={unit => {
-                        setToSectorId(unit.id)
-                        setToSectorName(unit.nome)
+                        setToOrganizationalUnitId(unit.id)
+                        setToOrganizationalUnitName(unit.nome)
                       }}
-                      placeholder="Setor de destino"
-                      helperText={nextStep.sectorName ? 'O setor da próxima etapa já vem sugerido pelo fluxo.' : 'Selecione uma unidade ou mantenha texto livre.'}
+                      placeholder="Unidade de destino"
+                      helperText={nextStep.organizationalUnitName ? 'A unidade da próxima etapa já vem sugerida pelo fluxo.' : 'Selecione uma unidade válida do organograma.'}
                     />
-                    {nextStep.sectorName && toSectorName !== nextStep.sectorName && (
+                    {nextStep.organizationalUnitName && toOrganizationalUnitName !== nextStep.organizationalUnitName && (
                       <button
                         type="button"
                         className="text-xs text-blue-600 mt-1"
                         onClick={() => {
-                          setToSectorId(nextStep.sectorId || nextStep.sectorName || '')
-                          setToSectorName(nextStep.sectorName || '')
+                          setToOrganizationalUnitId(nextStep.organizationalUnitId || '')
+                          setToOrganizationalUnitName(nextStep.organizationalUnitName || '')
                         }}
                       >
-                        Usar setor padrão: {nextStep.sectorName}
+                        Usar unidade padrão: {nextStep.organizationalUnitName}
                       </button>
                     )}
                   </div>
@@ -441,19 +442,19 @@ function DispatchDialog({
               </div>
               <div>
                 <OrganizationalUnitAutocomplete
-                  label="Setor / Secretaria de Destino"
-                  value={toSectorName}
+                  label="Unidade de destino"
+                  value={toOrganizationalUnitName}
                   onValueChange={value => {
-                    setToSectorId(value)
-                    setToSectorName(value)
+                    setToOrganizationalUnitName(value)
+                    setToOrganizationalUnitId('')
                   }}
                   onSelect={unit => {
-                    setToSectorId(unit.id)
-                    setToSectorName(unit.nome)
+                    setToOrganizationalUnitId(unit.id)
+                    setToOrganizationalUnitName(unit.nome)
                   }}
-                  placeholder="Ex: Secretaria de Finanças"
+                  placeholder="Ex: Diretoria de Compras"
                   required
-                  helperText="Selecione uma unidade existente ou use texto livre para processos legados."
+                  helperText="Selecione uma unidade existente no organograma."
                 />
               </div>
             </>
@@ -510,7 +511,7 @@ function ReturnDialog({
     setLoading(true)
     try {
       await flowClient.returnProcess(process.id, note)
-      toast({ title: `Processo ${process.number} devolvido ao setor anterior` })
+      toast({ title: `Processo ${process.number} devolvido à unidade anterior` })
       setNote('')
       onDone()
       onClose()
@@ -736,7 +737,7 @@ function ProcessDetailPanel({
                     )}
                   </div>
                   <p className="text-sm font-medium text-gray-800 mt-1 truncate">{process?.subject}</p>
-                  <p className="text-xs text-gray-500">{process?.type.name} · {process?.currentSectorName}</p>
+                  <p className="text-xs text-gray-500">{process?.type.name} · {process?.currentOrganizationalUnitName}</p>
                 </>
               )}
             </div>
@@ -975,12 +976,12 @@ function ProcessDetailPanel({
                         <p className="text-sm">{process.type.name}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Building2 className="w-3 h-3" /> Setor Origem</p>
-                        <p className="text-sm">{process.originSectorName}</p>
+                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Building2 className="w-3 h-3" /> Unidade Origem</p>
+                        <p className="text-sm">{process.originOrganizationalUnitName}</p>
                       </div>
                       <div>
-                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Building2 className="w-3 h-3" /> Setor Atual</p>
-                        <p className="text-sm">{process.currentSectorName}</p>
+                        <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><Building2 className="w-3 h-3" /> Unidade Atual</p>
+                        <p className="text-sm">{process.currentOrganizationalUnitName}</p>
                       </div>
                       <div>
                         <p className="text-xs text-gray-500 mb-1 flex items-center gap-1"><User className="w-3 h-3" /> Aberto por</p>
@@ -1084,7 +1085,7 @@ function ProcessCard({
           <p className="font-medium text-gray-900 text-sm truncate">{process.subject}</p>
           <div className="flex items-center gap-3 mt-1 flex-wrap">
             <span className="text-xs text-gray-500 flex items-center gap-1">
-              <Building2 className="w-3 h-3" /> {process.currentSectorName}
+              <Building2 className="w-3 h-3" /> {process.currentOrganizationalUnitName}
             </span>
             <span className="text-xs text-gray-500 flex items-center gap-1">
               <FileText className="w-3 h-3" /> {process.type.name}
@@ -1310,13 +1311,12 @@ function ProcessesTab({ processTypes }: { processTypes: ProcessType[] }) {
 // ============================================================================
 
 function InboxTab() {
-  const { user } = useAdminAuth()
+  useAdminAuth()
   const { toast } = useToast()
-  const [draftSectorId, setDraftSectorId] = useState('')
-  const [draftSectorName, setDraftSectorName] = useState('')
-  const [sectorId, setSectorId] = useState('')
-  const [sectorName, setSectorName] = useState('')
-  const [resolvedSectorKey, setResolvedSectorKey] = useState('')
+  const [draftOrganizationalUnitId, setDraftOrganizationalUnitId] = useState('')
+  const [draftOrganizationalUnitName, setDraftOrganizationalUnitName] = useState('')
+  const [organizationalUnitId, setOrganizationalUnitId] = useState('')
+  const [organizationalUnitName, setOrganizationalUnitName] = useState('')
   const [processes, setProcesses] = useState<InternalProcess[]>([])
   const [loading, setLoading] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
@@ -1325,67 +1325,37 @@ function InboxTab() {
   const [actionProcess, setActionProcess] = useState<InternalProcess | null>(null)
   const [actionType, setActionType] = useState<ActionType | null>(null)
 
-  useEffect(() => {
-    if (draftSectorName) return
-
-    const defaultSectorName = user?.department?.name || user?.primaryDepartment?.name
-    const defaultSectorId = user?.departmentId || user?.primaryDepartment?.id || defaultSectorName
-
-    if (!defaultSectorName || !defaultSectorId) return
-
-    setDraftSectorId(defaultSectorId)
-    setDraftSectorName(defaultSectorName)
-    setSectorId(defaultSectorId)
-    setSectorName(defaultSectorName)
-  }, [draftSectorName, user?.department?.name, user?.departmentId, user?.primaryDepartment?.id, user?.primaryDepartment?.name])
-
   const loadInbox = useCallback(async () => {
-    const candidates = Array.from(new Set([sectorId, sectorName].filter(Boolean)))
-    if (candidates.length === 0) return
+    if (!organizationalUnitId) return
 
     setLoading(true)
     try {
-      let loadedProcesses: InternalProcess[] = []
-      let matchedKey = candidates[0]
-
-      for (const candidate of candidates) {
-        const data = await flowClient.getInbox(candidate)
-        loadedProcesses = data
-        matchedKey = candidate
-
-        if (data.length > 0) {
-          break
-        }
-      }
-
-      setResolvedSectorKey(matchedKey)
-      setProcesses(loadedProcesses)
+      const data = await flowClient.getInbox(organizationalUnitId)
+      setProcesses(data)
     } catch {
       toast({ title: 'Erro ao carregar caixa de entrada', variant: 'destructive' })
     } finally {
       setLoading(false)
     }
-  }, [sectorId, sectorName, toast])
+  }, [organizationalUnitId, toast])
 
   useEffect(() => { loadInbox() }, [loadInbox])
 
-  const applySectorFilter = () => {
-    if (!draftSectorName) {
-      toast({ title: 'Informe um setor para consultar', variant: 'destructive' })
+  const applyOrganizationalUnitFilter = () => {
+    if (!draftOrganizationalUnitId || !draftOrganizationalUnitName) {
+      toast({ title: 'Selecione uma unidade para consultar', variant: 'destructive' })
       return
     }
 
-    setResolvedSectorKey('')
-    setSectorId(draftSectorId || draftSectorName)
-    setSectorName(draftSectorName)
+    setOrganizationalUnitId(draftOrganizationalUnitId)
+    setOrganizationalUnitName(draftOrganizationalUnitName)
   }
 
   const handleMarkAllRead = async () => {
-    const inboxSectorKey = resolvedSectorKey || sectorId || sectorName
-    if (!inboxSectorKey) return
+    if (!organizationalUnitId) return
 
     try {
-      await flowClient.markAllDispatchesRead(inboxSectorKey)
+      await flowClient.markAllDispatchesRead(organizationalUnitId)
       toast({ title: 'Todos os despachos marcados como lidos' })
     } catch {
       toast({ title: 'Erro', variant: 'destructive' })
@@ -1397,41 +1367,41 @@ function InboxTab() {
       <Card>
         <CardHeader className="pb-3">
           <CardTitle className="text-base">Caixa de Entrada</CardTitle>
-          <CardDescription>Processos aguardando ação no seu setor</CardDescription>
+          <CardDescription>Processos aguardando ação na sua unidade</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex gap-3">
             <div className="flex-1">
               <OrganizationalUnitAutocomplete
-                label="Setor"
-                value={draftSectorName}
+                label="Unidade"
+                value={draftOrganizationalUnitName}
                 onValueChange={value => {
-                  setDraftSectorId(value)
-                  setDraftSectorName(value)
+                  setDraftOrganizationalUnitName(value)
+                  setDraftOrganizationalUnitId('')
                 }}
                 onSelect={unit => {
-                  setDraftSectorId(unit.id)
-                  setDraftSectorName(unit.nome)
+                  setDraftOrganizationalUnitId(unit.id)
+                  setDraftOrganizationalUnitName(unit.nome)
                 }}
-                placeholder="Nome do setor"
-                helperText="A busca tenta o ID da unidade e, se necessário, também o nome para manter compatibilidade com processos antigos."
+                placeholder="Nome da unidade"
+                helperText="Selecione uma unidade válida do organograma para consultar a fila."
               />
             </div>
-            <Button className="self-start" onClick={applySectorFilter}>
+            <Button className="self-start" onClick={applyOrganizationalUnitFilter}>
               <Inbox className="w-4 h-4 mr-2" /> Buscar
             </Button>
-            {(sectorId || sectorName) && (
+            {organizationalUnitId && (
               <Button className="self-start" variant="outline" onClick={handleMarkAllRead}>Marcar Lidos</Button>
             )}
           </div>
         </CardContent>
       </Card>
 
-      {(sectorId || sectorName) && (
+      {organizationalUnitId && (
         <>
           <div className="flex items-center justify-between">
             <h3 className="font-medium text-gray-800">
-              Processos em {sectorName || sectorId} <span className="text-sm font-normal text-gray-500">({processes.length})</span>
+              Processos em {organizationalUnitName || organizationalUnitId} <span className="text-sm font-normal text-gray-500">({processes.length})</span>
             </h3>
             <Button variant="ghost" size="sm" onClick={loadInbox}>
               <RefreshCw className="w-3.5 h-3.5 mr-1" /> Atualizar
@@ -1478,7 +1448,7 @@ function DashboardTab() {
   const { toast } = useToast()
   const [dashboard, setDashboard] = useState<DashboardData | null>(null)
   const [overdue, setOverdue] = useState<InternalProcess[]>([])
-  const [bottlenecks, setBottlenecks] = useState<{ sectorId: string; sectorName: string; count: number; oldestDays: number }[]>([])
+  const [bottlenecks, setBottlenecks] = useState<BottleneckItem[]>([])
   const [loading, setLoading] = useState(true)
   const [selectedId, setSelectedId] = useState<string | null>(null)
 
@@ -1589,12 +1559,12 @@ function DashboardTab() {
         {bottlenecks.length > 0 && (
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Gargalos por Setor</CardTitle>
+              <CardTitle className="text-sm flex items-center gap-2"><AlertTriangle className="w-4 h-4 text-amber-500" /> Gargalos por Unidade</CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
               {bottlenecks.slice(0, 5).map(b => (
-                <div key={b.sectorId} className="flex items-center justify-between">
-                  <span className="text-sm text-gray-700 truncate flex-1">{b.sectorName}</span>
+                <div key={b.organizationalUnitId} className="flex items-center justify-between">
+                  <span className="text-sm text-gray-700 truncate flex-1">{b.organizationalUnitName}</span>
                   <div className="flex items-center gap-3 text-xs text-gray-500">
                     <span>{b.count} proc.</span>
                     <span className={b.oldestDays > 7 ? 'text-red-600 font-medium' : ''}>{b.oldestDays}d</span>
@@ -1730,7 +1700,7 @@ function ConfigTab({ processTypes, onRefresh }: { processTypes: ProcessType[]; o
           <div className="flex items-start gap-3 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
             <Zap className="w-4 h-4 flex-shrink-0 mt-0.5 text-blue-600" />
             <div className="space-y-1">
-              <p>Crie fluxos com etapas (setor → documento → SLA) e vincule aos tipos de processo.</p>
+              <p>Crie fluxos com etapas (unidade → documento → SLA) e vincule aos tipos de processo.</p>
               <p>Ao despachar, escolha entre <strong>destinatário livre</strong> ou <strong>seguir o fluxo</strong> definido.</p>
             </div>
           </div>

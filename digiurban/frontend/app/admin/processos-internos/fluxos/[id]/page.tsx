@@ -59,8 +59,8 @@ function newStep(order: number): WorkflowStep {
     id: generateId(),
     name: '',
     order,
-    sectorId: '',
-    sectorName: '',
+    organizationalUnitId: '',
+    organizationalUnitName: '',
     slaHours: 72,
     documentRequired: '',
     actions: ['ENCAMINHADO'],
@@ -144,6 +144,10 @@ export default function FluxoEditorPage() {
     for (let i = 0; i < steps.length; i++) {
       if (!steps[i].name.trim()) {
         toast({ title: `Etapa ${i + 1} precisa de um nome`, variant: 'destructive' })
+        return
+      }
+      if (!steps[i].organizationalUnitId || !steps[i].organizationalUnitName) {
+        toast({ title: `Etapa ${i + 1} precisa de uma unidade de destino`, variant: 'destructive' })
         return
       }
     }
@@ -291,7 +295,7 @@ export default function FluxoEditorPage() {
         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p>
           As transiÃ§Ãµes entre etapas sÃ£o geradas automaticamente em sequÃªncia linear (1â†’2â†’3...).
-          Ao despachar com "Seguir Fluxo", o setor de destino da prÃ³xima etapa Ã© prÃ©-selecionado.
+          Ao despachar com "Seguir Fluxo", a unidade de destino da prÃ³xima etapa Ã© prÃ©-selecionada.
         </p>
       </div>
 
@@ -381,15 +385,23 @@ function StepCard({
 
       <CardContent className="px-4 pb-4 space-y-3">
         <div className="grid grid-cols-2 gap-3">
-          {/* Setor */}
+          {/* Unidade */}
           <div>
             <OrganizationalUnitAutocomplete
-              label="Setor / Secretaria destino"
-              value={step.sectorName || ''}
-              onValueChange={value => onUpdate({ sectorName: value, sectorId: value })}
-              onSelect={unit => onUpdate({ sectorName: unit.nome, sectorId: unit.id })}
+              label="Unidade de destino"
+              value={step.organizationalUnitName || ''}
+              onValueChange={value => onUpdate({
+                organizationalUnitName: value,
+                organizationalUnitId: '',
+                departmentId: undefined,
+              })}
+              onSelect={unit => onUpdate({
+                organizationalUnitName: unit.nome,
+                organizationalUnitId: unit.id,
+                departmentId: unit.department?.id,
+              })}
               placeholder="Ex: Secretaria de Finanças"
-              helperText="Use uma unidade do organograma quando existir; texto livre continua aceito para compatibilidade."
+              helperText="Selecione uma unidade existente do organograma."
             />
           </div>
 

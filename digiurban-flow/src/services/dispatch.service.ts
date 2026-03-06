@@ -1,19 +1,23 @@
 /**
- * Serviço de tramitação / despacho de processos entre setores
+ * Dispatch / routing service for internal processes.
  */
+import { DispatchAction, Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
-import { DispatchAction } from '@prisma/client';
-
-// ============================================================================
-// INTERFACES
-// ============================================================================
+import {
+  assertOrganizationalUnitScope,
+  assertProcessAccess,
+  buildProcessVisibilityWhere,
+} from './access-control.service';
+import { FlowAuthContext } from '../middleware/auth.middleware';
+import { tryAdvanceActiveWorkflowForProcess } from './workflow.service';
 
 export interface DispatchInput {
   processId: string;
   action: DispatchAction;
-  toSectorId: string;
-  toSectorName: string;
+  toDepartmentId?: string;
+  toOrganizationalUnitId: string;
+  toOrganizationalUnitName: string;
   toUserId?: string;
   toUserName?: string;
   note?: string;
@@ -44,30 +48,29 @@ export interface ConcludeInput {
   userName: string;
 }
 
-// ============================================================================
-// DESPACHAR PARA OUTRO SETOR
-// ============================================================================
+export async function dispatchProcess(input: DispatchInput, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, input.processId, auth);
 
-export async function dispatchProcess(input: DispatchInput) {
   const process = await prisma.internalProcess.findUnique({
     where: { id: input.processId },
   });
 
-  if (!process) throw new Error('Processo não encontrado');
+  if (!process) throw new Error('Processo nao encontrado');
   if (process.status === 'CONCLUIDO' || process.status === 'CANCELADO') {
-    throw new Error('Não é possível tramitar um processo finalizado');
+    throw new Error('Nao e possivel tramitar um processo finalizado');
   }
 
   const result = await prisma.$transaction(async (tx) => {
-    // Criar despacho
     const dispatch = await tx.processDispatch.create({
       data: {
         processId: input.processId,
         action: input.action,
-        fromSectorId: process.currentSectorId,
-        fromSectorName: process.currentSectorName,
-        toSectorId: input.toSectorId,
-        toSectorName: input.toSectorName,
+        fromDepartmentId: process.currentDepartmentId,
+        fromOrganizationalUnitId: process.currentOrganizationalUnitId,
+        fromOrganizationalUnitName: process.currentOrganizationalUnitName,
+        toDepartmentId: input.toDepartmentId,
+        toOrganizationalUnitId: input.toOrganizationalUnitId,
+        toOrganizationalUnitName: input.toOrganizationalUnitName,
         fromUserId: input.fromUserId,
         fromUserName: input.fromUserName,
         toUserId: input.toUserId,
@@ -76,50 +79,58 @@ export async function dispatchProcess(input: DispatchInput) {
       },
     });
 
-    // Atualizar processo
     await tx.internalProcess.update({
       where: { id: input.processId },
       data: {
-        currentSectorId: input.toSectorId,
-        currentSectorName: input.toSectorName,
+        currentDepartmentId: input.toDepartmentId,
+        currentOrganizationalUnitId: input.toOrganizationalUnitId,
+        currentOrganizationalUnitName: input.toOrganizationalUnitName,
         currentUserId: input.toUserId || null,
         currentUserName: input.toUserName || null,
         status: 'EM_TRAMITACAO',
       },
     });
 
-    // Registrar no histórico
     await tx.internalProcessHistory.create({
       data: {
         processId: input.processId,
         action: input.action,
-        description: `${input.action === 'ENCAMINHADO' ? 'Encaminhado' : 'Despachado'} para ${input.toSectorName}`,
+        description: `${
+          input.action === 'ENCAMINHADO' ? 'Encaminhado' : 'Despachado'
+        } para ${input.toOrganizationalUnitName}`,
         note: input.note,
-        fromSectorId: process.currentSectorId,
-        fromSectorName: process.currentSectorName,
-        toSectorId: input.toSectorId,
-        toSectorName: input.toSectorName,
+        fromDepartmentId: process.currentDepartmentId,
+        fromOrganizationalUnitId: process.currentOrganizationalUnitId,
+        fromOrganizationalUnitName: process.currentOrganizationalUnitName,
+        toDepartmentId: input.toDepartmentId,
+        toOrganizationalUnitId: input.toOrganizationalUnitId,
+        toOrganizationalUnitName: input.toOrganizationalUnitName,
         userId: input.fromUserId,
         userName: input.fromUserName,
       },
+    });
+
+    await tryAdvanceActiveWorkflowForProcess(tx, input.processId, {
+      action: input.action,
+      note: input.note,
+      userId: input.fromUserId,
+      userName: input.fromUserName,
     });
 
     return dispatch;
   });
 
   logger.info(`Processo ${process.number} despachado`, {
-    from: process.currentSectorName,
-    to: input.toSectorName,
+    from: process.currentOrganizationalUnitName,
+    to: input.toOrganizationalUnitName,
   });
 
   return result;
 }
 
-// ============================================================================
-// DEVOLVER AO SETOR ANTERIOR
-// ============================================================================
+export async function returnProcess(input: ReturnInput, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, input.processId, auth);
 
-export async function returnProcess(input: ReturnInput) {
   const process = await prisma.internalProcess.findUnique({
     where: { id: input.processId },
     include: {
@@ -130,15 +141,14 @@ export async function returnProcess(input: ReturnInput) {
     },
   });
 
-  if (!process) throw new Error('Processo não encontrado');
+  if (!process) throw new Error('Processo nao encontrado');
   if (process.status === 'CONCLUIDO' || process.status === 'CANCELADO') {
-    throw new Error('Não é possível devolver um processo finalizado');
+    throw new Error('Nao e possivel devolver um processo finalizado');
   }
 
-  // Encontrar o setor anterior
   const lastDispatch = process.dispatches[0];
   if (!lastDispatch) {
-    throw new Error('Não há setor anterior para devolver');
+    throw new Error('Nao ha unidade anterior para devolucao');
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -146,10 +156,12 @@ export async function returnProcess(input: ReturnInput) {
       data: {
         processId: input.processId,
         action: 'DEVOLVIDO',
-        fromSectorId: process.currentSectorId,
-        fromSectorName: process.currentSectorName,
-        toSectorId: lastDispatch.fromSectorId,
-        toSectorName: lastDispatch.fromSectorName,
+        fromDepartmentId: process.currentDepartmentId,
+        fromOrganizationalUnitId: process.currentOrganizationalUnitId,
+        fromOrganizationalUnitName: process.currentOrganizationalUnitName,
+        toDepartmentId: lastDispatch.fromDepartmentId,
+        toOrganizationalUnitId: lastDispatch.fromOrganizationalUnitId,
+        toOrganizationalUnitName: lastDispatch.fromOrganizationalUnitName,
         fromUserId: input.fromUserId,
         fromUserName: input.fromUserName,
         note: input.note,
@@ -159,8 +171,9 @@ export async function returnProcess(input: ReturnInput) {
     await tx.internalProcess.update({
       where: { id: input.processId },
       data: {
-        currentSectorId: lastDispatch.fromSectorId,
-        currentSectorName: lastDispatch.fromSectorName,
+        currentDepartmentId: lastDispatch.fromDepartmentId,
+        currentOrganizationalUnitId: lastDispatch.fromOrganizationalUnitId,
+        currentOrganizationalUnitName: lastDispatch.fromOrganizationalUnitName,
         currentUserId: lastDispatch.fromUserId,
         currentUserName: lastDispatch.fromUserName,
         status: 'EM_TRAMITACAO',
@@ -171,12 +184,14 @@ export async function returnProcess(input: ReturnInput) {
       data: {
         processId: input.processId,
         action: 'DEVOLVIDO',
-        description: `Devolvido para ${lastDispatch.fromSectorName}`,
+        description: `Devolvido para ${lastDispatch.fromOrganizationalUnitName}`,
         note: input.note,
-        fromSectorId: process.currentSectorId,
-        fromSectorName: process.currentSectorName,
-        toSectorId: lastDispatch.fromSectorId,
-        toSectorName: lastDispatch.fromSectorName,
+        fromDepartmentId: process.currentDepartmentId,
+        fromOrganizationalUnitId: process.currentOrganizationalUnitId,
+        fromOrganizationalUnitName: process.currentOrganizationalUnitName,
+        toDepartmentId: lastDispatch.fromDepartmentId,
+        toOrganizationalUnitId: lastDispatch.fromOrganizationalUnitId,
+        toOrganizationalUnitName: lastDispatch.fromOrganizationalUnitName,
         userId: input.fromUserId,
         userName: input.fromUserName,
       },
@@ -186,24 +201,22 @@ export async function returnProcess(input: ReturnInput) {
   });
 
   logger.info(`Processo ${process.number} devolvido`, {
-    to: lastDispatch.fromSectorName,
+    to: lastDispatch.fromOrganizationalUnitName,
   });
 
   return result;
 }
 
-// ============================================================================
-// REDISTRIBUIR DENTRO DO SETOR
-// ============================================================================
+export async function reassignProcess(input: ReassignInput, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, input.processId, auth);
 
-export async function reassignProcess(input: ReassignInput) {
   const process = await prisma.internalProcess.findUnique({
     where: { id: input.processId },
   });
 
-  if (!process) throw new Error('Processo não encontrado');
+  if (!process) throw new Error('Processo nao encontrado');
   if (process.status === 'CONCLUIDO' || process.status === 'CANCELADO') {
-    throw new Error('Não é possível redistribuir um processo finalizado');
+    throw new Error('Nao e possivel redistribuir um processo finalizado');
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -219,10 +232,12 @@ export async function reassignProcess(input: ReassignInput) {
       data: {
         processId: input.processId,
         action: 'REDISTRIBUIDO',
-        fromSectorId: process.currentSectorId,
-        fromSectorName: process.currentSectorName,
-        toSectorId: process.currentSectorId,
-        toSectorName: process.currentSectorName,
+        fromDepartmentId: process.currentDepartmentId,
+        fromOrganizationalUnitId: process.currentOrganizationalUnitId,
+        fromOrganizationalUnitName: process.currentOrganizationalUnitName,
+        toDepartmentId: process.currentDepartmentId,
+        toOrganizationalUnitId: process.currentOrganizationalUnitId,
+        toOrganizationalUnitName: process.currentOrganizationalUnitName,
         fromUserId: input.fromUserId,
         fromUserName: input.fromUserName,
         toUserId: input.toUserId,
@@ -235,7 +250,7 @@ export async function reassignProcess(input: ReassignInput) {
       data: {
         processId: input.processId,
         action: 'REDISTRIBUIDO',
-        description: `Redistribuído para ${input.toUserName}`,
+        description: `Redistribuido para ${input.toUserName}`,
         note: input.note,
         userId: input.fromUserId,
         userName: input.fromUserName,
@@ -245,22 +260,20 @@ export async function reassignProcess(input: ReassignInput) {
     return process;
   });
 
-  logger.info(`Processo ${process.number} redistribuído para ${input.toUserName}`);
+  logger.info(`Processo ${process.number} redistribuido para ${input.toUserName}`);
   return result;
 }
 
-// ============================================================================
-// CONCLUIR PROCESSO
-// ============================================================================
+export async function concludeProcess(input: ConcludeInput, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, input.processId, auth);
 
-export async function concludeProcess(input: ConcludeInput) {
   const process = await prisma.internalProcess.findUnique({
     where: { id: input.processId },
   });
 
-  if (!process) throw new Error('Processo não encontrado');
+  if (!process) throw new Error('Processo nao encontrado');
   if (process.status === 'CONCLUIDO' || process.status === 'CANCELADO') {
-    throw new Error('Processo já está finalizado');
+    throw new Error('Processo ja esta finalizado');
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -276,14 +289,13 @@ export async function concludeProcess(input: ConcludeInput) {
       data: {
         processId: input.processId,
         action: 'CONCLUSAO',
-        description: `Processo concluído por ${input.userName}`,
+        description: `Processo concluido por ${input.userName}`,
         note: input.note,
         userId: input.userId,
         userName: input.userName,
       },
     });
 
-    // Concluir workflow se existir
     await tx.workflowInstance.updateMany({
       where: { processId: input.processId, status: 'ATIVO' },
       data: { status: 'CONCLUIDO', completedAt: new Date() },
@@ -292,22 +304,20 @@ export async function concludeProcess(input: ConcludeInput) {
     return proc;
   });
 
-  logger.info(`Processo ${process.number} concluído`, { id: input.processId });
+  logger.info(`Processo ${process.number} concluido`, { id: input.processId });
   return result;
 }
 
-// ============================================================================
-// ARQUIVAR PROCESSO
-// ============================================================================
+export async function archiveProcess(processId: string, userId: string, userName: string, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, processId, auth);
 
-export async function archiveProcess(processId: string, userId: string, userName: string) {
   const process = await prisma.internalProcess.findUnique({
     where: { id: processId },
   });
 
-  if (!process) throw new Error('Processo não encontrado');
+  if (!process) throw new Error('Processo nao encontrado');
   if (process.status !== 'CONCLUIDO' && process.status !== 'CANCELADO') {
-    throw new Error('Apenas processos concluídos ou cancelados podem ser arquivados');
+    throw new Error('Apenas processos concluidos ou cancelados podem ser arquivados');
   }
 
   const result = await prisma.$transaction(async (tx) => {
@@ -336,21 +346,28 @@ export async function archiveProcess(processId: string, userId: string, userName
   return result;
 }
 
-// ============================================================================
-// CAIXA DE ENTRADA (INBOX)
-// ============================================================================
+export async function getInbox(
+  organizationalUnitId: string,
+  auth: FlowAuthContext,
+  userId?: string,
+) {
+  assertOrganizationalUnitScope(auth, organizationalUnitId);
 
-export async function getInbox(sectorId: string, userId?: string) {
-  const where: Record<string, unknown> = {
-    currentSectorId: sectorId,
-    status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] },
+  const where: Prisma.InternalProcessWhereInput = {
+    AND: [
+      buildProcessVisibilityWhere(auth),
+      {
+        currentOrganizationalUnitId: organizationalUnitId,
+        status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] },
+      },
+    ],
   };
 
   if (userId) {
-    where.currentUserId = userId;
+    (where.AND as Prisma.InternalProcessWhereInput[]).push({ currentUserId: userId });
   }
 
-  const processes = await prisma.internalProcess.findMany({
+  return prisma.internalProcess.findMany({
     where,
     include: {
       type: { select: { name: true, prefix: true } },
@@ -358,7 +375,7 @@ export async function getInbox(sectorId: string, userId?: string) {
         orderBy: { createdAt: 'desc' },
         take: 1,
         select: {
-          fromSectorName: true,
+          fromOrganizationalUnitName: true,
           fromUserName: true,
           note: true,
           createdAt: true,
@@ -369,33 +386,37 @@ export async function getInbox(sectorId: string, userId?: string) {
         select: { documents: true, history: true },
       },
     },
-    orderBy: [
-      { priority: 'desc' },
-      { createdAt: 'asc' },
-    ],
+    orderBy: [{ priority: 'desc' }, { createdAt: 'asc' }],
   });
-
-  return processes;
 }
 
-/**
- * Contagem de processos na caixa de entrada por status
- */
-export async function getInboxCount(sectorId: string, userId?: string) {
-  const baseWhere = {
-    currentSectorId: sectorId,
-    ...(userId ? { currentUserId: userId } : {}),
+export async function getInboxCount(
+  organizationalUnitId: string,
+  auth: FlowAuthContext,
+  userId?: string,
+) {
+  assertOrganizationalUnitScope(auth, organizationalUnitId);
+
+  const visibilityWhere = buildProcessVisibilityWhere(auth);
+  const baseWhere: Prisma.InternalProcessWhereInput = {
+    AND: [
+      visibilityWhere,
+      { currentOrganizationalUnitId: organizationalUnitId },
+      ...(userId ? [{ currentUserId: userId }] : []),
+    ],
   };
 
   const [total, abertos, emTramitacao, pendentes, naoLidos] = await Promise.all([
     prisma.internalProcess.count({
-      where: { ...baseWhere, status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] } },
+      where: {
+        AND: [baseWhere, { status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] } }],
+      },
     }),
-    prisma.internalProcess.count({ where: { ...baseWhere, status: 'ABERTO' } }),
-    prisma.internalProcess.count({ where: { ...baseWhere, status: 'EM_TRAMITACAO' } }),
-    prisma.internalProcess.count({ where: { ...baseWhere, status: 'PENDENTE' } }),
+    prisma.internalProcess.count({ where: { AND: [baseWhere, { status: 'ABERTO' }] } }),
+    prisma.internalProcess.count({ where: { AND: [baseWhere, { status: 'EM_TRAMITACAO' }] } }),
+    prisma.internalProcess.count({ where: { AND: [baseWhere, { status: 'PENDENTE' }] } }),
     prisma.processDispatch.count({
-      where: { toSectorId: sectorId, isRead: false },
+      where: { toOrganizationalUnitId: organizationalUnitId, isRead: false },
     }),
   ]);
 

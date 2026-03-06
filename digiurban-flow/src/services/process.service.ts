@@ -1,13 +1,37 @@
 /**
- * Servico principal de CRUD de processos internos
+ * Internal process CRUD service.
  */
+import { Prisma, ProcessStatus, SigiloLevel } from '@prisma/client';
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
 import { generateProcessNumber } from './numbering.service';
-import { Prisma, ProcessStatus, SigiloLevel } from '@prisma/client';
+import {
+  assertProcessAccess,
+  buildProcessVisibilityWhere,
+} from './access-control.service';
+import { FlowAuthContext } from '../middleware/auth.middleware';
+
+interface SnapshotWorkflowStep {
+  id: string;
+  name: string;
+  order: number;
+  actions: string[];
+  departmentId?: string;
+  organizationalUnitId?: string;
+  organizationalUnitName?: string;
+  slaHours?: number;
+  documentRequired?: string;
+}
+
+interface SnapshotWorkflowTransition {
+  fromStepId: string;
+  toStepId: string;
+  condition?: string;
+  label: string;
+}
 
 // ============================================================================
-// INTERFACES
+// INPUTS
 // ============================================================================
 
 export interface CreateProcessInput {
@@ -16,8 +40,9 @@ export interface CreateProcessInput {
   description?: string;
   sigilo?: SigiloLevel;
   priority?: number;
-  originSectorId: string;
-  originSectorName: string;
+  originDepartmentId?: string;
+  originOrganizationalUnitId: string;
+  originOrganizationalUnitName: string;
   createdById: string;
   createdByName: string;
   currentUserId?: string;
@@ -43,7 +68,8 @@ export interface UpdateProcessInput {
 export interface ListProcessesFilter {
   status?: ProcessStatus;
   typeId?: string;
-  currentSectorId?: string;
+  currentDepartmentId?: string;
+  currentOrganizationalUnitId?: string;
   currentUserId?: string;
   createdById?: string;
   citizenProtocolId?: string;
@@ -56,8 +82,72 @@ export interface ListProcessesFilter {
   orderDir?: 'asc' | 'desc';
 }
 
+function normalizeSteps(raw: unknown): SnapshotWorkflowStep[] {
+  if (!Array.isArray(raw)) return [];
+  return raw
+    .map((step, index) => {
+      if (!step || typeof step !== 'object') return null;
+      const value = step as Record<string, unknown>;
+      const id = typeof value.id === 'string' ? value.id : `step_${index + 1}`;
+      const name =
+        typeof value.name === 'string' && value.name.trim().length > 0
+          ? value.name.trim()
+          : `Etapa ${index + 1}`;
+      const order =
+        typeof value.order === 'number' && Number.isFinite(value.order) ? value.order : index;
+      const actions = Array.isArray(value.actions)
+        ? value.actions.filter(
+            (action): action is string => typeof action === 'string' && action.length > 0,
+          )
+        : ['ENCAMINHADO'];
+
+      return {
+        id,
+        name,
+        order,
+        actions: actions.length > 0 ? actions : ['ENCAMINHADO'],
+        departmentId: typeof value.departmentId === 'string' ? value.departmentId : undefined,
+        organizationalUnitId:
+          typeof value.organizationalUnitId === 'string'
+            ? value.organizationalUnitId
+            : undefined,
+        organizationalUnitName:
+          typeof value.organizationalUnitName === 'string'
+            ? value.organizationalUnitName
+            : undefined,
+        slaHours: typeof value.slaHours === 'number' ? value.slaHours : undefined,
+        documentRequired:
+          typeof value.documentRequired === 'string' ? value.documentRequired : undefined,
+      } as SnapshotWorkflowStep;
+    })
+    .filter((step): step is SnapshotWorkflowStep => step !== null)
+    .sort((a, b) => a.order - b.order)
+    .map((step, index) => ({ ...step, order: index }));
+}
+
+function normalizeTransitions(raw: unknown, steps: SnapshotWorkflowStep[]): SnapshotWorkflowTransition[] {
+  if (!Array.isArray(raw)) return [];
+  const validStepIds = new Set(steps.map((step) => step.id));
+  return raw
+    .map((transition) => {
+      if (!transition || typeof transition !== 'object') return null;
+      const value = transition as Record<string, unknown>;
+      const fromStepId = typeof value.fromStepId === 'string' ? value.fromStepId : '';
+      const toStepId = typeof value.toStepId === 'string' ? value.toStepId : '';
+      if (!fromStepId || !toStepId) return null;
+      if (!validStepIds.has(fromStepId) || !validStepIds.has(toStepId)) return null;
+      return {
+        fromStepId,
+        toStepId,
+        condition: typeof value.condition === 'string' ? value.condition : undefined,
+        label: typeof value.label === 'string' && value.label ? value.label : 'ENCAMINHADO',
+      } as SnapshotWorkflowTransition;
+    })
+    .filter((transition): transition is SnapshotWorkflowTransition => transition !== null);
+}
+
 // ============================================================================
-// CRIAR PROCESSO
+// CREATE
 // ============================================================================
 
 export async function createProcess(input: CreateProcessInput) {
@@ -69,7 +159,6 @@ export async function createProcess(input: CreateProcessInput) {
   if (!processType) {
     throw new Error('Tipo de processo nao encontrado');
   }
-
   if (!processType.isActive) {
     throw new Error('Tipo de processo inativo');
   }
@@ -92,10 +181,12 @@ export async function createProcess(input: CreateProcessInput) {
         sigilo: input.sigilo || processType.sigiloDefault,
         priority: input.priority || 0,
         status: 'ABERTO',
-        originSectorId: input.originSectorId,
-        originSectorName: input.originSectorName,
-        currentSectorId: input.originSectorId,
-        currentSectorName: input.originSectorName,
+        originDepartmentId: input.originDepartmentId,
+        originOrganizationalUnitId: input.originOrganizationalUnitId,
+        originOrganizationalUnitName: input.originOrganizationalUnitName,
+        currentDepartmentId: input.originDepartmentId,
+        currentOrganizationalUnitId: input.originOrganizationalUnitId,
+        currentOrganizationalUnitName: input.originOrganizationalUnitName,
         createdById: input.createdById,
         createdByName: input.createdByName,
         currentUserId: input.currentUserId,
@@ -113,10 +204,12 @@ export async function createProcess(input: CreateProcessInput) {
         action: 'DESPACHO',
         description: `Processo ${number} aberto por ${input.createdByName}`,
         note: input.description,
-        fromSectorId: input.originSectorId,
-        fromSectorName: input.originSectorName,
-        toSectorId: input.originSectorId,
-        toSectorName: input.originSectorName,
+        fromDepartmentId: input.originDepartmentId,
+        fromOrganizationalUnitId: input.originOrganizationalUnitId,
+        fromOrganizationalUnitName: input.originOrganizationalUnitName,
+        toDepartmentId: input.originDepartmentId,
+        toOrganizationalUnitId: input.originOrganizationalUnitId,
+        toOrganizationalUnitName: input.originOrganizationalUnitName,
         userId: input.createdById,
         userName: input.createdByName,
       },
@@ -124,7 +217,8 @@ export async function createProcess(input: CreateProcessInput) {
 
     if (processType.defaultWorkflowTemplate) {
       const template = processType.defaultWorkflowTemplate;
-      const steps = template.steps as Array<{ id: string; name: string }>;
+      const steps = normalizeSteps(template.steps);
+      const transitions = normalizeTransitions(template.transitions, steps);
       const firstStep = steps[0];
 
       if (firstStep) {
@@ -132,6 +226,10 @@ export async function createProcess(input: CreateProcessInput) {
           data: {
             processId: proc.id,
             templateId: template.id,
+            templateVersion: template.version,
+            templateName: template.name,
+            stepsSnapshot: steps as unknown as Prisma.InputJsonValue,
+            transitionsSnapshot: transitions as unknown as Prisma.InputJsonValue,
             currentStepId: firstStep.id,
             currentStepName: firstStep.name,
             status: 'ATIVO',
@@ -159,32 +257,40 @@ export async function createProcess(input: CreateProcessInput) {
 }
 
 // ============================================================================
-// LISTAR PROCESSOS
+// LIST
 // ============================================================================
 
-export async function listProcesses(filter: ListProcessesFilter) {
+export async function listProcesses(filter: ListProcessesFilter, auth: FlowAuthContext) {
   const page = filter.page || 1;
   const limit = filter.limit || 20;
   const skip = (page - 1) * limit;
 
-  const where: Prisma.InternalProcessWhereInput = {};
+  const where: Prisma.InternalProcessWhereInput = {
+    AND: [buildProcessVisibilityWhere(auth)],
+  };
+  const andConditions = where.AND as Prisma.InternalProcessWhereInput[];
 
-  if (filter.status) where.status = filter.status;
-  if (filter.typeId) where.typeId = filter.typeId;
-  if (filter.currentSectorId) where.currentSectorId = filter.currentSectorId;
-  if (filter.currentUserId) where.currentUserId = filter.currentUserId;
-  if (filter.createdById) where.createdById = filter.createdById;
-  if (filter.citizenProtocolId) where.citizenProtocolId = filter.citizenProtocolId;
-  if (filter.sigilo) where.sigilo = filter.sigilo;
-  if (filter.priority !== undefined) where.priority = filter.priority;
+  if (filter.status) andConditions.push({ status: filter.status });
+  if (filter.typeId) andConditions.push({ typeId: filter.typeId });
+  if (filter.currentDepartmentId) andConditions.push({ currentDepartmentId: filter.currentDepartmentId });
+  if (filter.currentOrganizationalUnitId) {
+    andConditions.push({ currentOrganizationalUnitId: filter.currentOrganizationalUnitId });
+  }
+  if (filter.currentUserId) andConditions.push({ currentUserId: filter.currentUserId });
+  if (filter.createdById) andConditions.push({ createdById: filter.createdById });
+  if (filter.citizenProtocolId) andConditions.push({ citizenProtocolId: filter.citizenProtocolId });
+  if (filter.sigilo) andConditions.push({ sigilo: filter.sigilo });
+  if (filter.priority !== undefined) andConditions.push({ priority: filter.priority });
 
   if (filter.search) {
-    where.OR = [
-      { number: { contains: filter.search, mode: 'insensitive' } },
-      { subject: { contains: filter.search, mode: 'insensitive' } },
-      { description: { contains: filter.search, mode: 'insensitive' } },
-      { createdByName: { contains: filter.search, mode: 'insensitive' } },
-    ];
+    andConditions.push({
+      OR: [
+        { number: { contains: filter.search, mode: 'insensitive' } },
+        { subject: { contains: filter.search, mode: 'insensitive' } },
+        { description: { contains: filter.search, mode: 'insensitive' } },
+        { createdByName: { contains: filter.search, mode: 'insensitive' } },
+      ],
+    });
   }
 
   const orderBy: Prisma.InternalProcessOrderByWithRelationInput = {};
@@ -220,12 +326,15 @@ export async function listProcesses(filter: ListProcessesFilter) {
 }
 
 // ============================================================================
-// BUSCAR POR ID
+// GET BY ID
 // ============================================================================
 
-export async function getProcessById(id: string) {
-  const process = await prisma.internalProcess.findUnique({
-    where: { id },
+export async function getProcessById(id: string, auth: FlowAuthContext) {
+  const process = await prisma.internalProcess.findFirst({
+    where: {
+      id,
+      AND: [buildProcessVisibilityWhere(auth)],
+    },
     include: {
       type: true,
       history: { orderBy: { createdAt: 'desc' } },
@@ -246,17 +355,23 @@ export async function getProcessById(id: string) {
   });
 
   if (!process) {
-    throw new Error('Processo nao encontrado');
+    throw new Error('Processo nao encontrado ou acesso negado');
   }
 
   return process;
 }
 
 // ============================================================================
-// ATUALIZAR PROCESSO
+// UPDATE
 // ============================================================================
 
-export async function updateProcess(id: string, input: UpdateProcessInput, userId: string, userName: string) {
+export async function updateProcess(
+  id: string,
+  input: UpdateProcessInput,
+  auth: FlowAuthContext,
+) {
+  await assertProcessAccess(prisma, id, auth);
+
   const existing = await prisma.internalProcess.findUnique({ where: { id } });
   if (!existing) throw new Error('Processo nao encontrado');
 
@@ -279,15 +394,25 @@ export async function updateProcess(id: string, input: UpdateProcessInput, userI
     },
   });
 
-  logger.info(`Processo atualizado: ${process.number}`, { id, userId, userName });
+  logger.info(`Processo atualizado: ${process.number}`, {
+    id,
+    userId: auth.userId,
+    userName: auth.userName,
+  });
   return process;
 }
 
 // ============================================================================
-// CANCELAR PROCESSO
+// CANCEL
 // ============================================================================
 
-export async function cancelProcess(id: string, userId: string, userName: string, reason: string) {
+export async function cancelProcess(
+  id: string,
+  auth: FlowAuthContext,
+  reason: string,
+) {
+  await assertProcessAccess(prisma, id, auth);
+
   const existing = await prisma.internalProcess.findUnique({ where: { id } });
   if (!existing) throw new Error('Processo nao encontrado');
 
@@ -305,10 +430,10 @@ export async function cancelProcess(id: string, userId: string, userName: string
       data: {
         processId: id,
         action: 'CANCELAMENTO',
-        description: `Processo cancelado por ${userName}`,
+        description: `Processo cancelado por ${auth.userName}`,
         note: reason,
-        userId,
-        userName,
+        userId: auth.userId,
+        userName: auth.userName,
       },
     });
 

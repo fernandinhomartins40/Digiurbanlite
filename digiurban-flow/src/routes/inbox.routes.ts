@@ -1,50 +1,56 @@
 /**
- * Rotas de caixa de entrada (inbox) — processos pendentes por setor/usuário
+ * Inbox routes for pending processes.
  */
 import { Router, Request, Response } from 'express';
-import { authMiddleware, AuthenticatedRequest } from '../middleware/auth.middleware';
+import {
+  authMiddleware,
+  AuthenticatedRequest,
+  toFlowAuthContext,
+} from '../middleware/auth.middleware';
 import * as dispatchService from '../services/dispatch.service';
 
 const router = Router();
 router.use(authMiddleware);
 
-// ============================================================================
-// GET /inbox — Processos pendentes do setor/usuário
-// ============================================================================
+function resolveOrganizationalUnitId(
+  req: Request,
+  auth: ReturnType<typeof toFlowAuthContext>,
+): string {
+  const queryId =
+    (req.query.organizationalUnitId as string) ||
+    (req.query.currentOrganizationalUnitId as string);
+
+  if (queryId) {
+    return queryId;
+  }
+
+  if (auth.organizationalUnitIds.length === 1) {
+    return auth.organizationalUnitIds[0];
+  }
+
+  throw new Error('organizationalUnitId e obrigatorio');
+}
 
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const auth = req as AuthenticatedRequest;
-    const sectorId = req.query.sectorId as string;
-    const userId = req.query.userId as string;
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const organizationalUnitId = resolveOrganizationalUnitId(req, auth);
+    const userId = req.query.userId as string | undefined;
 
-    if (!sectorId) {
-      res.status(400).json({ error: 'sectorId é obrigatório' });
-      return;
-    }
-
-    const processes = await dispatchService.getInbox(sectorId, userId);
+    const processes = await dispatchService.getInbox(organizationalUnitId, auth, userId);
     res.json(processes);
   } catch (error: unknown) {
     res.status(400).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// GET /inbox/count — Contagem por status
-// ============================================================================
-
 router.get('/count', async (req: Request, res: Response) => {
   try {
-    const sectorId = req.query.sectorId as string;
-    const userId = req.query.userId as string;
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const organizationalUnitId = resolveOrganizationalUnitId(req, auth);
+    const userId = req.query.userId as string | undefined;
 
-    if (!sectorId) {
-      res.status(400).json({ error: 'sectorId é obrigatório' });
-      return;
-    }
-
-    const counts = await dispatchService.getInboxCount(sectorId, userId);
+    const counts = await dispatchService.getInboxCount(organizationalUnitId, auth, userId);
     res.json(counts);
   } catch (error: unknown) {
     res.status(400).json({ error: (error as Error).message });

@@ -152,7 +152,7 @@ class DigiUrbanFlowServer {
       }
 
       const defaultTypes = [
-        { name: 'Memorando', prefix: 'MEM', description: 'Comunicação interna entre setores', defaultSlaHours: 168 },
+        { name: 'Memorando', prefix: 'MEM', description: 'Comunicação interna entre unidades', defaultSlaHours: 168 },
         { name: 'Ofício', prefix: 'OFI', description: 'Comunicação oficial externa', defaultSlaHours: 240 },
         { name: 'Processo Administrativo', prefix: 'PAD', description: 'Processo administrativo disciplinar ou de gestão', defaultSlaHours: 720 },
         { name: 'Requerimento', prefix: 'REQ', description: 'Solicitação interna de providência', defaultSlaHours: 120 },

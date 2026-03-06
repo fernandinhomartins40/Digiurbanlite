@@ -1,43 +1,45 @@
 /**
- * Serviço de controle de assinaturas digitais em processos internos
- * Integra com o sistema de certificados do backend principal via API
+ * Signature control service for internal processes.
  */
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
+import { FlowAuthContext } from '../middleware/auth.middleware';
+import {
+  assertOrganizationalUnitScope,
+  assertProcessAccess,
+} from './access-control.service';
 
-// ============================================================================
-// LISTAR ASSINATURAS
-// ============================================================================
-
-export async function listSignatures(processId: string) {
+export async function listSignatures(processId: string, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, processId, auth);
   return prisma.processSignature.findMany({
     where: { processId },
     orderBy: { createdAt: 'desc' },
   });
 }
 
-// ============================================================================
-// SOLICITAR ASSINATURA
-// ============================================================================
+export async function requestSignature(
+  data: {
+    processId: string;
+    documentId?: string;
+    requestedById: string;
+    requestedByName: string;
+    signerId?: string;
+    signerName?: string;
+    signerEmail?: string;
+    expiresInHours?: number;
+  },
+  auth: FlowAuthContext,
+) {
+  await assertProcessAccess(prisma, data.processId, auth);
 
-export async function requestSignature(data: {
-  processId: string;
-  documentId?: string;
-  requestedById: string;
-  requestedByName: string;
-  signerId?: string;
-  signerName?: string;
-  signerEmail?: string;
-  expiresInHours?: number;
-}) {
   const process = await prisma.internalProcess.findUnique({
     where: { id: data.processId },
     select: { id: true, status: true, number: true },
   });
 
-  if (!process) throw new Error('Processo não encontrado');
+  if (!process) throw new Error('Processo nao encontrado');
   if (process.status === 'CONCLUIDO' || process.status === 'CANCELADO' || process.status === 'ARQUIVADO') {
-    throw new Error('Não é possível solicitar assinatura para um processo finalizado');
+    throw new Error('Nao e possivel solicitar assinatura para um processo finalizado');
   }
 
   let expiresAt: Date | undefined;
@@ -68,23 +70,24 @@ export async function requestSignature(data: {
   return signature;
 }
 
-// ============================================================================
-// CONFIRMAR ASSINATURA (marcar como assinado)
-// ============================================================================
-
-export async function confirmSignature(signatureId: string, userId: string, signatureHash?: string) {
+export async function confirmSignature(
+  signatureId: string,
+  userId: string,
+  auth: FlowAuthContext,
+  signatureHash?: string,
+) {
   const signature = await prisma.processSignature.findUnique({
     where: { id: signatureId },
-    include: { process: { select: { number: true } } },
+    include: { process: { select: { number: true, id: true } } },
   });
 
-  if (!signature) throw new Error('Solicitação de assinatura não encontrada');
-  if (signature.status !== 'PENDENTE') throw new Error('Esta assinatura já foi processada');
+  if (!signature) throw new Error('Solicitacao de assinatura nao encontrada');
+  await assertProcessAccess(prisma, signature.process.id, auth);
+  if (signature.status !== 'PENDENTE') throw new Error('Esta assinatura ja foi processada');
   if (signature.signerId && signature.signerId !== userId) {
-    throw new Error('Esta assinatura deve ser realizada por outro usuário');
+    throw new Error('Esta assinatura deve ser realizada por outro usuario');
   }
 
-  // Verificar expiração
   if (signature.expiresAt && signature.expiresAt < new Date()) {
     await prisma.processSignature.update({
       where: { id: signatureId },
@@ -104,7 +107,6 @@ export async function confirmSignature(signatureId: string, userId: string, sign
       },
     });
 
-    // Se havia documentId, marcar o documento como assinado
     if (signature.documentId) {
       await tx.processDocument.update({
         where: { id: signature.documentId },
@@ -112,12 +114,11 @@ export async function confirmSignature(signatureId: string, userId: string, sign
       });
     }
 
-    // Registrar no histórico
     await tx.internalProcessHistory.create({
       data: {
         processId: signature.processId,
         action: 'ASSINATURA',
-        description: `Documento assinado digitalmente`,
+        description: 'Documento assinado digitalmente',
         userId,
         userName: signature.signerName || 'Servidor',
       },
@@ -130,17 +131,23 @@ export async function confirmSignature(signatureId: string, userId: string, sign
   return updated;
 }
 
-// ============================================================================
-// REJEITAR ASSINATURA
-// ============================================================================
-
-export async function rejectSignature(signatureId: string, userId: string, reason: string) {
+export async function rejectSignature(
+  signatureId: string,
+  userId: string,
+  auth: FlowAuthContext,
+  reason: string,
+) {
   const signature = await prisma.processSignature.findUnique({
     where: { id: signatureId },
+    select: { id: true, status: true, processId: true, signerId: true },
   });
 
-  if (!signature) throw new Error('Solicitação de assinatura não encontrada');
-  if (signature.status !== 'PENDENTE') throw new Error('Esta assinatura já foi processada');
+  if (!signature) throw new Error('Solicitacao de assinatura nao encontrada');
+  await assertProcessAccess(prisma, signature.processId, auth);
+  if (signature.status !== 'PENDENTE') throw new Error('Esta assinatura ja foi processada');
+  if (signature.signerId && signature.signerId !== userId) {
+    throw new Error('Esta assinatura deve ser rejeitada pelo assinante designado');
+  }
 
   return prisma.processSignature.update({
     where: { id: signatureId },
@@ -152,24 +159,26 @@ export async function rejectSignature(signatureId: string, userId: string, reaso
   });
 }
 
-// ============================================================================
-// MARCAR DESPACHO COMO LIDO
-// ============================================================================
+export async function markDispatchRead(dispatchId: string, auth: FlowAuthContext) {
+  const dispatch = await prisma.processDispatch.findUnique({
+    where: { id: dispatchId },
+    select: { id: true, processId: true, toOrganizationalUnitId: true },
+  });
 
-export async function markDispatchRead(dispatchId: string) {
+  if (!dispatch) throw new Error('Despacho nao encontrado');
+  await assertProcessAccess(prisma, dispatch.processId, auth);
+  assertOrganizationalUnitScope(auth, dispatch.toOrganizationalUnitId);
+
   return prisma.processDispatch.update({
     where: { id: dispatchId },
     data: { isRead: true, readAt: new Date() },
   });
 }
 
-// ============================================================================
-// MARCAR TODOS OS DESPACHOS DO SETOR COMO LIDOS
-// ============================================================================
-
-export async function markAllDispatchesRead(sectorId: string) {
+export async function markAllDispatchesRead(organizationalUnitId: string, auth: FlowAuthContext) {
+  assertOrganizationalUnitScope(auth, organizationalUnitId);
   return prisma.processDispatch.updateMany({
-    where: { toSectorId: sectorId, isRead: false },
+    where: { toOrganizationalUnitId: organizationalUnitId, isRead: false },
     data: { isRead: true, readAt: new Date() },
   });
 }

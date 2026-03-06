@@ -1,14 +1,22 @@
 /**
- * Serviço de analytics e KPIs de processos internos
+ * Analytics service for internal processes.
  */
+import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
-import logger from '../utils/logger';
+import { FlowAuthContext } from '../middleware/auth.middleware';
+import { buildProcessVisibilityWhere } from './access-control.service';
 
-// ============================================================================
-// DASHBOARD PRINCIPAL
-// ============================================================================
+function withVisibility(auth: FlowAuthContext, extra?: Prisma.InternalProcessWhereInput): Prisma.InternalProcessWhereInput {
+  const visibility = buildProcessVisibilityWhere(auth);
+  if (!extra) {
+    return visibility;
+  }
+  return {
+    AND: [visibility, extra],
+  };
+}
 
-export async function getDashboard() {
+export async function getDashboard(auth: FlowAuthContext) {
   const now = new Date();
   const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
@@ -22,51 +30,50 @@ export async function getDashboard() {
     criadosUltimos30Dias,
     concluidosUltimos30Dias,
     porTipo,
-    porSetor,
+    porUnidade,
     urgentes,
     vencidos,
   ] = await Promise.all([
-    prisma.internalProcess.count({ where: { status: 'ABERTO' } }),
-    prisma.internalProcess.count({ where: { status: 'EM_TRAMITACAO' } }),
-    prisma.internalProcess.count({ where: { status: 'PENDENTE' } }),
-    prisma.internalProcess.count({ where: { status: 'CONCLUIDO' } }),
-    prisma.internalProcess.count({ where: { status: 'CANCELADO' } }),
-    prisma.internalProcess.count({ where: { status: 'ARQUIVADO' } }),
+    prisma.internalProcess.count({ where: withVisibility(auth, { status: 'ABERTO' }) }),
+    prisma.internalProcess.count({ where: withVisibility(auth, { status: 'EM_TRAMITACAO' }) }),
+    prisma.internalProcess.count({ where: withVisibility(auth, { status: 'PENDENTE' }) }),
+    prisma.internalProcess.count({ where: withVisibility(auth, { status: 'CONCLUIDO' }) }),
+    prisma.internalProcess.count({ where: withVisibility(auth, { status: 'CANCELADO' }) }),
+    prisma.internalProcess.count({ where: withVisibility(auth, { status: 'ARQUIVADO' }) }),
     prisma.internalProcess.count({
-      where: { createdAt: { gte: thirtyDaysAgo } },
+      where: withVisibility(auth, { createdAt: { gte: thirtyDaysAgo } }),
     }),
     prisma.internalProcess.count({
-      where: { concludedAt: { gte: thirtyDaysAgo } },
+      where: withVisibility(auth, { concludedAt: { gte: thirtyDaysAgo } }),
     }),
     prisma.internalProcess.groupBy({
       by: ['typeId'],
       _count: true,
-      where: { status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] } },
+      where: withVisibility(auth, { status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] } }),
     }),
     prisma.internalProcess.groupBy({
-      by: ['currentSectorId', 'currentSectorName'],
+      by: ['currentOrganizationalUnitId', 'currentOrganizationalUnitName'],
       _count: true,
-      where: { status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] } },
+      where: withVisibility(auth, { status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] } }),
     }),
     prisma.internalProcess.count({
-      where: {
+      where: withVisibility(auth, {
         priority: { gte: 1 },
         status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] },
-      },
+      }),
     }),
     prisma.internalProcess.count({
-      where: {
+      where: withVisibility(auth, {
         dueAt: { lt: now },
         status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] },
-      },
+      }),
     }),
   ]);
 
-  // Buscar nomes dos tipos
   const tipos = await prisma.internalProcessType.findMany({
     select: { id: true, name: true },
   });
-  const tipoMap = new Map(tipos.map((t) => [t.id, t.name]));
+  const tipoMap = new Map(tipos.map((tipo) => [tipo.id, tipo.name]));
 
   return {
     resumo: {
@@ -84,31 +91,27 @@ export async function getDashboard() {
       criados: criadosUltimos30Dias,
       concluidos: concluidosUltimos30Dias,
     },
-    porTipo: porTipo.map((t) => ({
-      tipoId: t.typeId,
-      tipoNome: tipoMap.get(t.typeId) || 'Desconhecido',
-      count: t._count,
+    porTipo: porTipo.map((tipo) => ({
+      tipoId: tipo.typeId,
+      tipoNome: tipoMap.get(tipo.typeId) || 'Desconhecido',
+      count: tipo._count,
     })),
-    porSetor: porSetor.map((s) => ({
-      setorId: s.currentSectorId,
-      setorNome: s.currentSectorName,
-      count: s._count,
+    porUnidade: porUnidade.map((unidade) => ({
+      organizationalUnitId: unidade.currentOrganizationalUnitId,
+      organizationalUnitName: unidade.currentOrganizationalUnitName,
+      count: unidade._count,
     })),
   };
 }
 
-// ============================================================================
-// PROCESSOS COM SLA VENCIDO
-// ============================================================================
-
-export async function getOverdueProcesses() {
+export async function getOverdueProcesses(auth: FlowAuthContext) {
   const now = new Date();
 
   return prisma.internalProcess.findMany({
-    where: {
+    where: withVisibility(auth, {
       dueAt: { lt: now },
       status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] },
-    },
+    }),
     include: {
       type: { select: { name: true, prefix: true } },
     },
@@ -116,103 +119,110 @@ export async function getOverdueProcesses() {
   });
 }
 
-// ============================================================================
-// GARGALOS POR SETOR (processos parados há mais tempo)
-// ============================================================================
-
-export async function getBottlenecks() {
+export async function getBottlenecks(auth: FlowAuthContext) {
   const processes = await prisma.internalProcess.findMany({
-    where: {
+    where: withVisibility(auth, {
       status: { in: ['ABERTO', 'EM_TRAMITACAO', 'PENDENTE'] },
-    },
+    }),
     select: {
       id: true,
       number: true,
       subject: true,
-      currentSectorId: true,
-      currentSectorName: true,
+      currentOrganizationalUnitId: true,
+      currentOrganizationalUnitName: true,
       updatedAt: true,
-      createdAt: true,
     },
     orderBy: { updatedAt: 'asc' },
-    take: 50,
+    take: 100,
   });
 
-  // Agrupar por setor
-  const sectorMap = new Map<string, { sectorName: string; count: number; oldestDays: number }>();
-
+  const unitMap = new Map<string, { unitName: string; count: number; oldestDays: number }>();
   const now = new Date();
-  for (const proc of processes) {
-    const existing = sectorMap.get(proc.currentSectorId);
-    const daysStale = Math.floor((now.getTime() - proc.updatedAt.getTime()) / (1000 * 60 * 60 * 24));
 
-    if (!existing) {
-      sectorMap.set(proc.currentSectorId, {
-        sectorName: proc.currentSectorName,
+  for (const process of processes) {
+    const staleDays = Math.floor((now.getTime() - process.updatedAt.getTime()) / (1000 * 60 * 60 * 24));
+    const current = unitMap.get(process.currentOrganizationalUnitId);
+
+    if (!current) {
+      unitMap.set(process.currentOrganizationalUnitId, {
+        unitName: process.currentOrganizationalUnitName,
         count: 1,
-        oldestDays: daysStale,
+        oldestDays: staleDays,
       });
-    } else {
-      existing.count++;
-      existing.oldestDays = Math.max(existing.oldestDays, daysStale);
+      continue;
     }
+
+    current.count += 1;
+    current.oldestDays = Math.max(current.oldestDays, staleDays);
   }
 
-  return Array.from(sectorMap.entries())
-    .map(([sectorId, data]) => ({ sectorId, ...data }))
+  return Array.from(unitMap.entries())
+    .map(([organizationalUnitId, data]) => ({
+      organizationalUnitId,
+      organizationalUnitName: data.unitName,
+      count: data.count,
+      oldestDays: data.oldestDays,
+    }))
     .sort((a, b) => b.count - a.count);
 }
 
-// ============================================================================
-// EXPORTAR CSV
-// ============================================================================
-
-export async function exportCSV(filters?: { status?: string; typeId?: string }) {
-  const where: Record<string, unknown> = {};
-  if (filters?.status) where.status = filters.status;
-  if (filters?.typeId) where.typeId = filters.typeId;
+export async function exportCSV(
+  auth: FlowAuthContext,
+  filters?: { status?: string; typeId?: string },
+) {
+  const where: Prisma.InternalProcessWhereInput = {
+    AND: [
+      buildProcessVisibilityWhere(auth),
+      ...(filters?.status ? [{ status: filters.status as any }] : []),
+      ...(filters?.typeId ? [{ typeId: filters.typeId }] : []),
+    ],
+  };
 
   const processes = await prisma.internalProcess.findMany({
     where,
-    include: { type: { select: { name: true } } },
+    include: {
+      type: { select: { name: true } },
+    },
     orderBy: { createdAt: 'desc' },
   });
 
-  // Header CSV
   const header = [
-    'Número',
+    'Numero',
     'Tipo',
     'Assunto',
     'Status',
     'Prioridade',
     'Sigilo',
-    'Setor Origem',
-    'Setor Atual',
+    'Departamento Origem',
+    'Unidade Origem',
+    'Departamento Atual',
+    'Unidade Atual',
     'Criado Por',
-    'Responsável Atual',
-    'Data Criação',
+    'Responsavel Atual',
+    'Data Criacao',
     'Prazo',
-    'Data Conclusão',
+    'Data Conclusao',
   ].join(';');
 
-  const rows = processes.map((p) =>
+  const rows = processes.map((process) =>
     [
-      p.number,
-      p.type.name,
-      `"${(p.subject || '').replace(/"/g, '""')}"`,
-      p.status,
-      p.priority === 0 ? 'Normal' : p.priority === 1 ? 'Urgente' : 'Urgentíssimo',
-      p.sigilo,
-      p.originSectorName,
-      p.currentSectorName,
-      p.createdByName,
-      p.currentUserName || '-',
-      new Intl.DateTimeFormat('pt-BR').format(p.createdAt),
-      p.dueAt ? new Intl.DateTimeFormat('pt-BR').format(p.dueAt) : '-',
-      p.concludedAt ? new Intl.DateTimeFormat('pt-BR').format(p.concludedAt) : '-',
-    ].join(';')
+      process.number,
+      process.type.name,
+      `"${(process.subject || '').replace(/"/g, '""')}"`,
+      process.status,
+      process.priority === 0 ? 'Normal' : process.priority === 1 ? 'Urgente' : 'Urgentissimo',
+      process.sigilo,
+      process.originDepartmentId || '-',
+      process.originOrganizationalUnitName,
+      process.currentDepartmentId || '-',
+      process.currentOrganizationalUnitName,
+      process.createdByName,
+      process.currentUserName || '-',
+      new Intl.DateTimeFormat('pt-BR').format(process.createdAt),
+      process.dueAt ? new Intl.DateTimeFormat('pt-BR').format(process.dueAt) : '-',
+      process.concludedAt ? new Intl.DateTimeFormat('pt-BR').format(process.concludedAt) : '-',
+    ].join(';'),
   );
 
-  // UTF-8 BOM para Excel
   return '\ufeff' + [header, ...rows].join('\n');
 }

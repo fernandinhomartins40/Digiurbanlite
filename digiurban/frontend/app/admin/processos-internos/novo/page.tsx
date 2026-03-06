@@ -35,8 +35,9 @@ interface CreateProcessFormState {
   description: string
   sigilo: string
   priority: string
-  originSectorId: string
-  originSectorName: string
+  originDepartmentId: string
+  originOrganizationalUnitId: string
+  originOrganizationalUnitName: string
   dueAt: string
   tags: string
 }
@@ -48,8 +49,9 @@ function createEmptyForm(): CreateProcessFormState {
     description: '',
     sigilo: 'PUBLICO',
     priority: '0',
-    originSectorId: '',
-    originSectorName: '',
+    originDepartmentId: '',
+    originOrganizationalUnitId: '',
+    originOrganizationalUnitName: '',
     dueAt: '',
     tags: '',
   }
@@ -90,7 +92,7 @@ const PRIORITY_LABELS: Record<string, string> = {
 export default function NovoProcessoInternoPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { user } = useAdminAuth()
+  useAdminAuth()
   const { toast } = useToast()
 
   const [loadingTypes, setLoadingTypes] = useState(true)
@@ -100,7 +102,13 @@ export default function NovoProcessoInternoPage() {
 
   const selectedType = processTypes.find(type => type.id === form.typeId)
   const activeTypes = processTypes.filter(type => type.isActive)
-  const isSubmitDisabled = saving || loadingTypes || !form.typeId || !form.subject.trim() || !form.originSectorName.trim()
+  const isSubmitDisabled =
+    saving ||
+    loadingTypes ||
+    !form.typeId ||
+    !form.subject.trim() ||
+    !form.originOrganizationalUnitId ||
+    !form.originOrganizationalUnitName.trim()
 
   useEffect(() => {
     const loadTypes = async () => {
@@ -120,21 +128,6 @@ export default function NovoProcessoInternoPage() {
 
     loadTypes()
   }, [toast])
-
-  useEffect(() => {
-    if (form.originSectorName) return
-
-    const defaultSectorName = user?.department?.name || user?.primaryDepartment?.name
-    const defaultSectorId = user?.departmentId || user?.primaryDepartment?.id || defaultSectorName
-
-    if (!defaultSectorName || !defaultSectorId) return
-
-    setForm(current => ({
-      ...current,
-      originSectorId: defaultSectorId,
-      originSectorName: defaultSectorName,
-    }))
-  }, [form.originSectorName, user?.department?.name, user?.departmentId, user?.primaryDepartment?.id, user?.primaryDepartment?.name])
 
   useEffect(() => {
     const preselectedTypeId = searchParams.get('typeId')
@@ -177,8 +170,9 @@ export default function NovoProcessoInternoPage() {
         description: form.description.trim() || undefined,
         sigilo: form.sigilo,
         priority: parseInt(form.priority, 10),
-        originSectorId: form.originSectorId || form.originSectorName,
-        originSectorName: form.originSectorName.trim(),
+        originDepartmentId: form.originDepartmentId || undefined,
+        originOrganizationalUnitId: form.originOrganizationalUnitId,
+        originOrganizationalUnitName: form.originOrganizationalUnitName.trim(),
         dueAt: form.dueAt ? new Date(form.dueAt).toISOString() : undefined,
         tags: form.tags ? form.tags.split(',').map(tag => tag.trim()).filter(Boolean) : [],
       })
@@ -213,7 +207,7 @@ export default function NovoProcessoInternoPage() {
             </div>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Novo Processo</h1>
             <p className="mt-2 max-w-2xl text-sm text-gray-500">
-              Abra o processo em uma página dedicada, com contexto do tipo, setor de origem e automações aplicáveis antes de confirmar a criação.
+              Abra o processo em uma página dedicada, com contexto do tipo, unidade de origem e automações aplicáveis antes de confirmar a criação.
             </p>
           </div>
         </div>
@@ -281,7 +275,7 @@ export default function NovoProcessoInternoPage() {
                 <Textarea
                   value={form.description}
                   onChange={event => setForm(current => ({ ...current, description: event.target.value }))}
-                  placeholder="Contextualize o processo com as informações que o próximo setor precisa entender."
+                  placeholder="Contextualize o processo com as informações que a próxima unidade precisa entender."
                   rows={6}
                 />
               </div>
@@ -296,21 +290,23 @@ export default function NovoProcessoInternoPage() {
               </div>
 
               <OrganizationalUnitAutocomplete
-                label="Setor de origem"
-                value={form.originSectorName}
+                label="Unidade de origem"
+                value={form.originOrganizationalUnitName}
                 onValueChange={value => setForm(current => ({
                   ...current,
-                  originSectorName: value,
-                  originSectorId: value,
+                  originOrganizationalUnitName: value,
+                  originOrganizationalUnitId: '',
+                  originDepartmentId: '',
                 }))}
                 onSelect={unit => setForm(current => ({
                   ...current,
-                  originSectorId: unit.id,
-                  originSectorName: unit.nome,
+                  originDepartmentId: unit.department?.id || '',
+                  originOrganizationalUnitId: unit.id,
+                  originOrganizationalUnitName: unit.nome,
                 }))}
                 placeholder="Ex: Secretaria de Administração"
                 required
-                helperText="Selecione uma unidade do organograma ou mantenha um nome livre para processos legados."
+                helperText="Selecione uma unidade do organograma. Texto livre não é aceito."
               />
 
               <div className="grid gap-4 lg:grid-cols-3">
@@ -401,8 +397,8 @@ export default function NovoProcessoInternoPage() {
                 <div className="flex items-start gap-3">
                   <Building2 className="mt-0.5 h-4 w-4 text-gray-400" />
                   <div>
-                    <p className="font-medium text-gray-700">Setor de origem</p>
-                    <p className="text-gray-500">{form.originSectorName || 'Não definido'}</p>
+                    <p className="font-medium text-gray-700">Unidade de origem</p>
+                    <p className="text-gray-500">{form.originOrganizationalUnitName || 'Não definida'}</p>
                   </div>
                 </div>
 

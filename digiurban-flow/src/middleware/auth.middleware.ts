@@ -1,8 +1,8 @@
 /**
- * Middleware de autenticação para o módulo digiurban-flow
- * Suporta:
- * 1. JWT do admin (mesmo secret do backend principal)
- * 2. Service Token (para comunicação backend → flow)
+ * Authentication middleware for digiurban-flow.
+ * Supports:
+ * 1. Service token (backend -> flow)
+ * 2. JWT admin token (cookie/header)
  */
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
@@ -11,46 +11,148 @@ import logger from '../utils/logger';
 
 export interface AuthenticatedRequest extends Request {
   userId?: string;
-  userType?: string;
+  userType?: 'admin' | 'service';
+  userRole?: string;
   userName?: string;
   departmentId?: string;
+  departmentIds?: string[];
+  organizationalUnitIds?: string[];
+  canAccessConfidential?: boolean;
 }
 
 interface JWTPayload {
   userId: string;
-  type: string;
+  type?: string;
+  role?: string;
   name?: string;
   departmentId?: string;
-  iat: number;
-  exp: number;
+  departmentIds?: string[];
+  organizationalUnitIds?: string[];
+  iat?: number;
+  exp?: number;
+}
+
+export interface FlowAuthContext {
+  userId: string;
+  userType: 'admin' | 'service';
+  userRole?: string;
+  userName: string;
+  departmentId?: string;
+  departmentIds: string[];
+  organizationalUnitIds: string[];
+  canAccessConfidential: boolean;
+}
+
+function parseHeaderList(value: unknown): string[] {
+  if (!value) return [];
+  const raw = Array.isArray(value) ? value.join(',') : String(value);
+  return Array.from(
+    new Set(
+      raw
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean),
+    ),
+  );
+}
+
+function isPrivilegedRole(role?: string): boolean {
+  const normalized = (role || '').toUpperCase();
+  return normalized === 'ADMIN' || normalized === 'SUPER_ADMIN';
+}
+
+function buildDepartmentIds(primaryDepartmentId?: string, headerList?: string[]): string[] {
+  const values = [...(headerList || [])];
+  if (primaryDepartmentId) {
+    values.unshift(primaryDepartmentId);
+  }
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
+function applyServiceContext(authReq: AuthenticatedRequest): void {
+  authReq.userId = 'system';
+  authReq.userType = 'service';
+  authReq.userRole = 'SERVICE';
+  authReq.userName = 'DigiUrban Backend';
+  authReq.departmentIds = [];
+  authReq.organizationalUnitIds = [];
+  authReq.canAccessConfidential = true;
+}
+
+export function toFlowAuthContext(req: AuthenticatedRequest): FlowAuthContext {
+  if (!req.userId || !req.userType) {
+    throw new Error('Requisicao sem contexto de autenticacao');
+  }
+
+  return {
+    userId: req.userId,
+    userType: req.userType,
+    userRole: req.userRole,
+    userName: req.userName || 'Servidor',
+    departmentId: req.departmentId,
+    departmentIds: req.departmentIds || [],
+    organizationalUnitIds: req.organizationalUnitIds || [],
+    canAccessConfidential: Boolean(req.canAccessConfidential),
+  };
 }
 
 /**
- * Middleware de autenticação JWT (admin/servidor)
+ * JWT/service auth middleware.
  */
 export function authMiddleware(req: Request, res: Response, next: NextFunction): void {
   const authReq = req as AuthenticatedRequest;
 
-  // 1. Verificar Service Token (comunicação interna)
-  const serviceToken = req.headers['x-digiurban-flow-token'] as string;
-  if (serviceToken && serviceToken === config.flowServiceToken) {
-    authReq.userId = 'system';
-    authReq.userType = 'service';
-    authReq.userName = 'DigiUrban Backend';
+  const serviceToken = req.headers['x-digiurban-flow-token'] as string | undefined;
+  const hasValidServiceToken =
+    Boolean(serviceToken) &&
+    Boolean(config.flowServiceToken) &&
+    serviceToken === config.flowServiceToken;
+
+  const proxyUserId = req.headers['x-user-id'] as string | undefined;
+  if (proxyUserId) {
+    if (!hasValidServiceToken) {
+      res.status(401).json({ error: 'Cabecalhos de proxy exigem service token valido' });
+      return;
+    }
+
+    const proxyRole = (req.headers['x-user-role'] as string | undefined) || 'USER';
+    const proxyName = (req.headers['x-user-name'] as string | undefined) || 'Servidor';
+    const proxyDepartmentId = req.headers['x-department-id'] as string | undefined;
+    const proxyDepartmentIds = buildDepartmentIds(
+      proxyDepartmentId,
+      parseHeaderList(req.headers['x-department-ids']),
+    );
+    const proxyOrganizationalUnitIds = parseHeaderList(req.headers['x-organizational-unit-ids']);
+    const canAccessConfidentialHeader = String(req.headers['x-access-confidential'] || '');
+    const canAccessConfidential =
+      canAccessConfidentialHeader === '1' ||
+      canAccessConfidentialHeader.toLowerCase() === 'true' ||
+      isPrivilegedRole(proxyRole);
+
+    authReq.userId = proxyUserId;
+    authReq.userType = 'admin';
+    authReq.userRole = proxyRole;
+    authReq.userName = proxyName;
+    authReq.departmentId = proxyDepartmentId;
+    authReq.departmentIds = proxyDepartmentIds;
+    authReq.organizationalUnitIds = proxyOrganizationalUnitIds;
+    authReq.canAccessConfidential = canAccessConfidential;
     next();
     return;
   }
 
-  // 2. Verificar JWT (cookie ou header Authorization)
-  let token: string | undefined;
+  if (hasValidServiceToken) {
+    applyServiceContext(authReq);
+    next();
+    return;
+  }
 
-  // Cookie do admin
-  const adminCookie = req.cookies?.digiurban_admin_token;
+  let token: string | undefined;
+  const adminCookie = req.cookies?.digiurban_admin_token as string | undefined;
   if (adminCookie) {
     token = adminCookie;
   }
 
-  // Header Authorization: Bearer <token>
   if (!token) {
     const authHeader = req.headers.authorization;
     if (authHeader?.startsWith('Bearer ')) {
@@ -58,51 +160,46 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     }
   }
 
-  // Header x-user-id (vindo do proxy do backend, já autenticado)
-  const proxyUserId = req.headers['x-user-id'] as string;
-  if (proxyUserId) {
-    authReq.userId = proxyUserId;
-    authReq.userType = 'admin';
-    authReq.userName = (req.headers['x-user-name'] as string) || 'Servidor';
-    authReq.departmentId = req.headers['x-department-id'] as string;
-    next();
-    return;
-  }
-
   if (!token) {
-    res.status(401).json({ error: 'Token de autenticação não fornecido' });
+    res.status(401).json({ error: 'Token de autenticacao nao fornecido' });
     return;
   }
 
   try {
     const decoded = jwt.verify(token, config.jwtSecret) as JWTPayload;
-
-    if (decoded.type !== 'admin') {
-      res.status(403).json({ error: 'Acesso restrito a servidores públicos' });
+    if (!decoded.userId) {
+      res.status(401).json({ error: 'Token invalido' });
       return;
     }
 
+    const role = decoded.role || decoded.type || 'USER';
     authReq.userId = decoded.userId;
-    authReq.userType = decoded.type;
-    authReq.userName = decoded.name;
+    authReq.userType = 'admin';
+    authReq.userRole = role;
+    authReq.userName = decoded.name || 'Servidor';
     authReq.departmentId = decoded.departmentId;
+    authReq.departmentIds = buildDepartmentIds(decoded.departmentId, decoded.departmentIds || []);
+    authReq.organizationalUnitIds = Array.isArray(decoded.organizationalUnitIds)
+      ? Array.from(new Set(decoded.organizationalUnitIds.filter(Boolean)))
+      : [];
+    authReq.canAccessConfidential = isPrivilegedRole(role);
     next();
   } catch (error) {
     logger.warn('JWT verification failed', { error: (error as Error).message });
-    res.status(401).json({ error: 'Token inválido ou expirado' });
+    res.status(401).json({ error: 'Token invalido ou expirado' });
   }
 }
 
 /**
- * Middleware que aceita APENAS service token (rotas internas)
+ * Middleware that accepts only service token.
  */
 export function serviceAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const serviceToken = req.headers['x-digiurban-flow-token'] as string;
+  const serviceToken = req.headers['x-digiurban-flow-token'] as string | undefined;
   if (!serviceToken || serviceToken !== config.flowServiceToken) {
-    res.status(401).json({ error: 'Service token inválido' });
+    res.status(401).json({ error: 'Service token invalido' });
     return;
   }
-  (req as AuthenticatedRequest).userId = 'system';
-  (req as AuthenticatedRequest).userType = 'service';
+
+  applyServiceContext(req as AuthenticatedRequest);
   next();
 }

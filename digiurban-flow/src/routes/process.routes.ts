@@ -1,26 +1,27 @@
 /**
- * Rotas CRUD de processos internos
+ * Internal process routes.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { authMiddleware, AuthenticatedRequest } from '../middleware/auth.middleware';
+import {
+  authMiddleware,
+  AuthenticatedRequest,
+  toFlowAuthContext,
+} from '../middleware/auth.middleware';
 import * as processService from '../services/process.service';
 
 const router = Router();
 router.use(authMiddleware);
 
-// ============================================================================
-// SCHEMAS DE VALIDAÇÃO
-// ============================================================================
-
 const createProcessSchema = z.object({
   typeId: z.string().min(1),
-  subject: z.string().min(3, 'Assunto deve ter no mínimo 3 caracteres'),
+  subject: z.string().min(3, 'Assunto deve ter no minimo 3 caracteres'),
   description: z.string().optional(),
   sigilo: z.enum(['PUBLICO', 'RESTRITO', 'CONFIDENCIAL']).optional(),
   priority: z.number().int().min(0).max(2).optional(),
-  originSectorId: z.string().min(1),
-  originSectorName: z.string().min(1),
+  originDepartmentId: z.string().optional(),
+  originOrganizationalUnitId: z.string().min(1),
+  originOrganizationalUnitName: z.string().min(1),
   currentUserId: z.string().optional(),
   currentUserName: z.string().optional(),
   citizenProtocolId: z.string().optional(),
@@ -44,7 +45,8 @@ const updateProcessSchema = z.object({
 const listProcessesSchema = z.object({
   status: z.string().optional(),
   typeId: z.string().optional(),
-  currentSectorId: z.string().optional(),
+  currentDepartmentId: z.string().optional(),
+  currentOrganizationalUnitId: z.string().optional(),
   currentUserId: z.string().optional(),
   createdById: z.string().optional(),
   citizenProtocolId: z.string().optional(),
@@ -57,55 +59,53 @@ const listProcessesSchema = z.object({
   orderDir: z.enum(['asc', 'desc']).optional(),
 });
 
-// ============================================================================
-// POST /processes — Criar processo
-// ============================================================================
-
 router.post('/', async (req: Request, res: Response) => {
   try {
-    const auth = req as AuthenticatedRequest;
+    const authReq = req as AuthenticatedRequest;
+    const auth = toFlowAuthContext(authReq);
     const body = createProcessSchema.parse(req.body);
 
     const process = await processService.createProcess({
       ...body,
-      createdById: auth.userId!,
-      createdByName: auth.userName || 'Servidor',
+      createdById: auth.userId,
+      createdByName: auth.userName,
       dueAt: body.dueAt ? new Date(body.dueAt) : undefined,
     });
 
     res.status(201).json(process);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+      res.status(400).json({ error: 'Dados invalidos', details: error.errors });
       return;
     }
     res.status(400).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// GET /processes — Listar processos
-// ============================================================================
-
 router.get('/', async (req: Request, res: Response) => {
   try {
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
     const query = listProcessesSchema.parse(req.query);
 
-    const result = await processService.listProcesses({
-      status: query.status as processService.ListProcessesFilter['status'],
-      typeId: query.typeId,
-      currentSectorId: query.currentSectorId,
-      currentUserId: query.currentUserId,
-      createdById: query.createdById,
-      citizenProtocolId: query.citizenProtocolId,
-      sigilo: query.sigilo as processService.ListProcessesFilter['sigilo'],
-      priority: query.priority ? parseInt(query.priority) : undefined,
-      search: query.search,
-      page: query.page ? parseInt(query.page) : undefined,
-      limit: query.limit ? parseInt(query.limit) : undefined,
-      orderBy: query.orderBy,
-      orderDir: query.orderDir,
-    });
+    const result = await processService.listProcesses(
+      {
+        status: query.status as processService.ListProcessesFilter['status'],
+        typeId: query.typeId,
+        currentDepartmentId: query.currentDepartmentId,
+        currentOrganizationalUnitId: query.currentOrganizationalUnitId,
+        currentUserId: query.currentUserId,
+        createdById: query.createdById,
+        citizenProtocolId: query.citizenProtocolId,
+        sigilo: query.sigilo as processService.ListProcessesFilter['sigilo'],
+        priority: query.priority ? parseInt(query.priority, 10) : undefined,
+        search: query.search,
+        page: query.page ? parseInt(query.page, 10) : undefined,
+        limit: query.limit ? parseInt(query.limit, 10) : undefined,
+        orderBy: query.orderBy,
+        orderDir: query.orderDir,
+      },
+      auth,
+    );
 
     res.json(result);
   } catch (error: unknown) {
@@ -113,26 +113,19 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// GET /processes/:id — Detalhes
-// ============================================================================
-
 router.get('/:id', async (req: Request, res: Response) => {
   try {
-    const process = await processService.getProcessById(req.params.id as string);
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const process = await processService.getProcessById(req.params.id as string, auth);
     res.json(process);
   } catch (error: unknown) {
     res.status(404).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// PATCH /processes/:id — Atualizar
-// ============================================================================
-
 router.patch('/:id', async (req: Request, res: Response) => {
   try {
-    const auth = req as AuthenticatedRequest;
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
     const body = updateProcessSchema.parse(req.body);
 
     const process = await processService.updateProcess(
@@ -141,36 +134,30 @@ router.patch('/:id', async (req: Request, res: Response) => {
         ...body,
         currentUserId: body.currentUserId ?? undefined,
         currentUserName: body.currentUserName ?? undefined,
-        dueAt: body.dueAt ? new Date(body.dueAt) : body.dueAt === null ? undefined : undefined,
+        dueAt: body.dueAt ? new Date(body.dueAt) : undefined,
       },
-      auth.userId!,
-      auth.userName || 'Servidor'
+      auth,
     );
 
     res.json(process);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+      res.status(400).json({ error: 'Dados invalidos', details: error.errors });
       return;
     }
     res.status(400).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// DELETE /processes/:id — Cancelar
-// ============================================================================
-
 router.delete('/:id', async (req: Request, res: Response) => {
   try {
-    const auth = req as AuthenticatedRequest;
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
     const { reason } = req.body || {};
 
     const process = await processService.cancelProcess(
       req.params.id as string,
-      auth.userId!,
-      auth.userName || 'Servidor',
-      reason || 'Cancelado pelo usuário'
+      auth,
+      reason || 'Cancelado pelo usuario',
     );
 
     res.json(process);

@@ -1,12 +1,8 @@
 /**
- * Client para o módulo DigiUrban Flow (Processos Internos)
- * Todas as chamadas passam pelo proxy do backend: /api/flow/*
+ * Client for DigiUrban Flow (internal processes).
+ * All requests go through backend proxy: /api/flow/*
  */
 import api from './api'
-
-// ============================================================================
-// TIPOS
-// ============================================================================
 
 export interface ProcessType {
   id: string
@@ -33,10 +29,12 @@ export interface InternalProcess {
   sigilo: string
   status: string
   priority: number
-  originSectorId: string
-  originSectorName: string
-  currentSectorId: string
-  currentSectorName: string
+  originDepartmentId?: string
+  originOrganizationalUnitId: string
+  originOrganizationalUnitName: string
+  currentDepartmentId?: string
+  currentOrganizationalUnitId: string
+  currentOrganizationalUnitName: string
   createdById: string
   createdByName: string
   currentUserId?: string
@@ -51,22 +49,17 @@ export interface InternalProcess {
   _count?: { dispatches: number; documents: number; history: number; comments?: number }
 }
 
-export interface ProcessDetail extends InternalProcess {
-  history: ProcessHistoryItem[]
-  dispatches: DispatchItem[]
-  documents: ProcessDocument[]
-  comments?: ProcessComment[]
-  signatures?: ProcessSignature[]
-  workflowInstance?: WorkflowInstanceDetail
-}
-
 export interface ProcessHistoryItem {
   id: string
   action: string
   description: string
   note?: string
-  fromSectorName?: string
-  toSectorName?: string
+  fromDepartmentId?: string
+  fromOrganizationalUnitId?: string
+  fromOrganizationalUnitName?: string
+  toDepartmentId?: string
+  toOrganizationalUnitId?: string
+  toOrganizationalUnitName?: string
   userName: string
   createdAt: string
 }
@@ -74,10 +67,12 @@ export interface ProcessHistoryItem {
 export interface DispatchItem {
   id: string
   action: string
-  fromSectorId: string
-  fromSectorName: string
-  toSectorId: string
-  toSectorName: string
+  fromDepartmentId?: string
+  fromOrganizationalUnitId: string
+  fromOrganizationalUnitName: string
+  toDepartmentId?: string
+  toOrganizationalUnitId: string
+  toOrganizationalUnitName: string
   fromUserId: string
   fromUserName: string
   toUserId?: string
@@ -136,14 +131,37 @@ export interface ProcessSignature {
   createdAt: string
 }
 
+export interface WorkflowStep {
+  id: string
+  name: string
+  order: number
+  actions: string[]
+  departmentId?: string
+  organizationalUnitId?: string
+  organizationalUnitName?: string
+  slaHours?: number
+  documentRequired?: string
+}
+
+export interface WorkflowTransition {
+  fromStepId: string
+  toStepId: string
+  condition?: string
+  label: string
+}
+
 export interface WorkflowInstanceDetail {
   id: string
   templateId: string
+  templateVersion?: number
+  templateName?: string
   currentStepId: string
   currentStepName: string
   status: string
   startedAt: string
   completedAt?: string
+  stepsSnapshot?: WorkflowStep[]
+  transitionsSnapshot?: WorkflowTransition[]
   template: {
     id: string
     name: string
@@ -162,24 +180,6 @@ export interface WorkflowInstanceDetail {
   }[]
 }
 
-export interface WorkflowStep {
-  id: string
-  name: string
-  order: number
-  sectorId?: string
-  sectorName?: string
-  slaHours?: number
-  documentRequired?: string
-  actions: string[]
-}
-
-export interface WorkflowTransition {
-  fromStepId: string
-  toStepId: string
-  condition?: string
-  label: string
-}
-
 export interface WorkflowTemplate {
   id: string
   name: string
@@ -190,6 +190,15 @@ export interface WorkflowTemplate {
   transitions: WorkflowTransition[]
   createdAt: string
   updatedAt: string
+}
+
+export interface ProcessDetail extends InternalProcess {
+  history: ProcessHistoryItem[]
+  dispatches: DispatchItem[]
+  documents: ProcessDocument[]
+  comments?: ProcessComment[]
+  signatures?: ProcessSignature[]
+  workflowInstance?: WorkflowInstanceDetail
 }
 
 export interface ProcessListResponse {
@@ -219,7 +228,14 @@ export interface DashboardData {
     concluidos: number
   }
   porTipo: { tipoId: string; tipoNome: string; count: number }[]
-  porSetor: { setorId: string; setorNome: string; count: number }[]
+  porUnidade: { organizationalUnitId: string; organizationalUnitName: string; count: number }[]
+}
+
+export interface BottleneckItem {
+  organizationalUnitId: string
+  organizationalUnitName: string
+  count: number
+  oldestDays: number
 }
 
 export interface InboxCount {
@@ -237,8 +253,9 @@ export interface CreateProcessInput {
   bodyContent?: string
   sigilo?: string
   priority?: number
-  originSectorId: string
-  originSectorName: string
+  originDepartmentId?: string
+  originOrganizationalUnitId?: string
+  originOrganizationalUnitName?: string
   currentUserId?: string
   currentUserName?: string
   citizenProtocolId?: string
@@ -247,57 +264,147 @@ export interface CreateProcessInput {
 }
 
 export interface DispatchInput {
-  toSectorId: string
-  toSectorName: string
+  toDepartmentId?: string
+  toOrganizationalUnitId?: string
+  toOrganizationalUnitName?: string
   toUserId?: string
   toUserName?: string
   note?: string
   action?: string
 }
 
-// ============================================================================
-// CLIENT
-// ============================================================================
+function normalizeWorkflowStep(step: any): WorkflowStep {
+  const organizationalUnitId = step?.organizationalUnitId || undefined
+  const organizationalUnitName = step?.organizationalUnitName || undefined
+  return {
+    ...step,
+    organizationalUnitId,
+    organizationalUnitName,
+  }
+}
+
+function serializeWorkflowStep(step: WorkflowStep): WorkflowStep {
+  const organizationalUnitId = step.organizationalUnitId || ''
+  const organizationalUnitName = step.organizationalUnitName || ''
+
+  return {
+    ...step,
+    organizationalUnitId,
+    organizationalUnitName,
+  }
+}
+
+function normalizeProcess(process: any): InternalProcess {
+  const originOrganizationalUnitId = process?.originOrganizationalUnitId || ''
+  const originOrganizationalUnitName = process?.originOrganizationalUnitName || ''
+  const currentOrganizationalUnitId = process?.currentOrganizationalUnitId || ''
+  const currentOrganizationalUnitName = process?.currentOrganizationalUnitName || ''
+
+  return {
+    ...process,
+    originOrganizationalUnitId,
+    originOrganizationalUnitName,
+    currentOrganizationalUnitId,
+    currentOrganizationalUnitName,
+  }
+}
+
+function normalizeProcessDetail(process: any): ProcessDetail {
+  const normalized = normalizeProcess(process) as ProcessDetail
+
+  normalized.history = Array.isArray(process?.history)
+    ? process.history.map((item: any) => ({
+        ...item,
+        fromOrganizationalUnitName: item?.fromOrganizationalUnitName || undefined,
+        toOrganizationalUnitName: item?.toOrganizationalUnitName || undefined,
+      }))
+    : []
+
+  normalized.dispatches = Array.isArray(process?.dispatches)
+    ? process.dispatches.map((item: any) => ({
+        ...item,
+        fromOrganizationalUnitId: item?.fromOrganizationalUnitId || '',
+        fromOrganizationalUnitName: item?.fromOrganizationalUnitName || '',
+        toOrganizationalUnitId: item?.toOrganizationalUnitId || '',
+        toOrganizationalUnitName: item?.toOrganizationalUnitName || '',
+      }))
+    : []
+
+  if (process?.workflowInstance) {
+    const stepsSnapshot = Array.isArray(process.workflowInstance.stepsSnapshot)
+      ? process.workflowInstance.stepsSnapshot.map(normalizeWorkflowStep)
+      : []
+    const templateSteps = Array.isArray(process.workflowInstance.template?.steps)
+      ? process.workflowInstance.template.steps.map(normalizeWorkflowStep)
+      : []
+
+    normalized.workflowInstance = {
+      ...process.workflowInstance,
+      stepsSnapshot,
+      transitionsSnapshot: process.workflowInstance.transitionsSnapshot || [],
+      template: {
+        ...process.workflowInstance.template,
+        steps: stepsSnapshot.length > 0 ? stepsSnapshot : templateSteps,
+        transitions:
+          process.workflowInstance.transitionsSnapshot?.length > 0
+            ? process.workflowInstance.transitionsSnapshot
+            : process.workflowInstance.template?.transitions || [],
+      },
+    }
+  }
+
+  return normalized
+}
 
 class FlowClient {
   private readonly baseUrl = '/flow'
 
-  // ─── Processos ───
-
   async createProcess(input: CreateProcessInput): Promise<InternalProcess> {
-    const res = await api.post<InternalProcess>(`${this.baseUrl}/processes`, input)
+    const payload = {
+      ...input,
+      originOrganizationalUnitId: input.originOrganizationalUnitId || '',
+      originOrganizationalUnitName: input.originOrganizationalUnitName || '',
+    }
+    const res = await api.post<InternalProcess>(`${this.baseUrl}/processes`, payload)
     if (!res.data) throw new Error(res.error || 'Erro ao criar processo')
-    return res.data
+    return normalizeProcess(res.data)
   }
 
   async listProcesses(params?: Record<string, string | number | undefined>): Promise<ProcessListResponse> {
-    const res = await api.get<ProcessListResponse>(`${this.baseUrl}/processes`, params)
+    const normalizedParams = { ...(params || {}) }
+    const res = await api.get<ProcessListResponse>(`${this.baseUrl}/processes`, normalizedParams)
     if (!res.data) throw new Error(res.error || 'Erro ao listar processos')
-    return res.data
+    return {
+      ...res.data,
+      data: Array.isArray(res.data.data) ? res.data.data.map(normalizeProcess) : [],
+    }
   }
 
   async getProcess(id: string): Promise<ProcessDetail> {
     const res = await api.get<ProcessDetail>(`${this.baseUrl}/processes/${id}`)
-    if (!res.data) throw new Error(res.error || 'Processo não encontrado')
-    return res.data
+    if (!res.data) throw new Error(res.error || 'Processo nao encontrado')
+    return normalizeProcessDetail(res.data)
   }
 
   async updateProcess(id: string, input: Partial<CreateProcessInput>): Promise<InternalProcess> {
     const res = await api.patch<InternalProcess>(`${this.baseUrl}/processes/${id}`, input)
     if (!res.data) throw new Error(res.error || 'Erro ao atualizar processo')
-    return res.data
+    return normalizeProcess(res.data)
   }
 
   async cancelProcess(id: string, reason: string): Promise<InternalProcess> {
     const res = await api.delete<InternalProcess>(`${this.baseUrl}/processes/${id}`, { reason })
     if (!res.data) throw new Error(res.error || 'Erro ao cancelar processo')
-    return res.data
+    return normalizeProcess(res.data)
   }
 
-  // ─── Tramitação ───
-
   async dispatchProcess(id: string, input: DispatchInput): Promise<unknown> {
-    const { data } = await api.post(`${this.baseUrl}/processes/${id}/dispatch`, input)
+    const payload = {
+      ...input,
+      toOrganizationalUnitId: input.toOrganizationalUnitId || '',
+      toOrganizationalUnitName: input.toOrganizationalUnitName || '',
+    }
+    const { data } = await api.post(`${this.baseUrl}/processes/${id}/dispatch`, payload)
     return data
   }
 
@@ -321,8 +428,6 @@ class FlowClient {
     return data
   }
 
-  // ─── Documentos ───
-
   async generateDocument(processId: string, templateName: string, additionalData?: Record<string, unknown>): Promise<ProcessDocument> {
     const { data } = await api.post<ProcessDocument>(`${this.baseUrl}/processes/${processId}/documents/generate`, {
       templateName,
@@ -337,8 +442,6 @@ class FlowClient {
     return data || []
   }
 
-  // ─── Comentários ───
-
   async listComments(processId: string): Promise<ProcessComment[]> {
     const { data } = await api.get<ProcessComment[]>(`${this.baseUrl}/processes/${processId}/comments`)
     return data || []
@@ -349,21 +452,19 @@ class FlowClient {
       content,
       isInternal,
     })
-    if (!data) throw new Error('Erro ao adicionar comentário')
+    if (!data) throw new Error('Erro ao adicionar comentario')
     return data
   }
 
   async editComment(commentId: string, content: string): Promise<ProcessComment> {
     const { data } = await api.patch<ProcessComment>(`${this.baseUrl}/comments/${commentId}`, { content })
-    if (!data) throw new Error('Erro ao editar comentário')
+    if (!data) throw new Error('Erro ao editar comentario')
     return data
   }
 
   async deleteComment(commentId: string): Promise<void> {
     await api.delete(`${this.baseUrl}/comments/${commentId}`)
   }
-
-  // ─── Assinaturas ───
 
   async listSignatures(processId: string): Promise<ProcessSignature[]> {
     const { data } = await api.get<ProcessSignature[]>(`${this.baseUrl}/processes/${processId}/signatures`)
@@ -394,29 +495,26 @@ class FlowClient {
     return data
   }
 
-  // ─── Leitura de despachos ───
-
   async markDispatchRead(dispatchId: string): Promise<void> {
     await api.post(`${this.baseUrl}/dispatches/${dispatchId}/read`, {})
   }
 
-  async markAllDispatchesRead(sectorId: string): Promise<void> {
-    await api.post(`${this.baseUrl}/inbox/read-all`, { sectorId })
+  async markAllDispatchesRead(organizationalUnitId: string): Promise<void> {
+    await api.post(`${this.baseUrl}/inbox/read-all`, { organizationalUnitId })
   }
 
-  // ─── Caixa de Entrada ───
-
-  async getInbox(sectorId: string, userId?: string): Promise<InternalProcess[]> {
-    const { data } = await api.get<InternalProcess[]>(`${this.baseUrl}/inbox`, { sectorId, userId })
-    return data || []
+  async getInbox(organizationalUnitId: string, userId?: string): Promise<InternalProcess[]> {
+    const { data } = await api.get<InternalProcess[]>(`${this.baseUrl}/inbox`, { organizationalUnitId, userId })
+    return Array.isArray(data) ? data.map(normalizeProcess) : []
   }
 
-  async getInboxCount(sectorId: string, userId?: string): Promise<InboxCount> {
-    const { data } = await api.get<InboxCount>(`${this.baseUrl}/inbox/count`, { sectorId, userId })
+  async getInboxCount(organizationalUnitId: string, userId?: string): Promise<InboxCount> {
+    const { data } = await api.get<InboxCount>(`${this.baseUrl}/inbox/count`, {
+      organizationalUnitId,
+      userId,
+    })
     return data || { total: 0, abertos: 0, emTramitacao: 0, pendentes: 0, naoLidos: 0 }
   }
-
-  // ─── Tipos de Processo ───
 
   async listProcessTypes(): Promise<ProcessType[]> {
     const { data } = await api.get<ProcessType[]>(`${this.baseUrl}/process-types`)
@@ -435,17 +533,24 @@ class FlowClient {
     return data
   }
 
-  // ─── Workflow Templates ───
-
   async listWorkflowTemplates(): Promise<WorkflowTemplate[]> {
     const { data } = await api.get<WorkflowTemplate[]>(`${this.baseUrl}/workflows/templates`)
-    return data || []
+    if (!Array.isArray(data)) return []
+    return data.map((template) => ({
+      ...template,
+      steps: Array.isArray(template.steps) ? template.steps.map(normalizeWorkflowStep) : [],
+      transitions: template.transitions || [],
+    }))
   }
 
   async getWorkflowTemplate(id: string): Promise<WorkflowTemplate> {
     const { data } = await api.get<WorkflowTemplate>(`${this.baseUrl}/workflows/templates/${id}`)
-    if (!data) throw new Error('Template não encontrado')
-    return data
+    if (!data) throw new Error('Template nao encontrado')
+    return {
+      ...data,
+      steps: Array.isArray(data.steps) ? data.steps.map(normalizeWorkflowStep) : [],
+      transitions: data.transitions || [],
+    }
   }
 
   async createWorkflowTemplate(input: {
@@ -454,7 +559,11 @@ class FlowClient {
     steps: WorkflowStep[]
     transitions: WorkflowTransition[]
   }): Promise<WorkflowTemplate> {
-    const { data } = await api.post<WorkflowTemplate>(`${this.baseUrl}/workflows/templates`, input)
+    const payload = {
+      ...input,
+      steps: input.steps.map(serializeWorkflowStep),
+    }
+    const { data } = await api.post<WorkflowTemplate>(`${this.baseUrl}/workflows/templates`, payload)
     if (!data) throw new Error('Erro ao criar template de workflow')
     return data
   }
@@ -466,7 +575,11 @@ class FlowClient {
     transitions?: WorkflowTransition[]
     isActive?: boolean
   }): Promise<WorkflowTemplate> {
-    const { data } = await api.put<WorkflowTemplate>(`${this.baseUrl}/workflows/templates/${id}`, input)
+    const payload = {
+      ...input,
+      ...(input.steps ? { steps: input.steps.map(serializeWorkflowStep) } : {}),
+    }
+    const { data } = await api.put<WorkflowTemplate>(`${this.baseUrl}/workflows/templates/${id}`, payload)
     if (!data) throw new Error('Erro ao atualizar template de workflow')
     return data
   }
@@ -476,7 +589,10 @@ class FlowClient {
   }
 
   async instantiateWorkflow(processId: string, templateId: string): Promise<WorkflowInstanceDetail> {
-    const { data } = await api.post<WorkflowInstanceDetail>(`${this.baseUrl}/workflows/instances`, { processId, templateId })
+    const { data } = await api.post<WorkflowInstanceDetail>(`${this.baseUrl}/workflows/instances`, {
+      processId,
+      templateId,
+    })
     if (!data) throw new Error('Erro ao iniciar fluxo')
     return data
   }
@@ -486,8 +602,6 @@ class FlowClient {
     return data
   }
 
-  // ─── Analytics ───
-
   async getDashboard(): Promise<DashboardData> {
     const { data } = await api.get<DashboardData>(`${this.baseUrl}/analytics/dashboard`)
     if (!data) throw new Error('Erro ao carregar dashboard')
@@ -496,14 +610,27 @@ class FlowClient {
 
   async getOverdueProcesses(): Promise<InternalProcess[]> {
     const { data } = await api.get<InternalProcess[]>(`${this.baseUrl}/analytics/sla`)
-    return data || []
+    return Array.isArray(data) ? data.map(normalizeProcess) : []
   }
 
-  async getBottlenecks(): Promise<{ sectorId: string; sectorName: string; count: number; oldestDays: number }[]> {
-    const { data } = await api.get<{ sectorId: string; sectorName: string; count: number; oldestDays: number }[]>(
-      `${this.baseUrl}/analytics/bottlenecks`
+  async getBottlenecks(): Promise<BottleneckItem[]> {
+    const { data } = await api.get<Array<{
+      organizationalUnitId: string
+      organizationalUnitName: string
+      count: number
+      oldestDays: number
+    }>>(
+      `${this.baseUrl}/analytics/bottlenecks`,
     )
-    return data || []
+    if (!Array.isArray(data)) {
+      return []
+    }
+    return data.map(item => ({
+      organizationalUnitId: item.organizationalUnitId,
+      organizationalUnitName: item.organizationalUnitName,
+      count: item.count,
+      oldestDays: item.oldestDays,
+    }))
   }
 
   async exportCSV(params?: { status?: string; typeId?: string }): Promise<void> {
@@ -520,7 +647,7 @@ class FlowClient {
 
   async health(): Promise<{ status: string }> {
     const { data } = await api.get<{ status: string }>(`${this.baseUrl}/health`)
-    if (!data) throw new Error('Módulo de processos indisponível')
+    if (!data) throw new Error('Modulo de processos indisponivel')
     return data
   }
 }

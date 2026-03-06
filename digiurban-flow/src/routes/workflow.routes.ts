@@ -1,27 +1,28 @@
 /**
- * Rotas de Workflow Templates e Instâncias
+ * Workflow template/instance routes.
  */
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
-import { authMiddleware } from '../middleware/auth.middleware';
+import {
+  authMiddleware,
+  AuthenticatedRequest,
+  toFlowAuthContext,
+} from '../middleware/auth.middleware';
 import * as workflowService from '../services/workflow.service';
 
 const router = Router();
 router.use(authMiddleware);
 
-// ============================================================================
-// SCHEMAS
-// ============================================================================
-
 const stepSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  sectorId: z.string().optional(),
-  sectorName: z.string().optional(),
+  departmentId: z.string().optional(),
+  organizationalUnitId: z.string().min(1),
+  organizationalUnitName: z.string().min(1),
   slaHours: z.number().int().positive().optional(),
   documentRequired: z.string().optional(),
   order: z.number().int().min(0),
-  actions: z.array(z.string()),
+  actions: z.array(z.string().min(1)).min(1),
 });
 
 const transitionSchema = z.object({
@@ -47,10 +48,6 @@ const advanceSchema = z.object({
   note: z.string().optional(),
 });
 
-// ============================================================================
-// CRUD Templates
-// ============================================================================
-
 router.post('/templates', async (req: Request, res: Response) => {
   try {
     const body = createTemplateSchema.parse(req.body);
@@ -58,7 +55,7 @@ router.post('/templates', async (req: Request, res: Response) => {
     res.status(201).json(template);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+      res.status(400).json({ error: 'Dados invalidos', details: error.errors });
       return;
     }
     res.status(400).json({ error: (error as Error).message });
@@ -90,7 +87,7 @@ router.put('/templates/:id', async (req: Request, res: Response) => {
     res.json(template);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+      res.status(400).json({ error: 'Dados invalidos', details: error.errors });
       return;
     }
     res.status(400).json({ error: (error as Error).message });
@@ -106,24 +103,20 @@ router.delete('/templates/:id', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// Instanciar workflow para um processo
-// ============================================================================
-
 router.post('/instances', async (req: Request, res: Response) => {
   try {
-    const { processId, templateId } = req.body;
+    const { processId, templateId } = req.body as { processId?: string; templateId?: string };
     if (!processId || !templateId) {
-      res.status(400).json({ error: 'processId e templateId são obrigatórios' });
+      res.status(400).json({ error: 'processId e templateId sao obrigatorios' });
       return;
     }
 
-    const auth = req as import('../middleware/auth.middleware').AuthenticatedRequest;
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
     const instance = await workflowService.instantiateWorkflow(
       processId,
       templateId,
-      auth.userId!,
-      auth.userName || 'Servidor'
+      auth.userId,
+      auth.userName,
     );
 
     res.status(201).json(instance);
@@ -132,27 +125,23 @@ router.post('/instances', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// Avançar workflow
-// ============================================================================
-
 router.post('/instances/:id/advance', async (req: Request, res: Response) => {
   try {
     const body = advanceSchema.parse(req.body);
-    const auth = req as import('../middleware/auth.middleware').AuthenticatedRequest;
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
 
     const instance = await workflowService.advanceWorkflow({
       instanceId: req.params.id as string,
       action: body.action,
       note: body.note,
-      userId: auth.userId!,
-      userName: auth.userName || 'Servidor',
+      userId: auth.userId,
+      userName: auth.userName,
     });
 
     res.json(instance);
   } catch (error: unknown) {
     if (error instanceof z.ZodError) {
-      res.status(400).json({ error: 'Dados inválidos', details: error.errors });
+      res.status(400).json({ error: 'Dados invalidos', details: error.errors });
       return;
     }
     res.status(400).json({ error: (error as Error).message });

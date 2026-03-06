@@ -1,59 +1,51 @@
 /**
- * Rotas de analytics e indicadores
+ * Analytics routes.
  */
 import { Router, Request, Response } from 'express';
-import { authMiddleware } from '../middleware/auth.middleware';
+import {
+  authMiddleware,
+  AuthenticatedRequest,
+  toFlowAuthContext,
+} from '../middleware/auth.middleware';
 import * as analyticsService from '../services/analytics.service';
 
 const router = Router();
 router.use(authMiddleware);
 
-// ============================================================================
-// GET /analytics/dashboard — Dashboard principal
-// ============================================================================
-
-router.get('/dashboard', async (_req: Request, res: Response) => {
+router.get('/dashboard', async (req: Request, res: Response) => {
   try {
-    const dashboard = await analyticsService.getDashboard();
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const dashboard = await analyticsService.getDashboard(auth);
     res.json(dashboard);
   } catch (error: unknown) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// GET /analytics/sla — Processos com SLA vencido
-// ============================================================================
-
-router.get('/sla', async (_req: Request, res: Response) => {
+router.get('/sla', async (req: Request, res: Response) => {
   try {
-    const overdue = await analyticsService.getOverdueProcesses();
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const overdue = await analyticsService.getOverdueProcesses(auth);
     res.json(overdue);
   } catch (error: unknown) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// GET /analytics/bottlenecks — Gargalos por setor
-// ============================================================================
-
-router.get('/bottlenecks', async (_req: Request, res: Response) => {
+router.get('/bottlenecks', async (req: Request, res: Response) => {
   try {
-    const bottlenecks = await analyticsService.getBottlenecks();
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const bottlenecks = await analyticsService.getBottlenecks(auth);
     res.json(bottlenecks);
   } catch (error: unknown) {
     res.status(500).json({ error: (error as Error).message });
   }
 });
 
-// ============================================================================
-// GET /analytics/export/csv — Exportar CSV
-// ============================================================================
-
 router.get('/export/csv', async (req: Request, res: Response) => {
   try {
-    const csv = await analyticsService.exportCSV({
+    const auth = toFlowAuthContext(req as AuthenticatedRequest);
+    const csv = await analyticsService.exportCSV(auth, {
       status: req.query.status as string,
       typeId: req.query.typeId as string,
     });

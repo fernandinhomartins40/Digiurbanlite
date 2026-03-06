@@ -34,7 +34,7 @@ export function startSLAWorker() {
             number: true,
             subject: true,
             dueAt: true,
-            currentSectorName: true,
+            currentOrganizationalUnitName: true,
             currentUserName: true,
           },
         });

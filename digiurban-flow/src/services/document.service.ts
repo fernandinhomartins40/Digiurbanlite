@@ -1,42 +1,45 @@
 /**
- * Serviço de geração de documentos PDF via Playwright
- * MESMO PADRÃO do document-generator.service.ts do backend principal
+ * PDF document generation service via Playwright.
  */
 import Handlebars from 'handlebars';
 import fs from 'fs/promises';
 import path from 'path';
 import crypto from 'crypto';
+import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
 import { config } from '../config/config';
-
-// ============================================================================
-// INTERFACES
-// ============================================================================
+import { FlowAuthContext } from '../middleware/auth.middleware';
+import { assertProcessAccess } from './access-control.service';
 
 export interface GenerateFlowDocumentInput {
   processId: string;
-  templateName: string;  // "despacho", "memorando", "oficio", "capa-processo"
+  templateName: string;
   generatedBy: string;
   generatedByName: string;
   additionalData?: Record<string, unknown>;
 }
 
-// ============================================================================
-// HELPERS HANDLEBARS (mesmo padrão do backend)
-// ============================================================================
+function parseDate(value: Date | string | null | undefined): Date | null {
+  if (!value) return null;
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) return null;
+  return date;
+}
 
 function formatDate(date: Date | string | null | undefined): string {
-  if (!date) return '-';
-  return new Intl.DateTimeFormat('pt-BR').format(new Date(date));
+  const parsed = parseDate(date);
+  if (!parsed) return '-';
+  return new Intl.DateTimeFormat('pt-BR').format(parsed);
 }
 
 function formatDateTime(date: Date | string | null | undefined): string {
-  if (!date) return '-';
+  const parsed = parseDate(date);
+  if (!parsed) return '-';
   return new Intl.DateTimeFormat('pt-BR', {
     dateStyle: 'short',
     timeStyle: 'short',
-  }).format(new Date(date));
+  }).format(parsed);
 }
 
 function formatCPF(cpf: string | null | undefined): string {
@@ -48,7 +51,6 @@ function formatCPF(cpf: string | null | undefined): string {
   return cpf;
 }
 
-// Registrar helpers Handlebars
 Handlebars.registerHelper('formatDate', formatDate);
 Handlebars.registerHelper('formatDateTime', formatDateTime);
 Handlebars.registerHelper('formatCPF', formatCPF);
@@ -56,50 +58,33 @@ Handlebars.registerHelper('eq', (a: unknown, b: unknown) => a === b);
 Handlebars.registerHelper('exists', (value: unknown) => value !== null && value !== undefined && value !== '');
 Handlebars.registerHelper('uppercase', (str: string) => str?.toUpperCase() || '');
 
-// ============================================================================
-// CARREGAR TEMPLATE HTML
-// ============================================================================
-
 async function loadTemplate(templateName: string): Promise<string> {
-  // Tentar carregar do diretório de templates
   const templatePaths = [
     path.join(process.cwd(), 'templates', `${templateName}.html`),
     path.join(__dirname, '..', '..', 'templates', `${templateName}.html`),
     path.join('/app', 'templates', `${templateName}.html`),
   ];
 
-  for (const tplPath of templatePaths) {
+  for (const templatePath of templatePaths) {
     try {
-      const content = await fs.readFile(tplPath, 'utf-8');
-      logger.info(`Template carregado: ${tplPath}`);
-      return content;
+      return await fs.readFile(templatePath, 'utf-8');
     } catch {
-      // Tentar próximo path
+      // try next path
     }
   }
 
-  throw new Error(`Template não encontrado: ${templateName}.html`);
+  throw new Error(`Template nao encontrado: ${templateName}.html`);
 }
-
-// ============================================================================
-// CALCULAR HASH SHA-256
-// ============================================================================
 
 async function generateDocumentHash(filePath: string): Promise<string> {
   const fileBuffer = await fs.readFile(filePath);
   return crypto.createHash('sha256').update(fileBuffer).digest('hex');
 }
 
-// ============================================================================
-// GERAR DOCUMENTO PDF — PLAYWRIGHT (MESMO PADRÃO DO BACKEND)
-// ============================================================================
-
-export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
+export async function generateFlowDocument(input: GenerateFlowDocumentInput, auth: FlowAuthContext) {
   const { processId, templateName, generatedBy, generatedByName, additionalData = {} } = input;
+  await assertProcessAccess(prisma, processId, auth);
 
-  logger.info(`Gerando documento: template=${templateName}, process=${processId}`);
-
-  // 1. Buscar processo
   const process = await prisma.internalProcess.findUnique({
     where: { id: processId },
     include: {
@@ -108,15 +93,11 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
       dispatches: { orderBy: { createdAt: 'desc' } },
     },
   });
+  if (!process) throw new Error('Processo nao encontrado');
 
-  if (!process) throw new Error('Processo não encontrado');
-
-  // 2. Carregar template HTML
   const templateHtml = await loadTemplate(templateName);
 
-  // 3. Preparar variáveis Handlebars
   const variables = {
-    // Processo
     processNumber: process.number,
     processSubject: process.subject,
     processDescription: process.description || '',
@@ -129,58 +110,46 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
     processCreatedAtFull: formatDateTime(process.createdAt),
     processDueAt: process.dueAt ? formatDate(process.dueAt) : '-',
     processConcludedAt: process.concludedAt ? formatDate(process.concludedAt) : null,
-
-    // Setores
-    originSectorName: process.originSectorName,
-    currentSectorName: process.currentSectorName,
-
-    // Pessoas
+    originOrganizationalUnitName: process.originOrganizationalUnitName,
+    currentOrganizationalUnitName: process.currentOrganizationalUnitName,
+    originDepartmentId: process.originDepartmentId || '',
+    currentDepartmentId: process.currentDepartmentId || '',
     createdByName: process.createdByName,
-    currentUserName: process.currentUserName || 'Não atribuído',
-
-    // Histórico
-    history: process.history.map((h) => ({
-      date: formatDateTime(h.createdAt),
-      action: h.action,
-      description: h.description,
-      note: h.note || '',
-      userName: h.userName,
-      fromSectorName: h.fromSectorName || '',
-      toSectorName: h.toSectorName || '',
+    currentUserName: process.currentUserName || 'Nao atribuido',
+    history: process.history.map((item) => ({
+      date: formatDateTime(item.createdAt),
+      action: item.action,
+      description: item.description,
+      note: item.note || '',
+      userName: item.userName,
+      fromOrganizationalUnitName: item.fromOrganizationalUnitName || '',
+      toOrganizationalUnitName: item.toOrganizationalUnitName || '',
+      fromDepartmentId: item.fromDepartmentId || '',
+      toDepartmentId: item.toDepartmentId || '',
     })),
     hasHistory: process.history.length > 0,
-
-    // Despachos
-    dispatches: process.dispatches.map((d) => ({
-      date: formatDateTime(d.createdAt),
-      action: d.action,
-      fromSectorName: d.fromSectorName,
-      toSectorName: d.toSectorName,
-      fromUserName: d.fromUserName,
-      note: d.note || '',
+    dispatches: process.dispatches.map((dispatch) => ({
+      date: formatDateTime(dispatch.createdAt),
+      action: dispatch.action,
+      fromOrganizationalUnitName: dispatch.fromOrganizationalUnitName,
+      toOrganizationalUnitName: dispatch.toOrganizationalUnitName,
+      fromUserName: dispatch.fromUserName,
+      note: dispatch.note || '',
+      fromDepartmentId: dispatch.fromDepartmentId || '',
+      toDepartmentId: dispatch.toDepartmentId || '',
     })),
     hasDispatches: process.dispatches.length > 0,
-
-    // Tags
     tags: process.tags,
     hasTags: process.tags.length > 0,
-
-    // Metadados de geração
     generatedAt: formatDateTime(new Date()),
     generatedAtDate: formatDate(new Date()),
     generatedByName,
-
-    // Dados adicionais
     ...additionalData,
   };
 
-  logger.info(`Variáveis preparadas: ${Object.keys(variables).length}`);
-
-  // 4. Compilar template Handlebars
   const compiled = Handlebars.compile(templateHtml);
   const html = compiled(variables);
 
-  // 5. Montar HTML completo
   const fullHtml = `
     <!DOCTYPE html>
     <html>
@@ -188,12 +157,7 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
       <meta charset="UTF-8">
       <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-          font-family: Arial, Helvetica, sans-serif;
-          font-size: 12pt;
-          line-height: 1.6;
-          color: #333;
-        }
+        body { font-family: Arial, Helvetica, sans-serif; font-size: 12pt; line-height: 1.6; color: #333; }
         .text-center { text-align: center; }
         .text-right { text-align: right; }
         .text-justify { text-align: justify; }
@@ -221,11 +185,7 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
     </html>
   `;
 
-  // 6. Gerar PDF com Playwright
   const { chromium } = await import('playwright');
-
-  logger.info(`Playwright browsers path: ${config.playwrightBrowsersPath || 'default'}`);
-
   const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
@@ -235,14 +195,11 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
     const page = await browser.newPage();
     await page.setContent(fullHtml, { waitUntil: 'networkidle' });
 
-    // Definir nome e path do arquivo
     const timestamp = Date.now();
     const fileName = `${process.number}_${templateName}_${timestamp}.pdf`;
     const uploadsDir = path.join(config.uploadDir, 'flow', processId);
     await fs.mkdir(uploadsDir, { recursive: true });
     const filePath = path.join(uploadsDir, fileName);
-
-    logger.info(`Gerando PDF: ${fileName}`);
 
     await page.pdf({
       path: filePath,
@@ -251,14 +208,9 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
       printBackground: true,
     });
 
-    await browser.close();
-    logger.info('PDF gerado com sucesso');
-
-    // 7. Obter tamanho e hash
     const stats = await fs.stat(filePath);
     const documentHash = await generateDocumentHash(filePath);
 
-    // 8. Salvar registro no banco
     const document = await prisma.processDocument.create({
       data: {
         processId,
@@ -275,40 +227,36 @@ export async function generateFlowDocument(input: GenerateFlowDocumentInput) {
       },
     });
 
-    logger.info(`Documento salvo: ${fileName} (${(stats.size / 1024).toFixed(2)} KB)`);
+    logger.info(`Documento gerado para processo ${process.number}`, { documentId: document.id });
     return document;
-
-  } catch (error) {
+  } finally {
     await browser.close();
-    throw error;
   }
 }
 
-// ============================================================================
-// LISTAR DOCUMENTOS DE UM PROCESSO
-// ============================================================================
-
-export async function listProcessDocuments(processId: string) {
+export async function listProcessDocuments(processId: string, auth: FlowAuthContext) {
+  await assertProcessAccess(prisma, processId, auth);
   return prisma.processDocument.findMany({
     where: { processId },
     orderBy: { createdAt: 'desc' },
   });
 }
 
-// ============================================================================
-// UPLOAD DE DOCUMENTO (anexo manual)
-// ============================================================================
+export async function createDocumentRecord(
+  data: {
+    processId: string;
+    documentType: string;
+    name: string;
+    fileName: string;
+    filePath: string;
+    fileSize: number;
+    mimeType: string;
+    generatedBy: string;
+  },
+  auth: FlowAuthContext,
+) {
+  await assertProcessAccess(prisma, data.processId, auth);
 
-export async function createDocumentRecord(data: {
-  processId: string;
-  documentType: string;
-  name: string;
-  fileName: string;
-  filePath: string;
-  fileSize: number;
-  mimeType: string;
-  generatedBy: string;
-}) {
   return prisma.processDocument.create({
     data: {
       ...data,

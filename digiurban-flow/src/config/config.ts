@@ -20,7 +20,7 @@ export const config = {
   jwtSecret: process.env.JWT_SECRET || '',
 
   // Service Token (para comunicação backend → flow)
-  flowServiceToken: process.env.FLOW_SERVICE_TOKEN || 'digiurban-flow-service-token',
+  flowServiceToken: process.env.FLOW_SERVICE_TOKEN || '',
 
   // DigiUrban Backend API
   digiurbanApiUrl: process.env.DIGIURBAN_API_URL || 'http://digiurban-vps:3001/api',
@@ -49,6 +49,7 @@ export function validateConfig(): void {
   const required: Array<[string, string]> = [
     ['DATABASE_URL', config.databaseUrl],
     ['JWT_SECRET', config.jwtSecret],
+    ['FLOW_SERVICE_TOKEN', config.flowServiceToken],
   ];
 
   for (const [name, value] of required) {

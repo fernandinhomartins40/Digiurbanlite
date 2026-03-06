@@ -169,10 +169,10 @@ export default function FluxosPage() {
           <CardTitle className="text-sm text-blue-800">Como funcionam os Fluxos de Tramitação?</CardTitle>
         </CardHeader>
         <CardContent className="text-sm text-blue-700 space-y-1">
-          <p>• Cada fluxo define uma sequência de <strong>etapas</strong> com setor destino, documento exigido e SLA</p>
+          <p>• Cada fluxo define uma sequência de <strong>etapas</strong> com unidade destino, documento exigido e SLA</p>
           <p>• Vincule um fluxo a um <strong>Tipo de Processo</strong> (ex: Memorandos seguem o Fluxo Padrão)</p>
           <p>• Ao despachar, escolha entre <strong>Destinatário livre</strong> ou <strong>Seguir o fluxo</strong></p>
-          <p>• O fluxo orienta automaticamente para o próximo setor e registra o progresso</p>
+          <p>• O fluxo orienta automaticamente para a próxima unidade e registra o progresso</p>
         </CardContent>
       </Card>
     </div>
@@ -229,7 +229,9 @@ function TemplateCard({
                   <div key={step.id} className="flex items-center gap-1">
                     <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full whitespace-nowrap">
                       {step.name}
-                      {step.sectorName && <span className="text-gray-400"> · {step.sectorName}</span>}
+                      {step.organizationalUnitName && (
+                        <span className="text-gray-400"> · {step.organizationalUnitName}</span>
+                      )}
                     </span>
                     {idx < steps.length - 1 && (
                       <ChevronRight className="w-3 h-3 text-gray-300 flex-shrink-0" />

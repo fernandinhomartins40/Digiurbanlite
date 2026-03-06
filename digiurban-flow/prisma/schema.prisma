@@ -129,11 +129,13 @@ model InternalProcess {
   status           ProcessStatus  @default(ABERTO)
   priority         Int            @default(0) // 0=normal, 1=urgente, 2=urgentíssimo
 
-  // Setores
-  originSectorId   String         // Setor que abriu
-  originSectorName String         // Nome do setor (snapshot)
-  currentSectorId  String         // Setor atual
-  currentSectorName String        // Nome do setor atual (snapshot)
+  // Organograma
+  originDepartmentId String?      // Departamento de origem
+  originOrganizationalUnitId   String  // Unidade organizacional de origem
+  originOrganizationalUnitName String  // Nome da unidade de origem (snapshot)
+  currentDepartmentId String?    // Departamento atual
+  currentOrganizationalUnitId   String  // Unidade organizacional atual
+  currentOrganizationalUnitName String  // Nome da unidade atual (snapshot)
 
   // Responsáveis
   createdById      String         // Quem abriu (userId do backend)
@@ -165,7 +167,9 @@ model InternalProcess {
   updatedAt        DateTime       @updatedAt
 
   @@index([status])
-  @@index([currentSectorId])
+  @@index([originDepartmentId])
+  @@index([currentDepartmentId])
+  @@index([currentOrganizationalUnitId])
   @@index([currentUserId])
   @@index([typeId])
   @@index([citizenProtocolId])
@@ -249,10 +253,12 @@ model InternalProcessHistory {
   action           DispatchAction
   description      String         // Ex: "Encaminhado ao Departamento de Urbanismo"
   note             String?        @db.Text  // Observação/anotação
-  fromSectorId     String?
-  fromSectorName   String?
-  toSectorId       String?
-  toSectorName     String?
+  fromDepartmentId String?
+  fromOrganizationalUnitId     String?
+  fromOrganizationalUnitName   String?
+  toDepartmentId   String?
+  toOrganizationalUnitId       String?
+  toOrganizationalUnitName     String?
   userId           String         // Quem fez a ação
   userName         String         // Nome (snapshot)
 
@@ -274,10 +280,12 @@ model ProcessDispatch {
   process          InternalProcess @relation(fields: [processId], references: [id], onDelete: Cascade)
 
   action           DispatchAction
-  fromSectorId     String
-  fromSectorName   String
-  toSectorId       String
-  toSectorName     String
+  fromDepartmentId String?
+  fromOrganizationalUnitId     String
+  fromOrganizationalUnitName   String
+  toDepartmentId   String?
+  toOrganizationalUnitId       String
+  toOrganizationalUnitName     String
   fromUserId       String
   fromUserName     String
   toUserId         String?        // Se redistribuir para servidor específico
@@ -290,7 +298,8 @@ model ProcessDispatch {
   createdAt        DateTime       @default(now())
 
   @@index([processId])
-  @@index([toSectorId])
+  @@index([toDepartmentId])
+  @@index([toOrganizationalUnitId])
   @@index([isRead])
   @@map("flow_dispatches")
 }
@@ -351,7 +360,7 @@ model WorkflowTemplate {
   isActive         Boolean        @default(true)
 
   // Steps configurados como JSON array
-  // [{ id, name, sectorId, sectorName, slaHours, order, actions: ["aprovar","rejeitar","despachar"] }]
+  // [{ id, name, departmentId, organizationalUnitId, organizationalUnitName, slaHours, order, actions }]
   steps            Json           @default("[]")
 
   // Transições como JSON array
@@ -380,6 +389,11 @@ model WorkflowInstance {
 
   templateId       String
   template         WorkflowTemplate @relation(fields: [templateId], references: [id])
+
+  templateVersion  Int            @default(1)
+  templateName     String
+  stepsSnapshot    Json           @default("[]")
+  transitionsSnapshot Json        @default("[]")
 
   currentStepId    String         // ID do step atual (referencia steps[].id do template)
   currentStepName  String         // Nome do step atual (snapshot)
