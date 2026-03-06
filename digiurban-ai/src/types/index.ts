@@ -31,5 +31,11 @@ export interface ChatCompletionResult {
   outputTokens: number;
   totalTokens: number;
   latencyMs: number;
+  thinking?: string;
+  totalDurationMs?: number;
+  loadDurationMs?: number;
+  promptEvalDurationMs?: number;
+  evalDurationMs?: number;
+  tokensPerSecond?: number;
   finishReason?: string;
 }

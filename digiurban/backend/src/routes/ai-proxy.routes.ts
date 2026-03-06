@@ -36,6 +36,23 @@ aiClient.interceptors.response.use(
   },
 );
 
+function buildProxyHeaders(req: Request): Record<string, string> {
+  const auth = req as Partial<AuthenticatedRequest>;
+  const userId = auth.userId;
+  const userName = auth.user?.name;
+  const departmentId = auth.user?.departmentId;
+  const tenantHeader = req.headers['x-tenant-id'];
+  const tenantId =
+    typeof tenantHeader === 'string' && tenantHeader.trim() ? tenantHeader.trim() : 'default';
+
+  return {
+    ...(userId ? { 'x-user-id': userId } : {}),
+    ...(userName ? { 'x-user-name': userName } : {}),
+    ...(departmentId ? { 'x-department-id': departmentId } : {}),
+    'x-tenant-id': tenantId,
+  };
+}
+
 async function proxyRequest(
   req: Request,
   res: Response,
@@ -43,25 +60,12 @@ async function proxyRequest(
   path?: string,
 ): Promise<void> {
   try {
-    const auth = req as Partial<AuthenticatedRequest>;
-    const userId = auth.userId;
-    const userName = auth.user?.name;
-    const departmentId = auth.user?.departmentId;
-    const tenantHeader = req.headers['x-tenant-id'];
-    const tenantId =
-      typeof tenantHeader === 'string' && tenantHeader.trim() ? tenantHeader.trim() : 'default';
-
     const upstream = await aiClient.request({
       method: req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
       url: path || req.path,
       params: req.query,
       data: req.body,
-      headers: {
-        ...(userId ? { 'x-user-id': userId } : {}),
-        ...(userName ? { 'x-user-name': userName } : {}),
-        ...(departmentId ? { 'x-department-id': departmentId } : {}),
-        'x-tenant-id': tenantId,
-      },
+      headers: buildProxyHeaders(req),
     });
 
     res.status(upstream.status).json(upstream.data);
@@ -97,6 +101,81 @@ async function proxyRequest(
   }
 }
 
+async function proxyStreamRequest(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+  path?: string,
+): Promise<void> {
+  try {
+    const upstream = await aiClient.request<NodeJS.ReadableStream>({
+      method: req.method as 'POST',
+      url: path || req.path,
+      params: req.query,
+      data: req.body,
+      headers: buildProxyHeaders(req),
+      responseType: 'stream',
+    });
+
+    res.status(upstream.status);
+    const contentType = upstream.headers['content-type'];
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
+    }
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+
+    const upstreamStream = upstream.data as any;
+    req.on('close', () => {
+      if (typeof upstreamStream.destroy === 'function') {
+        upstreamStream.destroy();
+      }
+    });
+    upstreamStream.on('error', (error: Error) => {
+      logger.error('[AIProxy] Stream forwarding failed', {
+        url: path || req.path,
+        message: error.message,
+      });
+      if (!res.writableEnded) {
+        res.end();
+      }
+    });
+    upstreamStream.pipe(res);
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        if (!res.headersSent) {
+          res.status(error.response.status).json({ error: 'Falha no stream da IA centralizada' });
+        } else if (!res.writableEnded) {
+          res.end();
+        }
+        return;
+      }
+
+      if (error.code === 'ECONNABORTED') {
+        if (!res.headersSent) {
+          res.status(504).json({ error: 'Tempo limite ao consultar a IA centralizada' });
+        }
+        return;
+      }
+
+      if (
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'ENOTFOUND' ||
+        error.code === 'ECONNRESET'
+      ) {
+        if (!res.headersSent) {
+          res.status(503).json({ error: 'IA centralizada indisponivel no momento' });
+        }
+        return;
+      }
+    }
+    next(error);
+  }
+}
+
 // Health route sem autenticação (monitoramento)
 router.get('/health', (_req, res) => {
   aiClient
@@ -122,6 +201,8 @@ router.get('/conversations/:id', (req, res, next) =>
   proxyRequest(req, res, next, `/conversations/${req.params.id}`));
 router.post('/conversations/:id/messages', (req, res, next) =>
   proxyRequest(req, res, next, `/conversations/${req.params.id}/messages`));
+router.post('/conversations/:id/messages/stream', (req, res, next) =>
+  proxyStreamRequest(req, res, next, `/conversations/${req.params.id}/messages/stream`));
 router.post('/chat/completions', (req, res, next) =>
   proxyRequest(req, res, next, '/chat/completions'));
 router.get('/usage/summary', superAdminOnly, (req, res, next) =>

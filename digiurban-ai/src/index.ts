@@ -15,6 +15,7 @@ import internalRoutes from './routes/internal.routes';
 import prisma from './utils/prisma';
 import logger from './utils/logger';
 import { AiPlanType } from '@prisma/client';
+import { ollamaService } from './services/ollama.service';
 
 class DigiUrbanAIServer {
   private app!: express.Express;
@@ -24,6 +25,7 @@ class DigiUrbanAIServer {
       validateConfig();
       await prisma.$connect();
       await this.ensureDefaultInternalPlan();
+      await this.warmupOllamaIfEnabled();
 
       this.app = this.createApp();
       this.app.listen(config.port, config.host, () => {
@@ -35,6 +37,10 @@ class DigiUrbanAIServer {
           ollamaBaseUrl: config.ollamaBaseUrl,
           ollamaTimeoutMs: config.ollamaTimeoutMs,
           ollamaRetryTimeoutMs: config.ollamaRetryTimeoutMs,
+          ollamaKeepAlive: config.ollamaKeepAlive,
+          ollamaNumCtx: config.ollamaNumCtx,
+          ollamaMaxTokens: config.ollamaMaxTokens,
+          ollamaWarmupEnabled: config.ollamaWarmupEnabled,
         });
       });
 
@@ -123,6 +129,16 @@ class DigiUrbanAIServer {
         isActive: true,
       },
     });
+  }
+
+  private async warmupOllamaIfEnabled(): Promise<void> {
+    try {
+      await ollamaService.warmup();
+    } catch (error) {
+      logger.warn('Failed during Ollama warmup sequence', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
   }
 
   private setupGracefulShutdown(): void {

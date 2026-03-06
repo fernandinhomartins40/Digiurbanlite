@@ -9,6 +9,7 @@ const router = Router();
 const completionSchema = z.object({
   prompt: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
+  think: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
 });
 
@@ -41,6 +42,7 @@ router.post('/public/chat/completions', async (req, res) => {
       tenantId: apiKey.tenantId,
       prompt: payload.prompt,
       model: payload.model,
+      think: payload.think,
       extraInstruction: payload.extraInstruction,
       source: 'PUBLIC_API',
       apiKeyId: apiKey.id,

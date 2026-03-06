@@ -1,6 +1,24 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
+function parseOptionalInt(value?: string): number | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function parseOptionalFloat(value?: string): number | undefined {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '9004', 10),
   host: process.env.HOST || '0.0.0.0',
@@ -19,9 +37,22 @@ export const config = {
   ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '45000', 10),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
   ollamaTopP: parseFloat(process.env.AI_OLLAMA_TOP_P || '0.9'),
+  ollamaTopK: parseOptionalInt(process.env.AI_OLLAMA_TOP_K),
+  ollamaMinP: parseOptionalFloat(process.env.AI_OLLAMA_MIN_P),
+  ollamaRepeatPenalty: parseOptionalFloat(process.env.AI_OLLAMA_REPEAT_PENALTY),
   ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '4096', 10),
+  ollamaNumThread: parseOptionalInt(process.env.AI_OLLAMA_NUM_THREAD),
+  ollamaNumBatch: parseOptionalInt(process.env.AI_OLLAMA_NUM_BATCH),
+  ollamaNumGpu: parseOptionalInt(process.env.AI_OLLAMA_NUM_GPU),
+  ollamaMainGpu: parseOptionalInt(process.env.AI_OLLAMA_MAIN_GPU),
   ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '320', 10),
+  ollamaKeepAlive:
+    process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE || '-1',
   ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
+  ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
+  ollamaWarmupPrompt: process.env.AI_OLLAMA_WARMUP_PROMPT || 'Responda apenas: ok',
+  ollamaWarmupTimeoutMs: parseInt(process.env.AI_OLLAMA_WARMUP_TIMEOUT_MS || '90000', 10),
+  ollamaWarmupThink: (process.env.AI_OLLAMA_WARMUP_THINK || 'false').toLowerCase() === 'true',
 
   defaultTenantId: process.env.AI_DEFAULT_TENANT_ID || 'default',
   maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '4', 10),

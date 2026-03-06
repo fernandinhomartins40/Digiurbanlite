@@ -14,6 +14,7 @@ const createConversationSchema = z.object({
 const sendMessageSchema = z.object({
   content: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
+  think: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
   attachments: z
     .array(
@@ -31,6 +32,7 @@ const sendMessageSchema = z.object({
 const completionSchema = z.object({
   prompt: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
+  think: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
 });
 
@@ -101,6 +103,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
       conversationId: req.params.id,
       content: payload.content,
       model: payload.model,
+      think: payload.think,
       extraInstruction: payload.extraInstruction,
       attachments: payload.attachments,
     });
@@ -123,6 +126,91 @@ router.post('/conversations/:id/messages', async (req, res) => {
   }
 });
 
+router.post('/conversations/:id/messages/stream', async (req, res) => {
+  try {
+    const auth = (req as unknown as AuthenticatedProxyRequest).auth;
+    const payload = sendMessageSchema.parse(req.body ?? {});
+
+    res.setHeader('Content-Type', 'application/x-ndjson; charset=utf-8');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('X-Accel-Buffering', 'no');
+    res.flushHeaders?.();
+
+    const writeEvent = (event: Record<string, unknown>): void => {
+      if (!res.writableEnded) {
+        res.write(`${JSON.stringify(event)}\n`);
+      }
+    };
+
+    writeEvent({
+      type: 'start',
+      data: {
+        conversationId: req.params.id,
+        startedAt: new Date().toISOString(),
+      },
+    });
+
+    const result = await chatService.sendMessageStream({
+      tenantId: auth.tenantId,
+      userId: auth.userId,
+      userName: auth.userName,
+      departmentId: auth.departmentId,
+      conversationId: req.params.id,
+      content: payload.content,
+      model: payload.model,
+      think: payload.think,
+      extraInstruction: payload.extraInstruction,
+      attachments: payload.attachments,
+      onThinkingDelta: (delta) => {
+        writeEvent({ type: 'thinking_delta', data: { delta } });
+      },
+      onContentDelta: (delta) => {
+        writeEvent({ type: 'content_delta', data: { delta } });
+      },
+    });
+
+    writeEvent({
+      type: 'done',
+      data: result,
+    });
+    res.end();
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid payload', details: error.issues });
+      return;
+    }
+    if (error instanceof Error && error.message.includes('not found')) {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    if (error instanceof OllamaServiceError) {
+      if (!res.headersSent) {
+        res.status(error.statusCode).json({ error: error.message });
+        return;
+      }
+      if (!res.writableEnded) {
+        res.write(`${JSON.stringify({ type: 'error', error: error.message })}\n`);
+        res.end();
+      }
+      return;
+    }
+    if (!res.headersSent) {
+      res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to stream message' });
+      return;
+    }
+    if (!res.writableEnded) {
+      res.write(
+        `${JSON.stringify({
+          type: 'error',
+          error: error instanceof Error ? error.message : 'Failed to stream message',
+        })}\n`,
+      );
+      res.end();
+    }
+  }
+});
+
 router.post('/chat/completions', async (req, res) => {
   try {
     const auth = (req as unknown as AuthenticatedProxyRequest).auth;
@@ -135,6 +223,7 @@ router.post('/chat/completions', async (req, res) => {
       departmentId: auth.departmentId,
       prompt: payload.prompt,
       model: payload.model,
+      think: payload.think,
       extraInstruction: payload.extraInstruction,
       source: 'ADMIN_CHAT',
     });

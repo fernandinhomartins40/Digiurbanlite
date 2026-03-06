@@ -9,6 +9,7 @@ const router = Router();
 const completionSchema = z.object({
   prompt: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
+  think: z.boolean().optional(),
   userId: z.string().trim().min(1).optional(),
   userName: z.string().trim().min(1).optional(),
   departmentId: z.string().trim().min(1).optional(),
@@ -27,6 +28,7 @@ router.post('/internal/chat/completions', async (req, res) => {
       departmentId: payload.departmentId,
       prompt: payload.prompt,
       model: payload.model,
+      think: payload.think,
       extraInstruction: payload.extraInstruction,
       source: 'INTERNAL_API',
     });

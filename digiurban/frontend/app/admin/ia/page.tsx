@@ -1,7 +1,7 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, Loader2, MessageSquare, Paperclip, Plus, Send, X } from 'lucide-react';
+import { Bot, Brain, Loader2, MessageSquare, Paperclip, Plus, Send, User, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +18,7 @@ import {
   AiConversation,
   AiMessage,
   AiMessageAttachment,
+  AiMessageMetadata,
 } from '@/lib/services/ai-platform.service';
 
 type PendingAttachment = AiMessageAttachment & { id: string };
@@ -25,6 +26,10 @@ type PendingAttachment = AiMessageAttachment & { id: string };
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE = 8 * 1024 * 1024;
 const TEXT_PREVIEW_LIMIT = 2500;
+const MODEL_OPTIONS = [
+  { value: 'qwen3.5:9b', label: 'Qwen 3.5 9B (principal)' },
+  { value: 'digibot-qwen2.5:latest', label: 'DigiBot Qwen 2.5 (reserva)' },
+];
 
 function formatDate(value?: string | null): string {
   if (!value) return '-';
@@ -38,6 +43,17 @@ function formatFileSize(size?: number): string {
   if (size < 1024) return `${size} B`;
   if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function formatMs(value?: number): string {
+  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return '-';
+  if (value >= 1000) return `${(value / 1000).toFixed(2)}s`;
+  return `${Math.round(value)}ms`;
+}
+
+function formatTps(value?: number): string {
+  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return '-';
+  return `${value.toFixed(1)} tok/s`;
 }
 
 function isTextLikeFile(file: File): boolean {
@@ -72,25 +88,34 @@ async function fileToAttachment(file: File): Promise<PendingAttachment> {
   };
 }
 
+function getMetadata(message: AiMessage): AiMessageMetadata {
+  if (!message.metadata || typeof message.metadata !== 'object') {
+    return {};
+  }
+  return message.metadata;
+}
+
 function getMessageAttachments(message: AiMessage): AiMessageAttachment[] {
-  if (!message.metadata || typeof message.metadata !== 'object') return [];
-  const attachments = (message.metadata as { attachments?: unknown }).attachments;
-  if (!Array.isArray(attachments)) return [];
+  const attachments = getMetadata(message).attachments;
+  return Array.isArray(attachments) ? attachments : [];
+}
 
-  return attachments
-    .map((item) => {
-      if (!item || typeof item !== 'object') return null;
-      const raw = item as Record<string, unknown>;
-      if (typeof raw.name !== 'string') return null;
+function normalizeAssistantMessage(message: AiMessage, thinkEnabled: boolean): AiMessage {
+  if (message.role !== 'ASSISTANT') {
+    return message;
+  }
 
-      return {
-        name: raw.name,
-        mimeType: typeof raw.mimeType === 'string' ? raw.mimeType : undefined,
-        size: typeof raw.size === 'number' ? raw.size : undefined,
-        contentText: typeof raw.contentText === 'string' ? raw.contentText : undefined,
-      } as AiMessageAttachment;
-    })
-    .filter((item): item is AiMessageAttachment => item !== null);
+  const metadata = getMetadata(message);
+  const hasThinking = typeof metadata.thinking === 'string' && metadata.thinking.trim().length > 0;
+
+  return {
+    ...message,
+    metadata: {
+      ...metadata,
+      thinkEnabled: metadata.thinkEnabled ?? thinkEnabled,
+      thinkingStatus: hasThinking ? 'completed' : metadata.thinkingStatus,
+    },
+  };
 }
 
 export default function AdminAiPage() {
@@ -105,14 +130,37 @@ export default function AdminAiPage() {
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [conversationsModalOpen, setConversationsModalOpen] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(true);
+  const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0].value);
+  const [thinkMode, setThinkMode] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  const activeConversation = useMemo(
-    () => conversations.find((conversation) => conversation.id === activeConversationId) || null,
-    [activeConversationId, conversations],
-  );
+  const aiPerformanceSummary = useMemo(() => {
+    const assistantMetrics = messages
+      .filter((message) => message.role === 'ASSISTANT')
+      .map((message) => getMetadata(message).performance)
+      .filter((metric): metric is NonNullable<AiMessageMetadata['performance']> => !!metric);
+
+    if (!assistantMetrics.length) {
+      return null;
+    }
+
+    const average = (values: Array<number | undefined>): number | undefined => {
+      const filtered = values.filter((value): value is number => typeof value === 'number' && value > 0);
+      if (!filtered.length) return undefined;
+      return filtered.reduce((sum, value) => sum + value, 0) / filtered.length;
+    };
+
+    return {
+      requests: assistantMetrics.length,
+      avgLatencyMs: average(assistantMetrics.map((metric) => metric.latencyMs)),
+      avgLoadMs: average(assistantMetrics.map((metric) => metric.loadDurationMs)),
+      avgPromptMs: average(assistantMetrics.map((metric) => metric.promptEvalDurationMs)),
+      avgEvalMs: average(assistantMetrics.map((metric) => metric.evalDurationMs)),
+      avgTps: average(assistantMetrics.map((metric) => metric.tokensPerSecond)),
+    };
+  }, [messages]);
 
   const scrollMessagesToBottom = (): void => {
     if (!messageListRef.current) return;
@@ -240,9 +288,11 @@ export default function AdminAiPage() {
       contentText: item.contentText,
     }));
 
-    const optimisticMessageId = `optimistic-${Date.now()}`;
+    const optimisticUserMessageId = `optimistic-user-${Date.now()}`;
+    const optimisticAssistantMessageId = `optimistic-assistant-${Date.now()}`;
+
     const optimisticUserMessage: AiMessage = {
-      id: optimisticMessageId,
+      id: optimisticUserMessageId,
       role: 'USER',
       content,
       totalTokens: 0,
@@ -250,9 +300,32 @@ export default function AdminAiPage() {
       metadata: attachmentPayload.length > 0 ? { attachments: attachmentPayload } : null,
     };
 
-    setMessages((previous) => [...previous, optimisticUserMessage]);
+    const optimisticAssistantMessage: AiMessage = {
+      id: optimisticAssistantMessageId,
+      role: 'ASSISTANT',
+      content: '',
+      totalTokens: 0,
+      createdAt: new Date().toISOString(),
+      metadata: {
+        thinkingStatus: 'processing',
+        thinkEnabled: thinkMode,
+        thinking: thinkMode ? 'Analisando a solicitacao e preparando o raciocinio...' : undefined,
+      },
+    };
+
+    setMessages((previous) => [...previous, optimisticUserMessage, optimisticAssistantMessage]);
     setDraft('');
     setAttachments([]);
+
+    const updateOptimisticAssistant = (
+      updater: (current: AiMessage) => AiMessage,
+    ): void => {
+      setMessages((previous) =>
+        previous.map((message) =>
+          message.id === optimisticAssistantMessageId ? updater(message) : message,
+        ),
+      );
+    };
 
     try {
       let conversationId = activeConversationId;
@@ -263,16 +336,52 @@ export default function AdminAiPage() {
         setActiveConversationId(created.id);
       }
 
-      const result = await aiPlatformService.sendMessage(conversationId, {
-        content,
-        attachments: attachmentPayload,
-      });
+      const result = await aiPlatformService.streamMessage(
+        conversationId,
+        {
+          content,
+          model: selectedModel,
+          think: thinkMode,
+          attachments: attachmentPayload,
+        },
+        {
+          onThinkingDelta: (delta) => {
+            updateOptimisticAssistant((current) => {
+              const metadata = getMetadata(current);
+              return {
+                ...current,
+                metadata: {
+                  ...metadata,
+                  thinkEnabled: thinkMode,
+                  thinkingStatus: 'processing',
+                  thinking: `${metadata.thinking || ''}${delta}`,
+                },
+              };
+            });
+          },
+          onContentDelta: (delta) => {
+            updateOptimisticAssistant((current) => ({
+              ...current,
+              content: `${current.content || ''}${delta}`,
+            }));
+          },
+        },
+      );
 
-      setMessages((previous) => [...previous, result.assistantMessage]);
+      setMessages((previous) => [
+        ...previous.filter((message) => message.id !== optimisticAssistantMessageId),
+        normalizeAssistantMessage(result.assistantMessage, thinkMode),
+      ]);
+
       const list = await aiPlatformService.listConversations();
       setConversations(list);
     } catch (error) {
-      setMessages((previous) => previous.filter((message) => message.id !== optimisticMessageId));
+      setMessages((previous) =>
+        previous.filter(
+          (message) =>
+            message.id !== optimisticUserMessageId && message.id !== optimisticAssistantMessageId,
+        ),
+      );
       setDraft(content);
       setAttachments(attachmentSnapshot);
 
@@ -296,7 +405,7 @@ export default function AdminAiPage() {
 
   return (
     <div className="space-y-4 pb-8">
-      <Card>
+      <Card className="border-slate-200">
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
             <div>
@@ -304,7 +413,7 @@ export default function AdminAiPage() {
                 <Bot className="h-4 w-4" />
                 Assistente IA
               </CardTitle>
-              <CardDescription>Converse com a IA e acompanhe o historico da conversa.</CardDescription>
+              <CardDescription>Experiencia de chat focada em IA com contexto e raciocinio.</CardDescription>
             </div>
             <Button type="button" variant="outline" onClick={() => setConversationsModalOpen(true)}>
               <MessageSquare className="mr-2 h-4 w-4" />
@@ -312,10 +421,61 @@ export default function AdminAiPage() {
             </Button>
           </div>
         </CardHeader>
+
         <CardContent className="space-y-4">
+          <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-slate-50 px-3 py-2">
+            <div className="flex min-w-[220px] items-center gap-2">
+              <label htmlFor="ai-model-select" className="text-xs font-medium uppercase tracking-wide text-slate-600">
+                Modelo
+              </label>
+              <select
+                id="ai-model-select"
+                value={selectedModel}
+                onChange={(event) => setSelectedModel(event.target.value)}
+                className="h-9 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
+              >
+                {MODEL_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+              <input
+                type="checkbox"
+                checked={thinkMode}
+                onChange={(event) => setThinkMode(event.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
+              />
+              Modo think (mostrar raciocinio)
+            </label>
+          </div>
+
+          <div className="grid gap-2 rounded-xl border bg-slate-50 p-3 text-xs text-slate-700 md:grid-cols-3">
+            <div>
+              <p className="font-semibold text-slate-800">Observabilidade</p>
+              <p className="text-slate-500">
+                {aiPerformanceSummary
+                  ? `${aiPerformanceSummary.requests} respostas analisadas`
+                  : 'Aguardando respostas para metricas'}
+              </p>
+            </div>
+            <div className="space-y-1">
+              <p>Latencia media: {formatMs(aiPerformanceSummary?.avgLatencyMs)}</p>
+              <p>Load medio: {formatMs(aiPerformanceSummary?.avgLoadMs)}</p>
+            </div>
+            <div className="space-y-1">
+              <p>Prompt medio: {formatMs(aiPerformanceSummary?.avgPromptMs)}</p>
+              <p>Eval medio: {formatMs(aiPerformanceSummary?.avgEvalMs)}</p>
+              <p>Throughput medio: {formatTps(aiPerformanceSummary?.avgTps)}</p>
+            </div>
+          </div>
+
           <div
             ref={messageListRef}
-            className="max-h-[56vh] space-y-3 overflow-y-auto rounded-lg border bg-slate-50 p-4"
+            className="max-h-[62vh] space-y-4 overflow-y-auto rounded-xl border bg-white p-4"
           >
             {loadingMessages ? (
               <div className="flex items-center gap-2 text-sm text-slate-500">
@@ -323,36 +483,100 @@ export default function AdminAiPage() {
                 Carregando mensagens...
               </div>
             ) : messages.length === 0 ? (
-              <p className="text-sm text-slate-500">Inicie uma conversa enviando uma mensagem.</p>
+              <div className="rounded-lg border border-dashed bg-slate-50 p-6 text-sm text-slate-500">
+                Inicie uma conversa enviando uma pergunta ou orientacao.
+              </div>
             ) : (
               messages.map((message) => {
                 const isUser = message.role === 'USER';
+                const metadata = getMetadata(message);
                 const messageAttachments = getMessageAttachments(message);
+                const performance = metadata.performance;
+                const thinkingText = typeof metadata.thinking === 'string' ? metadata.thinking.trim() : '';
+                const thinkingStatus = metadata.thinkingStatus;
+                const isThinkingNow = !isUser && thinkingStatus === 'processing';
+                const showThinkingPanel = !isUser && (isThinkingNow || thinkingText.length > 0);
+                const visibleContent = (message.content || '').trim();
 
                 return (
-                  <div key={message.id} className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
-                    <div
-                      className={`max-w-[85%] rounded-xl px-3 py-2 text-sm ${
-                        isUser ? 'bg-cyan-600 text-white' : 'border bg-white text-slate-900'
-                      }`}
-                    >
-                      <p className="whitespace-pre-wrap">{message.content}</p>
-
-                      {messageAttachments.length > 0 ? (
-                        <div className={`mt-2 space-y-1 text-xs ${isUser ? 'text-cyan-100' : 'text-slate-500'}`}>
-                          {messageAttachments.map((attachment, index) => (
-                            <div key={`${message.id}-att-${index}`} className="rounded-md border border-current/30 px-2 py-1">
-                              {attachment.name}
-                              {attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-
-                      <p className={`mt-2 text-[11px] ${isUser ? 'text-cyan-100' : 'text-slate-400'}`}>
+                  <div
+                    key={message.id}
+                    className={`rounded-2xl border p-4 ${
+                      isUser
+                        ? 'ml-8 border-cyan-200 bg-cyan-50'
+                        : 'mr-8 border-slate-200 bg-slate-50'
+                    }`}
+                  >
+                    <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-600">
+                      {isUser ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
+                      <span>{isUser ? 'Voce' : 'DigiUrban IA'}</span>
+                      <span className="ml-auto text-[11px] normal-case tracking-normal text-slate-500">
                         {formatDate(message.createdAt)}
-                      </p>
+                      </span>
                     </div>
+
+                    {showThinkingPanel ? (
+                      <details
+                        className="mb-3 rounded-lg border border-slate-200 bg-white"
+                        open={isThinkingNow}
+                      >
+                        <summary className="cursor-pointer list-none px-3 py-2 text-sm text-slate-700">
+                          <span className="flex items-center gap-2">
+                            {isThinkingNow ? (
+                              <Loader2 className="h-4 w-4 animate-spin text-cyan-600" />
+                            ) : (
+                              <Brain className="h-4 w-4 text-cyan-600" />
+                            )}
+                            {isThinkingNow ? 'IA pensando...' : 'Raciocinio da IA'}
+                          </span>
+                        </summary>
+                        <div className="whitespace-pre-wrap px-3 pb-3 text-xs text-slate-600">
+                          {thinkingText || 'Processando o raciocinio...'}
+                        </div>
+                      </details>
+                    ) : null}
+
+                    {visibleContent ? (
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
+                        {visibleContent}
+                      </p>
+                    ) : isThinkingNow ? (
+                      <p className="text-sm text-slate-500">Preparando resposta...</p>
+                    ) : null}
+
+                    {!isUser && performance ? (
+                      <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
+                        <span className="rounded border bg-white px-2 py-1">
+                          latencia: {formatMs(performance.latencyMs)}
+                        </span>
+                        <span className="rounded border bg-white px-2 py-1">
+                          load: {formatMs(performance.loadDurationMs)}
+                        </span>
+                        <span className="rounded border bg-white px-2 py-1">
+                          prompt: {formatMs(performance.promptEvalDurationMs)}
+                        </span>
+                        <span className="rounded border bg-white px-2 py-1">
+                          eval: {formatMs(performance.evalDurationMs)}
+                        </span>
+                        <span className="rounded border bg-white px-2 py-1">
+                          {formatTps(performance.tokensPerSecond)}
+                        </span>
+                      </div>
+                    ) : null}
+
+                    {messageAttachments.length > 0 ? (
+                      <div className="mt-3 space-y-1 text-xs text-slate-600">
+                        {messageAttachments.map((attachment, index) => (
+                          <div
+                            key={`${message.id}-att-${index}`}
+                            className="rounded-md border border-slate-200 bg-white px-2 py-1"
+                          >
+                            {attachment.name}
+                            {attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 );
               })
@@ -363,7 +587,7 @@ export default function AdminAiPage() {
             <Textarea
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              className="min-h-[90px] resize-none"
+              className="min-h-[96px] resize-none"
               placeholder="Digite sua mensagem..."
             />
 
@@ -374,7 +598,7 @@ export default function AdminAiPage() {
                     key={attachment.id}
                     className="inline-flex items-center gap-2 rounded-full border bg-slate-100 px-3 py-1 text-xs"
                   >
-                    <span className="truncate max-w-[220px]">
+                    <span className="max-w-[240px] truncate">
                       {attachment.name}
                       {attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
                     </span>
@@ -414,7 +638,7 @@ export default function AdminAiPage() {
                 {sending ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Enviando...
+                    {thinkMode ? 'Pensando...' : 'Enviando...'}
                   </>
                 ) : (
                   <>
