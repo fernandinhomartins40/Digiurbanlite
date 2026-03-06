@@ -15,7 +15,17 @@ export interface AiMessage {
   content: string;
   model?: string | null;
   totalTokens: number;
+  metadata?: {
+    attachments?: AiMessageAttachment[];
+  } | null;
   createdAt: string;
+}
+
+export interface AiMessageAttachment {
+  name: string;
+  mimeType?: string;
+  size?: number;
+  contentText?: string;
 }
 
 export interface AiKnowledgeSource {
@@ -107,6 +117,7 @@ export const aiPlatformService = {
     content: string;
     model?: string;
     extraInstruction?: string;
+    attachments?: AiMessageAttachment[];
   }): Promise<{
     conversationId: string;
     assistantMessage: AiMessage;

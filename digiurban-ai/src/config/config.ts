@@ -17,14 +17,14 @@ export const config = {
   ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '120000', 10),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
   ollamaTopP: parseFloat(process.env.AI_OLLAMA_TOP_P || '0.9'),
-  ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '8192', 10),
+  ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '4096', 10),
 
   defaultTenantId: process.env.AI_DEFAULT_TENANT_ID || 'default',
-  maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '8', 10),
+  maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '4', 10),
   maxChunkSizeChars: parseInt(process.env.AI_MAX_CHUNK_SIZE_CHARS || '1200', 10),
   chunkOverlapChars: parseInt(process.env.AI_CHUNK_OVERLAP_CHARS || '120', 10),
   maxConversationMessagesContext: parseInt(
-    process.env.AI_MAX_CONVERSATION_MESSAGES_CONTEXT || '12',
+    process.env.AI_MAX_CONVERSATION_MESSAGES_CONTEXT || '8',
     10,
   ),
 

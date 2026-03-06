@@ -21,6 +21,7 @@ import {
   Bell,
   Search,
   Mail,
+  Bot,
   Globe,
   ScrollText,
   CreditCard
@@ -72,6 +73,11 @@ const menuItems: MenuItem[] = [
     title: 'Operações',
     href: '/super-admin/operations',
     icon: Wrench
+  },
+  {
+    title: 'IA',
+    href: '/super-admin/ia',
+    icon: Bot
   },
   {
     title: 'Email',

@@ -69,12 +69,36 @@ export class OllamaService {
         finishReason: body.done_reason,
       };
     } catch (error) {
+      if (axios.isAxiosError(error)) {
+        if (error.code === 'ECONNABORTED') {
+          throw new OllamaServiceError('Tempo limite ao consultar o modelo de IA', 504);
+        }
+
+        if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+          throw new OllamaServiceError('Servico de IA indisponivel no momento', 503);
+        }
+
+        if (error.response?.status === 404) {
+          throw new OllamaServiceError('Modelo de IA nao encontrado no Ollama', 502);
+        }
+      }
+
       logger.error('Ollama chat completion failed', {
         model: selectedModel,
         error: error instanceof Error ? error.message : String(error),
       });
       throw error;
     }
+  }
+}
+
+export class OllamaServiceError extends Error {
+  statusCode: number;
+
+  constructor(message: string, statusCode: number) {
+    super(message);
+    this.name = 'OllamaServiceError';
+    this.statusCode = statusCode;
   }
 }
 

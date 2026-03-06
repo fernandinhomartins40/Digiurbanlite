@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { chatService } from '../services/chat.service';
 import { apiKeyService } from '../services/api-key.service';
+import { OllamaServiceError } from '../services/ollama.service';
 import { AuthenticatedProxyRequest } from '../types';
 
 const router = Router();
@@ -14,6 +15,17 @@ const sendMessageSchema = z.object({
   content: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
+  attachments: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1).max(180),
+        mimeType: z.string().trim().max(120).optional(),
+        size: z.number().int().nonnegative().max(20 * 1024 * 1024).optional(),
+        contentText: z.string().trim().max(4000).optional(),
+      }),
+    )
+    .max(6)
+    .optional(),
 });
 
 const completionSchema = z.object({
@@ -90,6 +102,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
       content: payload.content,
       model: payload.model,
       extraInstruction: payload.extraInstruction,
+      attachments: payload.attachments,
     });
 
     res.status(201).json({ data: result });
@@ -100,6 +113,10 @@ router.post('/conversations/:id/messages', async (req, res) => {
     }
     if (error instanceof Error && error.message.includes('not found')) {
       res.status(404).json({ error: error.message });
+      return;
+    }
+    if (error instanceof OllamaServiceError) {
+      res.status(error.statusCode).json({ error: error.message });
       return;
     }
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to generate message' });
@@ -126,6 +143,10 @@ router.post('/chat/completions', async (req, res) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid payload', details: error.issues });
+      return;
+    }
+    if (error instanceof OllamaServiceError) {
+      res.status(error.statusCode).json({ error: error.message });
       return;
     }
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to generate completion' });

@@ -5,6 +5,7 @@ import { apiKeyService } from './api-key.service';
 import { knowledgeService } from './knowledge.service';
 import { ollamaService } from './ollama.service';
 import { ChatMessageInput } from '../types';
+import logger from '../utils/logger';
 
 function normalizeConversationTitle(input: string): string {
   return input.trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -58,6 +59,102 @@ function buildSystemPrompt(params: {
   return [persona, operator, extra, `Base de conhecimento:\n${contextBlock}`]
     .filter(Boolean)
     .join('\n\n');
+}
+
+interface MessageAttachmentInput {
+  name: string;
+  mimeType?: string;
+  size?: number;
+  contentText?: string;
+}
+
+function normalizeAttachmentText(value?: string): string | undefined {
+  if (!value) return undefined;
+  const normalized = value.trim().replace(/\s+\n/g, '\n');
+  if (!normalized) return undefined;
+  return normalized.slice(0, 2500);
+}
+
+function normalizeAttachments(input?: MessageAttachmentInput[]): MessageAttachmentInput[] {
+  if (!Array.isArray(input)) return [];
+
+  return input
+    .slice(0, 6)
+    .map((item) => ({
+      name: (item.name || '').trim().slice(0, 180),
+      mimeType: item.mimeType?.trim().slice(0, 120) || undefined,
+      size: typeof item.size === 'number' && Number.isFinite(item.size) ? Math.max(0, item.size) : undefined,
+      contentText: normalizeAttachmentText(item.contentText),
+    }))
+    .filter((item) => item.name.length > 0);
+}
+
+function formatAttachmentSize(size?: number): string {
+  if (!size || size <= 0) return '';
+
+  if (size < 1024) return `${size} B`;
+  if (size < 1024 * 1024) return `${(size / 1024).toFixed(1)} KB`;
+  return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function buildAttachmentContext(attachments: MessageAttachmentInput[]): string {
+  if (!attachments.length) return '';
+
+  return attachments
+    .map((attachment, index) => {
+      const details = [
+        attachment.mimeType || 'tipo-desconhecido',
+        formatAttachmentSize(attachment.size),
+      ]
+        .filter(Boolean)
+        .join(' | ');
+
+      const header = `Arquivo ${index + 1}: ${attachment.name}${details ? ` (${details})` : ''}`;
+      if (!attachment.contentText) return header;
+
+      return `${header}\nConteudo extraido:\n${attachment.contentText}`;
+    })
+    .join('\n\n');
+}
+
+function extractAttachmentsFromMetadata(metadata: unknown): MessageAttachmentInput[] {
+  if (!metadata || typeof metadata !== 'object') return [];
+
+  const attachments = (metadata as { attachments?: unknown }).attachments;
+  if (!Array.isArray(attachments)) return [];
+
+  return normalizeAttachments(
+    attachments.map((item) => {
+      if (!item || typeof item !== 'object') return { name: '' };
+
+      const raw = item as Record<string, unknown>;
+      return {
+        name: typeof raw.name === 'string' ? raw.name : '',
+        mimeType: typeof raw.mimeType === 'string' ? raw.mimeType : undefined,
+        size: typeof raw.size === 'number' ? raw.size : undefined,
+        contentText: typeof raw.contentText === 'string' ? raw.contentText : undefined,
+      };
+    }),
+  );
+}
+
+function buildModelMessageContent(message: AiMessage): string {
+  const baseContent = (message.content || '').trim();
+  if (message.role !== AiMessageRole.USER) {
+    return baseContent;
+  }
+
+  const attachments = extractAttachmentsFromMetadata(message.metadata);
+  if (!attachments.length) {
+    return baseContent;
+  }
+
+  const attachmentContext = buildAttachmentContext(attachments);
+  if (!attachmentContext) {
+    return baseContent;
+  }
+
+  return `${baseContent}\n\n[Arquivos anexados]\n${attachmentContext}`;
 }
 
 export class ChatService {
@@ -125,6 +222,7 @@ export class ChatService {
     content: string;
     model?: string;
     extraInstruction?: string;
+    attachments?: MessageAttachmentInput[];
   }): Promise<{
     conversationId: string;
     assistantMessage: AiMessage;
@@ -147,11 +245,20 @@ export class ChatService {
       throw new Error('Conversation not found');
     }
 
+    const attachments = normalizeAttachments(params.attachments);
+    const attachmentsMetadata = attachments.map((attachment) => ({
+      name: attachment.name,
+      ...(attachment.mimeType ? { mimeType: attachment.mimeType } : {}),
+      ...(typeof attachment.size === 'number' ? { size: attachment.size } : {}),
+      ...(attachment.contentText ? { contentText: attachment.contentText } : {}),
+    }));
+
     const userMessage = await prisma.aiMessage.create({
       data: {
         conversationId: conversation.id,
         role: AiMessageRole.USER,
         content: normalized,
+        metadata: attachmentsMetadata.length > 0 ? { attachments: attachmentsMetadata } : undefined,
       },
     });
 
@@ -161,11 +268,20 @@ export class ChatService {
       take: config.maxConversationMessagesContext,
     });
 
-    const relevantChunks = await knowledgeService.searchRelevantChunks({
-      tenantId: params.tenantId,
-      query: normalized,
-      limit: config.maxContextChunks,
-    });
+    let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
+    try {
+      relevantChunks = await knowledgeService.searchRelevantChunks({
+        tenantId: params.tenantId,
+        query: normalized,
+        limit: config.maxContextChunks,
+      });
+    } catch (error) {
+      logger.warn('Knowledge context lookup failed for chat message', {
+        tenantId: params.tenantId,
+        conversationId: params.conversationId,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
@@ -180,7 +296,7 @@ export class ChatService {
         .reverse()
         .map((message) => ({
           role: mapStoredRoleToModelRole(message.role),
-          content: message.content,
+          content: buildModelMessageContent(message),
         }))
         .filter((message) => message.content.trim().length > 0),
     ];
@@ -214,17 +330,25 @@ export class ChatService {
       },
     });
 
-    await apiKeyService.recordUsage({
-      tenantId: params.tenantId,
-      conversationId: conversation.id,
-      userId: params.userId,
-      source: 'ADMIN_CHAT',
-      model: completion.model,
-      inputTokens: completion.inputTokens,
-      outputTokens: completion.outputTokens,
-      totalTokens: completion.totalTokens,
-      estimatedCostCents: 0,
-    });
+    try {
+      await apiKeyService.recordUsage({
+        tenantId: params.tenantId,
+        conversationId: conversation.id,
+        userId: params.userId,
+        source: 'ADMIN_CHAT',
+        model: completion.model,
+        inputTokens: completion.inputTokens,
+        outputTokens: completion.outputTokens,
+        totalTokens: completion.totalTokens,
+        estimatedCostCents: 0,
+      });
+    } catch (error) {
+      logger.warn('Failed to record AI usage (message flow)', {
+        tenantId: params.tenantId,
+        conversationId: conversation.id,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return {
       conversationId: conversation.id,
@@ -257,11 +381,21 @@ export class ChatService {
       throw new Error('Prompt is required');
     }
 
-    const relevantChunks = await knowledgeService.searchRelevantChunks({
-      tenantId: params.tenantId,
-      query: prompt,
-      limit: config.maxContextChunks,
-    });
+    let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
+    try {
+      relevantChunks = await knowledgeService.searchRelevantChunks({
+        tenantId: params.tenantId,
+        query: prompt,
+        limit: config.maxContextChunks,
+      });
+    } catch (error) {
+      logger.warn('Knowledge context lookup failed for stateless completion', {
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: params.source,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
@@ -278,18 +412,27 @@ export class ChatService {
       params.model,
     );
 
-    await apiKeyService.recordUsage({
-      tenantId: params.tenantId,
-      planId: params.planId,
-      apiKeyId: params.apiKeyId,
-      userId: params.userId,
-      source: params.source,
-      model: completion.model,
-      inputTokens: completion.inputTokens,
-      outputTokens: completion.outputTokens,
-      totalTokens: completion.totalTokens,
-      estimatedCostCents: 0,
-    });
+    try {
+      await apiKeyService.recordUsage({
+        tenantId: params.tenantId,
+        planId: params.planId,
+        apiKeyId: params.apiKeyId,
+        userId: params.userId,
+        source: params.source,
+        model: completion.model,
+        inputTokens: completion.inputTokens,
+        outputTokens: completion.outputTokens,
+        totalTokens: completion.totalTokens,
+        estimatedCostCents: 0,
+      });
+    } catch (error) {
+      logger.warn('Failed to record AI usage (stateless flow)', {
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: params.source,
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
 
     return {
       content: completion.content,
