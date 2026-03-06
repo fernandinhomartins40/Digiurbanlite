@@ -14,10 +14,14 @@ export const config = {
 
   ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
   ollamaModel: process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
+  ollamaFallbackModel: process.env.AI_OLLAMA_FALLBACK_MODEL || 'digibot-qwen2.5:latest',
   ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '120000', 10),
+  ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '45000', 10),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
   ollamaTopP: parseFloat(process.env.AI_OLLAMA_TOP_P || '0.9'),
   ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '4096', 10),
+  ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '320', 10),
+  ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
 
   defaultTenantId: process.env.AI_DEFAULT_TENANT_ID || 'default',
   maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '4', 10),
@@ -27,6 +31,8 @@ export const config = {
     process.env.AI_MAX_CONVERSATION_MESSAGES_CONTEXT || '8',
     10,
   ),
+  maxContextCharsInPrompt: parseInt(process.env.AI_MAX_CONTEXT_CHARS_IN_PROMPT || '2200', 10),
+  maxModelMessageChars: parseInt(process.env.AI_MAX_MODEL_MESSAGE_CHARS || '1400', 10),
 
   corsOrigin: process.env.CORS_ORIGIN || '*',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),

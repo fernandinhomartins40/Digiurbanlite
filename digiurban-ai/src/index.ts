@@ -31,7 +31,10 @@ class DigiUrbanAIServer {
           host: config.host,
           port: config.port,
           model: config.ollamaModel,
+          fallbackModel: config.ollamaFallbackModel,
           ollamaBaseUrl: config.ollamaBaseUrl,
+          ollamaTimeoutMs: config.ollamaTimeoutMs,
+          ollamaRetryTimeoutMs: config.ollamaRetryTimeoutMs,
         });
       });
 

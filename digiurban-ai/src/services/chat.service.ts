@@ -25,6 +25,101 @@ function mapStoredRoleToModelRole(role: AiMessageRole): ChatMessageInput['role']
   }
 }
 
+function truncateForModel(content: string, maxChars: number): string {
+  const normalized = content.trim();
+  if (!normalized) return '';
+
+  const safeMaxChars = Math.max(120, maxChars);
+  if (normalized.length <= safeMaxChars) {
+    return normalized;
+  }
+
+  const suffix = '\n[...trecho resumido para reduzir latencia...]';
+  if (safeMaxChars <= suffix.length + 40) {
+    return normalized.slice(0, safeMaxChars).trimEnd();
+  }
+
+  return `${normalized.slice(0, safeMaxChars - suffix.length).trimEnd()}${suffix}`;
+}
+
+function trimContextForPrompt(chunks: string[]): string[] {
+  const globalBudget = Math.max(600, config.maxContextCharsInPrompt);
+  const perChunkLimit = Math.max(240, config.maxChunkSizeChars);
+  let remaining = globalBudget;
+  const result: string[] = [];
+
+  for (const chunk of chunks) {
+    if (remaining <= 0) {
+      break;
+    }
+
+    const clipped = truncateForModel(chunk, Math.min(perChunkLimit, remaining));
+    if (!clipped) {
+      continue;
+    }
+
+    result.push(clipped);
+    remaining -= clipped.length;
+  }
+
+  return result;
+}
+
+function boundModelMessages(messages: ChatMessageInput[]): ChatMessageInput[] {
+  if (!messages.length) {
+    return messages;
+  }
+
+  const [systemMessage, ...conversationMessages] = messages;
+  const boundedSystemMessage: ChatMessageInput = {
+    role: systemMessage.role,
+    content: truncateForModel(
+      systemMessage.content,
+      Math.max(1200, config.maxContextCharsInPrompt + 600),
+    ),
+  };
+
+  const perMessageLimit = Math.max(300, config.maxModelMessageChars);
+  const conversationBudget = Math.max(perMessageLimit, config.maxContextCharsInPrompt);
+
+  const boundedConversationMessages = conversationMessages
+    .map((message) => ({
+      role: message.role,
+      content: truncateForModel(message.content, perMessageLimit),
+    }))
+    .filter((message) => message.content.length > 0);
+
+  let consumedChars = 0;
+  const selected: ChatMessageInput[] = [];
+
+  for (let index = boundedConversationMessages.length - 1; index >= 0; index -= 1) {
+    if (consumedChars >= conversationBudget) {
+      break;
+    }
+
+    const message = boundedConversationMessages[index];
+    const remaining = conversationBudget - consumedChars;
+
+    if (message.content.length <= remaining) {
+      selected.push(message);
+      consumedChars += message.content.length;
+      continue;
+    }
+
+    if (remaining < 120) {
+      continue;
+    }
+
+    selected.push({
+      role: message.role,
+      content: truncateForModel(message.content, remaining),
+    });
+    consumedChars = conversationBudget;
+  }
+
+  return [boundedSystemMessage, ...selected.reverse()];
+}
+
 function buildSystemPrompt(params: {
   userName?: string;
   departmentId?: string;
@@ -286,11 +381,11 @@ export class ChatService {
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
-      retrievedContext: relevantChunks.map((item) => item.content),
+      retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
       extraInstruction: params.extraInstruction,
     });
 
-    const modelMessages: ChatMessageInput[] = [
+    const modelMessages = boundModelMessages([
       { role: 'system', content: systemPrompt },
       ...recentMessages
         .reverse()
@@ -299,7 +394,7 @@ export class ChatService {
           content: buildModelMessageContent(message),
         }))
         .filter((message) => message.content.trim().length > 0),
-    ];
+    ]);
 
     const completion = await ollamaService.chat(modelMessages, params.model);
     const assistantMessage = await prisma.aiMessage.create({
@@ -400,17 +495,16 @@ export class ChatService {
     const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
-      retrievedContext: relevantChunks.map((item) => item.content),
+      retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
       extraInstruction: params.extraInstruction,
     });
 
-    const completion = await ollamaService.chat(
-      [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: prompt },
-      ],
-      params.model,
-    );
+    const modelMessages = boundModelMessages([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: prompt },
+    ]);
+
+    const completion = await ollamaService.chat(modelMessages, params.model);
 
     try {
       await apiKeyService.recordUsage({

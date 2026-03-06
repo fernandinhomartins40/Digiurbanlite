@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { apiKeyService } from '../services/api-key.service';
 import { chatService } from '../services/chat.service';
+import { OllamaServiceError } from '../services/ollama.service';
 
 const router = Router();
 
@@ -56,6 +57,11 @@ router.post('/public/chat/completions', async (req, res) => {
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid payload', details: error.issues });
+      return;
+    }
+
+    if (error instanceof OllamaServiceError) {
+      res.status(error.statusCode).json({ error: error.message });
       return;
     }
 

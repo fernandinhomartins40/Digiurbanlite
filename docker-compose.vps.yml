@@ -78,7 +78,7 @@ services:
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
       - OLLAMA_KEEP_ALIVE=-1  # Mantém modelo sempre em memória
-      - OLLAMA_NUM_PARALLEL=2  # Permite 2 requisições simultâneas
+      - OLLAMA_NUM_PARALLEL=1  # Evita disputa de CPU/RAM em paralelo
       - OLLAMA_MAX_LOADED_MODELS=1  # Mantém apenas 1 modelo carregado
     healthcheck:
       test: ["CMD-SHELL", "ollama list || exit 1"]
@@ -292,7 +292,9 @@ services:
       - AI_DEFAULT_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
       - AI_OLLAMA_BASE_URL=http://ollama:11434
       - AI_OLLAMA_MODEL=${AI_OLLAMA_MODEL:-qwen3.5:9b}
-      - AI_OLLAMA_TIMEOUT_MS=120000
+      - AI_OLLAMA_FALLBACK_MODEL=${AI_OLLAMA_FALLBACK_MODEL:-digibot-qwen2.5:latest}
+      - AI_OLLAMA_TIMEOUT_MS=90000
+      - AI_OLLAMA_RETRY_TIMEOUT_MS=45000
       - AI_OLLAMA_TEMPERATURE=0.2
       - AI_OLLAMA_TOP_P=0.9
       - AI_OLLAMA_NUM_CTX=4096
@@ -404,6 +406,7 @@ services:
       # Módulo de IA Centralizada (proxy interno)
       - AI_API_URL=http://digiurban-ai:9004/api/v1
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
+      - AI_PROXY_TIMEOUT_MS=150000
 
     volumes:
       - digiurban_uploads:/app/uploads

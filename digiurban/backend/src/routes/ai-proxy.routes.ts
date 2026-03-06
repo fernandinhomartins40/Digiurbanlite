@@ -11,11 +11,12 @@ const router = Router();
 
 const AI_API_URL = process.env.AI_API_URL ?? 'http://digiurban-ai:9004/api/v1';
 const AI_SERVICE_TOKEN = process.env.AI_SERVICE_TOKEN ?? '';
+const AI_PROXY_TIMEOUT_MS = Number.parseInt(process.env.AI_PROXY_TIMEOUT_MS || '150000', 10);
 const superAdminOnly = requireMinRole(UserRole.SUPER_ADMIN);
 
 const aiClient: AxiosInstance = axios.create({
   baseURL: AI_API_URL,
-  timeout: 120_000,
+  timeout: Number.isFinite(AI_PROXY_TIMEOUT_MS) && AI_PROXY_TIMEOUT_MS > 0 ? AI_PROXY_TIMEOUT_MS : 150_000,
   headers: {
     'x-digiurban-ai-token': AI_SERVICE_TOKEN,
     'Content-Type': 'application/json',
@@ -28,6 +29,7 @@ aiClient.interceptors.response.use(
     logger.warn('[AIProxy] Upstream error', {
       url: error.config?.url,
       status: error.response?.status,
+      code: error.code,
       message: error.message,
     });
     return Promise.reject(error);
@@ -64,8 +66,31 @@ async function proxyRequest(
 
     res.status(upstream.status).json(upstream.data);
   } catch (error: unknown) {
-    if (axios.isAxiosError(error) && error.response) {
-      res.status(error.response.status).json(error.response.data);
+    if (axios.isAxiosError(error)) {
+      if (error.response) {
+        res.status(error.response.status).json(error.response.data);
+        return;
+      }
+
+      if (error.code === 'ECONNABORTED') {
+        res.status(504).json({ error: 'Tempo limite ao consultar a IA centralizada' });
+        return;
+      }
+
+      if (
+        error.code === 'ECONNREFUSED' ||
+        error.code === 'ENOTFOUND' ||
+        error.code === 'ECONNRESET'
+      ) {
+        res.status(503).json({ error: 'IA centralizada indisponivel no momento' });
+        return;
+      }
+
+      logger.error('[AIProxy] Unexpected Axios error without response', {
+        url: path || req.path,
+        code: error.code,
+        message: error.message,
+      });
       return;
     }
     next(error);
