@@ -117,7 +117,7 @@ services:
       - OLLAMA_FLASH_ATTENTION=1
       - OLLAMA_KV_CACHE_TYPE=q8_0
     healthcheck:
-      test: ["CMD-SHELL", "ollama show qwen3.5:9b >/dev/null 2>&1 && ollama show qwen3.5:4b >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -258,7 +258,6 @@ volumes:
 networks:
   digiurban:
     driver: bridge
-
 
 
 

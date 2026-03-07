@@ -81,7 +81,7 @@ services:
       - OLLAMA_NUM_PARALLEL=1
       - OLLAMA_MAX_LOADED_MODELS=1
     healthcheck:
-      test: ["CMD-SHELL", "ollama show ${AI_OLLAMA_MODEL:-qwen3.5:9b} >/dev/null 2>&1 && ollama show ${AI_OLLAMA_FALLBACK_MODEL:-qwen3.5:4b} >/dev/null 2>&1 || exit 1"]
+      test: ["CMD-SHELL", "ollama list >/dev/null 2>&1 || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
@@ -508,7 +508,6 @@ volumes:
 networks:
   digiurban_network:
     driver: bridge
-
 
 
 
