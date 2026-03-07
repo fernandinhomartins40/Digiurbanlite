@@ -1,15 +1,22 @@
 'use client';
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
+  Archive,
   Bot,
   Brain,
+  ChevronLeft,
+  ChevronRight,
+  Edit3,
   Loader2,
   Menu,
+  MoreHorizontal,
   Paperclip,
+  PanelLeft,
   Plus,
   Send,
   Sparkles,
+  Trash2,
   User,
   X,
 } from 'lucide-react';
@@ -18,6 +25,13 @@ import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useToast } from '@/hooks/use-toast';
 import {
   aiPlatformService,
@@ -229,7 +243,10 @@ export default function AdminAiPage() {
   const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0].value);
   const [chatMode, setChatMode] = useState<AdminChatMode>('free');
   const [thinkMode, setThinkMode] = useState(false);
-  const [webSearchMode, setWebSearchMode] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState('');
+  const [conversationActionLoadingId, setConversationActionLoadingId] = useState<string | null>(null);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -243,6 +260,15 @@ export default function AdminAiPage() {
   const scrollMessagesToBottom = (): void => {
     if (!messageListRef.current) return;
     messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+  };
+
+  const syncComposerHeight = (): void => {
+    const element = textAreaRef.current;
+    if (!element) return;
+    element.style.height = '0px';
+    const nextHeight = Math.min(Math.max(element.scrollHeight, 44), 220);
+    element.style.height = `${nextHeight}px`;
+    element.style.overflowY = element.scrollHeight > 220 ? 'auto' : 'hidden';
   };
 
   const loadConversationById = async (conversationId: string): Promise<void> => {
@@ -300,7 +326,6 @@ export default function AdminAiPage() {
       setSelectedModel('auto');
       setChatMode('free');
       setThinkMode(false);
-      setWebSearchMode(false);
       setConversationsModalOpen(false);
     } catch (error) {
       toast({
@@ -321,6 +346,87 @@ export default function AdminAiPage() {
         description: error instanceof Error ? error.message : 'Falha ao abrir a conversa.',
         variant: 'destructive',
       });
+    }
+  };
+
+  const startEditingConversation = (conversation: AiConversation): void => {
+    setEditingConversationId(conversation.id);
+    setEditingTitle(conversation.title?.trim() || 'Nova conversa');
+  };
+
+  const saveConversationTitle = async (): Promise<void> => {
+    if (!editingConversationId) return;
+    const title = editingTitle.trim();
+    if (!title) {
+      toast({
+        title: 'Titulo invalido',
+        description: 'Informe um titulo para a conversa.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setConversationActionLoadingId(editingConversationId);
+    try {
+      const updated = await aiPlatformService.updateConversation(editingConversationId, { title });
+      setConversations((previous) =>
+        previous.map((conversation) => (conversation.id === updated.id ? updated : conversation)),
+      );
+      if (activeConversationId === updated.id) {
+        setActiveConversationId(updated.id);
+      }
+      setEditingConversationId(null);
+      setEditingTitle('');
+    } catch (error) {
+      toast({
+        title: 'Erro ao atualizar titulo',
+        description: error instanceof Error ? error.message : 'Falha ao atualizar a conversa.',
+        variant: 'destructive',
+      });
+    } finally {
+      setConversationActionLoadingId(null);
+    }
+  };
+
+  const archiveConversation = async (conversationId: string): Promise<void> => {
+    setConversationActionLoadingId(conversationId);
+    try {
+      await aiPlatformService.updateConversation(conversationId, { isArchived: true });
+      const nextList = conversations.filter((conversation) => conversation.id !== conversationId);
+      setConversations(nextList);
+      if (activeConversationId === conversationId) {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao arquivar conversa',
+        description: error instanceof Error ? error.message : 'Falha ao arquivar a conversa.',
+        variant: 'destructive',
+      });
+    } finally {
+      setConversationActionLoadingId(null);
+    }
+  };
+
+  const deleteConversation = async (conversationId: string): Promise<void> => {
+    setConversationActionLoadingId(conversationId);
+    try {
+      await aiPlatformService.deleteConversation(conversationId);
+      const nextList = conversations.filter((conversation) => conversation.id !== conversationId);
+      setConversations(nextList);
+      if (activeConversationId === conversationId) {
+        setActiveConversationId(null);
+        setMessages([]);
+      }
+    } catch (error) {
+      toast({
+        title: 'Erro ao excluir conversa',
+        description: error instanceof Error ? error.message : 'Falha ao excluir a conversa.',
+        variant: 'destructive',
+      });
+    } finally {
+      setConversationActionLoadingId(null);
     }
   };
 
@@ -364,8 +470,7 @@ export default function AdminAiPage() {
     window.requestAnimationFrame(() => textAreaRef.current?.focus());
   };
 
-  const sendMessage = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
+  const submitDraft = async (): Promise<void> => {
     if (sending) return;
     const content = draft.trim();
     if (!content) return;
@@ -431,7 +536,6 @@ export default function AdminAiPage() {
           model: selectedModel === 'auto' ? undefined : selectedModel,
           mode: chatMode,
           think: thinkMode,
-          webSearch: webSearchMode ? true : undefined,
           attachments: attachmentPayload,
         },
         {
@@ -479,6 +583,24 @@ export default function AdminAiPage() {
     }
   };
 
+  const sendMessage = async (event: FormEvent): Promise<void> => {
+    event.preventDefault();
+    await submitDraft();
+  };
+
+  const handleComposerKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (event.key !== 'Enter' || event.shiftKey) {
+      return;
+    }
+
+    event.preventDefault();
+    if (sending || !draft.trim()) {
+      return;
+    }
+
+    void submitDraft();
+  };
+
   useEffect(() => {
     void loadConversations();
   }, []);
@@ -487,19 +609,106 @@ export default function AdminAiPage() {
     scrollMessagesToBottom();
   }, [messages, loadingMessages]);
 
+  useEffect(() => {
+    syncComposerHeight();
+  }, [draft]);
+
+  const renderConversationItem = (conversation: AiConversation, compact = false) => {
+    const isActive = conversation.id === activeConversationId;
+    const isBusy = conversationActionLoadingId === conversation.id;
+
+    return (
+      <div
+        key={conversation.id}
+        className={`group flex items-center gap-2 rounded-xl border px-2 py-2 transition ${
+          isActive ? 'border-cyan-300 bg-cyan-50' : 'border-transparent bg-white hover:border-slate-200'
+        }`}
+      >
+        <button
+          type="button"
+          onClick={() => void openConversation(conversation.id)}
+          className="min-w-0 flex-1 text-left"
+        >
+          <p className="truncate text-sm font-medium text-slate-800">{titleForConversation(conversation)}</p>
+          {!compact ? <p className="mt-1 text-xs text-slate-500">{formatDate(conversation.lastMessageAt)}</p> : null}
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="h-8 w-8 rounded-full text-slate-500 hover:text-slate-800"
+              disabled={isBusy}
+            >
+              {isBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <MoreHorizontal className="h-4 w-4" />}
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-44">
+            <DropdownMenuItem onClick={() => startEditingConversation(conversation)}>
+              <Edit3 className="mr-2 h-4 w-4" />
+              Editar titulo
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => void archiveConversation(conversation.id)}>
+              <Archive className="mr-2 h-4 w-4" />
+              Arquivar
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => void deleteConversation(conversation.id)}
+              className="text-red-600 focus:text-red-600"
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    );
+  };
+
   return (
     <div className="h-[calc(100vh-11rem)] min-h-[620px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100/70">
       <div className="flex h-full">
-        <aside className="hidden w-80 shrink-0 flex-col border-r border-slate-200 bg-white/70 lg:flex">
+        <aside className={`hidden shrink-0 flex-col border-r border-slate-200 bg-white/70 transition-all lg:flex ${sidebarCollapsed ? 'w-20' : 'w-80'}`}>
           <div className="border-b border-slate-200 p-3">
-            <Button type="button" className="w-full justify-start gap-2 rounded-xl" onClick={() => void createConversation()}>
-              <Plus className="h-4 w-4" />
-              Nova conversa
-            </Button>
+            <div className={`flex items-center gap-2 ${sidebarCollapsed ? 'flex-col' : 'justify-between'}`}>
+              <Button
+                type="button"
+                className={`${sidebarCollapsed ? 'h-10 w-10 rounded-full p-0' : 'w-full justify-start gap-2 rounded-xl'}`}
+                onClick={() => void createConversation()}
+              >
+                <Plus className="h-4 w-4" />
+                {!sidebarCollapsed ? 'Nova conversa' : null}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="shrink-0 rounded-full"
+                onClick={() => setSidebarCollapsed((current) => !current)}
+              >
+                {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+              </Button>
+            </div>
           </div>
-          <div className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
-            Conversas recentes
-          </div>
+          {!sidebarCollapsed ? (
+            <div className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+              Conversas recentes
+            </div>
+          ) : (
+            <div className="px-3 pt-3">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-full"
+                onClick={() => setConversationsModalOpen(true)}
+              >
+                <PanelLeft className="h-4 w-4" />
+              </Button>
+            </div>
+          )}
           <div className="flex-1 space-y-2 overflow-y-auto p-2">
             {loadingConversations ? (
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-500">
@@ -511,21 +720,20 @@ export default function AdminAiPage() {
                 Nenhuma conversa ainda.
               </div>
             ) : (
-              conversations.map((conversation) => (
-                <button
-                  key={conversation.id}
-                  type="button"
-                  onClick={() => void openConversation(conversation.id)}
-                  className={`w-full rounded-xl border px-3 py-2 text-left transition ${
-                    conversation.id === activeConversationId
-                      ? 'border-cyan-300 bg-cyan-50'
-                      : 'border-transparent bg-white hover:border-slate-200'
-                  }`}
-                >
-                  <p className="truncate text-sm font-medium text-slate-800">{titleForConversation(conversation)}</p>
-                  <p className="mt-1 text-xs text-slate-500">{formatDate(conversation.lastMessageAt)}</p>
-                </button>
-              ))
+              sidebarCollapsed
+                ? conversations.map((conversation) => (
+                    <Button
+                      key={conversation.id}
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className={`h-10 w-10 rounded-full ${conversation.id === activeConversationId ? 'bg-cyan-100 text-cyan-700' : 'text-slate-500'}`}
+                      onClick={() => void openConversation(conversation.id)}
+                    >
+                      <Bot className="h-4 w-4" />
+                    </Button>
+                  ))
+                : conversations.map((conversation) => renderConversationItem(conversation))
             )}
           </div>
         </aside>
@@ -536,6 +744,15 @@ export default function AdminAiPage() {
               <div className="flex min-w-0 items-center gap-2">
                 <Button type="button" variant="ghost" size="icon" className="lg:hidden" onClick={() => setConversationsModalOpen(true)}>
                   <Menu className="h-4 w-4" />
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="hidden lg:inline-flex"
+                  onClick={() => setSidebarCollapsed((current) => !current)}
+                >
+                  {sidebarCollapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
                 </Button>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-slate-900">
@@ -712,7 +929,9 @@ export default function AdminAiPage() {
                     ref={textAreaRef}
                     value={draft}
                     onChange={(event) => setDraft(event.target.value)}
-                    className="min-h-[100px] resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus-visible:ring-0"
+                    rows={1}
+                    onKeyDown={handleComposerKeyDown}
+                    className="min-h-0 resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus-visible:ring-0"
                     placeholder={chatMode === 'free' ? 'Escreva livremente... ex: crie um oficio, revise um texto, estruture um comunicado.' : 'Descreva o que precisa considerando o contexto do sistema.'}
                   />
 
@@ -740,11 +959,7 @@ export default function AdminAiPage() {
                       </Button>
                       <label className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-700">
                         <input type="checkbox" checked={thinkMode} onChange={(event) => setThinkMode(event.target.checked)} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
-                        Think
-                      </label>
-                      <label className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-700">
-                        <input type="checkbox" checked={webSearchMode} onChange={(event) => setWebSearchMode(event.target.checked)} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
-                        Forcar web
+                        Ative pensamento da IA
                       </label>
                     </div>
 
@@ -789,20 +1004,60 @@ export default function AdminAiPage() {
               ) : conversations.length === 0 ? (
                 <p className="p-2 text-sm text-slate-500">Nenhuma conversa encontrada.</p>
               ) : (
-                conversations.map((conversation) => (
-                  <button
-                    key={conversation.id}
-                    type="button"
-                    onClick={() => void openConversation(conversation.id)}
-                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
-                      conversation.id === activeConversationId ? 'border-cyan-300 bg-cyan-50' : 'border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    <p className="truncate font-medium text-slate-800">{titleForConversation(conversation)}</p>
-                    <p className="mt-1 text-xs text-slate-500">{formatDate(conversation.lastMessageAt)}</p>
-                  </button>
-                ))
+                conversations.map((conversation) => renderConversationItem(conversation, true))
               )}
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(editingConversationId)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditingConversationId(null);
+            setEditingTitle('');
+          }
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Editar titulo</DialogTitle>
+            <DialogDescription>Ajuste o nome da conversa para identifica-la com mais facilidade.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3">
+            <input
+              value={editingTitle}
+              onChange={(event) => setEditingTitle(event.target.value)}
+              maxLength={120}
+              className="h-11 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-800 outline-none ring-0 transition focus:border-cyan-400"
+              placeholder="Titulo da conversa"
+            />
+            <div className="flex justify-end gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditingConversationId(null);
+                  setEditingTitle('');
+                }}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => void saveConversationTitle()}
+                disabled={!editingTitle.trim() || conversationActionLoadingId === editingConversationId}
+              >
+                {conversationActionLoadingId === editingConversationId ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Salvando
+                  </>
+                ) : (
+                  'Salvar'
+                )}
+              </Button>
             </div>
           </div>
         </DialogContent>

@@ -11,6 +11,15 @@ const createConversationSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
 });
 
+const updateConversationSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120).optional(),
+    isArchived: z.boolean().optional(),
+  })
+  .refine((value) => typeof value.title === 'string' || typeof value.isArchived === 'boolean', {
+    message: 'At least one field must be provided',
+  });
+
 const chatModeSchema = z.enum(['free', 'rag']);
 const thinkSchema = z.union([z.boolean(), z.enum(['low', 'medium', 'high'])]);
 const responseFormatSchema = z.union([z.literal('json'), z.record(z.any())]);
@@ -101,6 +110,52 @@ router.get('/conversations/:id', async (req, res) => {
       return;
     }
     res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to load conversation' });
+  }
+});
+
+router.patch('/conversations/:id', async (req, res) => {
+  try {
+    const auth = (req as unknown as AuthenticatedProxyRequest).auth;
+    const payload = updateConversationSchema.parse(req.body ?? {});
+
+    const data = await chatService.updateConversation({
+      tenantId: auth.tenantId,
+      userId: auth.userId,
+      conversationId: req.params.id,
+      title: payload.title,
+      isArchived: payload.isArchived,
+    });
+
+    res.json({ data });
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid payload', details: error.issues });
+      return;
+    }
+    if (error instanceof Error && error.message.includes('not found')) {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to update conversation' });
+  }
+});
+
+router.delete('/conversations/:id', async (req, res) => {
+  try {
+    const auth = (req as unknown as AuthenticatedProxyRequest).auth;
+    await chatService.deleteConversation({
+      tenantId: auth.tenantId,
+      userId: auth.userId,
+      conversationId: req.params.id,
+    });
+
+    res.status(204).send();
+  } catch (error) {
+    if (error instanceof Error && error.message.includes('not found')) {
+      res.status(404).json({ error: error.message });
+      return;
+    }
+    res.status(500).json({ error: error instanceof Error ? error.message : 'Failed to delete conversation' });
   }
 });
 

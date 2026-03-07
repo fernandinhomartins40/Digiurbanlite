@@ -44,6 +44,7 @@ model AiConversation {
   title       String?
   userId      String
   departmentId String?
+  isArchived  Boolean                  @default(false) @map("is_archived")
   visibility  AiConversationVisibility @default(PRIVATE)
   metadata    Json?
   createdAt   DateTime                 @default(now())
@@ -54,6 +55,7 @@ model AiConversation {
   tokenUsages AiTokenUsage[]
 
   @@index([tenantId, userId, lastMessageAt])
+  @@index([tenantId, userId, isArchived, lastMessageAt])
   @@index([tenantId, createdAt])
   @@map("ai_conversations")
 }

@@ -766,6 +766,7 @@ export class ChatService {
       where: {
         tenantId: params.tenantId,
         userId: params.userId,
+        isArchived: false,
       },
       orderBy: { lastMessageAt: 'desc' },
       take: 100,
@@ -784,7 +785,66 @@ export class ChatService {
         userId: params.userId,
         departmentId: params.departmentId,
         title: params.title?.trim() || 'Nova conversa',
+        isArchived: false,
       },
+    });
+  }
+
+  async updateConversation(params: {
+    tenantId: string;
+    userId: string;
+    conversationId: string;
+    title?: string;
+    isArchived?: boolean;
+  }): Promise<AiConversation> {
+    const conversation = await prisma.aiConversation.findFirst({
+      where: {
+        id: params.conversationId,
+        tenantId: params.tenantId,
+        userId: params.userId,
+      },
+    });
+
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    const data: Prisma.AiConversationUpdateInput = {};
+
+    if (typeof params.title === 'string') {
+      data.title = params.title.trim() || 'Nova conversa';
+    }
+
+    if (typeof params.isArchived === 'boolean') {
+      data.isArchived = params.isArchived;
+    }
+
+    return prisma.aiConversation.update({
+      where: { id: conversation.id },
+      data,
+    });
+  }
+
+  async deleteConversation(params: {
+    tenantId: string;
+    userId: string;
+    conversationId: string;
+  }): Promise<void> {
+    const conversation = await prisma.aiConversation.findFirst({
+      where: {
+        id: params.conversationId,
+        tenantId: params.tenantId,
+        userId: params.userId,
+      },
+      select: { id: true },
+    });
+
+    if (!conversation) {
+      throw new Error('Conversation not found');
+    }
+
+    await prisma.aiConversation.delete({
+      where: { id: conversation.id },
     });
   }
 

@@ -4,6 +4,7 @@ export interface AiConversation {
   id: string;
   title: string | null;
   userId: string;
+  isArchived?: boolean;
   createdAt: string;
   updatedAt: string;
   lastMessageAt: string;
@@ -150,6 +151,23 @@ export const aiPlatformService = {
       `/conversations/${conversationId}`,
     );
     return payload.data;
+  },
+
+  async updateConversation(
+    conversationId: string,
+    input: { title?: string; isArchived?: boolean },
+  ): Promise<AiConversation> {
+    const payload = await request<{ data: AiConversation }>(`/conversations/${conversationId}`, {
+      method: 'PATCH',
+      body: JSON.stringify(input),
+    });
+    return payload.data;
+  },
+
+  async deleteConversation(conversationId: string): Promise<void> {
+    await request(`/conversations/${conversationId}`, {
+      method: 'DELETE',
+    });
   },
 
   async sendMessage(conversationId: string, input: {
