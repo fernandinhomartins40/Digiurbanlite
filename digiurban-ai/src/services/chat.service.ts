@@ -104,7 +104,7 @@ function boundRagModelMessages(messages: ChatMessageInput[]): ChatMessageInput[]
     role: systemMessage.role,
     content: truncateForModel(
       systemMessage.content,
-      Math.max(1200, config.maxContextCharsInPrompt + 600),
+      Math.max(960, config.maxContextCharsInPrompt + 240),
     ),
   };
 
@@ -159,7 +159,15 @@ function boundConversationMessages(messages: ChatMessageInput[]): ChatMessageInp
   }
 
   const hasSystem = messages[0]?.role === 'system';
-  const leadingSystem = hasSystem ? messages[0] : undefined;
+  const leadingSystem = hasSystem
+    ? {
+        ...messages[0],
+        content: truncateForModel(
+          messages[0].content,
+          Math.max(720, config.maxContextCharsInPrompt + 160),
+        ),
+      }
+    : undefined;
   const conversationMessages = hasSystem ? messages.slice(1) : messages;
   const perMessageLimit = Math.max(300, config.maxModelMessageChars);
   const conversationBudget = Math.max(perMessageLimit * 2, config.maxContextCharsInPrompt);
@@ -206,6 +214,27 @@ function boundConversationMessages(messages: ChatMessageInput[]): ChatMessageInp
   return leadingSystem ? [leadingSystem, ...selected.reverse()] : selected.reverse();
 }
 
+function renderPromptSection(tag: string, content?: string): string {
+  const normalized = content?.trim();
+  if (!normalized) {
+    return '';
+  }
+
+  return `<${tag}>\n${normalized}\n</${tag}>`;
+}
+
+function renderPromptList(items: string[]): string {
+  return items
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => `- ${item}`)
+    .join('\n');
+}
+
+function joinPromptSections(sections: Array<string | undefined>): string {
+  return sections.filter((section): section is string => Boolean(section && section.trim())).join('\n\n');
+}
+
 function buildSystemPrompt(params: {
   userName?: string;
   departmentId?: string;
@@ -214,65 +243,68 @@ function buildSystemPrompt(params: {
   webSearchEnabled: boolean;
   extraInstruction?: string;
 }): string {
-  const contextBlock = params.retrievedContext.length
-    ? params.retrievedContext
-        .map((chunk, index) => `[Contexto ${index + 1}]\n${chunk}`)
-        .join('\n\n')
-    : 'Nenhum contexto recuperado no momento.';
-  const webContextBlock =
-    params.webSearchEnabled && params.webContext.length
-      ? params.webContext
-          .map((chunk, index) => `[Web ${index + 1}]\n${chunk}`)
-          .join('\n\n')
-      : 'Sem contexto web nesta solicitacao.';
-
-  const persona = [
-    'Voce e a DigiUrban IA, assistente operacional para gestao publica municipal.',
-    'Responda em portugues do Brasil com clareza, objetividade e foco em execucao.',
-    'Use prioritariamente o contexto fornecido.',
-    'Entregue respostas curtas por padrao: no maximo 5 bullets ou 1 paragrafo curto, salvo se o usuario pedir detalhamento.',
-    'Se faltar evidencia no contexto, diga explicitamente que nao ha dados suficientes.',
-    'Nunca invente IDs, normas, status de protocolo ou informacoes de cidadania.',
-    'Quando usar contexto web, cite os links relevantes de forma objetiva.',
-  ].join(' ');
-
   const operator =
     params.userName || params.departmentId
-      ? `Servidor atual: ${params.userName || 'nao informado'}; departamento: ${
-          params.departmentId || 'nao informado'
-        }.`
-      : 'Servidor atual nao identificado.';
+      ? `usuario=${params.userName || 'nao_informado'}; departamento=${params.departmentId || 'nao_informado'}`
+      : '';
 
-  const extra = params.extraInstruction?.trim()
-    ? `Instrucao adicional: ${params.extraInstruction.trim()}`
-    : '';
-
-  return [
-    persona,
-    operator,
-    extra,
-    `Base de conhecimento:\n${contextBlock}`,
-    `Contexto web:\n${webContextBlock}`,
-  ]
-    .filter(Boolean)
-    .join('\n\n');
+  return joinPromptSections([
+    renderPromptSection('mode', 'rag'),
+    renderPromptSection('role', 'assistente_operacional_municipal'),
+    renderPromptSection(
+      'response_contract',
+      renderPromptList([
+        'responda em pt-BR',
+        'entregue a resposta final primeiro',
+        'padrao curto: 1 paragrafo curto ou ate 5 bullets',
+        'priorize contexto recuperado e contexto web',
+        'se faltar evidencia, diga claramente que nao ha dados suficientes',
+        'nao invente ids, status, normas ou dados internos',
+        'se usar web, cite links relevantes',
+      ]),
+    ),
+    renderPromptSection('operator', operator),
+    renderPromptSection(
+      'extra_instruction',
+      params.extraInstruction?.trim(),
+    ),
+    renderPromptSection(
+      'knowledge_context',
+      params.retrievedContext
+        .map((chunk, index) => `[K${index + 1}] ${chunk}`)
+        .join('\n\n'),
+    ),
+    renderPromptSection(
+      'web_context',
+      params.webSearchEnabled
+        ? params.webContext
+            .map((chunk, index) => `[W${index + 1}] ${chunk}`)
+            .join('\n\n')
+        : '',
+    ),
+  ]);
 }
 
 function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): string {
-  const instructions = [
-    'Voce esta no modo chat livre da DigiUrban IA.',
-    'Atue como um assistente geral de escrita, analise, revisao e produtividade.',
-    'Nao assuma acesso a protocolos, cadastros, banco de dados ou conhecimento interno, a menos que o usuario forneca essas informacoes na propria conversa.',
-    'Se o usuario pedir dados internos do sistema, deixe claro que neste modo nao ha contexto conectado e sugira usar o modo contextual.',
-    'Responda em portugues do Brasil de forma direta e natural.',
-    'Em tarefas de redacao ou revisao, entregue primeiro o texto pronto ou a resposta objetiva, sem introducoes desnecessarias.',
-  ];
-
-  if (params.extraInstruction?.trim()) {
-    instructions.push(`Instrucao adicional: ${params.extraInstruction.trim()}`);
-  }
-
-  return instructions.join('\n\n');
+  return joinPromptSections([
+    renderPromptSection('mode', 'free_chat'),
+    renderPromptSection('role', 'assistente_geral_de_escrita_e_produtividade'),
+    renderPromptSection(
+      'response_contract',
+      renderPromptList([
+        'responda em pt-BR',
+        'entregue a resposta final primeiro',
+        'padrao curto: 1 paragrafo curto ou ate 5 bullets',
+        'em redacao ou revisao, entregue o texto pronto sem introducao',
+        'nao finja acesso a dados internos ou protocolos',
+        'se pedirem dados internos, diga que este modo nao tem contexto conectado',
+      ]),
+    ),
+    renderPromptSection(
+      'extra_instruction',
+      params.extraInstruction?.trim(),
+    ),
+  ]);
 }
 
 function buildFreeModePromptWithWebContext(params: {
@@ -285,14 +317,23 @@ function buildFreeModePromptWithWebContext(params: {
   });
 
   if (!params.webSearchEnabled || !params.webContext.length) {
-    return `${basePrompt}\n\nSem contexto web nesta solicitacao.`;
+    return basePrompt;
   }
 
-  return [
+  return joinPromptSections([
     basePrompt,
-    'Quando houver contexto web abaixo, use-o como referencia externa atualizada e cite os links mais relevantes na resposta.',
-    `Contexto web:\n${params.webContext.map((chunk, index) => `[Web ${index + 1}]\n${chunk}`).join('\n\n')}`,
-  ].join('\n\n');
+    renderPromptSection(
+      'web_context',
+      params.webContext.map((chunk, index) => `[W${index + 1}] ${chunk}`).join('\n\n'),
+    ),
+    renderPromptSection(
+      'web_usage',
+      renderPromptList([
+        'use o contexto web como referencia externa atualizada',
+        'cite links relevantes quando usar dados da web',
+      ]),
+    ),
+  ]);
 }
 
 function buildWebContextChunks(results: WebSearchResult[]): string[] {
