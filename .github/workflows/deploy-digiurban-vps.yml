@@ -363,9 +363,13 @@ jobs:
             echo "🧪 Testando modelo rápido ${FALLBACK_MODEL}..."
             docker exec digiurban-ollama ollama run "${FALLBACK_MODEL}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo rápido falhou, mas continuando..."
 
-            # Reiniciar backend para aplicar configurações Ollama
+            # Reiniciar AI e backend para reaplicar warmup com os modelos já provisionados
+            echo "🔄 Reiniciando digiurban-ai para reaplicar warmup..."
+            docker-compose -f docker-compose.vps.yml restart digiurban-ai
+            wait_for_container_health digiurban-ai 30 5
             echo "🔄 Reiniciando backend para aplicar configurações Ollama..."
             docker-compose -f docker-compose.vps.yml restart digiurban
+            wait_for_container_health digiurban-vps 36 10
 
             echo "✅ Ollama configurado com sucesso!"
 

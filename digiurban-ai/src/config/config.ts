@@ -72,7 +72,7 @@ export const config = {
   ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '30000', 10),
   ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '18000', 10),
   ollamaFallbackFastTimeoutMs: parseInt(
-    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '35000',
+    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '60000',
     10,
   ),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
@@ -95,7 +95,7 @@ export const config = {
     process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE,
   ),
   ollamaFallbackKeepAlive: normalizeOllamaKeepAlive(
-    process.env.AI_OLLAMA_FALLBACK_KEEP_ALIVE || '30m',
+    process.env.AI_OLLAMA_FALLBACK_KEEP_ALIVE || '24h',
   ),
   ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
   ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',

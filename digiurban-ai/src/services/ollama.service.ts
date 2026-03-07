@@ -482,10 +482,13 @@ export class OllamaService {
     const selectedThink = this.resolveThinkingMode(requestOptions?.think, profile);
     const allowFallback = requestOptions?.allowFallback !== false;
     const fallbackModel = config.ollamaFallbackModel.trim();
+    const selectedModelIsFallback =
+      fallbackModel.length > 0 && selectedModel === fallbackModel;
     const fallbackAllowedForSelection =
       !normalizedExplicitModel || normalizedExplicitModel === config.ollamaModel;
     const attemptedModels: string[] = [];
     const shouldBypassPrimary =
+      !selectedModelIsFallback &&
       fallbackAllowedForSelection &&
       allowFallback &&
       fallbackModel.length > 0 &&
@@ -501,6 +504,49 @@ export class OllamaService {
         fallbackModel,
         profile,
       });
+    }
+
+    if (selectedModelIsFallback) {
+      const fallbackSelectedAttempt = this.resolveAttemptOptions({
+        model: selectedModel,
+        source: 'fallback',
+        think: selectedThink,
+        profile,
+        requestOptions,
+      });
+      attemptedModels.push(fallbackSelectedAttempt.model);
+
+      try {
+        const result = await runner(fallbackSelectedAttempt);
+        this.recordSuccess(
+          fallbackSelectedAttempt.model,
+          fallbackSelectedAttempt.profile,
+          result,
+        );
+        return {
+          ...result,
+          profile,
+          attemptedModels,
+          usedFallback: true,
+          circuitBreakerOpen: this.isPrimaryCircuitOpen(),
+        };
+      } catch (selectedFallbackError) {
+        const normalizedSelectedFallbackError = this.normalizeError(
+          selectedFallbackError,
+          fallbackSelectedAttempt,
+        );
+        this.recordFailure(
+          fallbackSelectedAttempt.model,
+          fallbackSelectedAttempt.profile,
+          normalizedSelectedFallbackError instanceof Error
+            ? normalizedSelectedFallbackError.message
+            : String(normalizedSelectedFallbackError),
+        );
+        throw this.attachAttemptMetadata(
+          normalizedSelectedFallbackError,
+          attemptedModels,
+        );
+      }
     }
 
     if (!shouldBypassPrimary) {
