@@ -25,7 +25,6 @@ class DigiUrbanAIServer {
       validateConfig();
       await prisma.$connect();
       await this.ensureDefaultInternalPlan();
-      await this.warmupOllamaIfEnabled();
 
       this.app = this.createApp();
       this.app.listen(config.port, config.host, () => {
@@ -59,6 +58,7 @@ class DigiUrbanAIServer {
       });
 
       this.setupGracefulShutdown();
+      this.warmupOllamaInBackground();
     } catch (error) {
       logger.error('Failed to start DigiUrban AI server', {
         error: error instanceof Error ? error.message : String(error),
@@ -145,14 +145,12 @@ class DigiUrbanAIServer {
     });
   }
 
-  private async warmupOllamaIfEnabled(): Promise<void> {
-    try {
-      await ollamaService.warmup();
-    } catch (error) {
+  private warmupOllamaInBackground(): void {
+    void ollamaService.warmup().catch((error) => {
       logger.warn('Failed during Ollama warmup sequence', {
         error: error instanceof Error ? error.message : String(error),
       });
-    }
+    });
   }
 
   private setupGracefulShutdown(): void {

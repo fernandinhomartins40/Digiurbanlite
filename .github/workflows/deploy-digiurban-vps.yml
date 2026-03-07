@@ -23,8 +23,8 @@ jobs:
           username: root
           password: ${{ secrets.VPS_PASSWORD }}
           port: 22
-          timeout: 20m
-          command_timeout: 20m
+          timeout: 45m
+          command_timeout: 45m
           envs: GIT_TOKEN
           script: |
             set -e
@@ -357,11 +357,11 @@ jobs:
               echo "AI_OLLAMA_WARMUP_MODELS=${PRIMARY_MODEL},${FALLBACK_MODEL}" >> .env
             fi
 
-            # Testar modelos base
-            echo "🧪 Testando modelo principal ${PRIMARY_MODEL}..."
-            docker exec digiurban-ollama ollama run "${PRIMARY_MODEL}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo principal falhou, mas continuando..."
-            echo "🧪 Testando modelo rápido ${FALLBACK_MODEL}..."
-            docker exec digiurban-ollama ollama run "${FALLBACK_MODEL}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo rápido falhou, mas continuando..."
+            # Verificar se os modelos provisionados estão visíveis no Ollama
+            echo "🧪 Validando disponibilidade dos modelos no Ollama..."
+            docker exec digiurban-ollama ollama show "${PRIMARY_MODEL}" >/dev/null
+            docker exec digiurban-ollama ollama show "${FALLBACK_MODEL}" >/dev/null
+            docker exec digiurban-ollama ollama ps || true
 
             # Reiniciar AI e backend para reaplicar warmup com os modelos já provisionados
             echo "🔄 Reiniciando digiurban-ai para reaplicar warmup..."
