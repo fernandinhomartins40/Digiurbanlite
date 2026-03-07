@@ -1,12 +1,40 @@
-import { AiConversation, AiMessage, AiMessageRole } from '@prisma/client';
+import { AiConversation, AiMessage, AiMessageRole, Prisma } from '@prisma/client';
 import { config } from '../config/config';
 import prisma from '../utils/prisma';
 import { apiKeyService } from './api-key.service';
 import { knowledgeService } from './knowledge.service';
-import { ollamaService } from './ollama.service';
+import {
+  ChatCompletionResult,
+  ChatMessageInput,
+  ChatResponseFormat,
+  ChatThinkingMode,
+} from '../types';
+import { ollamaService, OllamaServiceError } from './ollama.service';
+import { toolRunnerService } from './tool-runner.service';
 import { webSearchService, WebSearchResult } from './web-search.service';
-import { ChatCompletionResult, ChatMessageInput } from '../types';
 import logger from '../utils/logger';
+
+export type ChatMode = 'free' | 'rag';
+
+type InferenceProfile = 'interactive' | 'rag' | 'draft' | 'tool' | 'structured';
+
+type WebSearchMetadata = {
+  enabled: boolean;
+  provider: string;
+  resultCount: number;
+  sources: Array<{
+    title: string;
+    url: string;
+    source: string;
+  }>;
+};
+
+interface MessageAttachmentInput {
+  name: string;
+  mimeType?: string;
+  size?: number;
+  contentText?: string;
+}
 
 function normalizeConversationTitle(input: string): string {
   return input.trim().replace(/\s+/g, ' ').slice(0, 80);
@@ -66,7 +94,7 @@ function trimContextForPrompt(chunks: string[]): string[] {
   return result;
 }
 
-function boundModelMessages(messages: ChatMessageInput[]): ChatMessageInput[] {
+function boundRagModelMessages(messages: ChatMessageInput[]): ChatMessageInput[] {
   if (!messages.length) {
     return messages;
   }
@@ -87,8 +115,12 @@ function boundModelMessages(messages: ChatMessageInput[]): ChatMessageInput[] {
     .map((message) => ({
       role: message.role,
       content: truncateForModel(message.content, perMessageLimit),
+      thinking: message.thinking,
+      toolName: message.toolName,
+      toolCallId: message.toolCallId,
+      toolCalls: message.toolCalls,
     }))
-    .filter((message) => message.content.length > 0);
+    .filter((message) => message.content.length > 0 || message.toolCalls?.length);
 
   let consumedChars = 0;
   const selected: ChatMessageInput[] = [];
@@ -107,18 +139,71 @@ function boundModelMessages(messages: ChatMessageInput[]): ChatMessageInput[] {
       continue;
     }
 
-    if (remaining < 120) {
+    if (remaining < 120 || message.toolCalls?.length) {
       continue;
     }
 
     selected.push({
-      role: message.role,
+      ...message,
       content: truncateForModel(message.content, remaining),
     });
     consumedChars = conversationBudget;
   }
 
   return [boundedSystemMessage, ...selected.reverse()];
+}
+
+function boundConversationMessages(messages: ChatMessageInput[]): ChatMessageInput[] {
+  if (!messages.length) {
+    return messages;
+  }
+
+  const hasSystem = messages[0]?.role === 'system';
+  const leadingSystem = hasSystem ? messages[0] : undefined;
+  const conversationMessages = hasSystem ? messages.slice(1) : messages;
+  const perMessageLimit = Math.max(300, config.maxModelMessageChars);
+  const conversationBudget = Math.max(perMessageLimit * 2, config.maxContextCharsInPrompt);
+
+  const boundedConversationMessages = conversationMessages
+    .map((message) => ({
+      role: message.role,
+      content: truncateForModel(message.content, perMessageLimit),
+      thinking: message.thinking,
+      toolName: message.toolName,
+      toolCallId: message.toolCallId,
+      toolCalls: message.toolCalls,
+    }))
+    .filter((message) => message.content.length > 0 || message.toolCalls?.length);
+
+  let consumedChars = 0;
+  const selected: ChatMessageInput[] = [];
+
+  for (let index = boundedConversationMessages.length - 1; index >= 0; index -= 1) {
+    if (consumedChars >= conversationBudget) {
+      break;
+    }
+
+    const message = boundedConversationMessages[index];
+    const remaining = conversationBudget - consumedChars;
+
+    if (message.content.length <= remaining) {
+      selected.push(message);
+      consumedChars += message.content.length;
+      continue;
+    }
+
+    if (remaining < 120 || message.toolCalls?.length) {
+      continue;
+    }
+
+    selected.push({
+      ...message,
+      content: truncateForModel(message.content, remaining),
+    });
+    consumedChars = conversationBudget;
+  }
+
+  return leadingSystem ? [leadingSystem, ...selected.reverse()] : selected.reverse();
 }
 
 function buildSystemPrompt(params: {
@@ -145,6 +230,7 @@ function buildSystemPrompt(params: {
     'Voce e a DigiUrban IA, assistente operacional para gestao publica municipal.',
     'Responda em portugues do Brasil com clareza, objetividade e foco em execucao.',
     'Use prioritariamente o contexto fornecido.',
+    'Entregue respostas curtas por padrao: no maximo 5 bullets ou 1 paragrafo curto, salvo se o usuario pedir detalhamento.',
     'Se faltar evidencia no contexto, diga explicitamente que nao ha dados suficientes.',
     'Nunca invente IDs, normas, status de protocolo ou informacoes de cidadania.',
     'Quando usar contexto web, cite os links relevantes de forma objetiva.',
@@ -181,18 +267,10 @@ function buildWebContextChunks(results: WebSearchResult[]): string[] {
   });
 }
 
-type WebSearchMetadata = {
-  enabled: boolean;
-  provider: string;
-  resultCount: number;
-  sources: Array<{
-    title: string;
-    url: string;
-    source: string;
-  }>;
-};
-
-function buildWebSearchMetadata(results: WebSearchResult[], enabled: boolean): WebSearchMetadata | undefined {
+function buildWebSearchMetadata(
+  results: WebSearchResult[],
+  enabled: boolean,
+): WebSearchMetadata | undefined {
   if (!enabled && !results.length) return undefined;
 
   return {
@@ -207,11 +285,80 @@ function buildWebSearchMetadata(results: WebSearchResult[], enabled: boolean): W
   };
 }
 
-interface MessageAttachmentInput {
-  name: string;
-  mimeType?: string;
-  size?: number;
-  contentText?: string;
+function normalizeIntentText(input: string): string {
+  return input
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^\w\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function shouldUseLowLatencyProfile(query: string): boolean {
+  const normalized = normalizeIntentText(query);
+  if (!normalized) return true;
+
+  if (normalized.length <= 20) {
+    const greetings = new Set([
+      'oi',
+      'ola',
+      'ola tudo bem',
+      'bom dia',
+      'boa tarde',
+      'boa noite',
+      'tudo bem',
+      'ok',
+      'obrigado',
+      'valeu',
+      'hi',
+      'hello',
+    ]);
+    if (greetings.has(normalized)) {
+      return true;
+    }
+  }
+
+  const words = normalized.split(' ').filter(Boolean);
+  if (!words.length) return true;
+
+  if (words.length <= 2 && words.every((word) => word.length <= 3)) {
+    return true;
+  }
+
+  return false;
+}
+
+function resolveChatMode(params: {
+  requestedMode?: ChatMode;
+  source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
+}): ChatMode {
+  if (params.requestedMode === 'free' || params.requestedMode === 'rag') {
+    return params.requestedMode;
+  }
+
+  return params.source === 'ADMIN_CHAT' ? 'free' : 'rag';
+}
+
+function resolveInferenceProfile(params: {
+  lowLatencyProfile: boolean;
+  chatMode: ChatMode;
+  responseFormat?: ChatResponseFormat;
+  useBuiltInTools?: boolean;
+}): InferenceProfile {
+  if (params.useBuiltInTools) {
+    return 'tool';
+  }
+
+  if (params.responseFormat) {
+    return 'structured';
+  }
+
+  if (params.lowLatencyProfile) {
+    return 'interactive';
+  }
+
+  return params.chatMode === 'rag' ? 'rag' : 'draft';
 }
 
 function normalizeAttachmentText(value?: string): string | undefined {
@@ -229,7 +376,10 @@ function normalizeAttachments(input?: MessageAttachmentInput[]): MessageAttachme
     .map((item) => ({
       name: (item.name || '').trim().slice(0, 180),
       mimeType: item.mimeType?.trim().slice(0, 120) || undefined,
-      size: typeof item.size === 'number' && Number.isFinite(item.size) ? Math.max(0, item.size) : undefined,
+      size:
+        typeof item.size === 'number' && Number.isFinite(item.size)
+          ? Math.max(0, item.size)
+          : undefined,
       contentText: normalizeAttachmentText(item.contentText),
     }))
     .filter((item) => item.name.length > 0);
@@ -248,10 +398,7 @@ function buildAttachmentContext(attachments: MessageAttachmentInput[]): string {
 
   return attachments
     .map((attachment, index) => {
-      const details = [
-        attachment.mimeType || 'tipo-desconhecido',
-        formatAttachmentSize(attachment.size),
-      ]
+      const details = [attachment.mimeType || 'tipo-desconhecido', formatAttachmentSize(attachment.size)]
         .filter(Boolean)
         .join(' | ');
 
@@ -305,6 +452,7 @@ function buildModelMessageContent(message: AiMessage): string {
 
 function buildPerformanceMetadata(completion: ChatCompletionResult): Record<string, number | undefined> {
   return {
+    firstTokenLatencyMs: completion.firstTokenLatencyMs,
     totalDurationMs: completion.totalDurationMs,
     loadDurationMs: completion.loadDurationMs,
     promptEvalDurationMs: completion.promptEvalDurationMs,
@@ -312,6 +460,75 @@ function buildPerformanceMetadata(completion: ChatCompletionResult): Record<stri
     tokensPerSecond: completion.tokensPerSecond,
     latencyMs: completion.latencyMs,
   };
+}
+
+function buildRagFallbackContent(
+  query: string,
+  chunks: Array<{ content: string; sourceId: string; score: number }>,
+): string {
+  const bullets = chunks
+    .slice(0, 3)
+    .map((item) => `- Fonte ${item.sourceId}: ${truncateForModel(item.content.replace(/\s+/g, ' '), 260)}`);
+
+  return [
+    'Nao foi possivel concluir a resposta do modelo dentro do tempo limite.',
+    `Consulta: ${query.trim()}`,
+    'Contexto interno mais relevante recuperado:',
+    ...bullets,
+  ].join('\n');
+}
+
+function toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
+  if (value === undefined) {
+    return undefined;
+  }
+
+  return JSON.parse(JSON.stringify(value)) as Prisma.InputJsonValue;
+}
+
+function appendStructuredOutputInstruction(
+  messages: ChatMessageInput[],
+  responseFormat?: ChatResponseFormat,
+): ChatMessageInput[] {
+  if (!responseFormat) {
+    return messages;
+  }
+
+  const instruction =
+    responseFormat === 'json'
+      ? 'Responda apenas com JSON valido. Nao use markdown, comentarios ou texto fora do JSON.'
+      : `Responda apenas com JSON valido seguindo estritamente este schema: ${JSON.stringify(responseFormat)}`;
+
+  const nextMessages = [...messages];
+  const systemIndex = nextMessages.findIndex((message) => message.role === 'system');
+
+  if (systemIndex >= 0) {
+    nextMessages[systemIndex] = {
+      ...nextMessages[systemIndex],
+      content: `${nextMessages[systemIndex].content}\n\n${instruction}`,
+    };
+    return nextMessages;
+  }
+
+  return [{ role: 'system', content: instruction }, ...nextMessages];
+}
+
+function appendToolUsageInstruction(messages: ChatMessageInput[]): ChatMessageInput[] {
+  const instruction = [
+    'Voce pode usar ferramentas quando realmente precisar de contexto externo ou dados internos.',
+    'Use no maximo a ferramenta necessaria para resolver a tarefa.',
+    'Depois de receber o resultado da ferramenta, responda diretamente ao usuario.',
+  ].join(' ');
+
+  return messages[0]?.role === 'system'
+    ? [
+        {
+          ...messages[0],
+          content: `${messages[0].content}\n\n${instruction}`,
+        },
+        ...messages.slice(1),
+      ]
+    : [{ role: 'system', content: instruction }, ...messages];
 }
 
 async function resolveWebSearchContext(params: {
@@ -416,10 +633,14 @@ export class ChatService {
     conversationId: string;
     content: string;
     model?: string;
-    think?: boolean;
+    think?: ChatThinkingMode;
+    mode?: ChatMode;
     webSearch?: boolean;
     extraInstruction?: string;
     attachments?: MessageAttachmentInput[];
+    responseFormat?: ChatResponseFormat;
+    useBuiltInTools?: boolean;
+    toolLoopLimit?: number;
   }): Promise<{
     conversationId: string;
     assistantMessage: AiMessage;
@@ -430,6 +651,8 @@ export class ChatService {
       throw new Error('Message content is required');
     }
 
+    const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
+    const chatMode: ChatMode = params.mode || 'free';
     const conversation = await prisma.aiConversation.findFirst({
       where: {
         id: params.conversationId,
@@ -462,55 +685,49 @@ export class ChatService {
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
-      take: config.maxConversationMessagesContext,
+      take: lowLatencyProfile
+        ? Math.min(config.maxConversationMessagesContext, 3)
+        : config.maxConversationMessagesContext,
     });
 
-    let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
-    try {
-      relevantChunks = await knowledgeService.searchRelevantChunks({
-        tenantId: params.tenantId,
-        query: normalized,
-        limit: config.maxContextChunks,
-      });
-    } catch (error) {
-      logger.warn('Knowledge context lookup failed for chat message', {
-        tenantId: params.tenantId,
-        conversationId: params.conversationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    const conversationMessages = recentMessages
+      .reverse()
+      .map((message) => ({
+        role: mapStoredRoleToModelRole(message.role),
+        content: buildModelMessageContent(message),
+      }))
+      .filter((message) => message.content.trim().length > 0);
 
-    const webSearch = await resolveWebSearchContext({
-      query: normalized,
+    const prepared = await this.prepareModelMessages({
       tenantId: params.tenantId,
-      conversationId: params.conversationId,
-      source: 'ADMIN_CHAT',
-      requested: params.webSearch,
-    });
-
-    const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
-      retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
-      webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
-      webSearchEnabled: webSearch.enabled,
+      query: normalized,
+      conversationId: params.conversationId,
+      messages: conversationMessages,
+      chatMode,
+      lowLatencyProfile,
+      webSearchRequested: params.webSearch,
       extraInstruction: params.extraInstruction,
+      source: 'ADMIN_CHAT',
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
     });
 
-    const modelMessages = boundModelMessages([
-      { role: 'system', content: systemPrompt },
-      ...recentMessages
-        .reverse()
-        .map((message) => ({
-          role: mapStoredRoleToModelRole(message.role),
-          content: buildModelMessageContent(message),
-        }))
-        .filter((message) => message.content.trim().length > 0),
-    ]);
-
-    const completion = await ollamaService.chat(modelMessages, params.model, {
+    const completion = await this.executeModelFlowWithRagFallback({
+      query: normalized,
+      relevantChunks: prepared.relevantChunks,
+      tenantId: params.tenantId,
+      modelMessages: prepared.modelMessages,
+      model: params.model,
       think: params.think,
+      chatMode,
+      lowLatencyProfile,
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
+      toolLoopLimit: params.toolLoopLimit,
     });
+
     const assistantMessage = await prisma.aiMessage.create({
       data: {
         conversationId: conversation.id,
@@ -526,8 +743,16 @@ export class ChatService {
           thinkEnabled: typeof params.think === 'boolean' ? params.think : undefined,
           thinking: completion.thinking || undefined,
           performance: buildPerformanceMetadata(completion),
-          contextSources: relevantChunks.slice(0, 5).map((item) => item.sourceId),
-          webSearch: buildWebSearchMetadata(webSearch.results, webSearch.enabled),
+          chatMode,
+          profile: completion.profile,
+          attemptedModels: completion.attemptedModels,
+          usedFallback: completion.usedFallback,
+          circuitBreakerOpen: completion.circuitBreakerOpen,
+          toolCalls: toJsonValue(completion.toolCalls),
+          responseFormat: toJsonValue(params.responseFormat),
+          builtinToolsEnabled: params.useBuiltInTools || undefined,
+          contextSources: prepared.relevantChunks.slice(0, 5).map((item) => item.sourceId),
+          webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
         },
       },
     });
@@ -566,7 +791,7 @@ export class ChatService {
     return {
       conversationId: conversation.id,
       assistantMessage,
-      contextSources: relevantChunks.length,
+      contextSources: prepared.relevantChunks.length,
     };
   }
 
@@ -578,10 +803,14 @@ export class ChatService {
     conversationId: string;
     content: string;
     model?: string;
-    think?: boolean;
+    think?: ChatThinkingMode;
+    mode?: ChatMode;
     webSearch?: boolean;
     extraInstruction?: string;
     attachments?: MessageAttachmentInput[];
+    responseFormat?: ChatResponseFormat;
+    useBuiltInTools?: boolean;
+    toolLoopLimit?: number;
     onThinkingDelta?: (delta: string) => void;
     onContentDelta?: (delta: string) => void;
   }): Promise<{
@@ -594,6 +823,8 @@ export class ChatService {
       throw new Error('Message content is required');
     }
 
+    const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
+    const chatMode: ChatMode = params.mode || 'free';
     const conversation = await prisma.aiConversation.findFirst({
       where: {
         id: params.conversationId,
@@ -626,61 +857,50 @@ export class ChatService {
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
-      take: config.maxConversationMessagesContext,
+      take: lowLatencyProfile
+        ? Math.min(config.maxConversationMessagesContext, 3)
+        : config.maxConversationMessagesContext,
     });
 
-    let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
-    try {
-      relevantChunks = await knowledgeService.searchRelevantChunks({
-        tenantId: params.tenantId,
-        query: normalized,
-        limit: config.maxContextChunks,
-      });
-    } catch (error) {
-      logger.warn('Knowledge context lookup failed for streamed chat message', {
-        tenantId: params.tenantId,
-        conversationId: params.conversationId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
+    const conversationMessages = recentMessages
+      .reverse()
+      .map((message) => ({
+        role: mapStoredRoleToModelRole(message.role),
+        content: buildModelMessageContent(message),
+      }))
+      .filter((message) => message.content.trim().length > 0);
 
-    const webSearch = await resolveWebSearchContext({
-      query: normalized,
+    const prepared = await this.prepareModelMessages({
       tenantId: params.tenantId,
-      conversationId: params.conversationId,
-      source: 'ADMIN_CHAT',
-      requested: params.webSearch,
-    });
-
-    const systemPrompt = buildSystemPrompt({
       userName: params.userName,
       departmentId: params.departmentId,
-      retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
-      webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
-      webSearchEnabled: webSearch.enabled,
+      query: normalized,
+      conversationId: params.conversationId,
+      messages: conversationMessages,
+      chatMode,
+      lowLatencyProfile,
+      webSearchRequested: params.webSearch,
       extraInstruction: params.extraInstruction,
+      source: 'ADMIN_CHAT',
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
     });
 
-    const modelMessages = boundModelMessages([
-      { role: 'system', content: systemPrompt },
-      ...recentMessages
-        .reverse()
-        .map((message) => ({
-          role: mapStoredRoleToModelRole(message.role),
-          content: buildModelMessageContent(message),
-        }))
-        .filter((message) => message.content.trim().length > 0),
-    ]);
-
-    const completion = await ollamaService.chatStream(
-      modelMessages,
-      params.model,
-      { think: params.think },
-      {
-        onThinkingDelta: (delta) => params.onThinkingDelta?.(delta),
-        onContentDelta: (delta) => params.onContentDelta?.(delta),
-      },
-    );
+    const completion = await this.executeModelFlowWithRagFallback({
+      query: normalized,
+      relevantChunks: prepared.relevantChunks,
+      tenantId: params.tenantId,
+      modelMessages: prepared.modelMessages,
+      model: params.model,
+      think: params.think,
+      chatMode,
+      lowLatencyProfile,
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
+      toolLoopLimit: params.toolLoopLimit,
+      onThinkingDelta: params.onThinkingDelta,
+      onContentDelta: params.onContentDelta,
+    });
 
     const assistantMessage = await prisma.aiMessage.create({
       data: {
@@ -697,8 +917,16 @@ export class ChatService {
           thinkEnabled: typeof params.think === 'boolean' ? params.think : undefined,
           thinking: completion.thinking || undefined,
           performance: buildPerformanceMetadata(completion),
-          contextSources: relevantChunks.slice(0, 5).map((item) => item.sourceId),
-          webSearch: buildWebSearchMetadata(webSearch.results, webSearch.enabled),
+          chatMode,
+          profile: completion.profile,
+          attemptedModels: completion.attemptedModels,
+          usedFallback: completion.usedFallback,
+          circuitBreakerOpen: completion.circuitBreakerOpen,
+          toolCalls: toJsonValue(completion.toolCalls),
+          responseFormat: toJsonValue(params.responseFormat),
+          builtinToolsEnabled: params.useBuiltInTools || undefined,
+          contextSources: prepared.relevantChunks.slice(0, 5).map((item) => item.sourceId),
+          webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
         },
       },
     });
@@ -737,7 +965,7 @@ export class ChatService {
     return {
       conversationId: conversation.id,
       assistantMessage,
-      contextSources: relevantChunks.length,
+      contextSources: prepared.relevantChunks.length,
     };
   }
 
@@ -748,9 +976,13 @@ export class ChatService {
     departmentId?: string;
     prompt: string;
     model?: string;
-    think?: boolean;
+    think?: ChatThinkingMode;
+    mode?: ChatMode;
     webSearch?: boolean;
     extraInstruction?: string;
+    responseFormat?: ChatResponseFormat;
+    useBuiltInTools?: boolean;
+    toolLoopLimit?: number;
     source: 'INTERNAL_API' | 'PUBLIC_API' | 'ADMIN_CHAT';
     apiKeyId?: string;
     planId?: string;
@@ -761,57 +993,57 @@ export class ChatService {
     outputTokens: number;
     totalTokens: number;
     thinking?: string;
+    firstTokenLatencyMs?: number;
     totalDurationMs?: number;
     loadDurationMs?: number;
     promptEvalDurationMs?: number;
     evalDurationMs?: number;
     tokensPerSecond?: number;
     contextSources: number;
+    profile?: string;
+    attemptedModels?: string[];
+    usedFallback?: boolean;
+    circuitBreakerOpen?: boolean;
+    webSearch?: WebSearchMetadata;
   }> {
     const prompt = params.prompt.trim();
     if (!prompt) {
       throw new Error('Prompt is required');
     }
 
-    let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
-    try {
-      relevantChunks = await knowledgeService.searchRelevantChunks({
-        tenantId: params.tenantId,
-        query: prompt,
-        limit: config.maxContextChunks,
-      });
-    } catch (error) {
-      logger.warn('Knowledge context lookup failed for stateless completion', {
-        tenantId: params.tenantId,
-        userId: params.userId,
-        source: params.source,
-        error: error instanceof Error ? error.message : String(error),
-      });
-    }
-
-    const webSearch = await resolveWebSearchContext({
-      query: prompt,
-      tenantId: params.tenantId,
+    const lowLatencyProfile = shouldUseLowLatencyProfile(prompt);
+    const chatMode = resolveChatMode({
+      requestedMode: params.mode,
       source: params.source,
-      requested: params.webSearch,
     });
 
-    const systemPrompt = buildSystemPrompt({
+    const prepared = await this.prepareModelMessages({
+      tenantId: params.tenantId,
       userName: params.userName,
       departmentId: params.departmentId,
-      retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
-      webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
-      webSearchEnabled: webSearch.enabled,
+      query: prompt,
+      messages: [{ role: 'user', content: prompt }],
+      chatMode,
+      lowLatencyProfile,
+      webSearchRequested: params.webSearch,
       extraInstruction: params.extraInstruction,
+      source: params.source,
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
     });
 
-    const modelMessages = boundModelMessages([
-      { role: 'system', content: systemPrompt },
-      { role: 'user', content: prompt },
-    ]);
-
-    const completion = await ollamaService.chat(modelMessages, params.model, {
+    const completion = await this.executeModelFlowWithRagFallback({
+      query: prompt,
+      relevantChunks: prepared.relevantChunks,
+      tenantId: params.tenantId,
+      modelMessages: prepared.modelMessages,
+      model: params.model,
       think: params.think,
+      chatMode,
+      lowLatencyProfile,
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
+      toolLoopLimit: params.toolLoopLimit,
     });
 
     try {
@@ -843,15 +1075,308 @@ export class ChatService {
       outputTokens: completion.outputTokens,
       totalTokens: completion.totalTokens,
       thinking: completion.thinking,
+      firstTokenLatencyMs: completion.firstTokenLatencyMs,
       totalDurationMs: completion.totalDurationMs,
       loadDurationMs: completion.loadDurationMs,
       promptEvalDurationMs: completion.promptEvalDurationMs,
       evalDurationMs: completion.evalDurationMs,
       tokensPerSecond: completion.tokensPerSecond,
-      contextSources: relevantChunks.length,
+      contextSources: prepared.relevantChunks.length,
+      profile: completion.profile,
+      attemptedModels: completion.attemptedModels,
+      usedFallback: completion.usedFallback,
+      circuitBreakerOpen: completion.circuitBreakerOpen,
+      webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
     };
+  }
+
+  private async prepareModelMessages(params: {
+    tenantId: string;
+    userName?: string;
+    departmentId?: string;
+    query: string;
+    conversationId?: string;
+    messages: ChatMessageInput[];
+    chatMode: ChatMode;
+    lowLatencyProfile: boolean;
+    webSearchRequested?: boolean;
+    extraInstruction?: string;
+    source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
+    responseFormat?: ChatResponseFormat;
+    useBuiltInTools?: boolean;
+  }): Promise<{
+    modelMessages: ChatMessageInput[];
+    relevantChunks: Array<{ content: string; sourceId: string; score: number }>;
+    webSearch: { enabled: boolean; results: WebSearchResult[] };
+  }> {
+    let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
+    const shouldPreloadKnowledge =
+      params.chatMode === 'rag' && !params.lowLatencyProfile && !params.useBuiltInTools;
+
+    if (shouldPreloadKnowledge) {
+      try {
+        relevantChunks = await knowledgeService.searchRelevantChunks({
+          tenantId: params.tenantId,
+          query: params.query,
+          limit: config.maxContextChunks,
+        });
+      } catch (error) {
+        logger.warn('Knowledge context lookup failed', {
+          tenantId: params.tenantId,
+          conversationId: params.conversationId,
+          source: params.source,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const webSearch = await resolveWebSearchContext({
+      query: params.query,
+      tenantId: params.tenantId,
+      conversationId: params.conversationId,
+      source: params.source,
+      requested:
+        params.chatMode === 'rag' && !params.lowLatencyProfile && !params.useBuiltInTools
+          ? params.webSearchRequested
+          : false,
+    });
+
+    let modelMessages =
+      params.chatMode === 'rag'
+        ? boundRagModelMessages([
+            {
+              role: 'system',
+              content: buildSystemPrompt({
+                userName: params.userName,
+                departmentId: params.departmentId,
+                retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
+                webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
+                webSearchEnabled: webSearch.enabled,
+                extraInstruction: params.extraInstruction,
+              }),
+            },
+            ...params.messages,
+          ])
+        : boundConversationMessages(
+            params.extraInstruction?.trim()
+              ? [
+                  {
+                    role: 'system',
+                    content: `Instrucao adicional: ${params.extraInstruction.trim()}`,
+                  },
+                  ...params.messages,
+                ]
+              : params.messages,
+          );
+
+    modelMessages = appendStructuredOutputInstruction(modelMessages, params.responseFormat);
+    return { modelMessages, relevantChunks, webSearch };
+  }
+
+  private async executeModelFlowWithRagFallback(params: {
+    query: string;
+    relevantChunks: Array<{ content: string; sourceId: string; score: number }>;
+    tenantId: string;
+    modelMessages: ChatMessageInput[];
+    model?: string;
+    think?: ChatThinkingMode;
+    chatMode: ChatMode;
+    lowLatencyProfile: boolean;
+    responseFormat?: ChatResponseFormat;
+    useBuiltInTools?: boolean;
+    toolLoopLimit?: number;
+    onThinkingDelta?: (delta: string) => void;
+    onContentDelta?: (delta: string) => void;
+  }): Promise<ChatCompletionResult> {
+    try {
+      return await this.executeModelFlow(params);
+    } catch (error) {
+      if (
+        params.chatMode === 'rag' &&
+        params.relevantChunks.length > 0 &&
+        error instanceof OllamaServiceError
+      ) {
+        const degradedContent = buildRagFallbackContent(params.query, params.relevantChunks);
+        logger.warn('Returning degraded RAG fallback after model timeout', {
+          tenantId: params.tenantId,
+          query: truncateForModel(params.query, 120),
+          statusCode: error.statusCode,
+          message: error.message,
+        });
+        params.onContentDelta?.(degradedContent);
+        return {
+          content: degradedContent,
+          model: 'knowledge-fallback',
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          latencyMs: 0,
+          finishReason: 'degraded_rag_timeout',
+          profile: 'rag',
+          attemptedModels: [],
+          usedFallback: false,
+          circuitBreakerOpen: false,
+        };
+      }
+
+      throw error;
+    }
+  }
+
+  private async executeModelFlow(params: {
+    tenantId: string;
+    modelMessages: ChatMessageInput[];
+    model?: string;
+    think?: ChatThinkingMode;
+    chatMode: ChatMode;
+    lowLatencyProfile: boolean;
+    responseFormat?: ChatResponseFormat;
+    useBuiltInTools?: boolean;
+    toolLoopLimit?: number;
+    onThinkingDelta?: (delta: string) => void;
+    onContentDelta?: (delta: string) => void;
+  }): Promise<ChatCompletionResult> {
+    const profile = resolveInferenceProfile({
+      lowLatencyProfile: params.lowLatencyProfile,
+      chatMode: params.chatMode,
+      responseFormat: params.responseFormat,
+      useBuiltInTools: params.useBuiltInTools,
+    });
+
+    if (!params.useBuiltInTools) {
+      if (params.onThinkingDelta || params.onContentDelta) {
+        return ollamaService.chatStream(
+          params.modelMessages,
+          params.model,
+          {
+            think: params.think,
+            profile,
+            format: params.responseFormat,
+          },
+          {
+            onThinkingDelta: params.onThinkingDelta,
+            onContentDelta: params.onContentDelta,
+          },
+        );
+      }
+
+      return ollamaService.chat(params.modelMessages, params.model, {
+        think: params.think,
+        profile,
+        format: params.responseFormat,
+      });
+    }
+
+    const builtinTools = toolRunnerService.getBuiltInTools({
+      tenantId: params.tenantId,
+      chatMode: params.chatMode,
+    });
+    if (!builtinTools.length) {
+      return params.onThinkingDelta || params.onContentDelta
+        ? ollamaService.chatStream(
+            params.modelMessages,
+            params.model,
+            {
+              think: params.think,
+              profile,
+              format: params.responseFormat,
+            },
+            {
+              onThinkingDelta: params.onThinkingDelta,
+              onContentDelta: params.onContentDelta,
+            },
+          )
+        : ollamaService.chat(params.modelMessages, params.model, {
+            think: params.think,
+            profile,
+            format: params.responseFormat,
+          });
+    }
+
+    const toolLoopLimit = Math.max(1, Math.min(params.toolLoopLimit || config.ollamaToolLoopMaxSteps, 8));
+    const messages = appendToolUsageInstruction(params.modelMessages);
+    let workingMessages = [...messages];
+
+    for (let step = 0; step < toolLoopLimit; step += 1) {
+      const completion = await ollamaService.chat(workingMessages, params.model, {
+        think: params.think,
+        profile: 'tool',
+        tools: builtinTools,
+        format: step === toolLoopLimit - 1 ? undefined : params.responseFormat,
+      });
+
+      if (!completion.toolCalls?.length) {
+        if (completion.thinking) {
+          params.onThinkingDelta?.(completion.thinking);
+        }
+        if (completion.content) {
+          params.onContentDelta?.(completion.content);
+        }
+        return completion;
+      }
+
+      workingMessages = [
+        ...workingMessages,
+        {
+          role: 'assistant',
+          content: completion.content,
+          thinking: completion.thinking,
+          toolCalls: completion.toolCalls,
+        },
+      ];
+
+      for (const toolCall of completion.toolCalls) {
+        try {
+          const result = await toolRunnerService.executeToolCall(toolCall, {
+            tenantId: params.tenantId,
+            chatMode: params.chatMode,
+          });
+          workingMessages.push({
+            role: 'tool',
+            toolName: result.toolName,
+            content: JSON.stringify(result.output),
+          });
+        } catch (error) {
+          const fallbackPayload = {
+            ok: false,
+            error: error instanceof Error ? error.message : String(error),
+          };
+          workingMessages.push({
+            role: 'tool',
+            toolName: toolCall.function.name,
+            content: JSON.stringify(fallbackPayload),
+          });
+        }
+      }
+    }
+
+    const finalizeMessages = appendStructuredOutputInstruction(
+      [
+        ...workingMessages,
+        {
+          role: 'system',
+          content:
+            'Finalize agora a resposta ao usuario com base nas ferramentas ja executadas. Nao chame novas ferramentas.',
+        },
+      ],
+      params.responseFormat,
+    );
+    const finalCompletion = await ollamaService.chat(finalizeMessages, params.model, {
+      think: false,
+      profile: params.responseFormat ? 'structured' : 'draft',
+      format: params.responseFormat,
+      allowFallback: true,
+    });
+
+    if (finalCompletion.thinking) {
+      params.onThinkingDelta?.(finalCompletion.thinking);
+    }
+    if (finalCompletion.content) {
+      params.onContentDelta?.(finalCompletion.content);
+    }
+
+    return finalCompletion;
   }
 }
 
 export const chatService = new ChatService();
-

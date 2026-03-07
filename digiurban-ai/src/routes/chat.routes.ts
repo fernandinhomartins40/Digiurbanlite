@@ -11,12 +11,20 @@ const createConversationSchema = z.object({
   title: z.string().trim().min(1).max(120).optional(),
 });
 
+const chatModeSchema = z.enum(['free', 'rag']);
+const thinkSchema = z.union([z.boolean(), z.enum(['low', 'medium', 'high'])]);
+const responseFormatSchema = z.union([z.literal('json'), z.record(z.any())]);
+
 const sendMessageSchema = z.object({
   content: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
-  think: z.boolean().optional(),
+  think: thinkSchema.optional(),
+  mode: chatModeSchema.optional(),
   webSearch: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
+  responseFormat: responseFormatSchema.optional(),
+  useBuiltInTools: z.boolean().optional(),
+  toolLoopLimit: z.number().int().min(1).max(8).optional(),
   attachments: z
     .array(
       z.object({
@@ -33,9 +41,13 @@ const sendMessageSchema = z.object({
 const completionSchema = z.object({
   prompt: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
-  think: z.boolean().optional(),
+  think: thinkSchema.optional(),
+  mode: chatModeSchema.optional(),
   webSearch: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
+  responseFormat: responseFormatSchema.optional(),
+  useBuiltInTools: z.boolean().optional(),
+  toolLoopLimit: z.number().int().min(1).max(8).optional(),
 });
 
 router.get('/conversations', async (req, res) => {
@@ -106,8 +118,12 @@ router.post('/conversations/:id/messages', async (req, res) => {
       content: payload.content,
       model: payload.model,
       think: payload.think,
+      mode: payload.mode,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
+      responseFormat: payload.responseFormat,
+      useBuiltInTools: payload.useBuiltInTools,
+      toolLoopLimit: payload.toolLoopLimit,
       attachments: payload.attachments,
     });
 
@@ -163,8 +179,12 @@ router.post('/conversations/:id/messages/stream', async (req, res) => {
       content: payload.content,
       model: payload.model,
       think: payload.think,
+      mode: payload.mode,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
+      responseFormat: payload.responseFormat,
+      useBuiltInTools: payload.useBuiltInTools,
+      toolLoopLimit: payload.toolLoopLimit,
       attachments: payload.attachments,
       onThinkingDelta: (delta) => {
         writeEvent({ type: 'thinking_delta', data: { delta } });
@@ -228,8 +248,12 @@ router.post('/chat/completions', async (req, res) => {
       prompt: payload.prompt,
       model: payload.model,
       think: payload.think,
+      mode: payload.mode,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
+      responseFormat: payload.responseFormat,
+      useBuiltInTools: payload.useBuiltInTools,
+      toolLoopLimit: payload.toolLoopLimit,
       source: 'ADMIN_CHAT',
     });
 

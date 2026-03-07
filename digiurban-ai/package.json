@@ -12,7 +12,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "benchmark:vps": "node scripts/benchmark-vps.js"
   },
   "keywords": [
     "ai",

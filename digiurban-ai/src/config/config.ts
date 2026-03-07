@@ -43,6 +43,17 @@ function normalizeOllamaKeepAlive(value?: string): string | undefined {
   return normalized;
 }
 
+function parseCsvList(value?: string): string[] {
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return [];
+  }
+
+  return value
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '9004', 10),
   host: process.env.HOST || '0.0.0.0',
@@ -57,27 +68,52 @@ export const config = {
   ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
   ollamaModel: process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
   ollamaFallbackModel: process.env.AI_OLLAMA_FALLBACK_MODEL || 'digibot-qwen2.5:latest',
-  ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '120000', 10),
-  ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '45000', 10),
+  ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '60000', 10),
+  ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '18000', 10),
+  ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '18000', 10),
+  ollamaFallbackFastTimeoutMs: parseInt(
+    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '12000',
+    10,
+  ),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
   ollamaTopP: parseFloat(process.env.AI_OLLAMA_TOP_P || '0.9'),
   ollamaTopK: parseOptionalInt(process.env.AI_OLLAMA_TOP_K),
   ollamaMinP: parseOptionalFloat(process.env.AI_OLLAMA_MIN_P),
   ollamaRepeatPenalty: parseOptionalFloat(process.env.AI_OLLAMA_REPEAT_PENALTY),
-  ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '4096', 10),
+  ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '3072', 10),
+  ollamaRagNumCtx: parseInt(process.env.AI_OLLAMA_RAG_NUM_CTX || '2304', 10),
   ollamaNumThread: parseOptionalInt(process.env.AI_OLLAMA_NUM_THREAD),
   ollamaNumBatch: parseOptionalInt(process.env.AI_OLLAMA_NUM_BATCH),
   ollamaNumGpu: parseOptionalInt(process.env.AI_OLLAMA_NUM_GPU),
   ollamaMainGpu: parseOptionalInt(process.env.AI_OLLAMA_MAIN_GPU),
-  ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '320', 10),
+  ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '220', 10),
+  ollamaRagMaxTokens: parseInt(process.env.AI_OLLAMA_RAG_MAX_TOKENS || '140', 10),
+  ollamaDraftMaxTokens: parseInt(process.env.AI_OLLAMA_DRAFT_MAX_TOKENS || '140', 10),
+  ollamaFastMaxTokens: parseInt(process.env.AI_OLLAMA_FAST_MAX_TOKENS || '120', 10),
+  ollamaFastNumCtx: parseInt(process.env.AI_OLLAMA_FAST_NUM_CTX || '2048', 10),
   ollamaKeepAlive: normalizeOllamaKeepAlive(
     process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE,
   ),
+  ollamaFallbackKeepAlive: normalizeOllamaKeepAlive(
+    process.env.AI_OLLAMA_FALLBACK_KEEP_ALIVE || '45s',
+  ),
   ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
   ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
+  ollamaWarmupModels: parseCsvList(
+    process.env.AI_OLLAMA_WARMUP_MODELS || process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
+  ),
   ollamaWarmupPrompt: process.env.AI_OLLAMA_WARMUP_PROMPT || 'Responda apenas: ok',
   ollamaWarmupTimeoutMs: parseInt(process.env.AI_OLLAMA_WARMUP_TIMEOUT_MS || '90000', 10),
   ollamaWarmupThink: (process.env.AI_OLLAMA_WARMUP_THINK || 'false').toLowerCase() === 'true',
+  ollamaCircuitBreakerFailures: parseInt(
+    process.env.AI_OLLAMA_CIRCUIT_BREAKER_FAILURES || '2',
+    10,
+  ),
+  ollamaCircuitBreakerCooldownMs: parseInt(
+    process.env.AI_OLLAMA_CIRCUIT_BREAKER_COOLDOWN_MS || '180000',
+    10,
+  ),
+  ollamaToolLoopMaxSteps: parseInt(process.env.AI_OLLAMA_TOOL_LOOP_MAX_STEPS || '4', 10),
   webSearchEnabled: (process.env.AI_WEB_SEARCH_ENABLED || 'false').toLowerCase() === 'true',
   webSearchDefault: (process.env.AI_WEB_SEARCH_DEFAULT || 'false').toLowerCase() === 'true',
   webSearchProvider: (process.env.AI_WEB_SEARCH_PROVIDER || 'duckduckgo').toLowerCase(),
@@ -89,15 +125,28 @@ export const config = {
     'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
 
   defaultTenantId: process.env.AI_DEFAULT_TENANT_ID || 'default',
-  maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '4', 10),
+  maxContextChunks: parseInt(process.env.AI_MAX_CONTEXT_CHUNKS || '3', 10),
   maxChunkSizeChars: parseInt(process.env.AI_MAX_CHUNK_SIZE_CHARS || '1200', 10),
   chunkOverlapChars: parseInt(process.env.AI_CHUNK_OVERLAP_CHARS || '120', 10),
+  ragCandidateLimit: parseInt(process.env.AI_RAG_CANDIDATE_LIMIT || '120', 10),
+  ragSemanticWeight: parseFloat(process.env.AI_RAG_SEMANTIC_WEIGHT || '0.65'),
+  ragLexicalWeight: parseFloat(process.env.AI_RAG_LEXICAL_WEIGHT || '0.35'),
+  ragQueryCacheTtlMs: parseInt(process.env.AI_RAG_QUERY_CACHE_TTL_MS || '120000', 10),
   maxConversationMessagesContext: parseInt(
-    process.env.AI_MAX_CONVERSATION_MESSAGES_CONTEXT || '8',
+    process.env.AI_MAX_CONVERSATION_MESSAGES_CONTEXT || '6',
     10,
   ),
-  maxContextCharsInPrompt: parseInt(process.env.AI_MAX_CONTEXT_CHARS_IN_PROMPT || '2200', 10),
-  maxModelMessageChars: parseInt(process.env.AI_MAX_MODEL_MESSAGE_CHARS || '1400', 10),
+  maxContextCharsInPrompt: parseInt(process.env.AI_MAX_CONTEXT_CHARS_IN_PROMPT || '1200', 10),
+  maxModelMessageChars: parseInt(process.env.AI_MAX_MODEL_MESSAGE_CHARS || '900', 10),
+  embeddingsEnabled: (process.env.AI_EMBEDDINGS_ENABLED || 'false').toLowerCase() === 'true',
+  embeddingsModel: process.env.AI_EMBEDDINGS_MODEL || 'nomic-embed-text',
+  embeddingsTimeoutMs: parseInt(process.env.AI_EMBEDDINGS_TIMEOUT_MS || '15000', 10),
+  embeddingsKeepAlive: normalizeOllamaKeepAlive(process.env.AI_EMBEDDINGS_KEEP_ALIVE),
+  embeddingsBatchSize: parseInt(process.env.AI_EMBEDDINGS_BATCH_SIZE || '12', 10),
+  embeddingsQueryCacheTtlMs: parseInt(
+    process.env.AI_EMBEDDINGS_QUERY_CACHE_TTL_MS || '300000',
+    10,
+  ),
 
   corsOrigin: process.env.CORS_ORIGIN || '*',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),

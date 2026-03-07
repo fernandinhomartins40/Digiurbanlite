@@ -22,6 +22,36 @@ export interface ApiKeyAuthenticatedRequest extends Request {
 export interface ChatMessageInput {
   role: 'system' | 'user' | 'assistant' | 'tool';
   content: string;
+  thinking?: string;
+  toolName?: string;
+  toolCallId?: string;
+  toolCalls?: ModelToolCall[];
+}
+
+export interface StructuredOutputSchema {
+  [key: string]: unknown;
+}
+
+export type ChatThinkingMode = boolean | 'low' | 'medium' | 'high';
+
+export type ChatResponseFormat = 'json' | StructuredOutputSchema;
+
+export interface ModelToolCall {
+  id?: string;
+  type?: 'function';
+  function: {
+    name: string;
+    arguments: Record<string, unknown> | string;
+  };
+}
+
+export interface ModelToolDefinition {
+  type: 'function';
+  function: {
+    name: string;
+    description?: string;
+    parameters?: StructuredOutputSchema;
+  };
 }
 
 export interface ChatCompletionResult {
@@ -32,10 +62,16 @@ export interface ChatCompletionResult {
   totalTokens: number;
   latencyMs: number;
   thinking?: string;
+  firstTokenLatencyMs?: number;
   totalDurationMs?: number;
   loadDurationMs?: number;
   promptEvalDurationMs?: number;
   evalDurationMs?: number;
   tokensPerSecond?: number;
   finishReason?: string;
+  toolCalls?: ModelToolCall[];
+  profile?: string;
+  attemptedModels?: string[];
+  usedFallback?: boolean;
+  circuitBreakerOpen?: boolean;
 }

@@ -31,6 +31,7 @@ export interface AiMessageMetadata {
   thinking?: string;
   thinkingStatus?: 'processing' | 'completed';
   thinkEnabled?: boolean;
+  chatMode?: 'free' | 'rag';
   finishReason?: string;
   contextSources?: string[];
   performance?: AiPerformanceMetrics;
@@ -155,6 +156,7 @@ export const aiPlatformService = {
     content: string;
     model?: string;
     think?: boolean;
+    mode?: 'free' | 'rag';
     webSearch?: boolean;
     extraInstruction?: string;
     attachments?: AiMessageAttachment[];
@@ -180,6 +182,7 @@ export const aiPlatformService = {
     prompt: string;
     model?: string;
     think?: boolean;
+    mode?: 'free' | 'rag';
     webSearch?: boolean;
     extraInstruction?: string;
   }): Promise<{
@@ -214,6 +217,7 @@ export const aiPlatformService = {
       content: string;
       model?: string;
       think?: boolean;
+      mode?: 'free' | 'rag';
       webSearch?: boolean;
       extraInstruction?: string;
       attachments?: AiMessageAttachment[];

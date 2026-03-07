@@ -1,17 +1,21 @@
 'use client';
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from 'react';
-import { Bot, Brain, Loader2, MessageSquare, Paperclip, Plus, Send, User, X } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Textarea } from '@/components/ui/textarea';
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+  Bot,
+  Brain,
+  Loader2,
+  Menu,
+  Paperclip,
+  Plus,
+  Send,
+  Sparkles,
+  User,
+  X,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import {
   aiPlatformService,
@@ -22,20 +26,31 @@ import {
 } from '@/lib/services/ai-platform.service';
 
 type PendingAttachment = AiMessageAttachment & { id: string };
+type AdminChatMode = 'free' | 'rag';
 
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE = 8 * 1024 * 1024;
 const TEXT_PREVIEW_LIMIT = 2500;
 const MODEL_OPTIONS = [
-  { value: 'qwen3.5:9b', label: 'Qwen 3.5 9B (principal)' },
-  { value: 'digibot-qwen2.5:latest', label: 'DigiBot Qwen 2.5 (reserva)' },
+  { value: 'qwen3.5:9b', label: 'Qwen 3.5 9B' },
+  { value: 'digibot-qwen2.5:latest', label: 'DigiBot Qwen 2.5' },
+];
+const CHAT_MODE_OPTIONS: Array<{ value: AdminChatMode; label: string; description: string }> = [
+  { value: 'free', label: 'Chat livre', description: 'Conversa direta com o modelo, sem RAG.' },
+  { value: 'rag', label: 'Chat contextual', description: 'Usa base de conhecimento e contexto web.' },
+];
+const QUICK_PROMPTS = [
+  'Crie um modelo de oficio para solicitar manutencao de equipamento.',
+  'Me ajude a revisar este texto para um tom mais formal.',
+  'Estruture um comunicado interno claro e objetivo.',
+  'Transforme este rascunho em uma resposta institucional.',
 ];
 
 function formatDate(value?: string | null): string {
   if (!value) return '-';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
-  return date.toLocaleString('pt-BR');
+  return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
 }
 
 function formatFileSize(size?: number): string {
@@ -45,40 +60,22 @@ function formatFileSize(size?: number): string {
   return `${(size / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-function formatMs(value?: number): string {
-  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return '-';
-  if (value >= 1000) return `${(value / 1000).toFixed(2)}s`;
-  return `${Math.round(value)}ms`;
-}
-
-function formatTps(value?: number): string {
-  if (typeof value !== 'number' || Number.isNaN(value) || value <= 0) return '-';
-  return `${value.toFixed(1)} tok/s`;
-}
-
 function isTextLikeFile(file: File): boolean {
   if (file.type.startsWith('text/')) return true;
-
   const extension = file.name.toLowerCase().split('.').pop();
-  return ['txt', 'md', 'csv', 'json', 'xml', 'html', 'htm', 'ts', 'tsx', 'js', 'jsx'].includes(
-    extension || '',
-  );
+  return ['txt', 'md', 'csv', 'json', 'xml', 'html', 'htm', 'ts', 'tsx', 'js', 'jsx'].includes(extension || '');
 }
 
 async function fileToAttachment(file: File): Promise<PendingAttachment> {
   let contentText: string | undefined;
-
   if (isTextLikeFile(file)) {
     try {
       const text = (await file.text()).trim();
-      if (text) {
-        contentText = text.slice(0, TEXT_PREVIEW_LIMIT);
-      }
+      if (text) contentText = text.slice(0, TEXT_PREVIEW_LIMIT);
     } catch {
       contentText = undefined;
     }
   }
-
   return {
     id: `${file.name}-${file.size}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     name: file.name,
@@ -89,9 +86,7 @@ async function fileToAttachment(file: File): Promise<PendingAttachment> {
 }
 
 function getMetadata(message: AiMessage): AiMessageMetadata {
-  if (!message.metadata || typeof message.metadata !== 'object') {
-    return {};
-  }
+  if (!message.metadata || typeof message.metadata !== 'object') return {};
   return message.metadata;
 }
 
@@ -100,22 +95,25 @@ function getMessageAttachments(message: AiMessage): AiMessageAttachment[] {
   return Array.isArray(attachments) ? attachments : [];
 }
 
-function normalizeAssistantMessage(message: AiMessage, thinkEnabled: boolean): AiMessage {
-  if (message.role !== 'ASSISTANT') {
-    return message;
-  }
-
+function normalizeAssistantMessage(message: AiMessage, thinkEnabled: boolean, chatMode: AdminChatMode): AiMessage {
+  if (message.role !== 'ASSISTANT') return message;
   const metadata = getMetadata(message);
   const hasThinking = typeof metadata.thinking === 'string' && metadata.thinking.trim().length > 0;
-
   return {
     ...message,
     metadata: {
       ...metadata,
       thinkEnabled: metadata.thinkEnabled ?? thinkEnabled,
+      chatMode: metadata.chatMode ?? chatMode,
       thinkingStatus: hasThinking ? 'completed' : metadata.thinkingStatus,
     },
   };
+}
+
+function titleForConversation(conversation: AiConversation): string {
+  const title = conversation.title?.trim();
+  if (!title) return 'Nova conversa';
+  return title.length > 54 ? `${title.slice(0, 54)}...` : title;
 }
 
 export default function AdminAiPage() {
@@ -127,41 +125,22 @@ export default function AdminAiPage() {
   const [draft, setDraft] = useState('');
   const [sending, setSending] = useState(false);
   const [loadingMessages, setLoadingMessages] = useState(true);
-  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
-  const [conversationsModalOpen, setConversationsModalOpen] = useState(false);
   const [loadingConversations, setLoadingConversations] = useState(true);
+  const [conversationsModalOpen, setConversationsModalOpen] = useState(false);
+  const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
   const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0].value);
+  const [chatMode, setChatMode] = useState<AdminChatMode>('free');
   const [thinkMode, setThinkMode] = useState(false);
   const [webSearchMode, setWebSearchMode] = useState(false);
 
   const messageListRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const textAreaRef = useRef<HTMLTextAreaElement | null>(null);
 
-  const aiPerformanceSummary = useMemo(() => {
-    const assistantMetrics = messages
-      .filter((message) => message.role === 'ASSISTANT')
-      .map((message) => getMetadata(message).performance)
-      .filter((metric): metric is NonNullable<AiMessageMetadata['performance']> => !!metric);
-
-    if (!assistantMetrics.length) {
-      return null;
-    }
-
-    const average = (values: Array<number | undefined>): number | undefined => {
-      const filtered = values.filter((value): value is number => typeof value === 'number' && value > 0);
-      if (!filtered.length) return undefined;
-      return filtered.reduce((sum, value) => sum + value, 0) / filtered.length;
-    };
-
-    return {
-      requests: assistantMetrics.length,
-      avgLatencyMs: average(assistantMetrics.map((metric) => metric.latencyMs)),
-      avgLoadMs: average(assistantMetrics.map((metric) => metric.loadDurationMs)),
-      avgPromptMs: average(assistantMetrics.map((metric) => metric.promptEvalDurationMs)),
-      avgEvalMs: average(assistantMetrics.map((metric) => metric.evalDurationMs)),
-      avgTps: average(assistantMetrics.map((metric) => metric.tokensPerSecond)),
-    };
-  }, [messages]);
+  const activeConversation = useMemo(
+    () => conversations.find((conversation) => conversation.id === activeConversationId) || null,
+    [conversations, activeConversationId],
+  );
 
   const scrollMessagesToBottom = (): void => {
     if (!messageListRef.current) return;
@@ -173,7 +152,7 @@ export default function AdminAiPage() {
     try {
       const data = await aiPlatformService.getConversation(conversationId);
       setActiveConversationId(data.id);
-      setMessages(data.messages || []);
+      setMessages((data.messages || []).map((message) => normalizeAssistantMessage(message, thinkMode, chatMode)));
     } finally {
       setLoadingMessages(false);
     }
@@ -196,7 +175,6 @@ export default function AdminAiPage() {
         activeConversationId && list.some((conversation) => conversation.id === activeConversationId)
           ? activeConversationId
           : list[0].id;
-
       await loadConversationById(selected);
     } catch (error) {
       setLoadingMessages(false);
@@ -216,6 +194,8 @@ export default function AdminAiPage() {
       setConversations((previous) => [created, ...previous]);
       setActiveConversationId(created.id);
       setMessages([]);
+      setDraft('');
+      setAttachments([]);
       setConversationsModalOpen(false);
     } catch (error) {
       toast({
@@ -273,10 +253,15 @@ export default function AdminAiPage() {
     setAttachments((previous) => previous.filter((item) => item.id !== attachmentId));
   };
 
+  const applyPromptSuggestion = (prompt: string): void => {
+    if (sending) return;
+    setDraft(prompt);
+    window.requestAnimationFrame(() => textAreaRef.current?.focus());
+  };
+
   const sendMessage = async (event: FormEvent): Promise<void> => {
     event.preventDefault();
     if (sending) return;
-
     const content = draft.trim();
     if (!content) return;
 
@@ -291,40 +276,37 @@ export default function AdminAiPage() {
 
     const optimisticUserMessageId = `optimistic-user-${Date.now()}`;
     const optimisticAssistantMessageId = `optimistic-assistant-${Date.now()}`;
-
-    const optimisticUserMessage: AiMessage = {
-      id: optimisticUserMessageId,
-      role: 'USER',
-      content,
-      totalTokens: 0,
-      createdAt: new Date().toISOString(),
-      metadata: attachmentPayload.length > 0 ? { attachments: attachmentPayload } : null,
-    };
-
-    const optimisticAssistantMessage: AiMessage = {
-      id: optimisticAssistantMessageId,
-      role: 'ASSISTANT',
-      content: '',
-      totalTokens: 0,
-      createdAt: new Date().toISOString(),
-      metadata: {
-        thinkingStatus: 'processing',
-        thinkEnabled: thinkMode,
-        thinking: thinkMode ? 'Analisando a solicitacao e preparando o raciocinio...' : undefined,
+    setMessages((previous) => [
+      ...previous,
+      {
+        id: optimisticUserMessageId,
+        role: 'USER',
+        content,
+        totalTokens: 0,
+        createdAt: new Date().toISOString(),
+        metadata: attachmentPayload.length > 0 ? { attachments: attachmentPayload } : null,
       },
-    };
+      {
+        id: optimisticAssistantMessageId,
+        role: 'ASSISTANT',
+        content: '',
+        totalTokens: 0,
+        createdAt: new Date().toISOString(),
+        metadata: {
+          thinkingStatus: 'processing',
+          thinkEnabled: thinkMode,
+          chatMode,
+          thinking: thinkMode ? 'Analisando e preparando resposta...' : undefined,
+        },
+      },
+    ]);
 
-    setMessages((previous) => [...previous, optimisticUserMessage, optimisticAssistantMessage]);
     setDraft('');
     setAttachments([]);
 
-    const updateOptimisticAssistant = (
-      updater: (current: AiMessage) => AiMessage,
-    ): void => {
+    const updateOptimisticAssistant = (updater: (current: AiMessage) => AiMessage): void => {
       setMessages((previous) =>
-        previous.map((message) =>
-          message.id === optimisticAssistantMessageId ? updater(message) : message,
-        ),
+        previous.map((message) => (message.id === optimisticAssistantMessageId ? updater(message) : message)),
       );
     };
 
@@ -342,6 +324,7 @@ export default function AdminAiPage() {
         {
           content,
           model: selectedModel,
+          mode: chatMode,
           think: thinkMode,
           webSearch: webSearchMode,
           attachments: attachmentPayload,
@@ -355,6 +338,7 @@ export default function AdminAiPage() {
                 metadata: {
                   ...metadata,
                   thinkEnabled: thinkMode,
+                  chatMode,
                   thinkingStatus: 'processing',
                   thinking: `${metadata.thinking || ''}${delta}`,
                 },
@@ -362,31 +346,24 @@ export default function AdminAiPage() {
             });
           },
           onContentDelta: (delta) => {
-            updateOptimisticAssistant((current) => ({
-              ...current,
-              content: `${current.content || ''}${delta}`,
-            }));
+            updateOptimisticAssistant((current) => ({ ...current, content: `${current.content || ''}${delta}` }));
           },
         },
       );
 
       setMessages((previous) => [
         ...previous.filter((message) => message.id !== optimisticAssistantMessageId),
-        normalizeAssistantMessage(result.assistantMessage, thinkMode),
+        normalizeAssistantMessage(result.assistantMessage, thinkMode, chatMode),
       ]);
 
       const list = await aiPlatformService.listConversations();
       setConversations(list);
     } catch (error) {
       setMessages((previous) =>
-        previous.filter(
-          (message) =>
-            message.id !== optimisticUserMessageId && message.id !== optimisticAssistantMessageId,
-        ),
+        previous.filter((message) => message.id !== optimisticUserMessageId && message.id !== optimisticAssistantMessageId),
       );
       setDraft(content);
       setAttachments(attachmentSnapshot);
-
       toast({
         title: 'Erro ao enviar mensagem',
         description: error instanceof Error ? error.message : 'Falha ao conversar com a IA.',
@@ -402,310 +379,295 @@ export default function AdminAiPage() {
   }, []);
 
   useEffect(() => {
+    if (chatMode === 'free' && webSearchMode) setWebSearchMode(false);
+  }, [chatMode, webSearchMode]);
+
+  useEffect(() => {
     scrollMessagesToBottom();
   }, [messages, loadingMessages]);
 
   return (
-    <div className="space-y-4 pb-8">
-      <Card className="border-slate-200">
-        <CardHeader className="pb-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div>
-              <CardTitle className="flex items-center gap-2 text-base">
-                <Bot className="h-4 w-4" />
-                Assistente IA
-              </CardTitle>
-              <CardDescription>Experiencia de chat focada em IA com contexto e raciocinio.</CardDescription>
-            </div>
-            <Button type="button" variant="outline" onClick={() => setConversationsModalOpen(true)}>
-              <MessageSquare className="mr-2 h-4 w-4" />
-              Conversas
+    <div className="h-[calc(100vh-11rem)] min-h-[620px] overflow-hidden rounded-2xl border border-slate-200 bg-slate-100/70">
+      <div className="flex h-full">
+        <aside className="hidden w-80 shrink-0 flex-col border-r border-slate-200 bg-white/70 lg:flex">
+          <div className="border-b border-slate-200 p-3">
+            <Button type="button" className="w-full justify-start gap-2 rounded-xl" onClick={() => void createConversation()}>
+              <Plus className="h-4 w-4" />
+              Nova conversa
             </Button>
           </div>
-        </CardHeader>
-
-        <CardContent className="space-y-4">
-          <div className="flex flex-wrap items-center gap-3 rounded-xl border bg-slate-50 px-3 py-2">
-            <div className="flex min-w-[220px] items-center gap-2">
-              <label htmlFor="ai-model-select" className="text-xs font-medium uppercase tracking-wide text-slate-600">
-                Modelo
-              </label>
-              <select
-                id="ai-model-select"
-                value={selectedModel}
-                onChange={(event) => setSelectedModel(event.target.value)}
-                className="h-9 flex-1 rounded-md border border-slate-300 bg-white px-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-500"
-              >
-                {MODEL_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={thinkMode}
-                onChange={(event) => setThinkMode(event.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-              />
-              Modo think (mostrar raciocinio)
-            </label>
-
-            <label className="inline-flex items-center gap-2 text-sm text-slate-700">
-              <input
-                type="checkbox"
-                checked={webSearchMode}
-                onChange={(event) => setWebSearchMode(event.target.checked)}
-                className="h-4 w-4 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500"
-              />
-              Busca web para contexto
-            </label>
+          <div className="px-3 pt-3 text-[11px] font-semibold uppercase tracking-wide text-slate-500">
+            Conversas recentes
           </div>
-
-          <div className="grid gap-2 rounded-xl border bg-slate-50 p-3 text-xs text-slate-700 md:grid-cols-3">
-            <div>
-              <p className="font-semibold text-slate-800">Observabilidade</p>
-              <p className="text-slate-500">
-                {aiPerformanceSummary
-                  ? `${aiPerformanceSummary.requests} respostas analisadas`
-                  : 'Aguardando respostas para metricas'}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p>Latencia media: {formatMs(aiPerformanceSummary?.avgLatencyMs)}</p>
-              <p>Load medio: {formatMs(aiPerformanceSummary?.avgLoadMs)}</p>
-            </div>
-            <div className="space-y-1">
-              <p>Prompt medio: {formatMs(aiPerformanceSummary?.avgPromptMs)}</p>
-              <p>Eval medio: {formatMs(aiPerformanceSummary?.avgEvalMs)}</p>
-              <p>Throughput medio: {formatTps(aiPerformanceSummary?.avgTps)}</p>
-            </div>
-          </div>
-
-          <div
-            ref={messageListRef}
-            className="max-h-[62vh] space-y-4 overflow-y-auto rounded-xl border bg-white p-4"
-          >
-            {loadingMessages ? (
-              <div className="flex items-center gap-2 text-sm text-slate-500">
+          <div className="flex-1 space-y-2 overflow-y-auto p-2">
+            {loadingConversations ? (
+              <div className="flex items-center gap-2 rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-500">
                 <Loader2 className="h-4 w-4 animate-spin" />
+                Carregando...
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="rounded-lg border border-dashed border-slate-300 p-3 text-sm text-slate-500">
+                Nenhuma conversa ainda.
+              </div>
+            ) : (
+              conversations.map((conversation) => (
+                <button
+                  key={conversation.id}
+                  type="button"
+                  onClick={() => void openConversation(conversation.id)}
+                  className={`w-full rounded-xl border px-3 py-2 text-left transition ${
+                    conversation.id === activeConversationId
+                      ? 'border-cyan-300 bg-cyan-50'
+                      : 'border-transparent bg-white hover:border-slate-200'
+                  }`}
+                >
+                  <p className="truncate text-sm font-medium text-slate-800">{titleForConversation(conversation)}</p>
+                  <p className="mt-1 text-xs text-slate-500">{formatDate(conversation.lastMessageAt)}</p>
+                </button>
+              ))
+            )}
+          </div>
+        </aside>
+
+        <section className="flex min-w-0 flex-1 flex-col bg-gradient-to-b from-slate-50 to-slate-100/40">
+          <header className="border-b border-slate-200 bg-white/90 px-3 py-2 backdrop-blur sm:px-6">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 items-center gap-2">
+                <Button type="button" variant="ghost" size="icon" className="lg:hidden" onClick={() => setConversationsModalOpen(true)}>
+                  <Menu className="h-4 w-4" />
+                </Button>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-slate-900">
+                    {activeConversation ? titleForConversation(activeConversation) : 'Assistente IA'}
+                  </p>
+                  <p className="text-xs text-slate-500">
+                    {CHAT_MODE_OPTIONS.find((option) => option.value === chatMode)?.description}
+                  </p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <select
+                  value={chatMode}
+                  onChange={(event) => setChatMode(event.target.value as AdminChatMode)}
+                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  {CHAT_MODE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+                <select
+                  value={selectedModel}
+                  onChange={(event) => setSelectedModel(event.target.value)}
+                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
+                >
+                  {MODEL_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </header>
+
+          <div ref={messageListRef} className="flex-1 overflow-y-auto px-1 sm:px-3">
+            {loadingMessages ? (
+              <div className="flex h-full items-center justify-center text-sm text-slate-500">
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Carregando mensagens...
               </div>
             ) : messages.length === 0 ? (
-              <div className="rounded-lg border border-dashed bg-slate-50 p-6 text-sm text-slate-500">
-                Inicie uma conversa enviando uma pergunta ou orientacao.
+              <div className="mx-auto flex h-full w-full max-w-3xl flex-col items-center justify-center px-5 pb-10 text-center">
+                <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-cyan-200 bg-cyan-50 px-3 py-1 text-xs font-medium text-cyan-700">
+                  <Sparkles className="h-3.5 w-3.5" />
+                  IA Centralizada
+                </span>
+                <h2 className="font-serif text-3xl tracking-tight text-slate-900 sm:text-5xl">Por onde comecamos?</h2>
+                <p className="mt-4 max-w-xl text-sm text-slate-600">
+                  Chat livre para redacao e revisao. Ative o modo contextual quando precisar de RAG.
+                </p>
+                <div className="mt-6 flex flex-wrap justify-center gap-2">
+                  {QUICK_PROMPTS.map((prompt) => (
+                    <button
+                      key={prompt}
+                      type="button"
+                      onClick={() => applyPromptSuggestion(prompt)}
+                      className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-700 transition hover:border-cyan-300 hover:text-cyan-700"
+                    >
+                      {prompt}
+                    </button>
+                  ))}
+                </div>
               </div>
             ) : (
-              messages.map((message) => {
-                const isUser = message.role === 'USER';
-                const metadata = getMetadata(message);
-                const messageAttachments = getMessageAttachments(message);
-                const performance = metadata.performance;
-                const webSearch = metadata.webSearch;
-                const thinkingText = typeof metadata.thinking === 'string' ? metadata.thinking.trim() : '';
-                const thinkingStatus = metadata.thinkingStatus;
-                const isThinkingNow = !isUser && thinkingStatus === 'processing';
-                const showThinkingPanel = !isUser && (isThinkingNow || thinkingText.length > 0);
-                const visibleContent = (message.content || '').trim();
-                const webSources = Array.isArray(webSearch?.sources) ? webSearch.sources : [];
+              <div className="mx-auto flex w-full max-w-4xl flex-col gap-6 px-4 py-6">
+                {messages.map((message) => {
+                  const isUser = message.role === 'USER';
+                  const metadata = getMetadata(message);
+                  const messageAttachments = getMessageAttachments(message);
+                  const webSearch = metadata.webSearch;
+                  const webSources = Array.isArray(webSearch?.sources) ? webSearch.sources : [];
+                  const thinkingText = typeof metadata.thinking === 'string' ? metadata.thinking.trim() : '';
+                  const isThinkingNow = !isUser && metadata.thinkingStatus === 'processing';
+                  const showThinkingPanel = !isUser && (isThinkingNow || thinkingText.length > 0);
+                  const visibleContent = (message.content || '').trim();
 
-                return (
-                  <div
-                    key={message.id}
-                    className={`rounded-2xl border p-4 ${
-                      isUser
-                        ? 'ml-8 border-cyan-200 bg-cyan-50'
-                        : 'mr-8 border-slate-200 bg-slate-50'
-                    }`}
-                  >
-                    <div className="mb-2 flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-slate-600">
-                      {isUser ? <User className="h-3.5 w-3.5" /> : <Bot className="h-3.5 w-3.5" />}
-                      <span>{isUser ? 'Voce' : 'DigiUrban IA'}</span>
-                      <span className="ml-auto text-[11px] normal-case tracking-normal text-slate-500">
-                        {formatDate(message.createdAt)}
-                      </span>
-                    </div>
-
-                    {showThinkingPanel ? (
-                      <details
-                        className="mb-3 rounded-lg border border-slate-200 bg-white"
-                        open={isThinkingNow}
-                      >
-                        <summary className="cursor-pointer list-none px-3 py-2 text-sm text-slate-700">
-                          <span className="flex items-center gap-2">
-                            {isThinkingNow ? (
-                              <Loader2 className="h-4 w-4 animate-spin text-cyan-600" />
-                            ) : (
-                              <Brain className="h-4 w-4 text-cyan-600" />
-                            )}
-                            {isThinkingNow ? 'IA pensando...' : 'Raciocinio da IA'}
-                          </span>
-                        </summary>
-                        <div className="whitespace-pre-wrap px-3 pb-3 text-xs text-slate-600">
-                          {thinkingText || 'Processando o raciocinio...'}
+                  return (
+                    <div key={message.id} className={`flex items-start gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
+                      {!isUser ? (
+                        <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-cyan-100 text-cyan-700">
+                          <Bot className="h-4 w-4" />
                         </div>
-                      </details>
-                    ) : null}
+                      ) : null}
 
-                    {visibleContent ? (
-                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-800">
-                        {visibleContent}
-                      </p>
-                    ) : isThinkingNow ? (
-                      <p className="text-sm text-slate-500">Preparando resposta...</p>
-                    ) : null}
+                      <div
+                        className={`${
+                          isUser ? 'max-w-[86%]' : 'max-w-[92%]'
+                        } rounded-2xl px-4 py-3 shadow-sm ${
+                          isUser
+                            ? 'border border-cyan-200 bg-cyan-50 text-slate-800'
+                            : 'border border-slate-200 bg-white/95 text-slate-800'
+                        }`}
+                      >
+                        <div className={`mb-2 flex items-center gap-2 text-[11px] ${isUser ? 'text-cyan-700' : 'text-slate-500'}`}>
+                          <span className="font-semibold uppercase tracking-wide">{isUser ? 'Voce' : 'DigiUrban IA'}</span>
+                          <span>{formatDate(message.createdAt)}</span>
+                        </div>
 
-                    {!isUser && performance ? (
-                      <div className="mt-3 flex flex-wrap gap-2 text-[11px] text-slate-500">
-                        <span className="rounded border bg-white px-2 py-1">
-                          latencia: {formatMs(performance.latencyMs)}
-                        </span>
-                        <span className="rounded border bg-white px-2 py-1">
-                          load: {formatMs(performance.loadDurationMs)}
-                        </span>
-                        <span className="rounded border bg-white px-2 py-1">
-                          prompt: {formatMs(performance.promptEvalDurationMs)}
-                        </span>
-                        <span className="rounded border bg-white px-2 py-1">
-                          eval: {formatMs(performance.evalDurationMs)}
-                        </span>
-                        <span className="rounded border bg-white px-2 py-1">
-                          {formatTps(performance.tokensPerSecond)}
-                        </span>
-                      </div>
-                    ) : null}
+                        {showThinkingPanel ? (
+                          <details className="mb-3 rounded-lg border border-slate-200 bg-slate-50" open={isThinkingNow}>
+                            <summary className="cursor-pointer list-none px-3 py-2 text-sm text-slate-700">
+                              <span className="flex items-center gap-2">
+                                {isThinkingNow ? <Loader2 className="h-4 w-4 animate-spin text-cyan-600" /> : <Brain className="h-4 w-4 text-cyan-600" />}
+                                {isThinkingNow ? 'IA pensando...' : 'Raciocinio'}
+                              </span>
+                            </summary>
+                            <div className="whitespace-pre-wrap px-3 pb-3 text-xs text-slate-600">{thinkingText || 'Processando raciocinio...'}</div>
+                          </details>
+                        ) : null}
 
-                    {!isUser && webSources.length > 0 ? (
-                      <div className="mt-3 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-600">
-                        <p className="mb-2 font-semibold text-slate-700">
-                          Fontes web ({webSearch?.provider || 'provider'}):
-                        </p>
-                        <ul className="space-y-1">
-                          {webSources.slice(0, 5).map((source, index) => (
-                            <li key={`${message.id}-web-${index}`}>
-                              <a
-                                href={source.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="text-cyan-700 underline decoration-cyan-300 underline-offset-2 hover:text-cyan-800"
+                        {visibleContent ? (
+                          <p className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{visibleContent}</p>
+                        ) : null}
+
+                        {messageAttachments.length > 0 ? (
+                          <div className="mt-3 space-y-1 text-xs">
+                            {messageAttachments.map((attachment, index) => (
+                              <div
+                                key={`${message.id}-att-${index}`}
+                                className={`rounded-md border px-2 py-1 ${
+                                  isUser ? 'border-cyan-200 bg-cyan-100 text-cyan-800' : 'border-slate-200 bg-slate-50 text-slate-600'
+                                }`}
                               >
-                                {source.title || source.url}
-                              </a>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ) : null}
-
-                    {messageAttachments.length > 0 ? (
-                      <div className="mt-3 space-y-1 text-xs text-slate-600">
-                        {messageAttachments.map((attachment, index) => (
-                          <div
-                            key={`${message.id}-att-${index}`}
-                            className="rounded-md border border-slate-200 bg-white px-2 py-1"
-                          >
-                            {attachment.name}
-                            {attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
+                                {attachment.name}{attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        ) : null}
+
+                        {!isUser && webSources.length > 0 ? (
+                          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                            <p className="mb-2 font-semibold text-slate-700">Fontes web ({webSearch?.provider || 'provider'})</p>
+                            <ul className="space-y-1">
+                              {webSources.slice(0, 5).map((source, index) => (
+                                <li key={`${message.id}-web-${index}`}>
+                                  <a href={source.url} target="_blank" rel="noreferrer" className="text-cyan-700 underline decoration-cyan-300 underline-offset-2 hover:text-cyan-800">
+                                    {source.title || source.url}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
                       </div>
-                    ) : null}
-                  </div>
-                );
-              })
+
+                      {isUser ? (
+                        <div className="mt-1 flex h-8 w-8 items-center justify-center rounded-full bg-cyan-600 text-white">
+                          <User className="h-4 w-4" />
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </div>
 
-          <form className="space-y-3" onSubmit={sendMessage}>
-            <Textarea
-              value={draft}
-              onChange={(event) => setDraft(event.target.value)}
-              className="min-h-[96px] resize-none"
-              placeholder="Digite sua mensagem..."
-            />
+          <div className="border-t border-slate-200/80 bg-white/95 p-3 backdrop-blur">
+            <div className="mx-auto w-full max-w-4xl">
+              <form onSubmit={sendMessage} className="space-y-0">
+                <div className="rounded-[28px] border border-slate-200 bg-white/95 px-3 pb-2 pt-3 shadow-[0_10px_30px_rgba(15,23,42,0.08)] transition focus-within:border-cyan-400 focus-within:ring-2 focus-within:ring-cyan-100">
+                  <Textarea
+                    ref={textAreaRef}
+                    value={draft}
+                    onChange={(event) => setDraft(event.target.value)}
+                    className="min-h-[100px] resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus-visible:ring-0"
+                    placeholder={chatMode === 'free' ? 'Escreva livremente... ex: crie um oficio, revise um texto, estruture um comunicado.' : 'Descreva o que precisa considerando o contexto do sistema.'}
+                  />
 
-            {attachments.length > 0 ? (
-              <div className="flex flex-wrap gap-2">
-                {attachments.map((attachment) => (
-                  <div
-                    key={attachment.id}
-                    className="inline-flex items-center gap-2 rounded-full border bg-slate-100 px-3 py-1 text-xs"
-                  >
-                    <span className="max-w-[240px] truncate">
-                      {attachment.name}
-                      {attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
-                    </span>
-                    <button
-                      type="button"
-                      onClick={() => removeAttachment(attachment.id)}
-                      className="text-slate-500 hover:text-slate-800"
-                      aria-label={`Remover ${attachment.name}`}
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                  {attachments.length > 0 ? (
+                    <div className="mb-2 flex flex-wrap gap-2 px-1">
+                      {attachments.map((attachment) => (
+                        <div key={attachment.id} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-100 px-3 py-1 text-xs text-slate-700">
+                          <span className="max-w-[240px] truncate">
+                            {attachment.name}{attachment.size ? ` (${formatFileSize(attachment.size)})` : ''}
+                          </span>
+                          <button type="button" onClick={() => removeAttachment(attachment.id)} className="text-slate-500 hover:text-slate-800" aria-label={`Remover ${attachment.name}`}>
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 px-1 pb-1 pt-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFilesSelected} />
+                      <Button type="button" variant="ghost" size="sm" className="rounded-full" onClick={() => fileInputRef.current?.click()}>
+                        <Paperclip className="mr-1 h-4 w-4" />
+                        Anexar
+                      </Button>
+                      <label className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-700">
+                        <input type="checkbox" checked={thinkMode} onChange={(event) => setThinkMode(event.target.checked)} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+                        Think
+                      </label>
+                      <label className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs ${chatMode === 'free' ? 'border-slate-200 bg-slate-100 text-slate-400' : 'border-slate-200 text-slate-700'}`}>
+                        <input type="checkbox" checked={webSearchMode} onChange={(event) => setWebSearchMode(event.target.checked)} disabled={chatMode === 'free'} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+                        Web
+                      </label>
+                    </div>
+
+                    <Button type="submit" disabled={sending || !draft.trim()} className="rounded-full px-4">
+                      {sending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Enviando
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          Enviar
+                        </>
+                      )}
+                    </Button>
                   </div>
-                ))}
-              </div>
-            ) : null}
-
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  multiple
-                  className="hidden"
-                  onChange={onFilesSelected}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => fileInputRef.current?.click()}
-                >
-                  <Paperclip className="mr-2 h-4 w-4" />
-                  Anexar arquivos
-                </Button>
-              </div>
-
-              <Button type="submit" disabled={sending || !draft.trim()}>
-                {sending ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    {thinkMode ? 'Pensando...' : 'Enviando...'}
-                  </>
-                ) : (
-                  <>
-                    <Send className="mr-2 h-4 w-4" />
-                    Enviar
-                  </>
-                )}
-              </Button>
+                </div>
+              </form>
             </div>
-          </form>
-        </CardContent>
-      </Card>
+          </div>
+        </section>
+      </div>
 
       <Dialog open={conversationsModalOpen} onOpenChange={setConversationsModalOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
             <DialogTitle>Conversas</DialogTitle>
-            <DialogDescription>
-              Selecione uma conversa existente ou crie uma nova.
-            </DialogDescription>
+            <DialogDescription>Escolha uma conversa ou crie uma nova.</DialogDescription>
           </DialogHeader>
-
           <div className="space-y-3">
-            <div className="flex justify-end">
-              <Button type="button" onClick={createConversation}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova conversa
-              </Button>
-            </div>
-
-            <div className="max-h-[45vh] space-y-2 overflow-y-auto rounded-md border p-2">
+            <Button type="button" className="w-full justify-start gap-2" onClick={() => void createConversation()}>
+              <Plus className="h-4 w-4" />
+              Nova conversa
+            </Button>
+            <div className="max-h-[50vh] space-y-2 overflow-y-auto rounded-lg border border-slate-200 p-2">
               {loadingConversations ? (
                 <div className="flex items-center gap-2 p-2 text-sm text-slate-500">
                   <Loader2 className="h-4 w-4 animate-spin" />
@@ -718,19 +680,13 @@ export default function AdminAiPage() {
                   <button
                     key={conversation.id}
                     type="button"
-                    onClick={() => openConversation(conversation.id)}
-                    className={`w-full rounded-md border px-3 py-2 text-left text-sm ${
-                      conversation.id === activeConversationId
-                        ? 'border-cyan-400 bg-cyan-50'
-                        : 'border-slate-200 hover:bg-slate-50'
+                    onClick={() => void openConversation(conversation.id)}
+                    className={`w-full rounded-lg border px-3 py-2 text-left text-sm transition ${
+                      conversation.id === activeConversationId ? 'border-cyan-300 bg-cyan-50' : 'border-slate-200 hover:bg-slate-50'
                     }`}
                   >
-                    <p className="font-medium text-slate-800">
-                      {conversation.title || 'Nova conversa'}
-                    </p>
-                    <p className="mt-1 text-xs text-slate-500">
-                      Ultima atualizacao: {formatDate(conversation.lastMessageAt)}
-                    </p>
+                    <p className="truncate font-medium text-slate-800">{titleForConversation(conversation)}</p>
+                    <p className="mt-1 text-xs text-slate-500">{formatDate(conversation.lastMessageAt)}</p>
                   </button>
                 ))
               )}

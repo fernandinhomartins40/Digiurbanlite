@@ -6,15 +6,22 @@ import { AuthenticatedProxyRequest } from '../types';
 
 const router = Router();
 
+const thinkSchema = z.union([z.boolean(), z.enum(['low', 'medium', 'high'])]);
+const responseFormatSchema = z.union([z.literal('json'), z.record(z.any())]);
+
 const completionSchema = z.object({
   prompt: z.string().trim().min(1).max(15000),
   model: z.string().trim().min(1).max(128).optional(),
-  think: z.boolean().optional(),
+  think: thinkSchema.optional(),
+  mode: z.enum(['free', 'rag']).optional(),
   webSearch: z.boolean().optional(),
   userId: z.string().trim().min(1).optional(),
   userName: z.string().trim().min(1).optional(),
   departmentId: z.string().trim().min(1).optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
+  responseFormat: responseFormatSchema.optional(),
+  useBuiltInTools: z.boolean().optional(),
+  toolLoopLimit: z.number().int().min(1).max(8).optional(),
 });
 
 router.post('/internal/chat/completions', async (req, res) => {
@@ -30,8 +37,12 @@ router.post('/internal/chat/completions', async (req, res) => {
       prompt: payload.prompt,
       model: payload.model,
       think: payload.think,
+      mode: payload.mode,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
+      responseFormat: payload.responseFormat,
+      useBuiltInTools: payload.useBuiltInTools,
+      toolLoopLimit: payload.toolLoopLimit,
       source: 'INTERNAL_API',
     });
 
