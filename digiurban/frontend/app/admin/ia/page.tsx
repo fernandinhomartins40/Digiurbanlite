@@ -431,7 +431,7 @@ export default function AdminAiPage() {
           model: selectedModel === 'auto' ? undefined : selectedModel,
           mode: chatMode,
           think: thinkMode,
-          webSearch: webSearchMode,
+          webSearch: webSearchMode ? true : undefined,
           attachments: attachmentPayload,
         },
         {
@@ -482,10 +482,6 @@ export default function AdminAiPage() {
   useEffect(() => {
     void loadConversations();
   }, []);
-
-  useEffect(() => {
-    if (chatMode === 'free' && webSearchMode) setWebSearchMode(false);
-  }, [chatMode, webSearchMode]);
 
   useEffect(() => {
     scrollMessagesToBottom();
@@ -746,9 +742,9 @@ export default function AdminAiPage() {
                         <input type="checkbox" checked={thinkMode} onChange={(event) => setThinkMode(event.target.checked)} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
                         Think
                       </label>
-                      <label className={`inline-flex items-center gap-1 rounded-full border px-2 py-1 text-xs ${chatMode === 'free' ? 'border-slate-200 bg-slate-100 text-slate-400' : 'border-slate-200 text-slate-700'}`}>
-                        <input type="checkbox" checked={webSearchMode} onChange={(event) => setWebSearchMode(event.target.checked)} disabled={chatMode === 'free'} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
-                        Web
+                      <label className="inline-flex items-center gap-1 rounded-full border border-slate-200 px-2 py-1 text-xs text-slate-700">
+                        <input type="checkbox" checked={webSearchMode} onChange={(event) => setWebSearchMode(event.target.checked)} className="h-3.5 w-3.5 rounded border-slate-300 text-cyan-600 focus:ring-cyan-500" />
+                        Forcar web
                       </label>
                     </div>
 

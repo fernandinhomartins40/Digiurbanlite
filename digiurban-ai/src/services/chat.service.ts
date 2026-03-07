@@ -262,7 +262,7 @@ function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): strin
   const instructions = [
     'Voce esta no modo chat livre da DigiUrban IA.',
     'Atue como um assistente geral de escrita, analise, revisao e produtividade.',
-    'Nao assuma acesso a protocolos, cadastros, banco de dados, conhecimento interno ou contexto web, a menos que o usuario forneca essas informacoes na propria conversa.',
+    'Nao assuma acesso a protocolos, cadastros, banco de dados ou conhecimento interno, a menos que o usuario forneca essas informacoes na propria conversa.',
     'Se o usuario pedir dados internos do sistema, deixe claro que neste modo nao ha contexto conectado e sugira usar o modo contextual.',
     'Responda em portugues do Brasil de forma direta e natural.',
     'Em tarefas de redacao ou revisao, entregue primeiro o texto pronto ou a resposta objetiva, sem introducoes desnecessarias.',
@@ -273,6 +273,26 @@ function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): strin
   }
 
   return instructions.join('\n\n');
+}
+
+function buildFreeModePromptWithWebContext(params: {
+  extraInstruction?: string;
+  webContext: string[];
+  webSearchEnabled: boolean;
+}): string {
+  const basePrompt = buildFreeModeSystemPrompt({
+    extraInstruction: params.extraInstruction,
+  });
+
+  if (!params.webSearchEnabled || !params.webContext.length) {
+    return `${basePrompt}\n\nSem contexto web nesta solicitacao.`;
+  }
+
+  return [
+    basePrompt,
+    'Quando houver contexto web abaixo, use-o como referencia externa atualizada e cite os links mais relevantes na resposta.',
+    `Contexto web:\n${params.webContext.map((chunk, index) => `[Web ${index + 1}]\n${chunk}`).join('\n\n')}`,
+  ].join('\n\n');
 }
 
 function buildWebContextChunks(results: WebSearchResult[]): string[] {
@@ -343,7 +363,91 @@ function shouldUseLowLatencyProfile(query: string): boolean {
     return true;
   }
 
+  const currentFactSignals = [
+    'atualmente',
+    'hoje',
+    'agora',
+    'neste momento',
+    'habitantes',
+    'populacao',
+    'cotacao',
+    'preco',
+    'temperatura',
+    'clima',
+    'resultado',
+    'noticias',
+  ];
+  const directLookupSignals = [
+    'busque',
+    'pesquise',
+    'procure',
+    'na web',
+    'na internet',
+    'quantos',
+    'qual',
+    'quem',
+    'quando',
+    'onde',
+  ];
+  const hasCurrentFactSignal = currentFactSignals.some((signal) => normalized.includes(signal));
+  const hasDirectLookupSignal = directLookupSignals.some((signal) => normalized.includes(signal));
+  if (words.length <= 14 && hasCurrentFactSignal && hasDirectLookupSignal) {
+    return true;
+  }
+
   return false;
+}
+
+function shouldAutoUseWebSearch(query: string): boolean {
+  const normalized = normalizeIntentText(query);
+  if (!normalized) return false;
+
+  const explicitWebIntent = [
+    'busque na web',
+    'pesquise na web',
+    'procure na web',
+    'na internet',
+    'na web',
+    'online',
+    'pesquise',
+    'busque',
+    'procure',
+    'google',
+  ].some((signal) => normalized.includes(signal));
+
+  if (explicitWebIntent) {
+    return true;
+  }
+
+  const currentDataIntent = [
+    'atualmente',
+    'hoje',
+    'agora',
+    'neste momento',
+    'ultimas',
+    'ultimos',
+    'recente',
+    'recentes',
+    'habitantes',
+    'populacao',
+    'preco',
+    'cotacao',
+    'clima',
+    'temperatura',
+    'noticias',
+    'resultado',
+  ].some((signal) => normalized.includes(signal));
+
+  const lookupFormatIntent = [
+    'quantos',
+    'qual',
+    'quem',
+    'quando',
+    'onde',
+    'quanto',
+  ].some((signal) => normalized.includes(signal));
+
+  return currentDataIntent && lookupFormatIntent;
 }
 
 function resolveChatMode(params: {
@@ -575,9 +679,14 @@ async function resolveWebSearchContext(params: {
   conversationId?: string;
   source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
   requested?: boolean;
+  autoDetect?: boolean;
 }): Promise<{ enabled: boolean; results: WebSearchResult[] }> {
   const requested =
-    typeof params.requested === 'boolean' ? params.requested : config.webSearchDefault;
+    typeof params.requested === 'boolean'
+      ? params.requested
+      : params.autoDetect
+        ? shouldAutoUseWebSearch(params.query)
+        : config.webSearchDefault;
 
   if (!requested) {
     return { enabled: false, results: [] };
@@ -1188,10 +1297,8 @@ export class ChatService {
       tenantId: params.tenantId,
       conversationId: params.conversationId,
       source: params.source,
-      requested:
-        params.chatMode === 'rag' && !params.lowLatencyProfile && !params.useBuiltInTools
-          ? params.webSearchRequested
-          : false,
+      requested: params.webSearchRequested,
+      autoDetect: !params.useBuiltInTools,
     });
 
     let modelMessages =
@@ -1214,8 +1321,10 @@ export class ChatService {
             [
               {
                 role: 'system',
-                content: buildFreeModeSystemPrompt({
+                content: buildFreeModePromptWithWebContext({
                   extraInstruction: params.extraInstruction,
+                  webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
+                  webSearchEnabled: webSearch.enabled,
                 }),
               },
               ...params.messages,

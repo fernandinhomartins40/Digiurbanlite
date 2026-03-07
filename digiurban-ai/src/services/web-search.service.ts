@@ -9,6 +9,11 @@ export interface WebSearchResult {
   source: 'serper' | 'duckduckgo';
 }
 
+type WebSearchCacheEntry = {
+  expiresAt: number;
+  results: WebSearchResult[];
+};
+
 function decodeHtml(input: string): string {
   return input
     .replace(/&amp;/g, '&')
@@ -56,6 +61,8 @@ function normalizeUrl(rawUrl: string): string | null {
 }
 
 export class WebSearchService {
+  private readonly cache = new Map<string, WebSearchCacheEntry>();
+
   async search(query: string, maxResults = config.webSearchMaxResults): Promise<WebSearchResult[]> {
     if (!config.webSearchEnabled) {
       return [];
@@ -68,17 +75,41 @@ export class WebSearchService {
 
     const boundedMaxResults = Math.min(Math.max(maxResults, 1), 10);
     const provider = config.webSearchProvider;
+    const cacheKey = `${provider}:${boundedMaxResults}:${normalizedQuery.toLowerCase()}`;
+    const now = Date.now();
+    const cached = this.cache.get(cacheKey);
+    if (cached && cached.expiresAt > now) {
+      return cached.results;
+    }
+    if (cached) {
+      this.cache.delete(cacheKey);
+    }
+
+    let results: WebSearchResult[];
 
     if (provider === 'serper') {
-      return this.searchWithSerper(normalizedQuery, boundedMaxResults);
+      results = await this.searchWithSerper(normalizedQuery, boundedMaxResults);
+    } else if (provider === 'duckduckgo') {
+      results = await this.searchWithDuckDuckGo(normalizedQuery, boundedMaxResults);
+    } else {
+      logger.warn('Unsupported web search provider configured', { provider });
+      return [];
     }
 
-    if (provider === 'duckduckgo') {
-      return this.searchWithDuckDuckGo(normalizedQuery, boundedMaxResults);
+    this.cache.set(cacheKey, {
+      expiresAt: now + Math.max(30_000, config.webSearchCacheTtlMs),
+      results,
+    });
+
+    if (this.cache.size > 200) {
+      for (const [key, entry] of this.cache.entries()) {
+        if (entry.expiresAt <= now) {
+          this.cache.delete(key);
+        }
+      }
     }
 
-    logger.warn('Unsupported web search provider configured', { provider });
-    return [];
+    return results;
   }
 
   private async searchWithSerper(query: string, maxResults: number): Promise<WebSearchResult[]> {

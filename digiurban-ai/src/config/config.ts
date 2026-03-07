@@ -89,8 +89,8 @@ export const config = {
   ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '220', 10),
   ollamaRagMaxTokens: parseInt(process.env.AI_OLLAMA_RAG_MAX_TOKENS || '140', 10),
   ollamaDraftMaxTokens: parseInt(process.env.AI_OLLAMA_DRAFT_MAX_TOKENS || '220', 10),
-  ollamaFastMaxTokens: parseInt(process.env.AI_OLLAMA_FAST_MAX_TOKENS || '120', 10),
-  ollamaFastNumCtx: parseInt(process.env.AI_OLLAMA_FAST_NUM_CTX || '2048', 10),
+  ollamaFastMaxTokens: parseInt(process.env.AI_OLLAMA_FAST_MAX_TOKENS || '96', 10),
+  ollamaFastNumCtx: parseInt(process.env.AI_OLLAMA_FAST_NUM_CTX || '1536', 10),
   ollamaKeepAlive: normalizeOllamaKeepAlive(
     process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE,
   ),
@@ -119,6 +119,7 @@ export const config = {
   webSearchProvider: (process.env.AI_WEB_SEARCH_PROVIDER || 'duckduckgo').toLowerCase(),
   webSearchTimeoutMs: parseInt(process.env.AI_WEB_SEARCH_TIMEOUT_MS || '12000', 10),
   webSearchMaxResults: parseInt(process.env.AI_WEB_SEARCH_MAX_RESULTS || '5', 10),
+  webSearchCacheTtlMs: parseInt(process.env.AI_WEB_SEARCH_CACHE_TTL_MS || '300000', 10),
   webSearchSerperApiKey: process.env.AI_WEB_SEARCH_SERPER_API_KEY || '',
   webSearchUserAgent:
     process.env.AI_WEB_SEARCH_USER_AGENT ||
