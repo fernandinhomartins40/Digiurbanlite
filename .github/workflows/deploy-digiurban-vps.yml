@@ -326,33 +326,42 @@ jobs:
               echo "Tentativa $i/30, aguardando 5s..."
               sleep 5
             done
+            PRIMARY_MODEL="qwen3.5:9b"
+            FALLBACK_MODEL="qwen3.5:4b"
 
-            # Verificar se modelo Qwen3.5:9b já está instalado
-            if docker exec digiurban-ollama ollama list | grep -q "qwen3.5:9b"; then
-              echo "✅ Modelo Qwen3.5:9b já instalado"
-              MODEL_NAME="qwen3.5:9b"
-            else
-              echo "📥 Baixando modelo Qwen3.5:9b (~6-7GB, pode levar alguns minutos)..."
-              docker exec digiurban-ollama ollama pull qwen3.5:9b || echo "⚠️ Falha ao baixar Qwen3.5:9b, tentando fallback qwen2.5:7b..."
+            ensure_ollama_model() {
+              local model_name="$1"
 
-              # Fallback para Qwen2.5:7b se Qwen3.5 falhar
-              if ! docker exec digiurban-ollama ollama list | grep -q "qwen3.5:9b"; then
-                echo "📥 Baixando modelo fallback Qwen2.5:7b..."
-                docker exec digiurban-ollama ollama pull qwen2.5:7b
-                sed -i 's/OLLAMA_MODEL=.*/OLLAMA_MODEL=qwen2.5:7b/' .env
-                sed -i 's/AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=qwen2.5:7b/' .env
-                MODEL_NAME="qwen2.5:7b"
-              else
-                sed -i 's/OLLAMA_MODEL=.*/OLLAMA_MODEL=qwen3.5:9b/' .env
-                sed -i 's/AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=qwen3.5:9b/' .env
-                MODEL_NAME="qwen3.5:9b"
+              if docker exec digiurban-ollama ollama list | grep -q "${model_name}"; then
+                echo "✅ Modelo ${model_name} já instalado"
+                return 0
               fi
+
+              echo "📥 Baixando modelo ${model_name}..."
+              docker exec digiurban-ollama ollama pull "${model_name}"
+            }
+
+            ensure_ollama_model "${PRIMARY_MODEL}"
+            ensure_ollama_model "${FALLBACK_MODEL}"
+
+            sed -i "s/^OLLAMA_MODEL=.*/OLLAMA_MODEL=${PRIMARY_MODEL}/" .env
+            sed -i "s/^AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=${PRIMARY_MODEL}/" .env
+            if grep -q '^AI_OLLAMA_FALLBACK_MODEL=' .env; then
+              sed -i "s/^AI_OLLAMA_FALLBACK_MODEL=.*/AI_OLLAMA_FALLBACK_MODEL=${FALLBACK_MODEL}/" .env
+            else
+              echo "AI_OLLAMA_FALLBACK_MODEL=${FALLBACK_MODEL}" >> .env
+            fi
+            if grep -q '^AI_OLLAMA_WARMUP_MODELS=' .env; then
+              sed -i "s/^AI_OLLAMA_WARMUP_MODELS=.*/AI_OLLAMA_WARMUP_MODELS=${PRIMARY_MODEL},${FALLBACK_MODEL}/" .env
+            else
+              echo "AI_OLLAMA_WARMUP_MODELS=${PRIMARY_MODEL},${FALLBACK_MODEL}" >> .env
             fi
 
-            # Testar modelo base
-            MODEL_NAME="${MODEL_NAME:-qwen3.5:9b}"
-            echo "🧪 Testando modelo ${MODEL_NAME}..."
-            docker exec digiurban-ollama ollama run "${MODEL_NAME}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo falhou, mas continuando..."
+            # Testar modelos base
+            echo "🧪 Testando modelo principal ${PRIMARY_MODEL}..."
+            docker exec digiurban-ollama ollama run "${PRIMARY_MODEL}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo principal falhou, mas continuando..."
+            echo "🧪 Testando modelo rápido ${FALLBACK_MODEL}..."
+            docker exec digiurban-ollama ollama run "${FALLBACK_MODEL}" "Olá" 2>/dev/null | head -5 || echo "⚠️ Teste do modelo rápido falhou, mas continuando..."
 
             # Reiniciar backend para aplicar configurações Ollama
             echo "🔄 Reiniciando backend para aplicar configurações Ollama..."
