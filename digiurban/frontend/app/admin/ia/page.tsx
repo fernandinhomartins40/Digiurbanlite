@@ -110,6 +110,34 @@ function AssistantMessageBody({ content }: { content: string }) {
   );
 }
 
+function AssistantPendingState() {
+  return (
+    <div className="rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-3">
+      <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
+        <span className="relative flex h-2.5 w-2.5">
+          <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-cyan-400/80" />
+          <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-cyan-500" />
+        </span>
+        <span>Preparando resposta</span>
+        <span className="ml-1 flex items-center gap-1">
+          {[0, 1, 2].map((index) => (
+            <span
+              key={index}
+              className="h-1.5 w-1.5 animate-pulse rounded-full bg-cyan-500"
+              style={{ animationDelay: `${index * 180}ms` }}
+            />
+          ))}
+        </span>
+      </div>
+      <div className="mt-3 space-y-2">
+        <div className="h-2.5 w-full animate-pulse rounded-full bg-slate-200" />
+        <div className="h-2.5 w-11/12 animate-pulse rounded-full bg-slate-200" style={{ animationDelay: '120ms' }} />
+        <div className="h-2.5 w-8/12 animate-pulse rounded-full bg-slate-200" style={{ animationDelay: '240ms' }} />
+      </div>
+    </div>
+  );
+}
+
 function formatDate(value?: string | null): string {
   if (!value) return '-';
   const date = new Date(value);
@@ -589,6 +617,7 @@ export default function AdminAiPage() {
                     (metadata.thinkEnabled === true || isThinkingNow || thinkingText.length > 0) &&
                     (isThinkingNow || thinkingText.length > 0);
                   const visibleContent = (message.content || '').trim();
+                  const showPendingState = !isUser && !visibleContent;
 
                   return (
                     <div key={message.id} className={`flex items-start gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}>
@@ -622,6 +651,10 @@ export default function AdminAiPage() {
                             </summary>
                             <div className="whitespace-pre-wrap px-3 pb-3 text-xs text-slate-600">{thinkingText || 'Processando raciocinio...'}</div>
                           </details>
+                        ) : null}
+
+                        {showPendingState ? (
+                          <AssistantPendingState />
                         ) : null}
 
                         {visibleContent ? (
