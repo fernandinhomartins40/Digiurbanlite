@@ -258,6 +258,23 @@ function buildSystemPrompt(params: {
     .join('\n\n');
 }
 
+function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): string {
+  const instructions = [
+    'Voce esta no modo chat livre da DigiUrban IA.',
+    'Atue como um assistente geral de escrita, analise, revisao e produtividade.',
+    'Nao assuma acesso a protocolos, cadastros, banco de dados, conhecimento interno ou contexto web, a menos que o usuario forneca essas informacoes na propria conversa.',
+    'Se o usuario pedir dados internos do sistema, deixe claro que neste modo nao ha contexto conectado e sugira usar o modo contextual.',
+    'Responda em portugues do Brasil de forma direta e natural.',
+    'Em tarefas de redacao ou revisao, entregue primeiro o texto pronto ou a resposta objetiva, sem introducoes desnecessarias.',
+  ];
+
+  if (params.extraInstruction?.trim()) {
+    instructions.push(`Instrucao adicional: ${params.extraInstruction.trim()}`);
+  }
+
+  return instructions.join('\n\n');
+}
+
 function buildWebContextChunks(results: WebSearchResult[]): string[] {
   if (!results.length) return [];
 
@@ -1158,15 +1175,15 @@ export class ChatService {
             ...params.messages,
           ])
         : boundConversationMessages(
-            params.extraInstruction?.trim()
-              ? [
-                  {
-                    role: 'system',
-                    content: `Instrucao adicional: ${params.extraInstruction.trim()}`,
-                  },
-                  ...params.messages,
-                ]
-              : params.messages,
+            [
+              {
+                role: 'system',
+                content: buildFreeModeSystemPrompt({
+                  extraInstruction: params.extraInstruction,
+                }),
+              },
+              ...params.messages,
+            ],
           );
 
     modelMessages = appendStructuredOutputInstruction(modelMessages, params.responseFormat);

@@ -99,13 +99,19 @@ function normalizeAssistantMessage(message: AiMessage, thinkEnabled: boolean, ch
   if (message.role !== 'ASSISTANT') return message;
   const metadata = getMetadata(message);
   const hasThinking = typeof metadata.thinking === 'string' && metadata.thinking.trim().length > 0;
+  const resolvedThinkEnabled = metadata.thinkEnabled ?? thinkEnabled;
   return {
     ...message,
     metadata: {
       ...metadata,
-      thinkEnabled: metadata.thinkEnabled ?? thinkEnabled,
+      thinkEnabled: resolvedThinkEnabled,
       chatMode: metadata.chatMode ?? chatMode,
-      thinkingStatus: hasThinking ? 'completed' : metadata.thinkingStatus,
+      thinkingStatus:
+        hasThinking
+          ? 'completed'
+          : resolvedThinkEnabled && metadata.thinkingStatus === 'processing'
+            ? 'processing'
+            : undefined,
     },
   };
 }
@@ -171,11 +177,14 @@ export default function AdminAiPage() {
         return;
       }
 
-      const selected =
-        activeConversationId && list.some((conversation) => conversation.id === activeConversationId)
-          ? activeConversationId
-          : list[0].id;
-      await loadConversationById(selected);
+      if (activeConversationId && list.some((conversation) => conversation.id === activeConversationId)) {
+        await loadConversationById(activeConversationId);
+        return;
+      }
+
+      setActiveConversationId(null);
+      setMessages([]);
+      setLoadingMessages(false);
     } catch (error) {
       setLoadingMessages(false);
       toast({
@@ -196,6 +205,9 @@ export default function AdminAiPage() {
       setMessages([]);
       setDraft('');
       setAttachments([]);
+      setChatMode('free');
+      setThinkMode(false);
+      setWebSearchMode(false);
       setConversationsModalOpen(false);
     } catch (error) {
       toast({
@@ -293,7 +305,7 @@ export default function AdminAiPage() {
         totalTokens: 0,
         createdAt: new Date().toISOString(),
         metadata: {
-          thinkingStatus: 'processing',
+          thinkingStatus: thinkMode ? 'processing' : undefined,
           thinkEnabled: thinkMode,
           chatMode,
           thinking: thinkMode ? 'Analisando e preparando resposta...' : undefined,
@@ -337,7 +349,7 @@ export default function AdminAiPage() {
                 ...current,
                 metadata: {
                   ...metadata,
-                  thinkEnabled: thinkMode,
+                  thinkEnabled: true,
                   chatMode,
                   thinkingStatus: 'processing',
                   thinking: `${metadata.thinking || ''}${delta}`,
@@ -507,7 +519,10 @@ export default function AdminAiPage() {
                   const webSources = Array.isArray(webSearch?.sources) ? webSearch.sources : [];
                   const thinkingText = typeof metadata.thinking === 'string' ? metadata.thinking.trim() : '';
                   const isThinkingNow = !isUser && metadata.thinkingStatus === 'processing';
-                  const showThinkingPanel = !isUser && (isThinkingNow || thinkingText.length > 0);
+                  const showThinkingPanel =
+                    !isUser &&
+                    (metadata.thinkEnabled === true || isThinkingNow || thinkingText.length > 0) &&
+                    (isThinkingNow || thinkingText.length > 0);
                   const visibleContent = (message.content || '').trim();
 
                   return (

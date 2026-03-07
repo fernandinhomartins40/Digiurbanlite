@@ -261,6 +261,7 @@ function buildResultFromPayload(params: {
   model: string;
   rawContent: string;
   directThinking?: string;
+  includeThinking?: boolean;
   toolCalls?: ModelToolCall[];
   promptEvalCount?: number;
   evalCount?: number;
@@ -271,7 +272,10 @@ function buildResultFromPayload(params: {
 }): ChatCompletionResult {
   const extracted = extractThinkingFromContent(params.rawContent);
   const content = extracted.content;
-  const thinking = mergeThinking(params.directThinking, extracted.thinking);
+  const thinking =
+    params.includeThinking === false
+      ? undefined
+      : mergeThinking(params.directThinking, extracted.thinking);
   const toolCalls = normalizeToolCalls(params.toolCalls);
 
   if (!content && !toolCalls?.length) {
@@ -775,6 +779,7 @@ export class OllamaService {
       model: body.model || attempt.model,
       rawContent: body?.message?.content || '',
       directThinking: body?.message?.thinking?.trim(),
+      includeThinking: attempt.think !== false,
       toolCalls: body?.message?.tool_calls,
       promptEvalCount: body.prompt_eval_count,
       evalCount: body.eval_count,
@@ -791,6 +796,7 @@ export class OllamaService {
     callbacks?: ChatStreamCallbacks,
   ): Promise<ChatCompletionResult> {
     const startedAt = Date.now();
+    const allowThinking = attempt.think !== false;
     const payload = this.buildPayload(messages, attempt, {
       stream: true,
       format: requestOptions?.format,
@@ -828,7 +834,7 @@ export class OllamaService {
       const now = Date.now();
 
       const thinkingDelta = chunk.message?.thinking;
-      if (thinkingDelta) {
+      if (allowThinking && thinkingDelta) {
         if (firstOutputAt === undefined) {
           firstOutputAt = now;
         }
@@ -881,6 +887,7 @@ export class OllamaService {
       model: lastChunk?.model || attempt.model,
       rawContent,
       directThinking: streamThinking,
+      includeThinking: allowThinking,
       toolCalls,
       promptEvalCount: lastChunk?.prompt_eval_count,
       evalCount: lastChunk?.eval_count,
