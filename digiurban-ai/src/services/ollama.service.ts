@@ -476,14 +476,17 @@ export class OllamaService {
     runner: (attempt: ChatAttemptOptions) => Promise<ChatCompletionResult>,
     canRetry: () => boolean,
   ): Promise<ChatCompletionResult> {
-    const selectedModel = explicitModel || config.ollamaModel;
+    const normalizedExplicitModel = explicitModel?.trim();
+    const selectedModel = normalizedExplicitModel || config.ollamaModel;
     const profile = requestOptions?.profile || 'draft';
     const selectedThink = this.resolveThinkingMode(requestOptions?.think, profile);
     const allowFallback = requestOptions?.allowFallback !== false;
     const fallbackModel = config.ollamaFallbackModel.trim();
+    const fallbackAllowedForSelection =
+      !normalizedExplicitModel || normalizedExplicitModel === config.ollamaModel;
     const attemptedModels: string[] = [];
     const shouldBypassPrimary =
-      !explicitModel &&
+      fallbackAllowedForSelection &&
       allowFallback &&
       fallbackModel.length > 0 &&
       fallbackModel !== selectedModel &&
@@ -526,7 +529,7 @@ export class OllamaService {
 
         const shouldRetryWithFallback =
           allowFallback &&
-          !explicitModel &&
+          fallbackAllowedForSelection &&
           fallbackModel.length > 0 &&
           fallbackModel !== selectedModel &&
           this.isRetryableError(primaryError) &&
@@ -561,7 +564,7 @@ export class OllamaService {
     try {
       const result = await runner(fallbackAttempt);
       this.recordSuccess(fallbackAttempt.model, fallbackAttempt.profile, result);
-      this.rewarmPrimaryInBackground(selectedModel, explicitModel);
+      this.rewarmPrimaryInBackground(selectedModel, normalizedExplicitModel);
       return {
         ...result,
         profile,
@@ -578,7 +581,7 @@ export class OllamaService {
           ? normalizedFallbackError.message
           : String(normalizedFallbackError),
       );
-      this.rewarmPrimaryInBackground(selectedModel, explicitModel);
+      this.rewarmPrimaryInBackground(selectedModel, normalizedExplicitModel);
       throw this.attachAttemptMetadata(normalizedFallbackError, attemptedModels);
     }
   }

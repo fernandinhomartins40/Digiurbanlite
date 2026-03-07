@@ -139,6 +139,9 @@ async function proxyStreamRequest(
         message: error.message,
       });
       if (!res.writableEnded) {
+        if (res.headersSent) {
+          res.write(`${JSON.stringify({ type: 'error', error: 'Falha no stream da IA centralizada' })}\n`);
+        }
         res.end();
       }
     });
@@ -149,6 +152,7 @@ async function proxyStreamRequest(
         if (!res.headersSent) {
           res.status(error.response.status).json({ error: 'Falha no stream da IA centralizada' });
         } else if (!res.writableEnded) {
+          res.write(`${JSON.stringify({ type: 'error', error: 'Falha no stream da IA centralizada' })}\n`);
           res.end();
         }
         return;
@@ -157,6 +161,9 @@ async function proxyStreamRequest(
       if (error.code === 'ECONNABORTED') {
         if (!res.headersSent) {
           res.status(504).json({ error: 'Tempo limite ao consultar a IA centralizada' });
+        } else if (!res.writableEnded) {
+          res.write(`${JSON.stringify({ type: 'error', error: 'Tempo limite ao consultar a IA centralizada' })}\n`);
+          res.end();
         }
         return;
       }
@@ -168,6 +175,9 @@ async function proxyStreamRequest(
       ) {
         if (!res.headersSent) {
           res.status(503).json({ error: 'IA centralizada indisponivel no momento' });
+        } else if (!res.writableEnded) {
+          res.write(`${JSON.stringify({ type: 'error', error: 'IA centralizada indisponivel no momento' })}\n`);
+          res.end();
         }
         return;
       }

@@ -69,10 +69,10 @@ export const config = {
   ollamaModel: process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
   ollamaFallbackModel: process.env.AI_OLLAMA_FALLBACK_MODEL || 'digibot-qwen2.5:latest',
   ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '60000', 10),
-  ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '18000', 10),
+  ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '30000', 10),
   ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '18000', 10),
   ollamaFallbackFastTimeoutMs: parseInt(
-    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '12000',
+    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '18000',
     10,
   ),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),

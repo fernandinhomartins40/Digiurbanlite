@@ -32,6 +32,7 @@ const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE = 8 * 1024 * 1024;
 const TEXT_PREVIEW_LIMIT = 2500;
 const MODEL_OPTIONS = [
+  { value: 'auto', label: 'Automatico (Qwen + fallback)' },
   { value: 'qwen3.5:9b', label: 'Qwen 3.5 9B' },
   { value: 'digibot-qwen2.5:latest', label: 'DigiBot Qwen 2.5' },
 ];
@@ -205,6 +206,7 @@ export default function AdminAiPage() {
       setMessages([]);
       setDraft('');
       setAttachments([]);
+      setSelectedModel('auto');
       setChatMode('free');
       setThinkMode(false);
       setWebSearchMode(false);
@@ -335,7 +337,7 @@ export default function AdminAiPage() {
         conversationId,
         {
           content,
-          model: selectedModel,
+          model: selectedModel === 'auto' ? undefined : selectedModel,
           mode: chatMode,
           think: thinkMode,
           webSearch: webSearchMode,
