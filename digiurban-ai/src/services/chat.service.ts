@@ -378,6 +378,27 @@ function resolveInferenceProfile(params: {
   return params.chatMode === 'rag' ? 'rag' : 'draft';
 }
 
+function resolveAutomaticModel(params: {
+  requestedModel?: string;
+  source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
+  chatMode: ChatMode;
+}): string | undefined {
+  const requestedModel = params.requestedModel?.trim();
+  if (requestedModel) {
+    return requestedModel;
+  }
+
+  if (
+    params.source === 'ADMIN_CHAT' &&
+    params.chatMode === 'free' &&
+    config.ollamaFallbackModel.trim()
+  ) {
+    return config.ollamaFallbackModel.trim();
+  }
+
+  return undefined;
+}
+
 function normalizeAttachmentText(value?: string): string | undefined {
   if (!value) return undefined;
   const normalized = value.trim().replace(/\s+\n/g, '\n');
@@ -670,6 +691,11 @@ export class ChatService {
 
     const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
     const chatMode: ChatMode = params.mode || 'free';
+    const resolvedModel = resolveAutomaticModel({
+      requestedModel: params.model,
+      source: 'ADMIN_CHAT',
+      chatMode,
+    });
     const conversation = await prisma.aiConversation.findFirst({
       where: {
         id: params.conversationId,
@@ -736,7 +762,7 @@ export class ChatService {
       relevantChunks: prepared.relevantChunks,
       tenantId: params.tenantId,
       modelMessages: prepared.modelMessages,
-      model: params.model,
+      model: resolvedModel,
       think: params.think,
       chatMode,
       lowLatencyProfile,
@@ -842,6 +868,11 @@ export class ChatService {
 
     const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
     const chatMode: ChatMode = params.mode || 'free';
+    const resolvedModel = resolveAutomaticModel({
+      requestedModel: params.model,
+      source: 'ADMIN_CHAT',
+      chatMode,
+    });
     const conversation = await prisma.aiConversation.findFirst({
       where: {
         id: params.conversationId,
@@ -908,7 +939,7 @@ export class ChatService {
       relevantChunks: prepared.relevantChunks,
       tenantId: params.tenantId,
       modelMessages: prepared.modelMessages,
-      model: params.model,
+      model: resolvedModel,
       think: params.think,
       chatMode,
       lowLatencyProfile,
@@ -1033,6 +1064,11 @@ export class ChatService {
       requestedMode: params.mode,
       source: params.source,
     });
+    const resolvedModel = resolveAutomaticModel({
+      requestedModel: params.model,
+      source: params.source,
+      chatMode,
+    });
 
     const prepared = await this.prepareModelMessages({
       tenantId: params.tenantId,
@@ -1054,7 +1090,7 @@ export class ChatService {
       relevantChunks: prepared.relevantChunks,
       tenantId: params.tenantId,
       modelMessages: prepared.modelMessages,
-      model: params.model,
+      model: resolvedModel,
       think: params.think,
       chatMode,
       lowLatencyProfile,

@@ -13,6 +13,8 @@ import {
   User,
   X,
 } from 'lucide-react';
+import ReactMarkdown, { Components } from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
@@ -32,9 +34,9 @@ const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE = 8 * 1024 * 1024;
 const TEXT_PREVIEW_LIMIT = 2500;
 const MODEL_OPTIONS = [
-  { value: 'auto', label: 'Automatico (Qwen + fallback)' },
+  { value: 'auto', label: 'Automatico (Qwen 3.5 4B)' },
+  { value: 'qwen3.5:4b', label: 'Qwen 3.5 4B' },
   { value: 'qwen3.5:9b', label: 'Qwen 3.5 9B' },
-  { value: 'digibot-qwen2.5:latest', label: 'DigiBot Qwen 2.5' },
 ];
 const CHAT_MODE_OPTIONS: Array<{ value: AdminChatMode; label: string; description: string }> = [
   { value: 'free', label: 'Chat livre', description: 'Conversa direta com o modelo, sem RAG.' },
@@ -46,6 +48,67 @@ const QUICK_PROMPTS = [
   'Estruture um comunicado interno claro e objetivo.',
   'Transforme este rascunho em uma resposta institucional.',
 ];
+
+const assistantMarkdownComponents: Components = {
+  p: ({ children }) => <p className="mb-4 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="mb-4 ml-5 list-disc space-y-1 last:mb-0">{children}</ul>,
+  ol: ({ children }) => <ol className="mb-4 ml-5 list-decimal space-y-1 last:mb-0">{children}</ol>,
+  li: ({ children }) => <li className="pl-1">{children}</li>,
+  strong: ({ children }) => <strong className="font-semibold text-slate-900">{children}</strong>,
+  em: ({ children }) => <em className="italic">{children}</em>,
+  h1: ({ children }) => <h1 className="mb-3 text-xl font-semibold tracking-tight text-slate-900">{children}</h1>,
+  h2: ({ children }) => <h2 className="mb-3 text-lg font-semibold tracking-tight text-slate-900">{children}</h2>,
+  h3: ({ children }) => <h3 className="mb-2 text-base font-semibold text-slate-900">{children}</h3>,
+  a: ({ children, href }) => (
+    <a href={href} target="_blank" rel="noreferrer" className="text-cyan-700 underline decoration-cyan-300 underline-offset-2 hover:text-cyan-800">
+      {children}
+    </a>
+  ),
+  blockquote: ({ children }) => (
+    <blockquote className="mb-4 border-l-2 border-cyan-300 bg-cyan-50/60 px-4 py-2 text-slate-700 last:mb-0">
+      {children}
+    </blockquote>
+  ),
+  hr: () => <hr className="my-4 border-slate-200" />,
+  pre: ({ children }) => (
+    <pre className="mb-4 overflow-x-auto rounded-xl border border-slate-200 bg-slate-950 px-4 py-3 text-xs text-slate-100 last:mb-0">
+      {children}
+    </pre>
+  ),
+  code: ({ children, className, ...props }) => {
+    const rendered = String(children).replace(/\n$/, '');
+    const isBlock = Boolean(className) || rendered.includes('\n');
+
+    return isBlock ? (
+      <code className={className} {...props}>
+        {children}
+      </code>
+    ) : (
+      <code className="rounded bg-slate-100 px-1.5 py-0.5 font-mono text-[0.85em] text-slate-800" {...props}>
+        {children}
+      </code>
+    );
+  },
+  table: ({ children }) => (
+    <div className="mb-4 overflow-x-auto last:mb-0">
+      <table className="min-w-full border-collapse overflow-hidden rounded-lg border border-slate-200 text-sm">
+        {children}
+      </table>
+    </div>
+  ),
+  th: ({ children }) => <th className="border border-slate-200 bg-slate-100 px-3 py-2 text-left font-medium text-slate-700">{children}</th>,
+  td: ({ children }) => <td className="border border-slate-200 px-3 py-2 align-top text-slate-700">{children}</td>,
+};
+
+function AssistantMessageBody({ content }: { content: string }) {
+  return (
+    <div className="text-sm leading-7 text-slate-800">
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={assistantMarkdownComponents}>
+        {content}
+      </ReactMarkdown>
+    </div>
+  );
+}
 
 function formatDate(value?: string | null): string {
   if (!value) return '-';
@@ -562,7 +625,11 @@ export default function AdminAiPage() {
                         ) : null}
 
                         {visibleContent ? (
-                          <p className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{visibleContent}</p>
+                          isUser ? (
+                            <p className="whitespace-pre-wrap text-sm leading-7 text-slate-800">{visibleContent}</p>
+                          ) : (
+                            <AssistantMessageBody content={visibleContent} />
+                          )
                         ) : null}
 
                         {messageAttachments.length > 0 ? (

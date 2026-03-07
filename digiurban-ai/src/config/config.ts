@@ -67,12 +67,12 @@ export const config = {
 
   ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
   ollamaModel: process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
-  ollamaFallbackModel: process.env.AI_OLLAMA_FALLBACK_MODEL || 'digibot-qwen2.5:latest',
+  ollamaFallbackModel: process.env.AI_OLLAMA_FALLBACK_MODEL || 'qwen3.5:4b',
   ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '60000', 10),
   ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '30000', 10),
   ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '18000', 10),
   ollamaFallbackFastTimeoutMs: parseInt(
-    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '18000',
+    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '35000',
     10,
   ),
   ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
@@ -88,14 +88,14 @@ export const config = {
   ollamaMainGpu: parseOptionalInt(process.env.AI_OLLAMA_MAIN_GPU),
   ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '220', 10),
   ollamaRagMaxTokens: parseInt(process.env.AI_OLLAMA_RAG_MAX_TOKENS || '140', 10),
-  ollamaDraftMaxTokens: parseInt(process.env.AI_OLLAMA_DRAFT_MAX_TOKENS || '140', 10),
+  ollamaDraftMaxTokens: parseInt(process.env.AI_OLLAMA_DRAFT_MAX_TOKENS || '220', 10),
   ollamaFastMaxTokens: parseInt(process.env.AI_OLLAMA_FAST_MAX_TOKENS || '120', 10),
   ollamaFastNumCtx: parseInt(process.env.AI_OLLAMA_FAST_NUM_CTX || '2048', 10),
   ollamaKeepAlive: normalizeOllamaKeepAlive(
     process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE,
   ),
   ollamaFallbackKeepAlive: normalizeOllamaKeepAlive(
-    process.env.AI_OLLAMA_FALLBACK_KEEP_ALIVE || '45s',
+    process.env.AI_OLLAMA_FALLBACK_KEEP_ALIVE || '30m',
   ),
   ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
   ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
