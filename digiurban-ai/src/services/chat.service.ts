@@ -324,9 +324,11 @@ function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): strin
         'responda em pt-BR',
         'entregue a resposta final primeiro',
         'padrao curto: 1 paragrafo curto ou ate 5 bullets',
+        'se a mensagem do usuario for apenas uma saudacao ou cumprimento curto, responda apenas com uma saudacao curta e um convite simples para continuar',
         'em redacao ou revisao, entregue o texto pronto sem introducao',
         'nao finja acesso a dados internos ou protocolos',
         'se pedirem dados internos, diga que este modo nao tem contexto conectado',
+        'nao mencione limitacoes, suporte, portal, sistema interno ou canais oficiais sem que o usuario tenha pedido isso',
       ]),
     ),
     renderPromptSection(
@@ -806,6 +808,64 @@ function buildModelMessageContent(message: AiMessage): string {
   return `${baseContent}\n\n[Arquivos anexados]\n${attachmentContext}`;
 }
 
+function extractMessageMetadataRecord(message: AiMessage): Record<string, unknown> {
+  if (!message.metadata || typeof message.metadata !== 'object') {
+    return {};
+  }
+
+  return message.metadata as Record<string, unknown>;
+}
+
+function resolveStoredMessageExperience(message: AiMessage): AiExperience | undefined {
+  const metadata = extractMessageMetadataRecord(message);
+  const experience = metadata.experience;
+  if (experience === 'fast' || experience === 'contextual' || experience === 'quality') {
+    return experience;
+  }
+
+  const chatMode = metadata.chatMode;
+  if (chatMode === 'rag') {
+    return 'contextual';
+  }
+
+  return undefined;
+}
+
+function filterConversationHistoryForExperience(
+  messages: AiMessage[],
+  experience: AiExperience,
+): AiMessage[] {
+  if (!messages.length) {
+    return messages;
+  }
+
+  const relevantExperiences =
+    experience === 'contextual'
+      ? new Set<AiExperience>(['contextual'])
+      : new Set<AiExperience>(['fast', 'quality']);
+
+  let startIndex = 0;
+
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index];
+    if (message.role !== AiMessageRole.ASSISTANT) {
+      continue;
+    }
+
+    const storedExperience = resolveStoredMessageExperience(message);
+    if (!storedExperience) {
+      continue;
+    }
+
+    if (!relevantExperiences.has(storedExperience)) {
+      startIndex = index + 1;
+      break;
+    }
+  }
+
+  return messages.slice(startIndex);
+}
+
 function buildPerformanceMetadata(completion: ChatCompletionResult): Record<string, number | undefined> {
   return {
     firstTokenLatencyMs: completion.firstTokenLatencyMs,
@@ -1126,8 +1186,12 @@ export class ChatService {
         : config.maxConversationMessagesContext,
     });
 
-    const conversationMessages = recentMessages
-      .reverse()
+    const scopedHistory = filterConversationHistoryForExperience(
+      recentMessages.reverse(),
+      inferencePlan.experience,
+    );
+
+    const conversationMessages = scopedHistory
       .map((message) => ({
         role: mapStoredRoleToModelRole(message.role),
         content: buildModelMessageContent(message),
@@ -1330,8 +1394,12 @@ export class ChatService {
         : config.maxConversationMessagesContext,
     });
 
-    const conversationMessages = recentMessages
-      .reverse()
+    const scopedHistory = filterConversationHistoryForExperience(
+      recentMessages.reverse(),
+      inferencePlan.experience,
+    );
+
+    const conversationMessages = scopedHistory
       .map((message) => ({
         role: mapStoredRoleToModelRole(message.role),
         content: buildModelMessageContent(message),

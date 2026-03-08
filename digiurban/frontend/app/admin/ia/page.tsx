@@ -55,8 +55,8 @@ const EXPERIENCE_OPTIONS: Array<{
 }> = [
   {
     value: 'fast',
-    label: 'Rapido',
-    description: 'Modelo DigiUrban rapido para escrita, revisao e produtividade.',
+    label: 'Livre',
+    description: 'Chat livre para escrita, revisao e produtividade, sem contexto interno da aplicacao.',
   },
   {
     value: 'contextual',
@@ -829,7 +829,7 @@ export default function AdminAiPage() {
                     ? 'Consultas contextuais usam dados, fluxos e contexto da aplicacao antes de responder.'
                     : experienceMode === 'quality'
                       ? 'Use o modo Qualidade quando quiser mais acabamento em redacoes, pareceres e textos institucionais.'
-                      : 'Modo rapido para escrita, revisao e produtividade. Use Contextual quando precisar de dados e fluxos da aplicacao.'}
+                      : 'Modo livre para escrita, revisao e produtividade. Use Contextual quando precisar de dados e fluxos da aplicacao.'}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                   {QUICK_PROMPTS.map((prompt) => (
