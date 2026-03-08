@@ -1,6 +1,6 @@
 name: Deploy DigiUrban to VPS
 
-on:
+"on":
   push:
     branches:
       - main
@@ -31,7 +31,7 @@ jobs:
 
             echo "=== Iniciando Deploy DigiUrban ==="
 
-            # DiretÃ³rio da aplicaÃ§Ã£o
+            # DiretA3rio da aplicaAAo
             APP_DIR="/root/digiurban"
 
             # Parar containers existentes
@@ -39,8 +39,8 @@ jobs:
             cd $APP_DIR
             docker-compose -f docker-compose.vps.yml down || true
 
-            # Remover containers Ã³rfÃ£os que possam estar em conflito
-            echo "Removendo containers Ã³rfÃ£os..."
+            # Remover containers A3rfAos que possam estar em conflito
+            echo "Removendo containers A3rfAos..."
             docker stop ultrazend-smtp 2>/dev/null || true
             docker rm ultrazend-smtp 2>/dev/null || true
             docker stop ultrazend-messages 2>/dev/null || true
@@ -52,22 +52,22 @@ jobs:
             docker stop digiurban-ai 2>/dev/null || true
             docker rm digiurban-ai 2>/dev/null || true
 
-            # ===== ATUALIZAR CÃ“DIGO DO GITHUB =====
-            echo "=== Atualizando cÃ³digo do GitHub ==="
+            # ===== ATUALIZAR CADIGO DO GITHUB =====
+            echo "=== Atualizando cA3digo do GitHub ==="
 
             # Fazer backup do .env se existir
             if [ -f ".env" ]; then
               cp .env .env.backup
-              echo "âœ“ Backup do .env criado"
+              echo "a Backup do .env criado"
             fi
 
-            # Configurar autenticaÃ§Ã£o Git (funciona tanto para repo pÃºblico quanto privado)
+            # Configurar autenticaAAo Git (funciona tanto para repo pAoblico quanto privado)
             REPO_URL="https://github.com/fernandinhomartins40/Digiurbanlite.git"
             if [ -n "${GIT_TOKEN}" ]; then
-              echo "ðŸ”‘ Token Git detectado, configurando autenticaÃ§Ã£o para repo privado..."
+              echo "Y Token Git detectado, configurando autenticaAAo para repo privado..."
               git remote set-url origin "https://${GIT_TOKEN}@github.com/fernandinhomartins40/Digiurbanlite.git"
             else
-              echo "â„¹ï¸ Sem token Git, usando acesso pÃºblico..."
+              echo "a1i  Sem token Git, usando acesso pAoblico..."
               git remote set-url origin "${REPO_URL}"
             fi
 
@@ -75,30 +75,30 @@ jobs:
             git checkout main || git checkout -b main origin/main
 
             # Fazer fetch e reset hard para sincronizar com origin/main
-            echo "ðŸ“¥ Fazendo fetch do origin/main..."
+            echo "Y Fazendo fetch do origin/main..."
             git fetch origin main --prune --force
 
-            echo "ðŸ“Š Status antes da sincronizaÃ§Ã£o:"
+            echo "YS Status antes da sincronizaAAo:"
             echo "Commit local:  $(git rev-parse HEAD)"
             echo "Commit origin: $(git rev-parse origin/main)"
 
-            # Stash de qualquer alteraÃ§Ã£o local
+            # Stash de qualquer alteraAAo local
             git add -A 2>/dev/null || true
             git stash push -u -m "Auto-stash antes do deploy $(date +%Y%m%d_%H%M%S)" 2>/dev/null || true
 
-            # ForÃ§ar sincronizaÃ§Ã£o com origin/main
-            echo "ðŸ”„ Sincronizando com origin/main..."
+            # ForAar sincronizaAAo com origin/main
+            echo "Y Sincronizando com origin/main..."
             git reset --hard origin/main
             git clean -fdx -e .env -e .env.backup
 
             # Restaurar .env se foi deletado
             if [ ! -f ".env" ] && [ -f ".env.backup" ]; then
               cp .env.backup .env
-              echo "âœ“ .env restaurado do backup"
+              echo "a .env restaurado do backup"
             fi
 
-            echo "âœ… CÃ³digo atualizado para commit: $(git rev-parse HEAD)"
-            echo "ðŸ“œ Ãšltimos 3 commits:"
+            echo "a... CA3digo atualizado para commit: $(git rev-parse HEAD)"
+            echo "Y Asltimos 3 commits:"
             git log --oneline -3
 
             if [ ! -f "$APP_DIR/scripts/vps-deploy-lib.sh" ]; then
@@ -113,130 +113,130 @@ jobs:
             echo "Criando arquivo .env..."
             write_vps_env_file ".env" ".env.backup"
 
-            # Validar variÃ¡veis crÃ­ticas para interpolaÃ§Ã£o do docker-compose
-            echo "Validando variÃ¡veis crÃ­ticas do .env..."
+            # Validar variAveis crAticas para interpolaAAo do docker-compose
+            echo "Validando variAveis crAticas do .env..."
             for required_var in FLOW_SERVICE_TOKEN MESSAGES_SERVICE_TOKEN AI_SERVICE_TOKEN; do
               if ! grep -q "^${required_var}=.\\+" .env; then
-                echo "âŒ ERRO: ${required_var} ausente no .env"
+                echo "a ERRO: ${required_var} ausente no .env"
                 exit 1
               fi
             done
-            echo "âœ… VariÃ¡veis crÃ­ticas presentes no .env"
+            echo "a... VariAveis crAticas presentes no .env"
 
-            # Remover arquivos .db SQLite antigos (nÃ£o usamos mais)
-            echo "Removendo arquivos .db do cÃ³digo-fonte..."
+            # Remover arquivos .db SQLite antigos (nAo usamos mais)
+            echo "Removendo arquivos .db do cA3digo-fonte..."
             find . -name "*.db" -type f ! -path "*/node_modules/*" -delete || true
             find . -name "*.db-*" -type f ! -path "*/node_modules/*" -delete || true
-            echo "âœ… Arquivos .db removidos"
+            echo "a... Arquivos .db removidos"
 
             # ===== LIMPEZA SEGURA: Remover APENAS imagens antigas (PRESERVAR volumes!) =====
             echo "=== Limpando recursos antigos de forma segura ==="
 
-            # Listar volumes ANTES da limpeza (para garantir que nÃ£o serÃ£o tocados)
-            echo "ðŸ“¦ Volumes existentes (serÃ£o preservados):"
+            # Listar volumes ANTES da limpeza (para garantir que nAo serAo tocados)
+            echo "Y Volumes existentes (serAo preservados):"
             docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "Nenhum volume encontrado ainda"
 
-            # Limpar containers parados (seguro - nÃ£o afeta volumes)
-            echo "ðŸ§¹ Removendo containers parados..."
+            # Limpar containers parados (seguro - nAo afeta volumes)
+            echo "Y1 Removendo containers parados..."
             docker container prune -f || true
 
             # ===== LIMPEZA NUCLEAR DE CACHE =====
-            echo "=== ðŸ”¥ LIMPEZA NUCLEAR DE CACHE DOCKER ==="
+            echo "=== Y LIMPEZA NUCLEAR DE CACHE DOCKER ==="
 
             # 1. Remover TODAS as imagens relacionadas ao DigiUrban
-            echo "ðŸ—‘ï¸ Removendo TODAS as imagens do DigiUrban..."
+            echo "Yi  Removendo TODAS as imagens do DigiUrban..."
             docker images | grep -i digiurban | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
             docker images | grep -i backend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
             docker images | grep -i frontend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
             docker images | grep -i runner | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
-            # 2. Remover imagens base do Node.js (forÃ§a download novo)
-            echo "ðŸ—‘ï¸ Removendo imagens base do Node.js..."
+            # 2. Remover imagens base do Node.js (forAa download novo)
+            echo "Yi  Removendo imagens base do Node.js..."
             docker images | grep "node.*18-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
             # 3. Limpar build cache do Docker
-            echo "ðŸ—‘ï¸ Limpando build cache do Docker..."
+            echo "Yi  Limpando build cache do Docker..."
             docker builder prune -af --filter "until=1h" || true
 
-            # 4. Remover imagens Ã³rfÃ£s (dangling)
-            echo "ðŸ—‘ï¸ Removendo imagens Ã³rfÃ£s..."
+            # 4. Remover imagens A3rfAs (dangling)
+            echo "Yi  Removendo imagens A3rfAs..."
             docker image prune -af || true
 
-            # 5. Verificar que volumes AINDA existem apÃ³s limpeza
-            echo "âœ… Verificando integridade dos volumes apÃ³s limpeza:"
-            docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "âš ï¸ AVISO: Alguns volumes nÃ£o foram encontrados!"
+            # 5. Verificar que volumes AINDA existem apA3s limpeza
+            echo "a... Verificando integridade dos volumes apA3s limpeza:"
+            docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "as i  AVISO: Alguns volumes nAo foram encontrados!"
 
-            # 6. Gerar BUILD_TIMESTAMP Ãºnico
+            # 6. Gerar BUILD_TIMESTAMP Aonico
             export BUILD_TIMESTAMP=$(date +%s%N)
             export CACHE_BUST=$(echo $RANDOM | md5sum | head -c 20)
             echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"
             echo "CACHE_BUST=${CACHE_BUST}"
 
-            # 7. ForÃ§ar pull das imagens base
-            echo "ðŸ“¥ ForÃ§ando pull de imagens base..."
+            # 7. ForAar pull das imagens base
+            echo "Y ForAando pull de imagens base..."
             docker pull node:18-bookworm-slim
 
-            # ===== VALIDAÃ‡ÃƒO PRÃ‰-BUILD: Verificar arquivos crÃ­ticos =====
-            echo "=== Validando arquivos crÃ­ticos antes do build ==="
+            # ===== VALIDAAAO PRA-BUILD: Verificar arquivos crAticos =====
+            echo "=== Validando arquivos crAticos antes do build ==="
 
             # Validar estrutura de arquivos backend
             if [ ! -f "digiurban/backend/src/routes/citizen-services.ts" ]; then
-              echo "âŒ ERRO: citizen-services.ts nÃ£o encontrado!"
+              echo "a ERRO: citizen-services.ts nAo encontrado!"
               exit 1
             fi
-            echo "âœ“ citizen-services.ts encontrado"
+            echo "a citizen-services.ts encontrado"
 
             if [ ! -f "digiurban/backend/src/index.ts" ]; then
-              echo "âŒ ERRO: index.ts nÃ£o encontrado!"
+              echo "a ERRO: index.ts nAo encontrado!"
               exit 1
             fi
-            echo "âœ“ index.ts encontrado"
+            echo "a index.ts encontrado"
 
             # Verificar se o index.ts registra a rota citizen-services
             if ! grep -q "citizen-services" digiurban/backend/src/index.ts; then
-              echo "âŒ ERRO: index.ts nÃ£o registra a rota citizen-services!"
+              echo "a ERRO: index.ts nAo registra a rota citizen-services!"
               exit 1
             fi
-            echo "âœ“ Rota citizen-services registrada no index.ts"
+            echo "a Rota citizen-services registrada no index.ts"
 
             # Validar tsconfig.docker.json
             if [ ! -f "digiurban/backend/tsconfig.docker.json" ]; then
-              echo "âŒ ERRO: tsconfig.docker.json nÃ£o encontrado!"
+              echo "a ERRO: tsconfig.docker.json nAo encontrado!"
               exit 1
             fi
-            echo "âœ“ tsconfig.docker.json encontrado"
+            echo "a tsconfig.docker.json encontrado"
 
-            # Verificar conteÃºdo do tsconfig.docker.json
-            echo "ðŸ“‹ ConteÃºdo do tsconfig.docker.json:"
+            # Verificar conteAodo do tsconfig.docker.json
+            echo "Y ConteAodo do tsconfig.docker.json:"
             cat digiurban/backend/tsconfig.docker.json
 
             # Validar estrutura shared
             if [ ! -d "digiurban/shared" ]; then
-              echo "âŒ ERRO: DiretÃ³rio shared nÃ£o encontrado!"
+              echo "a ERRO: DiretA3rio shared nAo encontrado!"
               exit 1
             fi
-            echo "âœ“ DiretÃ³rio shared encontrado"
+            echo "a DiretA3rio shared encontrado"
 
-            echo "ðŸ“ Estrutura do diretÃ³rio shared:"
+            echo "Y Estrutura do diretA3rio shared:"
             ls -la digiurban/shared/
 
-            # Validar arquivos shared crÃ­ticos
+            # Validar arquivos shared crAticos
             if [ ! -f "digiurban/shared/types/family.types.ts" ]; then
-              echo "âŒ ERRO: family.types.ts nÃ£o encontrado!"
+              echo "a ERRO: family.types.ts nAo encontrado!"
               exit 1
             fi
-            echo "âœ“ family.types.ts encontrado"
+            echo "a family.types.ts encontrado"
 
-            echo "=== âœ… Todos os arquivos crÃ­ticos validados ==="
+            echo "=== a... Todos os arquivos crAticos validados ==="
 
-            # ===== VALIDAÃ‡ÃƒO DO DOCKERFILE =====
-            echo "=== ðŸ“‹ VALIDAÃ‡ÃƒO DO DOCKERFILE ==="
+            # ===== VALIDAAAO DO DOCKERFILE =====
+            echo "=== Y VALIDAAAO DO DOCKERFILE ==="
 
-            # Gerar hash do Dockerfile para garantir que estamos usando a versÃ£o correta
+            # Gerar hash do Dockerfile para garantir que estamos usando a versAo correta
             DOCKERFILE_HASH=$(md5sum digiurban/Dockerfile | awk '{print $1}')
             echo "Hash do Dockerfile: ${DOCKERFILE_HASH}"
 
-            echo "Verificando linhas crÃ­ticas do Dockerfile:"
+            echo "Verificando linhas crAticas do Dockerfile:"
             echo "--- Linha 37 (COPY shared):"
             sed -n '37p' digiurban/Dockerfile
             echo "--- Linha 50 (DATABASE_URL):"
@@ -244,18 +244,18 @@ jobs:
             echo "--- Linha 52 (Build command):"
             sed -n '52p' digiurban/Dockerfile
 
-            # Verificar se linha 52 contÃ©m o comando correto
+            # Verificar se linha 52 contAm o comando correto
             if grep -q "npx tsc -p tsconfig.docker.json" digiurban/Dockerfile; then
-              echo "âœ… Dockerfile contÃ©m comando correto (npx tsc -p tsconfig.docker.json)"
+              echo "a... Dockerfile contAm comando correto (npx tsc -p tsconfig.docker.json)"
             else
-              echo "âŒ ERRO: Dockerfile NÃƒO contÃ©m comando correto!"
-              echo "ConteÃºdo da linha 52:"
+              echo "a ERRO: Dockerfile NAO contAm comando correto!"
+              echo "ConteAodo da linha 52:"
               sed -n '52p' digiurban/Dockerfile
               exit 1
             fi
 
-            # ===== BUILD SEM CACHE COM MÃšLTIPLAS GARANTIAS =====
-            echo "=== ðŸ”¨ CONSTRUINDO IMAGEM (BUILD COMPLETO SEM CACHE) ==="
+            # ===== BUILD SEM CACHE COM MAsLTIPLAS GARANTIAS =====
+            echo "=== Y  CONSTRUINDO IMAGEM (BUILD COMPLETO SEM CACHE) ==="
 
             # Adicionar CACHE_BUST como build arg adicional
             docker-compose -f docker-compose.vps.yml build \
@@ -300,27 +300,27 @@ jobs:
             docker-compose -f docker-compose.vps.yml up -d digiurban
             wait_for_container_health digiurban-vps 36 10
 
-            # Aguardar PostgreSQL e aplicaÃ§Ã£o iniciarem
+            # Aguardar PostgreSQL e aplicaAAo iniciarem
             echo "Aguardando containers iniciarem..."
 
             # ===== EXECUTAR SEEDS DOS MICRO SISTEMAS =====
             echo "=== Executando seeds dos Micro Sistemas ==="
-            docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed:deploy-safe" || echo "âš ï¸ Seed seguro falhou mas continuando deploy"
-            echo "âœ… Seeds executados"
+            docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed:deploy-safe" || echo "as i  Seed seguro falhou mas continuando deploy"
+            echo "a... Seeds executados"
 
             # ===== EXECUTAR SEED DOS FLUXOS DO BOT =====
             echo "=== Populando fluxos do sistema de bot ==="
-            docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "âš ï¸ Seed de fluxos falhou mas continuando deploy"
-            echo "âœ… Fluxos do bot populados"
+            docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "as i  Seed de fluxos falhou mas continuando deploy"
+            echo "a... Fluxos do bot populados"
 
             # ===== CONFIGURAR OLLAMA (DIGIURBAN FAST + QWEN 3.5 4B) =====
             echo "=== Configurando Ollama com DigiUrban Fast + Qwen3.5:4b ==="
 
-            # Aguardar Ollama ficar disponÃ­vel
+            # Aguardar Ollama ficar disponAvel
             echo "Aguardando Ollama iniciar..."
             for i in {1..30}; do
               if docker exec digiurban-ollama ollama list 2>/dev/null; then
-                echo "âœ… Ollama estÃ¡ disponÃ­vel!"
+                echo "a... Ollama estA disponAvel!"
                 break
               fi
               echo "Tentativa $i/30, aguardando 5s..."
@@ -335,11 +335,11 @@ jobs:
               local model_name="$1"
 
               if docker exec digiurban-ollama ollama list | grep -q "${model_name}"; then
-                echo "âœ… Modelo ${model_name} jÃ¡ instalado"
+                echo "a... Modelo ${model_name} jA instalado"
                 return 0
               fi
 
-              echo "ðŸ“¥ Baixando modelo ${model_name}..."
+              echo "Y Baixando modelo ${model_name}..."
               docker exec digiurban-ollama ollama pull "${model_name}"
             }
 
@@ -347,7 +347,7 @@ jobs:
             ensure_ollama_model "${QUALITY_MODEL}"
             ensure_ollama_model "${EMBEDDINGS_MODEL}"
 
-            echo "ðŸ§  Criando alias ${FAST_MODEL}..."
+            echo "Y  Criando alias ${FAST_MODEL}..."
             cat "$APP_DIR/digiurban-ai/models/ollama/digiurban-fast.Modelfile" | docker exec -i digiurban-ollama sh -lc 'cat > /tmp/digiurban-fast.Modelfile'
             docker exec digiurban-ollama ollama create "${FAST_MODEL}" -f /tmp/digiurban-fast.Modelfile
 
@@ -379,22 +379,22 @@ jobs:
               echo "AI_EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL}" >> .env
             fi
 
-            # Verificar se os modelos provisionados estÃ£o visÃ­veis no Ollama
-            echo "ðŸ§ª Validando disponibilidade dos modelos no Ollama..."
+            # Verificar se os modelos provisionados estAo visAveis no Ollama
+            echo "Ya Validando disponibilidade dos modelos no Ollama..."
             docker exec digiurban-ollama ollama show "${FAST_MODEL}" >/dev/null
             docker exec digiurban-ollama ollama show "${QUALITY_MODEL}" >/dev/null
             docker exec digiurban-ollama ollama show "${EMBEDDINGS_MODEL}" >/dev/null
             docker exec digiurban-ollama ollama ps || true
 
-            # Reiniciar AI e backend para reaplicar warmup com os modelos jÃ¡ provisionados
-            echo "ðŸ”„ Reiniciando digiurban-ai para reaplicar warmup..."
+            # Reiniciar AI e backend para reaplicar warmup com os modelos jA provisionados
+            echo "Y Reiniciando digiurban-ai para reaplicar warmup..."
             docker-compose -f docker-compose.vps.yml restart digiurban-ai
             wait_for_container_health digiurban-ai 30 5
-            echo "ðŸ”„ Reiniciando backend para aplicar configuraÃ§Ãµes Ollama..."
+            echo "Y Reiniciando backend para aplicar configuraAAes Ollama..."
             docker-compose -f docker-compose.vps.yml restart digiurban
             wait_for_container_health digiurban-vps 36 10
 
-            echo "âœ… Ollama configurado com sucesso!"
+            echo "a... Ollama configurado com sucesso!"
 
             # ===== VERIFICAR MIGRATIONS DO ULTRAZEND MESSAGES =====
             echo "=== Verificando migrations do UltraZend Messages ==="
@@ -402,9 +402,9 @@ jobs:
 
             # Verificar se as tabelas foram criadas
             echo "=== Verificando tabelas do UltraZend Messages no banco ==="
-            docker exec digiurban-postgres psql -U digiurban -d digiurban -c "\dt message_*" || echo "âš ï¸ Tabelas ainda nÃ£o criadas"
+            docker exec digiurban-postgres psql -U digiurban -d digiurban -c "\dt message_*" || echo "as i  Tabelas ainda nAo criadas"
 
-            # ===== DIAGNÃ“STICO: Verificar se backend estÃ¡ crashando =====
+            # ===== DIAGNASTICO: Verificar se backend estA crashando =====
             echo "=== Verificando status do backend no supervisord ==="
             docker exec digiurban-vps supervisorctl status || true
 
@@ -420,66 +420,66 @@ jobs:
             echo "=== Logs do PostgreSQL ==="
             docker logs digiurban-postgres --tail=20
 
-            # Verificar logs da aplicaÃ§Ã£o
-            echo "=== Logs da AplicaÃ§Ã£o ==="
+            # Verificar logs da aplicaAAo
+            echo "=== Logs da AplicaAAo ==="
             docker logs digiurban-vps --tail=100
 
-            # Verificar se container estÃ¡ rodando
+            # Verificar se container estA rodando
             if ! docker ps | grep -q digiurban-vps; then
-              echo "âŒ Container digiurban-vps nÃ£o estÃ¡ rodando!"
+              echo "a Container digiurban-vps nAo estA rodando!"
               echo "=== Logs completos do container ==="
               docker logs digiurban-vps
               exit 1
             fi
 
-            # ===== VALIDAÃ‡ÃƒO PÃ“S-BUILD: Verificar rota crÃ­tica =====
-            echo "=== Validando rotas crÃ­ticas no container ==="
+            # ===== VALIDAAAO PAS-BUILD: Verificar rota crAtica =====
+            echo "=== Validando rotas crAticas no container ==="
 
             # Verificar se o arquivo compilado existe
             if ! docker exec digiurban-vps test -f /app/backend/dist/routes/citizen-services.js; then
-              echo "âŒ ERRO: citizen-services.js nÃ£o foi compilado no container!"
+              echo "a ERRO: citizen-services.js nAo foi compilado no container!"
               echo "=== Listando arquivos em dist/routes ==="
               docker exec digiurban-vps ls -la /app/backend/dist/routes/ || true
               exit 1
             fi
-            echo "âœ“ citizen-services.js compilado no container"
+            echo "a citizen-services.js compilado no container"
 
             # Verificar se o index.js registra a rota
             if ! docker exec digiurban-vps grep -q "citizen-services" /app/backend/dist/index.js; then
-              echo "âŒ ERRO: Rota citizen-services nÃ£o registrada no index.js compilado!"
+              echo "a ERRO: Rota citizen-services nAo registrada no index.js compilado!"
               exit 1
             fi
-            echo "âœ“ Rota citizen-services registrada no index.js compilado"
+            echo "a Rota citizen-services registrada no index.js compilado"
 
             # Aguardar backend inicializar e buscar logs de carregamento de rotas
             echo "=== Aguardando backend carregar rotas (10s) ==="
             sleep 10
 
             echo "=== Logs de carregamento de rotas do backend ==="
-            docker logs digiurban-vps 2>&1 | grep -A 2 -B 2 "citizen-services" || echo "âš ï¸ Nenhum log de citizen-services encontrado"
+            docker logs digiurban-vps 2>&1 | grep -A 2 -B 2 "citizen-services" || echo "as i  Nenhum log de citizen-services encontrado"
 
             echo "=== Verificando se houve erro no carregamento ==="
-            if docker logs digiurban-vps 2>&1 | grep -q "âŒ citizen-services"; then
-              echo "âŒ ERRO: citizen-services falhou ao carregar!"
+            if docker logs digiurban-vps 2>&1 | grep -q "a citizen-services"; then
+              echo "a ERRO: citizen-services falhou ao carregar!"
               echo "=== Logs completos ==="
               docker logs digiurban-vps --tail=100
               exit 1
             fi
-            echo "âœ“ Nenhum erro no carregamento de citizen-services"
+            echo "a Nenhum erro no carregamento de citizen-services"
 
             # Verificar health
             echo "Verificando health check..."
             for i in {1..15}; do
               if curl -f http://localhost:3060/health; then
-                echo "âœ… DigiUrban estÃ¡ rodando na porta 3060!"
+                echo "a... DigiUrban estA rodando na porta 3060!"
 
-                # Validar rota citizen-services estÃ¡ acessÃ­vel
+                # Validar rota citizen-services estA acessAvel
                 echo "=== Validando rota /api/citizen/services ==="
                 if curl -f http://localhost:3060/api/citizen/services; then
-                  echo "âœ… Rota /api/citizen/services estÃ¡ acessÃ­vel!"
+                  echo "a... Rota /api/citizen/services estA acessAvel!"
                   exit 0
                 else
-                  echo "âŒ Rota /api/citizen/services retornou erro!"
+                  echo "a Rota /api/citizen/services retornou erro!"
                   echo "=== Logs do backend ==="
                   docker logs digiurban-vps --tail=50
                   exit 1
@@ -496,7 +496,7 @@ jobs:
               sleep 10
             done
 
-            echo "âš ï¸ Health check falhou apÃ³s 10 tentativas"
+            echo "as i  Health check falhou apA3s 10 tentativas"
             echo "Logs completos:"
             docker-compose -f docker-compose.vps.yml logs
             exit 1
@@ -504,7 +504,7 @@ jobs:
       - name: Verify Deployment
         if: success()
         run: |
-          echo "âœ… Deploy concluÃ­do com sucesso!"
-          echo "ðŸŒ DigiUrban disponÃ­vel em: https://www.digiurban.com.br"
-          echo "ðŸŒ Acesso alternativo: http://72.60.10.108:3060"
-          echo "ðŸ“Š Health check: http://72.60.10.108:3060/health"
+          echo "a... Deploy concluAdo com sucesso!"
+          echo "Y DigiUrban disponAvel em: https://www.digiurban.com.br"
+          echo "Y Acesso alternativo: http://72.60.10.108:3060"
+          echo "YS Health check: http://72.60.10.108:3060/health"
