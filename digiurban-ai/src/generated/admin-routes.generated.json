@@ -1,0 +1,3072 @@
+[
+  {
+    "id": "admin",
+    "title": "Portal Administrativo",
+    "path": "/admin",
+    "category": "Admin",
+    "summary": "Tela inicial do portal administrativo da DigiUrban.",
+    "keywords": [
+      "digiurban",
+      "admin"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/page.tsx"
+  },
+  {
+    "id": "admin_agenda",
+    "title": "Agenda",
+    "path": "/admin/agenda",
+    "category": "Agenda",
+    "summary": "Tela administrativa disponivel em /admin/agenda.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "agenda"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/agenda/page.tsx"
+  },
+  {
+    "id": "admin_agricultura_assistencia_tecnica",
+    "title": "Assistencia Tecnica",
+    "path": "/admin/agricultura/assistencia-tecnica",
+    "category": "Agricultura",
+    "summary": "Tela administrativa disponivel em /admin/agricultura/assistencia-tecnica.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "agricultura",
+      "assistencia-tecnica",
+      "assistencia",
+      "tecnica"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/agricultura/assistencia-tecnica/page.tsx"
+  },
+  {
+    "id": "admin_agricultura_mecanizacao",
+    "title": "Mecanizacao",
+    "path": "/admin/agricultura/mecanizacao",
+    "category": "Agricultura",
+    "summary": "Tela administrativa disponivel em /admin/agricultura/mecanizacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "agricultura",
+      "mecanizacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/agricultura/mecanizacao/page.tsx"
+  },
+  {
+    "id": "admin_agricultura_produtores",
+    "title": "Produtores",
+    "path": "/admin/agricultura/produtores",
+    "category": "Agricultura",
+    "summary": "Tela administrativa disponivel em /admin/agricultura/produtores.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "agricultura",
+      "produtores"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/agricultura/produtores/page.tsx"
+  },
+  {
+    "id": "admin_agricultura_propriedades",
+    "title": "Propriedades",
+    "path": "/admin/agricultura/propriedades",
+    "category": "Agricultura",
+    "summary": "Tela administrativa disponivel em /admin/agricultura/propriedades.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "agricultura",
+      "propriedades"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/agricultura/propriedades/page.tsx"
+  },
+  {
+    "id": "admin_agricultura_sementes",
+    "title": "Sementes",
+    "path": "/admin/agricultura/sementes",
+    "category": "Agricultura",
+    "summary": "Tela administrativa disponivel em /admin/agricultura/sementes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "agricultura",
+      "sementes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/agricultura/sementes/page.tsx"
+  },
+  {
+    "id": "admin_analytics",
+    "title": "Analytics",
+    "path": "/admin/analytics",
+    "category": "Analytics",
+    "summary": "Tela administrativa disponivel em /admin/analytics.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "analytics"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/analytics/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento",
+    "title": "Atendimento",
+    "path": "/admin/apps/saude/atendimento",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_id_acolhimento",
+    "title": "Acolhimento",
+    "path": "/admin/apps/saude/atendimento/[id]/acolhimento",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/[id]/acolhimento.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "[id]",
+      "acolhimento",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/[id]/acolhimento/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_id_classificacao_risco",
+    "title": "Classificacao Risco",
+    "path": "/admin/apps/saude/atendimento/[id]/classificacao-risco",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/[id]/classificacao-risco.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "[id]",
+      "classificacao-risco",
+      "id",
+      "classificacao",
+      "risco"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/[id]/classificacao-risco/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_adicionar",
+    "title": "Adicionar",
+    "path": "/admin/apps/saude/atendimento/adicionar",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/adicionar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "adicionar"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/adicionar/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_consulta",
+    "title": "Consulta",
+    "path": "/admin/apps/saude/atendimento/consulta",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/consulta.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "consulta"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/consulta/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_enfermagem",
+    "title": "Enfermagem",
+    "path": "/admin/apps/saude/atendimento/enfermagem",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/enfermagem.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "enfermagem"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/enfermagem/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_fila",
+    "title": "Fila",
+    "path": "/admin/apps/saude/atendimento/fila",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/fila.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "fila"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/fila/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_prontuario_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/atendimento/prontuario/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/prontuario/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "prontuario",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/prontuario/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_atendimento_triagem",
+    "title": "Triagem",
+    "path": "/admin/apps/saude/atendimento/triagem",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/atendimento/triagem.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "atendimento",
+      "triagem"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/atendimento/triagem/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros",
+    "title": "Cadastros",
+    "path": "/admin/apps/saude/cadastros",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_agendas",
+    "title": "Agendas",
+    "path": "/admin/apps/saude/cadastros/agendas",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/agendas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "agendas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/agendas/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_agendas_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/agendas/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/agendas/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "agendas",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/agendas/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_agendas_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/cadastros/agendas/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/agendas/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "agendas",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/agendas/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_equipes",
+    "title": "Equipes",
+    "path": "/admin/apps/saude/cadastros/equipes",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/equipes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "equipes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/equipes/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_equipes_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/equipes/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/equipes/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "equipes",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/equipes/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_equipes_id_microareas",
+    "title": "Microareas",
+    "path": "/admin/apps/saude/cadastros/equipes/[id]/microareas",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/equipes/[id]/microareas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "equipes",
+      "[id]",
+      "microareas",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/equipes/[id]/microareas/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_equipes_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/cadastros/equipes/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/equipes/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "equipes",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/equipes/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_especialidades",
+    "title": "Especialidades",
+    "path": "/admin/apps/saude/cadastros/especialidades",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/especialidades.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "especialidades"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/especialidades/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_especialidades_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/especialidades/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/especialidades/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "especialidades",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/especialidades/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_especialidades_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/cadastros/especialidades/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/especialidades/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "especialidades",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/especialidades/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_microareas",
+    "title": "Microareas",
+    "path": "/admin/apps/saude/cadastros/microareas",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/microareas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "microareas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/microareas/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_microareas_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/microareas/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/microareas/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "microareas",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/microareas/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_microareas_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/cadastros/microareas/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/microareas/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "microareas",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/microareas/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_salas",
+    "title": "Salas",
+    "path": "/admin/apps/saude/cadastros/salas",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/salas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "salas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/salas/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_salas_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/salas/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/salas/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "salas",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/salas/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_salas_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/cadastros/salas/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/salas/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "salas",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/salas/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_servidores_saude",
+    "title": "Servidores Saude",
+    "path": "/admin/apps/saude/cadastros/servidores-saude",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/servidores-saude.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "servidores-saude",
+      "servidores"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/servidores-saude/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_servidores_saude_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/servidores-saude/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/servidores-saude/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "servidores-saude",
+      "[id]",
+      "servidores",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/servidores-saude/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_servidores_saude_vincular",
+    "title": "Vincular",
+    "path": "/admin/apps/saude/cadastros/servidores-saude/vincular",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/servidores-saude/vincular.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "servidores-saude",
+      "vincular",
+      "servidores"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/servidores-saude/vincular/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_turnos",
+    "title": "Turnos",
+    "path": "/admin/apps/saude/cadastros/turnos",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/turnos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "turnos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/turnos/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_turnos_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/turnos/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/turnos/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "turnos",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/turnos/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_turnos_novo",
+    "title": "Novo",
+    "path": "/admin/apps/saude/cadastros/turnos/novo",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/turnos/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "turnos",
+      "novo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/turnos/novo/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_unidades",
+    "title": "Unidades",
+    "path": "/admin/apps/saude/cadastros/unidades",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/unidades.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "unidades"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/unidades/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_unidades_id",
+    "title": "Id",
+    "path": "/admin/apps/saude/cadastros/unidades/[id]",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/unidades/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "unidades",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/unidades/[id]/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_unidades_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/cadastros/unidades/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/unidades/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "unidades",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/unidades/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_cadastros_vinculos",
+    "title": "Vinculos",
+    "path": "/admin/apps/saude/cadastros/vinculos",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/cadastros/vinculos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "cadastros",
+      "vinculos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/cadastros/vinculos/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_farmacia",
+    "title": "Farmacia",
+    "path": "/admin/apps/saude/farmacia",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/farmacia.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "farmacia"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/farmacia/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_farmacia_dispensacao",
+    "title": "Dispensacao",
+    "path": "/admin/apps/saude/farmacia/dispensacao",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/farmacia/dispensacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "farmacia",
+      "dispensacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/farmacia/dispensacao/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_farmacia_dispensacao_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/farmacia/dispensacao/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/farmacia/dispensacao/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "farmacia",
+      "dispensacao",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/farmacia/dispensacao/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_farmacia_estoque",
+    "title": "Estoque",
+    "path": "/admin/apps/saude/farmacia/estoque",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/farmacia/estoque.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "farmacia",
+      "estoque"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/farmacia/estoque/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_farmacia_estoque_novo",
+    "title": "Novo",
+    "path": "/admin/apps/saude/farmacia/estoque/novo",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/farmacia/estoque/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "farmacia",
+      "estoque",
+      "novo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/farmacia/estoque/novo/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_servidores",
+    "title": "Servidores",
+    "path": "/admin/apps/saude/servidores",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/servidores.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "servidores"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/servidores/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd",
+    "title": "Tfd",
+    "path": "/admin/apps/saude/tfd",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_analise_documental",
+    "title": "Analise Documental",
+    "path": "/admin/apps/saude/tfd/analise-documental",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/analise-documental.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "analise-documental",
+      "analise",
+      "documental"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/analise-documental/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_aprovacao",
+    "title": "Aprovacao",
+    "path": "/admin/apps/saude/tfd/aprovacao",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/aprovacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "aprovacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/aprovacao/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_configuracoes_destinos",
+    "title": "Destinos",
+    "path": "/admin/apps/saude/tfd/configuracoes/destinos",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/configuracoes/destinos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "configuracoes",
+      "destinos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/configuracoes/destinos/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_configuracoes_especialidades",
+    "title": "Especialidades",
+    "path": "/admin/apps/saude/tfd/configuracoes/especialidades",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/configuracoes/especialidades.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "configuracoes",
+      "especialidades"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/configuracoes/especialidades/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_frota_motoristas",
+    "title": "Motoristas",
+    "path": "/admin/apps/saude/tfd/frota/motoristas",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/frota/motoristas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "frota",
+      "motoristas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/frota/motoristas/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_frota_veiculos",
+    "title": "Veiculos",
+    "path": "/admin/apps/saude/tfd/frota/veiculos",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/frota/veiculos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "frota",
+      "veiculos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/frota/veiculos/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_regulacao",
+    "title": "Regulacao",
+    "path": "/admin/apps/saude/tfd/regulacao",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/regulacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "regulacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/regulacao/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_regulacao_medica",
+    "title": "Regulacao Medica",
+    "path": "/admin/apps/saude/tfd/regulacao-medica",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/regulacao-medica.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "regulacao-medica",
+      "regulacao",
+      "medica"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/regulacao-medica/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_solicitacoes",
+    "title": "Solicitacoes",
+    "path": "/admin/apps/saude/tfd/solicitacoes",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/solicitacoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "solicitacoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/solicitacoes/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_solicitacoes_nova",
+    "title": "Nova",
+    "path": "/admin/apps/saude/tfd/solicitacoes/nova",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/solicitacoes/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "solicitacoes",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/solicitacoes/nova/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_viagens",
+    "title": "Viagens",
+    "path": "/admin/apps/saude/tfd/viagens",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/viagens.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "viagens"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/viagens/page.tsx"
+  },
+  {
+    "id": "admin_apps_saude_tfd_viagens_montar_lista",
+    "title": "Montar Lista",
+    "path": "/admin/apps/saude/tfd/viagens/montar-lista",
+    "category": "Apps",
+    "summary": "Tela administrativa disponivel em /admin/apps/saude/tfd/viagens/montar-lista.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "apps",
+      "saude",
+      "tfd",
+      "viagens",
+      "montar-lista",
+      "montar",
+      "lista"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/apps/saude/tfd/viagens/montar-lista/page.tsx"
+  },
+  {
+    "id": "admin_assinaturas_digitais",
+    "title": "Assinaturas Digitais",
+    "path": "/admin/assinaturas-digitais",
+    "category": "Assinaturas Digitais",
+    "summary": "Tela administrativa disponivel em /admin/assinaturas-digitais.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "assinaturas-digitais",
+      "assinaturas",
+      "digitais"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/assinaturas-digitais/page.tsx"
+  },
+  {
+    "id": "admin_bot_flows",
+    "title": "Bot Flows",
+    "path": "/admin/bot-flows",
+    "category": "Bot Flows",
+    "summary": "Tela administrativa disponivel em /admin/bot-flows.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "bot-flows",
+      "bot",
+      "flows"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/bot-flows/page.tsx"
+  },
+  {
+    "id": "admin_bot_flows_id_analytics",
+    "title": "Analytics",
+    "path": "/admin/bot-flows/[id]/analytics",
+    "category": "Bot Flows",
+    "summary": "Tela administrativa disponivel em /admin/bot-flows/[id]/analytics.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "bot-flows",
+      "[id]",
+      "analytics",
+      "bot",
+      "flows",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/bot-flows/[id]/analytics/page.tsx"
+  },
+  {
+    "id": "admin_bot_flows_id_edit",
+    "title": "Edit",
+    "path": "/admin/bot-flows/[id]/edit",
+    "category": "Bot Flows",
+    "summary": "Tela administrativa disponivel em /admin/bot-flows/[id]/edit.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "bot-flows",
+      "[id]",
+      "edit",
+      "bot",
+      "flows",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/bot-flows/[id]/edit/page.tsx"
+  },
+  {
+    "id": "admin_bot_flows_new",
+    "title": "New",
+    "path": "/admin/bot-flows/new",
+    "category": "Bot Flows",
+    "summary": "Tela administrativa disponivel em /admin/bot-flows/new.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "bot-flows",
+      "new",
+      "bot",
+      "flows"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/bot-flows/new/page.tsx"
+  },
+  {
+    "id": "admin_certificados_digitais",
+    "title": "Certificados Digitais",
+    "path": "/admin/certificados-digitais",
+    "category": "Certificados Digitais",
+    "summary": "Tela administrativa disponivel em /admin/certificados-digitais.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "certificados-digitais",
+      "certificados",
+      "digitais"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/certificados-digitais/page.tsx"
+  },
+  {
+    "id": "admin_chamados",
+    "title": "Chamados",
+    "path": "/admin/chamados",
+    "category": "Chamados",
+    "summary": "Tela administrativa disponivel em /admin/chamados.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "chamados"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/chamados/page.tsx"
+  },
+  {
+    "id": "admin_chamados_lista",
+    "title": "Lista",
+    "path": "/admin/chamados/lista",
+    "category": "Chamados",
+    "summary": "Tela administrativa disponivel em /admin/chamados/lista.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "chamados",
+      "lista"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/chamados/lista/page.tsx"
+  },
+  {
+    "id": "admin_cidadaos",
+    "title": "Cidadaos",
+    "path": "/admin/cidadaos",
+    "category": "Cidadaos",
+    "summary": "Tela administrativa disponivel em /admin/cidadaos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "cidadaos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/cidadaos/page.tsx"
+  },
+  {
+    "id": "admin_cidadaos_id",
+    "title": "Id",
+    "path": "/admin/cidadaos/[id]",
+    "category": "Cidadaos",
+    "summary": "Tela administrativa disponivel em /admin/cidadaos/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "cidadaos",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/cidadaos/[id]/page.tsx"
+  },
+  {
+    "id": "admin_cidadaos_novo",
+    "title": "Novo",
+    "path": "/admin/cidadaos/novo",
+    "category": "Cidadaos",
+    "summary": "Tela administrativa disponivel em /admin/cidadaos/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "cidadaos",
+      "novo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/cidadaos/novo/page.tsx"
+  },
+  {
+    "id": "admin_cidadaos_pendentes",
+    "title": "Pendentes",
+    "path": "/admin/cidadaos/pendentes",
+    "category": "Cidadaos",
+    "summary": "Tela administrativa disponivel em /admin/cidadaos/pendentes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "cidadaos",
+      "pendentes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/cidadaos/pendentes/page.tsx"
+  },
+  {
+    "id": "admin_composicao_familiar",
+    "title": "Composicao Familiar",
+    "path": "/admin/composicao-familiar",
+    "category": "Composicao Familiar",
+    "summary": "Tela administrativa disponivel em /admin/composicao-familiar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "composicao-familiar",
+      "composicao",
+      "familiar"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/composicao-familiar/page.tsx"
+  },
+  {
+    "id": "admin_configuracoes",
+    "title": "Configuracoes",
+    "path": "/admin/configuracoes",
+    "category": "Configuracoes",
+    "summary": "Tela administrativa disponivel em /admin/configuracoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "configuracoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/configuracoes/page.tsx"
+  },
+  {
+    "id": "admin_dashboard",
+    "title": "Dashboard",
+    "path": "/admin/dashboard",
+    "category": "Dashboard",
+    "summary": "Tela administrativa disponivel em /admin/dashboard.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "dashboard"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/dashboard/page.tsx"
+  },
+  {
+    "id": "admin_documentos_cidadaos_id",
+    "title": "Id",
+    "path": "/admin/documentos-cidadaos/[id]",
+    "category": "Documentos Cidadaos",
+    "summary": "Tela administrativa disponivel em /admin/documentos-cidadaos/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "documentos-cidadaos",
+      "[id]",
+      "documentos",
+      "cidadaos",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/documentos-cidadaos/[id]/page.tsx"
+  },
+  {
+    "id": "admin_documentos_cidadaos_pendentes",
+    "title": "Pendentes",
+    "path": "/admin/documentos-cidadaos/pendentes",
+    "category": "Documentos Cidadaos",
+    "summary": "Tela administrativa disponivel em /admin/documentos-cidadaos/pendentes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "documentos-cidadaos",
+      "pendentes",
+      "documentos",
+      "cidadaos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/documentos-cidadaos/pendentes/page.tsx"
+  },
+  {
+    "id": "admin_email",
+    "title": "Email",
+    "path": "/admin/email",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/page.tsx"
+  },
+  {
+    "id": "admin_email_accounts",
+    "title": "Email Accounts",
+    "path": "/admin/email-accounts",
+    "category": "Email Accounts",
+    "summary": "Tela administrativa disponivel em /admin/email-accounts.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email-accounts",
+      "email",
+      "accounts"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email-accounts/page.tsx"
+  },
+  {
+    "id": "admin_email_accounts_compose",
+    "title": "Compose",
+    "path": "/admin/email-accounts/compose",
+    "category": "Email Accounts",
+    "summary": "Tela administrativa disponivel em /admin/email-accounts/compose.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email-accounts",
+      "compose",
+      "email",
+      "accounts"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email-accounts/compose/page.tsx"
+  },
+  {
+    "id": "admin_email_service",
+    "title": "Email Service",
+    "path": "/admin/email-service",
+    "category": "Email Service",
+    "summary": "Tela administrativa disponivel em /admin/email-service.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email-service",
+      "email",
+      "service"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email-service/page.tsx"
+  },
+  {
+    "id": "admin_email_compose",
+    "title": "Compose",
+    "path": "/admin/email/compose",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email/compose.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email",
+      "compose"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/compose/page.tsx"
+  },
+  {
+    "id": "admin_email_drafts",
+    "title": "Drafts",
+    "path": "/admin/email/drafts",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email/drafts.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email",
+      "drafts"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/drafts/page.tsx"
+  },
+  {
+    "id": "admin_email_inbox",
+    "title": "Inbox",
+    "path": "/admin/email/inbox",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email/inbox.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email",
+      "inbox"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/inbox/page.tsx"
+  },
+  {
+    "id": "admin_email_sent",
+    "title": "Sent",
+    "path": "/admin/email/sent",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email/sent.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email",
+      "sent"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/sent/page.tsx"
+  },
+  {
+    "id": "admin_email_templates",
+    "title": "Templates",
+    "path": "/admin/email/templates",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email/templates.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email",
+      "templates"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/templates/page.tsx"
+  },
+  {
+    "id": "admin_email_trash",
+    "title": "Trash",
+    "path": "/admin/email/trash",
+    "category": "Email",
+    "summary": "Tela administrativa disponivel em /admin/email/trash.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "email",
+      "trash"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/email/trash/page.tsx"
+  },
+  {
+    "id": "admin_forgot_password",
+    "title": "Forgot Password",
+    "path": "/admin/forgot-password",
+    "category": "Forgot Password",
+    "summary": "Tela administrativa disponivel em /admin/forgot-password.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "forgot-password",
+      "forgot",
+      "password"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/forgot-password/page.tsx"
+  },
+  {
+    "id": "admin_gabinete",
+    "title": "Gabinete",
+    "path": "/admin/gabinete",
+    "category": "Gabinete",
+    "summary": "Tela administrativa disponivel em /admin/gabinete.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "gabinete"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/gabinete/page.tsx"
+  },
+  {
+    "id": "admin_gabinete_agenda",
+    "title": "Agenda",
+    "path": "/admin/gabinete/agenda",
+    "category": "Gabinete",
+    "summary": "Tela administrativa disponivel em /admin/gabinete/agenda.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "gabinete",
+      "agenda"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/gabinete/agenda/page.tsx"
+  },
+  {
+    "id": "admin_gabinete_mapa_demandas",
+    "title": "Mapa Demandas",
+    "path": "/admin/gabinete/mapa-demandas",
+    "category": "Gabinete",
+    "summary": "Tela administrativa disponivel em /admin/gabinete/mapa-demandas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "gabinete",
+      "mapa-demandas",
+      "mapa",
+      "demandas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/gabinete/mapa-demandas/page.tsx"
+  },
+  {
+    "id": "admin_gabinete_painel_prefeito",
+    "title": "Painel Prefeito",
+    "path": "/admin/gabinete/painel-prefeito",
+    "category": "Gabinete",
+    "summary": "Tela administrativa disponivel em /admin/gabinete/painel-prefeito.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "gabinete",
+      "painel-prefeito",
+      "painel",
+      "prefeito"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/gabinete/painel-prefeito/page.tsx"
+  },
+  {
+    "id": "admin_gabinete_painel_prefeito_cidadao_id",
+    "title": "Id",
+    "path": "/admin/gabinete/painel-prefeito/cidadao/[id]",
+    "category": "Gabinete",
+    "summary": "Tela administrativa disponivel em /admin/gabinete/painel-prefeito/cidadao/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "gabinete",
+      "painel-prefeito",
+      "cidadao",
+      "[id]",
+      "painel",
+      "prefeito",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/gabinete/painel-prefeito/cidadao/[id]/page.tsx"
+  },
+  {
+    "id": "admin_gerenciamento_servicos",
+    "title": "Gerenciamento Servicos",
+    "path": "/admin/gerenciamento-servicos",
+    "category": "Gerenciamento Servicos",
+    "summary": "Tela administrativa disponivel em /admin/gerenciamento-servicos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "gerenciamento-servicos",
+      "gerenciamento",
+      "servicos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/gerenciamento-servicos/page.tsx"
+  },
+  {
+    "id": "admin_ia",
+    "title": "Ia",
+    "path": "/admin/ia",
+    "category": "Ia",
+    "summary": "Tela administrativa disponivel em /admin/ia.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "ia"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/ia/page.tsx"
+  },
+  {
+    "id": "admin_integracoes",
+    "title": "Integracoes",
+    "path": "/admin/integracoes",
+    "category": "Integracoes",
+    "summary": "Tela administrativa disponivel em /admin/integracoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "integracoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/integracoes/page.tsx"
+  },
+  {
+    "id": "admin_login",
+    "title": "Login",
+    "path": "/admin/login",
+    "category": "Login",
+    "summary": "Tela administrativa disponivel em /admin/login.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "login"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/login/page.tsx"
+  },
+  {
+    "id": "admin_mensagens",
+    "title": "Mensagens",
+    "path": "/admin/mensagens",
+    "category": "Mensagens",
+    "summary": "Tela administrativa disponivel em /admin/mensagens.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "mensagens"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/mensagens/page.tsx"
+  },
+  {
+    "id": "admin_meus_documentos",
+    "title": "Meus Documentos",
+    "path": "/admin/meus-documentos",
+    "category": "Meus Documentos",
+    "summary": "Tela administrativa disponivel em /admin/meus-documentos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "meus-documentos",
+      "meus",
+      "documentos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/meus-documentos/page.tsx"
+  },
+  {
+    "id": "admin_organograma",
+    "title": "Organograma",
+    "path": "/admin/organograma",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/page.tsx"
+  },
+  {
+    "id": "admin_organograma_cargos",
+    "title": "Cargos",
+    "path": "/admin/organograma/cargos",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/cargos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "cargos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/cargos/page.tsx"
+  },
+  {
+    "id": "admin_organograma_cargos_id_editar",
+    "title": "Editar",
+    "path": "/admin/organograma/cargos/[id]/editar",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/cargos/[id]/editar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "cargos",
+      "[id]",
+      "editar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/cargos/[id]/editar/page.tsx"
+  },
+  {
+    "id": "admin_organograma_cargos_novo",
+    "title": "Novo",
+    "path": "/admin/organograma/cargos/novo",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/cargos/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "cargos",
+      "novo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/cargos/novo/page.tsx"
+  },
+  {
+    "id": "admin_organograma_equipes",
+    "title": "Equipes",
+    "path": "/admin/organograma/equipes",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/equipes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "equipes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/equipes/page.tsx"
+  },
+  {
+    "id": "admin_organograma_funcoes",
+    "title": "Funcoes",
+    "path": "/admin/organograma/funcoes",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/funcoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "funcoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/funcoes/page.tsx"
+  },
+  {
+    "id": "admin_organograma_funcoes_id_editar",
+    "title": "Editar",
+    "path": "/admin/organograma/funcoes/[id]/editar",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/funcoes/[id]/editar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "funcoes",
+      "[id]",
+      "editar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/funcoes/[id]/editar/page.tsx"
+  },
+  {
+    "id": "admin_organograma_funcoes_nova",
+    "title": "Nova",
+    "path": "/admin/organograma/funcoes/nova",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/funcoes/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "funcoes",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/funcoes/nova/page.tsx"
+  },
+  {
+    "id": "admin_organograma_hierarquias",
+    "title": "Hierarquias",
+    "path": "/admin/organograma/hierarquias",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/hierarquias.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "hierarquias"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/hierarquias/page.tsx"
+  },
+  {
+    "id": "admin_organograma_lotacoes",
+    "title": "Lotacoes",
+    "path": "/admin/organograma/lotacoes",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/lotacoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "lotacoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/lotacoes/page.tsx"
+  },
+  {
+    "id": "admin_organograma_mapeamento",
+    "title": "Mapeamento",
+    "path": "/admin/organograma/mapeamento",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/mapeamento.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "mapeamento"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/mapeamento/page.tsx"
+  },
+  {
+    "id": "admin_organograma_secretarias",
+    "title": "Secretarias",
+    "path": "/admin/organograma/secretarias",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/secretarias.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "secretarias"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/secretarias/page.tsx"
+  },
+  {
+    "id": "admin_organograma_secretarias_id_editar",
+    "title": "Editar",
+    "path": "/admin/organograma/secretarias/[id]/editar",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/secretarias/[id]/editar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "secretarias",
+      "[id]",
+      "editar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/secretarias/[id]/editar/page.tsx"
+  },
+  {
+    "id": "admin_organograma_secretarias_nova",
+    "title": "Nova",
+    "path": "/admin/organograma/secretarias/nova",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/secretarias/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "secretarias",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/secretarias/nova/page.tsx"
+  },
+  {
+    "id": "admin_organograma_unidades",
+    "title": "Unidades",
+    "path": "/admin/organograma/unidades",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/unidades.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "unidades"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/unidades/page.tsx"
+  },
+  {
+    "id": "admin_organograma_unidades_id",
+    "title": "Id",
+    "path": "/admin/organograma/unidades/[id]",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/unidades/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "unidades",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/unidades/[id]/page.tsx"
+  },
+  {
+    "id": "admin_organograma_unidades_id_editar",
+    "title": "Editar",
+    "path": "/admin/organograma/unidades/[id]/editar",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/unidades/[id]/editar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "unidades",
+      "[id]",
+      "editar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/unidades/[id]/editar/page.tsx"
+  },
+  {
+    "id": "admin_organograma_unidades_nova",
+    "title": "Nova",
+    "path": "/admin/organograma/unidades/nova",
+    "category": "Organograma",
+    "summary": "Tela administrativa disponivel em /admin/organograma/unidades/nova.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "organograma",
+      "unidades",
+      "nova"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/organograma/unidades/nova/page.tsx"
+  },
+  {
+    "id": "admin_perfil",
+    "title": "Perfil",
+    "path": "/admin/perfil",
+    "category": "Perfil",
+    "summary": "Tela administrativa disponivel em /admin/perfil.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "perfil"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/perfil/page.tsx"
+  },
+  {
+    "id": "admin_pesquisa_precos",
+    "title": "Pesquisa Precos",
+    "path": "/admin/pesquisa-precos",
+    "category": "Pesquisa Precos",
+    "summary": "Tela administrativa disponivel em /admin/pesquisa-precos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "pesquisa-precos",
+      "pesquisa",
+      "precos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/pesquisa-precos/page.tsx"
+  },
+  {
+    "id": "admin_processos_internos",
+    "title": "Processos Internos",
+    "path": "/admin/processos-internos",
+    "category": "Processos Internos",
+    "summary": "Tela administrativa disponivel em /admin/processos-internos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "processos-internos",
+      "processos",
+      "internos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/processos-internos/page.tsx"
+  },
+  {
+    "id": "admin_processos_internos_fluxos",
+    "title": "Fluxos",
+    "path": "/admin/processos-internos/fluxos",
+    "category": "Processos Internos",
+    "summary": "Tela administrativa disponivel em /admin/processos-internos/fluxos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "processos-internos",
+      "fluxos",
+      "processos",
+      "internos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/processos-internos/fluxos/page.tsx"
+  },
+  {
+    "id": "admin_processos_internos_fluxos_id",
+    "title": "Id",
+    "path": "/admin/processos-internos/fluxos/[id]",
+    "category": "Processos Internos",
+    "summary": "Tela administrativa disponivel em /admin/processos-internos/fluxos/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "processos-internos",
+      "fluxos",
+      "[id]",
+      "processos",
+      "internos",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/processos-internos/fluxos/[id]/page.tsx"
+  },
+  {
+    "id": "admin_processos_internos_novo",
+    "title": "Novo",
+    "path": "/admin/processos-internos/novo",
+    "category": "Processos Internos",
+    "summary": "Tela administrativa disponivel em /admin/processos-internos/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "processos-internos",
+      "novo",
+      "processos",
+      "internos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/processos-internos/novo/page.tsx"
+  },
+  {
+    "id": "admin_protocolos",
+    "title": "Protocolos",
+    "path": "/admin/protocolos",
+    "category": "Protocolos",
+    "summary": "Tela administrativa disponivel em /admin/protocolos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "protocolos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/protocolos/page.tsx"
+  },
+  {
+    "id": "admin_protocolos_id",
+    "title": "Id",
+    "path": "/admin/protocolos/[id]",
+    "category": "Protocolos",
+    "summary": "Tela administrativa disponivel em /admin/protocolos/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "protocolos",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/protocolos/[id]/page.tsx"
+  },
+  {
+    "id": "admin_relatorios",
+    "title": "Relatorios",
+    "path": "/admin/relatorios",
+    "category": "Relatorios",
+    "summary": "Tela administrativa disponivel em /admin/relatorios.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "relatorios"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/relatorios/page.tsx"
+  },
+  {
+    "id": "admin_reset_password",
+    "title": "Reset Password",
+    "path": "/admin/reset-password",
+    "category": "Reset Password",
+    "summary": "Tela administrativa disponivel em /admin/reset-password.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "reset-password",
+      "reset",
+      "password"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/reset-password/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_department",
+    "title": "Department",
+    "path": "/admin/secretarias/[department]",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/[department].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "[department]",
+      "department"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/[department]/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_department_module",
+    "title": "Module",
+    "path": "/admin/secretarias/[department]/[module]",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/[department]/[module].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "[department]",
+      "[module]",
+      "department",
+      "module"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/[department]/[module]/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_department_chamados_recebidos",
+    "title": "Chamados Recebidos",
+    "path": "/admin/secretarias/[department]/chamados-recebidos",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/[department]/chamados-recebidos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "[department]",
+      "chamados-recebidos",
+      "department",
+      "chamados",
+      "recebidos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/[department]/chamados-recebidos/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_department_servicos_gerais",
+    "title": "Servicos Gerais",
+    "path": "/admin/secretarias/[department]/servicos-gerais",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/[department]/servicos-gerais.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "[department]",
+      "servicos-gerais",
+      "department",
+      "servicos",
+      "gerais"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/[department]/servicos-gerais/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_administracao",
+    "title": "Administracao",
+    "path": "/admin/secretarias/administracao",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/administracao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "administracao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/administracao/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_administracao_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/administracao/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/administracao/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "administracao",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/administracao/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_agricultura",
+    "title": "Agricultura",
+    "path": "/admin/secretarias/agricultura",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/agricultura.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "agricultura"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/agricultura/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_agricultura_dashboard",
+    "title": "Dashboard",
+    "path": "/admin/secretarias/agricultura/dashboard",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/agricultura/dashboard.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "agricultura",
+      "dashboard"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/agricultura/dashboard/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_agricultura_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/agricultura/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/agricultura/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "agricultura",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/agricultura/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_assistencia_social",
+    "title": "Assistencia Social",
+    "path": "/admin/secretarias/assistencia-social",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/assistencia-social.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "assistencia-social",
+      "assistencia",
+      "social"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/assistencia-social/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_assistencia_social_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/assistencia-social/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/assistencia-social/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "assistencia-social",
+      "sugestoes",
+      "assistencia",
+      "social"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/assistencia-social/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_cultura",
+    "title": "Cultura",
+    "path": "/admin/secretarias/cultura",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/cultura.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "cultura"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/cultura/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_cultura_dashboard",
+    "title": "Dashboard",
+    "path": "/admin/secretarias/cultura/dashboard",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/cultura/dashboard.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "cultura",
+      "dashboard"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/cultura/dashboard/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_cultura_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/cultura/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/cultura/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "cultura",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/cultura/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_defesa_civil",
+    "title": "Defesa Civil",
+    "path": "/admin/secretarias/defesa-civil",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/defesa-civil.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "defesa-civil",
+      "defesa",
+      "civil"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/defesa-civil/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_defesa_civil_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/defesa-civil/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/defesa-civil/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "defesa-civil",
+      "sugestoes",
+      "defesa",
+      "civil"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/defesa-civil/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_desenvolvimento_economico",
+    "title": "Desenvolvimento Economico",
+    "path": "/admin/secretarias/desenvolvimento-economico",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/desenvolvimento-economico.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "desenvolvimento-economico",
+      "desenvolvimento",
+      "economico"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/desenvolvimento-economico/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_desenvolvimento_economico_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/desenvolvimento-economico/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/desenvolvimento-economico/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "desenvolvimento-economico",
+      "sugestoes",
+      "desenvolvimento",
+      "economico"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/desenvolvimento-economico/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_educacao",
+    "title": "Educacao",
+    "path": "/admin/secretarias/educacao",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/educacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "educacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/educacao/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_educacao_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/educacao/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/educacao/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "educacao",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/educacao/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_esportes",
+    "title": "Esportes",
+    "path": "/admin/secretarias/esportes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/esportes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "esportes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/esportes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_esportes_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/esportes/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/esportes/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "esportes",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/esportes/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_financas",
+    "title": "Financas",
+    "path": "/admin/secretarias/financas",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/financas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "financas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/financas/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_financas_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/financas/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/financas/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "financas",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/financas/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_habitacao",
+    "title": "Habitacao",
+    "path": "/admin/secretarias/habitacao",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/habitacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "habitacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/habitacao/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_habitacao_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/habitacao/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/habitacao/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "habitacao",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/habitacao/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_meio_ambiente",
+    "title": "Meio Ambiente",
+    "path": "/admin/secretarias/meio-ambiente",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/meio-ambiente.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "meio-ambiente",
+      "meio",
+      "ambiente"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/meio-ambiente/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_meio_ambiente_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/meio-ambiente/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/meio-ambiente/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "meio-ambiente",
+      "sugestoes",
+      "meio",
+      "ambiente"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/meio-ambiente/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_mobilidade_urbana",
+    "title": "Mobilidade Urbana",
+    "path": "/admin/secretarias/mobilidade-urbana",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/mobilidade-urbana.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "mobilidade-urbana",
+      "mobilidade",
+      "urbana"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/mobilidade-urbana/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_mobilidade_urbana_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/mobilidade-urbana/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/mobilidade-urbana/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "mobilidade-urbana",
+      "sugestoes",
+      "mobilidade",
+      "urbana"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/mobilidade-urbana/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_obras_publicas",
+    "title": "Obras Publicas",
+    "path": "/admin/secretarias/obras-publicas",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/obras-publicas.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "obras-publicas",
+      "obras",
+      "publicas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/obras-publicas/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_obras_publicas_dashboard",
+    "title": "Dashboard",
+    "path": "/admin/secretarias/obras-publicas/dashboard",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/obras-publicas/dashboard.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "obras-publicas",
+      "dashboard",
+      "obras",
+      "publicas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/obras-publicas/dashboard/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_obras_publicas_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/obras-publicas/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/obras-publicas/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "obras-publicas",
+      "sugestoes",
+      "obras",
+      "publicas"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/obras-publicas/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_planejamento_urbano",
+    "title": "Planejamento Urbano",
+    "path": "/admin/secretarias/planejamento-urbano",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/planejamento-urbano.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "planejamento-urbano",
+      "planejamento",
+      "urbano"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/planejamento-urbano/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_planejamento_urbano_dashboard",
+    "title": "Dashboard",
+    "path": "/admin/secretarias/planejamento-urbano/dashboard",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/planejamento-urbano/dashboard.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "planejamento-urbano",
+      "dashboard",
+      "planejamento",
+      "urbano"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/planejamento-urbano/dashboard/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_planejamento_urbano_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/planejamento-urbano/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/planejamento-urbano/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "planejamento-urbano",
+      "sugestoes",
+      "planejamento",
+      "urbano"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/planejamento-urbano/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_politicas_mulheres",
+    "title": "Politicas Mulheres",
+    "path": "/admin/secretarias/politicas-mulheres",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/politicas-mulheres.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "politicas-mulheres",
+      "politicas",
+      "mulheres"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/politicas-mulheres/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_politicas_mulheres_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/politicas-mulheres/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/politicas-mulheres/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "politicas-mulheres",
+      "sugestoes",
+      "politicas",
+      "mulheres"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/politicas-mulheres/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_saude",
+    "title": "Saude",
+    "path": "/admin/secretarias/saude",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/saude.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "saude"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/saude/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_saude_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/saude/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/saude/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "saude",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/saude/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_seguranca_publica",
+    "title": "Seguranca Publica",
+    "path": "/admin/secretarias/seguranca-publica",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/seguranca-publica.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "seguranca-publica",
+      "seguranca",
+      "publica"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/seguranca-publica/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_seguranca_publica_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/seguranca-publica/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/seguranca-publica/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "seguranca-publica",
+      "sugestoes",
+      "seguranca",
+      "publica"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/seguranca-publica/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_servicos_publicos",
+    "title": "Servicos Publicos",
+    "path": "/admin/secretarias/servicos-publicos",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/servicos-publicos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "servicos-publicos",
+      "servicos",
+      "publicos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/servicos-publicos/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_servicos_publicos_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/servicos-publicos/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/servicos-publicos/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "servicos-publicos",
+      "sugestoes",
+      "servicos",
+      "publicos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/servicos-publicos/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_tecnologia_inovacao",
+    "title": "Tecnologia Inovacao",
+    "path": "/admin/secretarias/tecnologia-inovacao",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/tecnologia-inovacao.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "tecnologia-inovacao",
+      "tecnologia",
+      "inovacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/tecnologia-inovacao/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_tecnologia_inovacao_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/tecnologia-inovacao/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/tecnologia-inovacao/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "tecnologia-inovacao",
+      "sugestoes",
+      "tecnologia",
+      "inovacao"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/tecnologia-inovacao/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_transportes_transito",
+    "title": "Transportes Transito",
+    "path": "/admin/secretarias/transportes-transito",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/transportes-transito.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "transportes-transito",
+      "transportes",
+      "transito"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/transportes-transito/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_transportes_transito_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/transportes-transito/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/transportes-transito/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "transportes-transito",
+      "sugestoes",
+      "transportes",
+      "transito"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/transportes-transito/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_turismo",
+    "title": "Turismo",
+    "path": "/admin/secretarias/turismo",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/turismo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "turismo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/turismo/page.tsx"
+  },
+  {
+    "id": "admin_secretarias_turismo_sugestoes",
+    "title": "Sugestoes",
+    "path": "/admin/secretarias/turismo/sugestoes",
+    "category": "Secretarias",
+    "summary": "Tela administrativa disponivel em /admin/secretarias/turismo/sugestoes.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "secretarias",
+      "turismo",
+      "sugestoes"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/secretarias/turismo/sugestoes/page.tsx"
+  },
+  {
+    "id": "admin_servicos",
+    "title": "Servicos",
+    "path": "/admin/servicos",
+    "category": "Servicos",
+    "summary": "Tela administrativa disponivel em /admin/servicos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servicos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servicos/page.tsx"
+  },
+  {
+    "id": "admin_servicos_id_editar",
+    "title": "Editar",
+    "path": "/admin/servicos/[id]/editar",
+    "category": "Servicos",
+    "summary": "Tela administrativa disponivel em /admin/servicos/[id]/editar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servicos",
+      "[id]",
+      "editar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servicos/[id]/editar/page.tsx"
+  },
+  {
+    "id": "admin_servicos_id_solicitar",
+    "title": "Solicitar",
+    "path": "/admin/servicos/[id]/solicitar",
+    "category": "Servicos",
+    "summary": "Tela administrativa disponivel em /admin/servicos/[id]/solicitar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servicos",
+      "[id]",
+      "solicitar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servicos/[id]/solicitar/page.tsx"
+  },
+  {
+    "id": "admin_servicos_novo",
+    "title": "Novo",
+    "path": "/admin/servicos/novo",
+    "category": "Servicos",
+    "summary": "Tela administrativa disponivel em /admin/servicos/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servicos",
+      "novo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servicos/novo/page.tsx"
+  },
+  {
+    "id": "admin_servidores",
+    "title": "Servidores",
+    "path": "/admin/servidores",
+    "category": "Servidores",
+    "summary": "Tela administrativa disponivel em /admin/servidores.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servidores"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servidores/page.tsx"
+  },
+  {
+    "id": "admin_servidores_id",
+    "title": "Id",
+    "path": "/admin/servidores/[id]",
+    "category": "Servidores",
+    "summary": "Tela administrativa disponivel em /admin/servidores/[id].",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servidores",
+      "[id]",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servidores/[id]/page.tsx"
+  },
+  {
+    "id": "admin_servidores_id_editar",
+    "title": "Editar",
+    "path": "/admin/servidores/[id]/editar",
+    "category": "Servidores",
+    "summary": "Tela administrativa disponivel em /admin/servidores/[id]/editar.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servidores",
+      "[id]",
+      "editar",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servidores/[id]/editar/page.tsx"
+  },
+  {
+    "id": "admin_servidores_equipe",
+    "title": "Equipe",
+    "path": "/admin/servidores/equipe",
+    "category": "Servidores",
+    "summary": "Tela administrativa disponivel em /admin/servidores/equipe.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servidores",
+      "equipe"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servidores/equipe/page.tsx"
+  },
+  {
+    "id": "admin_servidores_novo",
+    "title": "Novo",
+    "path": "/admin/servidores/novo",
+    "category": "Servidores",
+    "summary": "Tela administrativa disponivel em /admin/servidores/novo.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "servidores",
+      "novo"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/servidores/novo/page.tsx"
+  },
+  {
+    "id": "admin_templates_documentos",
+    "title": "Templates Documentos",
+    "path": "/admin/templates-documentos",
+    "category": "Templates Documentos",
+    "summary": "Tela administrativa disponivel em /admin/templates-documentos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "templates-documentos",
+      "templates",
+      "documentos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/templates-documentos/page.tsx"
+  },
+  {
+    "id": "admin_templates_documentos_id_edit",
+    "title": "Edit",
+    "path": "/admin/templates-documentos/[id]/edit",
+    "category": "Templates Documentos",
+    "summary": "Tela administrativa disponivel em /admin/templates-documentos/[id]/edit.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "templates-documentos",
+      "[id]",
+      "edit",
+      "templates",
+      "documentos",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/templates-documentos/[id]/edit/page.tsx"
+  },
+  {
+    "id": "admin_templates_documentos_id_view",
+    "title": "View",
+    "path": "/admin/templates-documentos/[id]/view",
+    "category": "Templates Documentos",
+    "summary": "Tela administrativa disponivel em /admin/templates-documentos/[id]/view.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "templates-documentos",
+      "[id]",
+      "view",
+      "templates",
+      "documentos",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/templates-documentos/[id]/view/page.tsx"
+  },
+  {
+    "id": "admin_vinculos",
+    "title": "Vinculos",
+    "path": "/admin/vinculos",
+    "category": "Vinculos",
+    "summary": "Tela administrativa disponivel em /admin/vinculos.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "vinculos"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/vinculos/page.tsx"
+  },
+  {
+    "id": "admin_workflows",
+    "title": "Workflows",
+    "path": "/admin/workflows",
+    "category": "Workflows",
+    "summary": "Tela administrativa disponivel em /admin/workflows.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "workflows"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/workflows/page.tsx"
+  },
+  {
+    "id": "admin_workflows_id_edit",
+    "title": "Edit",
+    "path": "/admin/workflows/[id]/edit",
+    "category": "Workflows",
+    "summary": "Tela administrativa disponivel em /admin/workflows/[id]/edit.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "workflows",
+      "[id]",
+      "edit",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/workflows/[id]/edit/page.tsx"
+  },
+  {
+    "id": "admin_workflows_id_view",
+    "title": "View",
+    "path": "/admin/workflows/[id]/view",
+    "category": "Workflows",
+    "summary": "Tela administrativa disponivel em /admin/workflows/[id]/view.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "workflows",
+      "[id]",
+      "view",
+      "id"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/workflows/[id]/view/page.tsx"
+  },
+  {
+    "id": "admin_workflows_new",
+    "title": "New",
+    "path": "/admin/workflows/new",
+    "category": "Workflows",
+    "summary": "Tela administrativa disponivel em /admin/workflows/new.",
+    "keywords": [
+      "digiurban",
+      "admin",
+      "workflows",
+      "new"
+    ],
+    "sourcePath": "digiurban/frontend/app/admin/workflows/new/page.tsx"
+  }
+]

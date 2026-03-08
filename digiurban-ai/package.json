@@ -12,6 +12,7 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:migrate:deploy": "prisma migrate deploy",
+    "generate:app-context": "node ../scripts/generate-ai-admin-routes.mjs",
     "type-check": "tsc --noEmit",
     "benchmark:vps": "node scripts/benchmark-vps.js"
   },

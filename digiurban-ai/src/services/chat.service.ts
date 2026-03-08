@@ -1,5 +1,7 @@
 import { AiConversation, AiMessage, AiMessageRole, Prisma } from '@prisma/client';
 import { config } from '../config/config';
+import { applicationContextService } from './application-context.service';
+import { applicationDataService } from './application-data.service';
 import prisma from '../utils/prisma';
 import { apiKeyService } from './api-key.service';
 import { knowledgeService } from './knowledge.service';
@@ -239,9 +241,12 @@ function buildSystemPrompt(params: {
   userName?: string;
   departmentId?: string;
   retrievedContext: string[];
+  applicationContext: string[];
+  applicationData?: string;
   webContext: string[];
   webSearchEnabled: boolean;
   extraInstruction?: string;
+  toolsEnabled: boolean;
 }): string {
   const operator =
     params.userName || params.departmentId
@@ -258,8 +263,11 @@ function buildSystemPrompt(params: {
         'entregue a resposta final primeiro',
         'padrao curto: 1 paragrafo curto ou ate 5 bullets',
         'priorize contexto recuperado e contexto web',
+        params.toolsEnabled
+          ? 'para perguntas sobre a aplicacao DigiUrban, use ferramentas antes de responder'
+          : 'responda apenas com base no contexto recuperado',
         'se faltar evidencia, diga claramente que nao ha dados suficientes',
-        'nao invente ids, status, normas ou dados internos',
+        'nao invente telas, botoes, ids, status, normas ou dados internos',
         'se usar web, cite links relevantes',
       ]),
     ),
@@ -273,6 +281,23 @@ function buildSystemPrompt(params: {
       params.retrievedContext
         .map((chunk, index) => `[K${index + 1}] ${chunk}`)
         .join('\n\n'),
+    ),
+    renderPromptSection(
+      'application_context',
+      params.applicationContext
+        .map((chunk, index) => `[A${index + 1}] ${chunk}`)
+        .join('\n\n'),
+    ),
+    renderPromptSection('application_data', params.applicationData),
+    renderPromptSection(
+      'application_scope',
+      params.toolsEnabled
+        ? renderPromptList([
+            'perguntas sobre menu, rota, modulo, permissao, papel ou fluxo da DigiUrban devem usar ferramentas',
+            'perguntas sobre totais, status ou metricas internas devem usar ferramentas',
+            'nao responda no escuro sobre a aplicacao',
+          ])
+        : '',
     ),
     renderPromptSection(
       'web_context',
@@ -491,6 +516,125 @@ function shouldAutoUseWebSearch(query: string): boolean {
   return currentDataIntent && lookupFormatIntent;
 }
 
+function shouldAutoUseBuiltInTools(params: {
+  query: string;
+  chatMode: ChatMode;
+}): boolean {
+  if (params.chatMode !== 'rag') {
+    return false;
+  }
+
+  const normalized = normalizeIntentText(params.query);
+  if (!normalized) {
+    return false;
+  }
+
+  const applicationSignals = [
+    'aplicacao',
+    'sistema',
+    'digiurban',
+    'menu',
+    'tela',
+    'pagina',
+    'modulo',
+    'rota',
+    'dashboard',
+    'painel',
+    'prefeito',
+    'secretaria',
+    'cidadao',
+    'servidor',
+    'servico',
+    'protocolo',
+    'protocolos',
+    'chamado',
+    'chamados',
+    'ticket',
+    'permissao',
+    'papel',
+    'role',
+  ];
+  const workflowSignals = [
+    'como faco',
+    'como fazer',
+    'como abrir',
+    'como criar',
+    'como acessar',
+    'onde fica',
+    'qual tela',
+    'qual menu',
+    'passo a passo',
+    'fluxo',
+  ];
+  const dataSignals = [
+    'quantos',
+    'quantas',
+    'total',
+    'totais',
+    'numero',
+    'numeros',
+    'estatistica',
+    'estatisticas',
+    'status',
+    'dados',
+    'metricas',
+  ];
+
+  const hasApplicationSignal = applicationSignals.some((signal) => normalized.includes(signal));
+  const hasWorkflowSignal = workflowSignals.some((signal) => normalized.includes(signal));
+  const hasDataSignal = dataSignals.some((signal) => normalized.includes(signal));
+
+  return hasApplicationSignal && (hasWorkflowSignal || hasDataSignal || normalized.includes('aqui na aplicacao'));
+}
+
+function shouldPrefetchApplicationData(query: string): boolean {
+  const normalized = normalizeIntentText(query);
+  if (!normalized) {
+    return false;
+  }
+
+  const entitySignals = ['protocolo', 'protocolos', 'chamado', 'chamados', 'ticket'];
+  const metricSignals = [
+    'quantos',
+    'quantas',
+    'total',
+    'totais',
+    'status',
+    'numero',
+    'numeros',
+    'dados',
+    'estatistica',
+    'estatisticas',
+  ];
+
+  return (
+    entitySignals.some((signal) => normalized.includes(signal)) &&
+    metricSignals.some((signal) => normalized.includes(signal))
+  );
+}
+
+function formatApplicationContextChunks(results: Array<{
+  title: string;
+  summary: string;
+  path?: string;
+  minRole?: string;
+  permissions?: string[];
+  steps?: string[];
+}>): string[] {
+  return results.map((result) =>
+    [
+      `Titulo: ${result.title}`,
+      result.path ? `Rota: ${result.path}` : undefined,
+      result.minRole ? `Perfil minimo: ${result.minRole}` : undefined,
+      result.permissions?.length ? `Permissoes: ${result.permissions.join(', ')}` : undefined,
+      `Resumo: ${result.summary}`,
+      result.steps?.length ? `Passos: ${result.steps.join(' | ')}` : undefined,
+    ]
+      .filter(Boolean)
+      .join('\n'),
+  );
+}
+
 function resolveChatMode(params: {
   requestedMode?: ChatMode;
   source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
@@ -698,8 +842,10 @@ function appendStructuredOutputInstruction(
 
 function appendToolUsageInstruction(messages: ChatMessageInput[]): ChatMessageInput[] {
   const instruction = [
-    'Voce pode usar ferramentas quando realmente precisar de contexto externo ou dados internos.',
-    'Use no maximo a ferramenta necessaria para resolver a tarefa.',
+    'Para perguntas sobre a aplicacao DigiUrban, use search_application_context antes de responder no escuro.',
+    'Para totais, status ou dados vivos de protocolos e chamados, use get_application_data.',
+    'Use search_knowledge_base para contexto documental complementar e search_web apenas para fatos externos atuais.',
+    'Use no maximo as ferramentas necessarias para resolver a tarefa.',
     'Depois de receber o resultado da ferramenta, responda diretamente ao usuario.',
   ].join(' ');
 
@@ -901,6 +1047,10 @@ export class ChatService {
 
     const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
     const chatMode: ChatMode = params.mode || 'free';
+    const useBuiltInTools =
+      typeof params.useBuiltInTools === 'boolean'
+        ? params.useBuiltInTools
+        : shouldAutoUseBuiltInTools({ query: normalized, chatMode });
     const resolvedModel = resolveAutomaticModel({
       requestedModel: params.model,
       source: 'ADMIN_CHAT',
@@ -964,7 +1114,7 @@ export class ChatService {
       extraInstruction: params.extraInstruction,
       source: 'ADMIN_CHAT',
       responseFormat: params.responseFormat,
-      useBuiltInTools: params.useBuiltInTools,
+      useBuiltInTools,
     });
 
     const completion = await this.executeModelFlowWithRagFallback({
@@ -977,7 +1127,7 @@ export class ChatService {
       chatMode,
       lowLatencyProfile,
       responseFormat: params.responseFormat,
-      useBuiltInTools: params.useBuiltInTools,
+      useBuiltInTools,
       toolLoopLimit: params.toolLoopLimit,
     });
 
@@ -1003,7 +1153,7 @@ export class ChatService {
           circuitBreakerOpen: completion.circuitBreakerOpen,
           toolCalls: toJsonValue(completion.toolCalls),
           responseFormat: toJsonValue(params.responseFormat),
-          builtinToolsEnabled: params.useBuiltInTools || undefined,
+          builtinToolsEnabled: useBuiltInTools || undefined,
           contextSources: prepared.relevantChunks.slice(0, 5).map((item) => item.sourceId),
           webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
         },
@@ -1078,6 +1228,10 @@ export class ChatService {
 
     const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
     const chatMode: ChatMode = params.mode || 'free';
+    const useBuiltInTools =
+      typeof params.useBuiltInTools === 'boolean'
+        ? params.useBuiltInTools
+        : shouldAutoUseBuiltInTools({ query: normalized, chatMode });
     const resolvedModel = resolveAutomaticModel({
       requestedModel: params.model,
       source: 'ADMIN_CHAT',
@@ -1141,7 +1295,7 @@ export class ChatService {
       extraInstruction: params.extraInstruction,
       source: 'ADMIN_CHAT',
       responseFormat: params.responseFormat,
-      useBuiltInTools: params.useBuiltInTools,
+      useBuiltInTools,
     });
 
     const completion = await this.executeModelFlowWithRagFallback({
@@ -1154,7 +1308,7 @@ export class ChatService {
       chatMode,
       lowLatencyProfile,
       responseFormat: params.responseFormat,
-      useBuiltInTools: params.useBuiltInTools,
+      useBuiltInTools,
       toolLoopLimit: params.toolLoopLimit,
       onThinkingDelta: params.onThinkingDelta,
       onContentDelta: params.onContentDelta,
@@ -1182,7 +1336,7 @@ export class ChatService {
           circuitBreakerOpen: completion.circuitBreakerOpen,
           toolCalls: toJsonValue(completion.toolCalls),
           responseFormat: toJsonValue(params.responseFormat),
-          builtinToolsEnabled: params.useBuiltInTools || undefined,
+          builtinToolsEnabled: useBuiltInTools || undefined,
           contextSources: prepared.relevantChunks.slice(0, 5).map((item) => item.sourceId),
           webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
         },
@@ -1274,6 +1428,10 @@ export class ChatService {
       requestedMode: params.mode,
       source: params.source,
     });
+    const useBuiltInTools =
+      typeof params.useBuiltInTools === 'boolean'
+        ? params.useBuiltInTools
+        : shouldAutoUseBuiltInTools({ query: prompt, chatMode });
     const resolvedModel = resolveAutomaticModel({
       requestedModel: params.model,
       source: params.source,
@@ -1292,7 +1450,7 @@ export class ChatService {
       extraInstruction: params.extraInstruction,
       source: params.source,
       responseFormat: params.responseFormat,
-      useBuiltInTools: params.useBuiltInTools,
+      useBuiltInTools,
     });
 
     const completion = await this.executeModelFlowWithRagFallback({
@@ -1305,7 +1463,7 @@ export class ChatService {
       chatMode,
       lowLatencyProfile,
       responseFormat: params.responseFormat,
-      useBuiltInTools: params.useBuiltInTools,
+      useBuiltInTools,
       toolLoopLimit: params.toolLoopLimit,
     });
 
@@ -1348,9 +1506,9 @@ export class ChatService {
       profile: completion.profile,
       attemptedModels: completion.attemptedModels,
       usedFallback: completion.usedFallback,
-      circuitBreakerOpen: completion.circuitBreakerOpen,
-      webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
-    };
+        circuitBreakerOpen: completion.circuitBreakerOpen,
+        webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
+      };
   }
 
   private async prepareModelMessages(params: {
@@ -1373,6 +1531,8 @@ export class ChatService {
     webSearch: { enabled: boolean; results: WebSearchResult[] };
   }> {
     let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
+    let applicationContextChunks: string[] = [];
+    let applicationDataChunk: string | undefined;
     const shouldPreloadKnowledge =
       params.chatMode === 'rag' && !params.lowLatencyProfile && !params.useBuiltInTools;
 
@@ -1390,6 +1550,30 @@ export class ChatService {
           source: params.source,
           error: error instanceof Error ? error.message : String(error),
         });
+      }
+    }
+
+    if (params.chatMode === 'rag' && params.useBuiltInTools) {
+      applicationContextChunks = trimContextForPrompt(
+        formatApplicationContextChunks(
+          applicationContextService.search({ query: params.query, limit: 4 }),
+        ),
+      );
+
+      if (shouldPrefetchApplicationData(params.query)) {
+        try {
+          applicationDataChunk = truncateForModel(
+            JSON.stringify(await applicationDataService.query(params.query)),
+            Math.max(320, Math.min(config.maxContextCharsInPrompt, 900)),
+          );
+        } catch (error) {
+          logger.warn('Application data lookup failed', {
+            tenantId: params.tenantId,
+            conversationId: params.conversationId,
+            source: params.source,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
     }
 
@@ -1411,9 +1595,12 @@ export class ChatService {
                 userName: params.userName,
                 departmentId: params.departmentId,
                 retrievedContext: trimContextForPrompt(relevantChunks.map((item) => item.content)),
+                applicationContext: applicationContextChunks,
+                applicationData: applicationDataChunk,
                 webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
                 webSearchEnabled: webSearch.enabled,
                 extraInstruction: params.extraInstruction,
+                toolsEnabled: params.useBuiltInTools || false,
               }),
             },
             ...params.messages,

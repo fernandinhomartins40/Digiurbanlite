@@ -1,9 +1,16 @@
 import { config } from '../config/config';
+import { applicationContextService } from './application-context.service';
+import { applicationDataService } from './application-data.service';
 import { knowledgeService } from './knowledge.service';
 import { webSearchService } from './web-search.service';
 import { ModelToolCall, ModelToolDefinition } from '../types';
 
-export type BuiltInToolName = 'search_knowledge_base' | 'search_web' | 'get_current_time';
+export type BuiltInToolName =
+  | 'search_application_context'
+  | 'get_application_data'
+  | 'search_knowledge_base'
+  | 'search_web'
+  | 'get_current_time';
 
 export interface BuiltInToolContext {
   tenantId: string;
@@ -80,6 +87,46 @@ export class ToolRunnerService {
       tools.push({
         type: 'function',
         function: {
+          name: 'search_application_context',
+          description:
+            'Busca telas, rotas, fluxos, papeis e permissoes da aplicacao DigiUrban.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Pergunta objetiva sobre menu, tela, modulo, role ou fluxo.',
+              },
+              limit: {
+                type: 'integer',
+                description: 'Quantidade maxima de resultados. Use no maximo 6.',
+              },
+            },
+            required: ['query'],
+          },
+        },
+      });
+      tools.push({
+        type: 'function',
+        function: {
+          name: 'get_application_data',
+          description:
+            'Consulta dados operacionais em tempo real da aplicacao, como totais de protocolos e chamados.',
+          parameters: {
+            type: 'object',
+            properties: {
+              query: {
+                type: 'string',
+                description: 'Pergunta objetiva sobre totais, status ou dados vivos da aplicacao.',
+              },
+            },
+            required: ['query'],
+          },
+        },
+      });
+      tools.push({
+        type: 'function',
+        function: {
           name: 'search_knowledge_base',
           description: 'Busca contexto interno na base de conhecimento da DigiUrban.',
           parameters: {
@@ -135,6 +182,10 @@ export class ToolRunnerService {
     const args = normalizeArguments(call.function?.arguments ?? {});
 
     switch (toolName) {
+      case 'search_application_context':
+        return this.searchApplicationContext(args);
+      case 'get_application_data':
+        return this.getApplicationData(args);
       case 'search_knowledge_base':
         return this.searchKnowledgeBase(args, context);
       case 'search_web':
@@ -185,6 +236,55 @@ export class ToolRunnerService {
           score: item.score,
           content: item.content.slice(0, 900),
         })),
+      },
+    };
+  }
+
+  private async searchApplicationContext(args: Record<string, unknown>): Promise<ToolExecutionResult> {
+    const query = readString(args.query);
+    if (!query) {
+      return {
+        toolName: 'search_application_context',
+        output: {
+          ok: false,
+          error: 'Parametro "query" obrigatorio.',
+        },
+      };
+    }
+
+    const limit = readInt(args.limit, 1, 6, 4);
+    const results = applicationContextService.search({ query, limit });
+
+    return {
+      toolName: 'search_application_context',
+      output: {
+        ok: true,
+        query,
+        resultCount: results.length,
+        results,
+      },
+    };
+  }
+
+  private async getApplicationData(args: Record<string, unknown>): Promise<ToolExecutionResult> {
+    const query = readString(args.query);
+    if (!query) {
+      return {
+        toolName: 'get_application_data',
+        output: {
+          ok: false,
+          error: 'Parametro "query" obrigatorio.',
+        },
+      };
+    }
+
+    const result = await applicationDataService.query(query);
+    return {
+      toolName: 'get_application_data',
+      output: {
+        ok: true,
+        query,
+        ...result,
       },
     };
   }
