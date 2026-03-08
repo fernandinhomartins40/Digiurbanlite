@@ -419,6 +419,98 @@ function buildWebSearchMetadata(
   };
 }
 
+function getWebResultPriority(result: WebSearchResult): number {
+  try {
+    const hostname = new URL(result.url).hostname.toLowerCase();
+    if (hostname.includes('ibge.gov.br')) return 100;
+    if (hostname.includes('gov.br')) return 90;
+    if (hostname.includes('g1.globo.com')) return 80;
+    if (hostname.includes('wikipedia.org')) return 30;
+    return 50;
+  } catch {
+    return 10;
+  }
+}
+
+function sortWebResultsForAnswer(results: WebSearchResult[]): WebSearchResult[] {
+  return [...results].sort((left, right) => getWebResultPriority(right) - getWebResultPriority(left));
+}
+
+function extractPopulationCandidate(result: WebSearchResult): {
+  value: string;
+  qualifier?: string;
+} | null {
+  const haystack = `${result.title} ${result.snippet}`.replace(/\s+/g, ' ').trim();
+  if (!haystack) return null;
+
+  const patterns = [
+    /(\d{1,3}(?:[.\s]\d{3})+|\d{4,})\s+(?:pessoas|habitantes)/i,
+    /popul[a-z]*[^0-9]{0,30}(\d{1,3}(?:[.\s]\d{3})+|\d{4,})/i,
+    /(\d{1,3}(?:[.\s]\d{3})+|\d{4,})/i,
+  ];
+
+  for (const pattern of patterns) {
+    const match = haystack.match(pattern);
+    const value = match?.[1]?.trim();
+    if (!value) continue;
+
+    const qualifierMatch = haystack.match(/(censo[^.,;)]*20\d{2}|20\d{2})/i);
+    return {
+      value,
+      qualifier: qualifierMatch?.[1]?.trim(),
+    };
+  }
+
+  return null;
+}
+
+function buildDeterministicWebLookupContent(query: string, results: WebSearchResult[]): string | null {
+  if (!results.length) {
+    return [
+      'Nao encontrei resultados suficientes na web para responder com confianca agora.',
+      '',
+      'Tente reformular a pergunta com mais contexto ou pedir uma fonte especifica.',
+    ].join('\n');
+  }
+
+  const ordered = sortWebResultsForAnswer(results);
+  const normalizedQuery = normalizeIntentText(query);
+  const isPopulationLookup = /habitantes|populacao/.test(normalizedQuery);
+
+  if (isPopulationLookup) {
+    const candidateSource =
+      ordered
+        .map((result) => ({ result, candidate: extractPopulationCandidate(result) }))
+        .find((item) => item.candidate?.value)?.result || ordered[0];
+    const candidate = extractPopulationCandidate(candidateSource);
+
+    if (candidate?.value) {
+      const leadingSentence = [
+        `Encontrei na web a indicacao de ${candidate.value} habitantes.`,
+        candidate.qualifier ? `Referencia identificada: ${candidate.qualifier}.` : undefined,
+        `Fonte mais forte encontrada: ${candidateSource.title}.`,
+      ]
+        .filter(Boolean)
+        .join(' ');
+
+      return [
+        leadingSentence,
+        '',
+        'Fontes web:',
+        ...ordered.slice(0, 4).map((result) => `- [${result.title}](${result.url})${result.snippet ? `: ${result.snippet}` : ''}`),
+      ].join('\n');
+    }
+  }
+
+  const primary = ordered[0];
+  return [
+    `Encontrei estas referencias na web para sua pergunta. Resultado mais relevante: ${primary.title}${primary.snippet ? ` - ${primary.snippet}` : ''}`,
+    '',
+    'Fontes web:',
+    ...ordered.slice(0, 4).map((result) => `- [${result.title}](${result.url})${result.snippet ? `: ${result.snippet}` : ''}`),
+  ].join('\n');
+}
+
 function normalizeIntentText(input: string): string {
   return input
     .toLowerCase()
@@ -894,6 +986,34 @@ function buildRagFallbackContent(
   ].join('\n');
 }
 
+function buildDeterministicWebLookupCompletion(params: {
+  query: string;
+  results: WebSearchResult[];
+  latencyMs: number;
+  routeKind: ChatCompletionResult['routeKind'];
+}): ChatCompletionResult | null {
+  const content = buildDeterministicWebLookupContent(params.query, params.results);
+  if (!content) {
+    return null;
+  }
+
+  return {
+    content,
+    model: 'web-search-deterministic',
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    latencyMs: params.latencyMs,
+    finishReason: 'deterministic_web_lookup',
+    profile: 'interactive',
+    attemptedModels: [],
+    usedFallback: false,
+    circuitBreakerOpen: false,
+    routeKind: params.routeKind,
+    deterministicResponse: true,
+  };
+}
+
 function toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
   if (value === undefined) {
     return undefined;
@@ -1134,6 +1254,7 @@ export class ChatService {
     if (!normalized) {
       throw new Error('Message content is required');
     }
+    const requestStartedAt = Date.now();
 
     const inferencePlan = inferenceRouterService.plan({
       query: normalized,
@@ -1212,6 +1333,75 @@ export class ChatService {
       responseFormat: params.responseFormat,
       useBuiltInTools,
     });
+
+    const deterministicWebCompletion =
+      inferencePlan.routeKind === 'web_lookup'
+        ? buildDeterministicWebLookupCompletion({
+            query: normalized,
+            results: prepared.webSearch.results,
+            latencyMs: Date.now() - requestStartedAt,
+            routeKind: inferencePlan.routeKind,
+          })
+        : null;
+
+    if (deterministicWebCompletion) {
+      aiObservabilityService.recordInference({
+        routeKind: inferencePlan.routeKind,
+        experience: inferencePlan.experience,
+        model: deterministicWebCompletion.model,
+        latencyMs: deterministicWebCompletion.latencyMs,
+        deterministicResponse: true,
+        toolFirst: false,
+        webSearch: prepared.webSearch.enabled,
+      });
+
+      const assistantMessage = await prisma.aiMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: AiMessageRole.ASSISTANT,
+          content: deterministicWebCompletion.content,
+          model: deterministicWebCompletion.model,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          latencyMs: deterministicWebCompletion.latencyMs,
+          metadata: {
+            finishReason: deterministicWebCompletion.finishReason,
+            thinkEnabled: false,
+            performance: buildPerformanceMetadata(deterministicWebCompletion),
+            chatMode,
+            experience: inferencePlan.experience,
+            profile: deterministicWebCompletion.profile,
+            routeKind: inferencePlan.routeKind,
+            attemptedModels: [],
+            usedFallback: false,
+            circuitBreakerOpen: false,
+            deterministicResponse: true,
+            responseFormat: toJsonValue(params.responseFormat),
+            builtinToolsEnabled: false,
+            contextSources: prepared.contextSourceIds.slice(0, 6),
+            webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
+          },
+        },
+      });
+
+      await prisma.aiConversation.update({
+        where: { id: conversation.id },
+        data: {
+          lastMessageAt: new Date(),
+          title:
+            conversation.title === 'Nova conversa'
+              ? normalizeConversationTitle(userMessage.content)
+              : undefined,
+        },
+      });
+
+      return {
+        conversationId: conversation.id,
+        assistantMessage,
+        contextSources: prepared.contextSourceIds.length,
+      };
+    }
 
     const completion = await this.executeModelFlowWithRagFallback({
       query: normalized,
@@ -1342,6 +1532,7 @@ export class ChatService {
     if (!normalized) {
       throw new Error('Message content is required');
     }
+    const requestStartedAt = Date.now();
 
     const inferencePlan = inferenceRouterService.plan({
       query: normalized,
@@ -1420,6 +1611,77 @@ export class ChatService {
       responseFormat: params.responseFormat,
       useBuiltInTools,
     });
+
+    const deterministicWebCompletion =
+      inferencePlan.routeKind === 'web_lookup'
+        ? buildDeterministicWebLookupCompletion({
+            query: normalized,
+            results: prepared.webSearch.results,
+            latencyMs: Date.now() - requestStartedAt,
+            routeKind: inferencePlan.routeKind,
+          })
+        : null;
+
+    if (deterministicWebCompletion) {
+      params.onContentDelta?.(deterministicWebCompletion.content);
+
+      aiObservabilityService.recordInference({
+        routeKind: inferencePlan.routeKind,
+        experience: inferencePlan.experience,
+        model: deterministicWebCompletion.model,
+        latencyMs: deterministicWebCompletion.latencyMs,
+        deterministicResponse: true,
+        toolFirst: false,
+        webSearch: prepared.webSearch.enabled,
+      });
+
+      const assistantMessage = await prisma.aiMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: AiMessageRole.ASSISTANT,
+          content: deterministicWebCompletion.content,
+          model: deterministicWebCompletion.model,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          latencyMs: deterministicWebCompletion.latencyMs,
+          metadata: {
+            finishReason: deterministicWebCompletion.finishReason,
+            thinkEnabled: false,
+            performance: buildPerformanceMetadata(deterministicWebCompletion),
+            chatMode,
+            experience: inferencePlan.experience,
+            profile: deterministicWebCompletion.profile,
+            routeKind: inferencePlan.routeKind,
+            attemptedModels: [],
+            usedFallback: false,
+            circuitBreakerOpen: false,
+            deterministicResponse: true,
+            responseFormat: toJsonValue(params.responseFormat),
+            builtinToolsEnabled: false,
+            contextSources: prepared.contextSourceIds.slice(0, 6),
+            webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
+          },
+        },
+      });
+
+      await prisma.aiConversation.update({
+        where: { id: conversation.id },
+        data: {
+          lastMessageAt: new Date(),
+          title:
+            conversation.title === 'Nova conversa'
+              ? normalizeConversationTitle(userMessage.content)
+              : undefined,
+        },
+      });
+
+      return {
+        conversationId: conversation.id,
+        assistantMessage,
+        contextSources: prepared.contextSourceIds.length,
+      };
+    }
 
     const completion = await this.executeModelFlowWithRagFallback({
       query: normalized,
@@ -1568,6 +1830,7 @@ export class ChatService {
     if (!prompt) {
       throw new Error('Prompt is required');
     }
+    const requestStartedAt = Date.now();
 
     const inferencePlan = inferenceRouterService.plan({
       query: prompt,
@@ -1597,6 +1860,51 @@ export class ChatService {
       responseFormat: params.responseFormat,
       useBuiltInTools,
     });
+
+    const deterministicWebCompletion =
+      inferencePlan.routeKind === 'web_lookup'
+        ? buildDeterministicWebLookupCompletion({
+            query: prompt,
+            results: prepared.webSearch.results,
+            latencyMs: Date.now() - requestStartedAt,
+            routeKind: inferencePlan.routeKind,
+          })
+        : null;
+
+    if (deterministicWebCompletion) {
+      aiObservabilityService.recordInference({
+        routeKind: inferencePlan.routeKind,
+        experience: inferencePlan.experience,
+        model: deterministicWebCompletion.model,
+        latencyMs: deterministicWebCompletion.latencyMs,
+        deterministicResponse: true,
+        toolFirst: false,
+        webSearch: prepared.webSearch.enabled,
+      });
+
+      return {
+        content: deterministicWebCompletion.content,
+        model: deterministicWebCompletion.model,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        thinking: undefined,
+        firstTokenLatencyMs: 0,
+        totalDurationMs: deterministicWebCompletion.latencyMs,
+        loadDurationMs: 0,
+        promptEvalDurationMs: 0,
+        evalDurationMs: 0,
+        tokensPerSecond: undefined,
+        contextSources: prepared.contextSourceIds.length,
+        profile: deterministicWebCompletion.profile,
+        routeKind: deterministicWebCompletion.routeKind,
+        attemptedModels: [],
+        usedFallback: false,
+        circuitBreakerOpen: false,
+        deterministicResponse: true,
+        webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
+      };
+    }
 
     const completion = await this.executeModelFlowWithRagFallback({
       query: prompt,
