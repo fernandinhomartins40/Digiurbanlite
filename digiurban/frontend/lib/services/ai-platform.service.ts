@@ -33,8 +33,11 @@ export interface AiMessageMetadata {
   thinkingStatus?: 'processing' | 'completed';
   thinkEnabled?: boolean;
   chatMode?: 'free' | 'rag';
+  experience?: 'fast' | 'contextual' | 'quality';
   finishReason?: string;
   contextSources?: string[];
+  routeKind?: string;
+  deterministicResponse?: boolean;
   performance?: AiPerformanceMetrics;
   webSearch?: AiWebSearchMetadata;
 }
@@ -175,6 +178,7 @@ export const aiPlatformService = {
     model?: string;
     think?: boolean;
     mode?: 'free' | 'rag';
+    experience?: 'fast' | 'contextual' | 'quality';
     webSearch?: boolean;
     extraInstruction?: string;
     attachments?: AiMessageAttachment[];
@@ -201,6 +205,7 @@ export const aiPlatformService = {
     model?: string;
     think?: boolean;
     mode?: 'free' | 'rag';
+    experience?: 'fast' | 'contextual' | 'quality';
     webSearch?: boolean;
     extraInstruction?: string;
   }): Promise<{
@@ -216,6 +221,8 @@ export const aiPlatformService = {
     evalDurationMs?: number;
     tokensPerSecond?: number;
     contextSources: number;
+    routeKind?: string;
+    deterministicResponse?: boolean;
   }> {
     const payload = await request<{ data: any }>('/chat/completions', {
       method: 'POST',
@@ -236,6 +243,7 @@ export const aiPlatformService = {
       model?: string;
       think?: boolean;
       mode?: 'free' | 'rag';
+      experience?: 'fast' | 'contextual' | 'quality';
       webSearch?: boolean;
       extraInstruction?: string;
       attachments?: AiMessageAttachment[];

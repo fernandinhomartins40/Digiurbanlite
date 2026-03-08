@@ -14,6 +14,7 @@ type SourceConfig = {
   content?: string;
   url?: string;
   headers?: Record<string, string>;
+  indexScope?: KnowledgeIndexScope;
 };
 
 type SearchResult = {
@@ -42,6 +43,12 @@ type KnowledgeRuntimeStats = {
   queryEmbeddingCacheMisses: number;
   embeddingFailures: number;
 };
+
+export type KnowledgeIndexScope =
+  | 'app_routes_index'
+  | 'business_flows_index'
+  | 'internal_docs_index'
+  | 'live_metrics_tools';
 
 const TABLE_NAME_REGEX = /^[A-Za-z0-9_]+$/;
 const FIELD_NAME_REGEX = /[_\-.]+/g;
@@ -173,6 +180,22 @@ function readMetadataEmbedding(metadata: Prisma.JsonValue | null | undefined): n
   return vector.length > 0 ? vector : undefined;
 }
 
+function resolveConfiguredIndexScope(configValue: Prisma.JsonValue | null | undefined): KnowledgeIndexScope {
+  if (configValue && typeof configValue === 'object' && !Array.isArray(configValue)) {
+    const rawScope = (configValue as Record<string, unknown>).indexScope;
+    if (
+      rawScope === 'app_routes_index' ||
+      rawScope === 'business_flows_index' ||
+      rawScope === 'internal_docs_index' ||
+      rawScope === 'live_metrics_tools'
+    ) {
+      return rawScope;
+    }
+  }
+
+  return 'internal_docs_index';
+}
+
 export class KnowledgeService {
   private readonly searchCache = new Map<string, SearchCacheEntry>();
 
@@ -257,7 +280,11 @@ export class KnowledgeService {
     }
 
     const documents = await this.extractDocumentsFromSource(source);
-    const chunks = await this.buildChunks(documents, source.type);
+    const chunks = await this.buildChunks(
+      documents,
+      source.type,
+      (source.config ?? {}) as unknown as SourceConfig,
+    );
 
     await prisma.$transaction([
       prisma.aiKnowledgeChunk.deleteMany({
@@ -306,6 +333,7 @@ export class KnowledgeService {
     tenantId: string;
     query: string;
     limit?: number;
+    scopes?: KnowledgeIndexScope[];
   }): Promise<SearchResult[]> {
     const normalizedQuery = params.query.trim();
     if (!normalizedQuery) {
@@ -324,10 +352,37 @@ export class KnowledgeService {
 
     this.runtimeStats.queryCacheMisses += 1;
     const terms = normalizeTerms(normalizedQuery);
+    let scopedSourceIds: string[] | undefined;
+    const requestedScopes = Array.isArray(params.scopes)
+      ? Array.from(new Set(params.scopes)).filter(Boolean)
+      : [];
+
+    if (requestedScopes.length > 0) {
+      const scopedSources = await prisma.aiKnowledgeSource.findMany({
+        where: {
+          tenantId: params.tenantId,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          config: true,
+        },
+      });
+
+      scopedSourceIds = scopedSources
+        .filter((source) => requestedScopes.includes(resolveConfiguredIndexScope(source.config)))
+        .map((source) => source.id);
+
+      if (!scopedSourceIds.length) {
+        return [];
+      }
+    }
+
     const lexicalWhere =
       terms.length > 0
         ? {
             tenantId: params.tenantId,
+            ...(scopedSourceIds ? { sourceId: { in: scopedSourceIds } } : {}),
             OR: terms.map((term) => ({
               content: {
                 contains: term,
@@ -335,7 +390,10 @@ export class KnowledgeService {
               },
             })),
           }
-        : { tenantId: params.tenantId };
+        : {
+            tenantId: params.tenantId,
+            ...(scopedSourceIds ? { sourceId: { in: scopedSourceIds } } : {}),
+          };
 
     const lexicalCandidates = await prisma.aiKnowledgeChunk.findMany({
       where: lexicalWhere,
@@ -346,7 +404,10 @@ export class KnowledgeService {
     let candidates = lexicalCandidates;
     if (candidates.length < limit * 4) {
       const supplemental = await prisma.aiKnowledgeChunk.findMany({
-        where: { tenantId: params.tenantId },
+        where: {
+          tenantId: params.tenantId,
+          ...(scopedSourceIds ? { sourceId: { in: scopedSourceIds } } : {}),
+        },
         orderBy: { createdAt: 'desc' },
         take: Math.min(clamp(config.ragCandidateLimit, 20, 250), limit * 12),
       });
@@ -422,37 +483,72 @@ export class KnowledgeService {
       {
         name: 'Catalogo de Servicos',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'services_simplified', where: '"isActive" = true', limit: 5000 },
+        config: {
+          table: 'services_simplified',
+          where: '"isActive" = true',
+          limit: 5000,
+          indexScope: 'internal_docs_index',
+        },
       },
       {
         name: 'Workflows por Servico',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'service_workflows', where: '"isActive" = true', limit: 5000 },
+        config: {
+          table: 'service_workflows',
+          where: '"isActive" = true',
+          limit: 5000,
+          indexScope: 'business_flows_index',
+        },
       },
       {
         name: 'Estrutura de Departamentos',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'departments', where: '"isActive" = true', limit: 1000 },
+        config: {
+          table: 'departments',
+          where: '"isActive" = true',
+          limit: 1000,
+          indexScope: 'internal_docs_index',
+        },
       },
       {
         name: 'Organograma de Unidades',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'organizational_units', where: '"isActive" = true', limit: 10000 },
+        config: {
+          table: 'organizational_units',
+          where: '"isActive" = true',
+          limit: 10000,
+          indexScope: 'internal_docs_index',
+        },
       },
       {
         name: 'Cargos',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'positions', where: '"isActive" = true', limit: 5000 },
+        config: {
+          table: 'positions',
+          where: '"isActive" = true',
+          limit: 5000,
+          indexScope: 'internal_docs_index',
+        },
       },
       {
         name: 'Funcoes',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'functions', where: '"isActive" = true', limit: 5000 },
+        config: {
+          table: 'functions',
+          where: '"isActive" = true',
+          limit: 5000,
+          indexScope: 'internal_docs_index',
+        },
       },
       {
         name: 'Fluxos Conversacionais',
         type: AiKnowledgeSourceType.SYSTEM_TABLE,
-        config: { table: 'flow_definitions', where: '"isActive" = true', limit: 2000 },
+        config: {
+          table: 'flow_definitions',
+          where: '"isActive" = true',
+          limit: 2000,
+          indexScope: 'business_flows_index',
+        },
       },
     ];
 
@@ -636,6 +732,7 @@ export class KnowledgeService {
   private async buildChunks(
     documents: string[],
     sourceType: AiKnowledgeSourceType,
+    sourceConfig?: SourceConfig,
   ): Promise<
     Array<{
       hash: string;
@@ -671,6 +768,7 @@ export class KnowledgeService {
             documentIndex: docIndex,
             originalLength: normalizedDoc.length,
             sourceType,
+            indexScope: sourceConfig?.indexScope || 'internal_docs_index',
           },
         });
       });

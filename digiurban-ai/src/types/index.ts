@@ -36,6 +36,17 @@ export type ChatThinkingMode = boolean | 'low' | 'medium' | 'high';
 
 export type ChatResponseFormat = 'json' | StructuredOutputSchema;
 
+export type AiExperience = 'fast' | 'contextual' | 'quality';
+
+export type InferenceRouteKind =
+  | 'free_short'
+  | 'free_draft'
+  | 'context_navigation'
+  | 'context_metrics'
+  | 'context_documents'
+  | 'web_lookup'
+  | 'quality';
+
 export interface ModelToolCall {
   id?: string;
   type?: 'function';
@@ -74,4 +85,6 @@ export interface ChatCompletionResult {
   attemptedModels?: string[];
   usedFallback?: boolean;
   circuitBreakerOpen?: boolean;
+  routeKind?: InferenceRouteKind;
+  deterministicResponse?: boolean;
 }

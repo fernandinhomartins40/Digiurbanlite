@@ -10,26 +10,42 @@ const iterations = Math.max(1, Number.parseInt(process.env.AI_BENCHMARK_ITERATIO
 
 const scenarios = [
   {
-    name: 'greeting',
+    name: 'free_short',
     payload: {
       prompt: 'Ola',
-      mode: 'free',
+      experience: 'fast',
       think: false,
     },
   },
   {
-    name: 'draft',
+    name: 'free_draft',
     payload: {
       prompt: 'Escreva um oficio curto solicitando manutencao urgente da iluminacao publica em uma avenida municipal.',
-      mode: 'free',
+      experience: 'quality',
       think: false,
     },
   },
   {
-    name: 'rag',
+    name: 'context_navigation',
     payload: {
-      prompt: 'Quais informacoes existem na base sobre catalogo de servicos e workflows?',
-      mode: 'rag',
+      prompt: 'Como faco para abrir um chamado sendo o prefeito na aplicacao?',
+      experience: 'contextual',
+      think: false,
+    },
+  },
+  {
+    name: 'context_metrics',
+    payload: {
+      prompt: 'Quantos protocolos temos na aplicacao?',
+      experience: 'contextual',
+      think: false,
+    },
+  },
+  {
+    name: 'web_lookup',
+    payload: {
+      prompt: 'Busque na web quantos habitantes Palmital Parana possui atualmente.',
+      experience: 'fast',
       think: false,
     },
   },

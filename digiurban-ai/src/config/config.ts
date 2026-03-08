@@ -66,8 +66,18 @@ export const config = {
   digiurbanServiceToken: process.env.DIGIURBAN_SERVICE_TOKEN || '',
 
   ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
-  ollamaModel: process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
-  ollamaFallbackModel: process.env.AI_OLLAMA_FALLBACK_MODEL || 'qwen3.5:4b',
+  ollamaModel:
+    process.env.AI_OLLAMA_MODEL ||
+    process.env.AI_OLLAMA_FAST_MODEL ||
+    'qwen3.5:2b',
+  ollamaQualityModel:
+    process.env.AI_OLLAMA_QUALITY_MODEL ||
+    process.env.AI_OLLAMA_FALLBACK_MODEL ||
+    'qwen3.5:4b',
+  ollamaFallbackModel:
+    process.env.AI_OLLAMA_FALLBACK_MODEL ||
+    process.env.AI_OLLAMA_QUALITY_MODEL ||
+    'qwen3.5:4b',
   ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '60000', 10),
   ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '30000', 10),
   ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '18000', 10),
@@ -100,7 +110,13 @@ export const config = {
   ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
   ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
   ollamaWarmupModels: parseCsvList(
-    process.env.AI_OLLAMA_WARMUP_MODELS || process.env.AI_OLLAMA_MODEL || 'qwen3.5:9b',
+    process.env.AI_OLLAMA_WARMUP_MODELS ||
+      [
+        process.env.AI_OLLAMA_MODEL || process.env.AI_OLLAMA_FAST_MODEL || 'qwen3.5:2b',
+        process.env.AI_OLLAMA_QUALITY_MODEL ||
+          process.env.AI_OLLAMA_FALLBACK_MODEL ||
+          'qwen3.5:4b',
+      ].join(','),
   ),
   ollamaWarmupPrompt: process.env.AI_OLLAMA_WARMUP_PROMPT || 'Responda apenas: ok',
   ollamaWarmupTimeoutMs: parseInt(process.env.AI_OLLAMA_WARMUP_TIMEOUT_MS || '90000', 10),
@@ -116,7 +132,11 @@ export const config = {
   ollamaToolLoopMaxSteps: parseInt(process.env.AI_OLLAMA_TOOL_LOOP_MAX_STEPS || '4', 10),
   webSearchEnabled: (process.env.AI_WEB_SEARCH_ENABLED || 'false').toLowerCase() === 'true',
   webSearchDefault: (process.env.AI_WEB_SEARCH_DEFAULT || 'false').toLowerCase() === 'true',
-  webSearchProvider: (process.env.AI_WEB_SEARCH_PROVIDER || 'duckduckgo').toLowerCase(),
+  webSearchProvider:
+    (
+      process.env.AI_WEB_SEARCH_PROVIDER ||
+      (process.env.AI_WEB_SEARCH_SERPER_API_KEY ? 'serper' : 'duckduckgo')
+    ).toLowerCase(),
   webSearchTimeoutMs: parseInt(process.env.AI_WEB_SEARCH_TIMEOUT_MS || '12000', 10),
   webSearchMaxResults: parseInt(process.env.AI_WEB_SEARCH_MAX_RESULTS || '5', 10),
   webSearchCacheTtlMs: parseInt(process.env.AI_WEB_SEARCH_CACHE_TTL_MS || '300000', 10),
@@ -139,8 +159,8 @@ export const config = {
   ),
   maxContextCharsInPrompt: parseInt(process.env.AI_MAX_CONTEXT_CHARS_IN_PROMPT || '1200', 10),
   maxModelMessageChars: parseInt(process.env.AI_MAX_MODEL_MESSAGE_CHARS || '900', 10),
-  embeddingsEnabled: (process.env.AI_EMBEDDINGS_ENABLED || 'false').toLowerCase() === 'true',
-  embeddingsModel: process.env.AI_EMBEDDINGS_MODEL || 'nomic-embed-text',
+  embeddingsEnabled: (process.env.AI_EMBEDDINGS_ENABLED || 'true').toLowerCase() === 'true',
+  embeddingsModel: process.env.AI_EMBEDDINGS_MODEL || 'qwen3-embedding:0.6b',
   embeddingsTimeoutMs: parseInt(process.env.AI_EMBEDDINGS_TIMEOUT_MS || '15000', 10),
   embeddingsKeepAlive: normalizeOllamaKeepAlive(process.env.AI_EMBEDDINGS_KEEP_ALIVE),
   embeddingsBatchSize: parseInt(process.env.AI_EMBEDDINGS_BATCH_SIZE || '12', 10),

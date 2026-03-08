@@ -21,6 +21,7 @@ const updateConversationSchema = z
   });
 
 const chatModeSchema = z.enum(['free', 'rag']);
+const experienceSchema = z.enum(['fast', 'contextual', 'quality']);
 const thinkSchema = z.union([z.boolean(), z.enum(['low', 'medium', 'high'])]);
 const responseFormatSchema = z.union([z.literal('json'), z.record(z.any())]);
 
@@ -29,6 +30,7 @@ const sendMessageSchema = z.object({
   model: z.string().trim().min(1).max(128).optional(),
   think: thinkSchema.optional(),
   mode: chatModeSchema.optional(),
+  experience: experienceSchema.optional(),
   webSearch: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
   responseFormat: responseFormatSchema.optional(),
@@ -52,6 +54,7 @@ const completionSchema = z.object({
   model: z.string().trim().min(1).max(128).optional(),
   think: thinkSchema.optional(),
   mode: chatModeSchema.optional(),
+  experience: experienceSchema.optional(),
   webSearch: z.boolean().optional(),
   extraInstruction: z.string().trim().max(2000).optional(),
   responseFormat: responseFormatSchema.optional(),
@@ -174,6 +177,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
       model: payload.model,
       think: payload.think,
       mode: payload.mode,
+      experience: payload.experience,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
       responseFormat: payload.responseFormat,
@@ -235,6 +239,7 @@ router.post('/conversations/:id/messages/stream', async (req, res) => {
       model: payload.model,
       think: payload.think,
       mode: payload.mode,
+      experience: payload.experience,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
       responseFormat: payload.responseFormat,
@@ -304,6 +309,7 @@ router.post('/chat/completions', async (req, res) => {
       model: payload.model,
       think: payload.think,
       mode: payload.mode,
+      experience: payload.experience,
       webSearch: payload.webSearch,
       extraInstruction: payload.extraInstruction,
       responseFormat: payload.responseFormat,

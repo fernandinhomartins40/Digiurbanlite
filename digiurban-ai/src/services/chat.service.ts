@@ -4,13 +4,16 @@ import { applicationContextService } from './application-context.service';
 import { applicationDataService } from './application-data.service';
 import prisma from '../utils/prisma';
 import { apiKeyService } from './api-key.service';
-import { knowledgeService } from './knowledge.service';
+import { KnowledgeIndexScope, knowledgeService } from './knowledge.service';
 import {
+  AiExperience,
   ChatCompletionResult,
   ChatMessageInput,
   ChatResponseFormat,
   ChatThinkingMode,
 } from '../types';
+import { aiObservabilityService } from './ai-observability.service';
+import { inferenceRouterService } from './inference-router.service';
 import { ollamaService, OllamaServiceError } from './ollama.service';
 import { toolRunnerService } from './tool-runner.service';
 import { webSearchService, WebSearchResult } from './web-search.service';
@@ -268,6 +271,7 @@ function buildSystemPrompt(params: {
           : 'responda apenas com base no contexto recuperado',
         'se faltar evidencia, diga claramente que nao ha dados suficientes',
         'nao invente telas, botoes, ids, status, normas ou dados internos',
+        'quando usar dados internos, mencione que a origem e interna e indique o horario da medicao se disponivel',
         'se usar web, cite links relevantes',
       ]),
     ),
@@ -332,14 +336,39 @@ function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): strin
   ]);
 }
 
+function buildQualityModeSystemPrompt(params: { extraInstruction?: string }): string {
+  return joinPromptSections([
+    renderPromptSection('mode', 'quality_chat'),
+    renderPromptSection('role', 'assistente_editorial_institucional'),
+    renderPromptSection(
+      'response_contract',
+      renderPromptList([
+        'responda em pt-BR',
+        'entregue a resposta final primeiro',
+        'priorize clareza, precisao e acabamento textual',
+        'em redacao, entregue o texto pronto e bem estruturado',
+        'evite introducoes desnecessarias e prolixidade',
+        'nao finja acesso a dados internos ou fatos atuais sem contexto',
+      ]),
+    ),
+    renderPromptSection('extra_instruction', params.extraInstruction?.trim()),
+  ]);
+}
+
 function buildFreeModePromptWithWebContext(params: {
   extraInstruction?: string;
   webContext: string[];
   webSearchEnabled: boolean;
+  contract?: 'free' | 'quality';
 }): string {
-  const basePrompt = buildFreeModeSystemPrompt({
-    extraInstruction: params.extraInstruction,
-  });
+  const basePrompt =
+    params.contract === 'quality'
+      ? buildQualityModeSystemPrompt({
+          extraInstruction: params.extraInstruction,
+        })
+      : buildFreeModeSystemPrompt({
+          extraInstruction: params.extraInstruction,
+        });
 
   if (!params.webSearchEnabled || !params.webContext.length) {
     return basePrompt;
@@ -1029,6 +1058,7 @@ export class ChatService {
     model?: string;
     think?: ChatThinkingMode;
     mode?: ChatMode;
+    experience?: AiExperience;
     webSearch?: boolean;
     extraInstruction?: string;
     attachments?: MessageAttachmentInput[];
@@ -1045,17 +1075,20 @@ export class ChatService {
       throw new Error('Message content is required');
     }
 
-    const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
-    const chatMode: ChatMode = params.mode || 'free';
+    const inferencePlan = inferenceRouterService.plan({
+      query: normalized,
+      requestedMode: params.mode,
+      requestedExperience: params.experience,
+      requestedModel: params.model,
+      source: 'ADMIN_CHAT',
+      explicitWebSearch: params.webSearch,
+    });
+    const chatMode: ChatMode = inferencePlan.chatMode;
     const useBuiltInTools =
       typeof params.useBuiltInTools === 'boolean'
         ? params.useBuiltInTools
-        : shouldAutoUseBuiltInTools({ query: normalized, chatMode });
-    const resolvedModel = resolveAutomaticModel({
-      requestedModel: params.model,
-      source: 'ADMIN_CHAT',
-      chatMode,
-    });
+        : inferencePlan.useBuiltInTools;
+    const resolvedModel = inferencePlan.resolvedModel;
     const conversation = await prisma.aiConversation.findFirst({
       where: {
         id: params.conversationId,
@@ -1088,7 +1121,7 @@ export class ChatService {
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
-      take: lowLatencyProfile
+      take: inferencePlan.lowLatencyProfile
         ? Math.min(config.maxConversationMessagesContext, 3)
         : config.maxConversationMessagesContext,
     });
@@ -1108,8 +1141,7 @@ export class ChatService {
       query: normalized,
       conversationId: params.conversationId,
       messages: conversationMessages,
-      chatMode,
-      lowLatencyProfile,
+      inferencePlan,
       webSearchRequested: params.webSearch,
       extraInstruction: params.extraInstruction,
       source: 'ADMIN_CHAT',
@@ -1125,10 +1157,27 @@ export class ChatService {
       model: resolvedModel,
       think: params.think,
       chatMode,
-      lowLatencyProfile,
+      lowLatencyProfile: inferencePlan.lowLatencyProfile,
       responseFormat: params.responseFormat,
       useBuiltInTools,
       toolLoopLimit: params.toolLoopLimit,
+      allowFallback: inferencePlan.allowFallback,
+      routeKind: inferencePlan.routeKind,
+      deterministicResponse: inferencePlan.deterministicResponse,
+    });
+
+    aiObservabilityService.recordInference({
+      routeKind: inferencePlan.routeKind,
+      experience: inferencePlan.experience,
+      model: completion.model,
+      latencyMs: completion.latencyMs,
+      firstTokenLatencyMs: completion.firstTokenLatencyMs,
+      deterministicResponse: inferencePlan.deterministicResponse,
+      toolFirst:
+        inferencePlan.deterministicApplicationContext ||
+        inferencePlan.deterministicApplicationData ||
+        useBuiltInTools,
+      webSearch: prepared.webSearch.enabled,
     });
 
     const assistantMessage = await prisma.aiMessage.create({
@@ -1147,14 +1196,17 @@ export class ChatService {
           thinking: completion.thinking || undefined,
           performance: buildPerformanceMetadata(completion),
           chatMode,
+          experience: inferencePlan.experience,
           profile: completion.profile,
+          routeKind: inferencePlan.routeKind,
           attemptedModels: completion.attemptedModels,
           usedFallback: completion.usedFallback,
           circuitBreakerOpen: completion.circuitBreakerOpen,
+          deterministicResponse: inferencePlan.deterministicResponse,
           toolCalls: toJsonValue(completion.toolCalls),
           responseFormat: toJsonValue(params.responseFormat),
           builtinToolsEnabled: useBuiltInTools || undefined,
-          contextSources: prepared.relevantChunks.slice(0, 5).map((item) => item.sourceId),
+          contextSources: prepared.contextSourceIds.slice(0, 6),
           webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
         },
       },
@@ -1194,7 +1246,7 @@ export class ChatService {
     return {
       conversationId: conversation.id,
       assistantMessage,
-      contextSources: prepared.relevantChunks.length,
+      contextSources: prepared.contextSourceIds.length,
     };
   }
 
@@ -1208,6 +1260,7 @@ export class ChatService {
     model?: string;
     think?: ChatThinkingMode;
     mode?: ChatMode;
+    experience?: AiExperience;
     webSearch?: boolean;
     extraInstruction?: string;
     attachments?: MessageAttachmentInput[];
@@ -1226,17 +1279,20 @@ export class ChatService {
       throw new Error('Message content is required');
     }
 
-    const lowLatencyProfile = shouldUseLowLatencyProfile(normalized);
-    const chatMode: ChatMode = params.mode || 'free';
+    const inferencePlan = inferenceRouterService.plan({
+      query: normalized,
+      requestedMode: params.mode,
+      requestedExperience: params.experience,
+      requestedModel: params.model,
+      source: 'ADMIN_CHAT',
+      explicitWebSearch: params.webSearch,
+    });
+    const chatMode: ChatMode = inferencePlan.chatMode;
     const useBuiltInTools =
       typeof params.useBuiltInTools === 'boolean'
         ? params.useBuiltInTools
-        : shouldAutoUseBuiltInTools({ query: normalized, chatMode });
-    const resolvedModel = resolveAutomaticModel({
-      requestedModel: params.model,
-      source: 'ADMIN_CHAT',
-      chatMode,
-    });
+        : inferencePlan.useBuiltInTools;
+    const resolvedModel = inferencePlan.resolvedModel;
     const conversation = await prisma.aiConversation.findFirst({
       where: {
         id: params.conversationId,
@@ -1269,7 +1325,7 @@ export class ChatService {
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
-      take: lowLatencyProfile
+      take: inferencePlan.lowLatencyProfile
         ? Math.min(config.maxConversationMessagesContext, 3)
         : config.maxConversationMessagesContext,
     });
@@ -1289,8 +1345,7 @@ export class ChatService {
       query: normalized,
       conversationId: params.conversationId,
       messages: conversationMessages,
-      chatMode,
-      lowLatencyProfile,
+      inferencePlan,
       webSearchRequested: params.webSearch,
       extraInstruction: params.extraInstruction,
       source: 'ADMIN_CHAT',
@@ -1306,12 +1361,29 @@ export class ChatService {
       model: resolvedModel,
       think: params.think,
       chatMode,
-      lowLatencyProfile,
+      lowLatencyProfile: inferencePlan.lowLatencyProfile,
       responseFormat: params.responseFormat,
       useBuiltInTools,
       toolLoopLimit: params.toolLoopLimit,
+      allowFallback: inferencePlan.allowFallback,
+      routeKind: inferencePlan.routeKind,
+      deterministicResponse: inferencePlan.deterministicResponse,
       onThinkingDelta: params.onThinkingDelta,
       onContentDelta: params.onContentDelta,
+    });
+
+    aiObservabilityService.recordInference({
+      routeKind: inferencePlan.routeKind,
+      experience: inferencePlan.experience,
+      model: completion.model,
+      latencyMs: completion.latencyMs,
+      firstTokenLatencyMs: completion.firstTokenLatencyMs,
+      deterministicResponse: inferencePlan.deterministicResponse,
+      toolFirst:
+        inferencePlan.deterministicApplicationContext ||
+        inferencePlan.deterministicApplicationData ||
+        useBuiltInTools,
+      webSearch: prepared.webSearch.enabled,
     });
 
     const assistantMessage = await prisma.aiMessage.create({
@@ -1330,14 +1402,17 @@ export class ChatService {
           thinking: completion.thinking || undefined,
           performance: buildPerformanceMetadata(completion),
           chatMode,
+          experience: inferencePlan.experience,
           profile: completion.profile,
+          routeKind: inferencePlan.routeKind,
           attemptedModels: completion.attemptedModels,
           usedFallback: completion.usedFallback,
           circuitBreakerOpen: completion.circuitBreakerOpen,
+          deterministicResponse: inferencePlan.deterministicResponse,
           toolCalls: toJsonValue(completion.toolCalls),
           responseFormat: toJsonValue(params.responseFormat),
           builtinToolsEnabled: useBuiltInTools || undefined,
-          contextSources: prepared.relevantChunks.slice(0, 5).map((item) => item.sourceId),
+          contextSources: prepared.contextSourceIds.slice(0, 6),
           webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
         },
       },
@@ -1377,7 +1452,7 @@ export class ChatService {
     return {
       conversationId: conversation.id,
       assistantMessage,
-      contextSources: prepared.relevantChunks.length,
+      contextSources: prepared.contextSourceIds.length,
     };
   }
 
@@ -1390,6 +1465,7 @@ export class ChatService {
     model?: string;
     think?: ChatThinkingMode;
     mode?: ChatMode;
+    experience?: AiExperience;
     webSearch?: boolean;
     extraInstruction?: string;
     responseFormat?: ChatResponseFormat;
@@ -1413,9 +1489,11 @@ export class ChatService {
     tokensPerSecond?: number;
     contextSources: number;
     profile?: string;
+    routeKind?: ChatCompletionResult['routeKind'];
     attemptedModels?: string[];
     usedFallback?: boolean;
     circuitBreakerOpen?: boolean;
+    deterministicResponse?: boolean;
     webSearch?: WebSearchMetadata;
   }> {
     const prompt = params.prompt.trim();
@@ -1423,20 +1501,20 @@ export class ChatService {
       throw new Error('Prompt is required');
     }
 
-    const lowLatencyProfile = shouldUseLowLatencyProfile(prompt);
-    const chatMode = resolveChatMode({
+    const inferencePlan = inferenceRouterService.plan({
+      query: prompt,
       requestedMode: params.mode,
+      requestedExperience: params.experience,
+      requestedModel: params.model,
       source: params.source,
+      explicitWebSearch: params.webSearch,
     });
+    const chatMode = inferencePlan.chatMode;
     const useBuiltInTools =
       typeof params.useBuiltInTools === 'boolean'
         ? params.useBuiltInTools
-        : shouldAutoUseBuiltInTools({ query: prompt, chatMode });
-    const resolvedModel = resolveAutomaticModel({
-      requestedModel: params.model,
-      source: params.source,
-      chatMode,
-    });
+        : inferencePlan.useBuiltInTools;
+    const resolvedModel = inferencePlan.resolvedModel;
 
     const prepared = await this.prepareModelMessages({
       tenantId: params.tenantId,
@@ -1444,8 +1522,7 @@ export class ChatService {
       departmentId: params.departmentId,
       query: prompt,
       messages: [{ role: 'user', content: prompt }],
-      chatMode,
-      lowLatencyProfile,
+      inferencePlan,
       webSearchRequested: params.webSearch,
       extraInstruction: params.extraInstruction,
       source: params.source,
@@ -1461,10 +1538,27 @@ export class ChatService {
       model: resolvedModel,
       think: params.think,
       chatMode,
-      lowLatencyProfile,
+      lowLatencyProfile: inferencePlan.lowLatencyProfile,
       responseFormat: params.responseFormat,
       useBuiltInTools,
       toolLoopLimit: params.toolLoopLimit,
+      allowFallback: inferencePlan.allowFallback,
+      routeKind: inferencePlan.routeKind,
+      deterministicResponse: inferencePlan.deterministicResponse,
+    });
+
+    aiObservabilityService.recordInference({
+      routeKind: inferencePlan.routeKind,
+      experience: inferencePlan.experience,
+      model: completion.model,
+      latencyMs: completion.latencyMs,
+      firstTokenLatencyMs: completion.firstTokenLatencyMs,
+      deterministicResponse: inferencePlan.deterministicResponse,
+      toolFirst:
+        inferencePlan.deterministicApplicationContext ||
+        inferencePlan.deterministicApplicationData ||
+        useBuiltInTools,
+      webSearch: prepared.webSearch.enabled,
     });
 
     try {
@@ -1502,13 +1596,15 @@ export class ChatService {
       promptEvalDurationMs: completion.promptEvalDurationMs,
       evalDurationMs: completion.evalDurationMs,
       tokensPerSecond: completion.tokensPerSecond,
-      contextSources: prepared.relevantChunks.length,
+      contextSources: prepared.contextSourceIds.length,
       profile: completion.profile,
+      routeKind: completion.routeKind,
       attemptedModels: completion.attemptedModels,
       usedFallback: completion.usedFallback,
-        circuitBreakerOpen: completion.circuitBreakerOpen,
-        webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
-      };
+      circuitBreakerOpen: completion.circuitBreakerOpen,
+      deterministicResponse: completion.deterministicResponse,
+      webSearch: buildWebSearchMetadata(prepared.webSearch.results, prepared.webSearch.enabled),
+    };
   }
 
   private async prepareModelMessages(params: {
@@ -1518,8 +1614,7 @@ export class ChatService {
     query: string;
     conversationId?: string;
     messages: ChatMessageInput[];
-    chatMode: ChatMode;
-    lowLatencyProfile: boolean;
+    inferencePlan: ReturnType<typeof inferenceRouterService.plan>;
     webSearchRequested?: boolean;
     extraInstruction?: string;
     source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
@@ -1528,13 +1623,24 @@ export class ChatService {
   }): Promise<{
     modelMessages: ChatMessageInput[];
     relevantChunks: Array<{ content: string; sourceId: string; score: number }>;
+    contextSourceIds: string[];
     webSearch: { enabled: boolean; results: WebSearchResult[] };
   }> {
+    const chatMode = params.inferencePlan.chatMode;
     let relevantChunks: Array<{ content: string; sourceId: string; score: number }> = [];
+    let applicationContextResults: Array<{
+      id: string;
+      title: string;
+      summary: string;
+      path?: string;
+      minRole?: string;
+      permissions?: string[];
+      steps?: string[];
+    }> = [];
     let applicationContextChunks: string[] = [];
     let applicationDataChunk: string | undefined;
     const shouldPreloadKnowledge =
-      params.chatMode === 'rag' && !params.lowLatencyProfile && !params.useBuiltInTools;
+      params.inferencePlan.shouldPreloadKnowledge && !params.useBuiltInTools;
 
     if (shouldPreloadKnowledge) {
       try {
@@ -1542,6 +1648,10 @@ export class ChatService {
           tenantId: params.tenantId,
           query: params.query,
           limit: config.maxContextChunks,
+          scopes: params.inferencePlan.knowledgeScopes.filter(
+            (scope): scope is KnowledgeIndexScope =>
+              scope === 'business_flows_index' || scope === 'internal_docs_index',
+          ),
         });
       } catch (error) {
         logger.warn('Knowledge context lookup failed', {
@@ -1553,27 +1663,26 @@ export class ChatService {
       }
     }
 
-    if (params.chatMode === 'rag' && params.useBuiltInTools) {
+    if (chatMode === 'rag' && params.inferencePlan.deterministicApplicationContext) {
+      applicationContextResults = applicationContextService.search({ query: params.query, limit: 4 });
       applicationContextChunks = trimContextForPrompt(
-        formatApplicationContextChunks(
-          applicationContextService.search({ query: params.query, limit: 4 }),
-        ),
+        formatApplicationContextChunks(applicationContextResults),
       );
+    }
 
-      if (shouldPrefetchApplicationData(params.query)) {
-        try {
-          applicationDataChunk = truncateForModel(
-            JSON.stringify(await applicationDataService.query(params.query)),
-            Math.max(320, Math.min(config.maxContextCharsInPrompt, 900)),
-          );
-        } catch (error) {
-          logger.warn('Application data lookup failed', {
-            tenantId: params.tenantId,
-            conversationId: params.conversationId,
-            source: params.source,
-            error: error instanceof Error ? error.message : String(error),
-          });
-        }
+    if (chatMode === 'rag' && params.inferencePlan.deterministicApplicationData) {
+      try {
+        applicationDataChunk = truncateForModel(
+          JSON.stringify(await applicationDataService.query(params.query)),
+          Math.max(320, Math.min(config.maxContextCharsInPrompt, 900)),
+        );
+      } catch (error) {
+        logger.warn('Application data lookup failed', {
+          tenantId: params.tenantId,
+          conversationId: params.conversationId,
+          source: params.source,
+          error: error instanceof Error ? error.message : String(error),
+        });
       }
     }
 
@@ -1583,11 +1692,11 @@ export class ChatService {
       conversationId: params.conversationId,
       source: params.source,
       requested: params.webSearchRequested,
-      autoDetect: !params.useBuiltInTools,
+      autoDetect: params.inferencePlan.shouldUseWebSearch,
     });
 
     let modelMessages =
-      params.chatMode === 'rag'
+      chatMode === 'rag'
         ? boundRagModelMessages([
             {
               role: 'system',
@@ -1600,7 +1709,10 @@ export class ChatService {
                 webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
                 webSearchEnabled: webSearch.enabled,
                 extraInstruction: params.extraInstruction,
-                toolsEnabled: params.useBuiltInTools || false,
+                toolsEnabled:
+                  params.useBuiltInTools ||
+                  params.inferencePlan.deterministicApplicationContext ||
+                  params.inferencePlan.deterministicApplicationData,
               }),
             },
             ...params.messages,
@@ -1613,6 +1725,8 @@ export class ChatService {
                   extraInstruction: params.extraInstruction,
                   webContext: trimContextForPrompt(buildWebContextChunks(webSearch.results)),
                   webSearchEnabled: webSearch.enabled,
+                  contract:
+                    params.inferencePlan.promptContract === 'quality' ? 'quality' : 'free',
                 }),
               },
               ...params.messages,
@@ -1620,7 +1734,13 @@ export class ChatService {
           );
 
     modelMessages = appendStructuredOutputInstruction(modelMessages, params.responseFormat);
-    return { modelMessages, relevantChunks, webSearch };
+    const contextSourceIds = [
+      ...relevantChunks.map((item) => item.sourceId),
+      ...applicationContextResults.map((item) => `app:${item.id}`),
+      ...(applicationDataChunk ? ['data:live_metrics_tools'] : []),
+      ...webSearch.results.slice(0, 3).map((item) => item.url),
+    ];
+    return { modelMessages, relevantChunks, contextSourceIds, webSearch };
   }
 
   private async executeModelFlowWithRagFallback(params: {
@@ -1635,6 +1755,9 @@ export class ChatService {
     responseFormat?: ChatResponseFormat;
     useBuiltInTools?: boolean;
     toolLoopLimit?: number;
+    allowFallback?: boolean;
+    routeKind: ChatCompletionResult['routeKind'];
+    deterministicResponse: boolean;
     onThinkingDelta?: (delta: string) => void;
     onContentDelta?: (delta: string) => void;
   }): Promise<ChatCompletionResult> {
@@ -1666,6 +1789,8 @@ export class ChatService {
           attemptedModels: [],
           usedFallback: false,
           circuitBreakerOpen: false,
+          routeKind: params.routeKind,
+          deterministicResponse: params.deterministicResponse,
         };
       }
 
@@ -1683,6 +1808,9 @@ export class ChatService {
     responseFormat?: ChatResponseFormat;
     useBuiltInTools?: boolean;
     toolLoopLimit?: number;
+    allowFallback?: boolean;
+    routeKind: ChatCompletionResult['routeKind'];
+    deterministicResponse: boolean;
     onThinkingDelta?: (delta: string) => void;
     onContentDelta?: (delta: string) => void;
   }): Promise<ChatCompletionResult> {
@@ -1695,26 +1823,38 @@ export class ChatService {
 
     if (!params.useBuiltInTools) {
       if (params.onThinkingDelta || params.onContentDelta) {
-        return ollamaService.chatStream(
+        const streamed = await ollamaService.chatStream(
           params.modelMessages,
           params.model,
           {
             think: params.think,
             profile,
             format: params.responseFormat,
+            allowFallback: params.allowFallback,
           },
           {
             onThinkingDelta: params.onThinkingDelta,
             onContentDelta: params.onContentDelta,
           },
         );
+        return {
+          ...streamed,
+          routeKind: params.routeKind,
+          deterministicResponse: params.deterministicResponse,
+        };
       }
 
-      return ollamaService.chat(params.modelMessages, params.model, {
+      const completion = await ollamaService.chat(params.modelMessages, params.model, {
         think: params.think,
         profile,
         format: params.responseFormat,
+        allowFallback: params.allowFallback,
       });
+      return {
+        ...completion,
+        routeKind: params.routeKind,
+        deterministicResponse: params.deterministicResponse,
+      };
     }
 
     const builtinTools = toolRunnerService.getBuiltInTools({
@@ -1722,25 +1862,39 @@ export class ChatService {
       chatMode: params.chatMode,
     });
     if (!builtinTools.length) {
-      return params.onThinkingDelta || params.onContentDelta
-        ? ollamaService.chatStream(
+      if (params.onThinkingDelta || params.onContentDelta) {
+        const streamed = await ollamaService.chatStream(
             params.modelMessages,
             params.model,
             {
               think: params.think,
               profile,
               format: params.responseFormat,
+              allowFallback: params.allowFallback,
             },
             {
               onThinkingDelta: params.onThinkingDelta,
               onContentDelta: params.onContentDelta,
             },
-          )
-        : ollamaService.chat(params.modelMessages, params.model, {
-            think: params.think,
-            profile,
-            format: params.responseFormat,
-          });
+          );
+        return {
+          ...streamed,
+          routeKind: params.routeKind,
+          deterministicResponse: params.deterministicResponse,
+        };
+      }
+
+      const completion = await ollamaService.chat(params.modelMessages, params.model, {
+        think: params.think,
+        profile,
+        format: params.responseFormat,
+        allowFallback: params.allowFallback,
+      });
+      return {
+        ...completion,
+        routeKind: params.routeKind,
+        deterministicResponse: params.deterministicResponse,
+      };
     }
 
     const toolLoopLimit = Math.max(1, Math.min(params.toolLoopLimit || config.ollamaToolLoopMaxSteps, 8));
@@ -1753,6 +1907,7 @@ export class ChatService {
         profile: 'tool',
         tools: builtinTools,
         format: step === toolLoopLimit - 1 ? undefined : params.responseFormat,
+        allowFallback: params.allowFallback,
       });
 
       if (!completion.toolCalls?.length) {
@@ -1762,7 +1917,11 @@ export class ChatService {
         if (completion.content) {
           params.onContentDelta?.(completion.content);
         }
-        return completion;
+        return {
+          ...completion,
+          routeKind: params.routeKind,
+          deterministicResponse: params.deterministicResponse,
+        };
       }
 
       workingMessages = [
@@ -1815,7 +1974,7 @@ export class ChatService {
       think: false,
       profile: params.responseFormat ? 'structured' : 'draft',
       format: params.responseFormat,
-      allowFallback: true,
+      allowFallback: params.allowFallback,
     });
 
     if (finalCompletion.thinking) {
@@ -1825,7 +1984,11 @@ export class ChatService {
       params.onContentDelta?.(finalCompletion.content);
     }
 
-    return finalCompletion;
+    return {
+      ...finalCompletion,
+      routeKind: params.routeKind,
+      deterministicResponse: params.deterministicResponse,
+    };
   }
 }
 

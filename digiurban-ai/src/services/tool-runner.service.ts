@@ -1,7 +1,7 @@
 import { config } from '../config/config';
 import { applicationContextService } from './application-context.service';
 import { applicationDataService } from './application-data.service';
-import { knowledgeService } from './knowledge.service';
+import { KnowledgeIndexScope, knowledgeService } from './knowledge.service';
 import { webSearchService } from './web-search.service';
 import { ModelToolCall, ModelToolDefinition } from '../types';
 
@@ -140,6 +140,12 @@ export class ToolRunnerService {
                 type: 'integer',
                 description: 'Quantidade maxima de resultados. Use no maximo 5.',
               },
+              scopes: {
+                type: 'array',
+                items: { type: 'string' },
+                description:
+                  'Escopos opcionais: business_flows_index, internal_docs_index.',
+              },
             },
             required: ['query'],
           },
@@ -219,10 +225,17 @@ export class ToolRunnerService {
     }
 
     const limit = readInt(args.limit, 1, 5, 4);
+    const scopes = Array.isArray(args.scopes)
+      ? args.scopes.filter(
+          (item): item is KnowledgeIndexScope =>
+            item === 'business_flows_index' || item === 'internal_docs_index',
+        )
+      : undefined;
     const results = await knowledgeService.searchRelevantChunks({
       tenantId: context.tenantId,
       query,
       limit,
+      scopes,
     });
 
     return {
@@ -231,6 +244,7 @@ export class ToolRunnerService {
         ok: true,
         query,
         resultCount: results.length,
+        scopes,
         results: results.map((item) => ({
           sourceId: item.sourceId,
           score: item.score,

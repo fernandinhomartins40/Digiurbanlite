@@ -1,7 +1,7 @@
 {
   "name": "@digiurban/ai",
   "version": "1.0.0",
-  "description": "DigiUrban AI Platform - Serviço centralizado de IA com Qwen 3.5 Small 9B",
+  "description": "DigiUrban AI Platform - Servico centralizado de IA com DigiUrban Fast e Qwen 3.5 4B",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -14,7 +14,9 @@
     "prisma:migrate:deploy": "prisma migrate deploy",
     "generate:app-context": "node ../scripts/generate-ai-admin-routes.mjs",
     "type-check": "tsc --noEmit",
-    "benchmark:vps": "node scripts/benchmark-vps.js"
+    "benchmark:vps": "node scripts/benchmark-vps.js",
+    "generate:lora-dataset": "node ../scripts/generate-digiurban-lora-dataset.mjs",
+    "prepare:ollama-fast": "bash ../ai-training/scripts/prepare_ollama_model.sh"
   },
   "keywords": [
     "ai",

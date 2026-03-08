@@ -1,0 +1,9 @@
+unsloth
+transformers
+datasets
+trl
+accelerate
+peft
+bitsandbytes
+sentencepiece
+safetensors

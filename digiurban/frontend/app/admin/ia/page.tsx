@@ -43,18 +43,31 @@ import {
 
 type PendingAttachment = AiMessageAttachment & { id: string };
 type AdminChatMode = 'free' | 'rag';
+type AdminAiExperience = 'fast' | 'contextual' | 'quality';
 
 const MAX_ATTACHMENTS = 5;
 const MAX_ATTACHMENT_SIZE = 8 * 1024 * 1024;
 const TEXT_PREVIEW_LIMIT = 2500;
-const MODEL_OPTIONS = [
-  { value: 'auto', label: 'Automatico (Qwen 3.5 4B)' },
-  { value: 'qwen3.5:4b', label: 'Qwen 3.5 4B' },
-  { value: 'qwen3.5:9b', label: 'Qwen 3.5 9B' },
-];
-const CHAT_MODE_OPTIONS: Array<{ value: AdminChatMode; label: string; description: string }> = [
-  { value: 'free', label: 'Chat livre', description: 'Conversa direta com o modelo, sem RAG.' },
-  { value: 'rag', label: 'Chat contextual', description: 'Usa base de conhecimento e contexto web.' },
+const EXPERIENCE_OPTIONS: Array<{
+  value: AdminAiExperience;
+  label: string;
+  description: string;
+}> = [
+  {
+    value: 'fast',
+    label: 'Rapido',
+    description: 'Modelo DigiUrban rapido para escrita, revisao e produtividade.',
+  },
+  {
+    value: 'contextual',
+    label: 'Contextual',
+    description: 'Consulta dados, fluxos e contexto da aplicacao antes de responder.',
+  },
+  {
+    value: 'quality',
+    label: 'Qualidade',
+    description: 'Usa o Qwen 3.5 4B para respostas com acabamento textual melhor.',
+  },
 ];
 const QUICK_PROMPTS = [
   'Crie um modelo de oficio para solicitar manutencao de equipamento.',
@@ -201,16 +214,24 @@ function getMessageAttachments(message: AiMessage): AiMessageAttachment[] {
   return Array.isArray(attachments) ? attachments : [];
 }
 
+function experienceToChatMode(experience: AdminAiExperience): AdminChatMode {
+  return experience === 'contextual' ? 'rag' : 'free';
+}
+
 function normalizeAssistantMessage(message: AiMessage, thinkEnabled: boolean, chatMode: AdminChatMode): AiMessage {
   if (message.role !== 'ASSISTANT') return message;
   const metadata = getMetadata(message);
   const hasThinking = typeof metadata.thinking === 'string' && metadata.thinking.trim().length > 0;
   const resolvedThinkEnabled = metadata.thinkEnabled ?? thinkEnabled;
+  const resolvedExperience =
+    metadata.experience ??
+    (metadata.chatMode === 'rag' ? 'contextual' : 'fast');
   return {
     ...message,
     metadata: {
       ...metadata,
       thinkEnabled: resolvedThinkEnabled,
+      experience: resolvedExperience,
       chatMode: metadata.chatMode ?? chatMode,
       thinkingStatus:
         hasThinking
@@ -240,8 +261,7 @@ export default function AdminAiPage() {
   const [loadingConversations, setLoadingConversations] = useState(true);
   const [conversationsModalOpen, setConversationsModalOpen] = useState(false);
   const [attachments, setAttachments] = useState<PendingAttachment[]>([]);
-  const [selectedModel, setSelectedModel] = useState(MODEL_OPTIONS[0].value);
-  const [chatMode, setChatMode] = useState<AdminChatMode>('free');
+  const [experienceMode, setExperienceMode] = useState<AdminAiExperience>('fast');
   const [thinkMode, setThinkMode] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [editingConversationId, setEditingConversationId] = useState<string | null>(null);
@@ -256,6 +276,7 @@ export default function AdminAiPage() {
     () => conversations.find((conversation) => conversation.id === activeConversationId) || null,
     [conversations, activeConversationId],
   );
+  const chatMode = experienceToChatMode(experienceMode);
 
   const scrollMessagesToBottom = (): void => {
     if (!messageListRef.current) return;
@@ -276,7 +297,19 @@ export default function AdminAiPage() {
     try {
       const data = await aiPlatformService.getConversation(conversationId);
       setActiveConversationId(data.id);
-      setMessages((data.messages || []).map((message) => normalizeAssistantMessage(message, thinkMode, chatMode)));
+      const normalizedMessages = (data.messages || []).map((message) =>
+        normalizeAssistantMessage(message, thinkMode, chatMode),
+      );
+      setMessages(normalizedMessages);
+      const lastAssistant = [...normalizedMessages].reverse().find((message) => message.role === 'ASSISTANT');
+      const metadata = lastAssistant ? getMetadata(lastAssistant) : {};
+      if (metadata.experience === 'fast' || metadata.experience === 'contextual' || metadata.experience === 'quality') {
+        setExperienceMode(metadata.experience);
+      } else if (metadata.chatMode === 'rag') {
+        setExperienceMode('contextual');
+      } else {
+        setExperienceMode('fast');
+      }
     } finally {
       setLoadingMessages(false);
     }
@@ -323,8 +356,7 @@ export default function AdminAiPage() {
       setMessages([]);
       setDraft('');
       setAttachments([]);
-      setSelectedModel('auto');
-      setChatMode('free');
+      setExperienceMode('fast');
       setThinkMode(false);
       setConversationsModalOpen(false);
     } catch (error) {
@@ -506,6 +538,7 @@ export default function AdminAiPage() {
           thinkingStatus: thinkMode ? 'processing' : undefined,
           thinkEnabled: thinkMode,
           chatMode,
+          experience: experienceMode,
           thinking: thinkMode ? 'Analisando e preparando resposta...' : undefined,
         },
       },
@@ -533,8 +566,8 @@ export default function AdminAiPage() {
         conversationId,
         {
           content,
-          model: selectedModel === 'auto' ? undefined : selectedModel,
           mode: chatMode,
+          experience: experienceMode,
           think: thinkMode,
           attachments: attachmentPayload,
         },
@@ -548,6 +581,7 @@ export default function AdminAiPage() {
                   ...metadata,
                   thinkEnabled: true,
                   chatMode,
+                  experience: experienceMode,
                   thinkingStatus: 'processing',
                   thinking: `${metadata.thinking || ''}${delta}`,
                 },
@@ -759,26 +793,17 @@ export default function AdminAiPage() {
                     {activeConversation ? titleForConversation(activeConversation) : 'Assistente IA'}
                   </p>
                   <p className="text-xs text-slate-500">
-                    {CHAT_MODE_OPTIONS.find((option) => option.value === chatMode)?.description}
+                    {EXPERIENCE_OPTIONS.find((option) => option.value === experienceMode)?.description}
                   </p>
                 </div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
-                  value={chatMode}
-                  onChange={(event) => setChatMode(event.target.value as AdminChatMode)}
+                  value={experienceMode}
+                  onChange={(event) => setExperienceMode(event.target.value as AdminAiExperience)}
                   className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
                 >
-                  {CHAT_MODE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
-                </select>
-                <select
-                  value={selectedModel}
-                  onChange={(event) => setSelectedModel(event.target.value)}
-                  className="h-8 rounded-md border border-slate-300 bg-white px-2 text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-cyan-500"
-                >
-                  {MODEL_OPTIONS.map((option) => (
+                  {EXPERIENCE_OPTIONS.map((option) => (
                     <option key={option.value} value={option.value}>{option.label}</option>
                   ))}
                 </select>
@@ -800,7 +825,11 @@ export default function AdminAiPage() {
                 </span>
                 <h2 className="font-serif text-3xl tracking-tight text-slate-900 sm:text-5xl">Por onde comecamos?</h2>
                 <p className="mt-4 max-w-xl text-sm text-slate-600">
-                  Chat livre para redacao e revisao. Ative o modo contextual quando precisar de RAG.
+                  {experienceMode === 'contextual'
+                    ? 'Consultas contextuais usam dados, fluxos e contexto da aplicacao antes de responder.'
+                    : experienceMode === 'quality'
+                      ? 'Use o modo Qualidade quando quiser mais acabamento em redacoes, pareceres e textos institucionais.'
+                      : 'Modo rapido para escrita, revisao e produtividade. Use Contextual quando precisar de dados e fluxos da aplicacao.'}
                 </p>
                 <div className="mt-6 flex flex-wrap justify-center gap-2">
                   {QUICK_PROMPTS.map((prompt) => (
@@ -823,6 +852,14 @@ export default function AdminAiPage() {
                   const messageAttachments = getMessageAttachments(message);
                   const webSearch = metadata.webSearch;
                   const webSources = Array.isArray(webSearch?.sources) ? webSearch.sources : [];
+                  const internalSources = Array.isArray(metadata.contextSources)
+                    ? metadata.contextSources.filter(
+                        (source) =>
+                          typeof source === 'string' &&
+                          source.trim().length > 0 &&
+                          !source.startsWith('http'),
+                      )
+                    : [];
                   const thinkingText = typeof metadata.thinking === 'string' ? metadata.thinking.trim() : '';
                   const isThinkingNow = !isUser && metadata.thinkingStatus === 'processing';
                   const showThinkingPanel =
@@ -907,6 +944,23 @@ export default function AdminAiPage() {
                             </ul>
                           </div>
                         ) : null}
+
+                        {!isUser && internalSources.length > 0 ? (
+                          <div className="mt-3 rounded-lg border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                            <p className="mb-2 font-semibold text-slate-700">Contexto interno consultado</p>
+                            <ul className="space-y-1">
+                              {internalSources.slice(0, 6).map((source, index) => (
+                                <li key={`${message.id}-internal-${index}`} className="truncate">
+                                  {source.startsWith('app:')
+                                    ? `Aplicacao: ${source.slice(4)}`
+                                    : source.startsWith('data:')
+                                      ? `Dados internos: ${source.slice(5)}`
+                                      : source}
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        ) : null}
                       </div>
 
                       {isUser ? (
@@ -932,7 +986,13 @@ export default function AdminAiPage() {
                     rows={1}
                     onKeyDown={handleComposerKeyDown}
                     className="min-h-0 resize-none border-0 bg-transparent px-2 py-2 text-[15px] leading-7 shadow-none focus-visible:ring-0"
-                    placeholder={chatMode === 'free' ? 'Escreva livremente... ex: crie um oficio, revise um texto, estruture um comunicado.' : 'Descreva o que precisa considerando o contexto do sistema.'}
+                    placeholder={
+                      experienceMode === 'contextual'
+                        ? 'Descreva o que precisa considerando o contexto do sistema.'
+                        : experienceMode === 'quality'
+                          ? 'Peça um texto mais elaborado, uma revisão refinada ou uma redação longa.'
+                          : 'Escreva livremente... ex: crie um oficio, revise um texto, estruture um comunicado.'
+                    }
                   />
 
                   {attachments.length > 0 ? (

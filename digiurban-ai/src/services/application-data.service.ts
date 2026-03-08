@@ -64,6 +64,7 @@ export class ApplicationDataService {
       ok: true,
       entity: 'protocols',
       source: 'database',
+      sourceLabel: 'Tabela protocols_simplified',
       measuredAt: new Date().toISOString(),
       totals: {
         total,
@@ -91,6 +92,7 @@ export class ApplicationDataService {
       ok: true,
       entity: 'admin_tickets',
       source: 'database',
+      sourceLabel: 'Tabela admin_tickets',
       measuredAt: new Date().toISOString(),
       totals: {
         total,
@@ -113,6 +115,7 @@ export class ApplicationDataService {
       ok: true,
       entity: 'application_overview',
       source: 'database',
+      sourceLabel: 'Tabelas protocols_simplified e admin_tickets',
       measuredAt: new Date().toISOString(),
       protocols: protocols.totals,
       adminTickets: tickets.totals,

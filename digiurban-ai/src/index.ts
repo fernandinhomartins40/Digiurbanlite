@@ -31,7 +31,8 @@ class DigiUrbanAIServer {
         logger.info('DigiUrban AI server started', {
           host: config.host,
           port: config.port,
-          model: config.ollamaModel,
+          fastModel: config.ollamaModel,
+          qualityModel: config.ollamaQualityModel,
           fallbackModel: config.ollamaFallbackModel,
           ollamaBaseUrl: config.ollamaBaseUrl,
           ollamaTimeoutMs: config.ollamaTimeoutMs,

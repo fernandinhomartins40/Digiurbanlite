@@ -452,6 +452,7 @@ export class OllamaService {
   getRuntimeStatus(): Record<string, unknown> {
     return {
       primaryModel: config.ollamaModel,
+      qualityModel: config.ollamaQualityModel,
       fallbackModel: config.ollamaFallbackModel,
       keepAlive: config.ollamaKeepAlive,
       warmupModels: config.ollamaWarmupModels,
