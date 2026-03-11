@@ -289,7 +289,7 @@ export class InferenceRouterService {
         chatMode === 'rag' &&
         (routeKind === 'context_navigation' || routeKind === 'context_documents'),
       shouldUseWebSearch: params.explicitWebSearch === true || routeKind === 'web_lookup',
-      allowFallback: false,
+      allowFallback: true,
     };
   }
 }
