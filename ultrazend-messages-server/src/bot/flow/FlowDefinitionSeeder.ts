@@ -80,7 +80,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
     const filePath = path.join(flowsDir, file);
 
     try {
-      const raw = fs.readFileSync(filePath, 'utf-8');
+      const raw = fs.readFileSync(filePath, 'utf-8').replace(/^\uFEFF/, '');
       const flowData = JSON.parse(raw);
 
       if (!flowData?.name || !Array.isArray(flowData?.nodes)) {
@@ -146,7 +146,13 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
       summary.errors += 1;
       logger.error('Failed to seed flow definition', {
         file: filePath,
-        error,
+        error: error instanceof Error
+          ? {
+              name: error.name,
+              message: error.message,
+              stack: error.stack,
+            }
+          : error,
       });
     }
   }
