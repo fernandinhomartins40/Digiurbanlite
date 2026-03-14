@@ -5,9 +5,10 @@
 
 import { FlowEngine } from '../bot/flow/FlowEngine';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
+import { citizenAiOrchestrator } from '../bot/ai/CitizenAiOrchestrator';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
-import { HandoverService } from './HandoverService'; // ✅ NOVO
+import { HandoverService } from './HandoverService'; // âœ… NOVO
 import fs from 'fs/promises';
 import path from 'path';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
@@ -15,11 +16,11 @@ import { ensureActiveMessageServerId } from '../utils/messageServer';
 export class FlowEngineService {
   private flowEngine: FlowEngine;
   private wsServer: WebSocketServer | null = null;
-  private handoverService: HandoverService; // ✅ NOVO
+  private handoverService: HandoverService; // âœ… NOVO
 
   constructor(wsServer?: WebSocketServer) {
     this.flowEngine = new FlowEngine(actionHandlers);
-    this.handoverService = new HandoverService(wsServer); // ✅ NOVO
+    this.handoverService = new HandoverService(wsServer); // âœ… NOVO
     if (wsServer) {
       this.wsServer = wsServer;
     }
@@ -27,10 +28,10 @@ export class FlowEngineService {
 
   setWebSocketServer(wsServer: WebSocketServer) {
     this.wsServer = wsServer;
-    this.handoverService.setWebSocketServer(wsServer); // ✅ NOVO
+    this.handoverService.setWebSocketServer(wsServer); // âœ… NOVO
   }
 
-  // ✅ NOVO: Expor HandoverService para rotas
+  // âœ… NOVO: Expor HandoverService para rotas
   getHandoverService(): HandoverService {
     return this.handoverService;
   }
@@ -64,7 +65,7 @@ export class FlowEngineService {
       metadata.media = response.data.media;
     }
 
-    // Passa campos extras de display para o frontend (carrosséis, categorias, etc.)
+    // Passa campos extras de display para o frontend (carrossÃ©is, categorias, etc.)
     if (response.data?.displayMode) {
       metadata.displayMode = response.data.displayMode;
     }
@@ -75,7 +76,7 @@ export class FlowEngineService {
       metadata.departmentName = response.data.departmentName;
     }
 
-    // Documentos obrigatórios para upload rico no bot
+    // Documentos obrigatÃ³rios para upload rico no bot
     if (response.data?.requiredDocuments) {
       metadata.requiredDocuments = response.data.requiredDocuments;
     }
@@ -94,27 +95,27 @@ export class FlowEngineService {
     }
 
     if (Array.isArray(message)) {
-      // Para uploads, gerar descrição legível
+      // Para uploads, gerar descriÃ§Ã£o legÃ­vel
       if (message.length > 0 && message[0]?.fileName) {
         const fileNames = message.map((f: any) => f.fileName).join(', ');
-        return `📎 Arquivos enviados: ${fileNames}`;
+        return `ðŸ“Ž Arquivos enviados: ${fileNames}`;
       }
       return `Dados enviados (${message.length} itens)`;
     }
 
     if (typeof message === 'object' && message !== null) {
-      // Seleção de menu (frontend envia { optionId, label })
+      // SeleÃ§Ã£o de menu (frontend envia { optionId, label })
       if (typeof (message as any).label === 'string' && (message as any).label.trim()) {
         return (message as any).label.trim();
       }
 
-      // Para formulários, gerar resumo legível dos campos
+      // Para formulÃ¡rios, gerar resumo legÃ­vel dos campos
       const entries = Object.entries(message).filter(([_, v]) => v !== null && v !== undefined && v !== '');
       if (entries.length > 0) {
         const summary = entries
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n');
-        return `📝 Dados do formulário:\n${summary}`;
+        return `ðŸ“ Dados do formulÃ¡rio:\n${summary}`;
       }
     }
 
@@ -130,6 +131,9 @@ export class FlowEngineService {
    */
   async startFlow(citizenId: string, flowName: string, conversationId?: string) {
     console.log('[FlowEngineService.startFlow]', { citizenId, flowName, conversationId });
+    const requestedFlowName = flowName || 'ai_assistant';
+    const normalizedFlowName =
+      requestedFlowName === 'menu_principal' ? 'ai_assistant' : requestedFlowName;
 
     // 1. Buscar/criar conversa do bot
     if (!conversationId) {
@@ -152,26 +156,46 @@ export class FlowEngineService {
     const isParticipant2 = !isParticipant1;
 
     // 2. Iniciar fluxo
-    const response = await this.flowEngine.startFlow(citizenId, flowName, conversationId);
+    let response;
+    if (normalizedFlowName === 'ai_assistant') {
+      await this.flowEngine.cancelActiveFlow(citizenId);
+      const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
+      if (!aiFlow) {
+        throw new Error('Flow ai_assistant not found');
+      }
+      const activeExecution = await this.getActiveExecution(citizenId);
+      const result = await citizenAiOrchestrator.startSession({
+        citizenId,
+        flowId: aiFlow.id,
+        conversationId,
+        existingExecution: activeExecution as any,
+      });
+      response = result.response;
+      await this.linkConversationToExecution(conversationId, result.execution.id, 'ACTIVE');
+    } else {
+      response = await this.flowEngine.startFlow(citizenId, normalizedFlowName, conversationId);
+    }
     const botMetadata = this.buildBotMetadata(response);
 
-    // 3. Vincular conversa à execução ativa do bot (✅ REFATORADO)
-    const execution = await this.getActiveExecution(citizenId);
-    if (execution) {
-      await prisma.conversation.update({
-        where: { id: conversationId },
-        data: {
-          isBotConversation: true,
-          activeFlowExecutionId: execution.id, // ✅ FK para FlowExecution
-          metadata: {
-            botStatus: 'ACTIVE',
-            botStatusUpdatedAt: new Date().toISOString(),
+    // 3. Vincular conversa Ã  execuÃ§Ã£o ativa do bot (âœ… REFATORADO)
+    if (normalizedFlowName !== 'ai_assistant') {
+      const execution = await this.getActiveExecution(citizenId);
+      if (execution) {
+        await prisma.conversation.update({
+          where: { id: conversationId },
+          data: {
+            isBotConversation: true,
+            activeFlowExecutionId: execution.id, // âœ… FK para FlowExecution
+            metadata: {
+              botStatus: 'ACTIVE',
+              botStatusUpdatedAt: new Date().toISOString(),
+            },
           },
-        },
-      });
+        });
+      }
     }
 
-    // 4. Salvar mensagem do bot (✅ REFATORADO com campos queryable)
+    // 4. Salvar mensagem do bot (âœ… REFATORADO com campos queryable)
     const message = await prisma.message.create({
       data: {
         conversationId,
@@ -182,7 +206,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // ✅ NOVOS CAMPOS QUERYABLE
+        // âœ… NOVOS CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
@@ -211,7 +235,7 @@ export class FlowEngineService {
         message,
       });
 
-      // Notificar também o cidadão diretamente
+      // Notificar tambÃ©m o cidadÃ£o diretamente
       this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
         conversationId,
         message,
@@ -238,7 +262,7 @@ export class FlowEngineService {
   }
 
   /**
-   * Processa mensagem do usuário
+   * Processa mensagem do usuÃ¡rio
    */
   async processMessage(citizenId: string, message: any, conversationId?: string) {
     console.log('[FlowEngineService.processMessage]', { citizenId, message, conversationId });
@@ -263,7 +287,7 @@ export class FlowEngineService {
       conversation?.participant1Type === 'CITIZEN';
     const isCitizenSecond = !isParticipant1;
 
-    // 2. Salvar mensagem do cidadão (✅ REFATORADO com campos queryable)
+    // 2. Salvar mensagem do cidadÃ£o (âœ… REFATORADO com campos queryable)
     const userMessageMetadata: any = {};
     let botInteractionType: string | null = null;
     let botSelectedOption: string | null = null;
@@ -298,20 +322,71 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         ...(Object.keys(userMessageMetadata).length > 0 ? { metadata: userMessageMetadata as any } : {}),
-        // ✅ CAMPOS QUERYABLE
+        // âœ… CAMPOS QUERYABLE
         botInteractionType,
         botSelectedOption,
         botStructuredData: botStructuredData as any,
       },
     });
 
-    // 3. Processar no FlowEngine
-    const response = await this.flowEngine.processMessage(citizenId, message, conversationId);
-    const botMetadata = this.buildBotMetadata(response);
-    const botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
-    const botContent = response.message || 'Ocorreu um erro ao processar sua solicitação.';
+    // 3. Processar mensagem pelo orquestrador hibrido ou pelo fluxo legado
+    const activeExecution = await this.getActiveExecution(citizenId);
+    const aiExecutionActive = this.isAiExecution(activeExecution as any);
+    const shouldUseAi = !activeExecution || aiExecutionActive;
 
-    // 4. Salvar resposta do bot (✅ REFATORADO)
+    let response;
+    let botStatus = 'ACTIVE';
+
+    if (shouldUseAi) {
+      const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
+      if (!aiFlow) {
+        throw new Error('Flow ai_assistant not found');
+      }
+
+      const normalizedMessage =
+        typeof message === 'string'
+          ? message
+          : typeof message === 'object' && message !== null && typeof (message as any).optionId === 'string'
+            ? String((message as any).optionId)
+            : this.formatUserMessageContent(message);
+
+      const recentMessages = await this.getRecentConversationMessages(conversationId);
+      const aiDecision = await citizenAiOrchestrator.processText({
+        citizenId,
+        flowId: aiFlow.id,
+        conversationId,
+        message: normalizedMessage,
+        existingExecution: activeExecution as any,
+        recentMessages,
+      });
+
+      if (aiDecision.redirectToFlowName) {
+        await this.flowEngine.cancelActiveFlow(citizenId);
+        response = await this.flowEngine.startFlow(citizenId, aiDecision.redirectToFlowName, conversationId);
+        const redirectedExecution = await this.getActiveExecution(citizenId);
+        if (redirectedExecution) {
+          await this.linkConversationToExecution(conversationId, redirectedExecution.id, 'ACTIVE');
+        }
+      } else {
+        response = aiDecision.response;
+        const refreshedExecution = await this.getActiveExecution(citizenId);
+        if (refreshedExecution) {
+          await this.linkConversationToExecution(conversationId, refreshedExecution.id, aiDecision.requestHumanHandover ? 'HUMAN_TAKEOVER' : 'ACTIVE');
+        }
+        if (aiDecision.requestHumanHandover) {
+          await this.pauseExecution(citizenId, conversationId, undefined, aiDecision.handoverReason);
+          botStatus = 'HUMAN_TAKEOVER';
+        }
+      }
+    } else {
+      response = await this.flowEngine.processMessage(citizenId, message, conversationId);
+      botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
+    }
+
+    const botMetadata = this.buildBotMetadata(response);
+    const botContent = response.message || 'Ocorreu um erro ao processar sua solicitacao.';
+
+    // 4. Salvar resposta do bot (âœ… REFATORADO)
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -322,7 +397,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // ✅ CAMPOS QUERYABLE
+        // âœ… CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId || null,
@@ -330,7 +405,7 @@ export class FlowEngineService {
       },
     });
 
-    // 5. Atualizar conversa (✅ REFATORADO - sem botFlowData)
+    // 5. Atualizar conversa (âœ… REFATORADO - sem botFlowData)
     await prisma.conversation.update({
       where: { id: conversationId },
       data: {
@@ -372,7 +447,7 @@ export class FlowEngineService {
   }
 
   /**
-   * Obtém execução ativa
+   * ObtÃ©m execuÃ§Ã£o ativa
    */
   async getActiveExecution(citizenId: string) {
     const execution = await prisma.flowExecution.findFirst({
@@ -400,12 +475,12 @@ export class FlowEngineService {
   }
 
   /**
-   * Pausa execução (para atendimento humano) - ✅ REFATORADO COM HANDOVER
+   * Pausa execuÃ§Ã£o (para atendimento humano) - âœ… REFATORADO COM HANDOVER
    */
   async pauseExecution(citizenId: string, conversationId?: string, pausedBy?: string, reason?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
-      throw new Error('Nenhuma execução ativa encontrada para este cidadão');
+      throw new Error('Nenhuma execuÃ§Ã£o ativa encontrada para este cidadÃ£o');
     }
 
     // Pausar no FlowExecution (fonte de verdade)
@@ -437,7 +512,7 @@ export class FlowEngineService {
         },
       });
 
-      // ✅ NOVO: Notificar departamento via HandoverService
+      // âœ… NOVO: Notificar departamento via HandoverService
       if (conversation.departmentId) {
         await this.handoverService.notifyDepartmentHandover(
           conversationId,
@@ -451,12 +526,12 @@ export class FlowEngineService {
   }
 
   /**
-   * Retoma execução - ✅ REFATORADO
+   * Retoma execuÃ§Ã£o - âœ… REFATORADO
    */
   async resumeExecution(citizenId: string, conversationId?: string, resumedBy?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
-      throw new Error('Nenhuma execução ativa encontrada para este cidadão');
+      throw new Error('Nenhuma execuÃ§Ã£o ativa encontrada para este cidadÃ£o');
     }
 
     // Retomar no FlowExecution (fonte de verdade)
@@ -503,7 +578,7 @@ export class FlowEngineService {
     const destDir = path.join(uploadDir, 'bot', subfolder);
     await fs.mkdir(destDir, { recursive: true });
 
-    // Nome único preservando extensão original
+    // Nome Ãºnico preservando extensÃ£o original
     const ext = path.extname(file.originalname || '');
     const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
     const destPath = path.join(destDir, uniqueName);
@@ -566,9 +641,39 @@ export class FlowEngineService {
       },
     });
 
-    const response = await this.flowEngine.processMessage(citizenId, uploadedFiles, conversationId);
+    const activeExecution = await this.getActiveExecution(citizenId);
+    const aiExecutionActive = this.isAiExecution(activeExecution as any);
+
+    let response;
+    let botStatus = 'ACTIVE';
+
+    if (!activeExecution || aiExecutionActive) {
+      const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
+      if (!aiFlow) {
+        throw new Error('Flow ai_assistant not found');
+      }
+      const aiDecision = await citizenAiOrchestrator.processUpload({
+        citizenId,
+        flowId: aiFlow.id,
+        conversationId,
+        files: uploadedFiles as any,
+        existingExecution: activeExecution as any,
+      });
+      response = aiDecision.response;
+      const refreshedExecution = await this.getActiveExecution(citizenId);
+      if (refreshedExecution) {
+        await this.linkConversationToExecution(conversationId, refreshedExecution.id, aiDecision.requestHumanHandover ? 'HUMAN_TAKEOVER' : 'ACTIVE');
+      }
+      if (aiDecision.requestHumanHandover) {
+        await this.pauseExecution(citizenId, conversationId, undefined, aiDecision.handoverReason);
+        botStatus = 'HUMAN_TAKEOVER';
+      }
+    } else {
+      response = await this.flowEngine.processMessage(citizenId, uploadedFiles, conversationId);
+      botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
+    }
+
     const botMetadata = this.buildBotMetadata(response);
-    const botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
 
     const botMessage = await prisma.message.create({
       data: {
@@ -580,7 +685,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // ✅ CAMPOS QUERYABLE
+        // âœ… CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
@@ -588,7 +693,7 @@ export class FlowEngineService {
       },
     });
 
-    // ✅ REFATORADO - atualização simplificada
+    // âœ… REFATORADO - atualizaÃ§Ã£o simplificada
     const conv2 = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
@@ -646,6 +751,77 @@ export class FlowEngineService {
     };
   }
 
+  getBotHealth() {
+    return {
+      status: 'ok',
+      runtime: 'hybrid_ai',
+      ai: citizenAiOrchestrator.getStats(),
+    };
+  }
+
+  private async getFlowDefinitionByName(name: string): Promise<{ id: string; name: string } | null> {
+    const flow = await prisma.flowDefinition.findFirst({
+      where: {
+        name,
+        isActive: true,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
+
+    return flow;
+  }
+
+  private async linkConversationToExecution(
+    conversationId: string,
+    executionId: string,
+    botStatus: 'ACTIVE' | 'HUMAN_TAKEOVER',
+  ): Promise<void> {
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        isBotConversation: true,
+        activeFlowExecutionId: executionId,
+        metadata: {
+          botStatus,
+          botStatusUpdatedAt: new Date().toISOString(),
+        },
+      },
+    });
+  }
+
+  private isAiExecution(execution: { flow?: { name: string } | null; metadata?: unknown } | null): boolean {
+    if (!execution) {
+      return false;
+    }
+
+    const metadata = execution.metadata as Record<string, unknown> | undefined;
+    return String(metadata?.engine || '') === 'ai_assistant' || execution.flow?.name === 'ai_assistant';
+  }
+
+  private async getRecentConversationMessages(conversationId: string, limit: number = 6): Promise<string[]> {
+    const messages = await prisma.message.findMany({
+      where: { conversationId },
+      orderBy: { sentAt: 'desc' },
+      take: limit,
+      select: {
+        senderId: true,
+        senderType: true,
+        content: true,
+      },
+    });
+
+    return messages
+      .reverse()
+      .map((item) => {
+        const sender =
+          item.senderId === 'DIGIBOT_SYSTEM' || item.senderType === 'SYSTEM' ? 'bot' : 'cidadao';
+        return `${sender}: ${item.content}`;
+      });
+  }
+
   /**
    * Busca ou cria conversa do bot
    */
@@ -665,7 +841,7 @@ export class FlowEngineService {
     });
 
     if (!conversation) {
-      // Criar nova conversa (✅ REFATORADO - sem campos antigos)
+      // Criar nova conversa (âœ… REFATORADO - sem campos antigos)
       conversation = await prisma.conversation.create({
         data: {
           messageServerId,
@@ -676,7 +852,7 @@ export class FlowEngineService {
           type: 'SUPPORT',
           status: 'ACTIVE',
           isBotConversation: true,
-          // activeFlowExecutionId será setado quando o fluxo iniciar
+          // activeFlowExecutionId serÃ¡ setado quando o fluxo iniciar
           metadata: {
             botStatus: 'IDLE',
             botStatusUpdatedAt: new Date().toISOString(),

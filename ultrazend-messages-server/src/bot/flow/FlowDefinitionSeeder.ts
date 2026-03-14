@@ -103,6 +103,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
       const metadata = buildMetadata(existing?.metadata, flowData.metadata);
       const description = flowData.description || null;
       const version = flowData.version || '1.0.0';
+      const isDefaultFlow = flowData.name === 'ai_assistant';
 
       if (existing) {
         if (seedMode === 'create') {
@@ -110,7 +111,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
           continue;
         }
 
-        // NÃ£o sobrescrever fluxos gerenciados pelo painel (admin) via seeds do filesystem.
+        // NÃƒÂ£o sobrescrever fluxos gerenciados pelo painel (admin) via seeds do filesystem.
         if (String(managedBy || '').toLowerCase() === 'admin') {
           summary.skipped += 1;
           continue;
@@ -123,6 +124,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
             version,
             nodes: flowData.nodes,
             metadata,
+            isDefault: isDefaultFlow,
           },
         });
         summary.updated += 1;
@@ -135,7 +137,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
             nodes: flowData.nodes,
             metadata,
             isActive: true,
-            isDefault: flowData.name === 'menu_principal',
+            isDefault: isDefaultFlow,
           },
         });
         summary.created += 1;

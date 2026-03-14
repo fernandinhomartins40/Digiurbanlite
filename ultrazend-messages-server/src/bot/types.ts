@@ -254,6 +254,11 @@ export interface BotResponse {
     cards?: any[];
     uploadConfig?: UploadNodeConfig;
     locationConfig?: LocationNodeConfig;
+    requiredDocuments?: any[];
+    protocolDetailCard?: any;
+    displayMode?: string;
+    categories?: any[];
+    departmentName?: string;
   };
   metadata?: {
     flowId: string;

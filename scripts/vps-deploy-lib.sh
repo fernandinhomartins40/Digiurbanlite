@@ -194,6 +194,8 @@ OLLAMA_KEEP_ALIVE=-1
 # AI Platform (digiurban-ai)
 AI_API_URL=http://digiurban-ai:9004/api/v1
 AI_DEFAULT_TENANT_ID=default
+CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
+CITIZEN_AI_TENANT_ID=default
 AI_OLLAMA_BASE_URL=http://ollama:11434
 AI_OLLAMA_MODEL=digiurban-fast:latest
 AI_OLLAMA_QUALITY_MODEL=qwen3.5:4b

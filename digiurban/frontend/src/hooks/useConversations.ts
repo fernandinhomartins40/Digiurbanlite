@@ -191,7 +191,7 @@ export function useConversations({
         method: 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ flowName: 'menu_principal' }),
+        body: JSON.stringify({ flowName: 'ai_assistant' }),
       });
 
       if (!response.ok) {

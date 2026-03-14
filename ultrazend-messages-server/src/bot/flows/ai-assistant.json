@@ -1,0 +1,30 @@
+﻿{
+  "name": "ai_assistant",
+  "description": "Fluxo sintetico para atendimento hibrido com IA no portal do cidadao",
+  "version": "1.0.0",
+  "metadata": {
+    "icon": "🤖",
+    "color": "#2563EB",
+    "category": "ai"
+  },
+  "nodes": [
+    {
+      "id": "start",
+      "type": "message",
+      "config": {
+        "text": "Assistente de IA inicializado."
+      },
+      "transitions": [
+        { "to": "end" }
+      ]
+    },
+    {
+      "id": "end",
+      "type": "end",
+      "config": {
+        "returnToMain": false
+      },
+      "transitions": []
+    }
+  ]
+}

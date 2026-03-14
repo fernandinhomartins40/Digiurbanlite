@@ -1,6 +1,6 @@
 /**
  * FlowEngine
- * Motor principal de execução de fluxos conversacionais
+ * Motor principal de execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o de fluxos conversacionais
  */
 
 import prisma from '../../utils/prisma';
@@ -25,6 +25,10 @@ export class FlowEngine {
   private inputValidator: InputValidator;
   private actionHandlers: ActionHandlers;
 
+  private normalizeFlowName(flowName: string): string {
+    return flowName === 'menu_principal' ? 'ai_assistant' : flowName;
+  }
+
   constructor(actionHandlers: ActionHandlers) {
     this.stateManager = new FlowStateManager();
     this.templateEngine = new TemplateEngine();
@@ -34,22 +38,24 @@ export class FlowEngine {
   }
 
   /**
-   * Inicia novo fluxo para o cidadão
+   * Inicia novo fluxo para o cidadÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
    */
   async startFlow(
     citizenId: string,
     flowName: string,
     conversationId?: string
   ): Promise<BotResponse> {
-    // Cancela execuções ativas anteriores
+    const normalizedFlowName = this.normalizeFlowName(flowName);
+
+    // Cancela execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes ativas anteriores
     await this.stateManager.cancelActiveExecutions(citizenId);
 
-    // Busca definição do fluxo
-    const flow = await this.getFlowDefinition(flowName);
+    // Busca definiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o do fluxo
+    const flow = await this.getFlowDefinition(normalizedFlowName);
     if (!flow) {
-      console.error(`[FlowEngine.startFlow] Fluxo '${flowName}' não encontrado no banco`);
+      console.error(`[FlowEngine.startFlow] Fluxo '${normalizedFlowName}' nao encontrado no banco`);
       return {
-        message: `O fluxo "${flowName}" não está disponível no momento. Tente novamente mais tarde.`,
+        message: `O fluxo "${normalizedFlowName}" nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ disponÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­vel no momento. Tente novamente mais tarde.`,
         messageType: 'text' as const,
         metadata: {
           flowId: '',
@@ -61,7 +67,7 @@ export class FlowEngine {
       };
     }
 
-    // Cria nova execução
+    // Cria nova execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
     const execution = await this.stateManager.createExecution(
       citizenId,
       flow.id,
@@ -73,7 +79,7 @@ export class FlowEngine {
   }
 
   /**
-   * Processa mensagem do usuário no fluxo ativo
+   * Processa mensagem do usuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡rio no fluxo ativo
    */
   async processMessage(
     citizenId: string,
@@ -86,16 +92,16 @@ export class FlowEngine {
       conversationId,
     });
 
-    // Busca execução ativa
+    // Busca execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o ativa
     let execution = await this.stateManager.getActiveExecution(citizenId);
 
     if (!execution) {
-      // Não há fluxo ativo: inicia menu principal
-      console.log('[FlowEngine.processMessage] Nenhuma execução ativa, iniciando menu principal');
+      // NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o hÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ fluxo ativo: inicia menu principal
+      console.log('[FlowEngine.processMessage] Nenhuma execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o ativa, iniciando menu principal');
       return this.startFlow(citizenId, 'menu_principal', conversationId);
     }
 
-    console.log('[FlowEngine.processMessage] Execução ativa encontrada:', {
+    console.log('[FlowEngine.processMessage] ExecuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o ativa encontrada:', {
       executionId: execution.id,
       flowId: execution.flowId,
       currentNodeId: execution.currentNodeId,
@@ -116,10 +122,10 @@ export class FlowEngine {
       };
     }
 
-    // Busca definição do fluxo
+    // Busca definiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o do fluxo
     const flow = await this.getFlowById(execution.flowId);
     if (!flow) {
-      console.error(`[FlowEngine.processMessage] Fluxo ${execution.flowId} não encontrado`);
+      console.error(`[FlowEngine.processMessage] Fluxo ${execution.flowId} nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o encontrado`);
       await this.stateManager.cancelActiveExecutions(citizenId);
       return this.startFlow(citizenId, 'menu_principal', conversationId);
     }
@@ -127,7 +133,7 @@ export class FlowEngine {
     // Busca nodo atual
     const currentNode = flow.nodes.find((n) => n.id === execution!.currentNodeId);
     if (!currentNode) {
-      console.error(`[FlowEngine.processMessage] Nodo ${execution.currentNodeId} não encontrado no fluxo ${flow.name}`);
+      console.error(`[FlowEngine.processMessage] Nodo ${execution.currentNodeId} nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o encontrado no fluxo ${flow.name}`);
       await this.stateManager.cancelActiveExecutions(citizenId);
       return this.startFlow(citizenId, 'menu_principal', conversationId);
     }
@@ -137,7 +143,7 @@ export class FlowEngine {
       nodeType: currentNode.type,
     });
 
-    // Cria contexto de execução
+    // Cria contexto de execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
     const context: ExecutionContext = {
       execution,
       flow,
@@ -147,10 +153,10 @@ export class FlowEngine {
       state: execution.state as any,
     };
 
-    // Executa nodo com input do usuário
+    // Executa nodo com input do usuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡rio
     const result = await this.executeNode(currentNode, context);
 
-    console.log('[FlowEngine.processMessage] Resultado da execução:', {
+    console.log('[FlowEngine.processMessage] Resultado da execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o:', {
       success: result.success,
       nextNodeId: result.nextNodeId,
       waitingForInput: result.waitingForInput,
@@ -179,7 +185,7 @@ export class FlowEngine {
         await this.stateManager.cancelActiveExecutions(citizenId);
 
         return {
-          message: '❌ Houve muitas tentativas sem sucesso. Vamos voltar ao menu principal.\n\nO que você gostaria de fazer?',
+          message: 'ÃƒÆ’Ã‚Â¢Ãƒâ€šÃ‚ÂÃƒâ€¦Ã¢â‚¬â„¢ Houve muitas tentativas sem sucesso. Vamos voltar ao menu principal.\n\nO que vocÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âª gostaria de fazer?',
           messageType: 'text',
           metadata: {
             flowId: flow.id,
@@ -191,7 +197,7 @@ export class FlowEngine {
         };
       }
 
-      // Erro: retorna mensagem de erro e mantém no mesmo nodo
+      // Erro: retorna mensagem de erro e mantÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©m no mesmo nodo
       // Preserva messageType e dados do nodo para que o frontend renderize corretamente
       const retryResponse: BotResponse = {
         message: result.error || result.message || 'Erro ao processar',
@@ -205,7 +211,7 @@ export class FlowEngine {
         },
       };
 
-      // Para menus: preserva messageType 'menu' e inclui opções para re-render dos botões
+      // Para menus: preserva messageType 'menu' e inclui opÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes para re-render dos botÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Âµes
       if (currentNode.type === 'menu') {
         retryResponse.messageType = 'menu';
         const menuConfig = currentNode.config as any;
@@ -241,8 +247,8 @@ export class FlowEngine {
         addToHistory: currentNode.id,
       });
 
-      // ✅ CRÍTICO: Recarregar execution do banco após atualizar estado
-      // Sem isso, o próximo nodo usa estado ANTIGO em memória
+      // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ CRÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂTICO: Recarregar execution do banco apÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³s atualizar estado
+      // Sem isso, o prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ximo nodo usa estado ANTIGO em memÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ria
       const reloadedExecution = await this.stateManager.getExecution(execution.id);
       if (reloadedExecution) {
         execution = reloadedExecution;
@@ -263,29 +269,29 @@ export class FlowEngine {
       return this.startFlow(execution.citizenId, 'menu_principal', execution.conversationId);
     }
 
-    // Se está aguardando input, retorna resposta e mantém nodo
+    // Se estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ aguardando input, retorna resposta e mantÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©m nodo
     if (result.waitingForInput) {
       return this.buildBotResponse(result, execution, flow, currentNode);
     }
 
-    // Avança para próximo nodo
+    // AvanÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§a para prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ximo nodo
     if (result.nextNodeId) {
       await this.stateManager.updateExecution(execution.id, {
         currentNodeId: result.nextNodeId,
       });
 
-      // Recarrega execução atualizada
+      // Recarrega execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o atualizada
       const updatedExecution = await this.stateManager.getExecution(execution.id);
       if (!updatedExecution) {
         throw new Error('Failed to reload execution');
       }
       execution = updatedExecution;
 
-      // Executa próximo nodo
+      // Executa prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ximo nodo
       return this.executeCurrentNode(execution, flow);
     }
 
-    // Nenhum próximo nodo: finaliza fluxo
+    // Nenhum prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ximo nodo: finaliza fluxo
     await this.stateManager.completeExecution(execution.id);
 
     return {
@@ -348,8 +354,8 @@ export class FlowEngine {
         stateUpdates: result.stateUpdates,
       });
 
-      // ✅ CRÍTICO: Recarregar execution do banco após atualizar estado
-      // Mesmo bug que em processMessage - sem isso próximo nodo usa estado ANTIGO
+      // ÃƒÆ’Ã‚Â¢Ãƒâ€¦Ã¢â‚¬Å“ÃƒÂ¢Ã¢â€šÂ¬Ã‚Â¦ CRÃƒÆ’Ã†â€™Ãƒâ€šÃ‚ÂTICO: Recarregar execution do banco apÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³s atualizar estado
+      // Mesmo bug que em processMessage - sem isso prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ximo nodo usa estado ANTIGO
       const reloadedExecution = await this.stateManager.getExecution(execution.id);
       if (reloadedExecution) {
         execution = reloadedExecution;
@@ -375,7 +381,7 @@ export class FlowEngine {
       return this.buildBotResponse(result, execution, flow, currentNode);
     }
 
-    // Avança para próximo nodo automaticamente
+    // AvanÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§a para prÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³ximo nodo automaticamente
     if (result.nextNodeId) {
       await this.stateManager.updateExecution(execution.id, {
         currentNodeId: result.nextNodeId,
@@ -447,33 +453,33 @@ export class FlowEngine {
   }
 
   /**
-   * Formata erro de nodo de forma amigável para o cidadão
+   * Formata erro de nodo de forma amigÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡vel para o cidadÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
    */
   private formatNodeError(error: any, _node: FlowNode): string {
     const code = error?.code || error?.response?.status;
     const message = error?.message || '';
 
     if (code === 'ECONNREFUSED' || code === 'ENOTFOUND') {
-      return 'O sistema está temporariamente indisponível. Por favor, tente novamente em alguns minutos.';
+      return 'O sistema estÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ temporariamente indisponÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â­vel. Por favor, tente novamente em alguns minutos.';
     }
     if (code === 'ECONNABORTED' || message.includes('timeout')) {
-      return 'A operação demorou mais do que o esperado. Tente novamente em instantes.';
+      return 'A operaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o demorou mais do que o esperado. Tente novamente em instantes.';
     }
     if (code === 401 || code === 403) {
-      return 'Sua sessão expirou. Por favor, faça login novamente.';
+      return 'Sua sessÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o expirou. Por favor, faÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§a login novamente.';
     }
     if (code === 404) {
-      return 'O recurso solicitado não foi encontrado. Verifique os dados e tente novamente.';
+      return 'O recurso solicitado nÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o foi encontrado. Verifique os dados e tente novamente.';
     }
     if (code >= 500) {
-      return 'Ocorreu um erro interno. Nossa equipe já foi notificada. Tente novamente em breve.';
+      return 'Ocorreu um erro interno. Nossa equipe jÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¡ foi notificada. Tente novamente em breve.';
     }
 
-    return 'Ocorreu um erro ao processar sua solicitação. Tente novamente.';
+    return 'Ocorreu um erro ao processar sua solicitaÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o. Tente novamente.';
   }
 
   /**
-   * Constrói resposta do bot
+   * ConstrÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³i resposta do bot
    */
   private buildBotResponse(
     result: NodeExecutionResult,
@@ -507,7 +513,7 @@ export class FlowEngine {
   }
 
   /**
-   * Busca definição de fluxo por nome
+   * Busca definiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o de fluxo por nome
    */
   private async getFlowDefinition(name: string): Promise<FlowDefinition | null> {
     const flow = await prisma.flowDefinition.findFirst({
@@ -521,7 +527,7 @@ export class FlowEngine {
   }
 
   /**
-   * Busca definição de fluxo por ID
+   * Busca definiÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o de fluxo por ID
    */
   private async getFlowById(id: string): Promise<FlowDefinition | null> {
     const flow = await prisma.flowDefinition.findUnique({
@@ -552,21 +558,21 @@ export class FlowEngine {
   }
 
   /**
-   * Cancela fluxo ativo do cidadão
+   * Cancela fluxo ativo do cidadÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o
    */
   async cancelActiveFlow(citizenId: string): Promise<void> {
     await this.stateManager.cancelActiveExecutions(citizenId);
   }
 
   /**
-   * Obtém execução ativa
+   * ObtÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â©m execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o ativa
    */
   async getActiveExecution(citizenId: string): Promise<FlowExecution | null> {
     return this.stateManager.getActiveExecution(citizenId);
   }
 
   /**
-   * Pausa execução do bot (atendimento humano assumindo)
+   * Pausa execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o do bot (atendimento humano assumindo)
    */
   async pauseExecution(citizenId: string): Promise<void> {
     const execution = await this.stateManager.getActiveExecution(citizenId);
@@ -584,7 +590,7 @@ export class FlowEngine {
   }
 
   /**
-   * Retoma execução do bot (após atendimento humano)
+   * Retoma execuÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â§ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â£o do bot (apÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³s atendimento humano)
    */
   async resumeExecution(citizenId: string): Promise<FlowExecution | null> {
     const execution = await this.stateManager.getActiveExecution(citizenId);

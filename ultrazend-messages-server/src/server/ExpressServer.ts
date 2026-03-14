@@ -1053,7 +1053,7 @@ export class ExpressServer {
 
         const result = await this.flowEngineService.startFlow(
           citizenId,
-          flowName || 'menu_principal',
+          flowName || 'ai_assistant',
           conversationId
         );
         res.json(result);
@@ -1124,8 +1124,8 @@ export class ExpressServer {
         // Cancela fluxo atual
         await this.flowEngineService.cancelActiveFlow(citizenId);
 
-        // Inicia menu principal
-        const result = await this.flowEngineService.startFlow(citizenId, 'menu_principal');
+        // Inicia assistente de IA
+        const result = await this.flowEngineService.startFlow(citizenId, 'ai_assistant');
         res.json(result);
       } catch (error) {
         logger.error('Error in POST /bot-flow/reset', { error });
@@ -1231,6 +1231,7 @@ export class ExpressServer {
         status: 'ok',
         service: 'bot-flow',
         timestamp: new Date().toISOString(),
+        data: this.flowEngineService.getBotHealth(),
       });
     });
 

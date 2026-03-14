@@ -114,6 +114,9 @@ services:
       - MESSAGES_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
+      - CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
+      - CITIZEN_AI_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - BASE_URL=https://digiurban.com.br
       - UPLOAD_DIR=/app/uploads
@@ -515,4 +518,3 @@ volumes:
 networks:
   digiurban_network:
     driver: bridge
-
