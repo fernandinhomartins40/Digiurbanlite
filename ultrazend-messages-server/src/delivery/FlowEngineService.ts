@@ -8,7 +8,7 @@ import { actionHandlers } from '../bot/flow/ActionHandlers';
 import { citizenAiOrchestrator } from '../bot/ai/CitizenAiOrchestrator';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
-import { HandoverService } from './HandoverService'; // âœ… NOVO
+import { HandoverService } from './HandoverService'; // Ã¢Å“â€¦ NOVO
 import fs from 'fs/promises';
 import path from 'path';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
@@ -16,11 +16,17 @@ import { ensureActiveMessageServerId } from '../utils/messageServer';
 export class FlowEngineService {
   private flowEngine: FlowEngine;
   private wsServer: WebSocketServer | null = null;
-  private handoverService: HandoverService; // âœ… NOVO
+  private handoverService: HandoverService; // Ã¢Å“â€¦ NOVO
+  private botInactivityTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private readonly botInactivityTimeoutMs: number;
 
   constructor(wsServer?: WebSocketServer) {
     this.flowEngine = new FlowEngine(actionHandlers);
-    this.handoverService = new HandoverService(wsServer); // âœ… NOVO
+    this.handoverService = new HandoverService(wsServer); // Ã¢Å“â€¦ NOVO
+    this.botInactivityTimeoutMs = Math.max(
+      Number.parseInt(process.env.DIGIBOT_INACTIVITY_TIMEOUT_MS || '600000', 10),
+      0
+    );
     if (wsServer) {
       this.wsServer = wsServer;
     }
@@ -28,12 +34,151 @@ export class FlowEngineService {
 
   setWebSocketServer(wsServer: WebSocketServer) {
     this.wsServer = wsServer;
-    this.handoverService.setWebSocketServer(wsServer); // âœ… NOVO
+    this.handoverService.setWebSocketServer(wsServer); // Ã¢Å“â€¦ NOVO
   }
 
-  // âœ… NOVO: Expor HandoverService para rotas
+  // Ã¢Å“â€¦ NOVO: Expor HandoverService para rotas
   getHandoverService(): HandoverService {
     return this.handoverService;
+  }
+
+  private cancelBotInactivityTimeout(conversationId?: string) {
+    if (!conversationId) return;
+    const existing = this.botInactivityTimeouts.get(conversationId);
+    if (existing) {
+      clearTimeout(existing);
+      this.botInactivityTimeouts.delete(conversationId);
+    }
+  }
+
+  private async scheduleBotInactivityTimeout(conversationId: string, citizenId: string, botStatus: string) {
+    this.cancelBotInactivityTimeout(conversationId);
+
+    if (this.botInactivityTimeoutMs <= 0 || botStatus !== 'ACTIVE') {
+      return;
+    }
+
+    const timeout = setTimeout(async () => {
+      try {
+        const conversation = await prisma.conversation.findUnique({
+          where: { id: conversationId },
+          select: {
+            id: true,
+            isBotConversation: true,
+            participant1Id: true,
+            participant1Type: true,
+            participant2Id: true,
+            participant2Type: true,
+            lastMessageAt: true,
+            metadata: true,
+          },
+        });
+
+        if (!conversation?.isBotConversation) return;
+
+        const metadata = (conversation.metadata as Record<string, any> | null) || {};
+        if (metadata.botStatus === 'HUMAN_TAKEOVER' || metadata.inactivityResetPending) return;
+
+        const lastMessageAt = conversation.lastMessageAt?.getTime() || 0;
+        if (!lastMessageAt || Date.now() - lastMessageAt < this.botInactivityTimeoutMs - 1000) return;
+
+        await this.flowEngine.cancelActiveFlow(citizenId);
+
+        const botContent =
+          'Encerrando este atendimento por inatividade. Quando quiser continuar, envie qualquer mensagem e eu vou te levar ao menu principal.';
+
+        const botMessage = await prisma.message.create({
+          data: {
+            conversationId,
+            senderId: 'DIGIBOT_SYSTEM',
+            senderType: 'SYSTEM',
+            content: botContent,
+            contentType: 'TEXT',
+            status: 'SENT',
+            sentAt: new Date(),
+            isBotMessage: true,
+            botInteractionType: 'system_message',
+          },
+        });
+
+        const isParticipant1 =
+          conversation.participant1Id === citizenId &&
+          conversation.participant1Type === 'CITIZEN';
+        const isParticipant2 = !isParticipant1;
+
+        await prisma.conversation.update({
+          where: { id: conversationId },
+          data: {
+            lastMessageAt: new Date(),
+            lastMessagePreview: botContent.substring(0, 100),
+            totalMessages: { increment: 1 },
+            metadata: {
+              ...metadata,
+              botStatus: 'INACTIVE_TIMEOUT',
+              botStatusUpdatedAt: new Date().toISOString(),
+              inactivityResetPending: true,
+              inactivityClosedAt: new Date().toISOString(),
+            },
+            ...(isParticipant2
+              ? { unreadCount1: { increment: 1 } }
+              : { unreadCount2: { increment: 1 } }),
+          },
+        });
+
+        if (this.wsServer) {
+          this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
+            conversationId,
+            message: botMessage,
+          });
+          this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
+            conversationId,
+            message: botMessage,
+          });
+        }
+      } catch (error) {
+        console.error('[FlowEngineService] Erro no timeout de inatividade do DigiBot:', error);
+      } finally {
+        this.botInactivityTimeouts.delete(conversationId);
+      }
+    }, this.botInactivityTimeoutMs);
+
+    this.botInactivityTimeouts.set(conversationId, timeout);
+  }
+
+  private async restartAiAssistantFromMenu(
+    citizenId: string,
+    conversationId: string,
+    currentMetadata?: Record<string, any> | null
+  ) {
+    await this.flowEngine.cancelActiveFlow(citizenId);
+
+    const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
+    if (!aiFlow) {
+      throw new Error('Flow ai_assistant not found');
+    }
+
+    const result = await citizenAiOrchestrator.startSession({
+      citizenId,
+      flowId: aiFlow.id,
+      conversationId,
+      existingExecution: null,
+    });
+
+    await this.linkConversationToExecution(conversationId, result.execution.id, 'ACTIVE');
+
+    await prisma.conversation.update({
+      where: { id: conversationId },
+      data: {
+        metadata: {
+          ...(currentMetadata || {}),
+          botStatus: 'ACTIVE',
+          botStatusUpdatedAt: new Date().toISOString(),
+          inactivityResetPending: false,
+        },
+      },
+    });
+
+    return result.response;
   }
 
   private buildBotMetadata(response: any) {
@@ -69,7 +214,7 @@ export class FlowEngineService {
       metadata.cards = JSON.parse(JSON.stringify(response.data.cards));
     }
 
-    // Passa campos extras de display para o frontend (carrossÃ©is, categorias, etc.)
+    // Passa campos extras de display para o frontend (carrossÃƒÂ©is, categorias, etc.)
     if (response.data?.displayMode) {
       metadata.displayMode = response.data.displayMode;
     }
@@ -80,7 +225,7 @@ export class FlowEngineService {
       metadata.departmentName = response.data.departmentName;
     }
 
-    // Documentos obrigatÃ³rios para upload rico no bot
+    // Documentos obrigatÃƒÂ³rios para upload rico no bot
     if (response.data?.requiredDocuments) {
       metadata.requiredDocuments = response.data.requiredDocuments;
     }
@@ -99,27 +244,27 @@ export class FlowEngineService {
     }
 
     if (Array.isArray(message)) {
-      // Para uploads, gerar descriÃ§Ã£o legÃ­vel
+      // Para uploads, gerar descriÃƒÂ§ÃƒÂ£o legÃƒÂ­vel
       if (message.length > 0 && message[0]?.fileName) {
         const fileNames = message.map((f: any) => f.fileName).join(', ');
-        return `ðŸ“Ž Arquivos enviados: ${fileNames}`;
+        return `Ã°Å¸â€œÅ½ Arquivos enviados: ${fileNames}`;
       }
       return `Dados enviados (${message.length} itens)`;
     }
 
     if (typeof message === 'object' && message !== null) {
-      // SeleÃ§Ã£o de menu (frontend envia { optionId, label })
+      // SeleÃƒÂ§ÃƒÂ£o de menu (frontend envia { optionId, label })
       if (typeof (message as any).label === 'string' && (message as any).label.trim()) {
         return (message as any).label.trim();
       }
 
-      // Para formulÃ¡rios, gerar resumo legÃ­vel dos campos
+      // Para formulÃƒÂ¡rios, gerar resumo legÃƒÂ­vel dos campos
       const entries = Object.entries(message).filter(([_, v]) => v !== null && v !== undefined && v !== '');
       if (entries.length > 0) {
         const summary = entries
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n');
-        return `ðŸ“ Dados do formulÃ¡rio:\n${summary}`;
+        return `Ã°Å¸â€œÂ Dados do formulÃƒÂ¡rio:\n${summary}`;
       }
     }
 
@@ -148,6 +293,7 @@ export class FlowEngineService {
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
+        metadata: true,
         participant1Id: true,
         participant1Type: true,
         participant2Id: true,
@@ -181,7 +327,7 @@ export class FlowEngineService {
     }
     const botMetadata = this.buildBotMetadata(response);
 
-    // 3. Vincular conversa Ã  execuÃ§Ã£o ativa do bot (âœ… REFATORADO)
+    // 3. Vincular conversa ÃƒÂ  execuÃƒÂ§ÃƒÂ£o ativa do bot (Ã¢Å“â€¦ REFATORADO)
     if (normalizedFlowName !== 'ai_assistant') {
       const execution = await this.getActiveExecution(citizenId);
       if (execution) {
@@ -189,7 +335,7 @@ export class FlowEngineService {
           where: { id: conversationId },
           data: {
             isBotConversation: true,
-            activeFlowExecutionId: execution.id, // âœ… FK para FlowExecution
+            activeFlowExecutionId: execution.id, // Ã¢Å“â€¦ FK para FlowExecution
             metadata: {
               botStatus: 'ACTIVE',
               botStatusUpdatedAt: new Date().toISOString(),
@@ -199,7 +345,7 @@ export class FlowEngineService {
       }
     }
 
-    // 4. Salvar mensagem do bot (âœ… REFATORADO com campos queryable)
+    // 4. Salvar mensagem do bot (Ã¢Å“â€¦ REFATORADO com campos queryable)
     const message = await prisma.message.create({
       data: {
         conversationId,
@@ -210,7 +356,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // âœ… NOVOS CAMPOS QUERYABLE
+        // Ã¢Å“â€¦ NOVOS CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
@@ -239,7 +385,7 @@ export class FlowEngineService {
         message,
       });
 
-      // Notificar tambÃ©m o cidadÃ£o diretamente
+      // Notificar tambÃƒÂ©m o cidadÃƒÂ£o diretamente
       this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
         conversationId,
         message,
@@ -262,11 +408,13 @@ export class FlowEngineService {
       }
     }
 
+    await this.scheduleBotInactivityTimeout(conversationId, citizenId, 'ACTIVE');
+
     return { response, conversationId, message };
   }
 
   /**
-   * Processa mensagem do usuÃ¡rio
+   * Processa mensagem do usuÃƒÂ¡rio
    */
   async processMessage(citizenId: string, message: any, conversationId?: string) {
     console.log('[FlowEngineService.processMessage]', { citizenId, message, conversationId });
@@ -280,6 +428,7 @@ export class FlowEngineService {
     const conversation = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
+        metadata: true,
         participant1Id: true,
         participant1Type: true,
         participant2Id: true,
@@ -290,8 +439,11 @@ export class FlowEngineService {
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
     const isCitizenSecond = !isParticipant1;
+    const conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
 
-    // 2. Salvar mensagem do cidadÃ£o (âœ… REFATORADO com campos queryable)
+    this.cancelBotInactivityTimeout(conversationId);
+
+    // 2. Salvar mensagem do cidadÃƒÂ£o (Ã¢Å“â€¦ REFATORADO com campos queryable)
     const userMessageMetadata: any = {};
     let botInteractionType: string | null = null;
     let botSelectedOption: string | null = null;
@@ -326,7 +478,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         ...(Object.keys(userMessageMetadata).length > 0 ? { metadata: userMessageMetadata as any } : {}),
-        // âœ… CAMPOS QUERYABLE
+        // Ã¢Å“â€¦ CAMPOS QUERYABLE
         botInteractionType,
         botSelectedOption,
         botStructuredData: botStructuredData as any,
@@ -341,7 +493,10 @@ export class FlowEngineService {
     let response;
     let botStatus = 'ACTIVE';
 
-    if (shouldUseAi) {
+    if (conversationMetadata?.inactivityResetPending) {
+      response = await this.restartAiAssistantFromMenu(citizenId, conversationId, conversationMetadata);
+      botStatus = 'ACTIVE';
+    } else if (shouldUseAi) {
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
         throw new Error('Flow ai_assistant not found');
@@ -390,7 +545,7 @@ export class FlowEngineService {
     const botMetadata = this.buildBotMetadata(response);
     const botContent = response.message || 'Ocorreu um erro ao processar sua solicitacao.';
 
-    // 4. Salvar resposta do bot (âœ… REFATORADO)
+    // 4. Salvar resposta do bot (Ã¢Å“â€¦ REFATORADO)
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -401,7 +556,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // âœ… CAMPOS QUERYABLE
+        // Ã¢Å“â€¦ CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId || null,
@@ -409,7 +564,7 @@ export class FlowEngineService {
       },
     });
 
-    // 5. Atualizar conversa (âœ… REFATORADO - sem botFlowData)
+    // 5. Atualizar conversa (Ã¢Å“â€¦ REFATORADO - sem botFlowData)
     await prisma.conversation.update({
       where: { id: conversationId },
       data: {
@@ -447,11 +602,13 @@ export class FlowEngineService {
       });
     }
 
+    await this.scheduleBotInactivityTimeout(conversationId, citizenId, botStatus);
+
     return { response, conversationId, userMessage, botMessage };
   }
 
   /**
-   * ObtÃ©m execuÃ§Ã£o ativa
+   * ObtÃƒÂ©m execuÃƒÂ§ÃƒÂ£o ativa
    */
   async getActiveExecution(citizenId: string) {
     const execution = await prisma.flowExecution.findFirst({
@@ -479,13 +636,15 @@ export class FlowEngineService {
   }
 
   /**
-   * Pausa execuÃ§Ã£o (para atendimento humano) - âœ… REFATORADO COM HANDOVER
+   * Pausa execuÃƒÂ§ÃƒÂ£o (para atendimento humano) - Ã¢Å“â€¦ REFATORADO COM HANDOVER
    */
   async pauseExecution(citizenId: string, conversationId?: string, pausedBy?: string, reason?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
-      throw new Error('Nenhuma execuÃ§Ã£o ativa encontrada para este cidadÃ£o');
+      throw new Error('Nenhuma execuÃƒÂ§ÃƒÂ£o ativa encontrada para este cidadÃƒÂ£o');
     }
+
+    this.cancelBotInactivityTimeout(conversationId);
 
     // Pausar no FlowExecution (fonte de verdade)
     await prisma.flowExecution.update({
@@ -516,7 +675,7 @@ export class FlowEngineService {
         },
       });
 
-      // âœ… NOVO: Notificar departamento via HandoverService
+      // Ã¢Å“â€¦ NOVO: Notificar departamento via HandoverService
       if (conversation.departmentId) {
         await this.handoverService.notifyDepartmentHandover(
           conversationId,
@@ -530,12 +689,12 @@ export class FlowEngineService {
   }
 
   /**
-   * Retoma execuÃ§Ã£o - âœ… REFATORADO
+   * Retoma execuÃƒÂ§ÃƒÂ£o - Ã¢Å“â€¦ REFATORADO
    */
   async resumeExecution(citizenId: string, conversationId?: string, resumedBy?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
-      throw new Error('Nenhuma execuÃ§Ã£o ativa encontrada para este cidadÃ£o');
+      throw new Error('Nenhuma execuÃƒÂ§ÃƒÂ£o ativa encontrada para este cidadÃƒÂ£o');
     }
 
     // Retomar no FlowExecution (fonte de verdade)
@@ -559,6 +718,8 @@ export class FlowEngineService {
           },
         },
       });
+
+      await this.scheduleBotInactivityTimeout(conversationId, citizenId, 'ACTIVE');
     }
 
     return { success: true, executionId: execution.id };
@@ -582,7 +743,7 @@ export class FlowEngineService {
     const destDir = path.join(uploadDir, 'bot', subfolder);
     await fs.mkdir(destDir, { recursive: true });
 
-    // Nome Ãºnico preservando extensÃ£o original
+    // Nome ÃƒÂºnico preservando extensÃƒÂ£o original
     const ext = path.extname(file.originalname || '');
     const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
     const destPath = path.join(destDir, uniqueName);
@@ -613,6 +774,8 @@ export class FlowEngineService {
       const conversation = await this.findOrCreateBotConversation(citizenId);
       conversationId = conversation.id;
     }
+
+    this.cancelBotInactivityTimeout(conversationId);
 
     // Mover arquivos de temp para armazenamento permanente
     const uploadedFiles = await Promise.all(
@@ -647,11 +810,23 @@ export class FlowEngineService {
 
     const activeExecution = await this.getActiveExecution(citizenId);
     const aiExecutionActive = this.isAiExecution(activeExecution as any);
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        metadata: true,
+        participant1Id: true,
+        participant1Type: true,
+      },
+    });
+    const conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
 
     let response;
     let botStatus = 'ACTIVE';
 
-    if (!activeExecution || aiExecutionActive) {
+    if (conversationMetadata?.inactivityResetPending) {
+      response = await this.restartAiAssistantFromMenu(citizenId, conversationId, conversationMetadata);
+      botStatus = 'ACTIVE';
+    } else if (!activeExecution || aiExecutionActive) {
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
         throw new Error('Flow ai_assistant not found');
@@ -689,7 +864,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // âœ… CAMPOS QUERYABLE
+        // Ã¢Å“â€¦ CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
@@ -697,10 +872,11 @@ export class FlowEngineService {
       },
     });
 
-    // âœ… REFATORADO - atualizaÃ§Ã£o simplificada
+    // Ã¢Å“â€¦ REFATORADO - atualizaÃƒÂ§ÃƒÂ£o simplificada
     const conv2 = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
+        metadata: true,
         participant1Id: true,
         participant1Type: true,
       },
@@ -744,6 +920,8 @@ export class FlowEngineService {
         message: botMessage,
       });
     }
+
+    await this.scheduleBotInactivityTimeout(conversationId, citizenId, botStatus);
 
     return {
       success: true,
@@ -845,7 +1023,7 @@ export class FlowEngineService {
     });
 
     if (!conversation) {
-      // Criar nova conversa (âœ… REFATORADO - sem campos antigos)
+      // Criar nova conversa (Ã¢Å“â€¦ REFATORADO - sem campos antigos)
       conversation = await prisma.conversation.create({
         data: {
           messageServerId,
@@ -856,7 +1034,7 @@ export class FlowEngineService {
           type: 'SUPPORT',
           status: 'ACTIVE',
           isBotConversation: true,
-          // activeFlowExecutionId serÃ¡ setado quando o fluxo iniciar
+          // activeFlowExecutionId serÃƒÂ¡ setado quando o fluxo iniciar
           metadata: {
             botStatus: 'IDLE',
             botStatusUpdatedAt: new Date().toISOString(),

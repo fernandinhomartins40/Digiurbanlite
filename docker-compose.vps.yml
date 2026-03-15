@@ -117,6 +117,7 @@ services:
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
       - CITIZEN_AI_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
+      - DIGIBOT_INACTIVITY_TIMEOUT_MS=${DIGIBOT_INACTIVITY_TIMEOUT_MS:-600000}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - BASE_URL=https://digiurban.com.br
       - UPLOAD_DIR=/app/uploads

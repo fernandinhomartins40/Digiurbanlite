@@ -37,7 +37,40 @@ const LEGACY_FLOW_BY_INTENT: Record<string, string> = {
   ajuda: 'ajuda',
 };
 
-const HUMAN_PATTERNS = ['humano', 'atendente', 'servidor', 'pessoa real', 'falar com alguem'];
+const HUMAN_PATTERNS = [
+  'humano',
+  'atendente',
+  'servidor',
+  'pessoa real',
+  'falar com alguem',
+  'falar com humano',
+  'falar com atendente',
+  'quero falar com humano',
+  'quero falar com atendente',
+  'suporte humano',
+];
+const MENU_PATTERNS = [
+  'menu',
+  'menu principal',
+  'voltar menu',
+  'voltar ao menu',
+  'inicio',
+  'inicial',
+  'pagina inicial',
+  'tela inicial',
+  'reiniciar',
+  'recomecar',
+  'comecar de novo',
+  'novo atendimento',
+];
+const HELP_PATTERNS = ['ajuda', 'preciso de ajuda', 'duvida', 'duvidas', 'como funciona'];
+const PROFILE_PATTERNS = ['meu perfil', 'perfil', 'meus dados', 'meus dados cadastrais', 'cadastro'];
+const DOCUMENT_PATTERNS = ['documentos', 'meus documentos', 'meus arquivos', 'arquivos', 'anexos'];
+const SERVICE_PATTERNS = ['solicitar servico', 'abrir solicitacao', 'nova solicitacao', 'novo protocolo', 'quero solicitar'];
+const DEPARTMENT_PATTERNS = ['secretaria', 'secretarias', 'explorar secretaria', 'explorar por secretaria', 'navegar por secretaria'];
+const FAMILY_PATTERNS = ['familia', 'minha familia', 'dependentes', 'composicao familiar'];
+const NOTIFICATION_PATTERNS = ['notificacoes', 'notificacao', 'avisos', 'comunicados'];
+const EVALUATION_PATTERNS = ['avaliacao', 'avaliar', 'avaliar atendimento', 'nota do atendimento'];
 const YES_PATTERNS = ['sim', 'confirmar', 'confirmo', 'ok', 'pode enviar', 'prosseguir'];
 const NO_PATTERNS = ['nao', 'não', 'cancelar', 'corrigir', 'voltar', 'outro'];
 
@@ -66,6 +99,9 @@ export class CitizenAiOrchestrator {
       await this.persistSession(execution.id, next);
       return { session: next, requestHumanHandover: true, handoverReason: 'citizen_request', response: { message: 'Certo. Vou sinalizar que voce deseja atendimento humano.', messageType: 'text', metadata: this.meta(execution, next, false) } };
     }
+
+    const globalShortcut = await this.handleGlobalShortcut(execution, session, message);
+    if (globalShortcut) return globalShortcut;
 
     if (session.stage === 'awaiting_request_mode') return this.handleRequestMode(execution, session, message);
     if (session.stage === 'awaiting_department_selection') return this.handleDepartmentSelection(execution, session, message);
@@ -802,13 +838,13 @@ export class CitizenAiOrchestrator {
 
   private matchExplicitIntent(normalized: string): string | undefined {
     if (!normalized) return undefined;
-    if (normalized === 'solicitar servico' || normalized === 'solicitar_servico') return 'solicitar_servico';
-    if (normalized === 'explorar por secretaria' || normalized === 'explorar_secretarias' || normalized === 'secretarias' || normalized === 'secretaria') return 'explorar_secretarias';
+    if (this.matchesAny(normalized, SERVICE_PATTERNS)) return 'solicitar_servico';
+    if (this.matchesAny(normalized, DEPARTMENT_PATTERNS)) return 'explorar_secretarias';
     if (normalized === 'consultar protocolo' || normalized === 'consultar_protocolo') return 'consultar_protocolo';
-    if (normalized === 'meu perfil' || normalized === 'meu_perfil') return 'meu_perfil';
-    if (normalized === 'documentos' || normalized === 'meus documentos') return 'documentos';
-    if (normalized === 'ajuda') return 'ajuda';
-    if (normalized === 'voltar menu' || normalized === 'voltar ao menu' || normalized === 'voltar_menu' || normalized === 'menu') return 'voltar_menu';
+    if (this.matchesAny(normalized, PROFILE_PATTERNS)) return 'meu_perfil';
+    if (this.matchesAny(normalized, DOCUMENT_PATTERNS)) return 'documentos';
+    if (this.matchesAny(normalized, HELP_PATTERNS)) return 'ajuda';
+    if (this.matchesAny(normalized, MENU_PATTERNS)) return 'voltar_menu';
     if (normalized === 'descrever solicitacao' || normalized === 'descrever com minhas palavras' || normalized === 'descrever_solicitacao') return 'descrever_solicitacao';
     return undefined;
   }
@@ -924,6 +960,110 @@ export class CitizenAiOrchestrator {
     const required = questions.filter((field) => field.required !== false).map((field) => field.id).filter((fieldId) => collected[fieldId] === undefined);
     if ((!session.description || String(session.description).trim().length < 10) && questions.length === 0) required.unshift('description');
     return required;
+  }
+
+  private async handleGlobalShortcut(execution: FlowExecution, session: CitizenAiSessionState, message: string): Promise<CitizenAiDecision | null> {
+    const normalized = this.normalize(message);
+    if (!normalized) return null;
+    const protocolMode = this.detectProtocolMode(message);
+
+    if (this.matchesAny(normalized, MENU_PATTERNS)) {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    if (this.matchesAny(normalized, SERVICE_PATTERNS)) {
+      const next: CitizenAiSessionState = {
+        ...session,
+        stage: 'awaiting_request_mode',
+        lastIntent: 'solicitar_servico',
+      };
+      await this.persistSession(execution.id, next);
+      return this.buildGuidedServiceEntry(execution, next);
+    }
+
+    if (normalized === 'consultar protocolo' || normalized === 'consultar_protocolo' || protocolMode) {
+      const next: CitizenAiSessionState = {
+        ...session,
+        lastIntent: 'consultar_protocolo',
+      };
+      return this.handleProtocolIntent(execution, next, message);
+    }
+
+    if (this.matchesAny(normalized, HELP_PATTERNS)) {
+      const next = { ...session, lastIntent: 'ajuda' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.ajuda,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (this.matchesAny(normalized, PROFILE_PATTERNS)) {
+      const next = { ...session, lastIntent: 'meu_perfil' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.meu_perfil,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (this.matchesAny(normalized, DOCUMENT_PATTERNS)) {
+      const next = { ...session, lastIntent: 'documentos' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.documentos,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (this.matchesAny(normalized, FAMILY_PATTERNS)) {
+      const next = { ...session, lastIntent: 'minha_familia' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.minha_familia,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (this.matchesAny(normalized, NOTIFICATION_PATTERNS)) {
+      const next = { ...session, lastIntent: 'notificacoes' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.notificacoes,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (this.matchesAny(normalized, EVALUATION_PATTERNS)) {
+      const next = { ...session, lastIntent: 'avaliacao' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.avaliacao,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (this.matchesAny(normalized, DEPARTMENT_PATTERNS)) {
+      const next: CitizenAiSessionState = { ...session, lastIntent: 'solicitar_servico' };
+      await this.persistSession(execution.id, next);
+      return this.presentDepartments(execution, next);
+    }
+
+    return null;
   }
 }
 
