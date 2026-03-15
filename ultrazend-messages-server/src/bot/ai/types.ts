@@ -15,6 +15,8 @@ export type CitizenAiIntent =
 
 export type CitizenAiStage =
   | 'triage'
+  | 'awaiting_request_mode'
+  | 'awaiting_department_selection'
   | 'awaiting_service_selection'
   | 'awaiting_protocol_number'
   | 'collecting_fields'
@@ -46,6 +48,9 @@ export interface CitizenAiSessionState {
   stage: CitizenAiStage;
   lastIntent?: CitizenAiIntent;
   serviceSearchQuery?: string;
+  departmentCandidates?: MenuOption[];
+  selectedDepartmentId?: string;
+  selectedDepartmentName?: string;
   serviceCandidates?: MenuOption[];
   selectedServiceId?: string;
   selectedServiceName?: string;
