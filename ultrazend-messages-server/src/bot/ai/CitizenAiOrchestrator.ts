@@ -790,7 +790,14 @@ export class CitizenAiOrchestrator {
   }
 
   private normalize(value: string): string {
-    return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^\w\s]/g, ' ').replace(/\s+/g, ' ').trim();
+    return value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/_/g, ' ')
+      .replace(/[^\w\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private matchExplicitIntent(normalized: string): string | undefined {
@@ -831,6 +838,15 @@ export class CitizenAiOrchestrator {
     const normalized = this.normalize(message);
     if (!normalized) return undefined;
     if (this.extractProtocolNumber(message)) return 'number';
+    if (
+      normalized === 'consultar protocolo' ||
+      normalized === 'consultar protocolos' ||
+      normalized === 'acompanhar protocolo' ||
+      normalized === 'acompanhar protocolos' ||
+      normalized === 'buscar protocolo'
+    ) {
+      return 'number';
+    }
     if (
       normalized === 'informar numero do protocolo' ||
       normalized === 'informar numero' ||
