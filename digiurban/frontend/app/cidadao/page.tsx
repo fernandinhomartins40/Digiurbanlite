@@ -984,7 +984,7 @@ export default function CitizenDashboard() {
 
                         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                           {isBot ? (
-                            <div className="max-w-[70%] space-y-2">
+                            <div className="w-full max-w-[92%] space-y-2 md:max-w-[88%] lg:max-w-[980px]">
                               <div className="flex items-center gap-2 text-blue-700">
                                 <Sparkles className="w-4 h-4 text-blue-600" />
                                 <span className="text-xs font-semibold">DigiBot</span>
@@ -1032,7 +1032,7 @@ export default function CitizenDashboard() {
                   {/* Typing indicator */}
                   {isBotTyping && (
                     <div className="flex justify-start">
-                      <div className="max-w-[70%] space-y-2">
+                      <div className="w-full max-w-[92%] space-y-2 md:max-w-[88%] lg:max-w-[980px]">
                         <div className="flex items-center gap-2 text-blue-700">
                           <Sparkles className="w-4 h-4 text-blue-600" />
                           <span className="text-xs font-semibold">DigiBot</span>
@@ -1202,5 +1202,4 @@ export default function CitizenDashboard() {
     </div>
   );
 }
-
 

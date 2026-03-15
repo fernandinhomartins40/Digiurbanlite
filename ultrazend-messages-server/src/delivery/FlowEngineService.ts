@@ -65,6 +65,10 @@ export class FlowEngineService {
       metadata.media = response.data.media;
     }
 
+    if (response.data?.cards) {
+      metadata.cards = JSON.parse(JSON.stringify(response.data.cards));
+    }
+
     // Passa campos extras de display para o frontend (carrossÃ©is, categorias, etc.)
     if (response.data?.displayMode) {
       metadata.displayMode = response.data.displayMode;

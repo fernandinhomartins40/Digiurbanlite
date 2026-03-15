@@ -43,7 +43,7 @@ function getDeptIcon(name: string) {
 }
 
 function getDeptTheme(name: string): DepartmentTheme {
-  const cleanName = name.replace(/🏢\s*/, '').trim();
+  const cleanName = name.replace(/^[^\p{L}\p{N}]+\s*/u, '').trim();
   return getDepartmentTheme(cleanName);
 }
 
@@ -52,7 +52,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
 
   const scroll = (direction: 'left' | 'right') => {
     if (!scrollRef.current) return;
-    const amount = 180;
+    const amount = 220;
     scrollRef.current.scrollBy({
       left: direction === 'left' ? -amount : amount,
       behavior: 'smooth',
@@ -60,12 +60,22 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
   };
 
   return (
-    <div className="w-full space-y-2">
+    <div className="w-full space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-sm font-semibold text-slate-900">Secretarias</p>
+          <p className="text-xs text-slate-500">Deslize para o lado e toque na secretaria desejada.</p>
+        </div>
+        <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+          {options.length} opcoes
+        </div>
+      </div>
+
       <div className="relative group">
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 hidden h-9 w-9 rounded-full bg-white/95 shadow-md md:flex md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           onClick={() => scroll('left')}
         >
           <ChevronLeft className="h-4 w-4" />
@@ -77,7 +87,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {options.map((option) => {
-            const displayName = (option.name || option.label || '').replace(/🏢\s*/, '').trim();
+            const displayName = (option.name || option.label || '').replace(/^[^\p{L}\p{N}]+\s*/u, '').trim();
             const theme = getDeptTheme(displayName);
             const IconComponent = getDeptIcon(displayName);
 
@@ -85,29 +95,27 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
               <button
                 key={option.id}
                 onClick={() => onSelect(option)}
-                className="flex-shrink-0 snap-start w-[130px] rounded-xl border-2 p-3 transition-all duration-200 hover:scale-105 hover:shadow-lg active:scale-95 cursor-pointer flex flex-col items-center gap-2 text-center"
+                className="flex-shrink-0 snap-start w-[160px] rounded-2xl border-2 p-4 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer flex flex-col items-center gap-3 text-center"
                 style={{
                   backgroundColor: theme.light,
                   borderColor: theme.border,
                 }}
               >
                 <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center shadow-sm"
+                  className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm"
                   style={{ backgroundColor: theme.primary + '20' }}
                 >
                   <IconComponent
-                    className="w-7 h-7"
+                    className="h-7 w-7"
                     style={{ color: theme.primary }}
                   />
                 </div>
-                <span className="text-xs font-semibold leading-tight line-clamp-2" style={{ color: theme.primary }}>
+                <span className="line-clamp-2 text-xs font-semibold leading-tight" style={{ color: theme.primary }}>
                   {displayName.replace(/^Secretaria\s*(Municipal\s*de?\s*)?/i, '').trim() || displayName}
                 </span>
-                {option.serviceCount && (
-                  <span className="text-[10px] text-gray-500">
-                    {option.serviceCount} serviço{option.serviceCount !== 1 ? 's' : ''}
-                  </span>
-                )}
+                <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] text-gray-600 shadow-sm">
+                  {option.serviceCount || 0} servicos
+                </div>
               </button>
             );
           })}
@@ -116,7 +124,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 rounded-full bg-white/90 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 hidden h-9 w-9 rounded-full bg-white/95 shadow-md md:flex md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           onClick={() => scroll('right')}
         >
           <ChevronRight className="h-4 w-4" />

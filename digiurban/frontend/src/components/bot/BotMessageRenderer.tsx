@@ -1,7 +1,8 @@
 'use client';
 
 import React from 'react';
-import { Button } from '@/components/ui/button';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import { CalendarPicker } from './CalendarPicker';
 import { TimePicker } from './TimePicker';
 import { ConfirmationCard } from './ConfirmationCard';
@@ -24,11 +25,24 @@ interface BotMessageRendererProps {
   onInteraction: (data: any) => void;
 }
 
+const markdownComponents = {
+  p: ({ children }: any) => <p className="mb-3 last:mb-0">{children}</p>,
+  strong: ({ children }: any) => <strong className="font-semibold text-slate-900">{children}</strong>,
+  ul: ({ children }: any) => <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
+  ol: ({ children }: any) => <ol className="mb-3 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
+  li: ({ children }: any) => <li className="marker:text-slate-400">{children}</li>,
+  hr: () => <hr className="my-4 border-slate-200" />,
+  h1: ({ children }: any) => <h1 className="mb-3 text-lg font-semibold text-slate-900">{children}</h1>,
+  h2: ({ children }: any) => <h2 className="mb-3 text-base font-semibold text-slate-900">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="mb-2 text-sm font-semibold text-slate-900">{children}</h3>,
+};
+
 export function BotMessageRenderer({ message, onInteraction }: BotMessageRendererProps) {
   const metadata = message?.metadata || {};
   const messageType = message?.messageType || metadata.messageType || 'text';
   const options = Array.isArray(metadata.options) ? metadata.options : [];
   const fields = Array.isArray(metadata.fields) ? metadata.fields : [];
+  const cards = Array.isArray(metadata.cards) ? metadata.cards : [];
 
   const renderProgress = () => {
     if (metadata?.progress && metadata?.totalSteps) {
@@ -129,7 +143,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
     if (messageType === 'menu' && options.length > 0) {
       const displayMode = metadata?.displayMode;
 
-      // Carrossel de secretarias
       if (displayMode === 'department_carousel') {
         return (
           <DepartmentCarousel
@@ -139,7 +152,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         );
       }
 
-      // Carrossel de serviços por subcategoria
       if (displayMode === 'service_carousel') {
         return (
           <ServiceCarousel
@@ -151,25 +163,42 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         );
       }
 
-      // Menu padrão (botões em coluna)
       return (
-        <div className="flex flex-col gap-2">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {options.map((option: any) => (
-            <Button
+            <button
               key={option.id}
-              variant="outline"
               onClick={() => onInteraction(option)}
-              className="justify-start text-left"
+              className="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
             >
-              <div>
-                <div className="font-semibold">{option.label}</div>
-                {option.description && (
-                  <div className="text-xs text-muted-foreground">
-                    {option.description}
-                  </div>
-                )}
+              <div className="flex h-full items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="font-semibold text-slate-900">{option.label}</div>
+                  {option.description && (
+                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                      {option.description}
+                    </div>
+                  )}
+                </div>
+                <div className="mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100">
+                  Selecionar
+                </div>
               </div>
-            </Button>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (messageType === 'card' && cards.length > 0) {
+      return (
+        <div className={`grid gap-3 ${cards.length > 1 ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+          {cards.map((card: any) => (
+            <MessageCard
+              key={card.id}
+              card={card}
+              onAction={(action) => onInteraction(action)}
+            />
           ))}
         </div>
       );
@@ -183,7 +212,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       const uploadConfig = metadata.uploadConfig || {};
       const requiredDocs = metadata.requiredDocuments;
 
-      // Se tem lista de documentos obrigatórios, usa componente rico (com scanner)
       if (Array.isArray(requiredDocs) && requiredDocs.length > 0) {
         return (
           <BotDocumentUpload
@@ -196,7 +224,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         );
       }
 
-      // Fallback: upload genérico sem documentos específicos
       const accept = Array.isArray(uploadConfig.allowedTypes)
         ? uploadConfig.allowedTypes.join(',')
         : undefined;
@@ -230,13 +257,19 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
     return null;
   };
 
+  const structuredInput = renderStructuredInput() || (messageType === 'interactive' && renderLegacyInteractive());
+
   return (
     <div className="space-y-3">
       {renderProgress()}
 
       {message?.content && (
-        <div className="bg-white rounded-lg p-4 shadow-sm">
-          <p className="text-gray-900 whitespace-pre-wrap">{message.content}</p>
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/70">
+          <div className="text-[15px] leading-7 text-slate-800">
+            <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+              {message.content}
+            </ReactMarkdown>
+          </div>
         </div>
       )}
 
@@ -244,19 +277,7 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         <ProtocolDetailCard data={metadata.protocolDetailCard} />
       )}
 
-      {messageType === 'card' && metadata?.cards && (
-        <div className="space-y-2">
-          {metadata.cards.map((card: any) => (
-            <MessageCard
-              key={card.id}
-              card={card}
-              onAction={(action) => onInteraction(action)}
-            />
-          ))}
-        </div>
-      )}
-
-      {renderStructuredInput() || (messageType === 'interactive' && renderLegacyInteractive())}
+      {structuredInput}
 
       {metadata?.quickReplies && (
         <QuickReplies

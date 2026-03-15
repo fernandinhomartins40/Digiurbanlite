@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FileText, SkipForward, Send } from 'lucide-react';
+import { FileText, SkipForward, Send, ShieldCheck } from 'lucide-react';
 import { DocumentUpload } from '@/components/common/DocumentUpload';
 import { normalizeDocumentConfig, type DocumentConfig } from '@/lib/document-utils';
 
@@ -32,7 +32,6 @@ export function BotDocumentUpload({
 }: BotDocumentUploadProps) {
   const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({});
 
-  // Normalizar os documentos para DocumentConfig usando o utilitário real
   const docConfigs: { docId: string; config: DocumentConfig }[] = requiredDocuments.map(
     (doc, index) => {
       const docId =
@@ -71,59 +70,75 @@ export function BotDocumentUpload({
   const allRequiredDone = requiredUploaded >= requiredCount;
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-center gap-2">
-        <FileText className="h-5 w-5 text-blue-600" />
-        <h3 className="text-base font-semibold text-gray-900">
-          Documentos Necessários
-        </h3>
+    <div className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+      <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-start gap-3">
+          <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
+            <FileText className="h-5 w-5" />
+          </div>
+          <div>
+            <h3 className="text-base font-semibold text-slate-900">Documentos necessarios</h3>
+            <p className="text-sm text-slate-500">
+              Envie os anexos solicitados para concluir a abertura do protocolo.
+            </p>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
+          <div className="rounded-full bg-slate-100 px-3 py-1 font-medium">
+            {uploadedCount} arquivo(s) pronto(s)
+          </div>
+          {requiredCount > 0 && (
+            <div className="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700">
+              {requiredUploaded}/{requiredCount} obrigatorios
+            </div>
+          )}
+        </div>
       </div>
 
-      {requiredCount > 0 && (
-        <p className="text-xs text-gray-500 -mt-2">
-          {requiredCount} documento(s) obrigatório(s) — campos com *
-        </p>
-      )}
-
-      {/* Lista de documentos usando DocumentUpload real (com scanner/câmera) */}
-      <div className="space-y-4">
+      <div className="mt-5 grid gap-4 lg:grid-cols-2">
         {docConfigs.map(({ docId, config }) => (
-          <DocumentUpload
-            key={docId}
-            documentConfig={config}
-            value={uploadedFiles[docId] || null}
-            onChange={(file) => handleFileChange(docId, file)}
-          />
+          <div key={docId} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+            <DocumentUpload
+              documentConfig={config}
+              value={uploadedFiles[docId] || null}
+              onChange={(file) => handleFileChange(docId, file)}
+            />
+          </div>
         ))}
       </div>
 
-      {/* Ações */}
-      <div className="flex gap-2 pt-2 border-t">
-        {allowSkip && (
-          <Button
-            variant="outline"
-            onClick={handleSkip}
-            className="flex-1"
-          >
-            <SkipForward className="h-4 w-4 mr-2" />
-            Pular
-          </Button>
-        )}
+      <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 md:flex-row md:items-center md:justify-between">
+        <div className="flex items-center gap-2 text-xs text-slate-500">
+          <ShieldCheck className="h-4 w-4 text-emerald-600" />
+          <span>Os arquivos serao enviados junto com a solicitacao.</span>
+        </div>
 
-        <Button
-          onClick={handleSubmit}
-          disabled={uploadedCount === 0 || (!allRequiredDone && requiredCount > 0)}
-          className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white"
-        >
-          <Send className="h-4 w-4 mr-2" />
-          Enviar {uploadedCount > 0 && `(${uploadedCount})`}
-        </Button>
+        <div className="flex gap-2 md:justify-end">
+          {allowSkip && (
+            <Button
+              variant="outline"
+              onClick={handleSkip}
+              className="flex-1 md:flex-none"
+            >
+              <SkipForward className="h-4 w-4 mr-2" />
+              Pular
+            </Button>
+          )}
+
+          <Button
+            onClick={handleSubmit}
+            disabled={uploadedCount === 0 || (!allRequiredDone && requiredCount > 0)}
+            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 md:flex-none"
+          >
+            <Send className="h-4 w-4 mr-2" />
+            Enviar {uploadedCount > 0 && `(${uploadedCount})`}
+          </Button>
+        </div>
       </div>
 
       {!allRequiredDone && requiredCount > 0 && uploadedCount > 0 && (
-        <p className="text-xs text-amber-600 text-center">
-          Envie todos os documentos obrigatórios (*) para continuar
+        <p className="mt-3 text-center text-xs text-amber-600">
+          Envie todos os documentos obrigatorios para continuar
         </p>
       )}
     </div>

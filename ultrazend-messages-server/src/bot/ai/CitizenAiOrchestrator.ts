@@ -213,8 +213,8 @@ export class CitizenAiOrchestrator {
       response: {
         message: 'Escolha a secretaria para eu listar os servicos disponiveis.',
         messageType: 'menu',
-        data: { options: departments },
-        metadata: this.meta(execution, next, true),
+        data: { options: departments, displayMode: 'department_carousel' } as any,
+        metadata: this.meta(execution, next, true, { displayMode: 'department_carousel' }),
       },
     };
   }
@@ -228,8 +228,8 @@ export class CitizenAiOrchestrator {
         response: {
           message: 'Nao consegui identificar a secretaria. Selecione uma opcao da lista.',
           messageType: 'menu',
-          data: { options: departments },
-          metadata: this.meta(execution, session, true),
+          data: { options: departments, displayMode: 'department_carousel' } as any,
+          metadata: this.meta(execution, session, true, { displayMode: 'department_carousel' }),
         },
       };
     }
@@ -272,12 +272,12 @@ export class CitizenAiOrchestrator {
           options: services,
           categories: Array.isArray(result.categories) ? result.categories : undefined,
           departmentName: String(result.department?.name || selectedDepartment.label),
-          displayMode: 'categories',
+          displayMode: 'service_carousel',
         } as any,
         metadata: this.meta(execution, next, true, {
           categories: Array.isArray(result.categories) ? result.categories : undefined,
           departmentName: String(result.department?.name || selectedDepartment.label),
-          displayMode: 'categories',
+          displayMode: 'service_carousel',
         }),
       },
     };
@@ -305,7 +305,22 @@ export class CitizenAiOrchestrator {
     if (services.length === 1) return this.selectServiceById(execution, session, userMessage, services[0].id, services);
     const wait: CitizenAiSessionState = { ...session, stage: 'awaiting_service_selection', serviceSearchQuery: searchQuery, serviceCandidates: services };
     await this.persistSession(execution.id, wait);
-    return { session: wait, response: { message: 'Encontrei estes servicos mais proximos. Escolha o que melhor representa sua necessidade.', messageType: 'menu', data: { options: services }, metadata: this.meta(execution, wait, true) } };
+    return {
+      session: wait,
+      response: {
+        message: 'Encontrei estes servicos mais proximos. Escolha o que melhor representa sua necessidade.',
+        messageType: 'menu',
+        data: {
+          options: services,
+          displayMode: 'service_carousel',
+          departmentName: 'Servicos sugeridos',
+        } as any,
+        metadata: this.meta(execution, wait, true, {
+          displayMode: 'service_carousel',
+          departmentName: 'Servicos sugeridos',
+        }),
+      },
+    };
   }
 
   private async handleServiceSelection(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
@@ -323,7 +338,24 @@ export class CitizenAiOrchestrator {
       if (selection?.selectedId && selection.confidence >= 0.55) selectedId = selection.selectedId;
     }
 
-    if (!selectedId) return { session, response: { message: 'Nao consegui identificar o servico correto. Selecione uma opcao da lista.', messageType: 'menu', data: { options: candidates }, metadata: this.meta(execution, session, true) } };
+    if (!selectedId) {
+      return {
+        session,
+        response: {
+          message: 'Nao consegui identificar o servico correto. Selecione uma opcao da lista.',
+          messageType: 'menu',
+          data: {
+            options: candidates,
+            displayMode: 'service_carousel',
+            departmentName: session.selectedDepartmentName || 'Servicos sugeridos',
+          } as any,
+          metadata: this.meta(execution, session, true, {
+            displayMode: 'service_carousel',
+            departmentName: session.selectedDepartmentName || 'Servicos sugeridos',
+          }),
+        },
+      };
+    }
     return this.selectServiceById(execution, session, userMessage, selectedId, candidates);
   }
   private async selectServiceById(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string, selectedServiceId: string, candidates: MenuOption[]): Promise<CitizenAiDecision> {
