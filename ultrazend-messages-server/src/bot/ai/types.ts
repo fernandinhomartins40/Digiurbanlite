@@ -18,7 +18,9 @@ export type CitizenAiStage =
   | 'awaiting_request_mode'
   | 'awaiting_department_selection'
   | 'awaiting_service_selection'
+  | 'awaiting_protocol_lookup_mode'
   | 'awaiting_protocol_number'
+  | 'awaiting_protocol_selection'
   | 'collecting_fields'
   | 'awaiting_documents'
   | 'awaiting_review_confirmation'
@@ -63,6 +65,7 @@ export interface CitizenAiSessionState {
   description?: string;
   uploadedDocuments?: Array<Record<string, unknown>>;
   protocolNumber?: string;
+  protocolCandidates?: MenuOption[];
   reviewText?: string;
   lowConfidenceFallbacks?: number;
   legacyFallbackCount?: number;

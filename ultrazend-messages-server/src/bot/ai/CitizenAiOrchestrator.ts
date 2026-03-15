@@ -21,6 +21,13 @@ const SERVICE_ENTRY_ACTIONS: MenuOption[] = [
   { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Retornar para as opcoes iniciais' },
 ];
 
+const PROTOCOL_ENTRY_ACTIONS: MenuOption[] = [
+  { id: 'informar_numero', label: 'Informar numero do protocolo', description: 'Digitar o numero exato para consultar' },
+  { id: 'listar_protocolos', label: 'Meus protocolos', description: 'Ver seus protocolos recentes' },
+  { id: 'ultimo_protocolo', label: 'Ultimo protocolo', description: 'Abrir o protocolo mais recente' },
+  { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Retornar para as opcoes iniciais' },
+];
+
 const LEGACY_FLOW_BY_INTENT: Record<string, string> = {
   meu_perfil: 'meu_perfil',
   documentos: 'documentos',
@@ -63,7 +70,9 @@ export class CitizenAiOrchestrator {
     if (session.stage === 'awaiting_request_mode') return this.handleRequestMode(execution, session, message);
     if (session.stage === 'awaiting_department_selection') return this.handleDepartmentSelection(execution, session, message);
     if (session.stage === 'awaiting_service_selection') return this.handleServiceSelection(execution, session, message);
+    if (session.stage === 'awaiting_protocol_lookup_mode') return this.handleProtocolLookupMode(execution, session, message);
     if (session.stage === 'awaiting_protocol_number') return this.handleProtocolLookup(execution, session, message);
+    if (session.stage === 'awaiting_protocol_selection') return this.handleProtocolSelection(execution, session, message);
     if (session.stage === 'collecting_fields') return this.handleFieldCollection(execution, session, message);
     if (session.stage === 'awaiting_review_confirmation') return this.handleReviewConfirmation(execution, session, message);
     if (session.stage === 'awaiting_documents') return { session, response: { message: 'Ainda estou aguardando o envio dos documentos obrigatorios.', messageType: 'text', metadata: this.meta(execution, session, true) } };
@@ -91,6 +100,7 @@ export class CitizenAiOrchestrator {
     const normalized = this.normalize(message);
     const protocolNumber = this.extractProtocolNumber(message);
     const explicitIntent = this.matchExplicitIntent(normalized);
+    const protocolMode = this.detectProtocolMode(message);
 
     if (this.isGreeting(message) || !normalized) {
       const next: CitizenAiSessionState = { ...session, stage: 'triage', lastIntent: 'greeting' };
@@ -110,15 +120,9 @@ export class CitizenAiOrchestrator {
       return this.presentDepartments(execution, next);
     }
 
-    if (explicitIntent === 'consultar_protocolo' || protocolNumber) {
+    if (explicitIntent === 'consultar_protocolo' || protocolNumber || protocolMode) {
       const next: CitizenAiSessionState = { ...session, lastIntent: 'consultar_protocolo' };
-      const number = protocolNumber;
-      if (!number) {
-        const wait = this.withStage(next, 'awaiting_protocol_number');
-        await this.persistSession(execution.id, wait);
-        return { session: wait, response: { message: 'Informe o numero do protocolo que voce deseja consultar.', messageType: 'text', metadata: this.meta(execution, wait, true) } };
-      }
-      return this.handleProtocolLookup(execution, next, number);
+      return this.handleProtocolIntent(execution, next, message);
     }
 
     if (explicitIntent && LEGACY_FLOW_BY_INTENT[explicitIntent]) {
@@ -140,13 +144,7 @@ export class CitizenAiOrchestrator {
     const next: CitizenAiSessionState = { ...session, lastIntent: analysis.intent as CitizenAiSessionState['lastIntent'] };
 
     if (analysis.intent === 'consultar_protocolo') {
-      const number = analysis.protocolNumber || protocolNumber;
-      if (!number) {
-        const wait = this.withStage(next, 'awaiting_protocol_number');
-        await this.persistSession(execution.id, wait);
-        return { session: wait, response: { message: 'Informe o numero do protocolo que voce deseja consultar.', messageType: 'text', metadata: this.meta(execution, wait, true) } };
-      }
-      return this.handleProtocolLookup(execution, next, number);
+      return this.handleProtocolIntent(execution, next, analysis.protocolNumber || message);
     }
 
     if (analysis.intent === 'solicitar_servico') return this.beginServiceRequest(execution, next, message, analysis.serviceQuery || message, true);
@@ -171,6 +169,7 @@ export class CitizenAiOrchestrator {
 
   private async handleRequestMode(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
     const intent = this.matchExplicitIntent(this.normalize(userMessage));
+    const protocolMode = this.detectProtocolMode(userMessage);
     if (intent === 'descrever_solicitacao') {
       await this.persistSession(execution.id, session);
       return {
@@ -183,11 +182,7 @@ export class CitizenAiOrchestrator {
       };
     }
     if (intent === 'explorar_secretarias') return this.presentDepartments(execution, session);
-    if (intent === 'consultar_protocolo') {
-      const next = this.withStage({ ...session, lastIntent: 'consultar_protocolo' }, 'awaiting_protocol_number');
-      await this.persistSession(execution.id, next);
-      return { session: next, response: { message: 'Informe o numero do protocolo que voce deseja consultar.', messageType: 'text', metadata: this.meta(execution, next, true) } };
-    }
+    if (intent === 'consultar_protocolo' || protocolMode) return this.handleProtocolIntent(execution, { ...session, lastIntent: 'consultar_protocolo' }, userMessage);
     if (intent === 'voltar_menu') {
       const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
       await this.persistSession(execution.id, next);
@@ -485,18 +480,199 @@ export class CitizenAiOrchestrator {
     return { session: finished, response: { message: `Solicitacao enviada com sucesso.\n\nNumero do protocolo: ${protocolNumber || 'gerado com sucesso'}\nServico: ${session.selectedServiceName || 'Solicitacao registrada'}\n\nSe quiser, tambem posso consultar esse protocolo depois para voce.`, messageType: 'card', data: { cards: [{ id: String(protocol.id || protocolNumber || Date.now()), title: `Protocolo ${protocolNumber || 'criado'}`, description: String(protocol.title || session.selectedServiceName || 'Solicitacao registrada'), metadata: { protocolNumber, status: protocol.status || 'ABERTO' } }] }, metadata: this.meta(execution, finished, true) } };
   }
 
-  private async handleProtocolLookup(execution: FlowExecution, session: CitizenAiSessionState, rawInput: string): Promise<CitizenAiDecision> {
-    const protocolNumber = this.extractProtocolNumber(rawInput) || rawInput.trim();
-    if (!protocolNumber) {
-      const waiting = this.withStage(session, 'awaiting_protocol_number');
+  private async handleProtocolIntent(execution: FlowExecution, session: CitizenAiSessionState, rawInput: string): Promise<CitizenAiDecision> {
+    const protocolMode = this.detectProtocolMode(rawInput);
+    const protocolNumber = this.extractProtocolNumber(rawInput);
+
+    if (protocolMode === 'list') return this.listCitizenProtocols(execution, session);
+    if (protocolMode === 'latest') return this.openLatestProtocol(execution, session);
+    if (protocolNumber) return this.handleProtocolLookup(execution, session, protocolNumber);
+
+    const waiting = this.withStage(session, 'awaiting_protocol_lookup_mode');
+    await this.persistSession(execution.id, waiting);
+    return { session: waiting, response: this.buildProtocolLookupEntry(execution, waiting) };
+  }
+
+  private async handleProtocolLookupMode(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
+    const normalized = this.normalize(userMessage);
+    const explicitIntent = this.matchExplicitIntent(normalized);
+    if (explicitIntent === 'voltar_menu') {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    if (this.isUnknownProtocolReply(userMessage)) {
+      const waiting = this.withStage(session, 'awaiting_protocol_lookup_mode');
       await this.persistSession(execution.id, waiting);
-      return { session: waiting, response: { message: 'Informe o numero do protocolo para eu consultar.', messageType: 'text', metadata: this.meta(execution, waiting, true) } };
+      return {
+        session: waiting,
+        response: this.buildProtocolLookupEntry(
+          execution,
+          waiting,
+          'Sem problema. Posso listar seus protocolos recentes ou abrir um pelo numero.'
+        ),
+      };
+    }
+
+    return this.handleProtocolIntent(execution, session, userMessage);
+  }
+
+  private async listCitizenProtocols(execution: FlowExecution, session: CitizenAiSessionState): Promise<CitizenAiDecision> {
+    const result = await this.runAction('getProtocols', { limit: 8 }, execution, session);
+    if (result.success === false) {
+      const waiting = this.withStage(session, 'awaiting_protocol_lookup_mode');
+      await this.persistSession(execution.id, waiting);
+      return {
+        session: waiting,
+        response: this.buildProtocolLookupEntry(
+          execution,
+          waiting,
+          typeof result.error === 'string' ? result.error : 'Nao foi possivel listar seus protocolos agora.'
+        ),
+      };
+    }
+
+    const protocols = Array.isArray(result.protocols) ? result.protocols as MenuOption[] : [];
+    if (!protocols.length) {
+      const next = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        response: {
+          message: 'Voce ainda nao possui protocolos cadastrados. Se quiser, posso te ajudar a abrir uma solicitacao agora.',
+          messageType: 'menu',
+          data: { options: QUICK_ACTIONS },
+          metadata: this.meta(execution, next, true),
+        },
+      };
+    }
+
+    const waiting: CitizenAiSessionState = {
+      ...session,
+      stage: 'awaiting_protocol_selection',
+      protocolCandidates: protocols,
+    };
+    await this.persistSession(execution.id, waiting);
+    return {
+      session: waiting,
+      response: {
+        message: 'Estes sao os seus protocolos recentes. Escolha um para ver os detalhes.',
+        messageType: 'menu',
+        data: { options: protocols },
+        metadata: this.meta(execution, waiting, true),
+      },
+    };
+  }
+
+  private async openLatestProtocol(execution: FlowExecution, session: CitizenAiSessionState): Promise<CitizenAiDecision> {
+    const result = await this.runAction('getProtocols', { limit: 1 }, execution, session);
+    if (result.success === false) {
+      const waiting = this.withStage(session, 'awaiting_protocol_lookup_mode');
+      await this.persistSession(execution.id, waiting);
+      return {
+        session: waiting,
+        response: this.buildProtocolLookupEntry(
+          execution,
+          waiting,
+          typeof result.error === 'string' ? result.error : 'Nao foi possivel localizar seu ultimo protocolo.'
+        ),
+      };
+    }
+
+    const latest = Array.isArray(result.protocols) ? result.protocols[0] as MenuOption | undefined : undefined;
+    const protocolNumber = this.getProtocolNumberFromOption(latest);
+    if (!protocolNumber) {
+      const next = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        response: {
+          message: 'Voce ainda nao possui protocolos cadastrados. Se quiser, posso te ajudar a abrir uma solicitacao agora.',
+          messageType: 'menu',
+          data: { options: QUICK_ACTIONS },
+          metadata: this.meta(execution, next, true),
+        },
+      };
+    }
+
+    return this.handleProtocolLookup(execution, session, protocolNumber);
+  }
+
+  private async handleProtocolSelection(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
+    const normalized = this.normalize(userMessage);
+    const explicitIntent = this.matchExplicitIntent(normalized);
+    if (explicitIntent === 'voltar_menu') {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    const protocolMode = this.detectProtocolMode(userMessage);
+    if (protocolMode === 'list') return this.listCitizenProtocols(execution, session);
+    if (protocolMode === 'latest') return this.openLatestProtocol(execution, session);
+
+    const candidates = Array.isArray(session.protocolCandidates) ? session.protocolCandidates : [];
+    const selected = this.findOptionByInput(userMessage, candidates);
+    const protocolNumber = this.getProtocolNumberFromOption(selected) || this.extractProtocolNumber(userMessage);
+    if (!protocolNumber) {
+      const waiting = this.withStage(session, 'awaiting_protocol_selection');
+      await this.persistSession(execution.id, waiting);
+      return {
+        session: waiting,
+        response: {
+          message: 'Selecione um protocolo da lista ou informe o numero exato.',
+          messageType: 'menu',
+          data: { options: candidates },
+          metadata: this.meta(execution, waiting, true),
+        },
+      };
+    }
+
+    return this.handleProtocolLookup(execution, session, protocolNumber);
+  }
+
+  private async handleProtocolLookup(execution: FlowExecution, session: CitizenAiSessionState, rawInput: string): Promise<CitizenAiDecision> {
+    if (this.isUnknownProtocolReply(rawInput)) {
+      const waiting = this.withStage(session, 'awaiting_protocol_lookup_mode');
+      await this.persistSession(execution.id, waiting);
+      return {
+        session: waiting,
+        response: this.buildProtocolLookupEntry(
+          execution,
+          waiting,
+          'Sem problema. Posso listar seus protocolos recentes ou consultar outro numero.'
+        ),
+      };
+    }
+
+    const protocolMode = this.detectProtocolMode(rawInput);
+    if (protocolMode === 'list') return this.listCitizenProtocols(execution, session);
+    if (protocolMode === 'latest') return this.openLatestProtocol(execution, session);
+
+    const protocolNumber = this.extractProtocolNumber(rawInput);
+    if (!protocolNumber) {
+      const waiting = this.withStage(session, 'awaiting_protocol_lookup_mode');
+      await this.persistSession(execution.id, waiting);
+      return { session: waiting, response: this.buildProtocolLookupEntry(execution, waiting, 'Informe o numero do protocolo para eu consultar.') };
     }
 
     const details = await this.runAction('getProtocolDetails', { protocolNumber }, execution, session);
+    if (details.success === false) {
+      const waiting: CitizenAiSessionState = { ...session, stage: 'awaiting_protocol_lookup_mode', protocolNumber: undefined };
+      await this.persistSession(execution.id, waiting);
+      return {
+        session: waiting,
+        response: this.buildProtocolLookupEntry(
+          execution,
+          waiting,
+          typeof details.error === 'string' ? details.error : `Nao consegui localizar o protocolo ${protocolNumber}.`
+        ),
+      };
+    }
+
     const next: CitizenAiSessionState = { ...session, stage: 'triage', protocolNumber };
     await this.persistSession(execution.id, next);
-    if (details.success === false) return { session: next, response: { message: typeof details.error === 'string' ? details.error : `Nao consegui localizar o protocolo ${protocolNumber}.`, messageType: 'text', metadata: this.meta(execution, next, true) } };
 
     this.stats.protocolLookups += 1;
     return { session: next, response: { message: typeof details.summary === 'string' && details.summary.trim() ? details.summary.trim() : `Consulta concluida para o protocolo ${protocolNumber}.`, messageType: 'text', data: details.protocolDetailCard ? { protocolDetailCard: details.protocolDetailCard } : undefined, metadata: this.meta(execution, next, true, details.protocolDetailCard ? { protocolDetailCard: details.protocolDetailCard } : {}) } };
@@ -588,7 +764,27 @@ export class CitizenAiOrchestrator {
 
   private async runAction(actionName: keyof typeof actionHandlers, params: Record<string, unknown>, execution: FlowExecution, session: CitizenAiSessionState): Promise<Record<string, any>> {
     const currentNode: FlowNode = { id: session.stage, type: 'action', config: { action: actionName, params }, transitions: [] };
-    const context: ExecutionContext = { execution: execution as any, flow: { id: execution.flowId, name: 'ai_assistant', version: '1.0.0', isActive: true, isDefault: false, nodes: [currentNode], createdAt: new Date(), updatedAt: new Date() }, currentNode, citizenId: execution.citizenId, state: { selectedServiceId: session.selectedServiceId, collectedFormData: session.collectedFormData || {}, description: session.description, uploadedDocuments: session.uploadedDocuments || [], protocolNumber: session.protocolNumber, formSchemaData: session.formSchemaData || {}, aiAssistant: session } };
+    const context: ExecutionContext = {
+      execution: execution as any,
+      flow: { id: execution.flowId, name: 'ai_assistant', version: '1.0.0', isActive: true, isDefault: false, nodes: [currentNode], createdAt: new Date(), updatedAt: new Date() },
+      currentNode,
+      citizenId: execution.citizenId,
+      state: {
+        selectedServiceId: session.selectedServiceId,
+        selectedService: session.selectedServiceData ? { service: session.selectedServiceData } : undefined,
+        serviceDetails: session.selectedServiceData,
+        selectedDept_data: session.selectedDepartmentName
+          ? { name: session.selectedDepartmentName, label: session.selectedDepartmentName }
+          : undefined,
+        formData: session.collectedFormData || {},
+        collectedFormData: session.collectedFormData || {},
+        description: session.description,
+        uploadedDocuments: session.uploadedDocuments || [],
+        protocolNumber: session.protocolNumber,
+        formSchemaData: session.formSchemaData || {},
+        aiAssistant: session,
+      },
+    };
     const result = await actionHandlers[actionName](params, context);
     return result && typeof result === 'object' ? result as Record<string, any> : {};
   }
@@ -615,6 +811,7 @@ export class CitizenAiOrchestrator {
     if (normalized.length < 6) return false;
     if (this.isGreeting(message)) return false;
     if (this.extractProtocolNumber(message)) return false;
+    if (this.detectProtocolMode(message)) return false;
     if (this.matchExplicitIntent(normalized)) return false;
     if (this.isHumanRequest(message)) return false;
     return true;
@@ -623,7 +820,62 @@ export class CitizenAiOrchestrator {
   private matchesAny(value: string, patterns: string[]): boolean { return patterns.some((pattern) => value.includes(this.normalize(pattern))); }
   private isGreeting(message: string): boolean { const normalized = this.normalize(message); return ['ola', 'oi', 'bom dia', 'boa tarde', 'boa noite'].some((pattern) => normalized.includes(pattern)); }
   private isHumanRequest(message: string): boolean { return this.matchesAny(this.normalize(message), HUMAN_PATTERNS); }
-  private extractProtocolNumber(message: string): string | undefined { return message.match(/\b\d{4,}\b/)?.[0]; }
+  private isUnknownProtocolReply(message: string): boolean { return this.matchesAny(this.normalize(message), ['nao sei', 'nao lembro', 'esqueci', 'nao tenho', 'nao lembro do numero']); }
+  private extractProtocolNumber(message: string): string | undefined {
+    const formatted = message.match(/\b\d{4}[-/]\d{4,}\b/);
+    if (formatted?.[0]) return formatted[0].replace('/', '-');
+    return message.match(/\b\d{4,}\b/)?.[0];
+  }
+
+  private detectProtocolMode(message: string): 'number' | 'list' | 'latest' | undefined {
+    const normalized = this.normalize(message);
+    if (!normalized) return undefined;
+    if (this.extractProtocolNumber(message)) return 'number';
+    if (
+      normalized === 'informar numero do protocolo' ||
+      normalized === 'informar numero' ||
+      normalized === 'por numero'
+    ) {
+      return 'number';
+    }
+    if (
+      (normalized.includes('ultimo') || normalized.includes('ultima') || normalized.includes('mais recente')) &&
+      normalized.includes('protocolo')
+    ) {
+      return 'latest';
+    }
+    if (
+      normalized === 'meus protocolos' ||
+      normalized === 'listar meus protocolos' ||
+      normalized === 'mostrar meus protocolos' ||
+      normalized === 'me mostre meus protocolos'
+    ) {
+      return 'list';
+    }
+    if (
+      (normalized.includes('protocolo') || normalized.includes('protocolos')) &&
+      (normalized.includes('listar') || normalized.includes('mostrar') || normalized.includes('mostre') || normalized.includes('meus') || normalized.includes('quais'))
+    ) {
+      return 'list';
+    }
+    return undefined;
+  }
+
+  private getProtocolNumberFromOption(option?: MenuOption): string | undefined {
+    const metadataNumber = option?.metadata?.number;
+    if (typeof metadataNumber === 'string' && metadataNumber.trim()) return metadataNumber.trim();
+    if (option?.label) return this.extractProtocolNumber(option.label);
+    return undefined;
+  }
+
+  private buildProtocolLookupEntry(execution: FlowExecution, session: CitizenAiSessionState, prefix?: string): BotResponse {
+    return {
+      message: `${prefix ? `${prefix}\n\n` : ''}Posso consultar pelo numero, listar seus protocolos ou abrir o mais recente.`,
+      messageType: 'menu',
+      data: { options: PROTOCOL_ENTRY_ACTIONS },
+      metadata: this.meta(execution, session, true),
+    };
+  }
 
   private findOptionByInput(input: string, options: MenuOption[]): MenuOption | undefined {
     const normalized = this.normalize(input);
