@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { Calendar as BigCalendar, dateFnsLocalizer, type Event as CalendarEvent, type View } from 'react-big-calendar';
-import { format, getDay, parse, startOfWeek } from 'date-fns';
+import { addMinutes, endOfDay, format, getDay, parse, startOfDay, startOfWeek } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import {
   Calendar as CalendarIcon,
@@ -82,6 +82,13 @@ const SOURCE_COLORS: Record<CentralCalendarSourceType, string> = {
   SYSTEM_INTEGRATION: '#4b5563',
 };
 
+const PROTOCOL_DEADLINE_LEGEND = [
+  { label: 'Prazo futuro', background: '#dbeafe', color: '#1d4ed8' },
+  { label: 'Vence hoje', background: '#ffedd5', color: '#9a3412' },
+  { label: 'Prazo vencido', background: '#fee2e2', color: '#991b1b' },
+  { label: 'Prazo concluido', background: '#dcfce7', color: '#166534' },
+];
+
 function mapStatusLabel(status: CentralCalendarEventStatus) {
   return STATUS_OPTIONS.find((option) => option.value === status)?.label || status;
 }
@@ -115,6 +122,87 @@ function participantLabel(event: CentralAgendaEvent) {
   }
 
   return labels.join(', ');
+}
+
+type AgendaCalendarDisplayEvent = CalendarEvent & {
+  resource: CentralAgendaEvent;
+};
+
+function isProtocolStageEvent(event: CentralAgendaEvent) {
+  return event.sourceType === 'PROTOCOL_STAGE';
+}
+
+function getDisplayStartDate(event: CentralAgendaEvent) {
+  return new Date(isProtocolStageEvent(event) ? event.endAt : event.startAt);
+}
+
+function getDisplayEndDate(event: CentralAgendaEvent) {
+  if (isProtocolStageEvent(event)) {
+    return addMinutes(getDisplayStartDate(event), 30);
+  }
+
+  return new Date(event.endAt);
+}
+
+function getProtocolDeadlineTone(event: CentralAgendaEvent) {
+  const dueDate = new Date(event.endAt);
+  const now = new Date();
+  const todayStart = startOfDay(now);
+  const todayEnd = endOfDay(now);
+
+  if (event.status === 'COMPLETED') {
+    return {
+      background: '#dcfce7',
+      color: '#166534',
+      border: '#22c55e',
+      accent: 'Prazo concluido',
+    };
+  }
+
+  if (event.status === 'CANCELED' || event.status === 'NO_SHOW') {
+    return {
+      background: '#e2e8f0',
+      color: '#475569',
+      border: '#94a3b8',
+      accent: 'Prazo encerrado',
+    };
+  }
+
+  if (dueDate.getTime() < todayStart.getTime()) {
+    return {
+      background: '#fee2e2',
+      color: '#991b1b',
+      border: '#ef4444',
+      accent: 'Prazo vencido',
+    };
+  }
+
+  if (dueDate.getTime() <= todayEnd.getTime()) {
+    return {
+      background: '#ffedd5',
+      color: '#9a3412',
+      border: '#f97316',
+      accent: 'Vence hoje',
+    };
+  }
+
+  return {
+    background: '#dbeafe',
+    color: '#1d4ed8',
+    border: '#3b82f6',
+    accent: 'Prazo futuro',
+  };
+}
+
+function buildListDateLabel(event: CentralAgendaEvent) {
+  if (isProtocolStageEvent(event)) {
+    return `Prazo da etapa: ${format(new Date(event.endAt), 'dd/MM/yyyy', { locale: ptBR })}`;
+  }
+
+  return [
+    format(new Date(event.startAt), "dd/MM/yyyy 'as' HH:mm", { locale: ptBR }),
+    format(new Date(event.endAt), 'HH:mm', { locale: ptBR }),
+  ].join(' - ');
 }
 
 export default function AdminCentralAgendaPage() {
@@ -193,12 +281,13 @@ export default function AdminCentralAgendaPage() {
     });
   }, [events, searchQuery]);
 
-  const calendarEvents = useMemo<CalendarEvent[]>(
+  const calendarEvents = useMemo<AgendaCalendarDisplayEvent[]>(
     () =>
       filteredEvents.map((event) => ({
         title: event.title,
-        start: new Date(event.startAt),
-        end: new Date(event.endAt),
+        start: getDisplayStartDate(event),
+        end: getDisplayEndDate(event),
+        allDay: isProtocolStageEvent(event) || event.allDay,
         resource: event,
       })),
     [filteredEvents]
@@ -210,9 +299,10 @@ export default function AdminCentralAgendaPage() {
       return acc;
     }, {});
 
-    const upcoming = filteredEvents.filter(
-      (event) => new Date(event.startAt).getTime() > Date.now() && event.status !== 'CANCELED'
-    ).length;
+    const upcoming = filteredEvents.filter((event) => {
+      const referenceDate = getDisplayStartDate(event);
+      return referenceDate.getTime() > Date.now() && event.status !== 'CANCELED';
+    }).length;
 
     return {
       total: filteredEvents.length,
@@ -552,6 +642,18 @@ export default function AdminCentralAgendaPage() {
       {viewMode === 'calendar' ? (
         <Card className="border-slate-200/80 shadow-sm">
           <CardContent className="central-agenda-calendar pt-6 overflow-x-auto">
+            <div className="mb-4 flex flex-wrap items-center gap-2 text-xs">
+              <span className="font-medium text-slate-600">Prazos de etapas:</span>
+              {PROTOCOL_DEADLINE_LEGEND.map((item) => (
+                <span
+                  key={item.label}
+                  className="rounded-full border border-transparent px-2.5 py-1 font-medium"
+                  style={{ backgroundColor: item.background, color: item.color }}
+                >
+                  {item.label}
+                </span>
+              ))}
+            </div>
             <div className="min-w-[640px] rounded-xl border border-slate-200/80 bg-white p-3 shadow-inner sm:p-4">
               <BigCalendar
                 localizer={localizer}
@@ -579,19 +681,46 @@ export default function AdminCentralAgendaPage() {
                   noEventsInRange: 'Sem eventos neste intervalo',
                   showMore: (total: number) => `+ ${total} mais`,
                 }}
-                eventPropGetter={(event: CalendarEvent) => {
+                eventPropGetter={(event: AgendaCalendarDisplayEvent) => {
                   const current = event.resource as CentralAgendaEvent;
+                  const opacity = current.status === 'CANCELED' ? 0.72 : 1;
+
+                  if (isProtocolStageEvent(current)) {
+                    const tone = getProtocolDeadlineTone(current);
+
+                    return {
+                      style: {
+                        backgroundColor: tone.background,
+                        color: tone.color,
+                        border: `1px solid ${tone.border}`,
+                        borderLeft: `4px solid ${tone.border}`,
+                        opacity,
+                        borderRadius: '8px',
+                        boxShadow: 'none',
+                        fontWeight: 600,
+                        paddingInline: '6px',
+                      },
+                    };
+                  }
+
                   const color = SOURCE_COLORS[current.sourceType] || '#2563eb';
-                  const opacity = current.status === 'CANCELED' ? 0.55 : 1;
 
                   return {
                     style: {
                       backgroundColor: color,
+                      color: '#ffffff',
                       opacity,
                       border: 'none',
-                      borderRadius: '4px',
+                      borderRadius: '8px',
+                      boxShadow: 'none',
                     },
                   };
+                }}
+                tooltipAccessor={(event: AgendaCalendarDisplayEvent) => {
+                  const current = event.resource as CentralAgendaEvent;
+                  return isProtocolStageEvent(current)
+                    ? `${current.title} - ${buildListDateLabel(current)}`
+                    : current.title;
                 }}
               />
             </div>
@@ -609,7 +738,7 @@ export default function AdminCentralAgendaPage() {
           ) : (
             filteredEvents
               .slice()
-              .sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime())
+              .sort((a, b) => getDisplayStartDate(a).getTime() - getDisplayStartDate(b).getTime())
               .map((event) => (
                 <Card key={event.id} className="border-slate-200/80 shadow-sm transition-shadow hover:shadow-md">
                   <CardHeader className="pb-3">
@@ -623,12 +752,20 @@ export default function AdminCentralAgendaPage() {
                           <CardTitle className="text-lg">{event.title}</CardTitle>
                           <Badge className={mapStatusColor(event.status)}>{mapStatusLabel(event.status)}</Badge>
                           <Badge variant="outline">{SOURCE_LABELS[event.sourceType]}</Badge>
+                          {isProtocolStageEvent(event) && (
+                            <Badge
+                              variant="outline"
+                              className="border-transparent"
+                              style={{
+                                backgroundColor: getProtocolDeadlineTone(event).background,
+                                color: getProtocolDeadlineTone(event).color,
+                              }}
+                            >
+                              {getProtocolDeadlineTone(event).accent}
+                            </Badge>
+                          )}
                         </div>
-                        <CardDescription className="mt-1">
-                          {format(new Date(event.startAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                          {' - '}
-                          {format(new Date(event.endAt), 'HH:mm', { locale: ptBR })}
-                        </CardDescription>
+                        <CardDescription className="mt-1">{buildListDateLabel(event)}</CardDescription>
                       </div>
 
                       <div className="flex gap-2">

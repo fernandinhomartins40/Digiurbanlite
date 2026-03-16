@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -64,6 +64,19 @@ interface Service {
   isActive: boolean
 }
 
+interface TicketAssigneeOption {
+  id: string
+  name: string
+  email: string
+  role: string
+  departmentName?: string
+  positionName?: string
+  organizationalUnitName?: string
+  isPrimaryAssignment: boolean
+  isTopHierarchy: boolean
+  isSecretaryLike: boolean
+}
+
 export default function CriarChamadoPage() {
   const router = useRouter()
   const { user } = useAdminAuth()
@@ -76,6 +89,9 @@ export default function CriarChamadoPage() {
 
   // Estados para serviço
   const [selectedService, setSelectedService] = useState<Service | null>(null)
+  const [assignees, setAssignees] = useState<TicketAssigneeOption[]>([])
+  const [defaultAssignee, setDefaultAssignee] = useState<TicketAssigneeOption | null>(null)
+  const [loadingAssignees, setLoadingAssignees] = useState(false)
 
   // Estados do formulário
   const [formData, setFormData] = useState({
@@ -156,6 +172,53 @@ export default function CriarChamadoPage() {
   const handleRemoveService = () => {
     setSelectedService(null)
   }
+
+  useEffect(() => {
+    let cancelled = false
+
+    const loadAssignees = async () => {
+      if (!selectedService?.departmentId) {
+        setAssignees([])
+        setDefaultAssignee(null)
+        setFormData((prev) => ({ ...prev, assignedUserId: '' }))
+        return
+      }
+
+      setLoadingAssignees(true)
+      try {
+        const response = await api.get(
+          `/admin/chamados/department-assignees?departmentId=${selectedService.departmentId}`
+        )
+
+        if (cancelled) {
+          return
+        }
+
+        const payload = response.data?.data || {}
+        setAssignees(Array.isArray(payload.assignees) ? payload.assignees : [])
+        setDefaultAssignee(payload.defaultAssignee || null)
+        setFormData((prev) => ({ ...prev, assignedUserId: '' }))
+      } catch (error) {
+        if (!cancelled) {
+          console.error('[Chamados] Erro ao carregar responsaveis:', error)
+          setAssignees([])
+          setDefaultAssignee(null)
+          setFormData((prev) => ({ ...prev, assignedUserId: '' }))
+          toast.error('Erro ao carregar os servidores da secretaria')
+        }
+      } finally {
+        if (!cancelled) {
+          setLoadingAssignees(false)
+        }
+      }
+    }
+
+    loadAssignees()
+
+    return () => {
+      cancelled = true
+    }
+  }, [selectedService?.departmentId])
 
   // ============================================================================
   // SUBMIT DO FORMULÁRIO
@@ -482,6 +545,52 @@ export default function CriarChamadoPage() {
                       <p className="text-xs text-red-500 flex items-center gap-1">
                         <AlertCircle className="h-3 w-3" />
                         Faltam {10 - formData.description.length} caracteres
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-blue-200 bg-blue-50/60 p-4">
+                    <div className="space-y-1">
+                      <Label htmlFor="assignedUserId">Servidor responsavel</Label>
+                      <p className="text-xs text-muted-foreground">
+                        Se nao escolher um servidor, o chamado vai automaticamente para o topo da hierarquia da secretaria.
+                      </p>
+                    </div>
+
+                    <Select
+                      value={formData.assignedUserId || '__AUTO__'}
+                      onValueChange={(value) =>
+                        handleInputChange('assignedUserId', value === '__AUTO__' ? '' : value)
+                      }
+                    >
+                      <SelectTrigger id="assignedUserId">
+                        <SelectValue placeholder="Selecionar servidor responsavel" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__AUTO__">
+                          {defaultAssignee
+                            ? `Automatico - ${defaultAssignee.name}`
+                            : 'Automatico - topo da hierarquia'}
+                        </SelectItem>
+                        {assignees.map((assignee) => (
+                          <SelectItem key={assignee.id} value={assignee.id}>
+                            {assignee.name}
+                            {assignee.positionName ? ` - ${assignee.positionName}` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {loadingAssignees ? (
+                      <p className="text-xs text-muted-foreground">Carregando servidores da secretaria...</p>
+                    ) : defaultAssignee ? (
+                      <p className="text-xs text-blue-700">
+                        Responsavel padrao: {defaultAssignee.name}
+                        {defaultAssignee.positionName ? ` (${defaultAssignee.positionName})` : ''}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-amber-700">
+                        Nenhum responsavel padrao identificado. O chamado sera criado sem atribuicao direta.
                       </p>
                     )}
                   </div>

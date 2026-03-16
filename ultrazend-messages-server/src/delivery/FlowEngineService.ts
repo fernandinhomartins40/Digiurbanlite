@@ -280,7 +280,7 @@ export class FlowEngineService {
       // Para uploads, gerar descriÃƒÂ§ÃƒÂ£o legÃƒÂ­vel
       if (message.length > 0 && message[0]?.fileName) {
         const fileNames = message.map((f: any) => f.fileName).join(', ');
-        return `Ã°Å¸â€œÅ½ Arquivos enviados: ${fileNames}`;
+        return `Arquivos enviados: ${fileNames}`;
       }
       return `Dados enviados (${message.length} itens)`;
     }
@@ -297,7 +297,7 @@ export class FlowEngineService {
         const summary = entries
           .map(([key, value]) => `${key}: ${value}`)
           .join('\n');
-        return `Ã°Å¸â€œÂ Dados do formulÃƒÂ¡rio:\n${summary}`;
+        return `Dados do formulario:\n${summary}`;
       }
     }
 

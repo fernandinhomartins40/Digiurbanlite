@@ -17,14 +17,14 @@ import {
   Phone,
   Search,
   RefreshCw,
-  Eye,
   Clock,
   CheckCircle,
   XCircle,
   AlertCircle,
   Ban,
   FileText,
-  ArrowLeft
+  ArrowLeft,
+  Loader2
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from '@/lib/services/api'
@@ -68,6 +68,12 @@ interface AdminTicket {
     email: string
     role: string
   }
+  responsibleUser?: {
+    id: string
+    name: string
+    email: string
+    role: string
+  } | null
   requestedBy: {
     id: string
     name: string
@@ -105,6 +111,8 @@ export default function ListaChamadosPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchTerm, setSearchTerm] = useState('')
+  const [requestingTicketId, setRequestingTicketId] = useState<string | null>(null)
+  const [cancellingTicketId, setCancellingTicketId] = useState<string | null>(null)
 
   const loadTickets = async () => {
     try {
@@ -125,6 +133,42 @@ export default function ListaChamadosPage() {
       toast.error('Erro ao carregar chamados')
     } finally {
       setIsLoading(false)
+    }
+  }
+
+  const handleRequestUpdate = async (ticket: AdminTicket) => {
+    try {
+      setRequestingTicketId(ticket.id)
+      await api.post(`/admin/chamados/${ticket.id}/request-update`, {})
+      toast.success('Cobranca de agilidade enviada ao servidor responsavel')
+      await loadTickets()
+    } catch (error: any) {
+      console.error('Erro ao cobrar agilidade do chamado:', error)
+      toast.error(error?.response?.data?.message || 'Erro ao cobrar agilidade do chamado')
+    } finally {
+      setRequestingTicketId(null)
+    }
+  }
+
+  const handleCancelTicket = async (ticket: AdminTicket) => {
+    const confirmed = window.confirm(
+      `Deseja cancelar o chamado ${ticket.number}? Esta acao so pode ser feita enquanto ele estiver pendente.`
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    try {
+      setCancellingTicketId(ticket.id)
+      await api.post(`/admin/chamados/${ticket.id}/cancel`, {})
+      toast.success('Chamado cancelado com sucesso')
+      await loadTickets()
+    } catch (error: any) {
+      console.error('Erro ao cancelar chamado:', error)
+      toast.error(error?.response?.data?.message || 'Erro ao cancelar chamado')
+    } finally {
+      setCancellingTicketId(null)
     }
   }
 
@@ -373,9 +417,9 @@ export default function ListaChamadosPage() {
                           <div className="truncate">
                             <strong>Secretaria:</strong> {ticket.department.name}
                           </div>
-                          {ticket.assignedUser && (
+                          {(ticket.assignedUser || ticket.responsibleUser) && (
                             <div className="truncate">
-                              <strong>Servidor:</strong> {ticket.assignedUser.name}
+                              <strong>Servidor:</strong> {(ticket.assignedUser || ticket.responsibleUser)?.name}
                             </div>
                           )}
                         </div>
@@ -422,6 +466,40 @@ export default function ListaChamadosPage() {
                                 Recusado por: {ticket.rejectedBy}
                               </p>
                             )}
+                          </div>
+                        )}
+
+                        {ticket.status === 'PENDING' && (
+                          <div className="mt-4 flex flex-col sm:flex-row gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleRequestUpdate(ticket)}
+                              disabled={requestingTicketId === ticket.id || cancellingTicketId === ticket.id}
+                            >
+                              {requestingTicketId === ticket.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <AlertCircle className="h-4 w-4 mr-2" />
+                              )}
+                              Cobrar agilidade
+                            </Button>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="border-red-200 text-red-700 hover:bg-red-50 hover:text-red-800"
+                              onClick={() => handleCancelTicket(ticket)}
+                              disabled={requestingTicketId === ticket.id || cancellingTicketId === ticket.id}
+                            >
+                              {cancellingTicketId === ticket.id ? (
+                                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              ) : (
+                                <Ban className="h-4 w-4 mr-2" />
+                              )}
+                              Cancelar chamado
+                            </Button>
                           </div>
                         )}
                       </div>

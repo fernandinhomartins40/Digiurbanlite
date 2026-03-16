@@ -13,7 +13,22 @@ const router = Router();
 // Apply middleware
 router.use(adminAuthMiddleware);
 
-// POST /api/admin/citizens - Criar cidadão administrativamente (Prata/Verificado)
+const PERSONAL_DOCUMENT_WHERE = {
+  AND: [
+    {
+      OR: [{ sourceType: null }, { sourceType: 'UPLOAD' }],
+    },
+    {
+      NOT: {
+        documentType: {
+          startsWith: 'Protocolo:',
+        },
+      },
+    },
+  ],
+};
+
+// POST /api/admin/citizens - Criar cidadÃ£o administrativamente (Prata/Verificado)
 router.post(
   '/',
   requirePermission('citizens:create'),
@@ -21,16 +36,16 @@ router.post(
     const authReq = req as AuthenticatedRequest;
     const { cpf, name, email, phone, birthDate, password, address } = authReq.body;
 
-    // Validações básicas
+    // ValidaÃ§Ãµes bÃ¡sicas
     if (!cpf || !name || !email) {
       res.status(400).json({
         success: false,
-        error: 'CPF, nome e email são obrigatórios'
+        error: 'CPF, nome e email sÃ£o obrigatÃ³rios'
         });
       return;
     }
 
-    // Limpar CPF (remover pontos e traços)
+    // Limpar CPF (remover pontos e traÃ§os)
     const cleanCpf = normalizeCpf(cpf);
     const normalizedEmail = normalizeEmail(email);
     const normalizedName = normalizeNullableString(name);
@@ -39,12 +54,12 @@ router.post(
     if (!cleanCpf || cleanCpf.length !== 11) {
       res.status(400).json({
         success: false,
-        error: 'CPF inválido'
+        error: 'CPF invÃ¡lido'
         });
       return;
     }
 
-    // Verificar se CPF já existe
+    // Verificar se CPF jÃ¡ existe
     const existingCitizen = await prisma.citizen.findFirst({
       where: {
         cpf: cleanCpf
@@ -54,12 +69,12 @@ router.post(
     if (existingCitizen) {
       res.status(400).json({
         success: false,
-        error: 'CPF já cadastrado'
+        error: 'CPF jÃ¡ cadastrado'
         });
       return;
     }
 
-    // Verificar se email já existe
+    // Verificar se email jÃ¡ existe
     const existingEmail = await prisma.citizen.findFirst({
       where: {
           email: {
@@ -72,22 +87,22 @@ router.post(
     if (existingEmail) {
       res.status(400).json({
         success: false,
-        error: 'Email já cadastrado'
+        error: 'Email jÃ¡ cadastrado'
         });
       return;
     }
 
-    // Gerar senha hash (ou senha temporária se não fornecida)
+    // Gerar senha hash (ou senha temporÃ¡ria se nÃ£o fornecida)
     let hashedPassword: string;
     if (password && password.length >= 8) {
       hashedPassword = await bcrypt.hash(password, BCRYPT_ROUNDS);
     } else {
-      // Senha temporária aleatória (cidadão pode redefinir depois)
+      // Senha temporÃ¡ria aleatÃ³ria (cidadÃ£o pode redefinir depois)
       const tempPassword = Math.random().toString(36).slice(-12) + 'Aa1!';
       hashedPassword = await bcrypt.hash(tempPassword, BCRYPT_ROUNDS);
     }
 
-    // Criar cidadão
+    // Criar cidadÃ£o
     const newCitizen = await prisma.$transaction(async (tx) => {
       const createdCitizen = await tx.citizen.create({
         data: {
@@ -135,13 +150,13 @@ router.post(
 
     res.status(201).json({
       success: true,
-      message: 'Cidadão cadastrado como Prata (Verificado)',
+      message: 'CidadÃ£o cadastrado como Prata (Verificado)',
       data: { citizen: newCitizen }
         });
   })
 );
 
-// GET /api/admin/citizens/search - Buscar cidadãos por nome ou CPF
+// GET /api/admin/citizens/search - Buscar cidadÃ£os por nome ou CPF
 router.get(
   '/search',
   requirePermission('citizens:read'),
@@ -158,11 +173,11 @@ router.get(
     }
 
     const searchTerm = q.trim();
-    const cleanCpf = searchTerm.replace(/\D/g, ''); // Remove pontuação do CPF
+    const cleanCpf = searchTerm.replace(/\D/g, ''); // Remove pontuaÃ§Ã£o do CPF
 
-    console.log(`🔍 [CITIZEN-SEARCH] Buscando por: "${searchTerm}" | CPF limpo: "${cleanCpf}"`);
+    console.log(`ðŸ” [CITIZEN-SEARCH] Buscando por: "${searchTerm}" | CPF limpo: "${cleanCpf}"`);
 
-    // Construir condições de busca
+    // Construir condiÃ§Ãµes de busca
     const searchConditions: any[] = [];
 
     // Buscar por nome (case-insensitive)
@@ -175,7 +190,7 @@ router.get(
       });
     }
 
-    // Buscar por CPF (se tiver números)
+    // Buscar por CPF (se tiver nÃºmeros)
     if (cleanCpf.length > 0) {
       searchConditions.push({
         cpf: {
@@ -206,7 +221,7 @@ router.get(
         email: true,
         phone: true,
         address: true,
-        // ✅ CRÍTICO: Adicionar todos os campos para pré-preenchimento no admin
+        // âœ… CRÃTICO: Adicionar todos os campos para prÃ©-preenchimento no admin
         birthDate: true,
         rg: true,
         phoneSecondary: true,
@@ -220,7 +235,7 @@ router.get(
       orderBy: { name: 'asc' }
         });
 
-    console.log(`✅ [CITIZEN-SEARCH] Encontrados ${citizens.length} resultados`);
+    console.log(`âœ… [CITIZEN-SEARCH] Encontrados ${citizens.length} resultados`);
     if (citizens.length > 0) {
       console.log(`   Primeiros resultados: ${citizens.slice(0, 3).map(c => c.name).join(', ')}`);
     }
@@ -232,7 +247,7 @@ router.get(
   })
 );
 
-// GET /api/admin/citizens - Listar TODOS os cidadãos (para página principal)
+// GET /api/admin/citizens - Listar TODOS os cidadÃ£os (para pÃ¡gina principal)
 router.get(
   '/',
   requirePermission('citizens:read'),
@@ -240,7 +255,7 @@ router.get(
     const authReq = req as AuthenticatedRequest;
     const { page = '1', limit = '50', status, search } = authReq.query;
 
-    console.log('📋 [CITIZENS] Listando cidadãos:', { page, limit, status, search });
+    console.log('ðŸ“‹ [CITIZENS] Listando cidadÃ£os:', { page, limit, status, search });
 
     const pageNum = parseInt(page as string, 10);
     const limitNum = parseInt(limit as string, 10);
@@ -292,12 +307,41 @@ router.get(
         prisma.citizen.count({ where }),
       ]);
 
-      console.log(`✅ [CITIZENS] Retornando ${citizens.length} cidadãos de ${total} total`);
+      console.log(`[CITIZENS] Retornando ${citizens.length} cidadaos de ${total} total`);
+
+      const citizenIds = citizens.map((citizen) => citizen.id);
+      const pendingDocumentCounts =
+        citizenIds.length > 0
+          ? await prisma.citizenDocument.groupBy({
+              by: ['citizenId'],
+              where: {
+                citizenId: { in: citizenIds },
+                status: {
+                  in: ['PENDING', 'UNDER_REVIEW'],
+                },
+                ...PERSONAL_DOCUMENT_WHERE,
+              },
+              _count: {
+                _all: true,
+              },
+            })
+          : [];
+
+      const pendingDocumentCountByCitizenId = new Map(
+        pendingDocumentCounts.map((item) => [item.citizenId, item._count._all])
+      );
+
+      const normalizedCitizens = citizens.map((citizen) => ({
+        ...citizen,
+        _count: {
+          ...citizen._count,
+          documents: pendingDocumentCountByCitizenId.get(citizen.id) || 0,
+        },
+      }));
 
       res.json({
         success: true,
-        citizens,
-        pagination: {
+        citizens: normalizedCitizens,        pagination: {
           page: pageNum,
           limit: limitNum,
           total,
@@ -305,13 +349,13 @@ router.get(
           }
           });
     } catch (error) {
-      console.error('❌ [CITIZENS] Erro ao buscar cidadãos:', error);
+      console.error('âŒ [CITIZENS] Erro ao buscar cidadÃ£os:', error);
       throw error; // asyncHandler vai pegar e retornar erro 500
     }
   })
 );
 
-// GET /api/admin/citizens/pending - Listar cidadãos aguardando verificação
+// GET /api/admin/citizens/pending - Listar cidadÃ£os aguardando verificaÃ§Ã£o
 router.get(
   '/pending',
   requirePermission('citizens:verify'),
@@ -353,7 +397,7 @@ router.get(
   })
 );
 
-// GET /api/admin/citizens/:id - Buscar cidadão por ID
+// GET /api/admin/citizens/:id - Buscar cidadÃ£o por ID
 router.get(
   '/:id',
   requirePermission('citizens:read'),
@@ -390,7 +434,7 @@ router.get(
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado'
+        error: 'CidadÃ£o nÃ£o encontrado'
       });
       return;
     }
@@ -405,7 +449,7 @@ router.get(
   })
 );
 
-// PUT /api/admin/citizens/:id/verify - Aprovar cidadão (Bronze → Prata)
+// PUT /api/admin/citizens/:id/verify - Aprovar cidadÃ£o (Bronze â†’ Prata)
 router.put(
   '/:id/verify',
   requirePermission('citizens:verify'),
@@ -414,7 +458,7 @@ router.put(
     const { id } = authReq.params;
     const { notes } = authReq.body;
 
-    // Validação de segurança: cidadão existe
+    // ValidaÃ§Ã£o de seguranÃ§a: cidadÃ£o existe
     const citizen = await prisma.citizen.findFirst({
       where: {
         id,
@@ -425,14 +469,14 @@ router.put(
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado ou já verificado'
+        error: 'CidadÃ£o nÃ£o encontrado ou jÃ¡ verificado'
         });
       return;
     }
 
-    // Transação para garantir integridade
+    // TransaÃ§Ã£o para garantir integridade
     const updatedCitizen = await prisma.$transaction(async (tx) => {
-      // 1. Atualizar status do cidadão
+      // 1. Atualizar status do cidadÃ£o
       const updated = await tx.citizen.update({
         where: { id },
         data: {
@@ -451,13 +495,13 @@ router.put(
         }
       });
 
-      // 2. Criar notificação para o cidadão
+      // 2. Criar notificaÃ§Ã£o para o cidadÃ£o
       await tx.notification.create({
         data: {
           citizenId: id,
-          title: 'Cadastro Aprovado! 🎉',
+          title: 'Cadastro Aprovado! ðŸŽ‰',
           message:
-            'Seu cadastro foi verificado e aprovado pela administração. Agora você tem acesso completo a todos os serviços municipais.',
+            'Seu cadastro foi verificado e aprovado pela administraÃ§Ã£o. Agora vocÃª tem acesso completo a todos os serviÃ§os municipais.',
           type: 'VERIFICATION_APPROVED',
           isRead: false
         }
@@ -468,7 +512,7 @@ router.put(
 
     res.json({
       success: true,
-      message: 'Cidadão verificado com sucesso',
+      message: 'CidadÃ£o verificado com sucesso',
       data: { citizen: updatedCitizen }
         });
   })
@@ -486,7 +530,7 @@ router.put(
     if (!reason) {
       res.status(400).json({
         success: false,
-        error: 'Motivo da rejeição é obrigatório'
+        error: 'Motivo da rejeiÃ§Ã£o Ã© obrigatÃ³rio'
         });
       return;
     }
@@ -501,7 +545,7 @@ router.put(
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado'
+        error: 'CidadÃ£o nÃ£o encontrado'
         });
       return;
     }
@@ -519,12 +563,12 @@ router.put(
         }
         });
 
-      // 2. Notificar cidadão
+      // 2. Notificar cidadÃ£o
       await tx.notification.create({
         data: {
           citizenId: id,
-          title: 'Cadastro Não Aprovado',
-          message: `Seu cadastro não foi aprovado. Motivo: ${reason}. Por favor, entre em contato com a prefeitura para mais informações.`,
+          title: 'Cadastro NÃ£o Aprovado',
+          message: `Seu cadastro nÃ£o foi aprovado. Motivo: ${reason}. Por favor, entre em contato com a prefeitura para mais informaÃ§Ãµes.`,
           type: 'VERIFICATION_REJECTED',
           isRead: false
         }
@@ -538,7 +582,7 @@ router.put(
   })
 );
 
-// PUT /api/admin/citizens/:id/promote-gold - Promover cidadão para nível GOLD
+// PUT /api/admin/citizens/:id/promote-gold - Promover cidadÃ£o para nÃ­vel GOLD
 router.put(
   '/:id/promote-gold',
   requirePermission('citizens:verify'),
@@ -547,7 +591,7 @@ router.put(
     const { id } = authReq.params;
     const { notes } = authReq.body;
 
-    // Validação: cidadão deve estar no status VERIFIED (Prata)
+    // ValidaÃ§Ã£o: cidadÃ£o deve estar no status VERIFIED (Prata)
     const citizen = await prisma.citizen.findFirst({
       where: {
         id,
@@ -558,12 +602,12 @@ router.put(
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado ou não possui nível Prata'
+        error: 'CidadÃ£o nÃ£o encontrado ou nÃ£o possui nÃ­vel Prata'
         });
       return;
     }
 
-    // Transação para garantir integridade
+    // TransaÃ§Ã£o para garantir integridade
     const updatedCitizen = await prisma.$transaction(async (tx) => {
       // 1. Promover para GOLD
       const updated = await tx.citizen.update({
@@ -581,13 +625,13 @@ router.put(
         }
       });
 
-      // 2. Criar notificação para o cidadão
+      // 2. Criar notificaÃ§Ã£o para o cidadÃ£o
       await tx.notification.create({
         data: {
           citizenId: id,
-          title: 'Cadastro Promovido para Ouro! 🥇',
+          title: 'Cadastro Promovido para Ouro! ðŸ¥‡',
           message:
-            'Parabéns! Seu cadastro foi promovido para o nível OURO. Agora você tem acesso prioritário máximo a todos os serviços e programas municipais.',
+            'ParabÃ©ns! Seu cadastro foi promovido para o nÃ­vel OURO. Agora vocÃª tem acesso prioritÃ¡rio mÃ¡ximo a todos os serviÃ§os e programas municipais.',
           type: 'VERIFICATION_UPGRADED',
           isRead: false
         }
@@ -598,13 +642,13 @@ router.put(
 
     res.json({
       success: true,
-      message: 'Cidadão promovido para nível GOLD com sucesso',
+      message: 'CidadÃ£o promovido para nÃ­vel GOLD com sucesso',
       data: { citizen: updatedCitizen }
         });
   })
 );
 
-// GET /api/admin/citizens/:id/details - Detalhes completos do cidadão
+// GET /api/admin/citizens/:id/details - Detalhes completos do cidadÃ£o
 router.get(
   '/:id/details',
   requirePermission('citizens:read'),
@@ -701,7 +745,7 @@ router.get(
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado'
+        error: 'CidadÃ£o nÃ£o encontrado'
         });
       return;
     }
@@ -710,7 +754,14 @@ router.get(
     const generatedDocuments = await prisma.citizenDocument.findMany({
       where: {
         citizenId: id,
-        sourceType: 'PROTOCOL'
+        OR: [
+          { sourceType: 'PROTOCOL' },
+          {
+            documentType: {
+              startsWith: 'Protocolo:'
+            }
+          }
+        ]
       },
       orderBy: { uploadedAt: 'desc' },
       select: {
@@ -766,7 +817,7 @@ router.get(
   })
 );
 
-// GET /api/admin/citizens/:id/family - Composição familiar
+// GET /api/admin/citizens/:id/family - ComposiÃ§Ã£o familiar
 router.get(
   '/:id/family',
   requirePermission('citizens:read'),
@@ -800,7 +851,7 @@ router.get(
   })
 );
 
-// GET /api/admin/citizens/:id/family/invites - Lista de convites de família
+// GET /api/admin/citizens/:id/family/invites - Lista de convites de famÃ­lia
 router.get(
   '/:id/family/invites',
   requirePermission('citizens:read'),
@@ -822,7 +873,7 @@ router.get(
   })
 );
 
-// POST /api/admin/citizens/:id/family - Adicionar membro (REFATORADO - USA SERVIÇO CENTRALIZADO)
+// POST /api/admin/citizens/:id/family - Adicionar membro (REFATORADO - USA SERVIÃ‡O CENTRALIZADO)
 router.post(
   '/:id/family',
   requirePermission('citizens:update'),
@@ -831,7 +882,7 @@ router.post(
     const { id } = authReq.params;
     const { memberId, relationship, isDependent, monthlyIncome, occupation, education, hasDisability } = authReq.body;
 
-    // Importar serviço centralizado
+    // Importar serviÃ§o centralizado
     const { familyService } = require('../services/family.service');
 
     const result = await familyService.addFamilyMember(id, {
@@ -845,7 +896,7 @@ router.post(
     });
 
     if (!result.success) {
-      const statusCode = result.error?.includes('não encontrado') ? 404 : 400;
+      const statusCode = result.error?.includes('nÃ£o encontrado') ? 404 : 400;
       res.status(statusCode).json({
         success: false,
         error: result.error
@@ -911,11 +962,11 @@ router.post(
     // Funcionalidade de vulnerabilidade foi removida do schema
     res.status(501).json({
       success: false,
-      error: 'Funcionalidade de vulnerabilidade não implementada'
+      error: 'Funcionalidade de vulnerabilidade nÃ£o implementada'
     });
     return;
 
-    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
+    /* CÃ“DIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
     const citizen = await prisma.citizen.findFirst({
       where: {
         id
@@ -926,7 +977,7 @@ router.post(
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado'
+        error: 'CidadÃ£o nÃ£o encontrado'
         });
       return;
     }
@@ -934,7 +985,7 @@ router.post(
     if (citizen.vulnerableFamilyData) {
       res.status(400).json({
         success: false,
-        error: 'Cidadão já possui registro de vulnerabilidade'
+        error: 'CidadÃ£o jÃ¡ possui registro de vulnerabilidade'
         });
       return;
     }
@@ -980,11 +1031,11 @@ router.put(
     // Funcionalidade de vulnerabilidade foi removida do schema
     res.status(501).json({
       success: false,
-      error: 'Funcionalidade de vulnerabilidade não implementada'
+      error: 'Funcionalidade de vulnerabilidade nÃ£o implementada'
     });
     return;
 
-    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
+    /* CÃ“DIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
     const updateData = authReq.body;
@@ -998,7 +1049,7 @@ router.put(
     if (!vulnerability) {
       res.status(404).json({
         success: false,
-        error: 'Dados de vulnerabilidade não encontrados'
+        error: 'Dados de vulnerabilidade nÃ£o encontrados'
         });
       return;
     }
@@ -1020,7 +1071,7 @@ router.put(
   })
 );
 
-// GET /api/admin/citizens/vulnerable - Listar famílias vulneráveis
+// GET /api/admin/citizens/vulnerable - Listar famÃ­lias vulnerÃ¡veis
 router.get(
   '/vulnerable',
   requirePermission('social-assistance:read'),
@@ -1028,11 +1079,11 @@ router.get(
     // Funcionalidade de vulnerabilidade foi removida do schema
     res.status(501).json({
       success: false,
-      error: 'Funcionalidade de vulnerabilidade não implementada'
+      error: 'Funcionalidade de vulnerabilidade nÃ£o implementada'
     });
     return;
 
-    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
+    /* CÃ“DIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
     const authReq = req as AuthenticatedRequest;
     const { riskLevel, status } = authReq.query;
 

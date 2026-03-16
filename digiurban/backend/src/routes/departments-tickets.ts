@@ -1,7 +1,3 @@
-// ============================================================================
-// DEPARTMENTS-TICKETS.TS - Gerenciamento de chamados administrativos pelas secretarias
-// ============================================================================
-
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { UserRole } from '@prisma/client';
@@ -9,14 +5,14 @@ import { prisma } from '../lib/prisma';
 import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { isPrismaMissingTableError } from '../utils/prisma-missing-table';
+import {
+  listDepartmentTicketAssignees,
+  resolveDefaultDepartmentTicketAssignee,
+} from '../services/ticket-assignment.service';
 
 const router = Router();
-
 router.use(adminAuthMiddleware);
 
-// ============================================================================
-// GET /api/departments - Listar departamentos para selects administrativos
-// ============================================================================
 router.get('/', async (req: Request, res: Response) => {
   try {
     const { user, userRole } = req as Request & {
@@ -63,24 +59,18 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// GET /api/departments/tickets - Listar chamados pendentes da secretaria
-// ============================================================================
 router.get('/tickets', async (req: Request, res: Response) => {
   try {
     const { user } = req;
 
     if (!user) {
-      res.status(401).json({ error: 'Não autenticado' });
+      res.status(401).json({ error: 'Nao autenticado' });
       return;
     }
 
     const status = req.query.status as string;
-
     const where: Record<string, unknown> = {};
 
-    // Se usuário tem departmentId, filtra apenas os chamados da secretaria
-    // Se é ADMIN (sem departmentId), mostra todos os chamados
     if (user.departmentId) {
       where.departmentId = user.departmentId;
     }
@@ -98,39 +88,35 @@ router.get('/tickets', async (req: Request, res: Response) => {
             name: true,
             cpf: true,
             email: true,
-            phone: true
-          }
+            phone: true,
+          },
         },
         service: {
           select: {
             id: true,
             name: true,
             category: true,
-            estimatedDays: true
-          }
+            estimatedDays: true,
+          },
         },
         requestedBy: {
           select: {
             id: true,
             name: true,
-            role: true
-          }
+            role: true,
+          },
         },
         protocol: {
           select: {
             id: true,
             number: true,
-            status: true
-          }
-        }
+            status: true,
+          },
+        },
       },
-      orderBy: [
-        { priority: 'desc' },
-        { createdAt: 'desc' }
-      ]
+      orderBy: [{ priority: 'desc' }, { createdAt: 'desc' }],
     });
 
-    // Estatísticas
     const statsWhere: Record<string, unknown> = {};
     if (user.departmentId) {
       statsWhere.departmentId = user.departmentId;
@@ -139,7 +125,7 @@ router.get('/tickets', async (req: Request, res: Response) => {
     const stats = await prisma.adminTicket.groupBy({
       by: ['status'],
       where: statsWhere,
-      _count: { status: true }
+      _count: { status: true },
     });
 
     const statusCount = stats.reduce((acc, item) => {
@@ -153,9 +139,9 @@ router.get('/tickets', async (req: Request, res: Response) => {
         tickets,
         stats: {
           total: tickets.length,
-          byStatus: statusCount
-        }
-      }
+          byStatus: statusCount,
+        },
+      },
     });
   } catch (error) {
     if (isPrismaMissingTableError(error, ['admin_tickets'])) {
@@ -180,13 +166,9 @@ router.get('/tickets', async (req: Request, res: Response) => {
   }
 });
 
-// ============================================================================
-// POST /api/departments/tickets/:id/accept - Aceitar chamado e criar protocolo
-// ============================================================================
-
 const acceptTicketSchema = z.object({
   assignedUserId: z.string().optional(),
-  observations: z.string().optional()
+  observations: z.string().optional(),
 });
 
 router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
@@ -195,59 +177,55 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
     const { user } = req;
 
     if (!user || !user.departmentId) {
-      res.status(403).json({ error: 'Usuário não pertence a nenhuma secretaria' });
+      res.status(403).json({ error: 'Usuario nao pertence a nenhuma secretaria' });
       return;
     }
 
     const data = acceptTicketSchema.parse(req.body);
-
-    // Buscar ticket
     const ticket = await prisma.adminTicket.findUnique({
       where: { id },
       include: {
         citizen: true,
         service: true,
-        department: true
-      }
+        department: true,
+      },
     });
 
     if (!ticket) {
-      res.status(404).json({ error: 'Chamado não encontrado' });
+      res.status(404).json({ error: 'Chamado nao encontrado' });
       return;
     }
 
-    // Verificar se o ticket pertence à secretaria do usuário
     if (ticket.departmentId !== user.departmentId) {
-      res.status(403).json({ error: 'Este chamado não pertence à sua secretaria' });
+      res.status(403).json({ error: 'Este chamado nao pertence a sua secretaria' });
       return;
     }
 
-    // Verificar se já foi aceito
     if (ticket.status !== 'PENDING') {
-      res.status(400).json({ error: `Chamado já foi ${ticket.status === 'ACCEPTED' ? 'aceito' : 'processado'}` });
+      res.status(400).json({
+        error: `Chamado ja foi ${ticket.status === 'ACCEPTED' ? 'aceito' : 'processado'}`,
+      });
       return;
     }
 
-    // Verificar usuário atribuído (se informado)
-    if (data.assignedUserId) {
-      const assignedUser = await prisma.user.findFirst({
-        where: {
-          id: data.assignedUserId,
-          departmentId: user.departmentId,
-          isActive: true
-        }
-      });
+    const departmentAssignees = await listDepartmentTicketAssignees(ticket.departmentId);
+    const fallbackAssignee = await resolveDefaultDepartmentTicketAssignee(ticket.departmentId);
+    const resolvedAssignedUserId =
+      data.assignedUserId || ticket.assignedUserId || fallbackAssignee?.id || undefined;
+
+    if (resolvedAssignedUserId) {
+      const assignedUser = departmentAssignees.find(
+        (candidate) => candidate.id === resolvedAssignedUserId
+      );
 
       if (!assignedUser) {
-        res.status(404).json({ error: 'Servidor não encontrado ou não pertence à secretaria' });
+        res.status(404).json({ error: 'Servidor nao encontrado ou nao pertence a secretaria' });
         return;
       }
     }
 
-    // Gerar número do protocolo
     const protocolNumber = await generateProtocolNumberSafe();
 
-    // Criar protocolo
     const protocol = await prisma.protocolSimplified.create({
       data: {
         number: protocolNumber,
@@ -258,25 +236,24 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
         serviceId: ticket.serviceId,
         departmentId: ticket.departmentId,
         createdById: user.id,
-        assignedUserId: data.assignedUserId || undefined,
-        status: 'VINCULADO'
+        assignedUserId: resolvedAssignedUserId,
+        status: 'VINCULADO',
       },
       include: {
         citizen: {
           select: {
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         assignedUser: {
           select: {
-            name: true
-          }
-        }
-      }
+            name: true,
+          },
+        },
+      },
     });
 
-    // Atualizar ticket
     const updatedTicket = await prisma.adminTicket.update({
       where: { id },
       data: {
@@ -285,8 +262,8 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
         acceptedAt: new Date(),
         protocolCreatedAt: new Date(),
         acceptedBy: user.name,
-        assignedUserId: data.assignedUserId || undefined,
-        observations: data.observations
+        assignedUserId: resolvedAssignedUserId,
+        observations: data.observations,
       },
       include: {
         protocol: true,
@@ -294,59 +271,48 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
         service: true,
         department: true,
         requestedBy: true,
-        assignedUser: true
-      }
+        assignedUser: true,
+      },
     });
 
-    // Criar histórico no protocolo
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId: protocol.id,
         action: 'TICKET_ACCEPTED',
         comment: `Chamado administrativo #${ticket.number} aceito por ${user.name}. ${data.observations || ''}`,
-        userId: user.id
-      }
+        userId: user.id,
+      },
     });
 
-    // Notificar cidadão
     await prisma.notification.create({
       data: {
         citizenId: ticket.citizenId,
         title: 'Protocolo Criado',
-        message: `A secretaria criou o protocolo ${protocolNumber} para atender sua solicitação: ${ticket.title}`,
+        message: `A secretaria criou o protocolo ${protocolNumber} para atender sua solicitacao: ${ticket.title}`,
         type: 'INFO',
-        protocolId: protocol.id
-      }
+        protocolId: protocol.id,
+      },
     });
-
-    // Notificar prefeito
-    console.log(
-      `[NOTIFICATION] Chamado ${ticket.number} aceito. Protocolo ${protocolNumber} criado por ${user.name}`
-    );
 
     res.json({
       success: true,
       message: 'Chamado aceito e protocolo criado com sucesso',
       data: {
         ticket: updatedTicket,
-        protocol
-      }
+        protocol,
+      },
     });
   } catch (error: any) {
     console.error('Erro ao aceitar chamado:', error);
     res.status(500).json({
       error: 'Erro ao aceitar chamado',
-      message: error.message
+      message: error.message,
     });
   }
 });
 
-// ============================================================================
-// POST /api/departments/tickets/:id/reject - Recusar chamado
-// ============================================================================
-
 const rejectTicketSchema = z.object({
-  reason: z.string().min(10, 'Informe o motivo da recusa (mínimo 10 caracteres)')
+  reason: z.string().min(10, 'Informe o motivo da recusa (minimo 10 caracteres)'),
 });
 
 router.post('/tickets/:id/reject', async (req: Request, res: Response) => {
@@ -355,68 +321,58 @@ router.post('/tickets/:id/reject', async (req: Request, res: Response) => {
     const { user } = req;
 
     if (!user || !user.departmentId) {
-      res.status(403).json({ error: 'Usuário não pertence a nenhuma secretaria' });
+      res.status(403).json({ error: 'Usuario nao pertence a nenhuma secretaria' });
       return;
     }
 
     const data = rejectTicketSchema.parse(req.body);
-
-    // Buscar ticket
     const ticket = await prisma.adminTicket.findUnique({
-      where: { id }
+      where: { id },
     });
 
     if (!ticket) {
-      res.status(404).json({ error: 'Chamado não encontrado' });
+      res.status(404).json({ error: 'Chamado nao encontrado' });
       return;
     }
 
-    // Verificar se o ticket pertence à secretaria do usuário
     if (ticket.departmentId !== user.departmentId) {
-      res.status(403).json({ error: 'Este chamado não pertence à sua secretaria' });
+      res.status(403).json({ error: 'Este chamado nao pertence a sua secretaria' });
       return;
     }
 
-    // Verificar se já foi processado
     if (ticket.status !== 'PENDING') {
-      res.status(400).json({ error: 'Chamado já foi processado' });
+      res.status(400).json({ error: 'Chamado ja foi processado' });
       return;
     }
 
-    // Atualizar ticket
     const updatedTicket = await prisma.adminTicket.update({
       where: { id },
       data: {
         status: 'REJECTED',
         rejectedAt: new Date(),
         rejectionReason: data.reason,
-        rejectedBy: user.name
+        rejectedBy: user.name,
       },
       include: {
         citizen: true,
         service: true,
         department: true,
-        requestedBy: true
-      }
+        requestedBy: true,
+      },
     });
-
-    // Notificar prefeito
-    console.log(
-      `[NOTIFICATION] Chamado ${ticket.number} recusado por ${user.name}. Motivo: ${data.reason}`
-    );
 
     res.json({
       success: true,
       message: 'Chamado recusado com sucesso',
       data: {
-        ticket: updatedTicket
-      }
+        ticket: updatedTicket,
+      },
     });
   } catch (error: any) {
     console.error('Erro ao recusar chamado:', error);
     res.status(500).json({
       error: 'Erro ao recusar chamado',
-      message: error.message
+      message: error.message,
     });
   }
 });

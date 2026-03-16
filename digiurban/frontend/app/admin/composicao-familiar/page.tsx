@@ -54,7 +54,7 @@ export default function ComposicaoFamiliarPage() {
         setSearchResults([])
       }
     } catch (error: any) {
-      console.error('❌ Erro ao buscar cidadão:', error)
+      console.error('Erro ao buscar cidadão:', error)
       setSearchResults([])
       toast({
         variant: 'destructive',

@@ -12,8 +12,22 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox'
 import { apiRequest } from '@/lib/api'
 import { useToast } from '@/hooks/use-toast'
-import { Users, UserPlus, Trash2, UserCircle, AlertCircle, Search, Edit2, Mail, Clock, CheckCircle, XCircle } from 'lucide-react'
-import { RELATIONSHIP_OPTIONS, getRelationshipLabel, getRelationshipEmoji } from '@/shared/constants/family.constants'
+import {
+  Users,
+  UserPlus,
+  Trash2,
+  UserCircle,
+  AlertCircle,
+  Search,
+  Edit2,
+  Mail,
+  Clock,
+  CheckCircle,
+  XCircle,
+  Heart,
+  Baby
+} from 'lucide-react'
+import { RELATIONSHIP_OPTIONS, getRelationshipLabel } from '@/shared/constants/family.constants'
 import { api } from '@/lib/services/api'
 
 interface FamilyMember {
@@ -60,6 +74,24 @@ interface CitizenFamilyCompositionEnhancedProps {
 }
 
 const NO_EDUCATION_VALUE = '__NO_EDUCATION__'
+
+function getRelationshipIcon(relationship: string) {
+  const normalizedRelationship = relationship?.toUpperCase()
+
+  if (normalizedRelationship === 'SPOUSE') {
+    return { icon: Heart, className: 'text-pink-600' }
+  }
+
+  if (['SON', 'DAUGHTER', 'GRANDSON', 'GRANDDAUGHTER'].includes(normalizedRelationship)) {
+    return { icon: Baby, className: 'text-blue-600' }
+  }
+
+  if (['BROTHER', 'SISTER'].includes(normalizedRelationship)) {
+    return { icon: Users, className: 'text-indigo-600' }
+  }
+
+  return { icon: UserCircle, className: 'text-gray-500' }
+}
 
 export function CitizenFamilyCompositionEnhanced({
   citizenId,
@@ -159,7 +191,7 @@ export function CitizenFamilyCompositionEnhanced({
         setSearchResults([])
       }
     } catch (error: any) {
-      console.error('❌ Erro ao buscar cidadãos:', error)
+      console.error('Erro ao buscar cidadãos:', error)
       setSearchResults([])
       toast({
         variant: 'destructive',
@@ -434,10 +466,14 @@ export function CitizenFamilyCompositionEnhanced({
                       key={member.id}
                       className="p-4 border border-gray-200 rounded-lg hover:border-gray-300 transition-colors"
                     >
+                      {(() => {
+                        const { icon: RelationshipIcon, className } = getRelationshipIcon(member.relationship)
+
+                        return (
                       <div className="flex items-start justify-between">
                         <div className="flex-1">
                           <div className="flex items-center gap-2 mb-2">
-                            <span className="text-lg">{getRelationshipEmoji(member.relationship)}</span>
+                            <RelationshipIcon className={`h-4 w-4 ${className}`} />
                             <span className="font-medium text-gray-900">
                               {member.member.name}
                             </span>
@@ -486,6 +522,8 @@ export function CitizenFamilyCompositionEnhanced({
                           </div>
                         )}
                       </div>
+                        )
+                      })()}
                     </div>
                   ))}
                 </div>
@@ -604,7 +642,16 @@ export function CitizenFamilyCompositionEnhanced({
                 <SelectContent>
                   {RELATIONSHIP_OPTIONS.map((rel) => (
                     <SelectItem key={rel.value} value={rel.value}>
-                      {rel.emoji} {rel.label}
+                      {(() => {
+                        const { icon: RelationshipIcon, className } = getRelationshipIcon(rel.value)
+
+                        return (
+                          <span className="flex items-center gap-2">
+                            <RelationshipIcon className={`h-4 w-4 ${className}`} />
+                            <span>{rel.label}</span>
+                          </span>
+                        )
+                      })()}
                     </SelectItem>
                   ))}
                 </SelectContent>
