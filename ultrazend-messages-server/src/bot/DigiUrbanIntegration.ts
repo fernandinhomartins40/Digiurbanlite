@@ -136,7 +136,7 @@ export class DigiUrbanIntegration {
       const fileName = String(doc?.fileName || doc?.originalName || path.basename(resolvedPath) || 'documento');
       const mimeType = String(doc?.mimeType || doc?.mimetype || 'application/octet-stream');
 
-      documentTypes.push(String(doc?.documentType || fileName));
+      documentTypes.push(String(doc?.documentType || doc?.documentId || fileName));
       uploadedFilePaths.push(resolvedPath);
 
       const blob = new Blob([buffer], { type: mimeType });

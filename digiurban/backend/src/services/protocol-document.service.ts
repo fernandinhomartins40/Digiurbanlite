@@ -1,5 +1,6 @@
 import { DocumentStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { syncProtocolRequiredDocuments } from './required-protocol-documents.service';
 
 export interface CreateDocumentData {
   protocolId: string;
@@ -55,6 +56,8 @@ export async function createProtocolDocument(data: CreateDocumentData) {
  * Lista todos os documentos de um protocolo
  */
 export async function getProtocolDocuments(protocolId: string) {
+  await syncProtocolRequiredDocuments(protocolId);
+
   return prisma.protocolDocument.findMany({
     where: { protocolId },
     orderBy: [
@@ -288,6 +291,8 @@ export async function markDocumentUnderReview(documentId: string) {
  * Verifica se todos os documentos obrigatórios foram enviados
  */
 export async function checkRequiredDocuments(protocolId: string) {
+  await syncProtocolRequiredDocuments(protocolId);
+
   const required = await prisma.protocolDocument.count({
     where: {
       protocolId,
@@ -317,6 +322,8 @@ export async function checkRequiredDocuments(protocolId: string) {
  * Verifica se todos os documentos foram aprovados
  */
 export async function checkAllDocumentsApproved(protocolId: string) {
+  await syncProtocolRequiredDocuments(protocolId);
+
   const required = await prisma.protocolDocument.count({
     where: {
       protocolId,

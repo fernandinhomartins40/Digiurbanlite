@@ -13,6 +13,7 @@ import { validateProtocolUniqueness } from '../services/protocol-uniqueness.serv
 import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
+import { getProtocolDocuments as getProtocolDocumentsForProtocol } from '../services/protocol-document.service';
 import { normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const router = Router();
@@ -871,10 +872,7 @@ router.get('/protocols/:protocolId/documents', async (req: Request, res: Respons
       return res.status(404).json({ error: 'Protocol not found' });
     }
 
-    const documents = await prisma.protocolDocument.findMany({
-      where: { protocolId },
-      orderBy: { uploadedAt: 'desc' },
-    });
+    const documents = await getProtocolDocumentsForProtocol(protocolId);
 
     res.json(documents);
   } catch (error) {

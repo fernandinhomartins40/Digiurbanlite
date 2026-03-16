@@ -17,6 +17,7 @@ import { createProtocolSLA } from '../services/protocol-sla.service';
 import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
 import { validateProtocolUniqueness } from '../services/protocol-uniqueness.service';
+import { getProtocolDocuments as getProtocolDocumentsForProtocol } from '../services/protocol-document.service';
 import fs from 'fs';
 import path from 'path';
 
@@ -1323,10 +1324,7 @@ router.get('/:id/documents', async (req, res) => {
     }
 
     // Buscar documentos do protocolo
-    const documents = await prisma.protocolDocument.findMany({
-      where: { protocolId },
-      orderBy: { uploadedAt: 'desc' }
-    });
+    const documents = await getProtocolDocumentsForProtocol(protocolId);
 
     // Mapear para formato esperado pelo frontend
     const mappedDocuments = documents.map(doc => ({
