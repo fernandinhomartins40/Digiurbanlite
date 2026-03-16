@@ -472,7 +472,7 @@ export class FlowEngineService {
     const isParticipant1 = conversation?.participant1Id === citizenId &&
       conversation?.participant1Type === 'CITIZEN';
     const isCitizenSecond = !isParticipant1;
-    const conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
+    let conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
 
     this.cancelBotInactivityTimeout(conversationId);
 
@@ -529,6 +529,11 @@ export class FlowEngineService {
     if (conversationMetadata?.inactivityResetPending) {
       response = await this.restartAiAssistantFromMenu(citizenId, conversationId, conversationMetadata);
       botStatus = 'ACTIVE';
+      conversationMetadata = this.mergeConversationMetadata(conversationMetadata, {
+        botStatus: 'ACTIVE',
+        botStatusUpdatedAt: new Date().toISOString(),
+        inactivityResetPending: false,
+      });
     } else if (shouldUseAi) {
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
@@ -884,7 +889,7 @@ export class FlowEngineService {
         participant1Type: true,
       },
     });
-    const conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
+    let conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
 
     let response;
     let botStatus = 'ACTIVE';
@@ -892,6 +897,11 @@ export class FlowEngineService {
     if (conversationMetadata?.inactivityResetPending) {
       response = await this.restartAiAssistantFromMenu(citizenId, conversationId, conversationMetadata);
       botStatus = 'ACTIVE';
+      conversationMetadata = this.mergeConversationMetadata(conversationMetadata, {
+        botStatus: 'ACTIVE',
+        botStatusUpdatedAt: new Date().toISOString(),
+        inactivityResetPending: false,
+      });
     } else if (!activeExecution || aiExecutionActive) {
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
