@@ -124,7 +124,35 @@ export class CitizenAiOrchestrator {
       return { session, response: { message: 'Arquivos recebidos, mas eu nao estava aguardando documentos neste momento.', messageType: 'text', metadata: this.meta(execution, session, true) } };
     }
 
-    const next: CitizenAiSessionState = { ...session, uploadedDocuments: [...(session.uploadedDocuments || []), ...params.files], stage: 'awaiting_review_confirmation' };
+    const requiredDocuments = this.getRequiredDocuments(session);
+    const uploadedDocuments = [...(session.uploadedDocuments || []), ...params.files];
+
+    if (requiredDocuments.length > 0) {
+      const missingDocuments = requiredDocuments
+        .filter((doc) => doc.required !== false)
+        .filter((doc) => !uploadedDocuments.some((file) => this.matchesRequiredDocument(file, doc)));
+
+      if (missingDocuments.length > 0) {
+        const uploadConfig = this.getUploadConfig();
+        return {
+          session,
+          response: {
+            message: `Ainda faltam documentos obrigatorios: ${missingDocuments.map((doc) => doc.name || doc.id).join(', ')}. Envie todos os itens solicitados para continuar.`,
+            messageType: 'upload',
+            data: {
+              uploadConfig,
+              requiredDocuments,
+            } as any,
+            metadata: this.meta(execution, session, true, {
+              uploadConfig,
+              requiredDocuments,
+            }),
+          },
+        };
+      }
+    }
+
+    const next: CitizenAiSessionState = { ...session, uploadedDocuments, stage: 'awaiting_review_confirmation' };
     next.reviewText = await this.buildReviewText(execution, next);
     await this.persistSession(execution.id, next);
     return { session: next, response: this.buildReviewResponse(execution, next) };
@@ -731,8 +759,8 @@ export class CitizenAiOrchestrator {
   }
 
   private buildUploadPrompt(execution: FlowExecution, session: CitizenAiSessionState): BotResponse {
-    const uploadConfig = { text: 'Envie os documentos obrigatorios', multiple: true, maxFiles: 5, maxFileSize: 10, allowSkip: false, allowedTypes: ['application/pdf', 'image/*'], saveAs: 'uploadedDocuments' };
-    const requiredDocuments = Array.isArray(session.formSchemaData?.requiredDocuments) ? session.formSchemaData?.requiredDocuments as any[] : [];
+    const uploadConfig = this.getUploadConfig();
+    const requiredDocuments = this.getRequiredDocuments(session);
     return { message: 'Este servico exige documentos obrigatorios. Envie os arquivos para concluir a abertura do protocolo.', messageType: 'upload', data: { uploadConfig, requiredDocuments } as any, metadata: this.meta(execution, session, true, { uploadConfig, requiredDocuments }) };
   }
 
@@ -918,6 +946,62 @@ export class CitizenAiOrchestrator {
     if (typeof metadataNumber === 'string' && metadataNumber.trim()) return metadataNumber.trim();
     if (option?.label) return this.extractProtocolNumber(option.label);
     return undefined;
+  }
+
+  private getUploadConfig() {
+    return {
+      text: 'Envie os documentos obrigatorios',
+      multiple: true,
+      maxFiles: 5,
+      maxFileSize: 10,
+      allowSkip: false,
+      allowedTypes: ['application/pdf', 'image/*'],
+      saveAs: 'uploadedDocuments',
+    };
+  }
+
+  private getRequiredDocuments(session: CitizenAiSessionState): Array<Record<string, any>> {
+    const requiredDocuments = Array.isArray(session.formSchemaData?.requiredDocuments)
+      ? (session.formSchemaData?.requiredDocuments as any[])
+      : [];
+
+    return requiredDocuments.map((doc: any, index: number) => {
+      if (typeof doc === 'string') {
+        return {
+          id: `doc-${index}`,
+          name: doc,
+          required: true,
+        };
+      }
+
+      const id = String(doc?.id || doc?.documentType || doc?.name || `doc-${index}`);
+      return {
+        ...doc,
+        id,
+        name: String(doc?.name || doc?.documentType || id),
+        required: doc?.required !== false,
+      };
+    });
+  }
+
+  private matchesRequiredDocument(file: Record<string, unknown>, requiredDoc: Record<string, any>): boolean {
+    const documentId = String(file?.documentId || file?.docId || '').trim();
+    const requiredId = String(requiredDoc.id || '').trim();
+    if (documentId && requiredId && documentId === requiredId) {
+      return true;
+    }
+
+    const fileType = this.normalize(String(file?.documentType || file?.fileName || ''));
+    const requiredName = this.normalize(String(requiredDoc.name || ''));
+    const normalizedRequiredId = this.normalize(requiredId);
+
+    return Boolean(
+      fileType &&
+      (fileType === requiredName ||
+        fileType === normalizedRequiredId ||
+        requiredName.includes(fileType) ||
+        fileType.includes(requiredName))
+    );
   }
 
   private buildProtocolLookupEntry(execution: FlowExecution, session: CitizenAiSessionState, prefix?: string): BotResponse {

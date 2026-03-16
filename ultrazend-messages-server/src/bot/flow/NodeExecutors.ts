@@ -124,6 +124,89 @@ export class NodeExecutors {
     };
   }
 
+  private resolveRequiredDocuments(
+    config: UploadNodeConfig,
+    state: Record<string, any>
+  ): Array<Record<string, any>> {
+    const cfg = config as any;
+    if (!cfg.requiredDocuments) {
+      return [];
+    }
+
+    const resolved =
+      typeof cfg.requiredDocuments === 'string' && cfg.requiredDocuments.includes('{{')
+        ? this.templateEngine.renderObject(cfg.requiredDocuments, state)
+        : cfg.requiredDocuments;
+
+    if (!Array.isArray(resolved)) {
+      return [];
+    }
+
+    return resolved.map((doc: any, index: number) => {
+      if (typeof doc === 'string') {
+        return {
+          id: `doc-${index}`,
+          name: doc,
+          required: true,
+        };
+      }
+
+      const id = String(doc?.id || doc?.documentType || doc?.name || `doc-${index}`);
+      return {
+        ...doc,
+        id,
+        name: String(doc?.name || doc?.documentType || id),
+        required: doc?.required !== false,
+      };
+    });
+  }
+
+  private normalizeUploadedFile(file: any, index: number): Record<string, any> | null {
+    if (!file || typeof file !== 'object') {
+      return null;
+    }
+
+    const fileName = file.fileName || file.originalName || file.originalname;
+    if (!fileName) {
+      return null;
+    }
+
+    return {
+      ...file,
+      fileName,
+      documentId: file.documentId || file.docId || undefined,
+      documentType: file.documentType || file.name || fileName,
+      required: file.required !== false,
+      fileSize: Number(file.fileSize || file.size || 0),
+      mimeType: file.mimeType || file.mimetype || 'application/octet-stream',
+      _uploadIndex: index,
+    };
+  }
+
+  private fileMatchesRequiredDocument(
+    file: Record<string, any>,
+    requiredDoc: Record<string, any>
+  ): boolean {
+    const fileDocumentId = String(file.documentId || '').trim();
+    const requiredId = String(requiredDoc.id || '').trim();
+
+    if (fileDocumentId && requiredId && fileDocumentId === requiredId) {
+      return true;
+    }
+
+    const normalizedType = this.normalizeText(String(file.documentType || ''));
+    const normalizedName = this.normalizeText(String(requiredDoc.name || ''));
+    const normalizedRequiredId = this.normalizeText(requiredId);
+
+    return Boolean(
+      normalizedType &&
+      (normalizedType === normalizedName ||
+        normalizedType === normalizedRequiredId ||
+        normalizedName.includes(normalizedType) ||
+        normalizedType.includes(normalizedName))
+    );
+  }
+
   /**
    * Executa nodo MESSAGE
    */
@@ -482,17 +565,40 @@ export class NodeExecutors {
       const nextNodeId = node.transitions[0]?.to;
       const result = await handler(resolvedParams, context);
 
+      const buildFailureResult = (errorMessage: string, payload?: any): NodeExecutionResult => {
+        const failurePayload =
+          payload && typeof payload === 'object' ? payload : { success: false, error: errorMessage };
+        const stateUpdates = config.saveResultAs
+          ? this.buildStateUpdates(config.saveResultAs, failurePayload, context.execution.state as any)
+          : undefined;
+
+        if (config.errorGoto) {
+          return {
+            success: true,
+            nextNodeId: config.errorGoto,
+            waitingForInput: false,
+            stateUpdates,
+            data: failurePayload,
+          };
+        }
+
+        return {
+          success: false,
+          error: errorMessage,
+          waitingForInput: false,
+        };
+      };
+
       if (
         result &&
         typeof result === 'object' &&
         ((result as any).success === false ||
           ((result as any).error && (result as any).success !== true))
       ) {
-        return {
-          success: false,
-          error: (result as any).error || `Action '${config.action}' failed`,
-          waitingForInput: false,
-        };
+        return buildFailureResult(
+          (result as any).error || `Action '${config.action}' failed`,
+          result
+        );
       }
 
       // Salva resultado no estado se configurado
@@ -518,9 +624,28 @@ export class NodeExecutors {
         data: result,
       };
     } catch (error: any) {
+      const errorMessage = `Action '${config.action}' failed: ${error.message}`;
+      if (config.errorGoto) {
+        const stateUpdates = config.saveResultAs
+          ? this.buildStateUpdates(
+              config.saveResultAs,
+              { success: false, error: errorMessage },
+              context.execution.state as any
+            )
+          : undefined;
+
+        return {
+          success: true,
+          nextNodeId: config.errorGoto,
+          waitingForInput: false,
+          stateUpdates,
+          data: { success: false, error: errorMessage },
+        };
+      }
+
       return {
         success: false,
-        error: `Action '${config.action}' failed: ${error.message}`,
+        error: errorMessage,
         waitingForInput: false,
       };
     }
@@ -696,6 +821,10 @@ export class NodeExecutors {
   ): Promise<NodeExecutionResult> {
     const config = node.config as UploadNodeConfig;
     const text = this.templateEngine.render(config.text, context.execution.state);
+    const requiredDocuments = this.resolveRequiredDocuments(
+      config,
+      context.execution.state as any
+    );
 
     // Se há input do usuário, processa upload ou skip
     if (context.userInput !== undefined) {
@@ -707,7 +836,7 @@ export class NodeExecutors {
         (Array.isArray(context.userInput) && context.userInput.length === 0);
 
       if (isSkipInput) {
-        if (!config.allowSkip) {
+        if (!config.allowSkip || requiredDocuments.some((doc) => doc.required !== false)) {
           return {
             success: false,
             message: '📎 É necessário enviar os documentos obrigatórios para continuar.',
@@ -726,9 +855,11 @@ export class NodeExecutors {
       }
 
       // Validações de arquivos
-      const files = Array.isArray(context.userInput)
-        ? context.userInput.filter((f: any) => f && typeof f === 'object' && f.fileName)
-        : [context.userInput];
+      const files = (
+        Array.isArray(context.userInput) ? context.userInput : [context.userInput]
+      )
+        .map((file: any, index: number) => this.normalizeUploadedFile(file, index))
+        .filter(Boolean) as Array<Record<string, any>>;
 
       if (files.length === 0) {
         return {
@@ -741,12 +872,49 @@ export class NodeExecutors {
       if (config.maxFiles && files.length > config.maxFiles) {
         return {
           success: false,
-          message: `Máximo de ${config.maxFiles} arquivo(s) permitido(s).`,
+          message: `Maximo de ${config.maxFiles} arquivo(s) permitido(s).`,
           waitingForInput: true,
         };
       }
 
-      // Salva arquivos no estado
+      for (const file of files) {
+        if (config.maxFileSize) {
+          const sizeValidation = this.inputValidator.validateFileSize(file.fileSize || 0, config.maxFileSize);
+          if (!sizeValidation.valid) {
+            return {
+              success: false,
+              message: `${file.fileName}: ${sizeValidation.error}`,
+              waitingForInput: true,
+            };
+          }
+        }
+
+        if (Array.isArray(config.allowedTypes) && config.allowedTypes.length > 0) {
+          const typeValidation = this.inputValidator.validateFileType(file.mimeType || '', config.allowedTypes);
+          if (!typeValidation.valid) {
+            return {
+              success: false,
+              message: `${file.fileName}: ${typeValidation.error}`,
+              waitingForInput: true,
+            };
+          }
+        }
+      }
+
+      if (requiredDocuments.length > 0) {
+        const missingDocuments = requiredDocuments
+          .filter((doc) => doc.required !== false)
+          .filter((doc) => !files.some((file) => this.fileMatchesRequiredDocument(file, doc)));
+
+        if (missingDocuments.length > 0) {
+          return {
+            success: false,
+            message: `Ainda faltam documentos obrigatorios: ${missingDocuments.map((doc) => doc.name || doc.id).join(', ')}. Envie todos os itens solicitados para continuar.`,
+            waitingForInput: true,
+          };
+        }
+      }
+
       const saveAs = config.saveAs || node.id;
       const stateUpdates = this.buildStateUpdates(
         saveAs,
@@ -765,25 +933,13 @@ export class NodeExecutors {
       };
     }
 
-    // Primeira vez: solicita upload
-    // Resolver requiredDocuments do config (pode ser template como "{{formSchemaData.requiredDocuments}}")
-    const cfg = config as any;
-    let requiredDocuments: any[] | undefined;
-    if (cfg.requiredDocuments) {
-      if (typeof cfg.requiredDocuments === 'string' && cfg.requiredDocuments.includes('{{')) {
-        requiredDocuments = this.templateEngine.renderObject(cfg.requiredDocuments, context.execution.state);
-      } else {
-        requiredDocuments = cfg.requiredDocuments;
-      }
-    }
-
     return {
       success: true,
       message: text,
       waitingForInput: true,
       data: {
         uploadConfig: config,
-        ...(Array.isArray(requiredDocuments) && requiredDocuments.length > 0 && { requiredDocuments }),
+        ...(requiredDocuments.length > 0 && { requiredDocuments }),
       },
     };
   }

@@ -344,7 +344,8 @@
           "customData": "{{collectedFormData}}",
           "documents": "{{uploadedDocuments}}"
         },
-        "saveResultAs": "createdProtocol"
+        "saveResultAs": "createdProtocol",
+        "errorGoto": "creation_error"
       },
       "transitions": [
         { "to": "check_protocol_created" }

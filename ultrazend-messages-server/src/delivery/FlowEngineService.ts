@@ -238,6 +238,39 @@ export class FlowEngineService {
     return metadata;
   }
 
+  private mergeConversationMetadata(
+    currentMetadata: Record<string, any> | null | undefined,
+    patch: Record<string, any>
+  ) {
+    return {
+      ...(currentMetadata || {}),
+      ...patch,
+    };
+  }
+
+  private parseUploadMetadata(rawMetadata: unknown, filesCount: number) {
+    if (!rawMetadata || typeof rawMetadata !== 'string') {
+      return [];
+    }
+
+    try {
+      const parsed = JSON.parse(rawMetadata);
+      if (!Array.isArray(parsed)) {
+        return [];
+      }
+
+      return parsed.slice(0, filesCount).map((item: any, index: number) => ({
+        documentId: item?.docId || item?.documentId || undefined,
+        documentType: item?.documentType || item?.name || undefined,
+        required: item?.required !== false,
+        uploadIndex: index,
+      }));
+    } catch (error) {
+      console.warn('[FlowEngineService] Nao foi possivel interpretar metadata de upload:', error);
+      return [];
+    }
+  }
+
   private formatUserMessageContent(message: any): string {
     if (typeof message === 'string') {
       return message;
@@ -336,10 +369,10 @@ export class FlowEngineService {
           data: {
             isBotConversation: true,
             activeFlowExecutionId: execution.id, // Ã¢Å“â€¦ FK para FlowExecution
-            metadata: {
+            metadata: this.mergeConversationMetadata(conversation?.metadata as Record<string, any> | null, {
               botStatus: 'ACTIVE',
               botStatusUpdatedAt: new Date().toISOString(),
-            },
+            }),
           },
         });
       }
@@ -571,10 +604,10 @@ export class FlowEngineService {
         lastMessageAt: new Date(),
         lastMessagePreview: botContent.substring(0, 100),
         totalMessages: { increment: 2 },
-        metadata: {
+        metadata: this.mergeConversationMetadata(conversationMetadata, {
           botStatus,
           botStatusUpdatedAt: new Date().toISOString(),
-        },
+        }),
         ...(isCitizenSecond
           ? { unreadCount1: { increment: 1 } }
           : { unreadCount2: { increment: 1 } }),
@@ -660,14 +693,22 @@ export class FlowEngineService {
     // Atualizar metadata da conversa (apenas status visual)
     let conversation = null;
     if (conversationId) {
+      const currentConversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: {
+          metadata: true,
+          departmentId: true,
+        },
+      });
+
       conversation = await prisma.conversation.update({
         where: { id: conversationId },
         data: {
-          metadata: {
+          metadata: this.mergeConversationMetadata(currentConversation?.metadata as Record<string, any> | null, {
             botStatus: 'HUMAN_TAKEOVER',
             botStatusUpdatedAt: new Date().toISOString(),
             pauseReason: reason || 'human_needed',
-          },
+          }),
         },
         select: {
           id: true,
@@ -709,13 +750,20 @@ export class FlowEngineService {
 
     // Atualizar metadata da conversa
     if (conversationId) {
+      const currentConversation = await prisma.conversation.findUnique({
+        where: { id: conversationId },
+        select: {
+          metadata: true,
+        },
+      });
+
       await prisma.conversation.update({
         where: { id: conversationId },
         data: {
-          metadata: {
+          metadata: this.mergeConversationMetadata(currentConversation?.metadata as Record<string, any> | null, {
             botStatus: 'ACTIVE',
             botStatusUpdatedAt: new Date().toISOString(),
-          },
+          }),
         },
       });
 
@@ -769,7 +817,12 @@ export class FlowEngineService {
   /**
    * Handle upload de arquivos
    */
-  async handleUpload(citizenId: string, files: any[], conversationId?: string) {
+  async handleUpload(
+    citizenId: string,
+    files: any[],
+    conversationId?: string,
+    rawUploadMetadata?: unknown
+  ) {
     if (!conversationId) {
       const conversation = await this.findOrCreateBotConversation(citizenId);
       conversationId = conversation.id;
@@ -777,19 +830,32 @@ export class FlowEngineService {
 
     this.cancelBotInactivityTimeout(conversationId);
 
+    const uploadMetadata = this.parseUploadMetadata(rawUploadMetadata, files.length);
+
     // Mover arquivos de temp para armazenamento permanente
     const uploadedFiles = await Promise.all(
-      files.map(async (file: any) => {
+      files.map(async (file: any, index: number) => {
         try {
-          return await this.moveToPermStorage(file);
+          const persistedFile = await this.moveToPermStorage(file);
+          const fileMetadata = uploadMetadata[index];
+          return {
+            ...persistedFile,
+            documentId: fileMetadata?.documentId,
+            documentType: fileMetadata?.documentType || persistedFile.fileName,
+            required: fileMetadata?.required !== false,
+          };
         } catch (err) {
           console.error('[FlowEngineService] Erro ao mover arquivo:', err);
+          const fileMetadata = uploadMetadata[index];
           return {
             fileName: file.originalname,
             filePath: file.path,
             fileUrl: '',
             fileSize: file.size,
             mimeType: file.mimetype,
+            documentId: fileMetadata?.documentId,
+            documentType: fileMetadata?.documentType || file.originalname,
+            required: fileMetadata?.required !== false,
           };
         }
       })
@@ -891,10 +957,10 @@ export class FlowEngineService {
         lastMessageAt: new Date(),
         lastMessagePreview: response.message.substring(0, 100),
         totalMessages: { increment: 2 },
-        metadata: {
+        metadata: this.mergeConversationMetadata(conv2?.metadata as Record<string, any> | null, {
           botStatus,
           botStatusUpdatedAt: new Date().toISOString(),
-        },
+        }),
         ...(isFileThird
           ? { unreadCount1: { increment: 1 } }
           : { unreadCount2: { increment: 1 } }),
@@ -961,15 +1027,22 @@ export class FlowEngineService {
     executionId: string,
     botStatus: 'ACTIVE' | 'HUMAN_TAKEOVER',
   ): Promise<void> {
+    const conversation = await prisma.conversation.findUnique({
+      where: { id: conversationId },
+      select: {
+        metadata: true,
+      },
+    });
+
     await prisma.conversation.update({
       where: { id: conversationId },
       data: {
         isBotConversation: true,
         activeFlowExecutionId: executionId,
-        metadata: {
+        metadata: this.mergeConversationMetadata(conversation?.metadata as Record<string, any> | null, {
           botStatus,
           botStatusUpdatedAt: new Date().toISOString(),
-        },
+        }),
       },
     });
   }

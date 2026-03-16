@@ -71,10 +71,50 @@
         "params": {
           "protocolNumber": "{{protocolNumber}}"
         },
-        "saveResultAs": "protocolDetails"
+        "saveResultAs": "protocolDetails",
+        "errorGoto": "protocol_lookup_error"
       },
       "transitions": [
         { "to": "show_protocol_details" }
+      ]
+    },
+    {
+      "id": "protocol_lookup_error",
+      "type": "message",
+      "config": {
+        "text": "{{protocolDetails.error}}"
+      },
+      "transitions": [
+        { "to": "protocol_lookup_error_actions" }
+      ]
+    },
+    {
+      "id": "protocol_lookup_error_actions",
+      "type": "menu",
+      "config": {
+        "text": "Como voce quer continuar?",
+        "options": [
+          {
+            "id": "tentar_novamente",
+            "label": "🔁 Tentar novamente",
+            "description": "Informar outro numero"
+          },
+          {
+            "id": "listar",
+            "label": "📋 Listar meus protocolos",
+            "description": "Ver os protocolos da sua conta"
+          },
+          {
+            "id": "voltar",
+            "label": "🔙 Voltar ao menu principal",
+            "description": "Encerrar consulta"
+          }
+        ]
+      },
+      "transitions": [
+        { "when": "tentar_novamente", "to": "ask_protocol_number" },
+        { "when": "listar", "to": "list_protocols" },
+        { "when": "voltar", "to": "end" }
       ]
     },
     {
@@ -172,7 +212,8 @@
         "params": {
           "protocolNumber": "{{selectedProtocolId_data.metadata.number}}"
         },
-        "saveResultAs": "protocolDetails"
+        "saveResultAs": "protocolDetails",
+        "errorGoto": "protocol_lookup_error"
       },
       "transitions": [
         { "to": "show_protocol_details" }

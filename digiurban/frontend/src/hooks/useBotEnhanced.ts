@@ -26,6 +26,13 @@ interface Message {
   metadata?: any;
 }
 
+interface BotUploadItem {
+  docId: string;
+  documentType: string;
+  required: boolean;
+  file: File;
+}
+
 export function useBotEnhanced() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(false);
@@ -169,13 +176,23 @@ export function useBotEnhanced() {
   /**
    * Upload de arquivos
    */
-  const uploadFiles = useCallback(async (files: File[]) => {
+  const uploadFiles = useCallback(async (files: BotUploadItem[]) => {
     if (!conversationIdRef.current) {
       throw new Error('Nenhuma conversa ativa');
     }
 
     const formData = new FormData();
-    files.forEach(file => formData.append('files', file));
+    files.forEach(({ file }) => formData.append('files', file));
+    formData.append(
+      'fileMetadata',
+      JSON.stringify(
+        files.map(({ docId, documentType, required }) => ({
+          docId,
+          documentType,
+          required,
+        }))
+      )
+    );
     formData.append('conversationId', conversationIdRef.current);
 
     const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {

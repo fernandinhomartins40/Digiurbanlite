@@ -106,9 +106,10 @@ export class FlowEngine {
       flowId: execution.flowId,
       currentNodeId: execution.currentNodeId,
       retryCount: execution.metadata?.retryCount || 0,
+      isPaused: execution.isPaused || execution.metadata?.paused || false,
     });
 
-    if (execution.metadata?.paused) {
+    if (execution.isPaused || execution.metadata?.paused) {
       return {
         message: 'Atendimento humano em andamento. Aguarde a resposta do atendente.',
         messageType: 'text',
@@ -578,11 +579,15 @@ export class FlowEngine {
     const execution = await this.stateManager.getActiveExecution(citizenId);
 
     if (execution) {
+      const pausedAt = new Date();
       await this.stateManager.updateExecution(execution.id, {
+        isPaused: true,
+        pausedAt,
+        pauseReason: 'HUMAN_TAKEOVER',
         metadata: {
           ...execution.metadata,
           paused: true,
-          pausedAt: new Date().toISOString(),
+          pausedAt: pausedAt.toISOString(),
           pausedReason: 'HUMAN_TAKEOVER',
         },
       });
@@ -595,12 +600,15 @@ export class FlowEngine {
   async resumeExecution(citizenId: string): Promise<FlowExecution | null> {
     const execution = await this.stateManager.getActiveExecution(citizenId);
 
-    if (execution && execution.metadata?.paused) {
+    if (execution && (execution.isPaused || execution.metadata?.paused)) {
+      const resumedAt = new Date();
       await this.stateManager.updateExecution(execution.id, {
+        isPaused: false,
+        resumedAt,
         metadata: {
           ...execution.metadata,
           paused: false,
-          resumedAt: new Date().toISOString(),
+          resumedAt: resumedAt.toISOString(),
         },
       });
 

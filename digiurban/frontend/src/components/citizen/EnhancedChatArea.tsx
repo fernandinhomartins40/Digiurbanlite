@@ -47,10 +47,30 @@ export function EnhancedChatArea() {
     } else if (data instanceof Date) {
       message = data.toLocaleDateString('pt-BR');
     } else if (Array.isArray(data) && data.length > 0 && data[0] instanceof File) {
+      try {
+        const uploadPayload = data.map((file: File, index: number) => ({
+          docId: `upload-${index}`,
+          documentType: file.name,
+          required: false,
+          file,
+        }));
+        await uploadFiles(uploadPayload);
+        return;
+      } catch (error) {
+        console.error('Erro no upload:', error);
+        return;
+      }
+    } else if (
+      Array.isArray(data) &&
+      data.length > 0 &&
+      data[0] &&
+      typeof data[0] === 'object' &&
+      data[0].file instanceof File
+    ) {
       // Upload de arquivos
       try {
-        const result = await uploadFiles(data);
-        message = `${data.length} arquivo(s) enviado(s)`;
+        await uploadFiles(data);
+        return;
       } catch (error) {
         console.error('Erro no upload:', error);
         return;

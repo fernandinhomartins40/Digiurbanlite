@@ -320,7 +320,12 @@ export class DigiUrbanIntegration {
    * Formatar dados do protocolo para revisão
    */
   formatProtocolReview(state: any): string {
-    const service = state.selectedService?.service || state.serviceDetails;
+    const service =
+      state.selectedService?.service ||
+      state.selectedServiceId_data?.metadata?.service ||
+      state.selectedServiceId_data?.service ||
+      state.selectedServiceData ||
+      state.serviceDetails;
     const formData = state.formData || state.collectedFormData || {};
     const description = state.description || formData.description;
     const documents = state.uploadedDocuments || [];

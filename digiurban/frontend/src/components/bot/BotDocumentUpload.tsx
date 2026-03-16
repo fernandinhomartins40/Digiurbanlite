@@ -20,7 +20,14 @@ interface BotDocumentUploadProps {
   requiredDocuments: (string | RequiredDoc)[];
   allowSkip?: boolean;
   maxFiles?: number;
-  onSubmit: (files: File[]) => void;
+  onSubmit: (
+    files: Array<{
+      docId: string;
+      documentType: string;
+      required: boolean;
+      file: File;
+    }>
+  ) => void;
   onSkip?: () => void;
 }
 
@@ -48,7 +55,23 @@ export function BotDocumentUpload({
   };
 
   const handleSubmit = () => {
-    const files = Object.values(uploadedFiles).filter(Boolean) as File[];
+    const files = docConfigs
+      .map(({ docId, config }) => {
+        const file = uploadedFiles[docId];
+        if (!file) return null;
+        return {
+          docId,
+          documentType: config.name || docId,
+          required: config.required !== false,
+          file,
+        };
+      })
+      .filter(Boolean) as Array<{
+      docId: string;
+      documentType: string;
+      required: boolean;
+      file: File;
+    }>;
     if (files.length > 0) {
       onSubmit(files);
     }

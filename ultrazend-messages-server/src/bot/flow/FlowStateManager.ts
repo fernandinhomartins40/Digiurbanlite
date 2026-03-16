@@ -70,6 +70,12 @@ export class FlowStateManager {
       status?: 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ERROR';
       errorMessage?: string;
       metadata?: Record<string, any>;
+      isPaused?: boolean;
+      pausedBy?: string | null;
+      pausedAt?: Date | null;
+      pauseReason?: string | null;
+      resumedAt?: Date | null;
+      resumedBy?: string | null;
     }
   ): Promise<FlowExecution> {
     const execution = await prisma.flowExecution.findUnique({
@@ -113,7 +119,34 @@ export class FlowStateManager {
     }
 
     if (updates.metadata) {
-      updateData.metadata = updates.metadata;
+      updateData.metadata = {
+        ...((execution.metadata as Record<string, any> | null) || {}),
+        ...updates.metadata,
+      };
+    }
+
+    if (updates.isPaused !== undefined) {
+      updateData.isPaused = updates.isPaused;
+    }
+
+    if (updates.pausedBy !== undefined) {
+      updateData.pausedBy = updates.pausedBy;
+    }
+
+    if (updates.pausedAt !== undefined) {
+      updateData.pausedAt = updates.pausedAt;
+    }
+
+    if (updates.pauseReason !== undefined) {
+      updateData.pauseReason = updates.pauseReason;
+    }
+
+    if (updates.resumedAt !== undefined) {
+      updateData.resumedAt = updates.resumedAt;
+    }
+
+    if (updates.resumedBy !== undefined) {
+      updateData.resumedBy = updates.resumedBy;
     }
 
     const updated = await prisma.flowExecution.update({
@@ -243,6 +276,12 @@ export class FlowStateManager {
       status: execution.status,
       errorMessage: execution.errorMessage,
       metadata: execution.metadata as Record<string, any> | undefined,
+      isPaused: execution.isPaused,
+      pausedBy: execution.pausedBy,
+      pausedAt: execution.pausedAt,
+      pauseReason: execution.pauseReason,
+      resumedAt: execution.resumedAt,
+      resumedBy: execution.resumedBy,
       startedAt: execution.startedAt,
       updatedAt: execution.updatedAt,
       completedAt: execution.completedAt,

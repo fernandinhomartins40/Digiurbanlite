@@ -197,14 +197,22 @@ export class InputValidator {
   }
 
   private validateProtocol(value: string): ValidationResult {
-    // Remove espaços
     const protocol = value.trim();
 
-    // Protocolo deve ter no mínimo 4 caracteres
-    if (protocol.length < 4) {
+    if (!protocol) {
       return {
         valid: false,
-        error: 'Número de protocolo inválido',
+        error: 'Numero de protocolo invalido',
+      };
+    }
+
+    const compactProtocol = protocol.replace(/\s+/g, '');
+    const acceptedPatterns = [/^\d{4}-\d{4,}$/, /^\d{4}\/\d{4,}$/, /^\d{6,}$/];
+
+    if (!acceptedPatterns.some((pattern) => pattern.test(compactProtocol))) {
+      return {
+        valid: false,
+        error: 'Use um numero de protocolo valido, como 2026-000123',
       };
     }
 

@@ -64,6 +64,7 @@ export interface ActionNodeConfig {
   action: string; // Nome da action handler
   params?: Record<string, any>; // Pode usar templates {{state.variable}}
   saveResultAs?: string; // Nome da variável para salvar resultado
+  errorGoto?: string; // Nodo de fallback quando a action falha
 }
 
 export interface ConditionNodeConfig {
@@ -195,6 +196,12 @@ export interface FlowExecution {
   status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'ERROR';
   errorMessage?: string;
   metadata?: Record<string, any>; // Metadados adicionais (pause status, etc)
+  isPaused?: boolean;
+  pausedBy?: string | null;
+  pausedAt?: Date | null;
+  pauseReason?: string | null;
+  resumedAt?: Date | null;
+  resumedBy?: string | null;
   startedAt: Date;
   updatedAt: Date;
   completedAt?: Date;

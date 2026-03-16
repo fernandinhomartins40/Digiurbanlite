@@ -1096,7 +1096,8 @@ export class ExpressServer {
         const files = req.files as Express.Multer.File[];
 
         const conversationId = req.body?.conversationId as string | undefined;
-        const result = await this.flowEngineService.handleUpload(citizenId, files, conversationId);
+        const uploadMetadata = req.body?.fileMetadata as string | undefined;
+        const result = await this.flowEngineService.handleUpload(citizenId, files, conversationId, uploadMetadata);
         res.json(result);
       } catch (error) {
         logger.error('Error in POST /bot-flow/upload', { error });
