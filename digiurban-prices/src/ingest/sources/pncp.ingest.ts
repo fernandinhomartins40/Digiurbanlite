@@ -33,17 +33,18 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
   logger.info('[PNCP Ingest] Starting', { sinceDays, uf, runId });
 
   try {
-    const contratacoes = await client.fetchAllPages(
-      (page) => client.fetchContratacoes({ sinceDays, uf, page }),
-      config.pncp.maxPagesContratacoes,
-    );
+    const contratacoes = await client.fetchContratacoesMultiWindow(sinceDays, {
+      uf,
+      pageSize: config.pncp.pageSize,
+      maxPagesPerWindow: config.pncp.maxPagesContratacoes,
+    });
 
     logger.info('[PNCP Ingest] Contratacoes fetched', { count: contratacoes.length });
 
     for (const contratacao of contratacoes) {
       try {
         const org = await upsertOrganization(contratacao);
-        const itens = await client.fetchItensContratacao(
+        const itens = await client.fetchAllItensContratacao(
           contratacao.orgaoEntidade.cnpj,
           contratacao.anoCompra ?? 0,
           contratacao.sequencialCompra ?? 0,
@@ -78,8 +79,8 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
       }
     }
 
-    // Contratos (fornecedores) — PNCP limita a 365 dias por request, usar multi-janela
-    const contratos = await client.fetchContratosMultiWindow(sinceDays, 50, config.pncp.maxPagesContratos);
+    // Contratos (fornecedores) Ã¢â‚¬â€ PNCP limita a 365 dias por request, usar multi-janela
+    const contratos = await client.fetchContratosMultiWindow(sinceDays, config.pncp.pageSize, config.pncp.maxPagesContratos);
 
     logger.info('[PNCP Ingest] Contratos fetched', { count: contratos.length });
 
@@ -125,7 +126,7 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
   return { ingested, updated, skipped, errors };
 }
 
-// ─── Helpers ────────────────────────────────────────────────────────────────
+// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
 
 async function upsertOrganization(c: PncpContratacao) {
   return prisma.organization.upsert({

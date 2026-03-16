@@ -296,7 +296,7 @@ export class PricesClient {
     return data;
   }
 
-  async triggerIngest(options?: { since_days?: number; uf?: string; source?: string }): Promise<{ jobId: string }> {
+  async triggerIngest(options?: { since_days?: number; uf?: string; source?: string; bps_max_files?: number }): Promise<{ jobId: string }> {
     const { data } = await api.post<{ jobId: string }>(`${this.baseUrl}/ingest/run`, options ?? {});
     if (!data) throw new Error('Erro ao iniciar ingestão');
     return data;

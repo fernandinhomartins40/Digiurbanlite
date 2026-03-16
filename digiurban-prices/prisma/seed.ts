@@ -1,172 +1,374 @@
 import { PrismaClient } from '@prisma/client';
+import { normalizeText } from '../src/ingest/normalizer';
+import { buildProvenanceHash } from '../src/utils/provenance';
+import { config } from '../src/config/config';
+import { ensureIndexExists, getOpenSearchClient } from '../src/search_index/opensearch.client';
 
 const prisma = new PrismaClient();
 
+const organizations = [
+  { code: 'SP001', cnpj: '11111111000101', name: 'Prefeitura Municipal de Sao Paulo', shortName: 'PMSP', uf: 'SP', city: 'Sao Paulo', sphere: 'municipal' },
+  { code: 'PR001', cnpj: '11111111000102', name: 'Prefeitura Municipal de Curitiba', shortName: 'PMCWB', uf: 'PR', city: 'Curitiba', sphere: 'municipal' },
+  { code: 'SC001', cnpj: '11111111000103', name: 'Prefeitura Municipal de Florianopolis', shortName: 'PMF', uf: 'SC', city: 'Florianopolis', sphere: 'municipal' },
+  { code: 'MG001', cnpj: '11111111000104', name: 'Prefeitura Municipal de Belo Horizonte', shortName: 'PBH', uf: 'MG', city: 'Belo Horizonte', sphere: 'municipal' },
+  { code: 'BA001', cnpj: '11111111000105', name: 'Prefeitura Municipal de Salvador', shortName: 'PMS', uf: 'BA', city: 'Salvador', sphere: 'municipal' },
+  { code: 'GO001', cnpj: '11111111000106', name: 'Prefeitura Municipal de Goiania', shortName: 'PMGYN', uf: 'GO', city: 'Goiania', sphere: 'municipal' },
+  { code: 'RS001', cnpj: '11111111000107', name: 'Prefeitura Municipal de Porto Alegre', shortName: 'PMPA', uf: 'RS', city: 'Porto Alegre', sphere: 'municipal' },
+  { code: 'RJ001', cnpj: '11111111000108', name: 'Prefeitura Municipal do Rio de Janeiro', shortName: 'PMRJ', uf: 'RJ', city: 'Rio de Janeiro', sphere: 'municipal' },
+  { code: 'DF001', cnpj: '11111111000109', name: 'Governo do Distrito Federal', shortName: 'GDF', uf: 'DF', city: 'Brasilia', sphere: 'estadual' },
+  { code: 'BR001', cnpj: '11111111000110', name: 'Ministerio da Gestao e da Inovacao', shortName: 'MGI', uf: 'DF', city: 'Brasilia', sphere: 'federal' },
+];
+
+const suppliers = [
+  { cnpj: '22222222000101', name: 'Alpha Tecnologia Ltda' },
+  { cnpj: '22222222000102', name: 'Beta Distribuidora Nacional' },
+  { cnpj: '22222222000103', name: 'Gamma Papelaria Corporativa' },
+  { cnpj: '22222222000104', name: 'Delta Moveis Institucionais' },
+  { cnpj: '22222222000105', name: 'Epsilon Redes e Telecom' },
+  { cnpj: '22222222000106', name: 'Zeta Equipamentos Hospitalares' },
+  { cnpj: '22222222000107', name: 'Eta Construcoes e Insumos' },
+  { cnpj: '22222222000108', name: 'Theta Vigilancia e Servicos' },
+  { cnpj: '22222222000109', name: 'Iota Limpeza Profissional' },
+  { cnpj: '22222222000110', name: 'Kappa Energia e Combustiveis' },
+  { cnpj: '22222222000111', name: 'Lambda Informatica Publica' },
+  { cnpj: '22222222000112', name: 'Sigma Solucoes Educacionais' },
+];
+
+const sources = ['pncp', 'comprasnet', 'transparencia', 'bps'] as const;
+
+const itemFamilies = [
+  {
+    code: 'desktop',
+    unit: 'un',
+    catmatCode: '43211507',
+    descriptions: [
+      'Computador desktop core i5 16gb 512gb ssd',
+      'Microcomputador corporativo i5 16gb ssd 512gb',
+      'Desktop administrativo intel i5 16gb',
+    ],
+    basePrice: 3450,
+    baseQuantity: 12,
+  },
+  {
+    code: 'notebook',
+    unit: 'un',
+    catmatCode: '43211503',
+    descriptions: [
+      'Notebook corporativo core i5 16gb 512gb ssd',
+      'Computador portatil i5 16gb 15 polegadas',
+      'Notebook institucional 16gb ssd 512gb',
+    ],
+    basePrice: 4320,
+    baseQuantity: 8,
+  },
+  {
+    code: 'impressora',
+    unit: 'un',
+    catmatCode: '43212110',
+    descriptions: [
+      'Impressora multifuncional laser monocromatica',
+      'Multifuncional laser a4 para escritorio',
+      'Impressora laser corporativa com scanner',
+    ],
+    basePrice: 2180,
+    baseQuantity: 6,
+  },
+  {
+    code: 'papel_a4',
+    unit: 'resma',
+    catmatCode: '7536452',
+    descriptions: [
+      'Papel a4 75g resma 500 folhas',
+      'Papel sulfite a4 branco 500 folhas',
+      'Resma de papel a4 75g para expediente',
+    ],
+    basePrice: 29.8,
+    baseQuantity: 220,
+  },
+  {
+    code: 'cadeira',
+    unit: 'un',
+    catmatCode: '52141543',
+    descriptions: [
+      'Cadeira giratoria ergonomica para escritorio',
+      'Cadeira operativa com regulagem lombar',
+      'Cadeira administrativa com apoio de bracos',
+    ],
+    basePrice: 980,
+    baseQuantity: 18,
+  },
+  {
+    code: 'router',
+    unit: 'un',
+    catmatCode: '43222609',
+    descriptions: [
+      'Roteador corporativo gigabit dual band',
+      'Equipamento de rede wifi empresarial',
+      'Router institucional com gerenciamento central',
+    ],
+    basePrice: 1490,
+    baseQuantity: 10,
+  },
+  {
+    code: 'seringa',
+    unit: 'cx',
+    catmatCode: '447594',
+    descriptions: [
+      'Seringa descartavel 10ml caixa com 100 unidades',
+      'Seringa hospitalar 10 ml com agulha',
+      'Seringa uso clinico 10ml esteril',
+    ],
+    basePrice: 86.5,
+    baseQuantity: 140,
+  },
+  {
+    code: 'luva',
+    unit: 'cx',
+    catmatCode: '269941',
+    descriptions: [
+      'Luva descartavel nitrilica caixa com 100 unidades',
+      'Luva de procedimento nao esteril',
+      'Luva hospitalar nitrilica tamanho medio',
+    ],
+    basePrice: 48.9,
+    baseQuantity: 190,
+  },
+  {
+    code: 'cimento',
+    unit: 'saco',
+    catmatCode: '31111014',
+    descriptions: [
+      'Cimento cp ii saco 50kg',
+      'Cimento para obras publicas saco 50 quilos',
+      'Cimento ensacado estrutural 50kg',
+    ],
+    basePrice: 39.7,
+    baseQuantity: 300,
+  },
+  {
+    code: 'diesel',
+    unit: 'l',
+    catmatCode: '15101505',
+    descriptions: [
+      'Oleo diesel s10 para frota municipal',
+      'Combustivel diesel s10 abastecimento frota',
+      'Diesel s10 uso veicular institucional',
+    ],
+    basePrice: 6.18,
+    baseQuantity: 3200,
+  },
+];
+
 async function main() {
-  console.log('🌱 Seeding prices module database...');
+  console.log('Seeding large DigiUrban prices dataset...');
 
-  // Organizações fake
-  const org1 = await prisma.organization.upsert({
-    where: { pncpCode: 'PREFMOC001' },
-    update: {},
-    create: {
-      cnpj: '00.000.000/0001-00',
-      name: 'Prefeitura Municipal de Exemplo',
-      shortName: 'PME',
-      uf: 'SP',
-      city: 'Exemplo',
-      sphere: 'municipal',
-      pncpCode: 'PREFMOC001',
-    },
+  let canIndex = true;
+  await ensureIndexExists().catch((error: Error) => {
+    canIndex = false;
+    console.warn('[seed] OpenSearch unavailable, continuing with database only:', error.message);
   });
+  const osClient = canIndex ? getOpenSearchClient() : null;
 
-  const org2 = await prisma.organization.upsert({
-    where: { pncpCode: 'PREFMOC002' },
-    update: {},
-    create: {
-      cnpj: '11.111.111/0001-11',
-      name: 'Câmara Municipal de Demonstração',
-      shortName: 'CMD',
-      uf: 'MG',
-      city: 'Demonstração',
-      sphere: 'municipal',
-      pncpCode: 'PREFMOC002',
-    },
-  });
-
-  const org3 = await prisma.organization.upsert({
-    where: { pncpCode: 'ESTSP001' },
-    update: {},
-    create: {
-      cnpj: '22.222.222/0001-22',
-      name: 'Governo do Estado de São Paulo',
-      shortName: 'GESP',
-      uf: 'SP',
-      sphere: 'estadual',
-      pncpCode: 'ESTSP001',
-    },
-  });
-
-  // Fornecedores fake
-  const sup1 = await prisma.supplier.upsert({
-    where: { cnpj: '33.333.333/0001-33' },
-    update: {},
-    create: {
-      cnpj: '33.333.333/0001-33',
-      name: 'TechSuprimentos Ltda',
-    },
-  });
-
-  const sup2 = await prisma.supplier.upsert({
-    where: { cnpj: '44.444.444/0001-44' },
-    update: {},
-    create: {
-      cnpj: '44.444.444/0001-44',
-      name: 'Distribuidora Sul Equipamentos ME',
-    },
-  });
-
-  // Contratos fake
-  const baseDate = new Date('2025-01-01');
-  const now = new Date();
-
-  const contracts = [
-    { org: org1, sup: sup1, desc: 'Fornecimento de computadores desktop', value: 75000, days: 30 },
-    { org: org2, sup: sup2, desc: 'Serviço de limpeza predial', value: 24000, days: 60 },
-    { org: org3, sup: sup1, desc: 'Aquisição de notebooks corporativos', value: 180000, days: 45 },
-    { org: org1, sup: sup2, desc: 'Fornecimento de material de escritório', value: 8500, days: 90 },
-    { org: org2, sup: sup1, desc: 'Impressoras multifuncionais', value: 32000, days: 20 },
-    { org: org3, sup: sup2, desc: 'Serviço de manutenção de veículos', value: 55000, days: 15 },
-  ];
-
-  const createdContracts: { id: string }[] = [];
-  for (let i = 0; i < contracts.length; i++) {
-    const c = contracts[i];
-    const date = new Date(baseDate);
-    date.setDate(date.getDate() + c.days * i);
-    const contract = await prisma.contract.create({
-      data: {
-        processNumber: `${2025 + i}-${String(i + 1).padStart(4, '0')}`,
-        year: 2025,
-        modality: i % 2 === 0 ? 'Pregão Eletrônico' : 'Dispensa de Licitação',
-        modalityCode: i % 2 === 0 ? 6 : 8,
-        description: c.desc,
-        totalValue: c.value,
-        contractDate: date,
-        publicationDate: date,
-        uf: c.org.uf ?? 'SP',
-        status: 'vigente',
-        organizationId: c.org.id,
-        supplierId: c.sup.id,
+  const organizationMap = new Map<string, { id: string; name: string; uf: string; city: string }>();
+  for (const org of organizations) {
+    const saved = await prisma.organization.upsert({
+      where: { cnpj: org.cnpj },
+      update: {
+        name: org.name,
+        shortName: org.shortName,
+        uf: org.uf,
+        city: org.city,
+        sphere: org.sphere,
+        pncpCode: org.code,
+      },
+      create: {
+        cnpj: org.cnpj,
+        name: org.name,
+        shortName: org.shortName,
+        uf: org.uf,
+        city: org.city,
+        sphere: org.sphere,
+        pncpCode: org.code,
       },
     });
-    createdContracts.push(contract);
+    organizationMap.set(org.code, { id: saved.id, name: saved.name, uf: org.uf, city: org.city });
   }
 
-  // Itens fake para computadores e notebooks
-  const lineItemsSeed = [
-    // Computadores desktop
-    { desc: 'Computador Desktop Intel Core i5 8GB RAM 256GB SSD', norm: 'computador desktop intel core i5 8gb ram 256gb ssd', qty: 10, unit: 'un', unitPrice: 2850.00, uf: 'SP', contractIdx: 0 },
-    { desc: 'Microcomputador tipo desktop processador i5 memória 8GB', norm: 'microcomputador desktop processador i5 memoria 8gb', qty: 5, unit: 'un', unitPrice: 2920.00, uf: 'SP', contractIdx: 0 },
-    { desc: 'PC Desktop Core i5 10ª geração 8GB 256SSD', norm: 'pc desktop core i5 10 geracao 8gb 256ssd', qty: 8, unit: 'un', unitPrice: 2780.00, uf: 'MG', contractIdx: 1 },
-    { desc: 'Computador desktop tipo 1 i5 8GB SSD', norm: 'computador desktop tipo 1 i5 8gb ssd', qty: 15, unit: 'un', unitPrice: 2950.00, uf: 'MG', contractIdx: 1 },
-    { desc: 'Desktop corporativo Intel i5 11ª geração 8GB RAM', norm: 'desktop corporativo intel i5 11 geracao 8gb ram', qty: 20, unit: 'un', unitPrice: 3100.00, uf: 'SP', contractIdx: 2 },
-
-    // Notebooks
-    { desc: 'Notebook Intel Core i5 16GB RAM 512GB SSD 15.6"', norm: 'notebook intel core i5 16gb ram 512gb ssd 15.6', qty: 5, unit: 'un', unitPrice: 4200.00, uf: 'SP', contractIdx: 2 },
-    { desc: 'Laptop corporativo i5 16GB 512SSD', norm: 'laptop corporativo i5 16gb 512ssd', qty: 10, unit: 'un', unitPrice: 4350.00, uf: 'SP', contractIdx: 2 },
-    { desc: 'Microcomputador portátil i5 16GB', norm: 'microcomputador portatil i5 16gb', qty: 3, unit: 'un', unitPrice: 4100.00, uf: 'MG', contractIdx: 2 },
-
-    // Serviço de limpeza
-    { desc: 'Serviço de limpeza e conservação predial mensal', norm: 'servico limpeza conservacao predial mensal', qty: 12, unit: 'mês', unitPrice: 2000.00, uf: 'MG', contractIdx: 1 },
-    { desc: 'Contratação serviço limpeza sede administrativa', norm: 'contratacao servico limpeza sede administrativa', qty: 6, unit: 'mês', unitPrice: 1850.00, uf: 'SP', contractIdx: 1 },
-    { desc: 'Limpeza predial - serviços gerais', norm: 'limpeza predial servicos gerais', qty: 12, unit: 'mês', unitPrice: 2200.00, uf: 'MG', contractIdx: 1 },
-
-    // Material de escritório
-    { desc: 'Papel A4 resma 500 folhas 75g/m²', norm: 'papel a4 resma 500 folhas 75g m2', qty: 100, unit: 'resma', unitPrice: 28.50, uf: 'SP', contractIdx: 3 },
-    { desc: 'Papel sulfite A4 75g branco 500fls', norm: 'papel sulfite a4 75g branco 500fls', qty: 50, unit: 'resma', unitPrice: 27.90, uf: 'SP', contractIdx: 3 },
-    { desc: 'Resma de papel A4 80g 500 folhas', norm: 'resma papel a4 80g 500 folhas', qty: 200, unit: 'resma', unitPrice: 30.00, uf: 'MG', contractIdx: 3 },
-
-    // Impressoras
-    { desc: 'Impressora multifuncional laser monocromática', norm: 'impressora multifuncional laser monocromatica', qty: 4, unit: 'un', unitPrice: 1890.00, uf: 'MG', contractIdx: 4 },
-    { desc: 'Multifuncional laser preto e branco A4', norm: 'multifuncional laser preto branco a4', qty: 6, unit: 'un', unitPrice: 1750.00, uf: 'SP', contractIdx: 4 },
-  ];
-
-  for (const item of lineItemsSeed) {
-    const contract = createdContracts[item.contractIdx];
-    const contractDate = new Date(baseDate);
-    contractDate.setDate(contractDate.getDate() + Math.floor(Math.random() * 300));
-
-    await prisma.lineItem.create({
-      data: {
-        description: item.desc,
-        normalizedDescription: item.norm,
-        quantity: item.qty,
-        unit: item.unit,
-        unitPrice: item.unitPrice,
-        totalPrice: item.unitPrice * item.qty,
-        calculatedUnitPrice: item.unitPrice,
-        uf: item.uf,
-        contractDate: contractDate,
-        isValid: true,
-        isOutlier: false,
-        organizationId: createdContracts[item.contractIdx] ? (item.uf === 'SP' ? org1.id : org2.id) : org1.id,
-        supplierId: item.contractIdx % 2 === 0 ? sup1.id : sup2.id,
-        contractId: contract.id,
-      },
+  const supplierMap = new Map<string, { id: string; cnpj: string; name: string }>();
+  for (const supplier of suppliers) {
+    const saved = await prisma.supplier.upsert({
+      where: { cnpj: supplier.cnpj },
+      update: { name: supplier.name },
+      create: supplier,
     });
+    supplierMap.set(supplier.cnpj, { id: saved.id, cnpj: supplier.cnpj, name: saved.name });
   }
 
-  console.log('✅ Seed concluído!');
-  console.log(`   → ${contracts.length} contratos criados`);
-  console.log(`   → ${lineItemsSeed.length} itens criados`);
-  console.log(`   → 3 organizações criadas`);
-  console.log(`   → 2 fornecedores criados`);
+  let contractCount = 0;
+  let lineItemCount = 0;
+  let indexedCount = 0;
+
+  const years = [2022, 2023, 2024, 2025, 2026];
+
+  for (const year of years) {
+    for (const [orgIndex, organization] of organizations.entries()) {
+      for (const [familyIndex, family] of itemFamilies.entries()) {
+        const source = sources[(year + orgIndex + familyIndex) % sources.length];
+        const supplier = suppliers[(orgIndex + familyIndex + year) % suppliers.length];
+        const supplierRecord = supplierMap.get(supplier.cnpj)!;
+        const organizationRecord = organizationMap.get(organization.code)!;
+        const contractCode = `seed_${source}_${year}_${organization.code}_${family.code}`;
+        const contractDate = new Date(Date.UTC(year, (orgIndex + familyIndex) % 12, ((familyIndex * 2) % 27) + 1));
+        const modality = year % 2 === 0 ? 'Pregao Eletronico' : 'Dispensa Eletronica';
+        const estimatedTotal = family.basePrice * family.baseQuantity * 2.5;
+
+        const contract = await prisma.contract.upsert({
+          where: { pncpId: contractCode },
+          update: {
+            processNumber: `${year}-${organization.code}-${family.code}`,
+            year,
+            modality,
+            modalityCode: year % 2 === 0 ? 6 : 8,
+            description: `Aquisicao de ${family.code} para ${organization.shortName}`,
+            totalValue: estimatedTotal,
+            contractDate,
+            publicationDate: contractDate,
+            uf: organization.uf,
+            city: organization.city,
+            status: 'vigente',
+            organizationId: organizationRecord.id,
+            supplierId: supplierRecord.id,
+          },
+          create: {
+            pncpId: contractCode,
+            processNumber: `${year}-${organization.code}-${family.code}`,
+            year,
+            modality,
+            modalityCode: year % 2 === 0 ? 6 : 8,
+            description: `Aquisicao de ${family.code} para ${organization.shortName}`,
+            totalValue: estimatedTotal,
+            contractDate,
+            publicationDate: contractDate,
+            uf: organization.uf,
+            city: organization.city,
+            status: 'vigente',
+            organizationId: organizationRecord.id,
+            supplierId: supplierRecord.id,
+          },
+        });
+        contractCount += 1;
+
+        for (const [variantIndex, description] of family.descriptions.entries()) {
+          const seed = year + orgIndex * 7 + familyIndex * 13 + variantIndex * 17;
+          const quantity = Math.max(1, Math.round(family.baseQuantity * (1 + ((seed % 5) - 2) * 0.08)));
+          const unitPrice = round2(family.basePrice * (1 + ((seed % 7) - 3) * 0.03));
+          const totalPrice = round2(quantity * unitPrice);
+          const sourceId = `seed_${source}_${year}_${organization.code}_${family.code}_${variantIndex + 1}`;
+          const normalizedDescription = normalizeText(description);
+          const confidenceScore = source === 'pncp' ? 0.98 : source === 'comprasnet' ? 0.95 : source === 'bps' ? 0.9 : 0.86;
+          const yearMonth = `${year}-${String(contractDate.getUTCMonth() + 1).padStart(2, '0')}`;
+          const provenanceHash = buildProvenanceHash({
+            source,
+            sourceId,
+            description,
+            unitPrice,
+            contractDate,
+            supplier: supplierRecord.cnpj,
+          });
+
+          const data = {
+            description,
+            normalizedDescription,
+            quantity,
+            unit: family.unit,
+            unitPrice,
+            totalPrice,
+            calculatedUnitPrice: unitPrice,
+            catmatCode: family.catmatCode,
+            catmatDescription: description,
+            source,
+            sourceId,
+            supplierId: supplierRecord.id,
+            supplierName: supplierRecord.name,
+            supplierCnpj: supplierRecord.cnpj,
+            confidenceScore,
+            classificationScore: 0.9,
+            yearMonth,
+            contractDate,
+            uf: organization.uf,
+            city: organization.city,
+            provenanceHash,
+            organizationId: organizationRecord.id,
+            contractId: contract.id,
+            inferredFromObject: false,
+            isValid: true,
+            isOutlier: false,
+          };
+
+          const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
+          const lineItem = existing
+            ? await prisma.lineItem.update({ where: { id: existing.id }, data })
+            : await prisma.lineItem.create({ data });
+
+          lineItemCount += 1;
+
+          if (osClient) {
+            try {
+              await osClient.index({
+                index: config.opensearch.indexLineItems,
+                id: lineItem.id,
+                body: {
+                  id: lineItem.id,
+                  description,
+                  normalized_description: normalizedDescription,
+                  unit: family.unit,
+                  unit_price: unitPrice,
+                  total_price: totalPrice,
+                  quantity,
+                  contract_date: contractDate.toISOString(),
+                  uf: organization.uf,
+                  city: organization.city,
+                  organization_name: organization.name,
+                  catmat_code: family.catmatCode,
+                  catmat_description: description,
+                  source,
+                  supplier_name: supplierRecord.name,
+                  supplier_cnpj: supplierRecord.cnpj,
+                  provenance_hash: provenanceHash,
+                  confidence_score: confidenceScore,
+                  classification_score: 0.9,
+                  inferred_from_object: false,
+                  year_month: yearMonth,
+                  indexed_at: new Date().toISOString(),
+                },
+              });
+              indexedCount += 1;
+            } catch (error) {
+              console.warn('[seed] Failed to index line item', { sourceId, error: (error as Error).message });
+            }
+          }
+        }
+      }
+    }
+  }
+
+  console.log('Seed completed.');
+  console.log({
+    organizations: organizations.length,
+    suppliers: suppliers.length,
+    contracts: contractCount,
+    lineItemsProcessed: lineItemCount,
+    lineItemsIndexed: indexedCount,
+  });
+}
+
+function round2(value: number): number {
+  return Math.round(value * 100) / 100;
 }
 
 main()
-  .catch((e) => {
-    console.error(e);
+  .catch((error) => {
+    console.error(error);
     process.exit(1);
   })
   .finally(async () => {

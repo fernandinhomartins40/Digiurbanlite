@@ -289,7 +289,11 @@ export class FlowEngine {
       execution = updatedExecution;
 
       // Executa proximo nodo
-      return this.executeCurrentNode(execution, flow);
+      const carriedMessages =
+        typeof result.message === 'string' && result.message.trim()
+          ? [result.message.trim()]
+          : [];
+      return this.executeCurrentNode(execution, flow, carriedMessages);
     }
 
     // Nenhum proximo nodo: finaliza fluxo
@@ -312,7 +316,8 @@ export class FlowEngine {
    */
   private async executeCurrentNode(
     execution: FlowExecution,
-    flow: FlowDefinition
+    flow: FlowDefinition,
+    accumulatedMessages: string[] = []
   ): Promise<BotResponse> {
     const currentNode = flow.nodes.find((n) => n.id === execution.currentNodeId);
 
@@ -348,6 +353,11 @@ export class FlowEngine {
       };
     }
 
+    const nextAccumulatedMessages =
+      typeof result.message === 'string' && result.message.trim()
+        ? [...accumulatedMessages, result.message.trim()]
+        : accumulatedMessages;
+
     // Atualiza estado
     if (result.stateUpdates) {
       console.log('[FlowEngine.executeCurrentNode] Atualizando estado:', JSON.stringify(result.stateUpdates, null, 2));
@@ -379,7 +389,12 @@ export class FlowEngine {
 
     // Se aguarda input, retorna
     if (result.waitingForInput) {
-      return this.buildBotResponse(result, execution, flow, currentNode);
+      const response = this.buildBotResponse(result, execution, flow, currentNode);
+      response.message =
+        nextAccumulatedMessages.length > 0
+          ? nextAccumulatedMessages.join('\n\n')
+          : response.message;
+      return response;
     }
 
     // Avanca para proximo nodo
@@ -390,14 +405,17 @@ export class FlowEngine {
       });
 
       const updatedExecution = (await this.stateManager.getExecution(execution.id))!;
-      return this.executeCurrentNode(updatedExecution, flow);
+      return this.executeCurrentNode(updatedExecution, flow, nextAccumulatedMessages);
     }
 
     // Fim do fluxo
     await this.stateManager.completeExecution(execution.id);
 
     return {
-      message: result.message || 'Conversa finalizada',
+      message:
+        nextAccumulatedMessages.length > 0
+          ? nextAccumulatedMessages.join('\n\n')
+          : result.message || 'Conversa finalizada',
       messageType: 'text',
       metadata: {
         flowId: flow.id,

@@ -5,14 +5,13 @@ import { logger } from '../../utils/logger';
 import type {
   PncpContratacao,
   PncpContrato,
+  PncpItem,
   PncpListResponse,
   PncpFetchOptions,
 } from './pncp.types';
 
-// A API do PNCP tem dois base paths distintos:
-// - /api/consulta/v1  → busca/listagem de contratações e contratos
-// - /pncp-api/v1      → itens de contratações específicas
 const PNCP_ITEMS_BASE_URL = 'https://pncp.gov.br/pncp-api/v1';
+const PNCP_WINDOW_DAYS = 364;
 
 export class PncpClient {
   private http: AxiosInstance;
@@ -53,30 +52,24 @@ export class PncpClient {
         });
       },
     };
+
     axiosRetry(this.http, retryConfig);
     axiosRetry(this.httpItems, retryConfig);
   }
 
-  // Rate limit básico entre requisições
   private async throttle() {
     const now = Date.now();
     const elapsed = now - this.lastRequestTime;
     if (elapsed < config.pncp.rateLimitMs) {
-      await new Promise((r) => setTimeout(r, config.pncp.rateLimitMs - elapsed));
+      await new Promise((resolve) => setTimeout(resolve, config.pncp.rateLimitMs - elapsed));
     }
     this.lastRequestTime = Date.now();
   }
 
-  // Busca contratações (editais/compras)
-  // Endpoint correto: /contratacoes/proposta (tamanhoPagina mínimo: 10)
   async fetchContratacoes(options: PncpFetchOptions = {}): Promise<PncpContratacao[]> {
-    const { sinceDays = config.ingest.sinceDays, page = 1 } = options;
-    // PNCP exige tamanhoPagina >= 10; usar 50 como padrão produtivo
+    const { page = 1 } = options;
     const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
-
-    const dataFinal = new Date();
-    const dataInicial = new Date();
-    dataInicial.setDate(dataFinal.getDate() - sinceDays);
+    const { dataInicial, dataFinal } = this.resolveDateRange(options);
 
     const params: Record<string, unknown> = {
       dataInicial: this.formatDate(dataInicial),
@@ -91,70 +84,82 @@ export class PncpClient {
     await this.throttle();
 
     try {
-      logger.debug('[PNCP] Fetching contratacoes', { params });
-      const response = await this.http.get<PncpListResponse<PncpContratacao>>(
-        '/contratacoes/proposta',
-        { params },
-      );
+      const response = await this.http.get<PncpListResponse<PncpContratacao>>('/contratacoes/proposta', { params });
       return response.data?.data ?? [];
     } catch (error: unknown) {
-      logger.error('[PNCP] Error fetching contratacoes', { error: (error as Error).message });
+      logger.error('[PNCP] Error fetching contratacoes', { error: (error as Error).message, params });
       return [];
     }
   }
 
-  // Busca todos os itens de uma contratação
-  // Usa o base path /pncp-api/v1 (distinto do /api/consulta/v1)
-  // Retorna array direto (não wrappado em { data: [] })
+  async fetchContratacoesMultiWindow(
+    sinceDays: number,
+    options: { uf?: string; modality?: number; pageSize?: number; maxPagesPerWindow?: number } = {},
+  ): Promise<PncpContratacao[]> {
+    const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
+    const maxPagesPerWindow = options.maxPagesPerWindow ?? config.pncp.maxPagesContratacoes;
+
+    return this.fetchMultiWindow<PncpContratacao>(sinceDays, maxPagesPerWindow, (dataInicial, dataFinal, page) =>
+      this.fetchContratacoes({
+        dataInicial,
+        dataFinal,
+        page,
+        pageSize,
+        uf: options.uf,
+        modality: options.modality,
+      }),
+    );
+  }
+
   async fetchItensContratacao(
     cnpjOrgao: string,
     anoCompra: number,
     sequencialCompra: number,
-  ): Promise<PncpContratacao['itens']> {
+    page = 1,
+    pageSize = 500,
+  ): Promise<PncpItem[]> {
     await this.throttle();
 
     try {
-      const response = await this.httpItems.get<PncpContratacao['itens']>(
+      const response = await this.httpItems.get<PncpItem[] | { data?: PncpItem[] }>(
         `/orgaos/${cnpjOrgao}/compras/${anoCompra}/${sequencialCompra}/itens`,
-        { params: { pagina: 1, tamanhoPagina: 500 } },
+        { params: { pagina: page, tamanhoPagina: pageSize } },
       );
-      // API retorna array direto ou { data: [] } dependendo da versão
       const body = response.data;
       if (Array.isArray(body)) return body;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      return (body as any)?.data ?? [];
+      return body.data ?? [];
     } catch (error: unknown) {
       logger.warn('[PNCP] Error fetching itens', {
         cnpj: cnpjOrgao,
         ano: anoCompra,
         seq: sequencialCompra,
+        page,
         error: (error as Error).message,
       });
       return [];
     }
   }
 
-  // Busca contratos (não compras)
-  // Endpoint correto: /contratos (tamanhoPagina mínimo: 10, formato data: yyyyMMdd)
-  // LIMITAÇÃO DA API: período máximo de 365 dias por request
+  async fetchAllItensContratacao(
+    cnpjOrgao: string,
+    anoCompra: number,
+    sequencialCompra: number,
+    pageSize = 500,
+    maxPages = config.pncp.maxPagesItensContratacao,
+  ): Promise<PncpItem[]> {
+    const results = await this.fetchAllPages(
+      (page) => this.fetchItensContratacao(cnpjOrgao, anoCompra, sequencialCompra, page, pageSize),
+      maxPages,
+      pageSize * Math.max(1, maxPages),
+    );
+
+    return results;
+  }
+
   async fetchContratos(options: PncpFetchOptions = {}): Promise<PncpContrato[]> {
     const { page = 1 } = options;
     const pageSize = Math.max(10, options.pageSize ?? config.pncp.pageSize);
-
-    // Usar dataInicial/dataFinal explícitas se fornecidas, caso contrário calcular por sinceDays
-    let dataFinal: Date;
-    let dataInicial: Date;
-    if (options.dataFinal && options.dataInicial) {
-      dataFinal = options.dataFinal;
-      dataInicial = options.dataInicial;
-    } else {
-      const sinceDays = options.sinceDays ?? config.ingest.sinceDays;
-      dataFinal = new Date();
-      dataInicial = new Date();
-      // PNCP limita a 365 dias por request — truncar se necessário
-      const effectiveDays = Math.min(sinceDays, 364);
-      dataInicial.setDate(dataFinal.getDate() - effectiveDays);
-    }
+    const { dataInicial, dataFinal } = this.resolveDateRange(options, PNCP_WINDOW_DAYS);
 
     const params: Record<string, unknown> = {
       dataInicial: this.formatDate(dataInicial),
@@ -168,55 +173,28 @@ export class PncpClient {
     await this.throttle();
 
     try {
-      const response = await this.http.get<PncpListResponse<PncpContrato>>(
-        '/contratos',
-        { params },
-      );
+      const response = await this.http.get<PncpListResponse<PncpContrato>>('/contratos', { params });
       return response.data?.data ?? [];
     } catch (error: unknown) {
-      logger.warn('[PNCP] Error fetching contratos', { error: (error as Error).message });
+      logger.warn('[PNCP] Error fetching contratos', { error: (error as Error).message, params });
       return [];
     }
   }
 
-  // Busca contratos em múltiplas janelas de 365 dias para cobrir períodos longos
-  async fetchContratosMultiWindow(sinceDays: number, pageSize = 50, maxPagesPerWindow = 300): Promise<PncpContrato[]> {
-    const WINDOW_DAYS = 364;
-    const all: PncpContrato[] = [];
-    const now = new Date();
-
-    // Dividir o período em janelas de 364 dias, do mais recente ao mais antigo
-    for (let offset = 0; offset < sinceDays; offset += WINDOW_DAYS) {
-      const windowEnd = new Date(now);
-      windowEnd.setDate(now.getDate() - offset);
-      const windowStart = new Date(now);
-      windowStart.setDate(now.getDate() - Math.min(offset + WINDOW_DAYS, sinceDays));
-
-      logger.info('[PNCP] Fetching contratos window', {
-        from: this.formatDate(windowStart),
-        to: this.formatDate(windowEnd),
-      });
-
-      const windowResults = await this.fetchAllPages(
-        (page) => this.fetchContratos({ dataInicial: windowStart, dataFinal: windowEnd, page, pageSize }),
-        maxPagesPerWindow,
-      );
-
-      all.push(...windowResults);
-    }
-
-    return all;
+  async fetchContratosMultiWindow(sinceDays: number, pageSize = config.pncp.pageSize, maxPagesPerWindow = config.pncp.maxPagesContratos): Promise<PncpContrato[]> {
+    return this.fetchMultiWindow<PncpContrato>(sinceDays, maxPagesPerWindow, (dataInicial, dataFinal, page) =>
+      this.fetchContratos({ dataInicial, dataFinal, page, pageSize }),
+    );
   }
 
-  // Paginação automática (busca TODAS as páginas)
   async fetchAllPages<T>(
     fetcher: (page: number) => Promise<T[]>,
     maxPages = 200,
+    maxResults = 250_000,
   ): Promise<T[]> {
     const results: T[] = [];
     let page = 1;
     const safeMaxPages = Math.max(1, maxPages);
-    const maxResults = 250_000;
 
     while (page <= safeMaxPages) {
       const data = await fetcher(page);
@@ -226,13 +204,12 @@ export class PncpClient {
         logger.warn('[PNCP] Pagination stopped by safety cap', { maxResults, page });
         break;
       }
-      page++;
+      page += 1;
     }
 
     return results;
   }
 
-  // Verifica disponibilidade da API PNCP
   async ping(): Promise<boolean> {
     try {
       await this.throttle();
@@ -254,7 +231,58 @@ export class PncpClient {
     }
   }
 
-  // PNCP exige formato yyyyMMdd (sem hífens), ex: 20260226
+  private async fetchMultiWindow<T>(
+    sinceDays: number,
+    maxPagesPerWindow: number,
+    fetcher: (dataInicial: Date, dataFinal: Date, page: number) => Promise<T[]>,
+  ): Promise<T[]> {
+    const all: T[] = [];
+    const now = new Date();
+    const totalDays = Math.max(1, sinceDays);
+
+    for (let startOffset = 0; startOffset < totalDays; startOffset += PNCP_WINDOW_DAYS) {
+      const endOffset = Math.min(startOffset + PNCP_WINDOW_DAYS - 1, totalDays - 1);
+      const dataFinal = this.shiftDate(now, startOffset);
+      const dataInicial = this.shiftDate(now, endOffset);
+
+      logger.info('[PNCP] Fetching window', {
+        from: this.formatDate(dataInicial),
+        to: this.formatDate(dataFinal),
+      });
+
+      const windowResults = await this.fetchAllPages(
+        (page) => fetcher(dataInicial, dataFinal, page),
+        maxPagesPerWindow,
+      );
+
+      all.push(...windowResults);
+    }
+
+    return all;
+  }
+
+  private resolveDateRange(options: PncpFetchOptions, maxWindowDays?: number): { dataInicial: Date; dataFinal: Date } {
+    if (options.dataInicial && options.dataFinal) {
+      return {
+        dataInicial: options.dataInicial,
+        dataFinal: options.dataFinal,
+      };
+    }
+
+    const sinceDays = options.sinceDays ?? config.ingest.sinceDays;
+    const effectiveDays = maxWindowDays ? Math.min(sinceDays, maxWindowDays) : sinceDays;
+    const dataFinal = new Date();
+    const dataInicial = new Date();
+    dataInicial.setDate(dataFinal.getDate() - effectiveDays);
+    return { dataInicial, dataFinal };
+  }
+
+  private shiftDate(baseDate: Date, daysAgo: number): Date {
+    const shifted = new Date(baseDate);
+    shifted.setDate(baseDate.getDate() - daysAgo);
+    return shifted;
+  }
+
   private formatDate(date: Date): string {
     const y = date.getFullYear();
     const m = String(date.getMonth() + 1).padStart(2, '0');
@@ -263,7 +291,6 @@ export class PncpClient {
   }
 }
 
-// Singleton
 let pncpClientInstance: PncpClient | null = null;
 
 export function getPncpClient(): PncpClient {

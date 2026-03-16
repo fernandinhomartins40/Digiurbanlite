@@ -31,7 +31,7 @@ export async function runTransparenciaIngest(options: TransparenciaIngestOptions
   let ingested = 0, updated = 0, skipped = 0, errors = 0;
 
   if (!config.transparencia.apiKey) {
-    logger.info('[Transparencia Ingest] API key não configurada, pulando');
+    logger.info('[Transparencia Ingest] API key nÃƒÂ£o configurada, pulando');
     return { ingested: 0, updated: 0, skipped: 0, errors: 0 };
   }
 
@@ -44,12 +44,14 @@ export async function runTransparenciaIngest(options: TransparenciaIngestOptions
 
     const formatDate = (d: Date) => d.toISOString().split('T')[0];
 
-    // API exige codigoOrgao — busca por lista de órgãos principais
+    // API exige codigoOrgao Ã¢â‚¬â€ busca por lista de ÃƒÂ³rgÃƒÂ£os principais
     const contratos = await client.fetchAllOrgaos(
       formatDate(dataInicio),
       formatDate(dataFim),
-      TRANSPARENCIA_ORGAOS_PRINCIPAIS,
-      20,
+      config.transparencia.orgaosPrincipais.length > 0
+        ? config.transparencia.orgaosPrincipais
+        : TRANSPARENCIA_ORGAOS_PRINCIPAIS,
+      config.transparencia.maxPagesPerOrgao,
     );
 
     logger.info('[Transparencia Ingest] Contratos fetched', { count: contratos.length });
@@ -93,7 +95,7 @@ async function processContrato(
   inferred?: { description: string; quantity: number | null; unit: string | null },
   inferredIndex?: number,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  // Contratos da Transparência têm objeto (descrição) mas não itemização detalhada
+  // Contratos da TransparÃƒÂªncia tÃƒÂªm objeto (descriÃƒÂ§ÃƒÂ£o) mas nÃƒÂ£o itemizaÃƒÂ§ÃƒÂ£o detalhada
   const desc = inferred?.description ?? contrato.objeto ?? '';
   const quantity = inferred?.quantity ?? null;
   // Campos reais da API: valorInicialCompra / valorFinalCompra
@@ -112,10 +114,10 @@ async function processContrato(
     : `transparencia_${contrato.id}`;
   const normalizedDescription = normalizeText(desc);
   const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
-  // UF não vem em orgaoVinculado — a API não retorna município/UF diretamente
+  // UF nÃƒÂ£o vem em orgaoVinculado Ã¢â‚¬â€ a API nÃƒÂ£o retorna municÃƒÂ­pio/UF diretamente
   const uf: string | undefined = undefined;
 
-  // Campo real da API: cnpjFormatado (com pontos/barras) — normalizar para 14 dígitos
+  // Campo real da API: cnpjFormatado (com pontos/barras) Ã¢â‚¬â€ normalizar para 14 dÃƒÂ­gitos
   const cnpjRaw = contrato.fornecedor?.cnpjFormatado ?? null;
   const supplierCnpj = cnpjRaw ? cnpjRaw.replace(/[.\-\/]/g, '') : null;
 
@@ -145,7 +147,7 @@ async function processContrato(
     where: { cnpj: orgCnpj },
     create: {
       cnpj: orgCnpj,
-      name: contrato.unidadeGestora?.nome ?? 'Órgão Federal',
+      name: contrato.unidadeGestora?.nome ?? 'Ãƒâ€œrgÃƒÂ£o Federal',
       uf,
       sphere: 'federal',
     },
@@ -186,7 +188,7 @@ async function processContrato(
     contractDate,
     uf,
     organizationId: org.id,
-    // 'modality' não existe no modelo LineItem — vai apenas para OpenSearch
+    // 'modality' nÃƒÂ£o existe no modelo LineItem Ã¢â‚¬â€ vai apenas para OpenSearch
   };
 
   const modality = contrato.modalidadeCompra ?? null;

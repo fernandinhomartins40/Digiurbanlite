@@ -6,26 +6,28 @@ import { logger } from '../../utils/logger';
 
 const router = Router();
 
-// POST /api/v1/ingest/run — disparar ingestão manual
+// POST /api/v1/ingest/run â€” disparar ingestÃ£o manual
 router.post('/ingest/run', ingestAuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const { since_days: sinceDays, uf, source } = req.body as {
+    const { since_days: sinceDays, uf, source, bps_max_files: bpsMaxFiles } = req.body as {
       since_days?: number;
       uf?: string;
       source?: string;
+      bps_max_files?: number;
     };
 
-    logger.info('[Ingest] Manual trigger via API', { sinceDays, uf, source });
+    logger.info('[Ingest] Manual trigger via API', { sinceDays, uf, source, bpsMaxFiles });
 
     const jobId = await triggerIngest({
       sinceDays,
       uf,
       source: source as import('../../ingest/ingest.orchestrator').IngestSource | undefined,
       triggeredBy: 'api',
+      bpsMaxFiles,
     });
 
     res.json({
-      message: 'Ingestão enfileirada com sucesso',
+      message: 'IngestÃ£o enfileirada com sucesso',
       jobId,
     });
   } catch (err) {

@@ -1,10 +1,6 @@
-// Conector para a API dadosabertos.compras.gov.br
-// Portal de Compras do Governo Federal — dados abertos SIASG/ComprasNet
-// Documentação: https://dadosabertos.compras.gov.br/swagger-ui/index.html
-// Sem autenticação. Paginação 1-based. tamanhoPagina: 10–500.
-
 import axios, { AxiosInstance } from 'axios';
 import axiosRetry from 'axios-retry';
+import { config } from '../../config/config';
 import { logger } from '../../utils/logger';
 import type {
   DadosAbertosResponse,
@@ -14,17 +10,14 @@ import type {
   ComprasnetARPOptions,
 } from './comprasnet.types';
 
-const BASE_URL = 'https://dadosabertos.compras.gov.br';
-
 export class ComprasnetClient {
   private http: AxiosInstance;
   private lastRequestTime = 0;
-  private readonly rateLimitMs = 1200;
 
   constructor() {
     this.http = axios.create({
-      baseURL: BASE_URL,
-      timeout: 45000,
+      baseURL: config.comprasnet.baseUrl,
+      timeout: config.comprasnet.timeoutMs,
       headers: {
         Accept: 'application/json',
         'User-Agent': 'DigiUrban-Prices/1.0',
@@ -33,25 +26,25 @@ export class ComprasnetClient {
 
     axiosRetry(this.http, {
       retries: 3,
-      retryDelay: (n) => n * 3000,
-      retryCondition: (err) =>
-        axiosRetry.isNetworkOrIdempotentRequestError(err) ||
-        err.response?.status === 429 ||
-        err.response?.status === 503,
-      onRetry: (n, err) => { logger.warn('[ComprasNet] Retry', { attempt: n, url: err.config?.url }); },
+      retryDelay: (attempt) => attempt * 3000,
+      retryCondition: (error) =>
+        axiosRetry.isNetworkOrIdempotentRequestError(error) ||
+        error.response?.status === 429 ||
+        error.response?.status === 503,
+      onRetry: (attempt, error) => {
+        logger.warn('[ComprasNet] Retry', { attempt, url: error.config?.url });
+      },
     });
   }
 
   private async throttle() {
     const elapsed = Date.now() - this.lastRequestTime;
-    if (elapsed < this.rateLimitMs) {
-      await new Promise((r) => setTimeout(r, this.rateLimitMs - elapsed));
+    if (elapsed < config.comprasnet.rateLimitMs) {
+      await new Promise((resolve) => setTimeout(resolve, config.comprasnet.rateLimitMs - elapsed));
     }
     this.lastRequestTime = Date.now();
   }
 
-  // ── Pregões homologados (/modulo-legado/4_consultarItensPregoes) ──────────
-  // Retorna itens de pregão com valorHomologadoItem (preço unitário real)
   async fetchItensPregoes(options: ComprasnetPregaoOptions): Promise<ComprasnetItemPregao[]> {
     const { dtHomInicial, dtHomFinal, coUasg, pagina = 1, tamanhoPagina = 500 } = options;
 
@@ -66,10 +59,7 @@ export class ComprasnetClient {
     await this.throttle();
 
     try {
-      const res = await this.http.get<DadosAbertosResponse<ComprasnetItemPregao>>(
-        '/modulo-legado/4_consultarItensPregoes',
-        { params },
-      );
+      const res = await this.http.get<DadosAbertosResponse<ComprasnetItemPregao>>('/modulo-legado/4_consultarItensPregoes', { params });
       return res.data?.resultado ?? [];
     } catch (err: unknown) {
       logger.warn('[ComprasNet] Error fetching itens pregoes', {
@@ -81,25 +71,20 @@ export class ComprasnetClient {
     }
   }
 
-  // ── Itens de ATAs de Registro de Preço (/modulo-arp/2_consultarARPItem) ──
-  // Usar janelas <= 30 dias para evitar timeout
   async fetchARPItens(options: ComprasnetARPOptions): Promise<ComprasnetARPItem[]> {
     const { dataVigenciaInicialMin, dataVigenciaInicialMax, pagina = 1, tamanhoPagina = 500 } = options;
 
     await this.throttle();
 
     try {
-      const res = await this.http.get<DadosAbertosResponse<ComprasnetARPItem>>(
-        '/modulo-arp/2_consultarARPItem',
-        {
-          params: {
-            dataVigenciaInicialMin,
-            dataVigenciaInicialMax,
-            pagina,
-            tamanhoPagina: Math.min(500, Math.max(10, tamanhoPagina)),
-          },
+      const res = await this.http.get<DadosAbertosResponse<ComprasnetARPItem>>('/modulo-arp/2_consultarARPItem', {
+        params: {
+          dataVigenciaInicialMin,
+          dataVigenciaInicialMax,
+          pagina,
+          tamanhoPagina: Math.min(500, Math.max(10, tamanhoPagina)),
         },
-      );
+      });
       return res.data?.resultado ?? [];
     } catch (err: unknown) {
       logger.warn('[ComprasNet] Error fetching ARP itens', {
@@ -111,66 +96,59 @@ export class ComprasnetClient {
     }
   }
 
-  // ── Paginação automática para pregões ─────────────────────────────────────
-  // Divide o período em janelas mensais para não sobrecarregar
-  async fetchAllPregoes(sinceDays: number, maxPagesPerWindow = 100): Promise<ComprasnetItemPregao[]> {
+  async fetchAllPregoes(sinceDays: number, maxPagesPerWindow = config.comprasnet.maxPagesPregoes): Promise<ComprasnetItemPregao[]> {
     const all: ComprasnetItemPregao[] = [];
     const now = new Date();
-    const WINDOW_DAYS = 30;
+    const windowDays = 30;
 
-    for (let offset = 0; offset < sinceDays; offset += WINDOW_DAYS) {
+    for (let offset = 0; offset < sinceDays; offset += windowDays) {
       const windowEnd = new Date(now);
       windowEnd.setDate(now.getDate() - offset);
       const windowStart = new Date(now);
-      windowStart.setDate(now.getDate() - Math.min(offset + WINDOW_DAYS, sinceDays));
-
-      const dtHomInicial = this.formatDate(windowStart);
-      const dtHomFinal = this.formatDate(windowEnd);
-
-      logger.debug('[ComprasNet] Fetching pregoes window', { dtHomInicial, dtHomFinal });
+      windowStart.setDate(now.getDate() - Math.min(offset + windowDays, sinceDays));
 
       const windowResults = await this.fetchAllPagesPregoes(
-        { dtHomInicial, dtHomFinal, tamanhoPagina: 500 },
+        {
+          dtHomInicial: this.formatDate(windowStart),
+          dtHomFinal: this.formatDate(windowEnd),
+          tamanhoPagina: 500,
+        },
         maxPagesPerWindow,
       );
+
       all.push(...windowResults);
     }
 
     return all;
   }
 
-  // ── Paginação automática para ARPs ────────────────────────────────────────
-  // Janelas de 30 dias para evitar timeout do endpoint
-  async fetchAllARPItens(sinceDays: number, maxPagesPerWindow = 50): Promise<ComprasnetARPItem[]> {
+  async fetchAllARPItens(sinceDays: number, maxPagesPerWindow = config.comprasnet.maxPagesArp): Promise<ComprasnetARPItem[]> {
     const all: ComprasnetARPItem[] = [];
     const now = new Date();
-    const WINDOW_DAYS = 30;
+    const windowDays = 30;
 
-    for (let offset = 0; offset < sinceDays; offset += WINDOW_DAYS) {
+    for (let offset = 0; offset < sinceDays; offset += windowDays) {
       const windowEnd = new Date(now);
       windowEnd.setDate(now.getDate() - offset);
       const windowStart = new Date(now);
-      windowStart.setDate(now.getDate() - Math.min(offset + WINDOW_DAYS, sinceDays));
-
-      const min = this.formatDate(windowStart);
-      const max = this.formatDate(windowEnd);
-
-      logger.debug('[ComprasNet] Fetching ARP itens window', { min, max });
+      windowStart.setDate(now.getDate() - Math.min(offset + windowDays, sinceDays));
 
       const windowResults = await this.fetchAllPagesARP(
-        { dataVigenciaInicialMin: min, dataVigenciaInicialMax: max, tamanhoPagina: 500 },
+        {
+          dataVigenciaInicialMin: this.formatDate(windowStart),
+          dataVigenciaInicialMax: this.formatDate(windowEnd),
+          tamanhoPagina: 500,
+        },
         maxPagesPerWindow,
       );
+
       all.push(...windowResults);
     }
 
     return all;
   }
 
-  private async fetchAllPagesPregoes(
-    options: ComprasnetPregaoOptions,
-    maxPages: number,
-  ): Promise<ComprasnetItemPregao[]> {
+  private async fetchAllPagesPregoes(options: ComprasnetPregaoOptions, maxPages: number): Promise<ComprasnetItemPregao[]> {
     const results: ComprasnetItemPregao[] = [];
     let page = 1;
 
@@ -179,16 +157,13 @@ export class ComprasnetClient {
       if (!data || data.length === 0) break;
       results.push(...data);
       if (data.length < (options.tamanhoPagina ?? 500)) break;
-      page++;
+      page += 1;
     }
 
     return results;
   }
 
-  private async fetchAllPagesARP(
-    options: ComprasnetARPOptions,
-    maxPages: number,
-  ): Promise<ComprasnetARPItem[]> {
+  private async fetchAllPagesARP(options: ComprasnetARPOptions, maxPages: number): Promise<ComprasnetARPItem[]> {
     const results: ComprasnetARPItem[] = [];
     let page = 1;
 
@@ -197,7 +172,7 @@ export class ComprasnetClient {
       if (!data || data.length === 0) break;
       results.push(...data);
       if (data.length < (options.tamanhoPagina ?? 500)) break;
-      page++;
+      page += 1;
     }
 
     return results;
@@ -219,8 +194,8 @@ export class ComprasnetClient {
     }
   }
 
-  private formatDate(d: Date): string {
-    return d.toISOString().split('T')[0]; // "YYYY-MM-DD"
+  private formatDate(date: Date): string {
+    return date.toISOString().split('T')[0];
   }
 }
 

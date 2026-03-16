@@ -28,9 +28,10 @@ export const config = {
     baseUrl: process.env.PNCP_BASE_URL ?? 'https://pncp.gov.br/api/consulta/v1',
     timeoutMs: parseInt(process.env.PNCP_TIMEOUT_MS ?? '30000', 10),
     rateLimitMs: parseInt(process.env.PNCP_RATE_LIMIT_MS ?? '500', 10),
-    pageSize: 50,
+    pageSize: parseInt(process.env.PNCP_PAGE_SIZE ?? '50', 10),
     maxPagesContratacoes: parseInt(process.env.PNCP_MAX_PAGES_CONTRATACOES ?? '500', 10),
     maxPagesContratos: parseInt(process.env.PNCP_MAX_PAGES_CONTRATOS ?? '300', 10),
+    maxPagesItensContratacao: parseInt(process.env.PNCP_MAX_PAGES_ITENS_CONTRATACAO ?? '20', 10),
     maxRetries: 3,
     retryDelayMs: 1000,
   },
@@ -38,16 +39,26 @@ export const config = {
   transparencia: {
     apiKey: process.env.TRANSPARENCIA_API_KEY ?? '',
     baseUrl: 'https://api.portaldatransparencia.gov.br/api-de-dados',
+    maxPagesPerOrgao: parseInt(process.env.TRANSPARENCIA_MAX_PAGES_PER_ORGAO ?? '60', 10),
+    orgaosPrincipais:
+      process.env.TRANSPARENCIA_ORGAOS_PRINCIPAIS
+        ?.split(',')
+        .map((item) => item.trim())
+        .filter(Boolean) ?? [],
   },
 
   comprasnet: {
-    // Nova API v2 (fev/2026) — antiga compras.dados.gov.br está fora do ar
-    baseUrl: process.env.COMPRASNET_BASE_URL ?? 'https://api.compras.dados.gov.br',
+    baseUrl: process.env.COMPRASNET_BASE_URL ?? 'https://dadosabertos.compras.gov.br',
+    timeoutMs: parseInt(process.env.COMPRASNET_TIMEOUT_MS ?? '45000', 10),
+    rateLimitMs: parseInt(process.env.COMPRASNET_RATE_LIMIT_MS ?? '1200', 10),
+    maxPagesPregoes: parseInt(process.env.COMPRASNET_MAX_PAGES_PREGOES ?? '150', 10),
+    maxPagesArp: parseInt(process.env.COMPRASNET_MAX_PAGES_ARP ?? '100', 10),
   },
 
   bps: {
     dataUrl: process.env.BPS_DATA_URL ?? 'https://opendatasus.saude.gov.br',
     maxFilesPerRun: parseInt(process.env.BPS_MAX_FILES_PER_RUN ?? '6', 10),
+    startYear: parseInt(process.env.BPS_START_YEAR ?? '2020', 10),
   },
 
   fnde: {

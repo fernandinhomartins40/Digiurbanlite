@@ -12,7 +12,7 @@ import type { BpsItem } from '../../connectors/bps/bps.types';
 
 export interface BpsIngestOptions {
   runId?: string;
-  maxFiles?: number; // quantos arquivos CSV baixar (para não sobrecarregar na primeira run)
+  maxFiles?: number;
 }
 
 export interface IngestSourceResult {
@@ -22,74 +22,69 @@ export interface IngestSourceResult {
   errors: number;
 }
 
-// Organização BPS padrão (Ministério da Saúde)
-const BPS_ORG_CNPJ = 'BPS_MS_00394544000185';
+type CatalogClassification = Awaited<ReturnType<typeof classifyCatalog>>;
 
 export async function runBpsIngest(options: BpsIngestOptions = {}): Promise<IngestSourceResult> {
   const { runId, maxFiles = config.bps.maxFilesPerRun } = options;
   const client = getBpsClient();
   const osClient = getOpenSearchClient();
+  const organizationCache = new Map<string, { id: string; name: string }>();
+  const supplierCache = new Map<string, string>();
+  const classificationCache = new Map<string, CatalogClassification>();
 
-  let ingested = 0, updated = 0, skipped = 0, errors = 0;
-  logger.info('[BPS Ingest] Starting', { runId });
+  let ingested = 0;
+  let updated = 0;
+  let skipped = 0;
+  let errors = 0;
 
-  // Garantir organização padrão BPS
-  await prisma.organization.upsert({
-    where: { cnpj: BPS_ORG_CNPJ },
-    create: {
-      cnpj: BPS_ORG_CNPJ,
-      name: 'Banco de Preços em Saúde — Ministério da Saúde',
-      shortName: 'BPS/MS',
-      sphere: 'federal',
-    },
-    update: {},
-  });
-
-  const org = await prisma.organization.findUnique({ where: { cnpj: BPS_ORG_CNPJ } });
-  if (!org) return { ingested: 0, updated: 0, skipped: 0, errors: 1 };
+  logger.info('[BPS Ingest] Starting', { runId, maxFiles });
 
   try {
     const resources = await client.listResources();
-    logger.info('[BPS Ingest] Resources found', { count: resources.length });
+    logger.info('[BPS Ingest] Resources found', { count: resources.length, resources: resources.map((resource) => resource.name) });
 
     const effectiveMaxFiles = maxFiles <= 0 ? resources.length : maxFiles;
     const toProcess = resources.slice(0, effectiveMaxFiles);
 
     for (const resource of toProcess) {
       let tmpFile: string | null = null;
+
       try {
         tmpFile = await client.downloadCsv(resource.url);
         let lineCount = 0;
 
         for await (const item of client.parseCsvStream(tmpFile)) {
-          const result = await processItem(item, org.id, osClient);
-          if (result === 'ingested') ingested++;
-          else if (result === 'updated') updated++;
-          else skipped++;
-          lineCount++;
+          const result = await processItem(item, osClient, organizationCache, supplierCache, classificationCache);
+          if (result === 'ingested') ingested += 1;
+          else if (result === 'updated') updated += 1;
+          else skipped += 1;
+          lineCount += 1;
 
-          // Log de progresso a cada 5k linhas
           if (lineCount % 5000 === 0) {
-            logger.info('[BPS Ingest] Progress', { lineCount, ingested, skipped, resource: resource.name });
+            logger.info('[BPS Ingest] Progress', { resource: resource.name, lineCount, ingested, updated, skipped });
           }
         }
 
-        logger.info('[BPS Ingest] File processed', { resource: resource.name, lineCount });
+        logger.info('[BPS Ingest] File processed', { resource: resource.name, lineCount, ingested, updated, skipped });
       } catch (err: unknown) {
         logger.error('[BPS Ingest] Error processing file', {
           error: (err as Error).message,
           resource: resource.name,
         });
-        errors++;
+        errors += 1;
       } finally {
         if (tmpFile && fs.existsSync(tmpFile)) {
-          try { fs.unlinkSync(tmpFile); } catch { /* ignore */ }
+          try {
+            fs.unlinkSync(tmpFile);
+          } catch {
+            // ignore cleanup failure
+          }
         }
       }
     }
   } catch (err: unknown) {
     logger.error('[BPS Ingest] Fatal error', { error: (err as Error).message });
-    errors++;
+    errors += 1;
   }
 
   logger.info('[BPS Ingest] Done', { ingested, updated, skipped, errors });
@@ -98,78 +93,73 @@ export async function runBpsIngest(options: BpsIngestOptions = {}): Promise<Inge
 
 async function processItem(
   item: BpsItem,
-  orgId: string,
   osClient: ReturnType<typeof getOpenSearchClient>,
+  organizationCache: Map<string, { id: string; name: string }>,
+  supplierCache: Map<string, string>,
+  classificationCache: Map<string, CatalogClassification>,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  // Descrição principal é DESCRICAO_CATMAT; pode incluir capacidade e unidade para enriquecer
-  const desc = [item.DESCRICAO_CATMAT, item.CAPACIDADE, item.UNIDADE_FORNECIMENTO_CAPACIDADE]
-    .filter(Boolean).join(' — ');
+  const description = [item.DESCRICAO_CATMAT, item.CAPACIDADE, item.UNIDADE_FORNECIMENTO_CAPACIDADE]
+    .filter(Boolean)
+    .join(' - ')
+    .trim();
 
-  // CSV usa ponto como separador decimal (ex: "0.32")
-  const unitPrice = item.PRECO_UNITARIO ? parseFloat(item.PRECO_UNITARIO) : null;
-  const totalPrice = item.PRECO_TOTAL ? parseFloat(item.PRECO_TOTAL) : null;
-  const quantity = item.QTD_ITENS_COMPRADOS ? parseFloat(item.QTD_ITENS_COMPRADOS) : null;
+  const unitPrice = parseDecimal(item.PRECO_UNITARIO);
+  const totalPrice = parseDecimal(item.PRECO_TOTAL);
+  const quantity = parseDecimal(item.QTD_ITENS_COMPRADOS);
+  const calculatedTotalPrice = totalPrice ?? (typeof unitPrice === 'number' && typeof quantity === 'number' ? unitPrice * quantity : null);
 
-  const validation = validateLineItem({ description: desc, unitPrice, totalPrice, quantity });
+  const validation = validateLineItem({
+    description,
+    unitPrice,
+    totalPrice: calculatedTotalPrice,
+    quantity,
+  });
   if (!validation.isValid) return 'skipped';
 
-  // sourceId: ano + código CATMAT + CNPJ comprador
-  const sourceId = `bps_${item.ANO_COMPRA}_${item.CODIGO_BR}_${item.CNPJ_INSTITUICAO}`.replace(/[^a-z0-9_]/gi, '_');
-  const normalizedDescription = normalizeText(desc);
-  const unit = normalizeUnit(item.UNIDADE_MEDIDA ?? item.UNIDADE_FORNECIMENTO);
+  const sourceId = buildBpsSourceId(item, description, unitPrice, calculatedTotalPrice, quantity);
+  const normalizedDescription = normalizeText(description);
+  const unit = normalizeUnit(item.UNIDADE_MEDIDA ?? item.UNIDADE_FORNECIMENTO ?? item.UNIDADE_FORNECIMENTO_CAPACIDADE);
+  const contractDate = parseBpsDate(item.COMPRA, item.ANO_COMPRA);
 
-  // Parsear data da compra: "YYYY-MM-DD HH:mm:ss.mmm" → Date
-  let contractDate: Date | null = null;
-  if (item.COMPRA) {
-    try {
-      contractDate = new Date(item.COMPRA.split(' ')[0]);
-    } catch { /* ignore */ }
-  } else if (item.ANO_COMPRA) {
-    contractDate = new Date(`${item.ANO_COMPRA}-01-01`);
+  const classificationKey = `${item.CODIGO_BR ?? 'na'}|${normalizedDescription}`;
+  let classification = classificationCache.get(classificationKey);
+  if (!classification) {
+    classification = await classifyCatalog({
+      description,
+      normalizedDescription,
+      catmatCode: item.CODIGO_BR,
+      allowDescriptionFallback: true,
+    });
+    classificationCache.set(classificationKey, classification);
   }
 
-  const classification = await classifyCatalog({
-    description: desc,
-    normalizedDescription,
-    catmatCode: item.CODIGO_BR,
-    allowDescriptionFallback: false,
-  });
+  const supplierDocument = normalizeDocumentNumber(item.CNPJ_FORNECEDOR);
+  const supplierName = normalizeNullableText(item.FORNECEDOR);
   const provenanceHash = buildProvenanceHash({
     source: 'bps',
     sourceId,
-    description: desc,
+    description,
     unitPrice,
     contractDate,
-    supplier: item.CNPJ_FORNECEDOR ?? item.FORNECEDOR,
+    supplier: supplierDocument ?? supplierName,
   });
 
   const confidenceScore = calculateConfidenceScore({ source: 'bps', contractDate, count: 1 });
-  const yearMonth = item.ANO_COMPRA
-    ? (contractDate
-        ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
-        : `${item.ANO_COMPRA}-01`)
-    : null;
+  const yearMonth = contractDate
+    ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
+    : (item.ANO_COMPRA ? `${item.ANO_COMPRA}-01` : null);
 
-  // Upsert fornecedor
-  let supplierId: string | null = null;
-  if (item.CNPJ_FORNECEDOR) {
-    const supplier = await prisma.supplier.upsert({
-      where: { cnpj: item.CNPJ_FORNECEDOR },
-      create: { cnpj: item.CNPJ_FORNECEDOR, name: item.FORNECEDOR ?? '' },
-      update: { name: item.FORNECEDOR ?? '' },
-    });
-    supplierId = supplier.id;
-  }
-
+  const organization = await resolveOrganization(item, organizationCache);
+  const supplierId = await resolveSupplierId(item, supplierCache, supplierDocument, supplierName);
   const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
 
   const data = {
-    description: desc,
+    description,
     normalizedDescription,
     quantity,
     unit,
     unitPrice,
-    totalPrice,
+    totalPrice: calculatedTotalPrice,
     calculatedUnitPrice: unitPrice,
     catmatCode: classification.catmatCode ?? item.CODIGO_BR ?? null,
     catserCode: classification.catserCode,
@@ -179,26 +169,88 @@ async function processItem(
     provenanceHash,
     inferredFromObject: false,
     supplierId,
-    supplierName: item.FORNECEDOR,
-    supplierCnpj: item.CNPJ_FORNECEDOR,
+    supplierName,
+    supplierCnpj: supplierDocument,
     confidenceScore,
     classificationScore: classification.confidence > 0 ? classification.confidence : null,
     yearMonth,
     contractDate,
-    uf: item.UF,
-    city: item.MUNICIPIO_INSTITUICAO,
-    organizationId: orgId,
+    uf: normalizeNullableText(item.UF),
+    city: normalizeNullableText(item.MUNICIPIO_INSTITUICAO),
+    organizationId: organization.id,
   };
 
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: item.NOME_INSTITUICAO ?? 'Comprador BPS' });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: organization.name });
     return 'updated';
-  } else {
-    const dbItem = await prisma.lineItem.create({ data });
-    await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: item.NOME_INSTITUICAO ?? 'Comprador BPS' });
-    return 'ingested';
   }
+
+  const dbItem = await prisma.lineItem.create({ data });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: organization.name });
+  return 'ingested';
+}
+
+async function resolveOrganization(
+  item: BpsItem,
+  cache: Map<string, { id: string; name: string }>,
+): Promise<{ id: string; name: string }> {
+  const normalizedInstitutionCnpj = normalizeDocumentNumber(item.CNPJ_INSTITUICAO);
+  const organizationName = normalizeNullableText(item.NOME_INSTITUICAO) ?? 'Comprador BPS';
+  const organizationKey = normalizedInstitutionCnpj ?? `BPS_ORG_${sanitizePart(organizationName)}`;
+
+  const cached = cache.get(organizationKey);
+  if (cached) return cached;
+
+  const organization = await prisma.organization.upsert({
+    where: { cnpj: organizationKey },
+    create: {
+      cnpj: organizationKey,
+      name: organizationName,
+      shortName: organizationName.slice(0, 80),
+      uf: normalizeNullableText(item.UF),
+      city: normalizeNullableText(item.MUNICIPIO_INSTITUICAO),
+      sphere: 'federal',
+    },
+    update: {
+      name: organizationName,
+      uf: normalizeNullableText(item.UF),
+      city: normalizeNullableText(item.MUNICIPIO_INSTITUICAO),
+    },
+  });
+
+  const resolved = { id: organization.id, name: organization.name };
+  cache.set(organizationKey, resolved);
+  return resolved;
+}
+
+async function resolveSupplierId(
+  item: BpsItem,
+  cache: Map<string, string>,
+  supplierDocument: string | null,
+  supplierName: string | null,
+): Promise<string | null> {
+  if (!supplierDocument && !supplierName) return null;
+
+  const key = supplierDocument ?? `NAME_${sanitizePart(supplierName)}`;
+  const cached = cache.get(key);
+  if (cached) return cached;
+
+  let supplierId: string | null = null;
+  if (supplierDocument) {
+    const supplier = await prisma.supplier.upsert({
+      where: { cnpj: supplierDocument },
+      create: { cnpj: supplierDocument, name: supplierName ?? supplierDocument },
+      update: { name: supplierName ?? supplierDocument },
+    });
+    supplierId = supplier.id;
+  }
+
+  if (supplierId) {
+    cache.set(key, supplierId);
+  }
+
+  return supplierId;
 }
 
 async function indexToOpenSearch(
@@ -259,7 +311,7 @@ async function indexToOpenSearch(
           contractDate: item.contractDate,
           supplier: item.supplierCnpj ?? item.supplierName,
         }),
-        confidence_score: item.confidenceScore ?? 0.90,
+        confidence_score: item.confidenceScore ?? 0.9,
         classification_score: item.classificationScore,
         inferred_from_object: item.inferredFromObject ?? false,
         year_month: item.yearMonth,
@@ -269,4 +321,74 @@ async function indexToOpenSearch(
   } catch (err: unknown) {
     logger.warn('[BPS Ingest] OpenSearch index error', { error: (err as Error).message });
   }
+}
+
+function buildBpsSourceId(
+  item: BpsItem,
+  description: string,
+  unitPrice: number | null,
+  totalPrice: number | null,
+  quantity: number | null,
+): string {
+  return [
+    'bps',
+    sanitizePart(item.ANO_COMPRA),
+    sanitizePart(item.CODIGO_BR),
+    sanitizePart(normalizeDocumentNumber(item.CNPJ_INSTITUICAO)),
+    sanitizePart(normalizeDocumentNumber(item.CNPJ_FORNECEDOR)),
+    sanitizePart(item.COMPRA),
+    sanitizePart(item.INSERCAO),
+    sanitizePart(item.MODALIDADE_COMPRA),
+    sanitizePart(item.TIPO_COMPRA),
+    sanitizePart(quantity),
+    sanitizePart(unitPrice),
+    sanitizePart(totalPrice),
+    sanitizePart(description.slice(0, 80)),
+  ]
+    .filter(Boolean)
+    .join('_');
+}
+
+function parseBpsDate(compra?: string, anoCompra?: string): Date | null {
+  if (compra) {
+    const normalized = compra.split(' ')[0];
+    const parsed = new Date(normalized);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  if (anoCompra) {
+    const parsed = new Date(`${anoCompra}-01-01`);
+    if (!Number.isNaN(parsed.getTime())) return parsed;
+  }
+
+  return null;
+}
+
+function parseDecimal(value?: string | null): number | null {
+  if (!value) return null;
+  const normalized = value
+    .trim()
+    .replace(/\s+/g, '')
+    .replace(/\.(?=\d{3}(?:\D|$))/g, '')
+    .replace(',', '.');
+  const parsed = Number.parseFloat(normalized);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function normalizeDocumentNumber(value?: string | null): string | null {
+  const digits = value?.replace(/\D/g, '') ?? '';
+  return digits.length > 0 ? digits : null;
+}
+
+function normalizeNullableText(value?: string | null): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
+function sanitizePart(value: unknown): string {
+  return String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '_')
+    .replace(/^_+|_+$/g, '');
 }
