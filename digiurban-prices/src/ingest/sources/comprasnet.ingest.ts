@@ -102,8 +102,8 @@ async function processPregaoItem(
   osClient: ReturnType<typeof getOpenSearchClient>,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
   const desc = item.descricaoItem ?? item.descricaoDetalhadaItem ?? '';
-  const unitPrice = item.valorHomologadoItem ? parseFloat(item.valorHomologadoItem) : null;
-  const quantity = item.quantidadeItem ? parseFloat(item.quantidadeItem) : null;
+  const unitPrice = item.valorHomologadoItem ? parseFloat(item.valorHomologadoItem.replace(',', '.')) : null;
+  const quantity = item.quantidadeItem ? parseFloat(item.quantidadeItem.replace(',', '.')) : null;
 
   const validation = validateLineItem({ description: desc, unitPrice });
   if (!validation.isValid) return 'skipped';

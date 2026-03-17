@@ -97,55 +97,49 @@ export class ComprasnetClient {
   }
 
   async fetchAllPregoes(sinceDays: number, maxPagesPerWindow = config.comprasnet.maxPagesPregoes): Promise<ComprasnetItemPregao[]> {
-    const all: ComprasnetItemPregao[] = [];
-    const now = new Date();
-    const windowDays = 30;
+    const deduped = new Map<string, ComprasnetItemPregao>();
 
-    for (let offset = 0; offset < sinceDays; offset += windowDays) {
-      const windowEnd = new Date(now);
-      windowEnd.setDate(now.getDate() - offset);
-      const windowStart = new Date(now);
-      windowStart.setDate(now.getDate() - Math.min(offset + windowDays, sinceDays));
-
+    for (const window of this.buildRollingWindows(sinceDays, 30)) {
       const windowResults = await this.fetchAllPagesPregoes(
         {
-          dtHomInicial: this.formatDate(windowStart),
-          dtHomFinal: this.formatDate(windowEnd),
+          dtHomInicial: this.formatDate(window.start),
+          dtHomFinal: this.formatDate(window.end),
           tamanhoPagina: 500,
         },
         maxPagesPerWindow,
       );
 
-      all.push(...windowResults);
+      for (const item of windowResults) {
+        if (!this.isUsablePregaoItem(item)) {
+          continue;
+        }
+
+        deduped.set(this.buildPregaoKey(item), item);
+      }
     }
 
-    return all;
+    return Array.from(deduped.values());
   }
 
   async fetchAllARPItens(sinceDays: number, maxPagesPerWindow = config.comprasnet.maxPagesArp): Promise<ComprasnetARPItem[]> {
-    const all: ComprasnetARPItem[] = [];
-    const now = new Date();
-    const windowDays = 30;
+    const deduped = new Map<string, ComprasnetARPItem>();
 
-    for (let offset = 0; offset < sinceDays; offset += windowDays) {
-      const windowEnd = new Date(now);
-      windowEnd.setDate(now.getDate() - offset);
-      const windowStart = new Date(now);
-      windowStart.setDate(now.getDate() - Math.min(offset + windowDays, sinceDays));
-
+    for (const window of this.buildRollingWindows(sinceDays, 30)) {
       const windowResults = await this.fetchAllPagesARP(
         {
-          dataVigenciaInicialMin: this.formatDate(windowStart),
-          dataVigenciaInicialMax: this.formatDate(windowEnd),
+          dataVigenciaInicialMin: this.formatDate(window.start),
+          dataVigenciaInicialMax: this.formatDate(window.end),
           tamanhoPagina: 500,
         },
         maxPagesPerWindow,
       );
 
-      all.push(...windowResults);
+      for (const item of windowResults) {
+        deduped.set(this.buildArpKey(item), item);
+      }
     }
 
-    return all;
+    return Array.from(deduped.values());
   }
 
   private async fetchAllPagesPregoes(options: ComprasnetPregaoOptions, maxPages: number): Promise<ComprasnetItemPregao[]> {
@@ -196,6 +190,54 @@ export class ComprasnetClient {
 
   private formatDate(date: Date): string {
     return date.toISOString().split('T')[0];
+  }
+
+  private buildRollingWindows(sinceDays: number, windowDays: number): Array<{ start: Date; end: Date }> {
+    const windows: Array<{ start: Date; end: Date }> = [];
+    const end = new Date();
+    end.setHours(0, 0, 0, 0);
+
+    const minDate = new Date(end);
+    minDate.setDate(minDate.getDate() - Math.max(0, sinceDays - 1));
+
+    let currentEnd = new Date(end);
+    while (currentEnd >= minDate) {
+      const start = new Date(currentEnd);
+      start.setDate(start.getDate() - (windowDays - 1));
+      if (start < minDate) {
+        start.setTime(minDate.getTime());
+      }
+
+      windows.push({ start: new Date(start), end: new Date(currentEnd) });
+
+      currentEnd = new Date(start);
+      currentEnd.setDate(currentEnd.getDate() - 1);
+    }
+
+    return windows;
+  }
+
+  private isUsablePregaoItem(item: ComprasnetItemPregao): boolean {
+    const unitPrice = item.valorHomologadoItem ? Number(item.valorHomologadoItem.replace(',', '.')) : NaN;
+    const situacao = (item.situacaoItem ?? '').toLowerCase();
+
+    if (!Number.isFinite(unitPrice) || unitPrice <= 0) {
+      return false;
+    }
+
+    if (situacao.includes('cancelado')) {
+      return false;
+    }
+
+    return true;
+  }
+
+  private buildPregaoKey(item: ComprasnetItemPregao): string {
+    return `${item.idCompraItem ?? item.idCompra ?? 'pregao'}_${item.tbVwItensPregaoId?.coItem ?? 'item'}`;
+  }
+
+  private buildArpKey(item: ComprasnetARPItem): string {
+    return `${item.numeroControlePncpAta ?? item.numeroAtaRegistroPreco ?? 'arp'}_${item.codigoItem ?? 'item'}`;
   }
 }
 

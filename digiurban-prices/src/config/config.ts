@@ -39,6 +39,12 @@ export const config = {
   transparencia: {
     apiKey: process.env.TRANSPARENCIA_API_KEY ?? '',
     baseUrl: 'https://api.portaldatransparencia.gov.br/api-de-dados',
+    bulkZipUrl:
+      process.env.TRANSPARENCIA_BULK_ZIP_URL ??
+      'https://dadosabertos-download.cgu.gov.br/PortalDaTransparencia/saida/paginas-de-transparencia/contratos/Contratos.zip',
+    preferBulkDownload: process.env.TRANSPARENCIA_PREFER_BULK_DOWNLOAD !== 'false',
+    timeoutMs: parseInt(process.env.TRANSPARENCIA_TIMEOUT_MS ?? '45000', 10),
+    rateLimitMs: parseInt(process.env.TRANSPARENCIA_RATE_LIMIT_MS ?? '1000', 10),
     maxPagesPerOrgao: parseInt(process.env.TRANSPARENCIA_MAX_PAGES_PER_ORGAO ?? '60', 10),
     orgaosPrincipais:
       process.env.TRANSPARENCIA_ORGAOS_PRINCIPAIS
@@ -59,6 +65,9 @@ export const config = {
     dataUrl: process.env.BPS_DATA_URL ?? 'https://opendatasus.saude.gov.br',
     maxFilesPerRun: parseInt(process.env.BPS_MAX_FILES_PER_RUN ?? '6', 10),
     startYear: parseInt(process.env.BPS_START_YEAR ?? '2020', 10),
+    timeoutMs: parseInt(process.env.BPS_TIMEOUT_MS ?? '300000', 10),
+    probeTimeoutMs: parseInt(process.env.BPS_PROBE_TIMEOUT_MS ?? '15000', 10),
+    validateResourceExists: process.env.BPS_VALIDATE_RESOURCE_EXISTS !== 'false',
   },
 
   fnde: {

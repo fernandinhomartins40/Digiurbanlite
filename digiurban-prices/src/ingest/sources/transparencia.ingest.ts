@@ -28,65 +28,119 @@ export async function runTransparenciaIngest(options: TransparenciaIngestOptions
   const client = getTransparenciaClient();
   const osClient = getOpenSearchClient();
 
-  let ingested = 0, updated = 0, skipped = 0, errors = 0;
+  let ingested = 0;
+  let updated = 0;
+  let skipped = 0;
+  let errors = 0;
 
-  if (!config.transparencia.apiKey) {
-    logger.info('[Transparencia Ingest] API key nÃƒÂ£o configurada, pulando');
-    return { ingested: 0, updated: 0, skipped: 0, errors: 0 };
-  }
+  logger.info('[Transparencia Ingest] Starting', { sinceDays, runId, preferBulk: config.transparencia.preferBulkDownload });
 
-  logger.info('[Transparencia Ingest] Starting', { sinceDays, runId });
+  const dataFim = new Date();
+  const dataInicio = new Date();
+  dataInicio.setDate(dataInicio.getDate() - sinceDays);
+  const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
   try {
-    const dataFim = new Date();
-    const dataInicio = new Date();
-    dataInicio.setDate(dataInicio.getDate() - sinceDays);
+    let bulkProcessed = false;
 
-    const formatDate = (d: Date) => d.toISOString().split('T')[0];
-
-    // API exige codigoOrgao Ã¢â‚¬â€ busca por lista de ÃƒÂ³rgÃƒÂ£os principais
-    const contratos = await client.fetchAllOrgaos(
-      formatDate(dataInicio),
-      formatDate(dataFim),
-      config.transparencia.orgaosPrincipais.length > 0
-        ? config.transparencia.orgaosPrincipais
-        : TRANSPARENCIA_ORGAOS_PRINCIPAIS,
-      config.transparencia.maxPagesPerOrgao,
-    );
-
-    logger.info('[Transparencia Ingest] Contratos fetched', { count: contratos.length });
-
-    for (const contrato of contratos) {
+    if (config.transparencia.preferBulkDownload && config.transparencia.bulkZipUrl) {
       try {
-        const inferredItems = inferItemsFromObject(contrato.objeto ?? '', 4);
-        if (inferredItems.length === 0) {
-          const result = await processContrato(contrato, osClient);
-          if (result === 'ingested') ingested++;
-          else if (result === 'updated') updated++;
-          else skipped++;
-        } else {
-          for (let idx = 0; idx < inferredItems.length; idx++) {
-            const result = await processContrato(contrato, osClient, inferredItems[idx], idx + 1);
-            if (result === 'ingested') ingested++;
-            else if (result === 'updated') updated++;
-            else skipped++;
+        let processed = 0;
+
+        for await (const contrato of client.streamBulkContracts(formatDate(dataInicio), formatDate(dataFim))) {
+          processed += 1;
+
+          try {
+            const result = await processFetchedContrato(contrato, osClient);
+            ingested += result.ingested;
+            updated += result.updated;
+            skipped += result.skipped;
+          } catch (err: unknown) {
+            logger.warn('[Transparencia Ingest] Error processing bulk contrato', {
+              error: (err as Error).message,
+              id: contrato.id,
+            });
+            errors += 1;
           }
         }
+
+        bulkProcessed = true;
+        logger.info('[Transparencia Ingest] Bulk source processed', { processed });
       } catch (err: unknown) {
-        logger.warn('[Transparencia Ingest] Error processing contrato', {
+        logger.warn('[Transparencia Ingest] Bulk source failed, evaluating API fallback', {
           error: (err as Error).message,
-          id: contrato.id,
         });
-        errors++;
+      }
+    }
+
+    if (!bulkProcessed) {
+      if (!config.transparencia.apiKey) {
+        logger.info('[Transparencia Ingest] API key not configured and bulk mode unavailable, skipping');
+        return { ingested: 0, updated: 0, skipped: 0, errors: 0 };
+      }
+
+      const contratos = await client.fetchAllOrgaos(
+        formatDate(dataInicio),
+        formatDate(dataFim),
+        config.transparencia.orgaosPrincipais.length > 0
+          ? config.transparencia.orgaosPrincipais
+          : TRANSPARENCIA_ORGAOS_PRINCIPAIS,
+        config.transparencia.maxPagesPerOrgao,
+      );
+
+      logger.info('[Transparencia Ingest] API contratos fetched', { count: contratos.length });
+
+      for (const contrato of contratos) {
+        try {
+          const result = await processFetchedContrato(contrato, osClient);
+          ingested += result.ingested;
+          updated += result.updated;
+          skipped += result.skipped;
+        } catch (err: unknown) {
+          logger.warn('[Transparencia Ingest] Error processing contrato', {
+            error: (err as Error).message,
+            id: contrato.id,
+          });
+          errors += 1;
+        }
       }
     }
   } catch (err: unknown) {
     logger.error('[Transparencia Ingest] Fatal error', { error: (err as Error).message });
-    errors++;
+    errors += 1;
   }
 
   logger.info('[Transparencia Ingest] Done', { ingested, updated, skipped, errors });
   return { ingested, updated, skipped, errors };
+}
+
+async function processFetchedContrato(
+  contrato: TransparenciaContrato,
+  osClient: ReturnType<typeof getOpenSearchClient>,
+): Promise<{ ingested: number; updated: number; skipped: number }> {
+  const inferredItems = inferItemsFromObject(contrato.objeto ?? '', 4);
+
+  if (inferredItems.length === 0) {
+    const result = await processContrato(contrato, osClient);
+    return {
+      ingested: result === 'ingested' ? 1 : 0,
+      updated: result === 'updated' ? 1 : 0,
+      skipped: result === 'skipped' ? 1 : 0,
+    };
+  }
+
+  let ingested = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  for (let idx = 0; idx < inferredItems.length; idx += 1) {
+    const result = await processContrato(contrato, osClient, inferredItems[idx], idx + 1);
+    if (result === 'ingested') ingested += 1;
+    else if (result === 'updated') updated += 1;
+    else skipped += 1;
+  }
+
+  return { ingested, updated, skipped };
 }
 
 async function processContrato(
@@ -95,14 +149,13 @@ async function processContrato(
   inferred?: { description: string; quantity: number | null; unit: string | null },
   inferredIndex?: number,
 ): Promise<'ingested' | 'updated' | 'skipped'> {
-  // Contratos da TransparÃƒÂªncia tÃƒÂªm objeto (descriÃƒÂ§ÃƒÂ£o) mas nÃƒÂ£o itemizaÃƒÂ§ÃƒÂ£o detalhada
   const desc = inferred?.description ?? contrato.objeto ?? '';
   const quantity = inferred?.quantity ?? null;
-  // Campos reais da API: valorInicialCompra / valorFinalCompra
   const totalPrice = contrato.valorInicialCompra ?? contrato.valorFinalCompra ?? null;
   const unitPrice = totalPrice && quantity && quantity > 0
     ? totalPrice / quantity
     : totalPrice;
+
   const validation = validateLineItem({
     description: desc,
     unitPrice,
@@ -113,11 +166,10 @@ async function processContrato(
     ? `transparencia_${contrato.id}_inferred_${inferredIndex}`
     : `transparencia_${contrato.id}`;
   const normalizedDescription = normalizeText(desc);
-  const contractDate = contrato.dataAssinatura ? new Date(contrato.dataAssinatura) : null;
-  // UF nÃƒÂ£o vem em orgaoVinculado Ã¢â‚¬â€ a API nÃƒÂ£o retorna municÃƒÂ­pio/UF diretamente
+  const referenceDate = contrato.dataAssinatura ?? contrato.dataPublicacaoDOU ?? contrato.dataInicioVigencia ?? null;
+  const contractDate = referenceDate ? new Date(referenceDate) : null;
   const uf: string | undefined = undefined;
 
-  // Campo real da API: cnpjFormatado (com pontos/barras) Ã¢â‚¬â€ normalizar para 14 dÃƒÂ­gitos
   const cnpjRaw = contrato.fornecedor?.cnpjFormatado ?? null;
   const supplierCnpj = cnpjRaw ? cnpjRaw.replace(/[.\-\/]/g, '') : null;
 
@@ -141,13 +193,12 @@ async function processContrato(
     ? `${contractDate.getFullYear()}-${String(contractDate.getMonth() + 1).padStart(2, '0')}`
     : null;
 
-  // Upsert organization
   const orgCnpj = `TRANS_${contrato.unidadeGestora?.codigo ?? contrato.id}`;
   const org = await prisma.organization.upsert({
     where: { cnpj: orgCnpj },
     create: {
       cnpj: orgCnpj,
-      name: contrato.unidadeGestora?.nome ?? 'Ãƒâ€œrgÃƒÂ£o Federal',
+      name: contrato.unidadeGestora?.nome ?? 'Orgao Federal',
       uf,
       sphere: 'federal',
     },
@@ -188,7 +239,6 @@ async function processContrato(
     contractDate,
     uf,
     organizationId: org.id,
-    // 'modality' nÃƒÂ£o existe no modelo LineItem Ã¢â‚¬â€ vai apenas para OpenSearch
   };
 
   const modality = contrato.modalidadeCompra ?? null;
@@ -197,11 +247,11 @@ async function processContrato(
     await prisma.lineItem.update({ where: { id: existing.id }, data });
     await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality });
     return 'updated';
-  } else {
-    const dbItem = await prisma.lineItem.create({ data });
-    await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality });
-    return 'ingested';
   }
+
+  const dbItem = await prisma.lineItem.create({ data });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality });
+  return 'ingested';
 }
 
 async function indexToOpenSearch(

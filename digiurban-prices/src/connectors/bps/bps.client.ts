@@ -8,6 +8,7 @@ import { createInterface } from 'readline';
 const unzipper = require('unzipper');
 import { config } from '../../config/config';
 import { logger } from '../../utils/logger';
+import { normalizeCsvHeader, normalizeDelimitedValue, parseDelimitedLine } from '../../utils/csv';
 import type { BpsItem } from './bps.types';
 
 const BPS_S3_BASE = 'https://s3.sa-east-1.amazonaws.com/ckan.saude.gov.br/BPS/csv';
@@ -30,13 +31,28 @@ export class BpsClient {
       years.push(year);
     }
 
-    return years.map((year) => ({
+    const resources = years.map((year) => ({
       id: `bps_${year}`,
       name: `BPS ${year}`,
       url: `${BPS_S3_BASE}/${year}.csv.zip`,
       format: 'csv',
       last_modified: `${year}-12-31`,
     }));
+
+    if (!config.bps.validateResourceExists) {
+      return resources;
+    }
+
+    const checks = await Promise.all(
+      resources.map(async (resource) => ({
+        resource,
+        exists: await this.resourceExists(resource.url),
+      })),
+    );
+
+    const available = checks.filter((item) => item.exists).map((item) => item.resource);
+    logger.info('[BPS] Resources available', { requested: resources.length, available: available.length });
+    return available;
   }
 
   async downloadCsv(url: string): Promise<string> {
@@ -46,7 +62,7 @@ export class BpsClient {
 
     const response = await axios.get(url, {
       responseType: 'stream',
-      timeout: 300000,
+      timeout: config.bps.timeoutMs,
       headers: { 'User-Agent': 'DigiUrban-Prices/1.0' },
     });
 
@@ -99,13 +115,13 @@ export class BpsClient {
     for await (const line of rl) {
       if (lineCount === 0) {
         const sep = line.includes(';') ? ';' : ',';
-        headers = line.split(sep).map((header) => header.trim().replace(/^"|"$/g, '').toUpperCase());
+        headers = parseDelimitedLine(line, sep).map((header) => normalizeCsvHeader(header));
         lineCount += 1;
         continue;
       }
 
       const sep = line.includes(';') ? ';' : ',';
-      const values = parseCsvLine(line, sep);
+      const values = parseDelimitedLine(line, sep);
       if (values.length < 2) {
         lineCount += 1;
         continue;
@@ -113,7 +129,7 @@ export class BpsClient {
 
       const item: Record<string, string> = {};
       headers.forEach((header, index) => {
-        item[header] = (values[index] ?? '').trim().replace(/^"|"$/g, '');
+        item[header] = normalizeDelimitedValue(values[index] ?? '');
       });
 
       lineCount += 1;
@@ -131,27 +147,23 @@ export class BpsClient {
       return false;
     }
   }
-}
 
-function parseCsvLine(line: string, sep: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === '"') {
-      inQuotes = !inQuotes;
-    } else if (char === sep && !inQuotes) {
-      result.push(current);
-      current = '';
-    } else {
-      current += char;
+  private async resourceExists(url: string): Promise<boolean> {
+    try {
+      const response = await axios.head(url, {
+        timeout: config.bps.probeTimeoutMs,
+        headers: { 'User-Agent': 'DigiUrban-Prices/1.0' },
+        validateStatus: (status) => status >= 200 && status < 500,
+      });
+      return response.status >= 200 && response.status < 300;
+    } catch (error: unknown) {
+      logger.warn('[BPS] Resource probe failed', {
+        url,
+        error: (error as Error).message,
+      });
+      return false;
     }
   }
-
-  result.push(current);
-  return result;
 }
 
 let instance: BpsClient | null = null;

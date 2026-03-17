@@ -4,7 +4,7 @@
 // Endpoint /contratos requer codigoOrgao obrigatório
 
 export interface TransparenciaContrato {
-  id: number;
+  id: number | string;
   numero: string;
   objeto: string;
   numeroProcesso?: string;

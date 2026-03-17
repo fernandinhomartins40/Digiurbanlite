@@ -32,6 +32,11 @@ export async function runFndeIngest(options: FndeIngestOptions = {}): Promise<In
   let ingested = 0, updated = 0, skipped = 0, errors = 0;
   logger.info('[FNDE Ingest] Starting', { runId });
 
+  if (!(await client.ping())) {
+    logger.info('[FNDE Ingest] Source unavailable, skipping without touching persistence');
+    return { ingested: 0, updated: 0, skipped: 0, errors: 0 };
+  }
+
   // Organização padrão FNDE
   await prisma.organization.upsert({
     where: { cnpj: FNDE_ORG_CNPJ },
