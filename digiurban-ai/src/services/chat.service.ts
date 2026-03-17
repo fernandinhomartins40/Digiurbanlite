@@ -13,8 +13,8 @@ import {
   ChatThinkingMode,
 } from '../types';
 import { aiObservabilityService } from './ai-observability.service';
+import { aiProviderService, AiProviderServiceError } from './ai-provider.service';
 import { inferenceRouterService } from './inference-router.service';
-import { ollamaService, OllamaServiceError } from './ollama.service';
 import { toolRunnerService } from './tool-runner.service';
 import { webSearchService, WebSearchResult } from './web-search.service';
 import logger from '../utils/logger';
@@ -1410,6 +1410,7 @@ export class ChatService {
       modelMessages: prepared.modelMessages,
       model: resolvedModel,
       think: params.think,
+      experience: inferencePlan.experience,
       chatMode,
       lowLatencyProfile: inferencePlan.lowLatencyProfile,
       responseFormat: params.responseFormat,
@@ -1690,6 +1691,7 @@ export class ChatService {
       modelMessages: prepared.modelMessages,
       model: resolvedModel,
       think: params.think,
+      experience: inferencePlan.experience,
       chatMode,
       lowLatencyProfile: inferencePlan.lowLatencyProfile,
       responseFormat: params.responseFormat,
@@ -1913,6 +1915,7 @@ export class ChatService {
       modelMessages: prepared.modelMessages,
       model: resolvedModel,
       think: params.think,
+      experience: inferencePlan.experience,
       chatMode,
       lowLatencyProfile: inferencePlan.lowLatencyProfile,
       responseFormat: params.responseFormat,
@@ -2126,6 +2129,7 @@ export class ChatService {
     modelMessages: ChatMessageInput[];
     model?: string;
     think?: ChatThinkingMode;
+    experience: AiExperience;
     chatMode: ChatMode;
     lowLatencyProfile: boolean;
     responseFormat?: ChatResponseFormat;
@@ -2143,7 +2147,7 @@ export class ChatService {
       if (
         params.chatMode === 'rag' &&
         params.relevantChunks.length > 0 &&
-        error instanceof OllamaServiceError
+        error instanceof AiProviderServiceError
       ) {
         const degradedContent = buildRagFallbackContent(params.query, params.relevantChunks);
         logger.warn('Returning degraded RAG fallback after model timeout', {
@@ -2179,6 +2183,7 @@ export class ChatService {
     modelMessages: ChatMessageInput[];
     model?: string;
     think?: ChatThinkingMode;
+    experience: AiExperience;
     chatMode: ChatMode;
     lowLatencyProfile: boolean;
     responseFormat?: ChatResponseFormat;
@@ -2199,11 +2204,13 @@ export class ChatService {
 
     if (!params.useBuiltInTools) {
       if (params.onThinkingDelta || params.onContentDelta) {
-        const streamed = await ollamaService.chatStream(
+        const streamed = await aiProviderService.chatStream(
           params.modelMessages,
-          params.model,
           {
+            tenantId: params.tenantId,
+            model: params.model,
             think: params.think,
+            experience: params.experience,
             profile,
             format: params.responseFormat,
             allowFallback: params.allowFallback,
@@ -2220,8 +2227,11 @@ export class ChatService {
         };
       }
 
-      const completion = await ollamaService.chat(params.modelMessages, params.model, {
+      const completion = await aiProviderService.chat(params.modelMessages, {
+        tenantId: params.tenantId,
+        model: params.model,
         think: params.think,
+        experience: params.experience,
         profile,
         format: params.responseFormat,
         allowFallback: params.allowFallback,
@@ -2239,20 +2249,22 @@ export class ChatService {
     });
     if (!builtinTools.length) {
       if (params.onThinkingDelta || params.onContentDelta) {
-        const streamed = await ollamaService.chatStream(
-            params.modelMessages,
-            params.model,
-            {
-              think: params.think,
-              profile,
-              format: params.responseFormat,
-              allowFallback: params.allowFallback,
-            },
-            {
-              onThinkingDelta: params.onThinkingDelta,
-              onContentDelta: params.onContentDelta,
-            },
-          );
+        const streamed = await aiProviderService.chatStream(
+          params.modelMessages,
+          {
+            tenantId: params.tenantId,
+            model: params.model,
+            think: params.think,
+            experience: params.experience,
+            profile,
+            format: params.responseFormat,
+            allowFallback: params.allowFallback,
+          },
+          {
+            onThinkingDelta: params.onThinkingDelta,
+            onContentDelta: params.onContentDelta,
+          },
+        );
         return {
           ...streamed,
           routeKind: params.routeKind,
@@ -2260,8 +2272,11 @@ export class ChatService {
         };
       }
 
-      const completion = await ollamaService.chat(params.modelMessages, params.model, {
+      const completion = await aiProviderService.chat(params.modelMessages, {
+        tenantId: params.tenantId,
+        model: params.model,
         think: params.think,
+        experience: params.experience,
         profile,
         format: params.responseFormat,
         allowFallback: params.allowFallback,
@@ -2278,8 +2293,11 @@ export class ChatService {
     let workingMessages = [...messages];
 
     for (let step = 0; step < toolLoopLimit; step += 1) {
-      const completion = await ollamaService.chat(workingMessages, params.model, {
+      const completion = await aiProviderService.chat(workingMessages, {
+        tenantId: params.tenantId,
+        model: params.model,
         think: params.think,
+        experience: params.experience,
         profile: 'tool',
         tools: builtinTools,
         format: step === toolLoopLimit - 1 ? undefined : params.responseFormat,
@@ -2346,8 +2364,11 @@ export class ChatService {
       ],
       params.responseFormat,
     );
-    const finalCompletion = await ollamaService.chat(finalizeMessages, params.model, {
+    const finalCompletion = await aiProviderService.chat(finalizeMessages, {
+      tenantId: params.tenantId,
+      model: params.model,
       think: false,
+      experience: params.experience,
       profile: params.responseFormat ? 'structured' : 'draft',
       format: params.responseFormat,
       allowFallback: params.allowFallback,

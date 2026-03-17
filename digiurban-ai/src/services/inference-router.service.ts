@@ -242,11 +242,7 @@ export class InferenceRouterService {
       routeKind = 'free_short';
     }
 
-    const resolvedModel = requestedModel
-      ? requestedModel
-      : routeKind === 'quality'
-        ? config.ollamaQualityModel
-        : config.ollamaModel;
+    const resolvedModel = requestedModel || undefined;
 
     const deterministicApplicationContext =
       routeKind === 'context_navigation' || routeKind === 'context_metrics';

@@ -107,6 +107,30 @@ export interface AiUsageSummary {
   totalRequests: number;
 }
 
+export interface AiProviderSettings {
+  provider: 'OLLAMA' | 'OPENROUTER';
+  fallbackProvider: 'OLLAMA' | 'OPENROUTER' | null;
+  openRouterBaseUrl: string;
+  hasOpenRouterApiKey: boolean;
+  openRouterApiKeyLast4?: string | null;
+  fastModel?: string | null;
+  contextualModel?: string | null;
+  qualityModel?: string | null;
+  fallbackFastModel?: string | null;
+  fallbackContextualModel?: string | null;
+  fallbackQualityModel?: string | null;
+  isEnabled: boolean;
+  updatedAt?: string | null;
+}
+
+export interface AiProviderModel {
+  id: string;
+  name: string;
+  contextLength?: number;
+  promptPrice?: string;
+  completionPrice?: string;
+}
+
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const response = await fetch(getFullApiUrl(`/api/ai${path}`), {
     ...init,
@@ -234,6 +258,60 @@ export const aiPlatformService = {
   async usageSummary(): Promise<AiUsageSummary> {
     const payload = await request<{ data: AiUsageSummary }>('/usage/summary');
     return payload.data;
+  },
+
+  async getProviderSettings(): Promise<AiProviderSettings> {
+    const payload = await request<{ data: AiProviderSettings }>('/provider/settings');
+    return payload.data;
+  },
+
+  async updateProviderSettings(input: {
+    provider: 'OLLAMA' | 'OPENROUTER';
+    fallbackProvider?: 'OLLAMA' | 'OPENROUTER' | null;
+    openRouterApiKey?: string;
+    openRouterBaseUrl?: string;
+    fastModel?: string | null;
+    contextualModel?: string | null;
+    qualityModel?: string | null;
+    fallbackFastModel?: string | null;
+    fallbackContextualModel?: string | null;
+    fallbackQualityModel?: string | null;
+    isEnabled?: boolean;
+  }): Promise<AiProviderSettings> {
+    const payload = await request<{ data: AiProviderSettings }>('/provider/settings', {
+      method: 'PUT',
+      body: JSON.stringify(input),
+    });
+    return payload.data;
+  },
+
+  async testProvider(input: {
+    provider: 'OLLAMA' | 'OPENROUTER';
+    openRouterApiKey?: string;
+    openRouterBaseUrl?: string;
+  }): Promise<{
+    provider: 'OLLAMA' | 'OPENROUTER';
+    ok: boolean;
+    message: string;
+    modelsChecked?: number;
+  }> {
+    const payload = await request<{ data: any }>('/provider/test', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return payload.data;
+  },
+
+  async listProviderModels(input: {
+    provider: 'OLLAMA' | 'OPENROUTER';
+    openRouterApiKey?: string;
+    openRouterBaseUrl?: string;
+  }): Promise<AiProviderModel[]> {
+    const payload = await request<{ data: AiProviderModel[] }>('/provider/models', {
+      method: 'POST',
+      body: JSON.stringify(input),
+    });
+    return payload.data || [];
   },
 
   async streamMessage(

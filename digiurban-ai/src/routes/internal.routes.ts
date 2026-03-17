@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { chatService } from '../services/chat.service';
-import { OllamaServiceError } from '../services/ollama.service';
+import { AiProviderServiceError } from '../services/ai-provider.service';
 import { AuthenticatedProxyRequest } from '../types';
 
 const router = Router();
@@ -55,7 +55,7 @@ router.post('/internal/chat/completions', async (req, res) => {
       return;
     }
 
-    if (error instanceof OllamaServiceError) {
+    if (error instanceof AiProviderServiceError) {
       res.status(error.statusCode).json({ error: error.message });
       return;
     }

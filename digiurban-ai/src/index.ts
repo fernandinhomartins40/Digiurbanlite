@@ -12,6 +12,7 @@ import knowledgeRoutes from './routes/knowledge.routes';
 import adminTokensRoutes from './routes/admin-tokens.routes';
 import publicRoutes from './routes/public.routes';
 import internalRoutes from './routes/internal.routes';
+import providerRoutes from './routes/provider.routes';
 import prisma from './utils/prisma';
 import logger from './utils/logger';
 import { AiPlanType } from '@prisma/client';
@@ -100,6 +101,7 @@ class DigiUrbanAIServer {
     app.use('/api/v1', proxyAuthMiddleware, requireUserContext, chatRoutes);
     app.use('/api/v1', proxyAuthMiddleware, requireUserContext, knowledgeRoutes);
     app.use('/api/v1', proxyAuthMiddleware, requireUserContext, adminTokensRoutes);
+    app.use('/api/v1', proxyAuthMiddleware, requireUserContext, providerRoutes);
 
     app.use((_req, res) => {
       res.status(404).json({ error: 'Route not found' });

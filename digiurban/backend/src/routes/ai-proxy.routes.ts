@@ -231,6 +231,15 @@ router.post('/knowledge/bootstrap/system', superAdminOnly, (req, res, next) =>
 router.get('/knowledge/search', superAdminOnly, (req, res, next) =>
   proxyRequest(req, res, next, '/knowledge/search'));
 
+router.get('/provider/settings', superAdminOnly, (req, res, next) =>
+  proxyRequest(req, res, next, '/provider/settings'));
+router.put('/provider/settings', superAdminOnly, (req, res, next) =>
+  proxyRequest(req, res, next, '/provider/settings'));
+router.post('/provider/test', superAdminOnly, (req, res, next) =>
+  proxyRequest(req, res, next, '/provider/test'));
+router.post('/provider/models', superAdminOnly, (req, res, next) =>
+  proxyRequest(req, res, next, '/provider/models'));
+
 router.get('/tokens/plans', superAdminOnly, (req, res, next) => proxyRequest(req, res, next, '/tokens/plans'));
 router.post('/tokens/plans', superAdminOnly, (req, res, next) => proxyRequest(req, res, next, '/tokens/plans'));
 router.put('/tokens/plans/:id', superAdminOnly, (req, res, next) =>

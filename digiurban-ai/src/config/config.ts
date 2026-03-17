@@ -64,6 +64,13 @@ export const config = {
   aiServiceToken: process.env.AI_SERVICE_TOKEN || 'digiurban-ai-service-token',
   digiurbanApiUrl: process.env.DIGIURBAN_API_URL || 'http://digiurban-vps:3001/api',
   digiurbanServiceToken: process.env.DIGIURBAN_SERVICE_TOKEN || '',
+  aiProviderEncryptionKey:
+    process.env.AI_PROVIDER_ENCRYPTION_KEY ||
+    process.env.AI_SETTINGS_ENCRYPTION_KEY ||
+    process.env.AI_SERVICE_TOKEN ||
+    process.env.DIGIURBAN_SERVICE_TOKEN ||
+    process.env.DATABASE_URL ||
+    'digiurban-ai-provider-key',
 
   ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
   ollamaModel:
@@ -168,6 +175,14 @@ export const config = {
     process.env.AI_EMBEDDINGS_QUERY_CACHE_TTL_MS || '300000',
     10,
   ),
+  openRouterBaseUrl: process.env.AI_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
+  openRouterFastModel: process.env.AI_OPENROUTER_FAST_MODEL || 'qwen/qwen3-4b:free',
+  openRouterContextualModel:
+    process.env.AI_OPENROUTER_CONTEXTUAL_MODEL || process.env.AI_OPENROUTER_FAST_MODEL || 'qwen/qwen3-4b:free',
+  openRouterQualityModel: process.env.AI_OPENROUTER_QUALITY_MODEL || 'qwen/qwen3-8b:free',
+  openRouterTimeoutMs: parseInt(process.env.AI_OPENROUTER_TIMEOUT_MS || '60000', 10),
+  openRouterAppName: process.env.AI_OPENROUTER_APP_NAME || 'DigiUrban AI',
+  openRouterSiteUrl: process.env.AI_OPENROUTER_SITE_URL || 'https://www.digiurban.com.br',
 
   corsOrigin: process.env.CORS_ORIGIN || '*',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),

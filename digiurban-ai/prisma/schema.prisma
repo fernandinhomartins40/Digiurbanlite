@@ -116,6 +116,28 @@ model AiKnowledgeChunk {
   @@map("ai_knowledge_chunks")
 }
 
+model AiProviderSettings {
+  id                        String   @id @default(cuid())
+  tenantId                  String   @default("default") @unique
+  provider                  String   @default("OLLAMA")
+  fallbackProvider          String?
+  openRouterApiKeyEncrypted String?  @map("openrouter_api_key_encrypted") @db.Text
+  openRouterApiKeyLast4     String?  @map("openrouter_api_key_last4")
+  openRouterBaseUrl         String?  @map("openrouter_base_url")
+  fastModel                 String?  @map("fast_model")
+  contextualModel           String?  @map("contextual_model")
+  qualityModel              String?  @map("quality_model")
+  fallbackFastModel         String?  @map("fallback_fast_model")
+  fallbackContextualModel   String?  @map("fallback_contextual_model")
+  fallbackQualityModel      String?  @map("fallback_quality_model")
+  isEnabled                 Boolean  @default(true) @map("is_enabled")
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  @@index([tenantId, provider])
+  @@map("ai_provider_settings")
+}
+
 model AiApiPlan {
   id                   String      @id @default(cuid())
   tenantId             String      @default("default")

@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { chatService } from '../services/chat.service';
 import { apiKeyService } from '../services/api-key.service';
-import { OllamaServiceError } from '../services/ollama.service';
+import { AiProviderServiceError } from '../services/ai-provider.service';
 import { AuthenticatedProxyRequest } from '../types';
 
 const router = Router();
@@ -196,7 +196,7 @@ router.post('/conversations/:id/messages', async (req, res) => {
       res.status(404).json({ error: error.message });
       return;
     }
-    if (error instanceof OllamaServiceError) {
+    if (error instanceof AiProviderServiceError) {
       res.status(error.statusCode).json({ error: error.message });
       return;
     }
@@ -268,7 +268,7 @@ router.post('/conversations/:id/messages/stream', async (req, res) => {
       res.status(404).json({ error: error.message });
       return;
     }
-    if (error instanceof OllamaServiceError) {
+    if (error instanceof AiProviderServiceError) {
       if (!res.headersSent) {
         res.status(error.statusCode).json({ error: error.message });
         return;
@@ -324,7 +324,7 @@ router.post('/chat/completions', async (req, res) => {
       res.status(400).json({ error: 'Invalid payload', details: error.issues });
       return;
     }
-    if (error instanceof OllamaServiceError) {
+    if (error instanceof AiProviderServiceError) {
       res.status(error.statusCode).json({ error: error.message });
       return;
     }
