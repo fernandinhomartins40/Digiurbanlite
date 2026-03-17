@@ -52,6 +52,21 @@ type OpenRouterModelsResponse = {
   data?: OpenRouterModelEntry[];
 };
 
+type OpenRouterKeyResponse = {
+  data?: {
+    label?: string;
+    is_free_tier?: boolean;
+    limit?: number | null;
+    limit_remaining?: number | null;
+    usage?: number;
+    usage_daily?: number;
+    usage_monthly?: number;
+  };
+  error?: {
+    message?: string;
+  };
+};
+
 type OpenRouterUsage = {
   prompt_tokens?: number;
   completion_tokens?: number;
@@ -283,6 +298,53 @@ export class OpenRouterService {
       }
 
       throw error;
+    }
+  }
+
+  async getKeyInfo(openRouterConfig: OpenRouterConfig): Promise<{
+    label?: string;
+    isFreeTier: boolean;
+    limit?: number | null;
+    limitRemaining?: number | null;
+    usage?: number;
+    usageDaily?: number;
+    usageMonthly?: number;
+  }> {
+    try {
+      const client = this.createClient(openRouterConfig);
+      const response = await client.get<OpenRouterKeyResponse>('/key');
+
+      if (response.data?.error?.message) {
+        throw new OpenRouterServiceError(response.data.error.message, 502);
+      }
+
+      return {
+        label: response.data?.data?.label,
+        isFreeTier: response.data?.data?.is_free_tier === true,
+        limit: response.data?.data?.limit,
+        limitRemaining: response.data?.data?.limit_remaining,
+        usage: response.data?.data?.usage,
+        usageDaily: response.data?.data?.usage_daily,
+        usageMonthly: response.data?.data?.usage_monthly,
+      };
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new OpenRouterServiceError(
+          error.response?.data?.error?.message ||
+            error.response?.data?.message ||
+            error.message ||
+            'Falha ao validar chave da OpenRouter',
+          error.response?.status || 502,
+        );
+      }
+
+      if (error instanceof OpenRouterServiceError) {
+        throw error;
+      }
+
+      throw new OpenRouterServiceError(
+        error instanceof Error ? error.message : 'Falha ao validar chave da OpenRouter',
+      );
     }
   }
 

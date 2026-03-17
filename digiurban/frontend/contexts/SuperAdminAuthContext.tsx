@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
@@ -47,11 +47,11 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
   const [isRedirecting, setIsRedirecting] = useState(false)
   const router = useRouter()
 
-  // ⚠️ NOTA: Não podemos verificar cookies httpOnly via JavaScript
-  // O cookie existe, mas é inacessível por document.cookie (por segurança)
-  // Vamos confiar na requisição /auth/me para validar a autenticação
+  // âš ï¸ NOTA: NÃ£o podemos verificar cookies httpOnly via JavaScript
+  // O cookie existe, mas Ã© inacessÃ­vel por document.cookie (por seguranÃ§a)
+  // Vamos confiar na requisiÃ§Ã£o /auth/me para validar a autenticaÃ§Ã£o
 
-  // ✅ SEGURANÇA: Função para fazer requisições autenticadas (usa cookies automáticos)
+  // âœ… SEGURANÃ‡A: FunÃ§Ã£o para fazer requisiÃ§Ãµes autenticadas (usa cookies automÃ¡ticos)
   const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
     console.log('[SuperAdminAuth] ====== apiRequest DEBUG ======')
     console.log('[SuperAdminAuth] Endpoint solicitado:', endpoint)
@@ -63,18 +63,18 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 
     // Usar getFullApiUrl para construir URL correta
     const { getFullApiUrl } = await import('@/lib/api-config')
-    // Remove /api do endpoint se já estiver presente pois getFullApiUrl já adiciona
+    // Remove /api do endpoint se jÃ¡ estiver presente pois getFullApiUrl jÃ¡ adiciona
     const cleanEndpoint = endpoint.replace(/^\/api/, '')
     const url = getFullApiUrl(cleanEndpoint)
 
-    console.log('[SuperAdminAuth] URL construída:', url)
+    console.log('[SuperAdminAuth] URL construÃ­da:', url)
     console.log('[SuperAdminAuth] Headers:', headers)
     console.log('[SuperAdminAuth] Cookies do navegador:', document.cookie ? 'EXISTEM' : 'VAZIO')
 
     const response = await fetch(url, {
       ...options,
       headers,
-      credentials: 'include', // ✅ CRÍTICO: Enviar cookies automaticamente
+      credentials: 'include', // âœ… CRÃTICO: Enviar cookies automaticamente
     })
 
     console.log('[SuperAdminAuth] Resposta recebida:', {
@@ -85,15 +85,15 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido', code: null }))
-      console.log('[SuperAdminAuth] ❌ Erro na resposta:', errorData)
+      console.log('[SuperAdminAuth] âŒ Erro na resposta:', errorData)
 
-      // Se token expirado ou inválido (401), limpar autenticação
+      // Se token expirado ou invÃ¡lido (401), limpar autenticaÃ§Ã£o
       if (response.status === 401) {
-        console.log('[SuperAdminAuth] 🔒 Status 401 - Limpando autenticação')
+        console.log('[SuperAdminAuth] ðŸ”’ Status 401 - Limpando autenticaÃ§Ã£o')
         setUser(null)
         setStats(null)
 
-        // Redirecionar apenas se não estiver em páginas públicas e não estiver já redirecionando
+        // Redirecionar apenas se nÃ£o estiver em pÃ¡ginas pÃºblicas e nÃ£o estiver jÃ¡ redirecionando
         const publicPaths = ['/login', '/forgot-password', '/reset-password']
         const isPublicPath = publicPaths.some(path => window.location.pathname.includes(path))
 
@@ -102,7 +102,7 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
           !isPublicPath &&
           !isRedirecting
         ) {
-          console.log('[SuperAdminAuth] 🔄 Redirecionando para login...')
+          console.log('[SuperAdminAuth] ðŸ”„ Redirecionando para login...')
           setIsRedirecting(true)
           setTimeout(() => {
             window.location.href = '/super-admin/login'
@@ -110,15 +110,15 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
         }
       }
 
-      throw new Error(errorData.error || 'Erro na requisição')
+      throw new Error(errorData.error || 'Erro na requisiÃ§Ã£o')
     }
 
     const data = await response.json()
-    console.log('[SuperAdminAuth] ✅ Sucesso! Dados recebidos:', Object.keys(data))
+    console.log('[SuperAdminAuth] âœ… Sucesso! Dados recebidos:', Object.keys(data))
     return data
   }
 
-  // Função de login
+  // FunÃ§Ã£o de login
   const login = async (email: string, password: string) => {
     try {
       console.log('[SuperAdminAuth] ====== LOGIN INICIADO ======')
@@ -138,7 +138,7 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
         headers: {
           'Content-Type': 'application/json'
         },
-        credentials: 'include', // ✅ CRÍTICO: Receber cookies
+        credentials: 'include', // âœ… CRÃTICO: Receber cookies
         body: JSON.stringify({ email, password })
       })
 
@@ -150,26 +150,26 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
 
       if (!response.ok) {
         const errorData = await response.json()
-        console.log('[SuperAdminAuth] ❌ Erro no login:', errorData)
+        console.log('[SuperAdminAuth] âŒ Erro no login:', errorData)
         throw new Error(errorData.error || 'Erro no login')
       }
 
       const data = await response.json()
-      console.log('[SuperAdminAuth] ✅ Login bem-sucedido! Usuário:', data.user?.email)
-      console.log('[SuperAdminAuth] Cookies após login:', document.cookie ? 'EXISTEM' : 'VAZIO')
+      console.log('[SuperAdminAuth] âœ… Login bem-sucedido! UsuÃ¡rio:', data.user?.email)
+      console.log('[SuperAdminAuth] Cookies apÃ³s login:', document.cookie ? 'EXISTEM' : 'VAZIO')
 
-      // ✅ SEGURANÇA: Token agora vem em cookie httpOnly, não em JSON
-      // Atualizar estado com dados do login (já vêm na resposta)
+      // âœ… SEGURANÃ‡A: Token agora vem em cookie httpOnly, nÃ£o em JSON
+      // Atualizar estado com dados do login (jÃ¡ vÃªm na resposta)
       setUser(data.user)
       setStats(data.stats || null)
 
-      // Não chamar refreshUserData() aqui - dados já vieram no login
-      // O refreshUserData() será chamado pelo checkAuth() ao montar o dashboard
+      // NÃ£o chamar refreshUserData() aqui - dados jÃ¡ vieram no login
+      // O refreshUserData() serÃ¡ chamado pelo checkAuth() ao montar o dashboard
 
-      console.log('[SuperAdminAuth] 🔄 Redirecionando para dashboard...')
+      console.log('[SuperAdminAuth] ðŸ”„ Redirecionando para dashboard...')
       router.push('/super-admin')
     } catch (err) {
-      console.error('[SuperAdminAuth] 💥 Erro no login:', err)
+      console.error('[SuperAdminAuth] ðŸ’¥ Erro no login:', err)
       setError(err instanceof Error ? err.message : 'Erro no login')
       throw err
     } finally {
@@ -177,12 +177,12 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
     }
   }
 
-  // Função de logout
+  // FunÃ§Ã£o de logout
   const logout = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
 
-      // ✅ SEGURANÇA: Chamar endpoint de logout para limpar cookie httpOnly
+      // âœ… SEGURANÃ‡A: Chamar endpoint de logout para limpar cookie httpOnly
       await fetch(`${apiUrl}/super-admin/logout`, {
         method: 'POST',
         credentials: 'include',
@@ -198,27 +198,33 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
     }
   }
 
-  // Função para atualizar dados do usuário
+  // FunÃ§Ã£o para atualizar dados do usuÃ¡rio
   const refreshUserData = async (): Promise<boolean> => {
     try {
       console.log('[SuperAdminAuth] ====== REFRESH USER DATA ======')
       const response = await apiRequest('/super-admin/auth/me')
-      console.log('[SuperAdminAuth] ✅ Dados atualizados:', response.user?.email)
+      console.log('[SuperAdminAuth] Dados atualizados:', response.user?.email)
       setUser(response.user)
       setStats(response.stats || null)
       return true
     } catch (err) {
-      console.log('[SuperAdminAuth] ❌ Erro ao atualizar dados:', err instanceof Error ? err.message : 'Unknown')
-      // Silenciar erro 401 (já tratado no apiRequest) e erro de token
-      if (err instanceof Error &&
-          !err.message.includes('Token não fornecido') &&
-          !err.message.includes('Authentication failed') &&
-          !err.message.includes('Não autenticado')) {
+      console.log('[SuperAdminAuth] Erro ao atualizar dados:', err instanceof Error ? err.message : 'Unknown')
+      const expectedAuthMessages = [
+        'Token não fornecido',
+        'Authentication failed',
+        'Não autenticado',
+        'Token de acesso necessário',
+      ]
+      const isExpectedAuthError =
+        err instanceof Error &&
+        expectedAuthMessages.some((message) => err.message.includes(message))
+
+      if (err instanceof Error && !isExpectedAuthError) {
         console.error('[SuperAdminAuth] Erro inesperado ao atualizar dados:', err)
       }
-      // Se erro de token, limpar estado silenciosamente
-      if (err instanceof Error && err.message.includes('Token não fornecido')) {
-        console.log('[SuperAdminAuth] 🔒 Limpando estado por falta de token')
+
+      if (isExpectedAuthError) {
+        console.log('[SuperAdminAuth] Limpando estado por falta de token')
         setUser(null)
         setStats(null)
       }
@@ -226,20 +232,20 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
     }
   }
 
-  // Função para verificar autenticação ao carregar
+  // FunÃ§Ã£o para verificar autenticaÃ§Ã£o ao carregar
   const checkAuth = async () => {
     try {
-      // ✅ Tentar carregar dados do usuário (o cookie httpOnly será enviado automaticamente)
+      // âœ… Tentar carregar dados do usuÃ¡rio (o cookie httpOnly serÃ¡ enviado automaticamente)
       await refreshUserData()
     } catch (err) {
-      // Silenciar erro 401/token - comportamento esperado para usuários não autenticados
-      // Erro 401 já é tratado no apiRequest, que limpa o estado
+      // Silenciar erro 401/token - comportamento esperado para usuÃ¡rios nÃ£o autenticados
+      // Erro 401 jÃ¡ Ã© tratado no apiRequest, que limpa o estado
     } finally {
       setLoading(false)
     }
   }
 
-  // Hook para verificar autenticação ao montar o componente
+  // Hook para verificar autenticaÃ§Ã£o ao montar o componente
   useEffect(() => {
     checkAuth()
   }, [])

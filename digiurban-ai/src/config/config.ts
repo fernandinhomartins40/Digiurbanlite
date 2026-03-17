@@ -179,7 +179,8 @@ export const config = {
   openRouterFastModel: process.env.AI_OPENROUTER_FAST_MODEL || 'qwen/qwen3-4b:free',
   openRouterContextualModel:
     process.env.AI_OPENROUTER_CONTEXTUAL_MODEL || process.env.AI_OPENROUTER_FAST_MODEL || 'qwen/qwen3-4b:free',
-  openRouterQualityModel: process.env.AI_OPENROUTER_QUALITY_MODEL || 'qwen/qwen3-8b:free',
+  openRouterQualityModel:
+    process.env.AI_OPENROUTER_QUALITY_MODEL || 'qwen/qwen3-next-80b-a3b-instruct:free',
   openRouterTimeoutMs: parseInt(process.env.AI_OPENROUTER_TIMEOUT_MS || '60000', 10),
   openRouterAppName: process.env.AI_OPENROUTER_APP_NAME || 'DigiUrban AI',
   openRouterSiteUrl: process.env.AI_OPENROUTER_SITE_URL || 'https://www.digiurban.com.br',

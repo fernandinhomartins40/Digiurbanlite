@@ -109,13 +109,22 @@ export class AiProviderConfigService {
       where: { tenantId },
     });
 
+    let openRouterApiKey: string | undefined;
+    if (record?.openRouterApiKeyEncrypted) {
+      try {
+        openRouterApiKey = decryptSecret(record.openRouterApiKeyEncrypted);
+      } catch {
+        throw new Error(
+          'Nao foi possivel descriptografar a chave da OpenRouter salva. Salve a configuracao novamente no Super Admin.',
+        );
+      }
+    }
+
     return {
       provider: (record?.provider as AiProviderId | undefined) || 'OLLAMA',
       fallbackProvider: (record?.fallbackProvider as AiProviderId | null | undefined) || null,
       openRouterBaseUrl: record?.openRouterBaseUrl || config.openRouterBaseUrl,
-      openRouterApiKey: record?.openRouterApiKeyEncrypted
-        ? decryptSecret(record.openRouterApiKeyEncrypted)
-        : undefined,
+      openRouterApiKey,
       fastModel: record?.fastModel || null,
       contextualModel: record?.contextualModel || null,
       qualityModel: record?.qualityModel || null,

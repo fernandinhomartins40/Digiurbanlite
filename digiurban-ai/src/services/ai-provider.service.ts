@@ -115,6 +115,33 @@ export class AiProviderService {
     return aiProviderConfigService.updateSettings(tenantId, input);
   }
 
+  private async resolveOpenRouterConfig(params: {
+    tenantId: string;
+    openRouterApiKey?: string;
+    openRouterBaseUrl?: string;
+  }): Promise<{ apiKey: string; baseUrl: string }> {
+    const directApiKey = params.openRouterApiKey?.trim();
+    const settingsView = await aiProviderConfigService.getSettings(params.tenantId);
+    const baseUrl = params.openRouterBaseUrl?.trim() || settingsView.openRouterBaseUrl || config.openRouterBaseUrl;
+
+    if (directApiKey) {
+      return {
+        apiKey: directApiKey,
+        baseUrl,
+      };
+    }
+
+    const resolved = await aiProviderConfigService.getResolvedSettings(params.tenantId);
+    if (!resolved.openRouterApiKey) {
+      throw new AiProviderServiceError('Uma chave da OpenRouter e obrigatoria para listar modelos', 400);
+    }
+
+    return {
+      apiKey: resolved.openRouterApiKey,
+      baseUrl: params.openRouterBaseUrl?.trim() || resolved.openRouterBaseUrl || config.openRouterBaseUrl,
+    };
+  }
+
   async listModels(params: {
     tenantId: string;
     provider: AiProviderId;
@@ -141,15 +168,15 @@ export class AiProviderService {
         ];
       }
 
-      const resolved = await aiProviderConfigService.getResolvedSettings(params.tenantId);
-      const apiKey = params.openRouterApiKey?.trim() || resolved.openRouterApiKey;
-      if (!apiKey) {
-        throw new AiProviderServiceError('Uma chave da OpenRouter e obrigatoria para listar modelos', 400);
-      }
+      const openRouterConfig = await this.resolveOpenRouterConfig({
+        tenantId: params.tenantId,
+        openRouterApiKey: params.openRouterApiKey,
+        openRouterBaseUrl: params.openRouterBaseUrl,
+      });
 
       const models = await openRouterService.listModels({
-        apiKey,
-        baseUrl: params.openRouterBaseUrl?.trim() || resolved.openRouterBaseUrl || config.openRouterBaseUrl,
+        apiKey: openRouterConfig.apiKey,
+        baseUrl: openRouterConfig.baseUrl,
       });
       return params.openSourceOnly ? models.filter((model) => model.isOpenSource) : models;
     } catch (error) {
@@ -177,11 +204,28 @@ export class AiProviderService {
         };
       }
 
-      const models = await this.listModels(params);
+      const openRouterConfig = await this.resolveOpenRouterConfig({
+        tenantId: params.tenantId,
+        openRouterApiKey: params.openRouterApiKey,
+        openRouterBaseUrl: params.openRouterBaseUrl,
+      });
+      const [keyInfo, models] = await Promise.all([
+        openRouterService.getKeyInfo(openRouterConfig),
+        openRouterService.listModels(openRouterConfig),
+      ]);
+
+      const messageParts = ['Conexao com OpenRouter validada'];
+      if (keyInfo.isFreeTier) {
+        messageParts.push('chave em free tier');
+      }
+      if (typeof keyInfo.limitRemaining === 'number') {
+        messageParts.push(`limite restante: ${keyInfo.limitRemaining}`);
+      }
+
       return {
         provider: 'OPENROUTER',
         ok: true,
-        message: 'Conexao com OpenRouter validada',
+        message: messageParts.join(' | '),
         modelsChecked: models.length,
       };
     } catch (error) {
@@ -223,7 +267,13 @@ export class AiProviderService {
     stream: boolean,
     callbacks?: ProviderChatStreamCallbacks,
   ): Promise<ChatCompletionResult> {
-    const settings = await aiProviderConfigService.getResolvedSettings(options.tenantId);
+    let settings: Awaited<ReturnType<typeof aiProviderConfigService.getResolvedSettings>>;
+    try {
+      settings = await aiProviderConfigService.getResolvedSettings(options.tenantId);
+    } catch (error) {
+      throw normalizeProviderError(error);
+    }
+
     const primaryProvider = settings.isEnabled ? settings.provider : 'OLLAMA';
     const fallbackProvider = settings.isEnabled ? settings.fallbackProvider : null;
 

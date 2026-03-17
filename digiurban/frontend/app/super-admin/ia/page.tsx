@@ -1,7 +1,7 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { Database, KeyRound, Loader2, PlugZap, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
+import { ChevronDown, Database, KeyRound, Loader2, PlugZap, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -80,6 +80,7 @@ export default function SuperAdminAiPage() {
   const [newKeyPlanId, setNewKeyPlanId] = useState('');
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
   const [modelSearch, setModelSearch] = useState('');
+  const [showAdvancedProviderConfig, setShowAdvancedProviderConfig] = useState(false);
   const [providerForm, setProviderForm] = useState<ProviderFormState>({
     provider: 'OLLAMA',
     fallbackProvider: 'NONE',
@@ -256,10 +257,10 @@ export default function SuperAdminAiPage() {
     setLoadingModels(true);
     try {
       setProviderModels(await aiPlatformService.listProviderModels({
-        provider: 'OPENROUTER',
+        provider: providerForm.provider,
         openRouterApiKey: providerForm.openRouterApiKey.trim() || undefined,
         openRouterBaseUrl: providerForm.openRouterBaseUrl.trim() || undefined,
-        openSourceOnly: true,
+        openSourceOnly: providerForm.provider === 'OPENROUTER',
       }));
     } catch (error) {
       toast({ title: 'Erro ao listar modelos', description: error instanceof Error ? error.message : 'Falha ao carregar modelos.', variant: 'destructive' });
@@ -269,10 +270,9 @@ export default function SuperAdminAiPage() {
   };
 
   useEffect(() => {
-    if (!providerSettings?.hasOpenRouterApiKey && !providerForm.openRouterApiKey.trim()) return;
-    if (providerModels.length > 0) return;
+    if (providerForm.provider === 'OPENROUTER' && !providerSettings?.hasOpenRouterApiKey && !providerForm.openRouterApiKey.trim()) return;
     void listModels();
-  }, [providerSettings?.hasOpenRouterApiKey]);
+  }, [providerForm.provider, providerSettings?.hasOpenRouterApiKey]);
 
   const applyModelToField = (
     field:
@@ -296,6 +296,14 @@ export default function SuperAdminAiPage() {
       model.huggingFaceId?.toLowerCase().includes(query)
     );
   });
+
+  const availableModelOptions = providerModels.length > 0
+    ? providerModels
+    : [
+        { id: providerForm.fastModel, name: providerForm.fastModel },
+        { id: providerForm.contextualModel, name: providerForm.contextualModel },
+        { id: providerForm.qualityModel, name: providerForm.qualityModel },
+      ].filter((model): model is AiProviderModel => Boolean(model.id));
 
   return (
     <div className="space-y-6 pb-8">
@@ -340,35 +348,117 @@ export default function SuperAdminAiPage() {
                 </select>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-2">
-                <Input value={providerForm.openRouterBaseUrl} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterBaseUrl: event.target.value }))} placeholder="Base URL da OpenRouter" />
-                <Input type="password" value={providerForm.openRouterApiKey} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterApiKey: event.target.value }))} placeholder={providerSettings?.hasOpenRouterApiKey ? `Chave salva termina com ${providerSettings.openRouterApiKeyLast4 || '****'}` : 'Cole uma chave da OpenRouter'} />
-              </div>
+              {providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER' ? (
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <Input type="password" value={providerForm.openRouterApiKey} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterApiKey: event.target.value }))} placeholder={providerSettings?.hasOpenRouterApiKey ? `Chave salva termina com ${providerSettings.openRouterApiKeyLast4 || '****'}` : 'Cole uma chave da OpenRouter'} />
+                  <div className="flex items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+                    {loadingModels ? (
+                      <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Carregando catalogo...</span>
+                    ) : (
+                      <span>
+                        {availableModelOptions.length > 0
+                          ? `${availableModelOptions.length} modelos disponiveis no catalogo`
+                          : 'Carregue o catalogo para selecionar os modelos disponiveis'}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ) : null}
 
-              <div className="grid gap-4 lg:grid-cols-3">
-                <Input value={providerForm.fastModel} onChange={(event) => setProviderForm((current) => ({ ...current, fastModel: event.target.value }))} placeholder="Modelo rapido" />
-                <Input value={providerForm.contextualModel} onChange={(event) => setProviderForm((current) => ({ ...current, contextualModel: event.target.value }))} placeholder="Modelo contextual" />
-                <Input value={providerForm.qualityModel} onChange={(event) => setProviderForm((current) => ({ ...current, qualityModel: event.target.value }))} placeholder="Modelo qualidade" />
-              </div>
+              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                <div className="mb-3 flex flex-col gap-1">
+                  <p className="text-sm font-medium text-slate-900">Modelos em uso</p>
+                  <p className="text-xs text-slate-500">
+                    Selecione os perfis que o sistema vai usar. O chat administrativo e os modulos da IA consumirao sempre essa configuracao.
+                  </p>
+                </div>
 
-              <div className="grid gap-4 lg:grid-cols-3">
-                <Input value={providerForm.fallbackFastModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackFastModel: event.target.value }))} placeholder="Modelo rapido fallback" />
-                <Input value={providerForm.fallbackContextualModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackContextualModel: event.target.value }))} placeholder="Modelo contextual fallback" />
-                <Input value={providerForm.fallbackQualityModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackQualityModel: event.target.value }))} placeholder="Modelo qualidade fallback" />
+                <div className="grid gap-4 lg:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Rapido</label>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={providerForm.fastModel}
+                      onChange={(event) => setProviderForm((current) => ({ ...current, fastModel: event.target.value }))}
+                    >
+                      <option value="">{loadingModels ? 'Carregando modelos...' : 'Selecione um modelo'}</option>
+                      {availableModelOptions.map((model) => (
+                        <option key={`fast-${model.id}`} value={model.id}>{model.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Contextual</label>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={providerForm.contextualModel}
+                      onChange={(event) => setProviderForm((current) => ({ ...current, contextualModel: event.target.value }))}
+                    >
+                      <option value="">{loadingModels ? 'Carregando modelos...' : 'Selecione um modelo'}</option>
+                      {availableModelOptions.map((model) => (
+                        <option key={`contextual-${model.id}`} value={model.id}>{model.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Qualidade</label>
+                    <select
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={providerForm.qualityModel}
+                      onChange={(event) => setProviderForm((current) => ({ ...current, qualityModel: event.target.value }))}
+                    >
+                      <option value="">{loadingModels ? 'Carregando modelos...' : 'Selecione um modelo'}</option>
+                      {availableModelOptions.map((model) => (
+                        <option key={`quality-${model.id}`} value={model.id}>{model.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div className="flex flex-wrap gap-3">
                 <Button type="submit" disabled={savingProvider}>{savingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : <><ShieldCheck className="mr-2 h-4 w-4" />Salvar provider</>}</Button>
                 <Button type="button" variant="outline" onClick={testProvider} disabled={testingProvider}>{testingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testando...</> : 'Testar conexao'}</Button>
-                <Button type="button" variant="outline" onClick={listModels} disabled={loadingModels}>{loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Listar modelos open source'}</Button>
+                <Button type="button" variant="outline" onClick={listModels} disabled={loadingModels}>{loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Atualizar catalogo'}</Button>
+                <Button type="button" variant="ghost" onClick={() => setShowAdvancedProviderConfig((current) => !current)}>
+                  <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${showAdvancedProviderConfig ? 'rotate-180' : ''}`} />
+                  Configuracoes avancadas
+                </Button>
               </div>
 
-              {providerModels.length > 0 ? (
-                <div className="space-y-3 rounded-lg border p-3">
+              {showAdvancedProviderConfig ? (
+                <div className="space-y-4 rounded-lg border border-dashed border-slate-300 p-4">
+                  {(providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER') ? (
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Base URL da OpenRouter</label>
+                      <Input value={providerForm.openRouterBaseUrl} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterBaseUrl: event.target.value }))} placeholder="https://openrouter.ai/api/v1" />
+                    </div>
+                  ) : null}
+
+                  {providerForm.fallbackProvider !== 'NONE' ? (
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-sm font-medium text-slate-900">Modelos de fallback</p>
+                        <p className="text-xs text-slate-500">Use somente se quiser uma politica diferente do provider principal.</p>
+                      </div>
+                      <div className="grid gap-4 lg:grid-cols-3">
+                        <Input value={providerForm.fallbackFastModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackFastModel: event.target.value }))} placeholder="Modelo rapido fallback" />
+                        <Input value={providerForm.fallbackContextualModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackContextualModel: event.target.value }))} placeholder="Modelo contextual fallback" />
+                        <Input value={providerForm.fallbackQualityModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackQualityModel: event.target.value }))} placeholder="Modelo qualidade fallback" />
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {providerModels.length > 0 ? (
+                    <div className="space-y-3 rounded-lg border p-3">
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
-                      <p className="text-sm font-medium text-slate-900">Catalogo OpenRouter open source</p>
-                      <p className="text-xs text-slate-500">Filtrado por modelos com `hugging_face_id` no catalogo oficial da OpenRouter.</p>
+                      <p className="text-sm font-medium text-slate-900">
+                        Catalogo {providerForm.provider === 'OPENROUTER' ? 'OpenRouter open source' : 'Ollama local'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        Use esta lista para consultar slugs, contexto e aplicar um modelo rapidamente aos perfis.
+                      </p>
                     </div>
                     <Input
                       value={modelSearch}
@@ -406,10 +496,12 @@ export default function SuperAdminAiPage() {
                     ))}
                     {visibleProviderModels.length === 0 ? (
                       <div className="rounded-lg border border-dashed p-4 text-sm text-slate-500">
-                        Nenhum modelo open source encontrado para este filtro.
+                        Nenhum modelo encontrado para este filtro.
                       </div>
                     ) : null}
                   </div>
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
             </form>
