@@ -126,6 +126,8 @@ export interface AiProviderSettings {
 export interface AiProviderModel {
   id: string;
   name: string;
+  huggingFaceId?: string;
+  isOpenSource?: boolean;
   contextLength?: number;
   promptPrice?: string;
   completionPrice?: string;
@@ -306,6 +308,7 @@ export const aiPlatformService = {
     provider: 'OLLAMA' | 'OPENROUTER';
     openRouterApiKey?: string;
     openRouterBaseUrl?: string;
+    openSourceOnly?: boolean;
   }): Promise<AiProviderModel[]> {
     const payload = await request<{ data: AiProviderModel[] }>('/provider/models', {
       method: 'POST',

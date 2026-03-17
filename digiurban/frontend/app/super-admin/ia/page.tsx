@@ -79,6 +79,7 @@ export default function SuperAdminAiPage() {
   const [newKeyName, setNewKeyName] = useState('');
   const [newKeyPlanId, setNewKeyPlanId] = useState('');
   const [revealedKey, setRevealedKey] = useState<string | null>(null);
+  const [modelSearch, setModelSearch] = useState('');
   const [providerForm, setProviderForm] = useState<ProviderFormState>({
     provider: 'OLLAMA',
     fallbackProvider: 'NONE',
@@ -255,9 +256,10 @@ export default function SuperAdminAiPage() {
     setLoadingModels(true);
     try {
       setProviderModels(await aiPlatformService.listProviderModels({
-        provider: providerForm.provider,
+        provider: 'OPENROUTER',
         openRouterApiKey: providerForm.openRouterApiKey.trim() || undefined,
         openRouterBaseUrl: providerForm.openRouterBaseUrl.trim() || undefined,
+        openSourceOnly: true,
       }));
     } catch (error) {
       toast({ title: 'Erro ao listar modelos', description: error instanceof Error ? error.message : 'Falha ao carregar modelos.', variant: 'destructive' });
@@ -265,6 +267,35 @@ export default function SuperAdminAiPage() {
       setLoadingModels(false);
     }
   };
+
+  useEffect(() => {
+    if (!providerSettings?.hasOpenRouterApiKey && !providerForm.openRouterApiKey.trim()) return;
+    if (providerModels.length > 0) return;
+    void listModels();
+  }, [providerSettings?.hasOpenRouterApiKey]);
+
+  const applyModelToField = (
+    field:
+      | 'fastModel'
+      | 'contextualModel'
+      | 'qualityModel'
+      | 'fallbackFastModel'
+      | 'fallbackContextualModel'
+      | 'fallbackQualityModel',
+    modelId: string,
+  ): void => {
+    setProviderForm((current) => ({ ...current, [field]: modelId }));
+  };
+
+  const visibleProviderModels = providerModels.filter((model) => {
+    if (!modelSearch.trim()) return true;
+    const query = modelSearch.trim().toLowerCase();
+    return (
+      model.name.toLowerCase().includes(query) ||
+      model.id.toLowerCase().includes(query) ||
+      model.huggingFaceId?.toLowerCase().includes(query)
+    );
+  });
 
   return (
     <div className="space-y-6 pb-8">
@@ -329,17 +360,56 @@ export default function SuperAdminAiPage() {
               <div className="flex flex-wrap gap-3">
                 <Button type="submit" disabled={savingProvider}>{savingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : <><ShieldCheck className="mr-2 h-4 w-4" />Salvar provider</>}</Button>
                 <Button type="button" variant="outline" onClick={testProvider} disabled={testingProvider}>{testingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testando...</> : 'Testar conexao'}</Button>
-                <Button type="button" variant="outline" onClick={listModels} disabled={loadingModels}>{loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Listar modelos'}</Button>
+                <Button type="button" variant="outline" onClick={listModels} disabled={loadingModels}>{loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Listar modelos open source'}</Button>
               </div>
 
               {providerModels.length > 0 ? (
-                <div className="max-h-72 space-y-2 overflow-y-auto rounded-lg border p-3">
-                  {providerModels.slice(0, 30).map((model) => (
-                    <div key={model.id} className="rounded-lg border p-3 text-sm">
-                      <p className="font-medium text-slate-900">{model.name}</p>
-                      <p className="font-mono text-xs text-slate-500">{model.id}</p>
+                <div className="space-y-3 rounded-lg border p-3">
+                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">Catalogo OpenRouter open source</p>
+                      <p className="text-xs text-slate-500">Filtrado por modelos com `hugging_face_id` no catalogo oficial da OpenRouter.</p>
                     </div>
-                  ))}
+                    <Input
+                      value={modelSearch}
+                      onChange={(event) => setModelSearch(event.target.value)}
+                      placeholder="Filtrar por nome, slug ou Hugging Face"
+                      className="w-full lg:w-80"
+                    />
+                  </div>
+                  <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1">
+                    {visibleProviderModels.map((model) => (
+                      <div key={model.id} className="rounded-lg border p-3 text-sm">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <div className="min-w-0 space-y-1">
+                            <p className="font-medium text-slate-900">{model.name}</p>
+                            <p className="font-mono text-xs text-slate-500">{model.id}</p>
+                            {model.huggingFaceId ? (
+                              <p className="text-xs text-slate-500">HF: {model.huggingFaceId}</p>
+                            ) : null}
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fastModel', model.id)}>Rapido</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('contextualModel', model.id)}>Contextual</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('qualityModel', model.id)}>Qualidade</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fallbackFastModel', model.id)}>Fallback rapido</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fallbackContextualModel', model.id)}>Fallback contextual</Button>
+                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fallbackQualityModel', model.id)}>Fallback qualidade</Button>
+                          </div>
+                        </div>
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {typeof model.contextLength === 'number' ? <Badge variant="outline">{model.contextLength.toLocaleString('pt-BR')} ctx</Badge> : null}
+                          {model.promptPrice ? <Badge variant="outline">Prompt: {model.promptPrice}</Badge> : null}
+                          {model.completionPrice ? <Badge variant="outline">Completion: {model.completionPrice}</Badge> : null}
+                        </div>
+                      </div>
+                    ))}
+                    {visibleProviderModels.length === 0 ? (
+                      <div className="rounded-lg border border-dashed p-4 text-sm text-slate-500">
+                        Nenhum modelo open source encontrado para este filtro.
+                      </div>
+                    ) : null}
+                  </div>
                 </div>
               ) : null}
             </form>

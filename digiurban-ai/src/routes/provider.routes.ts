@@ -25,6 +25,7 @@ const providerProbeSchema = z.object({
   provider: providerSchema,
   openRouterApiKey: z.string().trim().min(10).max(512).optional(),
   openRouterBaseUrl: z.string().trim().url().max(255).optional(),
+  openSourceOnly: z.boolean().optional(),
 });
 
 function getTenantId(req: AuthenticatedProxyRequest): string {
@@ -103,6 +104,7 @@ router.post('/provider/models', async (req, res) => {
       provider: payload.provider,
       openRouterApiKey: payload.openRouterApiKey,
       openRouterBaseUrl: payload.openRouterBaseUrl,
+      openSourceOnly: payload.openSourceOnly,
     });
     res.json({ data });
   } catch (error) {

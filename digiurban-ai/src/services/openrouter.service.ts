@@ -40,6 +40,7 @@ interface OpenRouterChatStreamCallbacks {
 type OpenRouterModelEntry = {
   id: string;
   name?: string;
+  hugging_face_id?: string;
   context_length?: number;
   pricing?: {
     prompt?: string;
@@ -249,6 +250,8 @@ export class OpenRouterService {
     Array<{
       id: string;
       name: string;
+      huggingFaceId?: string;
+      isOpenSource: boolean;
       contextLength?: number;
       promptPrice?: string;
       completionPrice?: string;
@@ -261,6 +264,8 @@ export class OpenRouterService {
         .map((item) => ({
           id: item.id,
           name: item.name || item.id,
+          huggingFaceId: item.hugging_face_id,
+          isOpenSource: typeof item.hugging_face_id === 'string' && item.hugging_face_id.trim().length > 0,
           contextLength: item.context_length,
           promptPrice: item.pricing?.prompt,
           completionPrice: item.pricing?.completion,

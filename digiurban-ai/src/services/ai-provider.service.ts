@@ -120,10 +120,13 @@ export class AiProviderService {
     provider: AiProviderId;
     openRouterApiKey?: string;
     openRouterBaseUrl?: string;
+    openSourceOnly?: boolean;
   }): Promise<
     Array<{
       id: string;
       name: string;
+      huggingFaceId?: string;
+      isOpenSource?: boolean;
       contextLength?: number;
       promptPrice?: string;
       completionPrice?: string;
@@ -144,10 +147,11 @@ export class AiProviderService {
         throw new AiProviderServiceError('Uma chave da OpenRouter e obrigatoria para listar modelos', 400);
       }
 
-      return await openRouterService.listModels({
+      const models = await openRouterService.listModels({
         apiKey,
         baseUrl: params.openRouterBaseUrl?.trim() || resolved.openRouterBaseUrl || config.openRouterBaseUrl,
       });
+      return params.openSourceOnly ? models.filter((model) => model.isOpenSource) : models;
     } catch (error) {
       throw normalizeProviderError(error);
     }

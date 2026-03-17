@@ -790,25 +790,20 @@ function resolveInferenceProfile(params: {
   return params.chatMode === 'rag' ? 'rag' : 'draft';
 }
 
-function resolveAutomaticModel(params: {
+function resolveRequestedModel(params: {
   requestedModel?: string;
   source: 'ADMIN_CHAT' | 'INTERNAL_API' | 'PUBLIC_API';
-  chatMode: ChatMode;
 }): string | undefined {
   const requestedModel = params.requestedModel?.trim();
-  if (requestedModel) {
-    return requestedModel;
+  if (!requestedModel) {
+    return undefined;
   }
 
-  if (
-    params.source === 'ADMIN_CHAT' &&
-    params.chatMode === 'free' &&
-    config.ollamaFallbackModel.trim()
-  ) {
-    return config.ollamaFallbackModel.trim();
+  if (params.source === 'ADMIN_CHAT') {
+    return undefined;
   }
 
-  return undefined;
+  return requestedModel;
 }
 
 function normalizeAttachmentText(value?: string): string | undefined {
@@ -1256,11 +1251,16 @@ export class ChatService {
     }
     const requestStartedAt = Date.now();
 
+    const requestedModel = resolveRequestedModel({
+      requestedModel: params.model,
+      source: 'ADMIN_CHAT',
+    });
+
     const inferencePlan = inferenceRouterService.plan({
       query: normalized,
       requestedMode: params.mode,
       requestedExperience: params.experience,
-      requestedModel: params.model,
+      requestedModel,
       source: 'ADMIN_CHAT',
       explicitWebSearch: params.webSearch,
     });
@@ -1535,11 +1535,16 @@ export class ChatService {
     }
     const requestStartedAt = Date.now();
 
+    const requestedModel = resolveRequestedModel({
+      requestedModel: params.model,
+      source: 'ADMIN_CHAT',
+    });
+
     const inferencePlan = inferenceRouterService.plan({
       query: normalized,
       requestedMode: params.mode,
       requestedExperience: params.experience,
-      requestedModel: params.model,
+      requestedModel,
       source: 'ADMIN_CHAT',
       explicitWebSearch: params.webSearch,
     });
@@ -1834,11 +1839,16 @@ export class ChatService {
     }
     const requestStartedAt = Date.now();
 
+    const requestedModel = resolveRequestedModel({
+      requestedModel: params.model,
+      source: params.source,
+    });
+
     const inferencePlan = inferenceRouterService.plan({
       query: prompt,
       requestedMode: params.mode,
       requestedExperience: params.experience,
-      requestedModel: params.model,
+      requestedModel,
       source: params.source,
       explicitWebSearch: params.webSearch,
     });

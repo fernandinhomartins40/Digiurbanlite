@@ -56,17 +56,17 @@ const EXPERIENCE_OPTIONS: Array<{
   {
     value: 'fast',
     label: 'Livre',
-    description: 'Chat livre para escrita, revisao e produtividade, sem contexto interno da aplicacao.',
+    description: 'Chat livre usando o perfil rapido configurado centralmente no Super Admin.',
   },
   {
     value: 'contextual',
     label: 'Contextual',
-    description: 'Consulta dados, fluxos e contexto da aplicacao antes de responder.',
+    description: 'Consulta dados, fluxos e contexto da aplicacao com o perfil contextual configurado no Super Admin.',
   },
   {
     value: 'quality',
     label: 'Qualidade',
-    description: 'Usa o Qwen 3.5 4B para respostas com acabamento textual melhor.',
+    description: 'Prioriza o perfil de qualidade configurado no Super Admin para respostas com mais acabamento textual.',
   },
 ];
 const QUICK_PROMPTS = [
@@ -794,6 +794,9 @@ export default function AdminAiPage() {
                   </p>
                   <p className="text-xs text-slate-500">
                     {EXPERIENCE_OPTIONS.find((option) => option.value === experienceMode)?.description}
+                  </p>
+                  <p className="text-[11px] text-slate-400">
+                    Provider e modelos sao aplicados pela configuracao central do Super Admin.
                   </p>
                 </div>
               </div>
