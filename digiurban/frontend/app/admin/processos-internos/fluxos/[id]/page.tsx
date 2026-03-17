@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -17,7 +17,7 @@ import {
 import { useToast } from '@/hooks/use-toast'
 import { flowClient, WorkflowStep, WorkflowTransition } from '@/lib/flow-client'
 
-// AÃ§Ãµes disponÃ­veis para etapas
+// Ações disponíveis para etapas
 const AVAILABLE_ACTIONS = [
   { value: 'ENCAMINHADO', label: 'Encaminhar' },
   { value: 'DESPACHO', label: 'Despacho' },
@@ -31,7 +31,7 @@ const AVAILABLE_ACTIONS = [
 const DOCUMENT_OPTIONS = [
   { value: '', label: 'Nenhum (opcional)' },
   { value: 'memorando', label: 'Memorando' },
-  { value: 'oficio', label: 'OfÃ­cio' },
+  { value: 'oficio', label: 'Ofício' },
   { value: 'despacho', label: 'Despacho' },
   { value: 'capa-processo', label: 'Capa de Processo' },
 ]
@@ -98,7 +98,7 @@ export default function FluxoEditorPage() {
 
   useEffect(() => { loadTemplate() }, [loadTemplate])
 
-  // â”€â”€â”€ ManipulaÃ§Ã£o de etapas â”€â”€â”€
+  // ─── Manipulação de etapas ───
 
   const addStep = () => {
     setSteps(prev => [...prev, newStep(prev.length)])
@@ -134,7 +134,7 @@ export default function FluxoEditorPage() {
     updateStep(idx, { actions: next })
   }
 
-  // â”€â”€â”€ Salvar â”€â”€â”€
+  // ─── Salvar ───
 
   const handleSave = async () => {
     if (!name.trim()) {
@@ -204,7 +204,7 @@ export default function FluxoEditorPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold text-gray-900 flex items-center gap-2">
           <GitBranch className="w-5 h-5 text-blue-600" />
-          {isNew ? 'Novo Fluxo de TramitaÃ§Ã£o' : 'Editar Fluxo'}
+          {isNew ? 'Novo Fluxo de Tramitação' : 'Editar Fluxo'}
         </h1>
         <Button onClick={handleSave} disabled={saving}>
           <Save className="w-4 h-4 mr-2" />
@@ -212,7 +212,7 @@ export default function FluxoEditorPage() {
         </Button>
       </div>
 
-      {/* Nome e DescriÃ§Ã£o */}
+      {/* Nome e Descrição */}
       <Card>
         <CardContent className="pt-4 space-y-4">
           <div>
@@ -221,12 +221,12 @@ export default function FluxoEditorPage() {
               id="name"
               value={name}
               onChange={e => setName(e.target.value)}
-              placeholder="Ex: Fluxo de Memorando PadrÃ£o"
+              placeholder="Ex: Fluxo de Memorando Padrão"
               className="mt-1"
             />
           </div>
           <div>
-            <Label htmlFor="desc">DescriÃ§Ã£o</Label>
+            <Label htmlFor="desc">Descrição</Label>
             <Textarea
               id="desc"
               value={description}
@@ -239,7 +239,7 @@ export default function FluxoEditorPage() {
         </CardContent>
       </Card>
 
-      {/* VisualizaÃ§Ã£o do fluxo */}
+      {/* Visualização do fluxo */}
       {steps.length > 1 && (
         <div className="flex items-center gap-1 overflow-x-auto pb-2">
           {steps.map((step, idx) => (
@@ -294,12 +294,12 @@ export default function FluxoEditorPage() {
       <div className="flex items-start gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
         <AlertTriangle className="w-4 h-4 flex-shrink-0 mt-0.5" />
         <p>
-          As transiÃ§Ãµes entre etapas sÃ£o geradas automaticamente em sequÃªncia linear (1â†’2â†’3...).
-          Ao despachar com "Seguir Fluxo", a unidade de destino da prÃ³xima etapa Ã© prÃ©-selecionada.
+          As transições entre etapas são geradas automaticamente em sequência linear (1→2→3...).
+          Ao despachar com "Seguir Fluxo", a unidade de destino da próxima etapa é pré-selecionada.
         </p>
       </div>
 
-      {/* BotÃ£o salvar ao final */}
+      {/* Botão salvar ao final */}
       <div className="flex justify-end gap-3 pt-2 pb-8">
         <Link href="/admin/processos-internos/fluxos">
           <Button variant="outline">Cancelar</Button>
@@ -313,7 +313,7 @@ export default function FluxoEditorPage() {
   )
 }
 
-// â”€â”€â”€ Componente de Etapa â”€â”€â”€
+// ─── Componente de Etapa ───
 
 function StepCard({
   step,
@@ -433,9 +433,9 @@ function StepCard({
           </select>
         </div>
 
-        {/* AÃ§Ãµes permitidas */}
+        {/* Ações permitidas */}
         <div>
-          <Label className="text-xs text-gray-500">AÃ§Ãµes permitidas nesta etapa *</Label>
+          <Label className="text-xs text-gray-500">Ações permitidas nesta etapa *</Label>
           <div className="flex flex-wrap gap-2 mt-1">
             {AVAILABLE_ACTIONS.map(a => {
               const active = step.actions.includes(a.value)
@@ -457,7 +457,7 @@ function StepCard({
             })}
           </div>
           {step.actions.length === 0 && (
-            <p className="text-xs text-red-500 mt-1">Selecione ao menos uma aÃ§Ã£o</p>
+            <p className="text-xs text-red-500 mt-1">Selecione ao menos uma ação</p>
           )}
         </div>
       </CardContent>

@@ -1,10 +1,14 @@
 import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
+import { Manrope } from 'next/font/google'
 import './globals.css'
 import { ToasterProvider } from '@/components/providers/ToasterProvider'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 
-const inter = Inter({ subsets: ['latin'] })
+const appFont = Manrope({
+  subsets: ['latin'],
+  variable: '--font-app',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_BASE_URL || 'https://digiurban.com.br'),
@@ -130,12 +134,13 @@ export default function RootLayout({
   return (
     <html lang="pt-BR">
       <head>
+        <meta charSet="utf-8" />
         {/* Compat: alguns browsers reclamam do meta apple-only */}
         <meta name="mobile-web-app-capable" content="yes" />
         {/* OpenCV.js para jscanify (document scanner) - usando CDN com CORS habilitado */}
         <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/opencv.js" async></script>
       </head>
-      <body className={inter.className}>
+      <body className={`${appFont.variable} font-sans antialiased`}>
         <QueryProvider>
           {children}
           <ToasterProvider />

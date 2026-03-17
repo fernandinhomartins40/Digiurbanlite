@@ -95,6 +95,13 @@ export default function SuperAdminAiPage() {
     isEnabled: true,
   });
 
+  const isOpenRouterInUse =
+    providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER';
+  const hasTypedOpenRouterApiKey = providerForm.openRouterApiKey.trim().length > 0;
+  const hasValidSavedOpenRouterApiKey = providerSettings?.openRouterApiKeyStatus === 'valid';
+  const hasBrokenSavedOpenRouterApiKey = providerSettings?.openRouterApiKeyStatus === 'broken';
+  const hasUsableOpenRouterApiKey = hasTypedOpenRouterApiKey || hasValidSavedOpenRouterApiKey;
+
   const loadKnowledge = async (): Promise<void> => {
     setLoadingKnowledge(true);
     try {
@@ -270,9 +277,13 @@ export default function SuperAdminAiPage() {
   };
 
   useEffect(() => {
-    if (providerForm.provider === 'OPENROUTER' && !providerSettings?.hasOpenRouterApiKey && !providerForm.openRouterApiKey.trim()) return;
+    if (providerForm.provider === 'OPENROUTER' && !hasUsableOpenRouterApiKey) {
+      setProviderModels([]);
+      return;
+    }
+
     void listModels();
-  }, [providerForm.provider, providerSettings?.hasOpenRouterApiKey]);
+  }, [providerForm.provider, hasUsableOpenRouterApiKey]);
 
   const applyModelToField = (
     field:
@@ -297,13 +308,15 @@ export default function SuperAdminAiPage() {
     );
   });
 
-  const availableModelOptions = providerModels.length > 0
+  const availableModelOptions = providerForm.provider === 'OPENROUTER'
     ? providerModels
-    : [
-        { id: providerForm.fastModel, name: providerForm.fastModel },
-        { id: providerForm.contextualModel, name: providerForm.contextualModel },
-        { id: providerForm.qualityModel, name: providerForm.qualityModel },
-      ].filter((model): model is AiProviderModel => Boolean(model.id));
+    : providerModels.length > 0
+      ? providerModels
+      : [
+          { id: providerForm.fastModel, name: providerForm.fastModel },
+          { id: providerForm.contextualModel, name: providerForm.contextualModel },
+          { id: providerForm.qualityModel, name: providerForm.qualityModel },
+        ].filter((model): model is AiProviderModel => Boolean(model.id));
 
   return (
     <div className="space-y-6 pb-8">
@@ -349,19 +362,33 @@ export default function SuperAdminAiPage() {
               </div>
 
               {providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER' ? (
-                <div className="grid gap-4 lg:grid-cols-2">
-                  <Input type="password" value={providerForm.openRouterApiKey} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterApiKey: event.target.value }))} placeholder={providerSettings?.hasOpenRouterApiKey ? `Chave salva termina com ${providerSettings.openRouterApiKeyLast4 || '****'}` : 'Cole uma chave da OpenRouter'} />
-                  <div className="flex items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
-                    {loadingModels ? (
-                      <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Carregando catalogo...</span>
-                    ) : (
-                      <span>
-                        {availableModelOptions.length > 0
-                          ? `${availableModelOptions.length} modelos disponiveis no catalogo`
-                          : 'Carregue o catalogo para selecionar os modelos disponiveis'}
-                      </span>
-                    )}
+                <div className="space-y-3">
+                  <div className="grid gap-4 lg:grid-cols-2">
+                    <Input type="password" value={providerForm.openRouterApiKey} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterApiKey: event.target.value }))} placeholder={hasValidSavedOpenRouterApiKey ? `Chave salva termina com ${providerSettings?.openRouterApiKeyLast4 || '****'}` : 'Cole uma chave da OpenRouter'} />
+                    <div className="flex items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
+                      {loadingModels ? (
+                        <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Carregando catalogo...</span>
+                      ) : (
+                        <span>
+                          {availableModelOptions.length > 0
+                            ? `${availableModelOptions.length} modelos disponiveis no catalogo`
+                            : hasUsableOpenRouterApiKey
+                              ? 'Carregue o catalogo para selecionar os modelos disponiveis'
+                              : 'Informe ou recadastre uma chave valida para carregar os modelos'}
+                        </span>
+                      )}
+                    </div>
                   </div>
+                  {hasBrokenSavedOpenRouterApiKey && !hasTypedOpenRouterApiKey ? (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+                      A chave da OpenRouter salva nao pode ser lida com o segredo atual. Cole uma nova chave e salve novamente para liberar o catalogo remoto.
+                    </div>
+                  ) : null}
+                  {!hasValidSavedOpenRouterApiKey && !hasTypedOpenRouterApiKey ? (
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
+                      Nenhuma chave valida da OpenRouter esta disponivel. Sem ela, o sistema nao consegue listar modelos free nem testar a conexao.
+                    </div>
+                  ) : null}
                 </div>
               ) : null}
 
@@ -418,8 +445,22 @@ export default function SuperAdminAiPage() {
 
               <div className="flex flex-wrap gap-3">
                 <Button type="submit" disabled={savingProvider}>{savingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : <><ShieldCheck className="mr-2 h-4 w-4" />Salvar provider</>}</Button>
-                <Button type="button" variant="outline" onClick={testProvider} disabled={testingProvider}>{testingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testando...</> : 'Testar conexao'}</Button>
-                <Button type="button" variant="outline" onClick={listModels} disabled={loadingModels}>{loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Atualizar catalogo'}</Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={testProvider}
+                  disabled={testingProvider || (providerForm.provider === 'OPENROUTER' && !hasUsableOpenRouterApiKey)}
+                >
+                  {testingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testando...</> : 'Testar conexao'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={listModels}
+                  disabled={loadingModels || (providerForm.provider === 'OPENROUTER' && !hasUsableOpenRouterApiKey)}
+                >
+                  {loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Atualizar catalogo'}
+                </Button>
                 <Button type="button" variant="ghost" onClick={() => setShowAdvancedProviderConfig((current) => !current)}>
                   <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${showAdvancedProviderConfig ? 'rotate-180' : ''}`} />
                   Configuracoes avancadas

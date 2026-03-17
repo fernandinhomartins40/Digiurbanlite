@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
@@ -268,7 +268,7 @@ function DispatchDialog({
         action,
       })
 
-      // Se modo fluxo, avançar a instÃ¢ncia de workflow também
+      // Se modo fluxo, avançar a instância de workflow também
       if (mode === 'fluxo' && activeWorkflowInstance?.id) {
         try {
           await flowClient.advanceWorkflow(activeWorkflowInstance.id, action, note || undefined)
@@ -784,7 +784,7 @@ function ProcessDetailPanel({
             <div className="flex-1 overflow-y-auto px-4 pb-4 pt-2">
               {/* Tramitação */}
               <TabsContent value="tramitacao" className="mt-0 space-y-3">
-                {/* Progresso do Fluxo (se houver instÃ¢ncia ativa) */}
+                {/* Progresso do Fluxo (se houver instância ativa) */}
                 {process?.workflowInstance && (
                   <div className={`p-3 rounded-lg border mt-2 ${
                     process.workflowInstance.status === 'ATIVO'

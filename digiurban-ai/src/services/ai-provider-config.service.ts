@@ -8,6 +8,7 @@ export interface AiProviderSettingsView {
   fallbackProvider: AiProviderId | null;
   openRouterBaseUrl: string;
   hasOpenRouterApiKey: boolean;
+  openRouterApiKeyStatus: 'missing' | 'valid' | 'broken';
   openRouterApiKeyLast4?: string | null;
   fastModel?: string | null;
   contextualModel?: string | null;
@@ -81,17 +82,36 @@ function requiresOpenRouterKey(provider: AiProviderId | null | undefined): boole
   return typeof provider === 'string' && OPENROUTER_PROVIDERS.includes(provider);
 }
 
+function getSavedOpenRouterKeyState(
+  encryptedValue?: string | null,
+): { status: 'missing' | 'valid' | 'broken'; value?: string } {
+  if (!encryptedValue) {
+    return { status: 'missing' };
+  }
+
+  try {
+    return {
+      status: 'valid',
+      value: decryptSecret(encryptedValue),
+    };
+  } catch {
+    return { status: 'broken' };
+  }
+}
+
 export class AiProviderConfigService {
   async getSettings(tenantId: string): Promise<AiProviderSettingsView> {
     const record = await prisma.aiProviderSettings.findUnique({
       where: { tenantId },
     });
+    const savedKeyState = getSavedOpenRouterKeyState(record?.openRouterApiKeyEncrypted);
 
     return {
       provider: (record?.provider as AiProviderId | undefined) || 'OLLAMA',
       fallbackProvider: (record?.fallbackProvider as AiProviderId | null | undefined) || null,
       openRouterBaseUrl: record?.openRouterBaseUrl || config.openRouterBaseUrl,
-      hasOpenRouterApiKey: Boolean(record?.openRouterApiKeyEncrypted),
+      hasOpenRouterApiKey: savedKeyState.status === 'valid',
+      openRouterApiKeyStatus: savedKeyState.status,
       openRouterApiKeyLast4: record?.openRouterApiKeyLast4,
       fastModel: record?.fastModel || null,
       contextualModel: record?.contextualModel || null,
@@ -108,23 +128,19 @@ export class AiProviderConfigService {
     const record = await prisma.aiProviderSettings.findUnique({
       where: { tenantId },
     });
+    const savedKeyState = getSavedOpenRouterKeyState(record?.openRouterApiKeyEncrypted);
 
-    let openRouterApiKey: string | undefined;
-    if (record?.openRouterApiKeyEncrypted) {
-      try {
-        openRouterApiKey = decryptSecret(record.openRouterApiKeyEncrypted);
-      } catch {
-        throw new Error(
-          'Nao foi possivel descriptografar a chave da OpenRouter salva. Salve a configuracao novamente no Super Admin.',
-        );
-      }
+    if (savedKeyState.status === 'broken') {
+      throw new Error(
+        'Nao foi possivel descriptografar a chave da OpenRouter salva. Salve a configuracao novamente no Super Admin.',
+      );
     }
 
     return {
       provider: (record?.provider as AiProviderId | undefined) || 'OLLAMA',
       fallbackProvider: (record?.fallbackProvider as AiProviderId | null | undefined) || null,
       openRouterBaseUrl: record?.openRouterBaseUrl || config.openRouterBaseUrl,
-      openRouterApiKey,
+      openRouterApiKey: savedKeyState.value,
       fastModel: record?.fastModel || null,
       contextualModel: record?.contextualModel || null,
       qualityModel: record?.qualityModel || null,
@@ -146,6 +162,7 @@ export class AiProviderConfigService {
     const provider = input.provider;
     const fallbackProvider = input.fallbackProvider ?? null;
     const currentEncryptedKey = current?.openRouterApiKeyEncrypted || null;
+    const currentKeyState = getSavedOpenRouterKeyState(currentEncryptedKey);
     const normalizedApiKey = input.openRouterApiKey?.trim();
     const nextEncryptedKey =
       normalizedApiKey && normalizedApiKey.length > 0
@@ -161,6 +178,16 @@ export class AiProviderConfigService {
       !nextEncryptedKey
     ) {
       throw new Error('Uma chave da OpenRouter e obrigatoria para usar este provider');
+    }
+
+    if (
+      (requiresOpenRouterKey(provider) || requiresOpenRouterKey(fallbackProvider)) &&
+      !normalizedApiKey &&
+      currentKeyState.status === 'broken'
+    ) {
+      throw new Error(
+        'A chave da OpenRouter salva esta corrompida. Cole uma nova chave e salve novamente.',
+      );
     }
 
     await prisma.aiProviderSettings.upsert({

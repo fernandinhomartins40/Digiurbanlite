@@ -1030,7 +1030,7 @@ export default function PesquisaPrecos() {
             {/* ABA: CONTRATOS */}
             <TabsContent value="resultados">
               <div className="overflow-auto rounded-lg border">
-                <table className="w-full text-sm">
+                <table className="w-full min-w-full table-fixed text-sm">
                   <thead className="bg-gray-50 dark:bg-gray-800">
                     <tr>
                       <th className="text-left px-3 py-3 font-medium text-gray-600 dark:text-gray-400">Fonte</th>
@@ -1054,8 +1054,10 @@ export default function PesquisaPrecos() {
                               {badge.label}
                             </span>
                           </td>
-                          <td className="px-3 py-2 max-w-xs">
-                            <p className="line-clamp-2 text-xs">{item.description}</p>
+                          <td className="px-3 py-2 align-top">
+                            <p className="max-w-[22rem] whitespace-normal break-words text-xs leading-snug">
+                              {item.description}
+                            </p>
                           </td>
                           <td className="px-3 py-2 text-gray-500 text-xs">{item.unit ?? '-'}</td>
                           <td className="px-3 py-2 text-right font-semibold text-green-700 text-sm">
@@ -1066,8 +1068,10 @@ export default function PesquisaPrecos() {
                           <td className="px-3 py-2">
                             {item.uf ? <Badge variant="outline" className="text-xs">{item.uf}</Badge> : '-'}
                           </td>
-                          <td className="px-3 py-2 text-gray-500 text-xs max-w-xs">
-                            <p className="line-clamp-1">{item.organizationName ?? '-'}</p>
+                          <td className="px-3 py-2 align-top text-gray-500 text-xs">
+                            <p className="max-w-[18rem] whitespace-normal break-words leading-snug">
+                              {item.organizationName ?? '-'}
+                            </p>
                           </td>
                           <td className="px-3 py-2">
                             <div className="flex items-center gap-1 min-w-[60px]">
@@ -1200,8 +1204,8 @@ export default function PesquisaPrecos() {
                       <tbody>
                         {supplierMap.suppliers.map((sup, i) => (
                           <tr key={`${sup.supplierCnpj}-${i}`} className={i % 2 === 0 ? 'bg-white dark:bg-gray-900' : 'bg-gray-50 dark:bg-gray-800'}>
-                            <td className="px-3 py-2 font-medium text-xs max-w-xs">
-                              <p className="line-clamp-2">{sup.supplierName || '—'}</p>
+                            <td className="px-3 py-2 align-top font-medium text-xs">
+                              <p className="max-w-[20rem] whitespace-normal break-words leading-snug">{sup.supplierName || '—'}</p>
                             </td>
                             <td className="px-3 py-2 text-gray-500 text-xs whitespace-nowrap">{sup.supplierCnpj ?? '—'}</td>
                             <td className="px-3 py-2 text-right font-semibold">{sup.contractCount}</td>

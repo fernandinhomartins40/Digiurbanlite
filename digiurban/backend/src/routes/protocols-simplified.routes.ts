@@ -934,7 +934,7 @@ router.post('/:id/request-update', requireMinRole(UserRole.ADMIN), async (req: R
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nao encontrado',
+        error: 'Protocolo não encontrado',
       });
     }
 
@@ -1537,7 +1537,7 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
 
 /**
  * POST /api/protocols/:id/reopen
- * Reabre um protocolo conclu��do/cancelado
+ * Reabre um protocolo concluído/cancelado
  * mode: 'restart' | 'append'
  */
 router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
@@ -1576,14 +1576,14 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (!mode || (mode !== 'restart' && mode !== 'append')) {
       return res.status(400).json({
         success: false,
-        error: 'Modo invǭlido. Use "restart" ou "append".'
+        error: 'Modo inv?lido. Use "restart" ou "append".'
       });
     }
 
     if (mode === 'append' && normalizedDocuments.length === 0 && selectedDataFieldIds.length === 0 && customDataFieldItems.length === 0 && !normalizedOtherDescription) {
       return res.status(400).json({
         success: false,
-        error: 'Selecione ao menos uma pend�ncia para reabrir como pend�ncia'
+        error: 'Selecione ao menos uma pendência para reabrir como pendência'
       });
     }
 
@@ -1598,14 +1598,14 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nǜo encontrado'
+        error: 'Protocolo não encontrado'
       });
     }
 
     if (protocol.status !== ProtocolStatus.CONCLUIDO && protocol.status !== ProtocolStatus.CANCELADO) {
       return res.status(400).json({
         success: false,
-        error: 'Apenas protocolos conclu��dos ou cancelados podem ser reabertos'
+        error: 'Apenas protocolos concluídos ou cancelados podem ser reabertos'
       });
     }
 
@@ -1616,7 +1616,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (mode === 'restart' && (!workflow || !workflow.isActive || sortedWorkflowStages.length === 0)) {
       return res.status(400).json({
         success: false,
-        error: 'Servi��o sem workflow ativo configurado para reiniciar'
+        error: 'Serviço sem workflow ativo configurado para reiniciar'
       });
     }
 
@@ -1664,7 +1664,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       );
     } else {
       const reopenMetadata = {
-        description: 'Reabertura do protocolo (pendencia)',
+        description: 'Reabertura do protocolo (pendência)',
         availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'pendencias',
         requiredDocumentTypes: [],
@@ -1678,7 +1678,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       const stage = await prisma.protocolStage.create({
         data: {
           protocolId: id,
-          stageName: 'Reabertura (Pendencia)',
+          stageName: 'Reabertura (Pendência)',
           stageOrder: maxStageOrder + 1,
           status: 'IN_PROGRESS',
           startedAt: now,
@@ -1779,7 +1779,7 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         await pendingService.createPending({
           protocolId: id,
           type: PendingType.INFORMATION,
-          title: normalizedOtherTitle || 'Pend�ncia adicional',
+          title: normalizedOtherTitle || 'Pendência adicional',
           description: normalizedOtherDescription,
           blocksProgress: true,
           metadata: { source: 'reopen' },

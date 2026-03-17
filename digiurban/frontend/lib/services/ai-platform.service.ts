@@ -112,6 +112,7 @@ export interface AiProviderSettings {
   fallbackProvider: 'OLLAMA' | 'OPENROUTER' | null;
   openRouterBaseUrl: string;
   hasOpenRouterApiKey: boolean;
+  openRouterApiKeyStatus: 'missing' | 'valid' | 'broken';
   openRouterApiKeyLast4?: string | null;
   fastModel?: string | null;
   contextualModel?: string | null;

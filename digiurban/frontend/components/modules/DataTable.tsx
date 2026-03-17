@@ -155,7 +155,7 @@ export function DataTable({
             {data.map((row) => (
               <TableRow key={row.id}>
                 {columns.map((column) => (
-                  <TableCell key={column.key}>
+                  <TableCell key={column.key} className="align-top whitespace-normal break-words">
                     {column.render
                       ? column.render(row[column.key], row)
                       : row[column.key]}

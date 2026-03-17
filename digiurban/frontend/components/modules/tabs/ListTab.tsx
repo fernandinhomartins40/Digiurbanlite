@@ -323,29 +323,37 @@ export function ListTab({ config }: ListTabProps) {
               data.data.map((item) => (
                 <Card key={item.id} className="border-l-4 border-l-blue-500">
                   <CardContent className="p-4">
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <h3 className="font-medium text-lg">{item.title}</h3>
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="mb-2 flex flex-wrap items-start gap-2">
+                          <h3 className="min-w-0 break-words text-lg font-medium leading-snug">
+                            {item.title}
+                          </h3>
                           {item.protocol && (
                             <Badge variant="outline">{item.protocol}</Badge>
                           )}
                         </div>
                         {item.description && (
-                          <p className="text-sm text-gray-600 mb-3">{item.description}</p>
+                          <p className="mb-3 whitespace-pre-wrap break-words text-sm text-gray-600">
+                            {item.description}
+                          </p>
                         )}
-                        <div className="flex items-center gap-4 text-sm text-gray-500">
-                          <span>Criado em: {new Date(item.createdAt).toLocaleDateString('pt-BR')}</span>
+                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+                          <span className="break-words">
+                            Criado em: {new Date(item.createdAt).toLocaleDateString('pt-BR')}
+                          </span>
                           {item.updatedAt && (
-                            <span>Atualizado em: {new Date(item.updatedAt).toLocaleDateString('pt-BR')}</span>
+                            <span className="break-words">
+                              Atualizado em: {new Date(item.updatedAt).toLocaleDateString('pt-BR')}
+                            </span>
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-3">
+                      <div className="flex flex-wrap items-center gap-3 lg:justify-end">
                         <Badge className={STATUS_COLORS[item.status] || 'bg-gray-100 text-gray-800'}>
                           {STATUS_LABELS[item.status] || item.status}
                         </Badge>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                           <Button variant="outline" size="sm" onClick={() => handleView(item)}>
                             <Eye className="h-4 w-4 mr-2" />
                             Ver
@@ -369,11 +377,11 @@ export function ListTab({ config }: ListTabProps) {
 
           {/* Paginação */}
           {data?.pagination && data.pagination.totalPages > 1 && (
-            <div className="flex justify-between items-center mt-6">
+            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-gray-600">
                 Mostrando {((page - 1) * limit) + 1} a {Math.min(page * limit, data.pagination.total)} de {data.pagination.total} registros
               </p>
-              <div className="flex gap-2">
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="outline"
                   onClick={() => setPage(p => Math.max(1, p - 1))}
