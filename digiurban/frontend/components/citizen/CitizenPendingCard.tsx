@@ -25,16 +25,22 @@ import { DocumentUpload } from '@/components/common/DocumentUpload'
 export interface ProtocolPending {
   id: string
   protocolId: string
+  stageId?: string
   pendingType?: string
   type: string
   title: string
   description: string
-  status: 'PENDING' | 'RESOLVED' | 'CANCELLED' | 'OPEN' | 'IN_PROGRESS' | 'EXPIRED'
+  status: 'PENDING' | 'RESOLVED' | 'CANCELLED' | 'OPEN' | 'IN_PROGRESS' | 'UNDER_REVIEW' | 'EXPIRED'
   priority: number
   dueDate?: string
   createdAt: string
+  submittedAt?: string
   resolvedAt?: string
   resolution?: string
+  reviewedAt?: string
+  reviewNotes?: string
+  requiresReview?: boolean
+  sourceType?: string
   metadata?: any
   blocksProgress?: boolean
 }
@@ -56,6 +62,7 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
   const isDocumentType = pendingType === 'DOCUMENT'
   const isInformationType = ['INFORMATION', 'CORRECTION', 'VALIDATION', 'PAYMENT'].includes(pendingType)
   const isPending = ['PENDING', 'OPEN', 'IN_PROGRESS'].includes(pending.status)
+  const isUnderReview = pending.status === 'UNDER_REVIEW'
   const isOverdue = Boolean(pending.dueDate && new Date(pending.dueDate) < new Date())
 
   const handleSubmit = async () => {
@@ -135,6 +142,8 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
         return <XCircle className="h-5 w-5 text-gray-600" />
       case 'IN_PROGRESS':
         return <Clock className="h-5 w-5 text-orange-600" />
+      case 'UNDER_REVIEW':
+        return <Clock className="h-5 w-5 text-blue-600" />
       default:
         return <AlertCircle className="h-5 w-5 text-orange-600" />
     }
@@ -146,6 +155,8 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
         return <Badge className="bg-green-600 text-white">Resolvida</Badge>
       case 'IN_PROGRESS':
         return <Badge className="bg-yellow-500 text-white">Em andamento</Badge>
+      case 'UNDER_REVIEW':
+        return <Badge className="bg-blue-600 text-white">Em análise</Badge>
       case 'CANCELLED':
         return <Badge variant="outline" className="text-gray-600">Cancelada</Badge>
       case 'EXPIRED':
@@ -161,6 +172,8 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
         ? isOverdue
           ? 'border-red-300 bg-red-50'
           : 'border-orange-300 bg-orange-50'
+        : isUnderReview
+          ? 'border-blue-200 bg-blue-50'
         : pending.status === 'RESOLVED'
           ? 'border-green-200 bg-green-50'
           : 'border-gray-200 bg-gray-50'
@@ -209,6 +222,26 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
             </div>
           )}
         </div>
+
+        {isUnderReview && (
+          <div className="rounded-lg border border-blue-300 bg-blue-100 p-3">
+            <p className="mb-1 flex items-center gap-1 text-sm font-medium text-blue-900">
+              <Clock className="h-4 w-4" />
+              Resposta enviada para análise
+            </p>
+            <p className="text-sm text-blue-800">
+              A equipe recebeu sua resposta e fará a validação antes de retomar o protocolo.
+            </p>
+            {pending.submittedAt && (
+              <p className="mt-2 text-xs text-blue-700">
+                Enviado em {format(new Date(pending.submittedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+              </p>
+            )}
+            {pending.resolution && (
+              <p className="mt-2 text-sm text-blue-800">{pending.resolution}</p>
+            )}
+          </div>
+        )}
 
         {pending.status === 'RESOLVED' && pending.resolution && (
           <div className="rounded-lg border border-green-300 bg-green-100 p-3">

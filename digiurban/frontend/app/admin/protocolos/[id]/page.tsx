@@ -45,6 +45,7 @@ import { ForwardProtocolDialog } from '@/components/protocols/ForwardProtocolDia
 import { AssignTeamDialog } from '@/components/protocols/AssignTeamDialog'
 import { AssignmentHistoryTimeline } from '@/components/protocols/AssignmentHistoryTimeline'
 import { CurrentAssignmentCard } from '@/components/protocols/CurrentAssignmentCard'
+import { PendingCreationContext } from '@/src/components/admin/protocol/protocol-pending-context'
 
 export default function ProtocolDetailPage() {
   const params = useParams()
@@ -65,6 +66,8 @@ export default function ProtocolDetailPage() {
   const [validation, setValidation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('')
+  const [pendingDialogOpen, setPendingDialogOpen] = useState(false)
+  const [pendingCreationContext, setPendingCreationContext] = useState<PendingCreationContext | null>(null)
 
   // Estados para diálogos de atribuição
   const [showAssignDialog, setShowAssignDialog] = useState(false)
@@ -212,6 +215,36 @@ export default function ProtocolDetailPage() {
     }
   }
 
+  const handleAssignAction = (action: 'assign' | 'delegate' | 'forward' | 'team') => {
+    switch (action) {
+      case 'assign':
+        setShowAssignDialog(true)
+        break
+      case 'delegate':
+        setShowDelegateDialog(true)
+        break
+      case 'forward':
+        setShowForwardDialog(true)
+        break
+      case 'team':
+        setShowAssignTeamDialog(true)
+        break
+    }
+  }
+
+  const handleCreatePendingRequest = (context: PendingCreationContext) => {
+    setPendingCreationContext(context)
+    setActiveTab('pendencias')
+    setPendingDialogOpen(true)
+  }
+
+  const handlePendingDialogOpenChange = (open: boolean) => {
+    setPendingDialogOpen(open)
+    if (!open) {
+      setPendingCreationContext(null)
+    }
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -253,6 +286,7 @@ export default function ProtocolDetailPage() {
           currentStage={currentStage}
           onActionComplete={loadProtocolData}
           onBack={() => router.push('/admin/protocolos')}
+          onCreatePendingRequest={handleCreatePendingRequest}
         />
 
         <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
@@ -283,6 +317,7 @@ export default function ProtocolDetailPage() {
           currentStage={undefined}
           onActionComplete={loadProtocolData}
           onBack={() => router.push('/admin/protocolos')}
+          onCreatePendingRequest={handleCreatePendingRequest}
         />
 
         <div className="container mx-auto px-4 sm:px-6 py-6 max-w-7xl">
@@ -304,7 +339,7 @@ export default function ProtocolDetailPage() {
   // ==========================================
   // MODO: ACTIVE (Workflow em progresso - abas contextuais)
   // ==========================================
-  const openPendings = pendings.filter(p => p.status === 'OPEN' || p.status === 'IN_PROGRESS')
+  const openPendings = pendings.filter(p => ['OPEN', 'IN_PROGRESS', 'UNDER_REVIEW'].includes(p.status))
   const unreadMessages = interactions.filter(i => !i.isRead).length
 
   // Badges dinâmicos para as abas
@@ -314,24 +349,6 @@ export default function ProtocolDetailPage() {
     comunicacao: unreadMessages,
     'documentos-gerados': generatedDocuments.filter(d => !d.isSigned).length, // Mostra apenas não assinados
     atribuicoes: 0 // Será atualizado dinamicamente
-  }
-
-  // Handler para ações de atribuição
-  const handleAssignAction = (action: 'assign' | 'delegate' | 'forward' | 'team') => {
-    switch (action) {
-      case 'assign':
-        setShowAssignDialog(true)
-        break
-      case 'delegate':
-        setShowDelegateDialog(true)
-        break
-      case 'forward':
-        setShowForwardDialog(true)
-        break
-      case 'team':
-        setShowAssignTeamDialog(true)
-        break
-    }
   }
 
   return (
@@ -348,6 +365,7 @@ export default function ProtocolDetailPage() {
         onActionComplete={loadProtocolData}
         onBack={() => router.push('/admin/protocolos')}
         onAssignAction={handleAssignAction}
+        onCreatePendingRequest={handleCreatePendingRequest}
       />
 
       {/* Conteúdo Principal */}
@@ -450,6 +468,9 @@ export default function ProtocolDetailPage() {
                     protocolId={protocolId}
                     pendings={pendings}
                     onRefresh={loadProtocolData}
+                    creationContext={pendingCreationContext}
+                    pendingDialogOpen={pendingDialogOpen}
+                    onPendingDialogOpenChange={handlePendingDialogOpenChange}
                   />
                 </TabsContent>
               )}
@@ -462,6 +483,7 @@ export default function ProtocolDetailPage() {
                     stages={stages}
                     interactions={interactions}
                     onRefresh={loadProtocolData}
+                    onCreatePendingRequest={handleCreatePendingRequest}
                   />
                 </TabsContent>
               )}

@@ -38,6 +38,7 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu'
+import { PendingCreationContext } from './protocol-pending-context'
 
 interface StageValidation {
   canProgress: boolean
@@ -63,6 +64,7 @@ interface ProtocolHeaderProps {
   onActionComplete: () => void
   onBack: () => void
   onAssignAction?: (action: 'assign' | 'delegate' | 'forward' | 'team') => void
+  onCreatePendingRequest?: (context: PendingCreationContext) => void
 }
 
 export function ProtocolHeader({
@@ -75,7 +77,8 @@ export function ProtocolHeader({
   departmentId,
   onActionComplete,
   onBack,
-  onAssignAction
+  onAssignAction,
+  onCreatePendingRequest
 }: ProtocolHeaderProps) {
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
@@ -90,6 +93,8 @@ export function ProtocolHeader({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const stageType = currentStage?.metadata?.stageType
   const approveActionLabel = currentStage?.metadata?.actionLabels?.APPROVE || 'Aprovar'
+  const createPendingActionLabel = currentStage?.metadata?.actionLabels?.CREATE_PENDING || 'Criar Pendência'
+  const requestInfoActionLabel = currentStage?.metadata?.actionLabels?.REQUEST_INFO || 'Solicitar informações'
   const isConclusionStage = stageType === 'CONCLUSION'
 
   // Validar etapa atual
@@ -102,6 +107,7 @@ export function ProtocolHeader({
 
       if (response.success) {
         setValidation(response.data.validation)
+        return response.data.validation
       }
     } catch (error) {
       console.error('Erro ao validar etapa:', error)
@@ -299,6 +305,32 @@ export function ProtocolHeader({
   const allowedActions = currentStage?.metadata?.allowedActions || []
   const showActions = currentStage?.status === 'IN_PROGRESS' && allowedActions.length > 0
 
+  const requestPendingCreation = async (sourceAction: PendingCreationContext['sourceAction']) => {
+    if (!currentStage) return
+
+    let nextValidation = validation
+    if (!nextValidation) {
+      nextValidation = await loadValidation()
+    }
+
+    if (!onCreatePendingRequest) {
+      toast({
+        title: 'Ação indisponível',
+        description: 'A criação contextual de pendência não está configurada nesta tela.',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    onCreatePendingRequest({
+      sourceAction,
+      stageId: currentStage.id,
+      stageName: currentStage.stageName,
+      stageMetadata: currentStage.metadata,
+      validation: nextValidation,
+    })
+  }
+
   return (
     <>
       <div className="sticky top-0 z-30 bg-white border-b border-gray-200 shadow-sm">
@@ -385,15 +417,21 @@ export function ProtocolHeader({
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => {
-                      toast({
-                        title: 'Criar pendência',
-                        description: 'Acesse a aba "Pendências" para criar uma nova pendência.'
-                      })
-                    }}
+                    onClick={() => requestPendingCreation('CREATE_PENDING')}
                   >
                     <AlertCircle className="h-4 w-4 mr-2" />
-                    Criar Pendência
+                    {createPendingActionLabel}
+                  </Button>
+                )}
+
+                {allowedActions.includes('REQUEST_INFO') && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => requestPendingCreation('REQUEST_INFO')}
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    {requestInfoActionLabel}
                   </Button>
                 )}
               </>

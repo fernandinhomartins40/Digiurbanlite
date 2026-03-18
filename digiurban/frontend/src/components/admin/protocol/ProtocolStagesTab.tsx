@@ -8,14 +8,16 @@ import { ProtocolStage, StageStatus } from '@/types/protocol-enhancements'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ProtocolStageActions } from './ProtocolStageActions'
+import { PendingCreationContext } from './protocol-pending-context'
 
 interface ProtocolStagesTabProps {
   protocolId: string
   stages: ProtocolStage[]
   onRefresh: () => void
+  onCreatePendingRequest?: (context: PendingCreationContext) => void
 }
 
-export function ProtocolStagesTab({ protocolId, stages, onRefresh }: ProtocolStagesTabProps) {
+export function ProtocolStagesTab({ protocolId, stages, onRefresh, onCreatePendingRequest }: ProtocolStagesTabProps) {
   const getStatusIcon = (status: StageStatus) => {
     switch (status) {
       case StageStatus.COMPLETED: return <CheckCircle2 className="h-5 w-5 text-green-600" />
@@ -55,6 +57,7 @@ export function ProtocolStagesTab({ protocolId, stages, onRefresh }: ProtocolSta
           stageStatus={currentStage.status}
           metadata={currentStage.metadata}
           onActionComplete={onRefresh}
+          onCreatePendingRequest={onCreatePendingRequest}
         />
       )}
 

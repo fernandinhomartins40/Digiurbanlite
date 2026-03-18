@@ -322,22 +322,19 @@ export async function rejectDataField(input: RejectFieldInput) {
     }
   });
 
-  // Criar pendência automática do tipo CORRECTION
-  await pendingService.createPending({
-    protocolId: field.protocolId,
-    type: 'CORRECTION',
-    title: `Campo Rejeitado: ${field.fieldLabel}`,
-    description: `O campo "${field.fieldLabel}" foi rejeitado e precisa ser corrigido. Consulte os detalhes da rejeição na aba Dados.`,
-    blocksProgress: field.isRequired, // Só bloqueia se for obrigatório
-    createdBy: validatedBy,
-    dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
-    metadata: {
-      fieldId: fieldId,
+  await pendingService.createCorrectionPending(
+    field.protocolId,
+    `Campo Rejeitado: ${field.fieldLabel}`,
+    `O campo "${field.fieldLabel}" foi rejeitado e precisa ser corrigido. Consulte os detalhes da rejeição na aba Dados.`,
+    validatedBy,
+    new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+    {
+      fieldId,
       fieldKey: field.fieldKey,
       fieldLabel: field.fieldLabel,
-      // rejectionReason está em ProtocolDataField.rejectionReason
+      fieldType: field.fieldType || undefined,
     }
-  });
+  );
 
   console.log(`❌ Campo "${field.fieldLabel}" rejeitado (${field.protocolId})`);
 
@@ -415,7 +412,7 @@ export async function correctDataField(input: CorrectFieldInput) {
       fieldValue: newValue,
       previousValue: field.fieldValue,
       version: field.version + 1,
-      status: DataFieldStatus.CORRECTED, // Aguarda revalidação
+      status: DataFieldStatus.UNDER_REVIEW,
       rejectionReason: null
     }
   });
@@ -430,12 +427,12 @@ export async function correctDataField(input: CorrectFieldInput) {
     console.error('⚠️ Erro ao disparar evento de campo corrigido:', error);
   }
 
-  // RESOLVER AUTOMATICAMENTE pendências relacionadas a este campo
+  // Enviar pendências relacionadas para reanálise
   const relatedPendings = await prisma.protocolPending.findMany({
     where: {
       protocolId: field.protocolId,
       type: 'CORRECTION',
-      status: PendingStatus.OPEN,
+      status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS] },
       metadata: {
         path: ['fieldKey'],
         equals: field.fieldKey
@@ -444,16 +441,23 @@ export async function correctDataField(input: CorrectFieldInput) {
   });
 
   if (relatedPendings.length > 0) {
-    console.log(`🔄 Resolvendo ${relatedPendings.length} pendência(s) relacionadas ao campo "${field.fieldLabel}"`);
+    console.log(`🔄 Enviando ${relatedPendings.length} pendência(s) para reanálise do campo "${field.fieldLabel}"`);
 
     for (const pending of relatedPendings) {
-      await pendingService.resolvePending(
+      await pendingService.submitPendingResponse(
         pending.id,
         correctedBy,
-        `Campo corrigido pelo cidadão (versão ${updatedField.version})`
+        `Campo corrigido pelo cidadão (versão ${updatedField.version})`,
+        {
+          fieldId: field.id,
+          fieldKey: field.fieldKey,
+          fieldLabel: field.fieldLabel,
+          submittedValue: newValue,
+          version: updatedField.version,
+        }
       );
 
-      console.log(`✅ Pendência "${pending.title}" resolvida automaticamente`);
+      console.log(`✅ Pendência "${pending.title}" enviada para reanálise`);
     }
   }
 
@@ -473,34 +477,6 @@ export async function correctDataField(input: CorrectFieldInput) {
       }
     }
   });
-
-  // Verificar se ainda há campos rejeitados obrigatórios
-  const hasRejectedRequired = await prisma.protocolDataField.count({
-    where: {
-      protocolId: field.protocolId,
-      isRequired: true,
-      status: { in: [DataFieldStatus.REJECTED] }
-    }
-  });
-
-  // Se não houver mais campos obrigatórios rejeitados, voltar para PROGRESSO
-  if (hasRejectedRequired === 0) {
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id: field.protocolId }
-    });
-
-    if (protocol && protocol.status === ProtocolStatus.ATUALIZACAO) {
-      await protocolStatusEngine.updateStatus({
-        protocolId: field.protocolId,
-        newStatus: ProtocolStatus.PROGRESSO,
-        actorRole: UserRole.USER, // Cidadão é USER
-        actorId: correctedBy,
-        comment: 'Todos os campos obrigatórios corrigidos - protocolo retomado'
-      });
-
-      console.log(`✅ Protocolo ${protocol.number} voltou para PROGRESSO`);
-    }
-  }
 
   return updatedField;
 }

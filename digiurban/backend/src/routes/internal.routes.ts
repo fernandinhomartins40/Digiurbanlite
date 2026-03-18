@@ -738,7 +738,11 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve', async (req: Re
     }
 
     if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
-      return res.status(400).json({ error: 'Pending already resolved or cancelled' });
+      return res.status(400).json({
+        error: pending.status === 'UNDER_REVIEW'
+          ? 'Pending already submitted and awaiting review'
+          : 'Pending already resolved or cancelled'
+      });
     }
 
     const metadata = pending.metadata && typeof pending.metadata === 'object'
@@ -770,7 +774,7 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve', async (req: Re
         return res.status(400).json({ error: 'resolution is required' });
       }
 
-      await pendingService.resolvePending(pendingId, citizenId, parsed.text);
+      await pendingService.submitPendingResponse(pendingId, citizenId, parsed.text);
       updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
     }
 
@@ -814,7 +818,11 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve-document', uploa
     }
 
     if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
-      return res.status(400).json({ error: 'Pending already resolved or cancelled' });
+      return res.status(400).json({
+        error: pending.status === 'UNDER_REVIEW'
+          ? 'Pending already submitted and awaiting review'
+          : 'Pending already resolved or cancelled'
+      });
     }
 
     if (pending.type !== 'DOCUMENT') {

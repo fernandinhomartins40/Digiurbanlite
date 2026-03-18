@@ -34,6 +34,34 @@ cron.schedule('0 9,17 * * *', async () => {
 });
 
 /**
+ * Lembretes de pendências dos protocolos (10h e 18h)
+ */
+cron.schedule('0 10,18 * * *', async () => {
+  console.log('🔔 [Cron] Running protocol pending reminders...');
+  try {
+    const pendingService = await import('../services/protocol-pending.service');
+    const result = await pendingService.processPendingReminders();
+    console.log('✅ [Cron] Protocol pending reminders completed', result);
+  } catch (error) {
+    console.error('❌ [Cron] Error in protocol pending reminders:', error);
+  }
+});
+
+/**
+ * Expirar pendências muito antigas (1h15)
+ */
+cron.schedule('15 1 * * *', async () => {
+  console.log('🔔 [Cron] Running stale pending expiration...');
+  try {
+    const pendingService = await import('../services/protocol-pending.service');
+    const result = await pendingService.expireStalePendings();
+    console.log('✅ [Cron] Stale pending expiration completed', result);
+  } catch (error) {
+    console.error('❌ [Cron] Error in stale pending expiration:', error);
+  }
+});
+
+/**
  * Limpar jobs antigos da fila (todo dia à meia-noite)
  */
 cron.schedule('0 0 * * *', async () => {

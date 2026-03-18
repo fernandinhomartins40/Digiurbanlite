@@ -125,6 +125,7 @@ export function getContextualTabs(
       requiredInputFieldIds?: string[]
       requiredStageOutputs?: string[]
       availableTabs?: string[]
+      allowedActions?: string[]
     }
   } | null,
   viewMode: ProtocolViewMode
@@ -138,7 +139,12 @@ export function getContextualTabs(
   if (viewMode === ProtocolViewMode.COMPLETING) {
     // Priorizar abas definidas no metadata do stage
     if (currentStage?.metadata?.availableTabs) {
-      return currentStage.metadata.availableTabs
+      const tabs = [...currentStage.metadata.availableTabs]
+      const allowedActions = currentStage?.metadata?.allowedActions || []
+      if ((allowedActions.includes('CREATE_PENDING') || allowedActions.includes('REQUEST_INFO')) && !tabs.includes('pendencias')) {
+        tabs.push('pendencias')
+      }
+      return tabs
     }
     // Fallback para abas padrão de conclusão
     return ['resumo-final', 'documentos-gerados', 'enviar', 'comunicacao']
@@ -151,7 +157,12 @@ export function getContextualTabs(
 
   // Se a etapa define abas customizadas, usar elas
   if (currentStage.metadata?.availableTabs) {
-    return currentStage.metadata.availableTabs
+    const tabs = [...currentStage.metadata.availableTabs]
+    const allowedActions = currentStage.metadata?.allowedActions || []
+    if ((allowedActions.includes('CREATE_PENDING') || allowedActions.includes('REQUEST_INFO')) && !tabs.includes('pendencias')) {
+      tabs.push('pendencias')
+    }
+    return tabs
   }
 
   // Inferir abas baseado nas necessidades da etapa
@@ -212,6 +223,7 @@ export function getPrimaryTab(
       requiredInputFieldIds?: string[]
       requiredStageOutputs?: string[]
       primaryTab?: string
+      allowedActions?: string[]
     }
   } | null
 ): string {

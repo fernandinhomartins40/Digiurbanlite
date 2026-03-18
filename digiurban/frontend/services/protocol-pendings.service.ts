@@ -10,11 +10,23 @@ import { getFullApiUrl } from '@/lib/api-config'
 export interface ProtocolPending {
   id: string
   protocolId: string
+  stageId?: string
+  type?: string
+  title?: string
   pendingType: string
   description: string
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'EXPIRED' | 'CANCELLED'
+  status: 'OPEN' | 'IN_PROGRESS' | 'UNDER_REVIEW' | 'RESOLVED' | 'EXPIRED' | 'CANCELLED'
   priority: number
   dueDate?: string
+  blocksProgress?: boolean
+  requiresReview?: boolean
+  submittedAt?: string
+  reviewedAt?: string
+  reviewedBy?: string
+  reviewNotes?: string
+  sourceType?: string
+  sourceEntityType?: string
+  sourceEntityId?: string
   createdById: string
   createdBy?: {
     id: string
@@ -39,12 +51,22 @@ export interface CreatePendingData {
   description: string
   priority?: number
   dueDate?: string
+  stageId?: string
   blocksProgress?: boolean
+  requiresReview?: boolean
+  sourceType?: string
+  sourceEntityType?: string
+  sourceEntityId?: string
+  dedupeKey?: string
   metadata?: any
 }
 
 export interface ResolvePendingData {
   resolution: string
+}
+
+export interface ReopenPendingData {
+  reason: string
 }
 
 /**
@@ -115,7 +137,7 @@ export async function resolvePending(
       `/api/protocols/${protocolId}/pendings/${pendingId}/resolve`
     )
     const response = await fetch(apiUrl, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -149,7 +171,7 @@ export async function cancelPending(
       `/api/protocols/${protocolId}/pendings/${pendingId}/cancel`
     )
     const response = await fetch(apiUrl, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -183,7 +205,7 @@ export async function updatePending(
       `/api/protocols/${protocolId}/pendings/${pendingId}`
     )
     const response = await fetch(apiUrl, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
       },
@@ -222,6 +244,37 @@ export async function createPendingsBatch(
     return createdPendings
   } catch (error) {
     console.error('Error creating pendings batch:', error)
+    throw error
+  }
+}
+
+export async function reopenPending(
+  protocolId: string,
+  pendingId: string,
+  reason: string
+): Promise<ProtocolPending> {
+  try {
+    const apiUrl = getFullApiUrl(
+      `/api/protocols/${protocolId}/pendings/${pendingId}/reopen`
+    )
+    const response = await fetch(apiUrl, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      credentials: 'include',
+      body: JSON.stringify({ reason }),
+    })
+
+    if (!response.ok) {
+      const errorData = await response.json()
+      throw new Error(errorData.error || 'Erro ao reabrir pendência')
+    }
+
+    const result = await response.json()
+    return result.data
+  } catch (error) {
+    console.error('Error reopening pending:', error)
     throw error
   }
 }

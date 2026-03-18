@@ -25,7 +25,13 @@ router.post(
         description,
         dueDate,
         blocksProgress,
-        metadata
+        metadata,
+        stageId,
+        requiresReview,
+        sourceType,
+        sourceEntityType,
+        sourceEntityId,
+        dedupeKey,
         } = req.body;
 
       if (!type || !title || !description) {
@@ -40,8 +46,14 @@ router.post(
         type,
         title,
         description,
+        stageId,
         dueDate: dueDate ? new Date(dueDate) : undefined,
         blocksProgress,
+        requiresReview,
+        sourceType,
+        sourceEntityType,
+        sourceEntityId,
+        dedupeKey,
         metadata,
         createdBy: authReq.userId
         });
@@ -229,6 +241,48 @@ router.put(
         error: 'Erro ao resolver pendência',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
+    }
+  }
+);
+
+/**
+ * PUT /api/protocols/:protocolId/pendings/:pendingId/reopen
+ * Reabrir uma pendência em revisão ou resolvida
+ */
+router.put(
+  '/:protocolId/pendings/:pendingId/reopen',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { pendingId } = req.params;
+      const { reason } = req.body;
+
+      if (!reason) {
+        return res.status(400).json({
+          success: false,
+          error: 'Motivo é obrigatório'
+        });
+      }
+
+      const pending = await pendingService.reopenPending(
+        pendingId,
+        authReq.userId,
+        reason
+      );
+
+      return res.json({
+        success: true,
+        data: pending
+      });
+    } catch (error) {
+      console.error('Erro ao reabrir pendência:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao reabrir pendência',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
     }
   }
 );

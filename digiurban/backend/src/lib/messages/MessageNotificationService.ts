@@ -249,6 +249,59 @@ export class MessageNotificationService {
     }
   }
 
+  async notifyProtocolPendingReminder(
+    protocolId: string,
+    pendingId: string,
+    reminderType: 'upcoming' | 'overdue' = 'upcoming'
+  ) {
+    try {
+      const pending = await prisma.protocolPending.findUnique({
+        where: { id: pendingId },
+        include: {
+          protocol: {
+            include: {
+              citizen: true,
+              assignedUser: true,
+            },
+          },
+        },
+      });
+
+      if (!pending?.protocol?.citizen) return;
+
+      const serverToken = generateToken({
+        userId: pending.protocol.assignedUserId || 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      const dueDate = pending.dueDate
+        ? new Date(pending.dueDate).toLocaleDateString('pt-BR')
+        : null;
+      const intro = reminderType === 'overdue'
+        ? 'Sua pendência continua em aberto e já está vencida.'
+        : 'Lembrete: você ainda possui uma pendência aberta neste protocolo.';
+
+      await ultraZendMessages.sendMessage(
+        pending.protocol.assignedUserId || 'system',
+        'SERVER',
+        {
+          participant2Id: pending.protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `${intro} Protocolo #${pending.protocol.number}: ${pending.title}.${dueDate ? ` Prazo: ${dueDate}.` : ''} Você pode resolver isso pelo DigiBot ou pela área de protocolos no portal do cidadão.`,
+          protocolId: protocolId,
+          departmentId: pending.protocol.departmentId || undefined,
+        }
+      );
+
+      logger.info('Protocol pending reminder sent', { protocolId, pendingId, reminderType });
+    } catch (error) {
+      logger.error('Error notifying protocol pending reminder', { error, protocolId, pendingId, reminderType });
+    }
+  }
+
   /**
    * Criar canal oficial para departamento
    */

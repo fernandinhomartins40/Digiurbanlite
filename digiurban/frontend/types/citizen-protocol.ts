@@ -55,6 +55,7 @@ export interface CitizenWorkflowStage {
 export interface CitizenPending {
   id: string;
   protocolId?: string;
+  stageId?: string;
   pendingType?: string;
   type: string;
   title?: string;
@@ -65,8 +66,16 @@ export interface CitizenPending {
   blocksProgress?: boolean;
   dueDate?: string | null;
   createdAt: string;
+  submittedAt?: string | null;
   resolvedAt?: string | null;
   resolution?: string | null;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+  reviewNotes?: string | null;
+  requiresReview?: boolean;
+  sourceType?: string | null;
+  sourceEntityType?: string | null;
+  sourceEntityId?: string | null;
   metadata?: Record<string, any>;
 }
 

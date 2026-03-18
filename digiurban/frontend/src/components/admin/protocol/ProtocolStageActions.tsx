@@ -17,6 +17,7 @@ import {
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { CheckCircle, XCircle, AlertCircle, Loader2, FileText, FormInput } from 'lucide-react'
+import { PendingCreationContext } from './protocol-pending-context'
 
 interface StageValidation {
   canProgress: boolean
@@ -38,6 +39,7 @@ interface ProtocolStageActionsProps {
   stageStatus: string
   metadata?: any
   onActionComplete: () => void
+  onCreatePendingRequest?: (context: PendingCreationContext) => void
 }
 
 export function ProtocolStageActions({
@@ -46,7 +48,8 @@ export function ProtocolStageActions({
   stageName,
   stageStatus,
   metadata,
-  onActionComplete
+  onActionComplete,
+  onCreatePendingRequest
 }: ProtocolStageActionsProps) {
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
@@ -58,6 +61,8 @@ export function ProtocolStageActions({
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [notes, setNotes] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const createPendingActionLabel = metadata?.actionLabels?.CREATE_PENDING || 'Criar Pendência'
+  const requestInfoActionLabel = metadata?.actionLabels?.REQUEST_INFO || 'Solicitar informações'
 
   // Carregar validação
   const loadValidation = async () => {
@@ -68,6 +73,7 @@ export function ProtocolStageActions({
       if (response.success) {
         setValidation(response.data.validation)
         setExecutionAccess(response.data.executionAccess || null)
+        return response.data.validation
       }
     } catch (error) {
       console.error('Erro ao validar etapa:', error)
@@ -79,6 +85,21 @@ export function ProtocolStageActions({
   useEffect(() => {
     loadValidation()
   }, [protocolId, stageId])
+
+  const requestPendingCreation = async (sourceAction: PendingCreationContext['sourceAction']) => {
+    let nextValidation = validation
+    if (!nextValidation) {
+      nextValidation = await loadValidation()
+    }
+
+    onCreatePendingRequest?.({
+      sourceAction,
+      stageId,
+      stageName,
+      stageMetadata: metadata,
+      validation: nextValidation,
+    })
+  }
 
   // Aprovar etapa
   const handleApprove = async () => {
@@ -293,9 +314,22 @@ export function ProtocolStageActions({
                 variant="outline"
                 className="w-full"
                 disabled={isExecutionBlocked}
+                onClick={() => requestPendingCreation('CREATE_PENDING')}
               >
                 <AlertCircle className="h-4 w-4 mr-2" />
-                Criar Pendência
+                {createPendingActionLabel}
+              </Button>
+            )}
+
+            {allowedActions.includes('REQUEST_INFO') && (
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={isExecutionBlocked}
+                onClick={() => requestPendingCreation('REQUEST_INFO')}
+              >
+                <FileText className="h-4 w-4 mr-2" />
+                {requestInfoActionLabel}
               </Button>
             )}
           </div>

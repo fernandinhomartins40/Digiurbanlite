@@ -54,7 +54,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
         )
 
         if (response.success) {
-          toast.success('Documento enviado com sucesso!')
+          toast.success('Documento enviado para análise com sucesso!')
           await loadPendings()
         } else {
           throw new Error(response.error || 'Erro ao enviar documento')
@@ -71,7 +71,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
         )
 
         if (response.success) {
-          toast.success('Resolução enviada com sucesso!')
+          toast.success('Resposta enviada para análise com sucesso!')
           await loadPendings()
         } else {
           throw new Error(response.error || 'Erro ao enviar resolução')
@@ -85,6 +85,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
   }
 
   const pendingPendings = pendings.filter(p => p.status === 'PENDING' || p.status === 'OPEN' || p.status === 'IN_PROGRESS')
+  const underReviewPendings = pendings.filter(p => p.status === 'UNDER_REVIEW')
   const resolvedPendings = pendings.filter(p => p.status === 'RESOLVED')
   const cancelledPendings = pendings.filter(p => p.status === 'CANCELLED' || p.status === 'EXPIRED')
 
@@ -116,7 +117,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
   return (
     <div className="space-y-4">
       <Tabs value={activeTab} onValueChange={setActiveTab}>
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="all" className="flex items-center gap-2">
             <AlertCircle className="h-4 w-4" />
             Todas ({pendings.length})
@@ -128,6 +129,10 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
           <TabsTrigger value="resolved" className="flex items-center gap-2">
             <CheckCircle2 className="h-4 w-4" />
             Resolvidas ({resolvedPendings.length})
+          </TabsTrigger>
+          <TabsTrigger value="review" className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4" />
+            Em análise ({underReviewPendings.length})
           </TabsTrigger>
           <TabsTrigger value="cancelled" className="flex items-center gap-2">
             <XCircle className="h-4 w-4" />
@@ -181,6 +186,24 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
             </Card>
           ) : (
             resolvedPendings.map((pending) => (
+              <CitizenPendingCard
+                key={pending.id}
+                pending={pending}
+                onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+              />
+            ))
+          )}
+        </TabsContent>
+
+        <TabsContent value="review" className="space-y-4 mt-4">
+          {underReviewPendings.length === 0 ? (
+            <Card>
+              <CardContent className="p-8 text-center text-gray-500">
+                Nenhuma pendência em análise
+              </CardContent>
+            </Card>
+          ) : (
+            underReviewPendings.map((pending) => (
               <CitizenPendingCard
                 key={pending.id}
                 pending={pending}

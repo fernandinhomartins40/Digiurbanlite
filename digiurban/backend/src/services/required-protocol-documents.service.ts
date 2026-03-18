@@ -2,6 +2,7 @@ import { DocumentStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { normalizeDocumentConfigs } from '../utils/document-validation';
 import { matchDocumentType, resolveCanonicalDocumentType } from '../utils/document-mapping';
+import * as pendingService from './protocol-pending.service';
 
 type UploadedDoc = {
   documentType?: string;
@@ -183,6 +184,15 @@ export async function ensureRequiredProtocolDocuments(
   const configs = getRequiredDocumentConfigs(service);
   if (configs.length === 0) return;
 
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: {
+      id: true,
+      currentAssignedUserId: true,
+      createdById: true,
+    },
+  });
+
   const currentDocuments = await prisma.protocolDocument.findMany({
     where: { protocolId },
     orderBy: { createdAt: 'asc' },
@@ -226,5 +236,24 @@ export async function ensureRequiredProtocolDocuments(
       });
       currentDocuments.push(created);
     }
+  }
+
+  const pendingOwner = protocol?.currentAssignedUserId || protocol?.createdById || 'system';
+
+  for (const document of currentDocuments) {
+    if (!document.isRequired) continue;
+    if (document.fileUrl) continue;
+    if (document.status !== DocumentStatus.PENDING) continue;
+
+    await pendingService.createDocumentPending(
+      protocolId,
+      document.documentType,
+      pendingOwner,
+      undefined,
+      {
+        documentId: document.id,
+        sourceType: 'REQUIRED_DOCUMENT',
+      },
+    );
   }
 }

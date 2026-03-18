@@ -195,7 +195,7 @@ async function resolveCitizenPendingText(
     throw new Error('Resolucao e obrigatoria.');
   }
 
-  await pendingService.resolvePending(pending.id, citizenId, text);
+  await pendingService.submitPendingResponse(pending.id, citizenId, text);
   return prisma.protocolPending.findUnique({ where: { id: pending.id } });
 }
 
@@ -1108,7 +1108,9 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
     if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
       return res.status(400).json({
         success: false,
-        error: 'PendÃªncia jÃ¡ foi resolvida ou cancelada'
+        error: pending.status === 'UNDER_REVIEW'
+          ? 'A pendÃªncia jÃ¡ recebeu sua resposta e aguarda anÃ¡lise da equipe'
+          : 'PendÃªncia jÃ¡ foi resolvida ou cancelada'
       });
     }
 
@@ -1175,7 +1177,9 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
     if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
       return res.status(400).json({
         success: false,
-        error: 'PendÃªncia jÃ¡ foi resolvida ou cancelada'
+        error: pending.status === 'UNDER_REVIEW'
+          ? 'A pendÃªncia jÃ¡ recebeu sua resposta e aguarda anÃ¡lise da equipe'
+          : 'PendÃªncia jÃ¡ foi resolvida ou cancelada'
       });
     }
 

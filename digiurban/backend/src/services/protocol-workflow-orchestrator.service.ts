@@ -11,7 +11,7 @@
  * - Gerenciamento de SLA
  */
 
-import { ProtocolStatus, StageStatus, PendingStatus, DocumentStatus, UserRole } from '@prisma/client';
+import { ProtocolStatus, StageStatus, PendingStatus, PendingType, DocumentStatus, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import * as stageService from './protocol-stage.service';
 import * as slaService from './protocol-sla.service';
@@ -64,7 +64,7 @@ export class ProtocolWorkflowOrchestrator {
       where: {
         protocolId: doc.protocolId,
         type: 'DOCUMENT',
-        status: PendingStatus.OPEN,
+        status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW] },
         metadata: {
           path: ['documentType'],
           equals: doc.documentType
@@ -82,8 +82,6 @@ export class ProtocolWorkflowOrchestrator {
           `Documento aprovado automaticamente pelo sistema`
         );
 
-        // Disparar evento de pendência resolvida
-        await this.onPendingResolved(pending.id, approvedBy);
       }
     }
 
@@ -154,20 +152,16 @@ export class ProtocolWorkflowOrchestrator {
     console.log(`❌ [Orchestrator] Documento rejeitado: ${doc.documentType}`);
 
     // 1. ✅ FASE 3: Criar pendência automática (sem duplicar rejectionReason)
-    await pendingService.createPending({
-      protocolId: doc.protocolId,
-      type: 'DOCUMENT',
-      title: `Documento Rejeitado: ${doc.documentType}`,
-      description: `O documento "${doc.documentType}" foi rejeitado e precisa ser reenviado. Consulte os detalhes da rejeição na aba Documentos.`,
-      blocksProgress: true,
-      createdBy: rejectedBy,
-      dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 dias
-      metadata: {
-        documentId: documentId,
-        documentType: doc.documentType,
-        // rejectionReason está em ProtocolDocument.rejectionReason
+    await pendingService.createDocumentPending(
+      doc.protocolId,
+      doc.documentType,
+      rejectedBy,
+      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+      {
+        documentId,
+        sourceType: 'DOCUMENT_REJECTION',
       }
-    });
+    );
 
     // 2. ✅ FASE 1: Mudar protocolo para ATUALIZACAO (aguarda ação do cidadão)
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -324,14 +318,17 @@ export class ProtocolWorkflowOrchestrator {
           // Há bloqueios - criar pendência
           console.log(`⚠️ [Orchestrator] Não pode iniciar stage. Bloqueios: ${validation.blockers.join(', ')}`);
 
-          await pendingService.createPending({
-            protocolId: stage.protocolId,
-            type: 'OTHER',
-            title: `Pré-requisitos pendentes para: ${nextStage.stageName}`,
-            description: validation.blockers.join('\n'),
-            blocksProgress: true,
-            createdBy: completedBy
-          });
+          await pendingService.createInformationPending(
+            stage.protocolId,
+            `Pré-requisitos pendentes para: ${nextStage.stageName}`,
+            validation.blockers.join('\n'),
+            completedBy,
+            undefined,
+            {
+              stageId: nextStage.id,
+              sourceType: 'STAGE_VALIDATION',
+            }
+          );
         }
       }
     }
@@ -357,10 +354,13 @@ export class ProtocolWorkflowOrchestrator {
     // 1. Criar pendência
     await pendingService.createPending({
       protocolId: stage.protocolId,
-      type: 'APPROVAL',
+      stageId,
+      type: PendingType.VALIDATION,
       title: `Etapa "${stage.stageName}" falhou`,
       description: reason,
       blocksProgress: true,
+      requiresReview: false,
+      sourceType: 'STAGE_FAILURE',
       createdBy: failedBy
     });
 
@@ -441,7 +441,7 @@ export class ProtocolWorkflowOrchestrator {
         protocolId: pending.protocolId,
         id: { not: pendingId },
         blocksProgress: true,
-        status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS] }
+        status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW] }
       }
     });
 
@@ -744,11 +744,10 @@ export class ProtocolWorkflowOrchestrator {
 
     console.log(`📝 [Orchestrator] Campo de dados corrigido: ${field.fieldLabel}`);
 
-    // 1. Pendências já foram resolvidas automaticamente ✅
+    // 1. A resposta do cidadão foi recebida e está aguardando reanálise.
+    // O protocolo só deve retomar quando o servidor aprovar o campo novamente.
 
-    // 2. Status já foi atualizado se necessário ✅
-
-    // 3. Verificar se ainda há campos obrigatórios rejeitados
+    // 2. Verificar se ainda há campos obrigatórios rejeitados
     const hasRejectedRequired = await prisma.protocolDataField.count({
       where: {
         protocolId: field.protocolId,
@@ -757,18 +756,15 @@ export class ProtocolWorkflowOrchestrator {
       }
     });
 
-    // Se não houver mais campos rejeitados, retomar SLA
+    // Se não houver mais campos rejeitados, registrar que o material foi enviado para revisão.
     if (hasRejectedRequired === 0) {
-      await this.resumeSLA(field.protocolId);
-
-      // Criar interação informando
       await interactionService.createInteraction({
         protocolId: field.protocolId,
-        type: 'STATUS_CHANGED',
-        authorType: 'SERVER',
+        type: 'NOTE',
+        authorType: 'SYSTEM',
         authorId: correctedBy,
         authorName: 'Sistema',
-        message: `✅ Todos os campos obrigatórios foram corrigidos. Seu protocolo foi retomado e está em andamento.`,
+        message: `Recebemos a correção do campo "${field.fieldLabel}". A resposta foi enviada para reanálise da equipe.`,
         isInternal: false
       });
     }
@@ -795,6 +791,30 @@ export class ProtocolWorkflowOrchestrator {
     if (!field) return;
 
     console.log(`✅ [Orchestrator] Campo de dados aprovado: ${field.fieldLabel}`);
+
+    const correctionCandidates = await prisma.protocolPending.findMany({
+      where: {
+        protocolId: field.protocolId,
+        type: 'CORRECTION',
+        status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW] },
+      }
+    });
+
+    const fieldPendings = correctionCandidates.filter((pending) => {
+      const metadata = pending.metadata && typeof pending.metadata === 'object'
+        ? pending.metadata as Record<string, any>
+        : {};
+
+      return metadata.fieldId === field.id || metadata.fieldKey === field.fieldKey;
+    });
+
+    for (const pending of fieldPendings) {
+      await pendingService.resolvePending(
+        pending.id,
+        approvedBy,
+        'Campo revisado e aprovado pela equipe'
+      );
+    }
 
     // Verificar se todos os campos obrigatórios foram aprovados
     const stats = await prisma.protocolDataField.groupBy({
@@ -886,11 +906,4 @@ export class ProtocolWorkflowOrchestrator {
 // SINGLETON EXPORT
 // ============================================================================
 export const workflowOrchestrator = new ProtocolWorkflowOrchestrator();
-
-
-
-
-
-
-
 

@@ -8,19 +8,22 @@ import { GitBranch, MessageSquare } from 'lucide-react'
 import { ProtocolStage, ProtocolInteraction } from '@/types/protocol-enhancements'
 import { ProtocolStagesTab } from './ProtocolStagesTab'
 import { ProtocolInteractionsTab } from './ProtocolInteractionsTab'
+import { PendingCreationContext } from './protocol-pending-context'
 
 interface ProtocolCommunicationTabProps {
   protocolId: string
   stages: ProtocolStage[]
   interactions?: ProtocolInteraction[]
   onRefresh: () => void
+  onCreatePendingRequest?: (context: PendingCreationContext) => void
 }
 
 export function ProtocolCommunicationTab({
   protocolId,
   stages,
   interactions = [],
-  onRefresh
+  onRefresh,
+  onCreatePendingRequest
 }: ProtocolCommunicationTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<'timeline' | 'messages'>('timeline')
 
@@ -84,6 +87,7 @@ export function ProtocolCommunicationTab({
             protocolId={protocolId}
             stages={stages}
             onRefresh={onRefresh}
+            onCreatePendingRequest={onCreatePendingRequest}
           />
         </TabsContent>
 

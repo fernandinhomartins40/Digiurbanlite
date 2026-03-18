@@ -138,18 +138,15 @@ export async function uploadDocument(
         });
   }
 
-  // ✅ FASE 1: Resolver automaticamente pendências relacionadas a este documento
+  // Quando o cidadão reenviar um documento, a pendência deve ficar em revisão.
   try {
-    const { PendingStatus } = await import('@prisma/client');
     const pendingService = await import('./protocol-pending.service');
-    const workflowOrchestrator = await import('./protocol-workflow-orchestrator.service');
 
-    // Buscar pendências do tipo DOCUMENT relacionadas a este documento
     const relatedPendings = await prisma.protocolPending.findMany({
       where: {
         protocolId: currentDoc.protocolId,
         type: 'DOCUMENT',
-        status: PendingStatus.OPEN,
+        status: { in: ['OPEN', 'IN_PROGRESS'] },
         metadata: {
           path: ['documentType'],
           equals: currentDoc.documentType
@@ -158,27 +155,25 @@ export async function uploadDocument(
     });
 
     if (relatedPendings.length > 0) {
-      console.log(`📄 Documento "${currentDoc.documentType}" reenviado - Resolvendo ${relatedPendings.length} pendência(s) automaticamente`);
+      console.log(`📄 Documento "${currentDoc.documentType}" reenviado - Movendo ${relatedPendings.length} pendência(s) para revisão`);
 
       for (const pending of relatedPendings) {
-        await pendingService.resolvePending(
+        await pendingService.submitPendingResponse(
           pending.id,
           fileData.uploadedBy,
-          `Documento reenviado pelo cidadão (versão ${updatedDocument.version})`
+          `Documento reenviado pelo cidadão (versão ${updatedDocument.version})`,
+          {
+            documentId: updatedDocument.id,
+            lastSubmittedDocumentId: updatedDocument.id,
+            lastSubmittedFileName: updatedDocument.fileName,
+          }
         );
 
-        // Disparar evento de pendência resolvida (muda status protocolo, retoma SLA)
-        await workflowOrchestrator.ProtocolWorkflowOrchestrator.prototype.onPendingResolved(
-          pending.id,
-          fileData.uploadedBy
-        );
-
-        console.log(`✅ Pendência "${pending.title}" resolvida automaticamente`);
+        console.log(`✅ Pendência "${pending.title}" enviada para reanálise`);
       }
     }
   } catch (error) {
-    console.error('⚠️ Erro ao resolver pendências automaticamente:', error);
-    // Não falha o upload do documento se pendências não puderem ser resolvidas
+    console.error('⚠️ Erro ao atualizar pendências do documento reenviado:', error);
   }
 
   return updatedDocument;

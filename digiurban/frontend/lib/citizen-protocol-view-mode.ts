@@ -72,6 +72,9 @@ export function getCitizenProtocolViewMode(
   const openCitizenPendings = citizenPendings.filter(
     p => ['OPEN', 'IN_PROGRESS'].includes(p.status) && p.requiresCitizenAction === true
   )
+  const pendingUnderReview = citizenPendings.filter(
+    p => p.status === 'UNDER_REVIEW' && p.requiresCitizenAction === true
+  )
 
   const hasDocumentOnlyPendings = openCitizenPendings.every(
     (pending: any) => (pending.type || pending.pendingType) === 'DOCUMENT'
@@ -91,6 +94,19 @@ export function getCitizenProtocolViewMode(
         : (hasDocumentOnlyPendings
           ? `Envie ${openCitizenPendings.length} documentos solicitados`
           : `Resolva ${openCitizenPendings.length} pendÃªncias para continuar`)
+    }
+  }
+
+  if (pendingUnderReview.length > 0) {
+    return {
+      mode: CitizenProtocolViewMode.ACTIVE,
+      currentStage: currentStage as any,
+      isLastStage: false,
+      availableTabs: ['pendings', 'resumo', 'documents', 'messages'],
+      primaryTab: 'pendings',
+      message: `Há ${pendingUnderReview.length} resposta(s) enviada(s) aguardando análise da equipe`,
+      actionRequired: false,
+      actionMessage: 'Sua resposta foi recebida e está em análise'
     }
   }
 

@@ -229,6 +229,7 @@ export enum PendingType {
 export enum PendingStatus {
   OPEN = 'OPEN',
   IN_PROGRESS = 'IN_PROGRESS',
+  UNDER_REVIEW = 'UNDER_REVIEW',
   RESOLVED = 'RESOLVED',
   CANCELLED = 'CANCELLED',
   EXPIRED = 'EXPIRED',
@@ -244,12 +245,23 @@ export enum PendingPriority {
 export interface ProtocolPending {
   id: string
   protocolId: string
+  stageId?: string
+  type?: PendingType | string
   title: string
   description: string
-  priority: PendingPriority
+  priority: PendingPriority | number
   status: PendingStatus
   dueDate?: Date
   blocksProgress?: boolean
+  requiresReview?: boolean
+  sourceType?: string
+  sourceEntityType?: string
+  sourceEntityId?: string
+  submittedAt?: Date
+  reviewedAt?: Date
+  reviewedBy?: string
+  reviewNotes?: string
+  resolution?: string
   assignedToId?: string
   assignedTo?: {
     id: string
@@ -401,14 +413,21 @@ export interface CreatePendingData {
   type: PendingType
   dueDate?: Date
   blocksProgress?: boolean
+  stageId?: string
+  requiresReview?: boolean
+  metadata?: Record<string, unknown>
+  sourceType?: string
+  sourceEntityType?: string
+  sourceEntityId?: string
+  dedupeKey?: string
 }
 
 export interface ResolvePendingData {
-  resolutionNotes?: string
+  resolution: string
 }
 
 export interface CancelPendingData {
-  cancellationReason?: string
+  reason: string
 }
 
 export interface PendingCountByStatus {

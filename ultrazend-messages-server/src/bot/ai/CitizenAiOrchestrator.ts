@@ -67,6 +67,7 @@ const MENU_PATTERNS = [
 const HELP_PATTERNS = ['ajuda', 'preciso de ajuda', 'duvida', 'duvidas', 'como funciona'];
 const PROFILE_PATTERNS = ['meu perfil', 'perfil', 'meus dados', 'meus dados cadastrais', 'cadastro'];
 const DOCUMENT_PATTERNS = ['documentos', 'meus documentos', 'meus arquivos', 'arquivos', 'anexos'];
+const PENDING_PATTERNS = ['pendencias', 'minhas pendencias', 'pendencia do protocolo', 'pendencias do protocolo', 'resolver pendencia'];
 const SERVICE_PATTERNS = ['solicitar servico', 'abrir solicitacao', 'nova solicitacao', 'novo protocolo', 'quero solicitar'];
 const DEPARTMENT_PATTERNS = ['secretaria', 'secretarias', 'explorar secretaria', 'explorar por secretaria', 'navegar por secretaria'];
 const FAMILY_PATTERNS = ['familia', 'minha familia', 'dependentes', 'composicao familiar'];
@@ -757,7 +758,8 @@ export class CitizenAiOrchestrator {
     await this.persistSession(execution.id, next);
 
     const openPendingsCount = Number(details.protocolDetailCard?.openPendingsCount || details.protocol?._count?.pendings || 0);
-    if (next.currentProtocolId && openPendingsCount > 0) {
+    const explicitPendingLookup = this.matchesAny(this.normalize(rawInput), PENDING_PATTERNS);
+    if (next.currentProtocolId && (openPendingsCount > 0 || explicitPendingLookup)) {
       return this.presentProtocolPendings(execution, next, details.protocolDetailCard);
     }
 
@@ -786,17 +788,22 @@ export class CitizenAiOrchestrator {
     }
 
     const result = await this.integration.getProtocolPendings(session.currentProtocolId, execution.citizenId);
-    const pendings = Array.isArray(result?.pendings)
+    const actionablePendings = Array.isArray(result?.pendings)
       ? result.pendings.filter((pending: any) => ['OPEN', 'IN_PROGRESS'].includes(pending.status) && pending.requiresCitizenAction === true)
       : [];
+    const underReviewPendings = Array.isArray(result?.pendings)
+      ? result.pendings.filter((pending: any) => pending.status === 'UNDER_REVIEW' && pending.requiresCitizenAction === true)
+      : [];
 
-    if (!pendings.length) {
+    if (!actionablePendings.length) {
       const next = this.withStage(session, 'triage');
       await this.persistSession(execution.id, next);
       return {
         session: next,
         response: {
-          message: 'Nao ha pendencias abertas para voce neste protocolo no momento.',
+          message: underReviewPendings.length > 0
+            ? `Nao ha novas pendencias abertas neste protocolo. Voce ja enviou ${underReviewPendings.length} resposta(s) e elas aguardam analise da equipe.`
+            : 'Nao ha pendencias abertas para voce neste protocolo no momento.',
           messageType: 'text',
           data: protocolDetailCard ? { protocolDetailCard } : undefined,
           metadata: this.meta(execution, next, true, protocolDetailCard ? { protocolDetailCard } : {}),
@@ -804,7 +811,7 @@ export class CitizenAiOrchestrator {
       };
     }
 
-    const pendingOptions: MenuOption[] = pendings.map((pending: any) => ({
+    const pendingOptions: MenuOption[] = actionablePendings.map((pending: any) => ({
       id: String(pending.id),
       label: String(pending.title || pending.description || 'Pendencia'),
       description: String(pending.description || pending.type || 'Acao necessaria'),
@@ -821,7 +828,7 @@ export class CitizenAiOrchestrator {
     return {
       session: next,
       response: {
-        message: `O protocolo ${session.protocolNumber || ''} possui ${pendingOptions.length} pendencia(s) para resolver. Escolha uma opcao abaixo para continuar.`,
+        message: `O protocolo ${session.protocolNumber || ''} possui ${pendingOptions.length} pendencia(s) para resolver.${underReviewPendings.length > 0 ? ` Alem disso, ${underReviewPendings.length} resposta(s) sua(s) aguardam analise.` : ''} Escolha uma opcao abaixo para continuar.`,
         messageType: 'menu',
         data: {
           options: [
@@ -948,7 +955,7 @@ export class CitizenAiOrchestrator {
         session: followUp.session,
         response: {
           ...followUp.response,
-          message: `${pendingTitle} enviada com sucesso.\n\n${followUp.response.message}`,
+          message: `${pendingTitle} enviada para analise com sucesso.\n\n${followUp.response.message}`,
         },
       };
     }
@@ -956,7 +963,7 @@ export class CitizenAiOrchestrator {
     return {
       session: refreshed,
       response: {
-        message: `${pendingTitle} enviada com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
+        message: `${pendingTitle} enviada para analise com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
         messageType: 'menu',
         data: { options: QUICK_ACTIONS },
         metadata: this.meta(execution, refreshed, true),
@@ -1024,7 +1031,7 @@ export class CitizenAiOrchestrator {
         session: followUp.session,
         response: {
           ...followUp.response,
-          message: `${pendingTitle} enviada com sucesso.\n\n${followUp.response.message}`,
+          message: `${pendingTitle} enviada para analise com sucesso.\n\n${followUp.response.message}`,
         },
       };
     }
@@ -1032,7 +1039,7 @@ export class CitizenAiOrchestrator {
     return {
       session: refreshed,
       response: {
-        message: `${pendingTitle} enviada com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
+        message: `${pendingTitle} enviada para analise com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
         messageType: 'menu',
         data: { options: QUICK_ACTIONS },
         metadata: this.meta(execution, refreshed, true),
@@ -1170,6 +1177,7 @@ export class CitizenAiOrchestrator {
     if (normalized === 'consultar protocolo' || normalized === 'consultar_protocolo') return 'consultar_protocolo';
     if (this.matchesAny(normalized, PROFILE_PATTERNS)) return 'meu_perfil';
     if (this.matchesAny(normalized, DOCUMENT_PATTERNS)) return 'documentos';
+    if (this.matchesAny(normalized, PENDING_PATTERNS)) return 'consultar_protocolo';
     if (this.matchesAny(normalized, HELP_PATTERNS)) return 'ajuda';
     if (this.matchesAny(normalized, MENU_PATTERNS)) return 'voltar_menu';
     if (normalized === 'descrever solicitacao' || normalized === 'descrever com minhas palavras' || normalized === 'descrever_solicitacao') return 'descrever_solicitacao';
@@ -1222,6 +1230,15 @@ export class CitizenAiOrchestrator {
       normalized.includes('protocolo')
     ) {
       return 'latest';
+    }
+    if (
+      this.matchesAny(normalized, PENDING_PATTERNS) ||
+      (
+        normalized.includes('pendencia') &&
+        (normalized.includes('protocolo') || normalized.includes('minha') || normalized.includes('minhas'))
+      )
+    ) {
+      return 'list';
     }
     if (
       normalized === 'meus protocolos' ||

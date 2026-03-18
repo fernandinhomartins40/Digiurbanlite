@@ -991,6 +991,7 @@ enum DocumentStatus {
 model ProtocolPending {
   id         String @id @default(cuid())
   protocolId String
+  stageId    String?
 
   // Tipo e descrição
   type        PendingType
@@ -1002,15 +1003,24 @@ model ProtocolPending {
 
   // Status
   status     PendingStatus @default(OPEN)
+  submittedAt DateTime?
   resolvedAt DateTime?
   resolvedBy String?
   resolution String?
+  reviewedAt DateTime?
+  reviewedBy String?
+  reviewNotes String?
 
   // Bloqueio
   blocksProgress Boolean @default(true)
+  requiresReview Boolean @default(false)
 
   // Metadados
   metadata Json?
+  sourceType String?
+  sourceEntityType String?
+  sourceEntityId String?
+  dedupeKey String?
 
   // Criação
   createdBy String
@@ -1021,6 +1031,8 @@ model ProtocolPending {
 
   @@index([protocolId, status])
   @@index([protocolId])
+  @@index([protocolId, dedupeKey, status])
+  @@index([stageId])
   @@map("protocol_pendings")
 }
 
@@ -1038,6 +1050,7 @@ enum PendingType {
 enum PendingStatus {
   OPEN
   IN_PROGRESS
+  UNDER_REVIEW
   RESOLVED
   EXPIRED
   CANCELLED
