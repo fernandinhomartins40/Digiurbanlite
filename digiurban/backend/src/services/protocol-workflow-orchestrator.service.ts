@@ -42,6 +42,45 @@ interface StageValidationResult {
   rejectedDocuments?: string[];
 }
 
+function getPendingRequestedDocumentTypes(metadata: unknown): string[] {
+  const source =
+    metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? (metadata as Record<string, unknown>)
+      : null;
+
+  if (!source) return [];
+
+  const requestedTypes = new Set<string>();
+
+  const pushValue = (value: unknown) => {
+    if (typeof value !== 'string') return;
+    const trimmed = value.trim();
+    if (trimmed) {
+      requestedTypes.add(trimmed);
+    }
+  };
+
+  pushValue(source.documentType);
+
+  if (Array.isArray(source.documentTypes)) {
+    for (const documentType of source.documentTypes) {
+      pushValue(documentType);
+    }
+  }
+
+  if (Array.isArray(source.documentRequests)) {
+    for (const item of source.documentRequests) {
+      if (!item || typeof item !== 'object') continue;
+      const documentRequest = item as Record<string, unknown>;
+      pushValue(documentRequest.documentType);
+      pushValue(documentRequest.label);
+      pushValue(documentRequest.documentId);
+    }
+  }
+
+  return Array.from(requestedTypes);
+}
+
 // ============================================================================
 // CLASSE PRINCIPAL
 // ============================================================================
@@ -72,21 +111,51 @@ export class ProtocolWorkflowOrchestrator {
       }
     });
 
+    const protocolDocuments = await documentService.getProtocolDocuments(doc.protocolId);
+
     const documentPendings = candidateDocumentPendings.filter((pending) => {
-      const metadata = pending.metadata as Record<string, unknown> | null;
-      return matchDocumentType(doc.documentType, String(metadata?.documentType || ''));
+      const requestedTypes = getPendingRequestedDocumentTypes(pending.metadata);
+      return requestedTypes.some((requestedType) =>
+        matchDocumentType(doc.documentType, requestedType)
+      );
     });
 
     if (documentPendings.length > 0) {
       console.log(`🔄 [Orchestrator] Resolvendo ${documentPendings.length} pendência(s) do documento ${doc.documentType}`);
 
       for (const pending of documentPendings) {
-        await pendingService.resolvePending(
-          pending.id,
-          approvedBy,
-          `Documento aprovado automaticamente pelo sistema`
-        );
+        const requestedTypes = getPendingRequestedDocumentTypes(pending.metadata);
+        const shouldResolveAutomatically =
+          requestedTypes.length === 0 ||
+          requestedTypes.every((requestedType) =>
+            protocolDocuments.some((document) =>
+              document.status === DocumentStatus.APPROVED &&
+              matchDocumentType(document.documentType || document.fileName || '', requestedType)
+            )
+          );
 
+        if (!shouldResolveAutomatically) {
+          console.log(
+            `ℹ️ [Orchestrator] Pendência ${pending.id} ainda aguarda outros documentos: ${requestedTypes.join(', ')}`
+          );
+          continue;
+        }
+
+        try {
+          await pendingService.resolvePending(
+            pending.id,
+            approvedBy,
+            `Documento aprovado automaticamente pelo sistema`
+          );
+        } catch (error) {
+          console.error('[workflow-orchestrator] Falha ao resolver pendência de documento automaticamente:', {
+            pendingId: pending.id,
+            protocolId: doc.protocolId,
+            documentId,
+            documentType: doc.documentType,
+            error: error instanceof Error ? error.message : String(error),
+          });
+        }
       }
     }
 

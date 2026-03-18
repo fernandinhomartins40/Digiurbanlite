@@ -43,6 +43,45 @@ function getDocumentStatusRank(status: DocumentStatus) {
   }
 }
 
+function getPendingRequestedDocumentTypes(metadata: unknown): string[] {
+  const source =
+    metadata && typeof metadata === 'object' && !Array.isArray(metadata)
+      ? (metadata as Record<string, unknown>)
+      : null;
+
+  if (!source) return [];
+
+  const requestedTypes = new Set<string>();
+
+  const pushValue = (value: unknown) => {
+    if (typeof value !== 'string') return;
+    const trimmed = value.trim();
+    if (trimmed) {
+      requestedTypes.add(trimmed);
+    }
+  };
+
+  pushValue(source.documentType);
+
+  if (Array.isArray(source.documentTypes)) {
+    for (const documentType of source.documentTypes) {
+      pushValue(documentType);
+    }
+  }
+
+  if (Array.isArray(source.documentRequests)) {
+    for (const item of source.documentRequests) {
+      if (!item || typeof item !== 'object') continue;
+      const documentRequest = item as Record<string, unknown>;
+      pushValue(documentRequest.documentType);
+      pushValue(documentRequest.label);
+      pushValue(documentRequest.documentId);
+    }
+  }
+
+  return Array.from(requestedTypes);
+}
+
 function parseRequiredDocumentNames(raw: unknown): string[] {
   if (!raw) return [];
 
@@ -350,8 +389,10 @@ export async function uploadDocument(
       });
 
       const relatedPendings = candidatePendings.filter((pending) => {
-        const metadata = pending.metadata as Record<string, unknown> | null;
-        return matchDocumentType(currentDoc.documentType, String(metadata?.documentType || ''));
+        const requestedTypes = getPendingRequestedDocumentTypes(pending.metadata);
+        return requestedTypes.some((requestedType) =>
+          matchDocumentType(currentDoc.documentType, requestedType)
+        );
       });
 
       if (relatedPendings.length > 0) {
@@ -419,8 +460,17 @@ export async function approveDocument(
   }).catch(err => console.error('Erro ao criar histórico:', err));
 
   // ✨ NOVO: Disparar orquestrador de workflow
-  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
-  await workflowOrchestrator.onDocumentApproved(documentId, validatedBy);
+  try {
+    const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+    await workflowOrchestrator.onDocumentApproved(documentId, validatedBy);
+  } catch (error) {
+    console.error('[protocol-document.service] Falha ao processar side effects da aprovacao do documento:', {
+      documentId,
+      protocolId: document.protocolId,
+      documentType: document.documentType,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   return updatedDocument;
 }
@@ -465,8 +515,17 @@ export async function rejectDocument(
   }).catch(err => console.error('Erro ao criar histórico:', err));
 
   // ✨ NOVO: Disparar orquestrador de workflow
-  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
-  await workflowOrchestrator.onDocumentRejected(documentId, validatedBy, rejectionReason);
+  try {
+    const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+    await workflowOrchestrator.onDocumentRejected(documentId, validatedBy, rejectionReason);
+  } catch (error) {
+    console.error('[protocol-document.service] Falha ao processar side effects da rejeicao do documento:', {
+      documentId,
+      protocolId: document.protocolId,
+      documentType: document.documentType,
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
 
   return updatedDocument;
 }
