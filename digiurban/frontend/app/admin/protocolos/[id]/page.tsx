@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card } from '@/components/ui/card'
 
@@ -45,11 +45,12 @@ import { ForwardProtocolDialog } from '@/components/protocols/ForwardProtocolDia
 import { AssignTeamDialog } from '@/components/protocols/AssignTeamDialog'
 import { AssignmentHistoryTimeline } from '@/components/protocols/AssignmentHistoryTimeline'
 import { CurrentAssignmentCard } from '@/components/protocols/CurrentAssignmentCard'
-import { PendingCreationContext } from '@/src/components/admin/protocol/protocol-pending-context'
+import { buildPendingCreationHref, PendingCreationContext } from '@/src/components/admin/protocol/protocol-pending-context'
 
 export default function ProtocolDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { apiRequest } = useAdminAuth()
   const { toast } = useToast()
   const protocolId = params.id as string
@@ -66,8 +67,6 @@ export default function ProtocolDetailPage() {
   const [validation, setValidation] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('')
-  const [pendingDialogOpen, setPendingDialogOpen] = useState(false)
-  const [pendingCreationContext, setPendingCreationContext] = useState<PendingCreationContext | null>(null)
 
   // Estados para diálogos de atribuição
   const [showAssignDialog, setShowAssignDialog] = useState(false)
@@ -98,10 +97,16 @@ export default function ProtocolDetailPage() {
 
   // Inicializar tab ativo quando modo for detectado
   useEffect(() => {
+    const requestedTab = searchParams.get('tab')
+    if (requestedTab && availableTabs.includes(requestedTab) && activeTab !== requestedTab) {
+      setActiveTab(requestedTab)
+      return
+    }
+
     if (availableTabs.length > 0 && !activeTab) {
       setActiveTab(primaryTab || availableTabs[0])
     }
-  }, [availableTabs, primaryTab, activeTab])
+  }, [availableTabs, primaryTab, activeTab, searchParams])
 
   // Carregar dados do protocolo
   useEffect(() => {
@@ -233,16 +238,7 @@ export default function ProtocolDetailPage() {
   }
 
   const handleCreatePendingRequest = (context: PendingCreationContext) => {
-    setPendingCreationContext(context)
-    setActiveTab('pendencias')
-    setPendingDialogOpen(true)
-  }
-
-  const handlePendingDialogOpenChange = (open: boolean) => {
-    setPendingDialogOpen(open)
-    if (!open) {
-      setPendingCreationContext(null)
-    }
+    router.push(buildPendingCreationHref(protocolId, context))
   }
 
   // Loading state
@@ -341,6 +337,15 @@ export default function ProtocolDetailPage() {
   // ==========================================
   const openPendings = pendings.filter(p => ['OPEN', 'IN_PROGRESS', 'UNDER_REVIEW'].includes(p.status))
   const unreadMessages = interactions.filter(i => !i.isRead).length
+  const pendingTabContext: PendingCreationContext | null = currentStage
+    ? {
+        sourceAction: 'MANUAL',
+        stageId: currentStage.id,
+        stageName: currentStage.stageName,
+        stageMetadata: currentStage.metadata,
+        validation,
+      }
+    : null
 
   // Badges dinâmicos para as abas
   const tabBadges: Record<string, number> = {
@@ -469,9 +474,7 @@ export default function ProtocolDetailPage() {
                     pendings={pendings}
                     service={protocol?.service}
                     onRefresh={loadProtocolData}
-                    creationContext={pendingCreationContext}
-                    pendingDialogOpen={pendingDialogOpen}
-                    onPendingDialogOpenChange={handlePendingDialogOpenChange}
+                    creationContext={pendingTabContext}
                   />
                 </TabsContent>
               )}
