@@ -1,11 +1,11 @@
 /**
- * Rotas Internas - API para chamadas de serviços internos (UltraZend)
+ * Rotas Internas - API para chamadas de serviÃ§os internos (UltraZend)
  */
 
 import { Router, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
-import { uploadDocuments } from '../config/upload';
+import { ensureProtocolDir, getProtocolFileUrl, uploadDocuments } from '../config/upload';
 import { prisma } from '../lib/prisma';
 import { validateServiceFormData } from '../lib/json-schema-validator';
 import { DocumentUploadService } from '../services/document-upload.service';
@@ -13,13 +13,20 @@ import { validateProtocolUniqueness } from '../services/protocol-uniqueness.serv
 import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
-import { getProtocolDocuments as getProtocolDocumentsForProtocol } from '../services/protocol-document.service';
+import {
+  getProtocolDocuments as getProtocolDocumentsForProtocol,
+  uploadDocument as uploadProtocolDocument,
+} from '../services/protocol-document.service';
+import * as pendingService from '../services/protocol-pending.service';
+import * as dataFieldService from '../services/protocol-data-field.service';
 import { normalizeEmail, normalizeNullableString } from '../utils/identity';
+import fs from 'fs';
+import path from 'path';
 
 const router = Router();
 const documentUploadService = new DocumentUploadService();
 
-// Aplicar middleware de autenticação em todas as rotas
+// Aplicar middleware de autenticaÃ§Ã£o em todas as rotas
 router.use(internalAuthMiddleware);
 
 const coerceObject = (value: any) => {
@@ -41,11 +48,33 @@ const coerceObject = (value: any) => {
   return {};
 };
 
+const parseInternalPendingResolution = (rawResolution: unknown) => {
+  if (typeof rawResolution !== 'string') {
+    return { text: '', payload: null as Record<string, any> | null };
+  }
+
+  const trimmed = rawResolution.trim();
+  if (!trimmed) {
+    return { text: '', payload: null as Record<string, any> | null };
+  }
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return { text: trimmed, payload: parsed as Record<string, any> };
+    }
+  } catch {
+    // texto simples
+  }
+
+  return { text: trimmed, payload: null as Record<string, any> | null };
+};
+
 // ========================================
 // CITIZENS
 // ========================================
 
-// GET /api/internal/citizens/:citizenId - Buscar cidadão por ID
+// GET /api/internal/citizens/:citizenId - Buscar cidadÃ£o por ID
 router.get('/citizens/:citizenId', async (req: Request, res: Response) => {
   try {
     const { citizenId } = req.params;
@@ -86,13 +115,13 @@ router.get('/citizens/:citizenId', async (req: Request, res: Response) => {
   }
 });
 
-// PUT /api/internal/citizens/:citizenId - Atualizar perfil do cidadão
+// PUT /api/internal/citizens/:citizenId - Atualizar perfil do cidadÃ£o
 router.put('/citizens/:citizenId', async (req: Request, res: Response) => {
   try {
     const { citizenId } = req.params;
     const updates = req.body;
 
-    // Campos permitidos para atualização
+    // Campos permitidos para atualizaÃ§Ã£o
     const allowedFields = [
       'name', 'email', 'phone', 'phoneSecondary', 'birthDate',
       'address', 'rg', 'motherName', 'maritalStatus', 'occupation', 'familyIncome'
@@ -105,7 +134,7 @@ router.put('/citizens/:citizenId', async (req: Request, res: Response) => {
       }
     }
 
-    // EndereÃ§o Ã© um JSON: fazer merge com o endereÃ§o atual para permitir atualizaÃ§Ãµes parciais
+    // EndereÃƒÂ§o ÃƒÂ© um JSON: fazer merge com o endereÃƒÂ§o atual para permitir atualizaÃƒÂ§ÃƒÂµes parciais
     // e suportar "pular" no complemento (fluxo envia sem o campo em vez de sobrescrever com "pular").
     if (dataToUpdate.address !== undefined) {
       const incomingAddress = coerceObject(dataToUpdate.address);
@@ -173,7 +202,7 @@ router.put('/citizens/:citizenId', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/internal/citizens/:citizenId/family - Composição familiar
+// GET /api/internal/citizens/:citizenId/family - ComposiÃ§Ã£o familiar
 router.get('/citizens/:citizenId/family', async (req: Request, res: Response) => {
   try {
     const { citizenId } = req.params;
@@ -216,7 +245,7 @@ router.get('/citizens/:citizenId/family', async (req: Request, res: Response) =>
 // SERVICES
 // ========================================
 
-// GET /api/internal/services/search - Buscar serviços
+// GET /api/internal/services/search - Buscar serviÃ§os
 router.get('/services/search', async (req: Request, res: Response) => {
   try {
     const { query, category, limit = '10' } = req.query;
@@ -269,7 +298,7 @@ router.get('/services/search', async (req: Request, res: Response) => {
         select: selectFields,
       });
     } else {
-      // Listar serviços populares
+      // Listar serviÃ§os populares
       services = await prisma.serviceSimplified.findMany({
         where: { isActive: true },
         take: limitNum,
@@ -285,7 +314,7 @@ router.get('/services/search', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/internal/services - Listar serviços
+// GET /api/internal/services - Listar serviÃ§os
 router.get('/services', async (req: Request, res: Response) => {
   try {
     const { limit = '50' } = req.query;
@@ -321,7 +350,7 @@ router.get('/services', async (req: Request, res: Response) => {
     console.log('[internal.routes] GET /services - found:', services.length, 'services');
 
     if (services.length === 0) {
-      console.warn('[internal.routes] GET /services - AVISO: Nenhum serviço ativo encontrado no banco!');
+      console.warn('[internal.routes] GET /services - AVISO: Nenhum serviÃ§o ativo encontrado no banco!');
     }
 
     res.json(services);
@@ -352,7 +381,7 @@ router.get('/services/categories', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/internal/services/:serviceId - Obter serviço
+// GET /api/internal/services/:serviceId - Obter serviÃ§o
 router.get('/services/:serviceId', async (req: Request, res: Response) => {
   try {
     const { serviceId } = req.params;
@@ -411,18 +440,18 @@ router.post(
         return res.status(404).json({ error: 'Service not found' });
       }
 
-      // Extrair e limpar dados do formulário (description é campo separado)
+      // Extrair e limpar dados do formulÃ¡rio (description Ã© campo separado)
       const baseCustomData = coerceObject(customData);
       const cleanedCustomData: Record<string, any> = { ...(baseCustomData as any) };
       delete cleanedCustomData.description;
       delete cleanedCustomData.descricao;
 
-      // Validar formData contra o JSON Schema do serviço (se houver)
+      // Validar formData contra o JSON Schema do serviÃ§o (se houver)
       if (Object.keys(cleanedCustomData).length > 0) {
         const validation = validateServiceFormData(service as any, cleanedCustomData);
         if (!validation.valid) {
           return res.status(400).json({
-            error: 'Dados do formulário inválidos',
+            error: 'Dados do formulÃ¡rio invÃ¡lidos',
             details: validation.errors,
           });
         }
@@ -433,7 +462,7 @@ router.post(
         ...cleanedCustomData,
       };
 
-      // Validação de unicidade (mesma regra do painel do cidadão)
+      // ValidaÃ§Ã£o de unicidade (mesma regra do painel do cidadÃ£o)
       const uniquenessValidation = await validateProtocolUniqueness(
         citizenId,
         serviceId,
@@ -442,13 +471,13 @@ router.post(
 
       if (!uniquenessValidation.canCreate) {
         return res.status(400).json({
-          error: uniquenessValidation.errorMessage || 'Não é possível criar este protocolo',
+          error: uniquenessValidation.errorMessage || 'NÃ£o Ã© possÃ­vel criar este protocolo',
           reason: uniquenessValidation.reason,
           existingProtocolNumber: uniquenessValidation.existingProtocolNumber,
         });
       }
 
-      // Criar protocolo usando o mesmo pipeline do painel do cidadão
+      // Criar protocolo usando o mesmo pipeline do painel do cidadÃ£o
       const result = await protocolModuleService.createProtocolWithModule({
         citizenId,
         serviceId,
@@ -493,7 +522,7 @@ router.post(
         }
       }
 
-      // Criar pendentes para documentos obrigatórios que não foram enviados
+      // Criar pendentes para documentos obrigatÃ³rios que nÃ£o foram enviados
       await ensureRequiredProtocolDocuments(result.protocol.id, service as any, uploadedDocsResult);
 
       const fullProtocol = await prisma.protocolSimplified.findUnique({
@@ -501,8 +530,8 @@ router.post(
         include: { service: true, department: true },
       });
 
-      // Registrar uma interaÃ§Ã£o pÃºblica no protocolo (visÃ­vel ao cidadÃ£o)
-      // Isso ajuda a manter o histÃ³rico consistente no painel.
+      // Registrar uma interaÃƒÂ§ÃƒÂ£o pÃƒÂºblica no protocolo (visÃƒÂ­vel ao cidadÃƒÂ£o)
+      // Isso ajuda a manter o histÃƒÂ³rico consistente no painel.
       try {
         const citizen = await prisma.citizen.findUnique({
           where: { id: citizenId },
@@ -515,7 +544,7 @@ router.post(
             type: 'MESSAGE',
             authorType: 'CITIZEN',
             authorId: citizenId,
-            authorName: citizen?.name || 'Cidadão',
+            authorName: citizen?.name || 'CidadÃ£o',
             message: `Protocolo ${result.protocol.number} criado via DigiBot`,
             isInternal: false,
             isRead: false,
@@ -538,7 +567,7 @@ router.post(
   }
 );
 
-// GET /api/internal/protocols - Listar protocolos do cidadão
+// GET /api/internal/protocols - Listar protocolos do cidadÃ£o
 router.get('/protocols', async (req: Request, res: Response) => {
   try {
     const { citizenId, limit = '10' } = req.query;
@@ -575,7 +604,7 @@ router.get('/protocols', async (req: Request, res: Response) => {
     console.log('[internal.routes] GET /protocols - found:', protocols.length, 'protocols');
 
     if (protocols.length === 0) {
-      console.warn('[internal.routes] GET /protocols - AVISO: Nenhum protocolo encontrado para o cidadão');
+      console.warn('[internal.routes] GET /protocols - AVISO: Nenhum protocolo encontrado para o cidadÃ£o');
     }
 
     res.json(protocols);
@@ -585,7 +614,7 @@ router.get('/protocols', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/internal/protocols/number/:protocolNumber - Buscar por número
+// GET /api/internal/protocols/number/:protocolNumber - Buscar por nÃºmero
 router.get('/protocols/number/:protocolNumber', async (req: Request, res: Response) => {
   try {
     const { protocolNumber } = req.params;
@@ -635,7 +664,12 @@ router.get('/protocols/number/:protocolNumber', async (req: Request, res: Respon
         },
         _count: {
           select: {
-            pendings: { where: { status: 'OPEN' } },
+            pendings: {
+              where: {
+                status: { in: ['OPEN', 'IN_PROGRESS'] },
+                type: { in: ['DOCUMENT', 'INFORMATION', 'CORRECTION', 'VALIDATION', 'PAYMENT'] },
+              },
+            },
           },
         },
       },
@@ -652,7 +686,189 @@ router.get('/protocols/number/:protocolNumber', async (req: Request, res: Respon
   }
 });
 
-// POST /api/internal/protocols/:protocolId/comments - Adicionar comentário
+// GET /api/internal/protocols/:protocolId/pendings - Pendencias do protocolo para o bot/canais internos
+router.get('/protocols/:protocolId/pendings', async (req: Request, res: Response) => {
+  try {
+    const { protocolId } = req.params;
+    const { citizenId } = req.query;
+
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: {
+        id: protocolId,
+        ...(citizenId ? { citizenId: citizenId as string } : {}),
+      },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const pendings = await pendingService.getCitizenPendings(protocolId);
+    res.json({ pendings });
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /protocols/:protocolId/pendings', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/internal/protocols/:protocolId/pendings/:pendingId/resolve - Resolver pendencia textual
+router.post('/protocols/:protocolId/pendings/:pendingId/resolve', async (req: Request, res: Response) => {
+  try {
+    const { protocolId, pendingId } = req.params;
+    const { citizenId, resolution } = req.body;
+
+    if (!citizenId) {
+      return res.status(400).json({ error: 'citizenId is required' });
+    }
+
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: { id: protocolId, citizenId },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const pending = await prisma.protocolPending.findFirst({
+      where: { id: pendingId, protocolId },
+    });
+
+    if (!pending) {
+      return res.status(404).json({ error: 'Pending not found' });
+    }
+
+    if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
+      return res.status(400).json({ error: 'Pending already resolved or cancelled' });
+    }
+
+    const metadata = pending.metadata && typeof pending.metadata === 'object'
+      ? pending.metadata as Record<string, any>
+      : {};
+    const parsed = parseInternalPendingResolution(resolution);
+
+    let updatedPending;
+    if (pending.type === 'CORRECTION' && metadata.fieldId) {
+      const candidateValue =
+        typeof parsed.payload?.[String(metadata.fieldId)] === 'string' ? parsed.payload?.[String(metadata.fieldId)] :
+        typeof parsed.payload?.[String(metadata.fieldKey || '')] === 'string' ? parsed.payload?.[String(metadata.fieldKey || '')] :
+        typeof parsed.payload?.value === 'string' ? parsed.payload.value :
+        parsed.text;
+
+      if (!candidateValue?.trim()) {
+        return res.status(400).json({ error: 'resolution is required' });
+      }
+
+      await dataFieldService.correctDataField({
+        fieldId: String(metadata.fieldId),
+        newValue: candidateValue.trim(),
+        correctedBy: citizenId,
+      });
+
+      updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
+    } else {
+      if (!parsed.text) {
+        return res.status(400).json({ error: 'resolution is required' });
+      }
+
+      await pendingService.resolvePending(pendingId, citizenId, parsed.text);
+      updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
+    }
+
+    res.json({ pending: updatedPending ? pendingService.serializePendingForCitizen(updatedPending as any) : null });
+  } catch (error) {
+    console.error('[internal.routes] Error in POST /protocols/:protocolId/pendings/:pendingId/resolve', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/internal/protocols/:protocolId/pendings/:pendingId/resolve-document - Resolver pendencia com documento
+router.post('/protocols/:protocolId/pendings/:pendingId/resolve-document', uploadDocuments, async (req: Request, res: Response) => {
+  try {
+    const { protocolId, pendingId } = req.params;
+    const citizenId = String(req.body?.citizenId || '');
+    const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
+    const file = files[0];
+
+    if (!citizenId) {
+      return res.status(400).json({ error: 'citizenId is required' });
+    }
+
+    if (!file) {
+      return res.status(400).json({ error: 'document is required' });
+    }
+
+    const protocol = await prisma.protocolSimplified.findFirst({
+      where: { id: protocolId, citizenId },
+    });
+
+    if (!protocol) {
+      return res.status(404).json({ error: 'Protocol not found' });
+    }
+
+    const pending = await prisma.protocolPending.findFirst({
+      where: { id: pendingId, protocolId },
+    });
+
+    if (!pending) {
+      return res.status(404).json({ error: 'Pending not found' });
+    }
+
+    if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
+      return res.status(400).json({ error: 'Pending already resolved or cancelled' });
+    }
+
+    if (pending.type !== 'DOCUMENT') {
+      return res.status(400).json({ error: 'Pending does not accept document upload' });
+    }
+
+    const metadata = pending.metadata && typeof pending.metadata === 'object'
+      ? pending.metadata as Record<string, any>
+      : {};
+    const documentType = String(metadata.documentType || pending.title || 'DOCUMENTO_PENDENCIA');
+
+    const protocolDir = ensureProtocolDir(protocolId);
+    const newPath = path.join(protocolDir, file.filename);
+    fs.renameSync(file.path, newPath);
+
+    let targetDocumentId = typeof metadata.documentId === 'string' ? metadata.documentId : undefined;
+
+    if (!targetDocumentId) {
+      const existingDocument = await prisma.protocolDocument.findFirst({
+        where: { protocolId, documentType },
+        orderBy: { createdAt: 'asc' },
+      });
+
+      if (existingDocument) {
+        targetDocumentId = existingDocument.id;
+      } else {
+        const createdDocument = await prisma.protocolDocument.create({
+          data: {
+            protocolId,
+            documentType,
+            isRequired: true,
+            status: 'PENDING',
+          },
+        });
+        targetDocumentId = createdDocument.id;
+      }
+    }
+
+    await uploadProtocolDocument(targetDocumentId, {
+      fileName: file.originalname,
+      fileUrl: getProtocolFileUrl(protocolId, file.filename),
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      uploadedBy: citizenId,
+    });
+
+    const updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
+    res.json({ pending: updatedPending ? pendingService.serializePendingForCitizen(updatedPending as any) : null });
+  } catch (error) {
+    console.error('[internal.routes] Error in POST /protocols/:protocolId/pendings/:pendingId/resolve-document', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+// POST /api/internal/protocols/:protocolId/comments - Adicionar comentÃ¡rio
 router.post('/protocols/:protocolId/comments', async (req: Request, res: Response) => {
   try {
     const { protocolId } = req.params;
@@ -662,7 +878,7 @@ router.post('/protocols/:protocolId/comments', async (req: Request, res: Respons
       return res.status(400).json({ error: 'comment is required' });
     }
 
-    // Atualizar protocolo com comentário no metadata ou criar sistema de comentários
+    // Atualizar protocolo com comentÃ¡rio no metadata ou criar sistema de comentÃ¡rios
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: protocolId },
       select: { customData: true },
@@ -715,7 +931,7 @@ router.post('/protocols/:protocolId/comments', async (req: Request, res: Respons
 // NOTIFICATIONS
 // ========================================
 
-// GET /api/internal/notifications - Listar notificações
+// GET /api/internal/notifications - Listar notificaÃ§Ãµes
 router.get('/notifications', async (req: Request, res: Response) => {
   try {
     const { citizenId, unreadOnly = 'false', limit = '20' } = req.query;
@@ -773,7 +989,7 @@ router.put('/notifications/read', async (req: Request, res: Response) => {
 // PROTOCOL INTERACTIONS
 // ========================================
 
-// GET /api/internal/protocols/:protocolId/interactions - Histórico de interações
+// GET /api/internal/protocols/:protocolId/interactions - HistÃ³rico de interaÃ§Ãµes
 router.get('/protocols/:protocolId/interactions', async (req: Request, res: Response) => {
   try {
     const { protocolId } = req.params;
@@ -783,7 +999,7 @@ router.get('/protocols/:protocolId/interactions', async (req: Request, res: Resp
       return res.status(400).json({ error: 'citizenId is required' });
     }
 
-    // Verificar se o protocolo pertence ao cidadão
+    // Verificar se o protocolo pertence ao cidadÃ£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: { id: protocolId, citizenId: citizenId as string },
     });
@@ -795,7 +1011,7 @@ router.get('/protocols/:protocolId/interactions', async (req: Request, res: Resp
     const interactions = await prisma.protocolInteraction.findMany({
       where: {
         protocolId,
-        isInternal: false, // Não mostrar interações internas ao cidadão
+        isInternal: false, // NÃ£o mostrar interaÃ§Ãµes internas ao cidadÃ£o
       },
       orderBy: { createdAt: 'desc' },
       take: 50,
@@ -812,7 +1028,7 @@ router.get('/protocols/:protocolId/interactions', async (req: Request, res: Resp
 // DOCUMENTS
 // ========================================
 
-// GET /api/internal/citizens/:citizenId/documents - Documentos do cidadão
+// GET /api/internal/citizens/:citizenId/documents - Documentos do cidadÃ£o
 router.get('/citizens/:citizenId/documents', async (req: Request, res: Response) => {
   try {
     const { citizenId } = req.params;
@@ -843,7 +1059,7 @@ router.get('/citizens/:citizenId/documents', async (req: Request, res: Response)
     console.log('[internal.routes] GET /citizens/:citizenId/documents - found:', documents.length, 'documents');
 
     if (documents.length === 0) {
-      console.warn('[internal.routes] GET /citizens/:citizenId/documents - AVISO: Nenhum documento encontrado para o cidadão');
+      console.warn('[internal.routes] GET /citizens/:citizenId/documents - AVISO: Nenhum documento encontrado para o cidadÃ£o');
     }
 
     res.json(documents);
@@ -863,7 +1079,7 @@ router.get('/protocols/:protocolId/documents', async (req: Request, res: Respons
       return res.status(400).json({ error: 'citizenId is required' });
     }
 
-    // Verificar se o protocolo pertence ao cidadão
+    // Verificar se o protocolo pertence ao cidadÃ£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: { id: protocolId, citizenId: citizenId as string },
     });
@@ -885,7 +1101,7 @@ router.get('/protocols/:protocolId/documents', async (req: Request, res: Respons
 // EVALUATIONS
 // ========================================
 
-// GET /api/internal/evaluations/pending - Protocolos concluídos sem avaliação
+// GET /api/internal/evaluations/pending - Protocolos concluÃ­dos sem avaliaÃ§Ã£o
 router.get('/evaluations/pending', async (req: Request, res: Response) => {
   try {
     const { citizenId } = req.query;
@@ -894,7 +1110,7 @@ router.get('/evaluations/pending', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'citizenId is required' });
     }
 
-    // Buscar protocolos concluídos do cidadão que ainda não foram avaliados
+    // Buscar protocolos concluÃ­dos do cidadÃ£o que ainda nÃ£o foram avaliados
     const protocols = await prisma.protocolSimplified.findMany({
       where: {
         citizenId: citizenId as string,
@@ -927,7 +1143,7 @@ router.get('/evaluations/pending', async (req: Request, res: Response) => {
   }
 });
 
-// POST /api/internal/evaluations - Submeter avaliação
+// POST /api/internal/evaluations - Submeter avaliaÃ§Ã£o
 router.post('/evaluations', async (req: Request, res: Response) => {
   try {
     const { protocolId, citizenId, rating, comment } = req.body;
@@ -936,7 +1152,7 @@ router.post('/evaluations', async (req: Request, res: Response) => {
       return res.status(400).json({ error: 'protocolId, citizenId and rating are required' });
     }
 
-    // Verificar se o protocolo pertence ao cidadão e está concluído
+    // Verificar se o protocolo pertence ao cidadÃ£o e estÃ¡ concluÃ­do
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -949,7 +1165,7 @@ router.post('/evaluations', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Protocol not found or not completed' });
     }
 
-    // Verificar se já existe avaliação
+    // Verificar se jÃ¡ existe avaliaÃ§Ã£o
     const existingEval = await prisma.protocolEvaluationSimplified.findFirst({
       where: { protocolId },
     });
@@ -977,7 +1193,7 @@ router.post('/evaluations', async (req: Request, res: Response) => {
 // DEPARTMENTS
 // ========================================
 
-// GET /api/internal/departments - Listar departamentos (apenas os que têm serviços ativos)
+// GET /api/internal/departments - Listar departamentos (apenas os que tÃªm serviÃ§os ativos)
 router.get('/departments', async (req: Request, res: Response) => {
   try {
     const departments = await prisma.department.findMany({
@@ -1007,7 +1223,7 @@ router.get('/departments', async (req: Request, res: Response) => {
   }
 });
 
-// GET /api/internal/departments/:deptId/services - Serviços de um departamento agrupados por categoria
+// GET /api/internal/departments/:deptId/services - ServiÃ§os de um departamento agrupados por categoria
 router.get('/departments/:deptId/services', async (req: Request, res: Response) => {
   try {
     const { deptId } = req.params;
@@ -1077,4 +1293,3 @@ router.get('/departments/:deptId/services', async (req: Request, res: Response) 
 });
 
 export default router;
-

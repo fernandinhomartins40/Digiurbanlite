@@ -1,8 +1,9 @@
-﻿import { FlowExecution } from '@prisma/client';
+import { FlowExecution } from '@prisma/client';
 import { FlowStateManager } from '../flow/FlowStateManager';
 import { actionHandlers } from '../flow/ActionHandlers';
 import { BotResponse, ExecutionContext, FlowNode, MenuOption } from '../types';
 import { citizenAiClient } from './CitizenAiClient';
+import { getDigiUrbanIntegration } from '../DigiUrbanIntegration';
 import { CitizenAiDecision, CitizenAiSessionState, CitizenAiStage } from './types';
 
 const QUICK_ACTIONS: MenuOption[] = [
@@ -79,6 +80,7 @@ type FieldDef = { id: string; label: string; type?: string; required?: boolean; 
 
 export class CitizenAiOrchestrator {
   private readonly stateManager = new FlowStateManager();
+  private readonly integration = getDigiUrbanIntegration();
   private readonly stats = { sessionsStarted: 0, aiTurns: 0, lowConfidenceFallbacks: 0, legacyRedirects: 0, protocolsCreated: 0, protocolLookups: 0, humanHandoverRequests: 0 };
 
   async startSession(params: { citizenId: string; flowId: string; conversationId: string; existingExecution?: ExecutionLike | null }): Promise<{ execution: FlowExecution; response: BotResponse }> {
@@ -109,6 +111,11 @@ export class CitizenAiOrchestrator {
     if (session.stage === 'awaiting_protocol_lookup_mode') return this.handleProtocolLookupMode(execution, session, message);
     if (session.stage === 'awaiting_protocol_number') return this.handleProtocolLookup(execution, session, message);
     if (session.stage === 'awaiting_protocol_selection') return this.handleProtocolSelection(execution, session, message);
+    if (session.stage === 'awaiting_protocol_pending_selection') return this.handleProtocolPendingSelection(execution, session, message);
+    if (session.stage === 'awaiting_protocol_pending_text_resolution') return this.handleProtocolPendingTextResolution(execution, session, message);
+    if (session.stage === 'awaiting_protocol_pending_document_upload') {
+      return { session, response: { message: 'Estou aguardando o envio do documento solicitado para resolver a pendencia.', messageType: 'text', metadata: this.meta(execution, session, true) } };
+    }
     if (session.stage === 'collecting_fields') return this.handleFieldCollection(execution, session, message);
     if (session.stage === 'awaiting_review_confirmation') return this.handleReviewConfirmation(execution, session, message);
     if (session.stage === 'awaiting_documents') return { session, response: { message: 'Ainda estou aguardando o envio dos documentos obrigatorios.', messageType: 'text', metadata: this.meta(execution, session, true) } };
@@ -120,6 +127,9 @@ export class CitizenAiOrchestrator {
   async processUpload(params: { citizenId: string; flowId: string; conversationId: string; files: Array<Record<string, unknown>>; existingExecution?: ExecutionLike | null }): Promise<CitizenAiDecision> {
     const execution = await this.ensureExecution(params);
     const session = this.getSessionState(execution);
+    if (session.stage === 'awaiting_protocol_pending_document_upload') {
+      return this.handleProtocolPendingDocumentUpload(execution, session, params.files);
+    }
     if (session.stage !== 'awaiting_documents') {
       return { session, response: { message: 'Arquivos recebidos, mas eu nao estava aguardando documentos neste momento.', messageType: 'text', metadata: this.meta(execution, session, true) } };
     }
@@ -735,12 +745,301 @@ export class CitizenAiOrchestrator {
       };
     }
 
-    const next: CitizenAiSessionState = { ...session, stage: 'triage', protocolNumber };
+    this.stats.protocolLookups += 1;
+
+    const next: CitizenAiSessionState = {
+      ...session,
+      stage: 'triage',
+      protocolNumber,
+      currentProtocolId: String(details.protocol?.id || ''),
+      currentProtocolTitle: String(details.protocol?.title || details.protocol?.service?.name || ''),
+    };
     await this.persistSession(execution.id, next);
 
-    this.stats.protocolLookups += 1;
-    return { session: next, response: { message: typeof details.summary === 'string' && details.summary.trim() ? details.summary.trim() : `Consulta concluida para o protocolo ${protocolNumber}.`, messageType: 'text', data: details.protocolDetailCard ? { protocolDetailCard: details.protocolDetailCard } : undefined, metadata: this.meta(execution, next, true, details.protocolDetailCard ? { protocolDetailCard: details.protocolDetailCard } : {}) } };
+    const openPendingsCount = Number(details.protocolDetailCard?.openPendingsCount || details.protocol?._count?.pendings || 0);
+    if (next.currentProtocolId && openPendingsCount > 0) {
+      return this.presentProtocolPendings(execution, next, details.protocolDetailCard);
+    }
+
+    return {
+      session: next,
+      response: {
+        message: typeof details.summary === 'string' && details.summary.trim()
+          ? details.summary.trim()
+          : `Consulta concluida para o protocolo ${protocolNumber}.`,
+        messageType: 'text',
+        data: details.protocolDetailCard ? { protocolDetailCard: details.protocolDetailCard } : undefined,
+        metadata: this.meta(execution, next, true, details.protocolDetailCard ? { protocolDetailCard: details.protocolDetailCard } : {}),
+      },
+    };
   }
+
+  private async presentProtocolPendings(
+    execution: FlowExecution,
+    session: CitizenAiSessionState,
+    protocolDetailCard?: Record<string, unknown>
+  ): Promise<CitizenAiDecision> {
+    if (!session.currentProtocolId) {
+      const fallback = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, fallback);
+      return { session: fallback, response: this.buildWelcomeResponse(execution, fallback) };
+    }
+
+    const result = await this.integration.getProtocolPendings(session.currentProtocolId, execution.citizenId);
+    const pendings = Array.isArray(result?.pendings)
+      ? result.pendings.filter((pending: any) => ['OPEN', 'IN_PROGRESS'].includes(pending.status) && pending.requiresCitizenAction === true)
+      : [];
+
+    if (!pendings.length) {
+      const next = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        response: {
+          message: 'Nao ha pendencias abertas para voce neste protocolo no momento.',
+          messageType: 'text',
+          data: protocolDetailCard ? { protocolDetailCard } : undefined,
+          metadata: this.meta(execution, next, true, protocolDetailCard ? { protocolDetailCard } : {}),
+        },
+      };
+    }
+
+    const pendingOptions: MenuOption[] = pendings.map((pending: any) => ({
+      id: String(pending.id),
+      label: String(pending.title || pending.description || 'Pendencia'),
+      description: String(pending.description || pending.type || 'Acao necessaria'),
+      metadata: pending,
+    }));
+
+    const next: CitizenAiSessionState = {
+      ...session,
+      stage: 'awaiting_protocol_pending_selection',
+      pendingCandidates: pendingOptions,
+    };
+    await this.persistSession(execution.id, next);
+
+    return {
+      session: next,
+      response: {
+        message: `O protocolo ${session.protocolNumber || ''} possui ${pendingOptions.length} pendencia(s) para resolver. Escolha uma opcao abaixo para continuar.`,
+        messageType: 'menu',
+        data: {
+          options: [
+            ...pendingOptions,
+            { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Retornar para as opcoes iniciais' },
+          ],
+          ...(protocolDetailCard ? { protocolDetailCard } : {}),
+        },
+        metadata: this.meta(execution, next, true, protocolDetailCard ? { protocolDetailCard } : {}),
+      },
+    };
+  }
+
+  private async handleProtocolPendingSelection(
+    execution: FlowExecution,
+    session: CitizenAiSessionState,
+    userMessage: string
+  ): Promise<CitizenAiDecision> {
+    const explicitIntent = this.matchExplicitIntent(this.normalize(userMessage));
+    if (explicitIntent === 'voltar_menu') {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    const options = Array.isArray(session.pendingCandidates) ? session.pendingCandidates : [];
+    const selected = this.findOptionByInput(userMessage, options);
+    const selectedPending = selected?.metadata;
+
+    if (!selected || !selectedPending) {
+      await this.persistSession(execution.id, session);
+      return {
+        session,
+        response: {
+          message: 'Selecione uma pendencia da lista para eu te orientar na resolucao.',
+          messageType: 'menu',
+          data: { options: [...options, { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Retornar para as opcoes iniciais' }] },
+          metadata: this.meta(execution, session, true),
+        },
+      };
+    }
+
+    const next: CitizenAiSessionState = {
+      ...session,
+      currentPendingId: String(selectedPending.id),
+      currentPendingTitle: String(selectedPending.title || selected.label),
+      currentPendingType: String(selectedPending.type || selectedPending.pendingType || 'INFORMATION'),
+    };
+
+    if (next.currentPendingType === 'DOCUMENT') {
+      const waiting = this.withStage(next, 'awaiting_protocol_pending_document_upload');
+      await this.persistSession(execution.id, waiting);
+      return {
+        session: waiting,
+        response: {
+          message: `${next.currentPendingTitle}. Envie o documento solicitado para eu registrar a resposta no protocolo.`,
+          messageType: 'upload',
+          data: {
+            uploadConfig: {
+              text: 'Envie o documento solicitado',
+              multiple: false,
+              maxFiles: 1,
+              maxFileSize: 10,
+              allowSkip: false,
+              allowedTypes: ['application/pdf', 'image/*'],
+              saveAs: 'pendingDocument',
+            },
+            requiredDocuments: [
+              {
+                id: String(selectedPending.metadata?.documentId || selectedPending.metadata?.documentType || selectedPending.id),
+                name: String(selectedPending.metadata?.documentLabel || selectedPending.metadata?.documentType || next.currentPendingTitle),
+                required: true,
+              },
+            ],
+          } as any,
+          metadata: this.meta(execution, waiting, true),
+        },
+      };
+    }
+
+    const waiting = this.withStage(next, 'awaiting_protocol_pending_text_resolution');
+    await this.persistSession(execution.id, waiting);
+    return {
+      session: waiting,
+      response: {
+        message: `${next.currentPendingTitle}. Responda com a informacao solicitada para eu enviar sua correcao.`,
+        messageType: 'text',
+        metadata: this.meta(execution, waiting, true),
+      },
+    };
+  }
+
+  private async handleProtocolPendingTextResolution(
+    execution: FlowExecution,
+    session: CitizenAiSessionState,
+    userMessage: string
+  ): Promise<CitizenAiDecision> {
+    if (!session.currentProtocolId || !session.currentPendingId) {
+      const next = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    const result = await this.integration.resolveProtocolPending(
+      session.currentProtocolId,
+      session.currentPendingId,
+      execution.citizenId,
+      userMessage
+    );
+
+    const refreshed: CitizenAiSessionState = {
+      ...session,
+      stage: 'triage',
+      currentPendingId: undefined,
+      currentPendingTitle: undefined,
+      currentPendingType: undefined,
+    };
+    await this.persistSession(execution.id, refreshed);
+
+    const pendingTitle = String(result?.pending?.title || session.currentPendingTitle || 'Pendencia');
+    const followUp = await this.presentProtocolPendings(execution, refreshed).catch(() => null);
+    if (followUp && followUp.session.stage === 'awaiting_protocol_pending_selection') {
+      return {
+        session: followUp.session,
+        response: {
+          ...followUp.response,
+          message: `${pendingTitle} enviada com sucesso.\n\n${followUp.response.message}`,
+        },
+      };
+    }
+
+    return {
+      session: refreshed,
+      response: {
+        message: `${pendingTitle} enviada com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
+        messageType: 'menu',
+        data: { options: QUICK_ACTIONS },
+        metadata: this.meta(execution, refreshed, true),
+      },
+    };
+  }
+
+  private async handleProtocolPendingDocumentUpload(
+    execution: FlowExecution,
+    session: CitizenAiSessionState,
+    files: Array<Record<string, unknown>>
+  ): Promise<CitizenAiDecision> {
+    if (!session.currentProtocolId || !session.currentPendingId) {
+      const next = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    const file = files[0];
+    const filePath = typeof file?.filePath === 'string' ? file.filePath : '';
+    if (!filePath) {
+      return {
+        session,
+        response: {
+          message: 'Nao consegui identificar o arquivo enviado. Tente anexar o documento novamente.',
+          messageType: 'upload',
+          data: {
+            uploadConfig: {
+              text: 'Envie o documento solicitado',
+              multiple: false,
+              maxFiles: 1,
+              maxFileSize: 10,
+              allowSkip: false,
+              allowedTypes: ['application/pdf', 'image/*'],
+              saveAs: 'pendingDocument',
+            },
+          } as any,
+          metadata: this.meta(execution, session, true),
+        },
+      };
+    }
+
+    const result = await this.integration.resolveProtocolPendingWithDocument({
+      protocolId: session.currentProtocolId,
+      pendingId: session.currentPendingId,
+      citizenId: execution.citizenId,
+      filePath,
+      fileName: typeof file?.fileName === 'string' ? file.fileName : undefined,
+      mimeType: typeof file?.mimeType === 'string' ? file.mimeType : undefined,
+    });
+
+    const refreshed: CitizenAiSessionState = {
+      ...session,
+      stage: 'triage',
+      currentPendingId: undefined,
+      currentPendingTitle: undefined,
+      currentPendingType: undefined,
+    };
+    await this.persistSession(execution.id, refreshed);
+
+    const pendingTitle = String(result?.pending?.title || session.currentPendingTitle || 'Pendencia');
+    const followUp = await this.presentProtocolPendings(execution, refreshed).catch(() => null);
+    if (followUp && followUp.session.stage === 'awaiting_protocol_pending_selection') {
+      return {
+        session: followUp.session,
+        response: {
+          ...followUp.response,
+          message: `${pendingTitle} enviada com sucesso.\n\n${followUp.response.message}`,
+        },
+      };
+    }
+
+    return {
+      session: refreshed,
+      response: {
+        message: `${pendingTitle} enviada com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
+        messageType: 'menu',
+        data: { options: QUICK_ACTIONS },
+        metadata: this.meta(execution, refreshed, true),
+      },
+    };
+  }
+
   private async buildReviewText(execution: FlowExecution, session: CitizenAiSessionState): Promise<string> {
     const formatted = await this.runAction('formatProtocolReview', { serviceId: session.selectedServiceId, formData: session.collectedFormData, description: session.description, documents: session.uploadedDocuments }, execution, session);
     if (typeof formatted.reviewText === 'string' && formatted.reviewText.trim()) return formatted.reviewText.trim();

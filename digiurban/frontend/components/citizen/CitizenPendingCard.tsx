@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -7,24 +7,26 @@ import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { AlertCircle, FileText, Info, Calendar, Send, CheckCircle2, XCircle, Clock, Check } from 'lucide-react'
+import {
+  AlertCircle,
+  FileText,
+  Info,
+  Calendar,
+  Send,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Check,
+} from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { DocumentUpload } from '@/components/common/DocumentUpload'
 
-// Tipos de documento suportados
-type DocumentType =
-  | 'rg' | 'cpf' | 'cnh'
-  | 'certidao_nascimento' | 'certidao_casamento'
-  | 'comprovante_residencia' | 'titulo_eleitor'
-  | 'carteira_trabalho' | 'documento_generico'
-  | 'foto_perfil'
-
 export interface ProtocolPending {
   id: string
   protocolId: string
-  pendingType: string
-  type: string // tipo do enum PendingType do backend
+  pendingType?: string
+  type: string
   title: string
   description: string
   status: 'PENDING' | 'RESOLVED' | 'CANCELLED' | 'OPEN' | 'IN_PROGRESS' | 'EXPIRED'
@@ -50,34 +52,38 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
   const [uploadedFile, setUploadedFile] = useState<File | null>(null)
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, any>>({})
 
-  // Detectar tipo de pendência
-  const pendingType = pending.type || pending.pendingType || 'OTHER'
+  const pendingType = pending.pendingType || pending.type || 'OTHER'
   const isDocumentType = pendingType === 'DOCUMENT'
-  const isInformationType = ['INFORMATION', 'CORRECTION', 'VALIDATION'].includes(pendingType)
+  const isInformationType = ['INFORMATION', 'CORRECTION', 'VALIDATION', 'PAYMENT'].includes(pendingType)
+  const isPending = ['PENDING', 'OPEN', 'IN_PROGRESS'].includes(pending.status)
+  const isOverdue = Boolean(pending.dueDate && new Date(pending.dueDate) < new Date())
 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
 
       if (isDocumentType && uploadedFile) {
-        // Resolver com documento
         if (onResolveWithDocument) {
           await onResolveWithDocument(uploadedFile)
         } else {
           await onResolve(`Documento enviado: ${uploadedFile.name}`, uploadedFile)
         }
         setUploadedFile(null)
-      } else if (isInformationType && Object.keys(dynamicFieldValues).length > 0) {
-        // Resolver com campos dinâmicos
-        const fieldsResolution = JSON.stringify(dynamicFieldValues, null, 2)
-        await onResolve(fieldsResolution)
-        setDynamicFieldValues({})
-      } else {
-        // Resolver com texto
-        if (!resolution.trim()) return
-        await onResolve(resolution)
-        setResolution('')
+        return
       }
+
+      if (isInformationType && Object.keys(dynamicFieldValues).length > 0) {
+        await onResolve(JSON.stringify(dynamicFieldValues, null, 2))
+        setDynamicFieldValues({})
+        return
+      }
+
+      if (!resolution.trim()) {
+        return
+      }
+
+      await onResolve(resolution)
+      setResolution('')
     } catch (error) {
       console.error('Erro ao resolver pendência:', error)
     } finally {
@@ -86,38 +92,38 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
   }
 
   const handleDynamicFieldChange = (fieldId: string, value: any) => {
-    setDynamicFieldValues(prev => ({
+    setDynamicFieldValues((prev) => ({
       ...prev,
-      [fieldId]: value
+      [fieldId]: value,
     }))
   }
 
   const getPriorityBadge = (priority: number) => {
     if (priority >= 3) {
       return <Badge variant="destructive" className="text-xs">Alta</Badge>
-    } else if (priority === 2) {
-      return <Badge className="bg-orange-500 text-white text-xs">Média</Badge>
-    } else {
-      return <Badge variant="outline" className="text-xs">Baixa</Badge>
     }
+    if (priority === 2) {
+      return <Badge className="bg-orange-500 text-white text-xs">Média</Badge>
+    }
+    return <Badge variant="outline" className="text-xs">Baixa</Badge>
   }
 
   const getTypeBadge = (type: string) => {
     if (type === 'DOCUMENT') {
       return (
-        <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-300">
-          <FileText className="h-3 w-3 mr-1" />
+        <Badge variant="outline" className="border-blue-300 bg-blue-50 text-blue-700">
+          <FileText className="mr-1 h-3 w-3" />
           Documento
         </Badge>
       )
-    } else {
-      return (
-        <Badge variant="outline" className="bg-purple-50 text-purple-700 border-purple-300">
-          <Info className="h-3 w-3 mr-1" />
-          Informação
-        </Badge>
-      )
     }
+
+    return (
+      <Badge variant="outline" className="border-purple-300 bg-purple-50 text-purple-700">
+        <Info className="mr-1 h-3 w-3" />
+        Informação
+      </Badge>
+    )
   }
 
   const getStatusIcon = () => {
@@ -125,8 +131,10 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
       case 'RESOLVED':
         return <CheckCircle2 className="h-5 w-5 text-green-600" />
       case 'CANCELLED':
+      case 'EXPIRED':
         return <XCircle className="h-5 w-5 text-gray-600" />
-      case 'PENDING':
+      case 'IN_PROGRESS':
+        return <Clock className="h-5 w-5 text-orange-600" />
       default:
         return <AlertCircle className="h-5 w-5 text-orange-600" />
     }
@@ -136,16 +144,16 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
     switch (pending.status) {
       case 'RESOLVED':
         return <Badge className="bg-green-600 text-white">Resolvida</Badge>
+      case 'IN_PROGRESS':
+        return <Badge className="bg-yellow-500 text-white">Em andamento</Badge>
       case 'CANCELLED':
         return <Badge variant="outline" className="text-gray-600">Cancelada</Badge>
-      case 'PENDING':
+      case 'EXPIRED':
+        return <Badge variant="outline" className="text-gray-600">Expirada</Badge>
       default:
         return <Badge className="bg-orange-500 text-white">Pendente</Badge>
     }
   }
-
-  const isPending = pending.status === 'PENDING' || pending.status === 'OPEN' || pending.status === 'IN_PROGRESS'
-  const isOverdue = pending.dueDate && new Date(pending.dueDate) < new Date()
 
   return (
     <Card className={`${
@@ -154,33 +162,36 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
           ? 'border-red-300 bg-red-50'
           : 'border-orange-300 bg-orange-50'
         : pending.status === 'RESOLVED'
-        ? 'border-green-200 bg-green-50'
-        : 'border-gray-200 bg-gray-50'
+          ? 'border-green-200 bg-green-50'
+          : 'border-gray-200 bg-gray-50'
     }`}>
       <CardHeader>
         <CardTitle className="flex items-start justify-between gap-3">
-          <div className="flex items-start gap-2 flex-1">
+          <div className="flex flex-1 items-start gap-2">
             {getStatusIcon()}
             <div className="flex-1 space-y-2">
-              <h3 className="font-semibold text-base leading-tight">
-                {pending.metadata?.title || 'Pendência'}
+              <h3 className="text-base font-semibold leading-tight">
+                {pending.title || pending.metadata?.title || 'Pendência'}
               </h3>
               <div className="flex flex-wrap items-center gap-2">
-                {getTypeBadge(pending.pendingType)}
+                {getTypeBadge(pendingType)}
                 {getPriorityBadge(pending.priority)}
                 {getStatusBadge()}
+                {pending.blocksProgress && (
+                  <Badge variant="destructive" className="text-xs">
+                    Bloqueia fluxo
+                  </Badge>
+                )}
               </div>
             </div>
           </div>
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Descrição */}
         <div className="space-y-2">
-          <p className="text-sm text-gray-700 leading-relaxed">{pending.description}</p>
+          <p className="text-sm leading-relaxed text-gray-700">{pending.description}</p>
         </div>
 
-        {/* Informações de Data */}
         <div className="flex flex-wrap gap-4 text-sm text-gray-600">
           <div className="flex items-center gap-1">
             <Clock className="h-4 w-4" />
@@ -189,46 +200,46 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
             </span>
           </div>
           {pending.dueDate && (
-            <div className={`flex items-center gap-1 ${isOverdue ? 'text-red-600 font-medium' : ''}`}>
+            <div className={`flex items-center gap-1 ${isOverdue ? 'font-medium text-red-600' : ''}`}>
               <Calendar className="h-4 w-4" />
               <span>
-                Prazo: {format(new Date(pending.dueDate), "dd/MM/yyyy", { locale: ptBR })}
-                {isOverdue && ' (Vencido)'}
+                Prazo: {format(new Date(pending.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                {isOverdue && ' (vencido)'}
               </span>
             </div>
           )}
         </div>
 
-        {/* Resolução (se já foi resolvida) */}
         {pending.status === 'RESOLVED' && pending.resolution && (
-          <div className="p-3 rounded-lg bg-green-100 border border-green-300">
-            <p className="text-sm font-medium text-green-900 mb-1 flex items-center gap-1"><Check className="h-4 w-4" /> Resolução enviada</p>
+          <div className="rounded-lg border border-green-300 bg-green-100 p-3">
+            <p className="mb-1 flex items-center gap-1 text-sm font-medium text-green-900">
+              <Check className="h-4 w-4" />
+              Resolução enviada
+            </p>
             <p className="text-sm text-green-800">{pending.resolution}</p>
             {pending.resolvedAt && (
-              <p className="text-xs text-green-700 mt-2">
+              <p className="mt-2 text-xs text-green-700">
                 Resolvida em {format(new Date(pending.resolvedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
               </p>
             )}
           </div>
         )}
 
-        {/* Formulário de Resolução (apenas se pendente) */}
         {isPending && (
-          <div className="space-y-3 pt-2 border-t">
-            {/* TIPO 1: Upload de Documento */}
+          <div className="space-y-3 border-t pt-2">
             {isDocumentType ? (
               <>
-                <div className="text-sm font-medium text-gray-700 mb-2">
+                <div className="mb-2 text-sm font-medium text-gray-700">
                   Enviar documento para resolver esta pendência:
                 </div>
                 <DocumentUpload
                   documentConfig={{
-                    name: "Documento Solicitado",
+                    name: pending.metadata?.documentLabel || pending.title || 'Documento solicitado',
                     description: pending.description,
                     required: true,
                     acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
                     allowCameraUpload: true,
-                    maxSizeMB: 10
+                    maxSizeMB: 10,
                   }}
                   value={uploadedFile}
                   onChange={setUploadedFile}
@@ -241,21 +252,20 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                 >
                   {isSubmitting || isResolving ? (
                     <>
-                      <Clock className="h-5 w-5 mr-2 animate-spin" />
+                      <Clock className="mr-2 h-5 w-5 animate-spin" />
                       Enviando documento...
                     </>
                   ) : (
                     <>
-                      <Send className="h-5 w-5 mr-2" />
+                      <Send className="mr-2 h-5 w-5" />
                       Enviar Documento
                     </>
                   )}
                 </Button>
               </>
-            ) : isInformationType && pending.metadata?.fields ? (
-              /* TIPO 2: Campos Dinâmicos */
+            ) : isInformationType && Array.isArray(pending.metadata?.fields) && pending.metadata.fields.length > 0 ? (
               <>
-                <div className="text-sm font-medium text-gray-700 mb-3">
+                <div className="mb-3 text-sm font-medium text-gray-700">
                   Preencha as informações solicitadas:
                 </div>
                 <div className="space-y-4">
@@ -263,7 +273,7 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                     <div key={field.id} className="space-y-2">
                       <Label htmlFor={field.id}>
                         {field.label}
-                        {field.required && <span className="text-red-500 ml-1">*</span>}
+                        {field.required && <span className="ml-1 text-red-500">*</span>}
                       </Label>
                       {field.type === 'textarea' ? (
                         <Textarea
@@ -296,22 +306,21 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                 >
                   {isSubmitting || isResolving ? (
                     <>
-                      <Clock className="h-5 w-5 mr-2 animate-spin" />
+                      <Clock className="mr-2 h-5 w-5 animate-spin" />
                       Enviando...
                     </>
                   ) : (
                     <>
-                      <Send className="h-5 w-5 mr-2" />
+                      <Send className="mr-2 h-5 w-5" />
                       Enviar Informações
                     </>
                   )}
                 </Button>
               </>
             ) : (
-              /* TIPO 3: Texto Livre (padrão) */
               <>
                 <div>
-                  <label className="text-sm font-medium text-gray-700 mb-2 block">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Enviar resposta para resolver esta pendência:
                   </label>
                   <Textarea
@@ -329,20 +338,20 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                 >
                   {isSubmitting || isResolving ? (
                     <>
-                      <Clock className="h-4 w-4 mr-2 animate-spin" />
+                      <Clock className="mr-2 h-4 w-4 animate-spin" />
                       Enviando...
                     </>
                   ) : (
                     <>
-                      <Send className="h-4 w-4 mr-2" />
+                      <Send className="mr-2 h-4 w-4" />
                       Enviar Resolução
                     </>
                   )}
                 </Button>
               </>
             )}
-            <p className="text-xs text-gray-500 text-center">
-              Após enviar, a equipe responsável irá analisar sua resposta
+            <p className="text-center text-xs text-gray-500">
+              Após o envio, a equipe responsável irá analisar sua resposta.
             </p>
           </div>
         )}

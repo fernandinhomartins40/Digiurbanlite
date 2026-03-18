@@ -276,6 +276,11 @@ export default function ProtocolosPage() {
                             {protocol.number}
                           </h3>
                           {getStatusBadge(protocol.status)}
+                          {!!protocol.openCitizenPendingsCount && protocol.openCitizenPendingsCount > 0 && (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700">
+                              {protocol.openCitizenPendingsCount} pendência(s)
+                            </span>
+                          )}
                         </div>
                         <p className="text-sm sm:text-base text-gray-900 mb-1">{protocol.title}</p>
                         <p className="text-xs sm:text-sm text-gray-600 mb-1">{protocol.service.name}</p>

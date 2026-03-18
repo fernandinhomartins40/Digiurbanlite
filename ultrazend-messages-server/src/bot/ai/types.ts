@@ -21,6 +21,9 @@ export type CitizenAiStage =
   | 'awaiting_protocol_lookup_mode'
   | 'awaiting_protocol_number'
   | 'awaiting_protocol_selection'
+  | 'awaiting_protocol_pending_selection'
+  | 'awaiting_protocol_pending_text_resolution'
+  | 'awaiting_protocol_pending_document_upload'
   | 'collecting_fields'
   | 'awaiting_documents'
   | 'awaiting_review_confirmation'
@@ -66,6 +69,12 @@ export interface CitizenAiSessionState {
   uploadedDocuments?: Array<Record<string, unknown>>;
   protocolNumber?: string;
   protocolCandidates?: MenuOption[];
+  currentProtocolId?: string;
+  currentProtocolTitle?: string;
+  pendingCandidates?: MenuOption[];
+  currentPendingId?: string;
+  currentPendingTitle?: string;
+  currentPendingType?: string;
   reviewText?: string;
   lowConfidenceFallbacks?: number;
   legacyFallbackCount?: number;

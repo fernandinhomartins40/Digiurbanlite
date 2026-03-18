@@ -192,6 +192,64 @@ export class MessageNotificationService {
   }
 
   /**
+   * Notificar cidadão sobre uma pendência do protocolo
+   */
+  async notifyProtocolPendingCreated(protocolId: string, pendingId: string) {
+    try {
+      const pending = await prisma.protocolPending.findUnique({
+        where: { id: pendingId },
+        include: {
+          protocol: {
+            include: {
+              citizen: true,
+              assignedUser: true,
+            },
+          },
+        },
+      });
+
+      if (!pending?.protocol?.citizen) return;
+
+      const serverToken = generateToken({
+        userId: pending.protocol.assignedUserId || 'system',
+        userType: 'SERVER',
+        role: 'ADMIN',
+      });
+
+      ultraZendMessages.setToken(serverToken);
+
+      const metadata = pending.metadata && typeof pending.metadata === 'object'
+        ? pending.metadata as Record<string, any>
+        : {};
+      const dueDate = pending.dueDate
+        ? ` Prazo: ${new Date(pending.dueDate).toLocaleDateString('pt-BR')}.`
+        : '';
+      const extraContext =
+        metadata.documentType
+          ? ` Documento solicitado: ${metadata.documentType}.`
+          : metadata.fieldLabel
+          ? ` Informacao solicitada: ${metadata.fieldLabel}.`
+          : '';
+
+      await ultraZendMessages.sendMessage(
+        pending.protocol.assignedUserId || 'system',
+        'SERVER',
+        {
+          participant2Id: pending.protocol.citizenId,
+          participant2Type: 'CITIZEN',
+          content: `Seu protocolo #${pending.protocol.number} possui uma pendencia: ${pending.title}.${extraContext}${dueDate} Voce pode resolver isso pelo DigiBot ou pela area de protocolos no portal do cidadao.`,
+          protocolId: pending.protocol.id,
+          departmentId: pending.protocol.departmentId || undefined,
+        }
+      );
+
+      logger.info('Protocol pending notification sent', { protocolId, pendingId });
+    } catch (error) {
+      logger.error('Error notifying protocol pending', { error, protocolId, pendingId });
+    }
+  }
+
+  /**
    * Criar canal oficial para departamento
    */
   async createDepartmentChannel(departmentId: string, adminUserIds: string[]) {

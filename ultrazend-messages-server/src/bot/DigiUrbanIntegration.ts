@@ -208,6 +208,87 @@ export class DigiUrbanIntegration {
   }
 
   /**
+   * Buscar pendências acionáveis de um protocolo
+   */
+  async getProtocolPendings(protocolId: string, citizenId: string) {
+    const response = await this.api.get(`/internal/protocols/${protocolId}/pendings`, {
+      params: { citizenId },
+    });
+    return response.data;
+  }
+
+  /**
+   * Resolver pendência textual
+   */
+  async resolveProtocolPending(protocolId: string, pendingId: string, citizenId: string, resolution: string) {
+    const response = await this.api.post(`/internal/protocols/${protocolId}/pendings/${pendingId}/resolve`, {
+      citizenId,
+      resolution,
+    });
+    return response.data;
+  }
+
+  /**
+   * Resolver pendência com documento
+   */
+  async resolveProtocolPendingWithDocument(data: {
+    protocolId: string;
+    pendingId: string;
+    citizenId: string;
+    filePath: string;
+    fileName?: string;
+    mimeType?: string;
+  }) {
+    const resolvedPath = path.isAbsolute(data.filePath)
+      ? data.filePath
+      : path.resolve(process.cwd(), data.filePath);
+    const buffer = await fs.readFile(resolvedPath);
+
+    const formData = new FormData();
+    formData.append('citizenId', data.citizenId);
+
+    const blob = new Blob([buffer], { type: data.mimeType || 'application/octet-stream' });
+    formData.append('documents', blob, data.fileName || path.basename(resolvedPath));
+
+    const response = await fetch(
+      `${this.apiUrl}/internal/protocols/${data.protocolId}/pendings/${data.pendingId}/resolve-document`,
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${this.serviceToken}`,
+        },
+        body: formData,
+      }
+    );
+
+    const responseText = await response.text();
+    let payload: any;
+    try {
+      payload = responseText ? JSON.parse(responseText) : {};
+    } catch {
+      payload = { raw: responseText };
+    }
+
+    if (!response.ok) {
+      const errorMessage = payload?.error || `HTTP ${response.status} ao resolver pendência`;
+      const err = new Error(errorMessage) as any;
+      err.response = { status: response.status, data: payload };
+      throw err;
+    }
+
+    try {
+      const normalized = resolvedPath.replace(/\\/g, '/');
+      if (normalized.includes('/uploads/bot/')) {
+        await fs.unlink(resolvedPath);
+      }
+    } catch {
+      // Ignorar falha de limpeza local
+    }
+
+    return payload;
+  }
+
+  /**
    * Adicionar comentário ao protocolo
    */
   async addProtocolComment(protocolId: string, citizenId: string, comment: string) {

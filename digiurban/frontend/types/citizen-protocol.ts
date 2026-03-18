@@ -32,6 +32,7 @@ export interface CitizenProtocol {
     history: number;
     evaluations: number;
   };
+  openCitizenPendingsCount?: number;
 }
 
 export interface CitizenProtocolHistory {
@@ -53,12 +54,20 @@ export interface CitizenWorkflowStage {
 
 export interface CitizenPending {
   id: string;
+  protocolId?: string;
+  pendingType?: string;
   type: string;
+  title?: string;
   description: string;
   status: string;
+  priority?: number;
   requiresCitizenAction?: boolean;
+  blocksProgress?: boolean;
   dueDate?: string | null;
   createdAt: string;
+  resolvedAt?: string | null;
+  resolution?: string | null;
+  metadata?: Record<string, any>;
 }
 
 export interface CitizenDocument {

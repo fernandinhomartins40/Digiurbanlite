@@ -20,15 +20,16 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 export async function createPending(
   protocolId: string,
   data: CreatePendingData,
-  token: string
+  token?: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
     `${API_URL}/protocols/${protocolId}/pendings`,
     {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(data),
     }
@@ -48,7 +49,7 @@ export async function createPending(
  */
 export async function getProtocolPendings(
   protocolId: string,
-  token: string,
+  token?: string,
   status?: PendingStatus
 ): Promise<ProtocolPending[]> {
   const params = new URLSearchParams();
@@ -60,9 +61,8 @@ export async function getProtocolPendings(
     `${API_URL}/protocols/${protocolId}/pendings?${params.toString()}`,
     {
       method: 'GET',
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      credentials: 'include',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
     }
   );
 
@@ -166,15 +166,16 @@ export async function resolvePending(
   protocolId: string,
   pendingId: string,
   data: ResolvePendingData,
-  token: string
+  token?: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
     `${API_URL}/protocols/${protocolId}/pendings/${pendingId}/resolve`,
     {
       method: 'PUT',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(data),
     }
@@ -196,15 +197,16 @@ export async function cancelPending(
   protocolId: string,
   pendingId: string,
   data: CancelPendingData,
-  token: string
+  token?: string
 ): Promise<ProtocolPending> {
   const response = await fetch(
     `${API_URL}/protocols/${protocolId}/pendings/${pendingId}/cancel`,
     {
       method: 'PUT',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
       },
       body: JSON.stringify(data),
     }

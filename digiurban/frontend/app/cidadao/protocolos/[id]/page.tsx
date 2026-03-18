@@ -293,7 +293,7 @@ export default function ProtocolDetailsPage() {
 
   // Contadores para badges
   const citizenPendingsCount = pendings.filter(
-    p => p.status === 'OPEN' && p.requiresCitizenAction === true
+    p => ['OPEN', 'IN_PROGRESS'].includes(p.status) && p.requiresCitizenAction === true
   ).length;
 
   const messagesCount = interactions.length;
@@ -368,7 +368,7 @@ export default function ProtocolDetailsPage() {
           currentStage={viewModeResult.currentStage}
           totalStages={stages.length}
           citizenPendings={pendings.filter(
-            p => p.status === 'OPEN' && p.requiresCitizenAction === true
+            p => ['OPEN', 'IN_PROGRESS'].includes(p.status) && p.requiresCitizenAction === true
           )}
           estimatedDays={protocol.service.estimatedDays || undefined}
           completedAt={protocol.status === 'CONCLUIDO' ? protocol.updatedAt : undefined}

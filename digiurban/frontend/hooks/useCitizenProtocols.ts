@@ -43,6 +43,7 @@ interface Protocol {
     history: number;
     evaluations: number;
   };
+  openCitizenPendingsCount?: number;
 }
 
 interface PaginationInfo {

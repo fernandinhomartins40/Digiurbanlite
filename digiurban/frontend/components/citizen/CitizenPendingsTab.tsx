@@ -27,7 +27,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
       const response = await apiRequest(`/citizen/protocols/${protocolId}/pendings`)
 
       if (response.success) {
-        setPendings(response.data || [])
+        setPendings(response.data || response.pendings || [])
       }
     } catch (error) {
       console.error('Erro ao carregar pendências:', error)
