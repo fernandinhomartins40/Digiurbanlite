@@ -742,11 +742,12 @@ export function ProtocolPendingsTab({
               Nova Pendência
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-3xl">
-            <DialogHeader>
+          <DialogContent className="flex w-[calc(100vw-1.5rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-[calc(100vw-3rem)] sm:max-h-[calc(100vh-3rem)]">
+            <DialogHeader className="border-b px-4 py-4 sm:px-6">
               <DialogTitle>Criar Nova Pendência</DialogTitle>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+              <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <Label>Tipo</Label>
@@ -874,7 +875,9 @@ export function ProtocolPendingsTab({
                   </Button>
                 </div>
               </div>
-
+              </div>
+            </div>
+            <div className="border-t bg-background px-4 py-4 sm:px-6">
               <Button onClick={handleCreate} className="w-full">
                 Criar Pendência
               </Button>
