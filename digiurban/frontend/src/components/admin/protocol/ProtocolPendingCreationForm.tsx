@@ -13,6 +13,11 @@ import { Badge } from '@/components/ui/badge'
 import { useToast } from '@/hooks/use-toast'
 import { getFullApiUrl } from '@/lib/api-config'
 import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
+import {
+  isGenericServiceDocumentLabel,
+  normalizeProtocolDocumentLabel,
+  resolveCanonicalProtocolDocumentLabel,
+} from '@/lib/protocol-document-matching'
 import { extractFieldsFromSchema } from '@/lib/schema-field-extractor'
 import { PendingType } from '@/types/protocol-enhancements'
 import { PendingCreationContext } from './protocol-pending-context'
@@ -25,7 +30,7 @@ interface ProtocolDocumentOption {
   fileName?: string | null
   status?: string
   required: boolean
-  source: 'protocol' | 'service'
+  source: 'protocol' | 'service' | 'stage'
   suggested?: boolean
 }
 
@@ -64,11 +69,7 @@ interface ProtocolPendingCreationFormProps {
 }
 
 function normalizeText(value?: string | null) {
-  return String(value || '')
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .trim()
+  return normalizeProtocolDocumentLabel(value)
 }
 
 function parseJsonIfString<T = any>(value: unknown): T | null {
@@ -125,19 +126,41 @@ function buildDefaultDraft(context?: PendingCreationContext | null): PendingDraf
   }
 }
 
-function buildServiceDocumentOptions(service: any): ProtocolDocumentOption[] {
+function buildStageDocumentOptions(context?: PendingCreationContext | null): ProtocolDocumentOption[] {
+  const stageRequiredDocuments = context?.stageMetadata?.requiredDocumentTypes || []
+  return stageRequiredDocuments.map((documentType) => ({
+    key: `stage:${normalizeText(documentType)}`,
+    documentType,
+    label: documentType,
+    required: true,
+    source: 'stage' as const,
+  }))
+}
+
+function buildServiceDocumentOptions(
+  service: any,
+  context?: PendingCreationContext | null
+): ProtocolDocumentOption[] {
+  const stageRequiredDocuments = context?.stageMetadata?.requiredDocumentTypes || []
   const requiredDocuments = normalizeRequiredDocuments(service?.requiredDocuments)
-  return requiredDocuments.map((document: any, index) => {
-    const label = String(document?.name || document?.documentType || document?.label || document?.id || `Documento ${index + 1}`)
-    const documentId = String(document?.id || document?.documentId || label)
-    return {
-      key: `service:${normalizeText(documentId || label)}`,
-      documentType: label,
-      label,
-      required: document?.required !== false,
-      source: 'service' as const,
-    }
-  })
+
+  return requiredDocuments
+    .map((document: any, index) => {
+      const label = String(document?.name || document?.documentType || document?.label || document?.id || `Documento ${index + 1}`)
+      const documentId = String(document?.id || document?.documentId || label)
+      return {
+        key: `service:${normalizeText(documentId || label)}`,
+        documentType: label,
+        label,
+        required: document?.required !== false,
+        source: 'service' as const,
+      }
+    })
+    .filter((document) => {
+      if (!stageRequiredDocuments.length) return true
+      if (!isGenericServiceDocumentLabel(document.label)) return true
+      return false
+    })
 }
 
 function buildServiceFieldOptions(service: any): ProtocolDataFieldOption[] {
@@ -163,31 +186,74 @@ function buildServiceFieldOptions(service: any): ProtocolDataFieldOption[] {
 
 function mergeDocumentOptions(
   protocolDocuments: Array<{ id?: string; documentType?: string; fileName?: string | null; status?: string; isRequired?: boolean }>,
+  stageDocuments: ProtocolDocumentOption[],
   serviceDocuments: ProtocolDocumentOption[],
   context?: PendingCreationContext | null
 ): ProtocolDocumentOption[] {
   const requiredTypes = context?.stageMetadata?.requiredDocumentTypes || []
   const missingDocuments = context?.validation?.missingDocuments || []
   const merged = new Map<string, ProtocolDocumentOption>()
+  const baseDocuments = [...stageDocuments, ...serviceDocuments]
 
-  for (const document of serviceDocuments) {
-    merged.set(normalizeText(document.label || document.documentType), { ...document })
+  for (const document of baseDocuments) {
+    const key = normalizeText(document.label || document.documentType)
+    if (!key) continue
+
+    const existing = merged.get(key)
+    if (!existing || existing.source === 'service') {
+      merged.set(key, { ...document })
+    }
+  }
+
+  const canonicalLabels = Array.from(merged.values()).map((document) => document.label)
+
+  const getStatusRank = (status?: string) => {
+    switch (status) {
+      case 'APPROVED':
+        return 4
+      case 'UNDER_REVIEW':
+        return 3
+      case 'UPLOADED':
+        return 2
+      case 'PENDING':
+        return 1
+      default:
+        return 0
+    }
   }
 
   for (const document of protocolDocuments) {
-    const label = String(document.documentType || document.fileName || 'Documento do protocolo')
-    const key = normalizeText(label)
+    const rawLabel = String(document.documentType || document.fileName || 'Documento do protocolo')
+    const canonicalLabel =
+      resolveCanonicalProtocolDocumentLabel(rawLabel, canonicalLabels) ||
+      resolveCanonicalProtocolDocumentLabel(String(document.fileName || ''), canonicalLabels) ||
+      rawLabel
+
+    const key = normalizeText(canonicalLabel)
+    if (!key) continue
+
     const existing = merged.get(key)
-    merged.set(key, {
+    const nextDocument: ProtocolDocumentOption = {
       key: existing?.key || `protocol:${document.id || key}`,
       id: document.id,
-      documentType: label,
-      label,
+      documentType: canonicalLabel,
+      label: canonicalLabel,
       fileName: document.fileName,
       status: document.status,
       required: document.isRequired ?? existing?.required ?? true,
       source: 'protocol',
-    })
+      suggested: existing?.suggested,
+    }
+
+    const shouldReplace =
+      !existing ||
+      existing.source !== 'protocol' ||
+      (!existing.fileName && Boolean(nextDocument.fileName)) ||
+      getStatusRank(nextDocument.status) > getStatusRank(existing.status)
+
+    if (shouldReplace) {
+      merged.set(key, nextDocument)
+    }
   }
 
   return Array.from(merged.values())
@@ -197,7 +263,20 @@ function mergeDocumentOptions(
         missingDocuments.some((item) => normalizeText(item) === normalizeText(document.label) || normalizeText(item) === normalizeText(document.documentType)) ||
         requiredTypes.some((item) => normalizeText(item) === normalizeText(document.label) || normalizeText(item) === normalizeText(document.documentType)),
     }))
-    .sort((a, b) => Number(b.suggested) - Number(a.suggested) || Number(b.required) - Number(a.required) || a.label.localeCompare(b.label))
+    .sort((a, b) => {
+      const sourceRank = (source: ProtocolDocumentOption['source']) => {
+        if (source === 'protocol') return 0
+        if (source === 'stage') return 1
+        return 2
+      }
+
+      return (
+        Number(b.suggested) - Number(a.suggested) ||
+        Number(b.required) - Number(a.required) ||
+        sourceRank(a.source) - sourceRank(b.source) ||
+        a.label.localeCompare(b.label)
+      )
+    })
 }
 
 function mergeFieldOptions(
@@ -243,6 +322,17 @@ function mergeFieldOptions(
     .sort((a, b) => Number(b.suggested) - Number(a.suggested) || Number(b.required) - Number(a.required) || a.fieldLabel.localeCompare(b.fieldLabel))
 }
 
+function getSourceBadgeLabel(source: ProtocolDocumentOption['source']) {
+  switch (source) {
+    case 'protocol':
+      return 'Já no protocolo'
+    case 'stage':
+      return 'Da etapa'
+    default:
+      return 'Do serviço'
+  }
+}
+
 export function ProtocolPendingCreationForm({
   protocolId,
   service,
@@ -279,8 +369,10 @@ export function ProtocolPendingCreationForm({
             ? documentsPayload.data
             : []
         const nextFields = Array.isArray(fieldsPayload?.data?.fields) ? fieldsPayload.data.fields : []
+        const stageDocuments = buildStageDocumentOptions(creationContext)
+        const serviceDocuments = buildServiceDocumentOptions(service, creationContext)
 
-        setDocuments(mergeDocumentOptions(nextDocuments, buildServiceDocumentOptions(service), creationContext))
+        setDocuments(mergeDocumentOptions(nextDocuments, stageDocuments, serviceDocuments, creationContext))
         setDataFields(mergeFieldOptions(nextFields, buildServiceFieldOptions(service), creationContext))
       } catch (error) {
         console.error('Erro ao carregar contexto de pendências:', error)
@@ -523,7 +615,7 @@ export function ProtocolPendingCreationForm({
       {canSelectDocument && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <Label>Documentos exigidos pelo serviço</Label>
+            <Label>Documentos exigidos pela etapa e pelo serviço</Label>
             <span className="text-xs text-muted-foreground">{draft.documentKeys.length} selecionado(s)</span>
           </div>
           <ScrollArea className="h-72 rounded-md border">
@@ -536,7 +628,7 @@ export function ProtocolPendingCreationForm({
                       <span className="font-medium text-foreground">{document.label}</span>
                       {document.required && <Badge variant="outline" className="text-[11px]">Obrigatório</Badge>}
                       {document.suggested && <Badge className="bg-blue-100 text-blue-700 text-[11px]">Sugerido</Badge>}
-                      <Badge variant="outline" className="text-[11px]">{document.source === 'protocol' ? 'Já no protocolo' : 'Do serviço'}</Badge>
+                      <Badge variant="outline" className="text-[11px]">{getSourceBadgeLabel(document.source)}</Badge>
                       {document.status && <Badge variant="outline" className="text-[11px]">{document.status}</Badge>}
                     </div>
                     {document.fileName && <p className="text-xs text-muted-foreground">Arquivo atual: {document.fileName}</p>}
