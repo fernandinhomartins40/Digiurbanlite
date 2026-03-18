@@ -7,7 +7,8 @@ import {
   CheckCircle,
   FileText,
   FormInput,
-  XCircle
+  XCircle,
+  Clock
 } from 'lucide-react'
 
 interface ValidationAlertProps {
@@ -16,6 +17,8 @@ interface ValidationAlertProps {
     blockers: string[]
     warnings: string[]
     missingDocuments: string[]
+    awaitingReviewDocuments?: string[]
+    rejectedDocuments?: string[]
     missingFormFields: string[]
   }
   onNavigateToDocuments?: () => void
@@ -29,6 +32,8 @@ export function ValidationAlert({
 }: ValidationAlertProps) {
   const hasBlockers = validation.blockers.length > 0
   const hasMissingDocuments = validation.missingDocuments.length > 0
+  const hasAwaitingReviewDocuments = (validation.awaitingReviewDocuments?.length || 0) > 0
+  const hasRejectedDocuments = (validation.rejectedDocuments?.length || 0) > 0
   const hasMissingFields = validation.missingFormFields.length > 0
   const hasWarnings = validation.warnings.length > 0
 
@@ -46,7 +51,7 @@ export function ValidationAlert({
   }
 
   // Se tem bloqueios
-  if (hasBlockers || hasMissingDocuments || hasMissingFields) {
+  if (hasBlockers || hasMissingDocuments || hasAwaitingReviewDocuments || hasRejectedDocuments || hasMissingFields) {
     return (
       <Alert variant="destructive" className="border-red-200 bg-red-50">
         <XCircle className="h-4 w-4" />
@@ -90,6 +95,64 @@ export function ValidationAlert({
                   ))}
                   {validation.missingDocuments.length > 3 && (
                     <li>+ {validation.missingDocuments.length - 3} documento(s)</li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {hasAwaitingReviewDocuments && (
+              <div className="p-2 bg-blue-50 border border-blue-200 rounded">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <Clock className="h-4 w-4 text-blue-700" />
+                    <p className="font-medium text-blue-900">
+                      Documentos em Análise ({validation.awaitingReviewDocuments?.length || 0})
+                    </p>
+                  </div>
+                  {onNavigateToDocuments && (
+                    <button
+                      onClick={onNavigateToDocuments}
+                      className="text-xs text-blue-700 underline hover:text-blue-800"
+                    >
+                      Ver Documentos
+                    </button>
+                  )}
+                </div>
+                <ul className="list-disc list-inside space-y-0.5 text-xs text-blue-800">
+                  {(validation.awaitingReviewDocuments || []).slice(0, 3).map((doc, i) => (
+                    <li key={i}>{doc}</li>
+                  ))}
+                  {(validation.awaitingReviewDocuments?.length || 0) > 3 && (
+                    <li>+ {(validation.awaitingReviewDocuments?.length || 0) - 3} documento(s)</li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {hasRejectedDocuments && (
+              <div className="p-2 bg-red-50 border border-red-200 rounded">
+                <div className="flex items-center justify-between gap-2 mb-1">
+                  <div className="flex items-center gap-2">
+                    <FileText className="h-4 w-4 text-red-700" />
+                    <p className="font-medium text-red-900">
+                      Documentos Rejeitados ({validation.rejectedDocuments?.length || 0})
+                    </p>
+                  </div>
+                  {onNavigateToDocuments && (
+                    <button
+                      onClick={onNavigateToDocuments}
+                      className="text-xs text-red-700 underline hover:text-red-800"
+                    >
+                      Ver Documentos
+                    </button>
+                  )}
+                </div>
+                <ul className="list-disc list-inside space-y-0.5 text-xs text-red-800">
+                  {(validation.rejectedDocuments || []).slice(0, 3).map((doc, i) => (
+                    <li key={i}>{doc}</li>
+                  ))}
+                  {(validation.rejectedDocuments?.length || 0) > 3 && (
+                    <li>+ {(validation.rejectedDocuments?.length || 0) - 3} documento(s)</li>
                   )}
                 </ul>
               </div>

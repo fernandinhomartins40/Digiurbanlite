@@ -18,24 +18,50 @@ type ProtocolServiceLike = {
   requiredDocuments?: unknown;
 };
 
-function getRequiredDocumentConfigs(service: ProtocolServiceLike | null | undefined) {
-  if (!service?.requiredDocuments || service.requiresDocuments === false) {
+function getRequiredDocumentConfigs(
+  service: ProtocolServiceLike | null | undefined,
+  stageDocumentNames: string[] = [],
+) {
+  if ((!service?.requiredDocuments && stageDocumentNames.length === 0) || service?.requiresDocuments === false) {
     return [];
   }
 
   let requiredRaw: any[] = [];
-  if (typeof service.requiredDocuments === 'string') {
+  if (typeof service?.requiredDocuments === 'string') {
     try {
       requiredRaw = JSON.parse(service.requiredDocuments);
     } catch (error) {
       console.warn('Erro ao parsear requiredDocuments:', error);
       return [];
     }
-  } else if (Array.isArray(service.requiredDocuments)) {
+  } else if (Array.isArray(service?.requiredDocuments)) {
     requiredRaw = service.requiredDocuments;
   }
 
-  return normalizeDocumentConfigs(requiredRaw).filter((config) => Boolean(config?.name));
+  const normalized = normalizeDocumentConfigs(requiredRaw).filter((config) => Boolean(config?.name));
+  const merged = new Map<string, { name: string; required: boolean }>();
+
+  for (const config of normalized) {
+    merged.set(String(config.name).trim().toUpperCase(), {
+      name: String(config.name),
+      required: config.required ?? true,
+    });
+  }
+
+  for (const stageDocumentName of stageDocumentNames) {
+    const trimmed = String(stageDocumentName || '').trim();
+    if (!trimmed) continue;
+
+    const key = trimmed.toUpperCase();
+    if (!merged.has(key)) {
+      merged.set(key, {
+        name: trimmed,
+        required: true,
+      });
+    }
+  }
+
+  return Array.from(merged.values());
 }
 
 async function loadProtocolService(protocolId: string): Promise<ProtocolServiceLike | null> {
@@ -55,11 +81,39 @@ async function loadProtocolService(protocolId: string): Promise<ProtocolServiceL
   return protocol?.service || null;
 }
 
+async function loadStageRequiredDocumentNames(protocolId: string): Promise<string[]> {
+  const stages = await prisma.protocolStage.findMany({
+    where: { protocolId },
+    select: { metadata: true },
+  });
+
+  const requiredNames = new Set<string>();
+
+  for (const stage of stages) {
+    const metadata = stage.metadata as Record<string, unknown> | null;
+    const requiredDocumentTypes = Array.isArray(metadata?.requiredDocumentTypes)
+      ? metadata.requiredDocumentTypes
+      : [];
+
+    for (const requiredDocumentType of requiredDocumentTypes) {
+      if (typeof requiredDocumentType !== 'string') continue;
+
+      const trimmed = requiredDocumentType.trim();
+      if (trimmed) {
+        requiredNames.add(trimmed);
+      }
+    }
+  }
+
+  return Array.from(requiredNames);
+}
+
 async function reconcileProtocolDocuments(
   protocolId: string,
   service: ProtocolServiceLike,
+  stageDocumentNames: string[],
 ): Promise<void> {
-  const configs = getRequiredDocumentConfigs(service);
+  const configs = getRequiredDocumentConfigs(service, stageDocumentNames);
   if (configs.length === 0) return;
 
   const requiredNames = configs.map((config) => String(config.name));
@@ -167,9 +221,10 @@ export async function syncProtocolRequiredDocuments(
 ): Promise<void> {
   const resolvedService = service || (await loadProtocolService(protocolId));
   if (!resolvedService) return;
+  const stageDocumentNames = await loadStageRequiredDocumentNames(protocolId);
 
-  await reconcileProtocolDocuments(protocolId, resolvedService);
-  await ensureRequiredProtocolDocuments(protocolId, resolvedService);
+  await reconcileProtocolDocuments(protocolId, resolvedService, stageDocumentNames);
+  await ensureRequiredProtocolDocuments(protocolId, resolvedService, [], stageDocumentNames);
 }
 
 /**
@@ -180,8 +235,9 @@ export async function ensureRequiredProtocolDocuments(
   protocolId: string,
   service: ProtocolServiceLike,
   uploadedDocs: UploadedDoc[] = [],
+  stageDocumentNames: string[] = [],
 ): Promise<void> {
-  const configs = getRequiredDocumentConfigs(service);
+  const configs = getRequiredDocumentConfigs(service, stageDocumentNames);
   if (configs.length === 0) return;
 
   const protocol = await prisma.protocolSimplified.findUnique({

@@ -1,10 +1,10 @@
-'use client'
+﻿'use client'
 
 import { ProtocolDocumentsTab } from './ProtocolDocumentsTab'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import { AlertCircle, CheckCircle2, FileText, AlertTriangle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, FileText, AlertTriangle, Clock } from 'lucide-react'
 import { ProtocolDocument, DocumentStatus } from '@/types/protocol-enhancements'
 import { matchProtocolDocumentLabel } from '@/lib/protocol-document-matching'
 
@@ -15,6 +15,14 @@ interface ProtocolDocumentsUnifiedProps {
     requiredDocumentTypes?: string[]
   }
   onRefresh: () => void
+}
+
+type StageDocumentState = 'approved' | 'awaiting_review' | 'rejected' | 'missing'
+
+interface StageDocumentMatch {
+  requiredType: string
+  state: StageDocumentState
+  document?: ProtocolDocument
 }
 
 export function ProtocolDocumentsUnified({
@@ -28,22 +36,35 @@ export function ProtocolDocumentsUnified({
   const documentMatchesStageRequirement = (document: ProtocolDocument, requiredType: string) =>
     matchProtocolDocumentLabel(document.documentType, requiredType)
 
-  const requiredDocs = documents.filter((document) =>
-    requiredForCurrentStage.some((requiredType) => documentMatchesStageRequirement(document, requiredType))
-  )
-
-  const approvedRequiredDocs = requiredDocs.filter((document) => document.status === DocumentStatus.APPROVED)
-  const pendingRequiredDocs = requiredDocs.filter(
-    (document) => document.status !== DocumentStatus.APPROVED && document.status !== DocumentStatus.REJECTED
-  )
-  const rejectedRequiredDocs = requiredDocs.filter((document) => document.status === DocumentStatus.REJECTED)
-
-  const missingRequiredDocs = requiredForCurrentStage.filter((requiredType) =>
-    !documents.some(
-      (document) =>
-        documentMatchesStageRequirement(document, requiredType) && document.status === DocumentStatus.APPROVED
+  const stageDocumentStatus: StageDocumentMatch[] = requiredForCurrentStage.map((requiredType) => {
+    const matchingDocuments = documents.filter((document) =>
+      documentMatchesStageRequirement(document, requiredType)
     )
-  )
+
+    const approvedDocument = matchingDocuments.find((document) => document.status === DocumentStatus.APPROVED)
+    if (approvedDocument) {
+      return { requiredType, state: 'approved', document: approvedDocument }
+    }
+
+    const awaitingReviewDocument = matchingDocuments.find((document) =>
+      [DocumentStatus.UPLOADED, DocumentStatus.UNDER_REVIEW].includes(document.status)
+    )
+    if (awaitingReviewDocument) {
+      return { requiredType, state: 'awaiting_review', document: awaitingReviewDocument }
+    }
+
+    const rejectedDocument = matchingDocuments.find((document) => document.status === DocumentStatus.REJECTED)
+    if (rejectedDocument) {
+      return { requiredType, state: 'rejected', document: rejectedDocument }
+    }
+
+    return { requiredType, state: 'missing' }
+  })
+
+  const approvedRequiredDocs = stageDocumentStatus.filter((item) => item.state === 'approved')
+  const awaitingReviewRequiredDocs = stageDocumentStatus.filter((item) => item.state === 'awaiting_review')
+  const rejectedRequiredDocs = stageDocumentStatus.filter((item) => item.state === 'rejected')
+  const missingRequiredDocs = stageDocumentStatus.filter((item) => item.state === 'missing')
 
   const totalDocuments = documents.length
   const approvedDocuments = documents.filter((document) => document.status === DocumentStatus.APPROVED).length
@@ -51,6 +72,11 @@ export function ProtocolDocumentsUnified({
     (document) => document.status !== DocumentStatus.APPROVED && document.status !== DocumentStatus.REJECTED
   ).length
   const rejectedDocuments = documents.filter((document) => document.status === DocumentStatus.REJECTED).length
+
+  const stageComplete =
+    missingRequiredDocs.length === 0 &&
+    awaitingReviewRequiredDocs.length === 0 &&
+    rejectedRequiredDocs.length === 0
 
   return (
     <div className="space-y-4">
@@ -85,10 +111,10 @@ export function ProtocolDocumentsUnified({
 
       {requiredForCurrentStage.length > 0 && (
         <Alert
-          variant={missingRequiredDocs.length === 0 ? 'default' : 'destructive'}
-          className={missingRequiredDocs.length === 0 ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}
+          variant={stageComplete ? 'default' : 'destructive'}
+          className={stageComplete ? 'border-green-200 bg-green-50' : 'border-amber-200 bg-amber-50'}
         >
-          {missingRequiredDocs.length === 0 ? (
+          {stageComplete ? (
             <>
               <CheckCircle2 className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-900">Documentos da etapa atual: completos</AlertTitle>
@@ -111,26 +137,50 @@ export function ProtocolDocumentsUnified({
               <AlertTriangle className="h-4 w-4 text-amber-600" />
               <AlertTitle className="text-amber-900">Documentos obrigatórios da etapa atual</AlertTitle>
               <AlertDescription className="mt-2 space-y-3 text-amber-800">
-                <div>
-                  <p className="mb-2 font-medium">{missingRequiredDocs.length} documento(s) pendente(s):</p>
-                  <div className="flex flex-wrap gap-2">
-                    {missingRequiredDocs.map((documentType) => (
-                      <Badge key={documentType} variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">
-                        <AlertCircle className="mr-1 h-3 w-3" />
-                        {documentType}
-                      </Badge>
-                    ))}
+                {missingRequiredDocs.length > 0 && (
+                  <div>
+                    <p className="mb-2 font-medium">{missingRequiredDocs.length} documento(s) ainda não enviado(s):</p>
+                    <div className="flex flex-wrap gap-2">
+                      {missingRequiredDocs.map(({ requiredType }) => (
+                        <Badge key={requiredType} variant="outline" className="border-amber-300 bg-amber-100 text-amber-800">
+                          <AlertCircle className="mr-1 h-3 w-3" />
+                          {requiredType}
+                        </Badge>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {awaitingReviewRequiredDocs.length > 0 && (
+                  <div className="border-t border-amber-200 pt-2">
+                    <p className="mb-1 text-sm font-medium text-blue-800">
+                      Enviados aguardando aprovação ({awaitingReviewRequiredDocs.length}):
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {awaitingReviewRequiredDocs.map(({ requiredType, document }) => (
+                        <Badge
+                          key={requiredType}
+                          variant="outline"
+                          className="border-blue-300 bg-blue-100 text-xs text-blue-800"
+                        >
+                          <Clock className="mr-1 h-3 w-3" />
+                          {requiredType}
+                          {document?.fileName ? ` - ${document.fileName}` : ''}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {approvedRequiredDocs.length > 0 && (
                   <div className="border-t border-amber-200 pt-2">
                     <p className="mb-1 text-sm font-medium">Aprovados ({approvedRequiredDocs.length}):</p>
                     <div className="flex flex-wrap gap-2">
-                      {approvedRequiredDocs.map((document) => (
-                        <Badge key={document.id} variant="outline" className="border-green-300 bg-green-100 text-xs text-green-800">
+                      {approvedRequiredDocs.map(({ requiredType, document }) => (
+                        <Badge key={requiredType} variant="outline" className="border-green-300 bg-green-100 text-xs text-green-800">
                           <CheckCircle2 className="mr-1 h-3 w-3" />
-                          {document.documentType}
+                          {requiredType}
+                          {document?.fileName ? ` - ${document.fileName}` : ''}
                         </Badge>
                       ))}
                     </div>
@@ -143,21 +193,13 @@ export function ProtocolDocumentsUnified({
                       Rejeitados ({rejectedRequiredDocs.length}) - precisam ser reenviados:
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {rejectedRequiredDocs.map((document) => (
-                        <Badge key={document.id} variant="outline" className="border-red-300 bg-red-100 text-xs text-red-800">
+                      {rejectedRequiredDocs.map(({ requiredType }) => (
+                        <Badge key={requiredType} variant="outline" className="border-red-300 bg-red-100 text-xs text-red-800">
                           <AlertCircle className="mr-1 h-3 w-3" />
-                          {document.documentType}
+                          {requiredType}
                         </Badge>
                       ))}
                     </div>
-                  </div>
-                )}
-
-                {pendingRequiredDocs.length > 0 && (
-                  <div className="border-t border-amber-200 pt-2">
-                    <p className="mb-1 text-sm font-medium text-amber-900">
-                      Já existem arquivos vinculados, mas ainda sem aprovação final ({pendingRequiredDocs.length}).
-                    </p>
                   </div>
                 )}
               </AlertDescription>

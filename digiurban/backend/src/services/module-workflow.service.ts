@@ -15,6 +15,7 @@ import { DocumentStatus } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { generateWorkflowFromService } from './workflow-template.service';
 import * as ServiceWorkflowService from './service-workflow.service';
+import { matchDocumentType } from '../utils/document-mapping';
 
 /**
  * Cria um novo workflow de módulo
@@ -161,6 +162,8 @@ export async function validateStageConditions(
   const blockers: string[] = [];
   const warnings: string[] = [];
   const missingDocuments: string[] = [];
+  const awaitingReviewDocuments: string[] = [];
+  const rejectedDocuments: string[] = [];
   const missingFormFields: string[] = [];
 
   // ===== VALIDAR DOCUMENTOS =====
@@ -170,21 +173,55 @@ export async function validateStageConditions(
     const documents = await prisma.protocolDocument.findMany({
       where: {
         protocolId,
-        documentType: { in: requiredDocTypes }
       }
     });
 
-    const approvedDocs = documents.filter(d => d.status === DocumentStatus.APPROVED);
-    const approvedDocTypes = approvedDocs.map(d => d.documentType);
+    for (const requiredDocType of requiredDocTypes) {
+      const matchingDocuments = documents.filter((document) =>
+        matchDocumentType(document.documentType || document.fileName || '', requiredDocType)
+      );
 
-    // Documentos faltantes ou não aprovados
-    const missingDocs = requiredDocTypes.filter(
-      (docType: string) => !approvedDocTypes.includes(docType)
-    );
+      const hasApprovedDocument = matchingDocuments.some(
+        (document) => document.status === DocumentStatus.APPROVED
+      );
 
-    if (missingDocs.length > 0) {
-      missingDocuments.push(...missingDocs);
-      blockers.push(`Documentos pendentes: ${missingDocs.join(', ')}`);
+      if (hasApprovedDocument) {
+        continue;
+      }
+
+      const hasAwaitingReviewDocument = matchingDocuments.some(
+        (document) =>
+          document.status === DocumentStatus.UPLOADED ||
+          document.status === DocumentStatus.UNDER_REVIEW
+      );
+
+      if (hasAwaitingReviewDocument) {
+        awaitingReviewDocuments.push(requiredDocType);
+        continue;
+      }
+
+      const hasRejectedDocument = matchingDocuments.some(
+        (document) => document.status === DocumentStatus.REJECTED
+      );
+
+      if (hasRejectedDocument) {
+        rejectedDocuments.push(requiredDocType);
+        continue;
+      }
+
+      missingDocuments.push(requiredDocType);
+    }
+
+    if (missingDocuments.length > 0) {
+      blockers.push(`Documentos não enviados: ${missingDocuments.join(', ')}`);
+    }
+
+    if (awaitingReviewDocuments.length > 0) {
+      blockers.push(`Documentos enviados aguardando aprovação: ${awaitingReviewDocuments.join(', ')}`);
+    }
+
+    if (rejectedDocuments.length > 0) {
+      blockers.push(`Documentos rejeitados aguardando reenvio: ${rejectedDocuments.join(', ')}`);
     }
   }
 
@@ -239,6 +276,8 @@ export async function validateStageConditions(
     blockers,
     warnings,
     missingDocuments,
+    awaitingReviewDocuments,
+    rejectedDocuments,
     missingFormFields
   };
 }

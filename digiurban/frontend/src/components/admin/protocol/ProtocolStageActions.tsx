@@ -24,6 +24,8 @@ interface StageValidation {
   blockers: string[]
   warnings: string[]
   missingDocuments: string[]
+  awaitingReviewDocuments?: string[]
+  rejectedDocuments?: string[]
   missingFormFields: string[]
 }
 
@@ -255,10 +257,38 @@ export function ProtocolStageActions({
                 <div className="p-3 bg-amber-50 border border-amber-200 rounded-md">
                   <div className="flex items-center gap-2 mb-2">
                     <FileText className="h-4 w-4 text-amber-700" />
-                    <p className="font-medium text-amber-900">Documentos Pendentes:</p>
+                    <p className="font-medium text-amber-900">Documentos não enviados:</p>
                   </div>
                   <ul className="list-disc list-inside space-y-1 text-sm text-amber-800">
                     {validation.missingDocuments.map((doc, i) => (
+                      <li key={i}>{doc}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(validation.awaitingReviewDocuments?.length || 0) > 0 && (
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Loader2 className="h-4 w-4 text-blue-700" />
+                    <p className="font-medium text-blue-900">Documentos enviados aguardando análise:</p>
+                  </div>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-blue-800">
+                    {(validation.awaitingReviewDocuments || []).map((doc, i) => (
+                      <li key={i}>{doc}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {(validation.rejectedDocuments?.length || 0) > 0 && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-center gap-2 mb-2">
+                    <XCircle className="h-4 w-4 text-red-700" />
+                    <p className="font-medium text-red-900">Documentos rejeitados aguardando reenvio:</p>
+                  </div>
+                  <ul className="list-disc list-inside space-y-1 text-sm text-red-800">
+                    {(validation.rejectedDocuments || []).map((doc, i) => (
                       <li key={i}>{doc}</li>
                     ))}
                   </ul>

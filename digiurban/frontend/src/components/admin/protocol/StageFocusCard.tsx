@@ -15,6 +15,7 @@ import {
   Shield
 } from 'lucide-react'
 import type { ProtocolStageMetadata } from '@/types/protocol-enhancements'
+import { matchProtocolDocumentLabel } from '@/lib/protocol-document-matching'
 
 interface StageFocusCardProps {
   currentStage: {
@@ -30,6 +31,8 @@ interface StageFocusCardProps {
     canProgress: boolean
     blockers: string[]
     missingDocuments: string[]
+    awaitingReviewDocuments?: string[]
+    rejectedDocuments?: string[]
     missingFormFields: string[]
   }
   documents?: any[]
@@ -52,10 +55,30 @@ export function StageFocusCard({
   const referenceAssignments = supportAssignments.filter(assignment => assignment.mode === 'REFERENCE_ONLY')
 
   // Calcular documentos pendentes
-  const approvedDocs = documents.filter(d =>
-    requiredDocs.includes(d.documentType) && d.status === 'APPROVED'
+  const approvedDocs = requiredDocs.filter((requiredDoc) =>
+    documents.some((document) =>
+      matchProtocolDocumentLabel(document.documentType, requiredDoc) && document.status === 'APPROVED'
+    )
   ).length
-  const pendingDocs = requiredDocs.length - approvedDocs
+  const awaitingReviewDocs = requiredDocs.filter((requiredDoc) =>
+    documents.some((document) =>
+      matchProtocolDocumentLabel(document.documentType, requiredDoc) &&
+      ['UPLOADED', 'UNDER_REVIEW'].includes(document.status)
+    ) &&
+    !documents.some((document) =>
+      matchProtocolDocumentLabel(document.documentType, requiredDoc) && document.status === 'APPROVED'
+    )
+  ).length
+  const rejectedDocs = requiredDocs.filter((requiredDoc) =>
+    documents.some((document) =>
+      matchProtocolDocumentLabel(document.documentType, requiredDoc) && document.status === 'REJECTED'
+    ) &&
+    !documents.some((document) =>
+      matchProtocolDocumentLabel(document.documentType, requiredDoc) &&
+      ['APPROVED', 'UPLOADED', 'UNDER_REVIEW'].includes(document.status)
+    )
+  ).length
+  const missingDocs = Math.max(requiredDocs.length - approvedDocs - awaitingReviewDocs - rejectedDocs, 0)
 
   // Pendências abertas
   const openPendings = pendings.filter(p =>
@@ -82,8 +105,14 @@ export function StageFocusCard({
   // Determinar ação necessária
   const getRequiredAction = () => {
     if (validation && !validation.canProgress) {
+      if ((validation.awaitingReviewDocuments?.length || 0) > 0) {
+        return `Analisar ${validation.awaitingReviewDocuments?.length} documento(s)`
+      }
+      if ((validation.rejectedDocuments?.length || 0) > 0) {
+        return `Solicitar reenvio de ${validation.rejectedDocuments?.length} documento(s)`
+      }
       if (validation.missingDocuments.length > 0) {
-        return `Verificar ${validation.missingDocuments.length} documento(s)`
+        return `Solicitar ${validation.missingDocuments.length} documento(s)`
       }
       if (validation.missingFormFields.length > 0) {
         return `Preencher ${validation.missingFormFields.length} campo(s)`
@@ -161,8 +190,14 @@ export function StageFocusCard({
                   <p className="text-xs text-blue-600 font-medium">Documentos</p>
                   <p className="text-sm text-blue-900 font-semibold">
                     {approvedDocs}/{requiredDocs.length} aprovados
-                    {pendingDocs > 0 && (
-                      <span className="text-orange-600"> ({pendingDocs} pendente{pendingDocs > 1 ? 's' : ''})</span>
+                    {awaitingReviewDocs > 0 && (
+                      <span className="text-blue-600"> ({awaitingReviewDocs} em análise)</span>
+                    )}
+                    {missingDocs > 0 && (
+                      <span className="text-orange-600"> ({missingDocs} faltante{missingDocs > 1 ? 's' : ''})</span>
+                    )}
+                    {rejectedDocs > 0 && (
+                      <span className="text-red-600"> ({rejectedDocs} rejeitado{rejectedDocs > 1 ? 's' : ''})</span>
                     )}
                   </p>
                 </div>
@@ -221,7 +256,13 @@ export function StageFocusCard({
               <div className="flex flex-wrap gap-2">
                 {requiredDocs.slice(0, 5).map((doc, i) => {
                   const isApproved = documents.some(d =>
-                    d.documentType === doc && d.status === 'APPROVED'
+                    matchProtocolDocumentLabel(d.documentType, doc) && d.status === 'APPROVED'
+                  )
+                  const isAwaitingReview = !isApproved && documents.some(d =>
+                    matchProtocolDocumentLabel(d.documentType, doc) && ['UPLOADED', 'UNDER_REVIEW'].includes(d.status)
+                  )
+                  const isRejected = !isApproved && !isAwaitingReview && documents.some(d =>
+                    matchProtocolDocumentLabel(d.documentType, doc) && d.status === 'REJECTED'
                   )
                   return (
                     <Badge
@@ -230,10 +271,20 @@ export function StageFocusCard({
                       className={`text-xs ${
                         isApproved
                           ? 'bg-green-50 text-green-700 border-green-300'
-                          : 'bg-orange-50 text-orange-700 border-orange-300'
+                          : isAwaitingReview
+                            ? 'bg-blue-50 text-blue-700 border-blue-300'
+                            : isRejected
+                              ? 'bg-red-50 text-red-700 border-red-300'
+                              : 'bg-orange-50 text-orange-700 border-orange-300'
                       }`}
                     >
-                      {isApproved ? <CheckCircle2 className="h-3 w-3 mr-1" /> : <FileText className="h-3 w-3 mr-1" />}
+                      {isApproved ? (
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                      ) : isAwaitingReview ? (
+                        <Clock className="h-3 w-3 mr-1" />
+                      ) : (
+                        <FileText className="h-3 w-3 mr-1" />
+                      )}
                       {doc}
                     </Badge>
                   )

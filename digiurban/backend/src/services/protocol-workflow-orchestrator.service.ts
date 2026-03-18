@@ -20,6 +20,7 @@ import * as pendingService from './protocol-pending.service';
 import * as interactionService from './protocol-interaction.service';
 import { protocolStatusEngine } from './protocol-status.engine';
 import * as categoryService from './citizen-category.service';
+import { matchDocumentType } from '../utils/document-mapping';
 
 // ============================================================================
 // TIPOS
@@ -36,6 +37,9 @@ interface StageValidationResult {
   canProgress: boolean;
   blockers: string[];
   warnings: string[];
+  missingDocuments?: string[];
+  awaitingReviewDocuments?: string[];
+  rejectedDocuments?: string[];
 }
 
 // ============================================================================
@@ -60,16 +64,17 @@ export class ProtocolWorkflowOrchestrator {
     console.log(`📄 [Orchestrator] Documento aprovado: ${doc.documentType}`);
 
     // 0. Resolver automaticamente pendências relacionadas a este documento
-    const documentPendings = await prisma.protocolPending.findMany({
+    const candidateDocumentPendings = await prisma.protocolPending.findMany({
       where: {
         protocolId: doc.protocolId,
         type: 'DOCUMENT',
         status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW] },
-        metadata: {
-          path: ['documentType'],
-          equals: doc.documentType
-        }
       }
+    });
+
+    const documentPendings = candidateDocumentPendings.filter((pending) => {
+      const metadata = pending.metadata as Record<string, unknown> | null;
+      return matchDocumentType(doc.documentType, String(metadata?.documentType || ''));
     });
 
     if (documentPendings.length > 0) {
@@ -508,16 +513,52 @@ export class ProtocolWorkflowOrchestrator {
       const docs = await prisma.protocolDocument.findMany({
         where: {
           protocolId: stage.protocolId,
-          documentType: { in: metadata.requiredDocuments }
         }
       });
 
-      const approvedDocs = docs.filter(d => d.status === DocumentStatus.APPROVED);
-      if (approvedDocs.length < metadata.requiredDocuments.length) {
-        const missing = metadata.requiredDocuments.filter(
-          (req: string) => !approvedDocs.find(d => d.documentType === req)
+      const requiredDocuments = Array.isArray(metadata.requiredDocuments)
+        ? metadata.requiredDocuments.filter((value: unknown): value is string => typeof value === 'string')
+        : [];
+      const missingDocuments: string[] = [];
+      const awaitingReviewDocuments: string[] = [];
+      const rejectedDocuments: string[] = [];
+
+      for (const requiredDocument of requiredDocuments) {
+        const matchingDocuments = docs.filter((document) =>
+          matchDocumentType(document.documentType || document.fileName || '', requiredDocument)
         );
-        blockers.push(`Documentos pendentes: ${missing.join(', ')}`);
+
+        if (matchingDocuments.some((document) => document.status === DocumentStatus.APPROVED)) {
+          continue;
+        }
+
+        if (matchingDocuments.some(
+          (document) =>
+            document.status === DocumentStatus.UPLOADED ||
+            document.status === DocumentStatus.UNDER_REVIEW
+        )) {
+          awaitingReviewDocuments.push(requiredDocument);
+          continue;
+        }
+
+        if (matchingDocuments.some((document) => document.status === DocumentStatus.REJECTED)) {
+          rejectedDocuments.push(requiredDocument);
+          continue;
+        }
+
+        missingDocuments.push(requiredDocument);
+      }
+
+      if (missingDocuments.length > 0) {
+        blockers.push(`Documentos não enviados: ${missingDocuments.join(', ')}`);
+      }
+
+      if (awaitingReviewDocuments.length > 0) {
+        blockers.push(`Documentos enviados aguardando aprovação: ${awaitingReviewDocuments.join(', ')}`);
+      }
+
+      if (rejectedDocuments.length > 0) {
+        blockers.push(`Documentos rejeitados aguardando reenvio: ${rejectedDocuments.join(', ')}`);
       }
     }
 
@@ -906,4 +947,3 @@ export class ProtocolWorkflowOrchestrator {
 // SINGLETON EXPORT
 // ============================================================================
 export const workflowOrchestrator = new ProtocolWorkflowOrchestrator();
-

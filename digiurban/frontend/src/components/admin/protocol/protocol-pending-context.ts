@@ -3,6 +3,8 @@ export interface StageValidationContext {
   blockers?: string[]
   warnings?: string[]
   missingDocuments?: string[]
+  awaitingReviewDocuments?: string[]
+  rejectedDocuments?: string[]
   missingFormFields?: string[]
 }
 

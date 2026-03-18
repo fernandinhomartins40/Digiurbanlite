@@ -1,6 +1,7 @@
 import { DocumentStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { syncProtocolRequiredDocuments } from './required-protocol-documents.service';
+import { matchDocumentType } from '../utils/document-mapping';
 
 export interface CreateDocumentData {
   protocolId: string;
@@ -150,16 +151,17 @@ export async function uploadDocument(
     try {
       const pendingService = await import('./protocol-pending.service');
 
-      const relatedPendings = await prisma.protocolPending.findMany({
+      const candidatePendings = await prisma.protocolPending.findMany({
         where: {
           protocolId: currentDoc.protocolId,
           type: 'DOCUMENT',
           status: { in: ['OPEN', 'IN_PROGRESS'] },
-          metadata: {
-            path: ['documentType'],
-            equals: currentDoc.documentType
-          }
         }
+      });
+
+      const relatedPendings = candidatePendings.filter((pending) => {
+        const metadata = pending.metadata as Record<string, unknown> | null;
+        return matchDocumentType(currentDoc.documentType, String(metadata?.documentType || ''));
       });
 
       if (relatedPendings.length > 0) {

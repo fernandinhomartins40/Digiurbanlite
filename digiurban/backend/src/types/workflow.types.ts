@@ -159,6 +159,8 @@ export interface StageValidationResult {
   blockers: string[];                   // Impedimentos
   warnings: string[];                   // Avisos
   missingDocuments: string[];           // Documentos faltantes
+  awaitingReviewDocuments?: string[];   // Documentos enviados aguardando análise/aprovação
+  rejectedDocuments?: string[];         // Documentos rejeitados aguardando reenvio
   missingFormFields: string[];          // Campos de formulário não preenchidos
   missingStageOutputs?: string[];       // Saídas obrigatórias da etapa não preenchidas
 }

@@ -49,6 +49,8 @@ interface StageValidation {
   blockers: string[]
   warnings: string[]
   missingDocuments: string[]
+  awaitingReviewDocuments?: string[]
+  rejectedDocuments?: string[]
   missingFormFields: string[]
 }
 
@@ -122,6 +124,8 @@ export function CurrentStageHighlight({
 
   const hasPendings = validation && (
     validation.missingDocuments.length > 0 ||
+    (validation.awaitingReviewDocuments?.length || 0) > 0 ||
+    (validation.rejectedDocuments?.length || 0) > 0 ||
     validation.missingFormFields.length > 0 ||
     validation.blockers.length > 0 ||
     blockingPendings.length > 0
@@ -198,6 +202,58 @@ export function CurrentStageHighlight({
                           </p>
                           <ul className="list-disc list-inside text-sm text-amber-800 space-y-1">
                             {validation.missingDocuments.map((doc, i) => (
+                              <li key={i}>{doc}</li>
+                            ))}
+                          </ul>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto mt-2 text-blue-600"
+                            onClick={onNavigateToDocuments}
+                          >
+                            Ir para Documentos <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {(validation.awaitingReviewDocuments?.length || 0) > 0 && (
+                    <div className="p-3 bg-white rounded border border-blue-200">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-blue-700 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-blue-900 mb-1">
+                            {(validation.awaitingReviewDocuments?.length || 0)} documento(s) enviado(s) aguardando análise:
+                          </p>
+                          <ul className="list-disc list-inside text-sm text-blue-800 space-y-1">
+                            {(validation.awaitingReviewDocuments || []).map((doc, i) => (
+                              <li key={i}>{doc}</li>
+                            ))}
+                          </ul>
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="p-0 h-auto mt-2 text-blue-600"
+                            onClick={onNavigateToDocuments}
+                          >
+                            Ir para Documentos <ArrowRight className="h-3 w-3 ml-1" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {(validation.rejectedDocuments?.length || 0) > 0 && (
+                    <div className="p-3 bg-white rounded border border-red-200">
+                      <div className="flex items-start gap-2">
+                        <FileText className="h-4 w-4 text-red-700 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="font-medium text-sm text-red-900 mb-1">
+                            {(validation.rejectedDocuments?.length || 0)} documento(s) rejeitado(s) aguardando reenvio:
+                          </p>
+                          <ul className="list-disc list-inside text-sm text-red-800 space-y-1">
+                            {(validation.rejectedDocuments || []).map((doc, i) => (
                               <li key={i}>{doc}</li>
                             ))}
                           </ul>
