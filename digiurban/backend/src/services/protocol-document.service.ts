@@ -56,7 +56,11 @@ export async function createProtocolDocument(data: CreateDocumentData) {
  * Lista todos os documentos de um protocolo
  */
 export async function getProtocolDocuments(protocolId: string) {
-  await syncProtocolRequiredDocuments(protocolId);
+  try {
+    await syncProtocolRequiredDocuments(protocolId);
+  } catch (error) {
+    console.error('[protocol-document.service] Failed to sync required documents before listing:', error);
+  }
 
   return prisma.protocolDocument.findMany({
     where: { protocolId },

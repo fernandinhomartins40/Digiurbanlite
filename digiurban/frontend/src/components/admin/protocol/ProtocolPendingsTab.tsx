@@ -305,7 +305,11 @@ export function ProtocolPendingsTab({
         const documentsPayload = documentsResponse.ok ? await documentsResponse.json() : null
         const fieldsPayload = fieldsResponse.ok ? await fieldsResponse.json() : null
 
-        const nextDocuments = Array.isArray(documentsPayload?.documents) ? documentsPayload.documents : []
+        const nextDocuments = Array.isArray(documentsPayload?.documents)
+          ? documentsPayload.documents
+          : Array.isArray(documentsPayload?.data)
+            ? documentsPayload.data
+            : []
         const nextFields = Array.isArray(fieldsPayload?.data?.fields) ? fieldsPayload.data.fields : []
 
         setDocuments(mergeDocumentOptions(nextDocuments, buildServiceDocumentOptions(service), creationContext))
@@ -742,11 +746,11 @@ export function ProtocolPendingsTab({
               Nova Pendência
             </Button>
           </DialogTrigger>
-          <DialogContent className="grid w-[calc(100vw-1.5rem)] max-w-3xl grid-rows-[auto,minmax(0,1fr),auto] gap-0 overflow-hidden p-0 max-h-[calc(100dvh-1.5rem)] sm:w-[calc(100vw-3rem)] sm:max-h-[calc(100dvh-3rem)]">
+          <DialogContent className="top-3 grid w-[calc(100vw-1.5rem)] max-w-3xl translate-y-0 grid-rows-[auto,minmax(0,1fr),auto] gap-0 overflow-hidden p-0 max-h-[calc(100dvh-1.5rem)] sm:top-6 sm:w-[calc(100vw-3rem)] sm:max-h-[calc(100dvh-3rem)]">
             <DialogHeader className="border-b px-4 py-4 sm:px-6">
               <DialogTitle>Criar Nova Pendência</DialogTitle>
             </DialogHeader>
-            <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
+            <div className="min-h-0 overflow-y-scroll overscroll-contain px-4 py-4 sm:px-6">
               <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>

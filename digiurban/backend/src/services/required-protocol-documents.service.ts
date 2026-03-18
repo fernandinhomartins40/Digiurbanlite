@@ -245,15 +245,19 @@ export async function ensureRequiredProtocolDocuments(
     if (document.fileUrl) continue;
     if (document.status !== DocumentStatus.PENDING) continue;
 
-    await pendingService.createDocumentPending(
-      protocolId,
-      document.documentType,
-      pendingOwner,
-      undefined,
-      {
-        documentId: document.id,
-        sourceType: 'REQUIRED_DOCUMENT',
-      },
-    );
+    try {
+      await pendingService.createDocumentPending(
+        protocolId,
+        document.documentType,
+        pendingOwner,
+        undefined,
+        {
+          documentId: document.id,
+          sourceType: 'REQUIRED_DOCUMENT',
+        },
+      );
+    } catch (error) {
+      console.error('[required-protocol-documents.service] Failed to create document pending during sync:', error);
+    }
   }
 }
