@@ -1,12 +1,12 @@
 /**
- * CONSTANTES - Tipos, Status e Configurações dos Selectors
+ * CONSTANTES - Tipos, Status e ConfiguraÃ§Ãµes dos Selectors
  *
  * Este arquivo centraliza as constantes utilizadas nos componentes selectors
- * para facilitar manutenção e garantir consistência.
+ * para facilitar manutenÃ§Ã£o e garantir consistÃªncia.
  */
 
 // ============================================================================
-// TIPOS DE UNIDADES DE SAÚDE
+// TIPOS DE UNIDADES DE SAÃšDE
 // ============================================================================
 
 export const TIPOS_UNIDADE = {
@@ -23,10 +23,10 @@ export const TIPOS_UNIDADE_LABELS: Record<string, string> = {
   [TIPOS_UNIDADE.UBS]: 'UBS',
   [TIPOS_UNIDADE.UPA]: 'UPA',
   [TIPOS_UNIDADE.HOSPITAL]: 'Hospital',
-  [TIPOS_UNIDADE.CLINICA]: 'Clínica',
+  [TIPOS_UNIDADE.CLINICA]: 'ClÃ­nica',
   [TIPOS_UNIDADE.PRONTO_SOCORRO]: 'Pronto Socorro',
   [TIPOS_UNIDADE.CAPS]: 'CAPS',
-  [TIPOS_UNIDADE.LABORATORIO]: 'Laboratório',
+  [TIPOS_UNIDADE.LABORATORIO]: 'LaboratÃ³rio',
 };
 
 export const TIPOS_UNIDADE_COLORS: Record<string, string> = {
@@ -40,7 +40,7 @@ export const TIPOS_UNIDADE_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// CATEGORIAS DE PROFISSIONAIS DE SAÚDE
+// CATEGORIAS DE PROFISSIONAIS DE SAÃšDE
 // ============================================================================
 
 export const CATEGORIAS_PROFISSIONAL = {
@@ -57,16 +57,16 @@ export const CATEGORIAS_PROFISSIONAL = {
 } as const;
 
 export const CATEGORIAS_PROFISSIONAL_LABELS: Record<string, string> = {
-  [CATEGORIAS_PROFISSIONAL.MEDICO]: 'Médico(a)',
+  [CATEGORIAS_PROFISSIONAL.MEDICO]: 'MÃ©dico(a)',
   [CATEGORIAS_PROFISSIONAL.ENFERMEIRO]: 'Enfermeiro(a)',
-  [CATEGORIAS_PROFISSIONAL.TECNICO_ENFERMAGEM]: 'Téc. Enfermagem',
+  [CATEGORIAS_PROFISSIONAL.TECNICO_ENFERMAGEM]: 'TÃ©c. Enfermagem',
   [CATEGORIAS_PROFISSIONAL.DENTISTA]: 'Dentista',
-  [CATEGORIAS_PROFISSIONAL.PSICOLOGO]: 'Psicólogo(a)',
+  [CATEGORIAS_PROFISSIONAL.PSICOLOGO]: 'PsicÃ³logo(a)',
   [CATEGORIAS_PROFISSIONAL.FISIOTERAPEUTA]: 'Fisioterapeuta',
   [CATEGORIAS_PROFISSIONAL.NUTRICIONISTA]: 'Nutricionista',
-  [CATEGORIAS_PROFISSIONAL.FARMACEUTICO]: 'Farmacêutico(a)',
+  [CATEGORIAS_PROFISSIONAL.FARMACEUTICO]: 'FarmacÃªutico(a)',
   [CATEGORIAS_PROFISSIONAL.ASSISTENTE_SOCIAL]: 'Assistente Social',
-  [CATEGORIAS_PROFISSIONAL.AGENTE_SAUDE]: 'Agente de Saúde',
+  [CATEGORIAS_PROFISSIONAL.AGENTE_SAUDE]: 'Agente de SaÃºde',
 };
 
 // ============================================================================
@@ -83,9 +83,9 @@ export const STATUS_PROFISSIONAL = {
 
 export const STATUS_PROFISSIONAL_LABELS: Record<string, string> = {
   [STATUS_PROFISSIONAL.ATIVO]: 'Ativo',
-  [STATUS_PROFISSIONAL.FERIAS]: 'Férias',
+  [STATUS_PROFISSIONAL.FERIAS]: 'FÃ©rias',
   [STATUS_PROFISSIONAL.AFASTADO]: 'Afastado',
-  [STATUS_PROFISSIONAL.LICENCA]: 'Licença',
+  [STATUS_PROFISSIONAL.LICENCA]: 'LicenÃ§a',
   [STATUS_PROFISSIONAL.INATIVO]: 'Inativo',
 };
 
@@ -98,7 +98,7 @@ export const STATUS_PROFISSIONAL_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// ÁREAS DE ESPECIALIDADES
+// ÃREAS DE ESPECIALIDADES
 // ============================================================================
 
 export const AREAS_ESPECIALIDADE = {
@@ -139,16 +139,16 @@ export const TIPOS_SALA = {
 } as const;
 
 export const TIPOS_SALA_LABELS: Record<string, string> = {
-  [TIPOS_SALA.CONSULTORIO]: 'Consultório',
-  [TIPOS_SALA.CIRURGICA]: 'Cirúrgica',
-  [TIPOS_SALA.EMERGENCIA]: 'Emergência',
+  [TIPOS_SALA.CONSULTORIO]: 'ConsultÃ³rio',
+  [TIPOS_SALA.CIRURGICA]: 'CirÃºrgica',
+  [TIPOS_SALA.EMERGENCIA]: 'EmergÃªncia',
   [TIPOS_SALA.EXAME]: 'Exames',
-  [TIPOS_SALA.INTERNACAO]: 'Internação',
+  [TIPOS_SALA.INTERNACAO]: 'InternaÃ§Ã£o',
   [TIPOS_SALA.PROCEDIMENTO]: 'Procedimentos',
-  [TIPOS_SALA.OBSERVACAO]: 'Observação',
+  [TIPOS_SALA.OBSERVACAO]: 'ObservaÃ§Ã£o',
   [TIPOS_SALA.ENFERMAGEM]: 'Enfermagem',
   [TIPOS_SALA.ODONTOLOGIA]: 'Odontologia',
-  [TIPOS_SALA.VACINA]: 'Vacinação',
+  [TIPOS_SALA.VACINA]: 'VacinaÃ§Ã£o',
 };
 
 export const TIPOS_SALA_COLORS: Record<string, string> = {
@@ -176,9 +176,9 @@ export const STATUS_SALA = {
 } as const;
 
 export const STATUS_SALA_LABELS: Record<string, string> = {
-  [STATUS_SALA.DISPONIVEL]: 'Disponível',
+  [STATUS_SALA.DISPONIVEL]: 'DisponÃ­vel',
   [STATUS_SALA.EM_USO]: 'Em Uso',
-  [STATUS_SALA.MANUTENCAO]: 'Manutenção',
+  [STATUS_SALA.MANUTENCAO]: 'ManutenÃ§Ã£o',
   [STATUS_SALA.DESATIVADA]: 'Desativada',
 };
 
@@ -190,7 +190,7 @@ export const STATUS_SALA_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// CONFIGURAÇÕES DE BUSCA
+// CONFIGURAÃ‡Ã•ES DE BUSCA
 // ============================================================================
 
 export const SEARCH_CONFIG = {
@@ -201,20 +201,20 @@ export const SEARCH_CONFIG = {
 } as const;
 
 // ============================================================================
-// ÍCONES DE TURNOS
+// ÃCONES DE TURNOS
 // ============================================================================
 
-export const getTurnoIcone = (nomeTurno: string): string => {
+export const getTurnoIcone = (
+  nomeTurno: string
+): 'manha' | 'tarde' | 'noite' | 'madrugada' | 'padrao' => {
   const lower = nomeTurno.toLowerCase();
-  if (lower.includes('manhã') || lower.includes('manha')) return '🌅';
-  if (lower.includes('tarde')) return '🌤️';
-  if (lower.includes('noite')) return '🌙';
-  if (lower.includes('madrugada')) return '🌃';
-  return '⏰';
+  if (lower.includes('manha') || lower.includes('man\u00e3')) return 'manha';
+  if (lower.includes('tarde')) return 'tarde';
+  if (lower.includes('noite')) return 'noite';
+  if (lower.includes('madrugada')) return 'madrugada';
+  return 'padrao';
 };
-
-// ============================================================================
-// CORES PADRÃO DE TURNOS
+// CORES PADRÃƒO DE TURNOS
 // ============================================================================
 
 export const TURNO_COLORS: Record<string, string> = {
@@ -230,7 +230,7 @@ export const TURNO_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// FUNÇÕES UTILITÁRIAS
+// FUNÃ‡Ã•ES UTILITÃRIAS
 // ============================================================================
 
 /**
@@ -265,7 +265,7 @@ export const formatHora = (hora: string): string => {
 };
 
 /**
- * Formata tempo em minutos para string legível
+ * Formata tempo em minutos para string legÃ­vel
  */
 export const formatTempo = (minutos?: number): string => {
   if (!minutos) return '';

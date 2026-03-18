@@ -28,6 +28,7 @@ import {
   Stethoscope,
   ChevronDown,
   ChevronRight,
+  Circle,
 } from 'lucide-react';
 import { buscarContextoFila } from '@/lib/api/atendimento-api';
 
@@ -57,11 +58,11 @@ interface ContextoFila {
 // Classificação Manchester — cores e metadados
 // ──────────────────────────────────────────────────────────────────────────────
 const MANCHESTER_CLASSES = {
-  VERMELHO: { cor: 'bg-red-600 text-white', corBorder: 'border-red-600', corBg: 'bg-red-50 border-red-300', label: 'VERMELHO — Emergência', tempo: '0 min', icon: '🔴' },
-  LARANJA: { cor: 'bg-orange-500 text-white', corBorder: 'border-orange-500', corBg: 'bg-orange-50 border-orange-300', label: 'LARANJA — Muito Urgente', tempo: '10 min', icon: '🟠' },
-  AMARELO: { cor: 'bg-yellow-500 text-white', corBorder: 'border-yellow-500', corBg: 'bg-yellow-50 border-yellow-300', label: 'AMARELO — Urgente', tempo: '60 min', icon: '🟡' },
-  VERDE: { cor: 'bg-green-500 text-white', corBorder: 'border-green-500', corBg: 'bg-green-50 border-green-300', label: 'VERDE — Pouco Urgente', tempo: '120 min', icon: '🟢' },
-  AZUL: { cor: 'bg-blue-500 text-white', corBorder: 'border-blue-500', corBg: 'bg-blue-50 border-blue-300', label: 'AZUL — Não Urgente', tempo: '240 min', icon: '🔵' },
+  VERMELHO: { cor: 'bg-red-600 text-white', corBorder: 'border-red-600', corBg: 'bg-red-50 border-red-300', label: 'VERMELHO — Emergência', tempo: '0 min', iconClassName: 'fill-current text-red-600' },
+  LARANJA: { cor: 'bg-orange-500 text-white', corBorder: 'border-orange-500', corBg: 'bg-orange-50 border-orange-300', label: 'LARANJA — Muito Urgente', tempo: '10 min', iconClassName: 'fill-current text-orange-500' },
+  AMARELO: { cor: 'bg-yellow-500 text-white', corBorder: 'border-yellow-500', corBg: 'bg-yellow-50 border-yellow-300', label: 'AMARELO — Urgente', tempo: '60 min', iconClassName: 'fill-current text-yellow-500' },
+  VERDE: { cor: 'bg-green-500 text-white', corBorder: 'border-green-500', corBg: 'bg-green-50 border-green-300', label: 'VERDE — Pouco Urgente', tempo: '120 min', iconClassName: 'fill-current text-green-500' },
+  AZUL: { cor: 'bg-blue-500 text-white', corBorder: 'border-blue-500', corBg: 'bg-blue-50 border-blue-300', label: 'AZUL — Não Urgente', tempo: '240 min', iconClassName: 'fill-current text-blue-500' },
 } as const;
 
 type ClassificacaoKey = keyof typeof MANCHESTER_CLASSES;
@@ -136,7 +137,10 @@ function PainelPaciente({ contexto }: { contexto: ContextoFila }) {
           </div>
           {manchesterInfo && (
             <div className="mt-2">
-              <Badge className={manchesterInfo.cor}>{manchesterInfo.icon} {manchesterInfo.label}</Badge>
+              <Badge className={manchesterInfo.cor}>
+                <Circle className={`mr-1 h-2.5 w-2.5 ${manchesterInfo.iconClassName}`} />
+                {manchesterInfo.label}
+              </Badge>
             </div>
           )}
         </CardContent>
@@ -879,7 +883,9 @@ export default function EnfermagemPage() {
                             : 'border-gray-200 bg-white hover:border-gray-300'
                         }`}
                       >
-                        <div className="text-2xl mb-1">{info.icon}</div>
+                        <div className="mb-1 flex justify-center">
+                          <Circle className={`h-5 w-5 ${info.iconClassName}`} />
+                        </div>
                         <div className={`text-xs font-bold ${classificacaoRisco === key ? 'text-gray-800' : 'text-gray-600'}`}>
                           {key}
                         </div>
@@ -891,7 +897,10 @@ export default function EnfermagemPage() {
                   {/* Banner da classificação atual */}
                   {classificacaoInfo && (
                     <div className={`p-4 rounded-lg border-2 ${classificacaoInfo.corBg} text-center`}>
-                      <div className="text-lg font-bold">{classificacaoInfo.icon} {classificacaoInfo.label}</div>
+                      <div className="flex items-center justify-center gap-2 text-lg font-bold">
+                        <Circle className={`h-4 w-4 ${classificacaoInfo.iconClassName}`} />
+                        {classificacaoInfo.label}
+                      </div>
                       <div className="text-sm text-gray-600 mt-0.5">Atendimento em até {classificacaoInfo.tempo}</div>
                     </div>
                   )}
@@ -1010,7 +1019,8 @@ export default function EnfermagemPage() {
                     <span>
                       {classificacaoRisco ? (
                         <Badge className={MANCHESTER_CLASSES[classificacaoRisco].cor}>
-                          {MANCHESTER_CLASSES[classificacaoRisco].icon} {classificacaoRisco}
+                          <Circle className={`mr-1 h-2.5 w-2.5 ${MANCHESTER_CLASSES[classificacaoRisco].iconClassName}`} />
+                          {classificacaoRisco}
                         </Badge>
                       ) : <span className="text-gray-400">—</span>}
                     </span>

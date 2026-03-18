@@ -28,7 +28,7 @@ import {
   aprovarSolicitacao,
   negarSolicitacao,
 } from '@/lib/api/tfd-api';
-import { FileText, CheckCircle, XCircle, AlertCircle, User, MapPin, Calendar } from 'lucide-react';
+import { FileText, CheckCircle, XCircle, AlertCircle, User, MapPin, Calendar, ArrowLeft } from 'lucide-react';
 
 export default function RegulacaoPage() {
   const router = useRouter();
@@ -92,12 +92,12 @@ export default function RegulacaoPage() {
 
   const getPrioridadeBadge = (prioridade: string) => {
     if (prioridade === 'URGENTE') {
-      return <Badge variant="destructive">🚨 Urgente</Badge>;
+      return <Badge variant="destructive">Urgente</Badge>;
     }
     if (prioridade === 'PRIORITARIO') {
-      return <Badge className="bg-orange-600">⚠️ Prioritário</Badge>;
+      return <Badge className="bg-orange-600">Prioritário</Badge>;
     }
-    return <Badge variant="outline">📋 Normal</Badge>;
+    return <Badge variant="outline">Normal</Badge>;
   };
 
   if (loading) {
@@ -121,6 +121,7 @@ export default function RegulacaoPage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>

@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Save, Users } from 'lucide-react';
+import { ArrowLeft, MapPin, Save, Users, AlertTriangle } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface Equipe {
@@ -346,8 +346,9 @@ export default function EditarMicroarea() {
                   </SelectContent>
                 </Select>
                 {!formData.ativo && (
-                  <p className="text-sm text-orange-600 mt-1">
-                    ⚠️ Microáreas inativas não aparecem em listagens de atendimento
+                  <p className="text-sm text-orange-600 mt-1 inline-flex items-center gap-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    Microáreas inativas não aparecem em listagens de atendimento
                   </p>
                 )}
               </div>

@@ -15,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Package, ArrowRight, Database, PenTool, Pill, AlertCircle } from 'lucide-react';
+import { Package, ArrowLeft, ArrowRight, Database, PenTool, Pill, AlertCircle } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import MedicamentoRenameAutocomplete, {
   MedicamentoRename,
@@ -145,6 +145,7 @@ export default function NovoEstoquePage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>
@@ -309,16 +310,16 @@ export default function NovoEstoquePage() {
                       <SelectValue placeholder="Selecione a forma" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="COMPRIMIDO">💊 Comprimido</SelectItem>
-                      <SelectItem value="CAPSULA">⚪ Cápsula</SelectItem>
-                      <SelectItem value="XAROPE">🥤 Xarope</SelectItem>
-                      <SelectItem value="SOLUCAO">💧 Solução</SelectItem>
-                      <SelectItem value="SUSPENSAO">🧪 Suspensão</SelectItem>
-                      <SelectItem value="POMADA">🧴 Pomada</SelectItem>
-                      <SelectItem value="CREME">🧴 Creme</SelectItem>
-                      <SelectItem value="INJETAVEL">💉 Injetável</SelectItem>
-                      <SelectItem value="AEROSOL">🌬️ Aerosol</SelectItem>
-                      <SelectItem value="OUTRO">📦 Outro</SelectItem>
+                      <SelectItem value="COMPRIMIDO">Comprimido</SelectItem>
+                      <SelectItem value="CAPSULA">Cápsula</SelectItem>
+                      <SelectItem value="XAROPE">Xarope</SelectItem>
+                      <SelectItem value="SOLUCAO">Solução</SelectItem>
+                      <SelectItem value="SUSPENSAO">Suspensão</SelectItem>
+                      <SelectItem value="POMADA">Pomada</SelectItem>
+                      <SelectItem value="CREME">Creme</SelectItem>
+                      <SelectItem value="INJETAVEL">Injetável</SelectItem>
+                      <SelectItem value="AEROSOL">Aerosol</SelectItem>
+                      <SelectItem value="OUTRO">Outro</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

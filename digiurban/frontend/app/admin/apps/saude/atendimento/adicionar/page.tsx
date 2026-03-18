@@ -17,7 +17,7 @@ import {
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
 import { useUnidade } from '@/contexts/UnidadeContext';
 import { SeletorUnidade } from '@/components/saude/SeletorUnidade';
-import { UserPlus, Stethoscope, ArrowRight, Clock, AlertCircle, Activity } from 'lucide-react';
+import { UserPlus, Stethoscope, ArrowLeft, ArrowRight, Clock, AlertCircle, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -206,6 +206,7 @@ export default function AdicionarCidadaoListaPage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.push('/admin/apps/saude/atendimento')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar para Lista
         </Button>
       </div>
@@ -343,7 +344,7 @@ export default function AdicionarCidadaoListaPage() {
                 Após adicionar à lista, o paciente passará pela <strong>Classificação de Risco</strong> (Protocolo de Manchester).
               </p>
               <p className="text-sm text-red-700 mt-2">
-                O atendimento será priorizado com base na cor da classificação: 🔴 Vermelho, 🟠 Laranja, 🟡 Amarelo, 🟢 Verde, 🔵 Azul
+                O atendimento será priorizado com base na cor da classificação: vermelho, laranja, amarelo, verde e azul.
               </p>
             </CardContent>
           </Card>
@@ -369,11 +370,11 @@ export default function AdicionarCidadaoListaPage() {
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="AGENDADO">📅 Agendado</SelectItem>
-                  <SelectItem value="DEMANDA_ESPONTANEA">🚶 Demanda Espontânea</SelectItem>
-                  <SelectItem value="URGENCIA">🚨 Urgência</SelectItem>
-                  <SelectItem value="RETORNO">🔄 Retorno</SelectItem>
-                  <SelectItem value="VACINA">💉 Vacinação</SelectItem>
+                  <SelectItem value="AGENDADO">Agendado</SelectItem>
+                  <SelectItem value="DEMANDA_ESPONTANEA">Demanda Espontânea</SelectItem>
+                  <SelectItem value="URGENCIA">Urgência</SelectItem>
+                  <SelectItem value="RETORNO">Retorno</SelectItem>
+                  <SelectItem value="VACINA">Vacinação</SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground mt-1">

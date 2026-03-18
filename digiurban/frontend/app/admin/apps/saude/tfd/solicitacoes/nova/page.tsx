@@ -15,7 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
-import { Truck, FileText, Upload, ArrowRight } from 'lucide-react';
+import { Truck, FileText, Upload, ArrowLeft, ArrowRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 export default function NovaSolicitacaoTFDPage() {
@@ -177,6 +177,7 @@ export default function NovaSolicitacaoTFDPage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>
@@ -295,11 +296,11 @@ export default function NovaSolicitacaoTFDPage() {
                   <SelectValue placeholder="Selecione o tipo" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CONSULTA">🩺 Consulta Médica</SelectItem>
-                  <SelectItem value="EXAME">🔬 Exame Especializado</SelectItem>
-                  <SelectItem value="CIRURGIA">🏥 Procedimento Cirúrgico</SelectItem>
-                  <SelectItem value="TRATAMENTO">💊 Tratamento Contínuo</SelectItem>
-                  <SelectItem value="URGENCIA">🚨 Urgência</SelectItem>
+                  <SelectItem value="CONSULTA">Consulta Médica</SelectItem>
+                  <SelectItem value="EXAME">Exame Especializado</SelectItem>
+                  <SelectItem value="CIRURGIA">Procedimento Cirúrgico</SelectItem>
+                  <SelectItem value="TRATAMENTO">Tratamento Contínuo</SelectItem>
+                  <SelectItem value="URGENCIA">Urgência</SelectItem>
                 </SelectContent>
               </Select>
             </div>

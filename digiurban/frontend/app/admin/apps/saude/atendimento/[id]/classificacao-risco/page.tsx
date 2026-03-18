@@ -181,6 +181,7 @@ export default function ClassificacaoRiscoPage() {
         <div className="text-center">
           <p className="text-red-600">Paciente não encontrado</p>
           <Button className="mt-4" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
         </div>

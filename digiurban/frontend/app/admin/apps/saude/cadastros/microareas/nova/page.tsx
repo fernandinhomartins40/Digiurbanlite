@@ -14,7 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { ArrowLeft, MapPin, Save } from 'lucide-react';
+import { ArrowLeft, MapPin, Save, Info } from 'lucide-react';
 
 interface Equipe {
   id: string;
@@ -63,7 +63,7 @@ export default function NovaMicroarea() {
 
   const loadACS = async () => {
     try {
-      // Buscar usuários com DadosSaude categoria=ACS
+      // Buscar usuÃ¡rios com DadosSaude categoria=ACS
       const response = await fetch('/api/apps/saude/cadastros/dados-saude?categoria=ACS&ativo=true', {
         credentials: 'include',
       });
@@ -78,7 +78,7 @@ export default function NovaMicroarea() {
     e.preventDefault();
 
     if (!formData.numero || !formData.equipeId) {
-      alert('Número da microárea e Equipe ESF são obrigatórios');
+      alert('NÃºmero da microÃ¡rea e Equipe ESF sÃ£o obrigatÃ³rios');
       return;
     }
 
@@ -102,15 +102,15 @@ export default function NovaMicroarea() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao criar microárea');
+        alert(error.error || 'Erro ao criar microÃ¡rea');
         return;
       }
 
-      alert('Microárea criada com sucesso!');
+      alert('MicroÃ¡rea criada com sucesso!');
       router.push('/admin/apps/saude/cadastros/microareas');
     } catch (error) {
-      console.error('Erro ao criar microárea:', error);
-      alert('Erro ao criar microárea');
+      console.error('Erro ao criar microÃ¡rea:', error);
+      alert('Erro ao criar microÃ¡rea');
     } finally {
       setLoading(false);
     }
@@ -129,9 +129,9 @@ export default function NovaMicroarea() {
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-2">
               <MapPin className="h-8 w-8 text-purple-600" />
-              Nova Microárea
+              Nova MicroÃ¡rea
             </h1>
-            <p className="text-gray-600">Cadastrar nova microárea no território da ESF</p>
+            <p className="text-gray-600">Cadastrar nova microÃ¡rea no territÃ³rio da ESF</p>
           </div>
         </div>
 
@@ -139,7 +139,7 @@ export default function NovaMicroarea() {
         <form onSubmit={handleSubmit}>
           <Card className="mb-6">
             <CardHeader>
-              <CardTitle>Dados da Microárea</CardTitle>
+              <CardTitle>Dados da MicroÃ¡rea</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Equipe ESF */}
@@ -152,7 +152,7 @@ export default function NovaMicroarea() {
                   onValueChange={(value) => setFormData({ ...formData, equipeId: value })}
                 >
                   <SelectTrigger id="equipeId">
-                    <SelectValue placeholder="Selecione a equipe responsável" />
+                    <SelectValue placeholder="Selecione a equipe responsÃ¡vel" />
                   </SelectTrigger>
                   <SelectContent>
                     {equipes.map((equipe) => (
@@ -169,10 +169,10 @@ export default function NovaMicroarea() {
                 )}
               </div>
 
-              {/* Número da Microárea */}
+              {/* NÃºmero da MicroÃ¡rea */}
               <div>
                 <Label htmlFor="numero" className="required">
-                  Número da Microárea *
+                  NÃºmero da MicroÃ¡rea *
                 </Label>
                 <Input
                   id="numero"
@@ -183,13 +183,13 @@ export default function NovaMicroarea() {
                   required
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Número de identificação única da microárea dentro da equipe
+                  NÃºmero de identificaÃ§Ã£o Ãºnica da microÃ¡rea dentro da equipe
                 </p>
               </div>
 
-              {/* Descrição */}
+              {/* DescriÃ§Ã£o */}
               <div>
-                <Label htmlFor="descricao">Descrição / Localização</Label>
+                <Label htmlFor="descricao">DescriÃ§Ã£o / LocalizaÃ§Ã£o</Label>
                 <Textarea
                   id="descricao"
                   placeholder="Ex: Bairro Centro, entre Rua A e Rua B..."
@@ -198,13 +198,13 @@ export default function NovaMicroarea() {
                   rows={3}
                 />
                 <p className="text-sm text-gray-500 mt-1">
-                  Descrição opcional para identificar o território
+                  DescriÃ§Ã£o opcional para identificar o territÃ³rio
                 </p>
               </div>
 
-              {/* ACS Responsável */}
+              {/* ACS ResponsÃ¡vel */}
               <div>
-                <Label htmlFor="acsId">Agente Comunitário de Saúde (ACS) - Opcional</Label>
+                <Label htmlFor="acsId">Agente ComunitÃ¡rio de SaÃºde (ACS) - Opcional</Label>
                 <Select
                   value={formData.acsId}
                   onValueChange={(value) => setFormData({ ...formData, acsId: value })}
@@ -214,7 +214,7 @@ export default function NovaMicroarea() {
                   </SelectTrigger>
                   <SelectContent>
                     {acsDisponiveis.length === 0 ? (
-                      <div className="p-2 text-sm text-gray-500">Nenhum ACS disponível</div>
+                      <div className="p-2 text-sm text-gray-500">Nenhum ACS disponÃ­vel</div>
                     ) : (
                       acsDisponiveis.map((acs) => (
                         <SelectItem key={acs.id} value={acs.id}>
@@ -225,7 +225,7 @@ export default function NovaMicroarea() {
                   </SelectContent>
                 </Select>
                 <p className="text-sm text-gray-500 mt-1">
-                  ACS que realizará as visitas domiciliares neste território. Deixe vazio se ainda não tiver ACS designado.
+                  ACS que realizarÃ¡ as visitas domiciliares neste territÃ³rio. Deixe vazio se ainda nÃ£o tiver ACS designado.
                 </p>
               </div>
             </CardContent>
@@ -235,14 +235,17 @@ export default function NovaMicroarea() {
           <Card className="mb-6 bg-purple-50 border-purple-200">
             <CardContent className="pt-6">
               <h3 className="font-semibold text-purple-900 mb-2">
-                ℹ️ Sobre Microáreas
+                <span className="inline-flex items-center gap-2">
+                  <Info className="h-4 w-4" />
+                  Sobre Microáreas
+                </span>
               </h3>
               <ul className="text-sm text-purple-800 space-y-1">
-                <li>• Cada equipe ESF é responsável por um território de até 4.000 pessoas</li>
-                <li>• O território é dividido em microáreas (geralmente 4 a 6 por equipe)</li>
-                <li>• Cada microárea deve ter aproximadamente 750 pessoas (150 famílias)</li>
-                <li>• O ACS é o profissional responsável pelas visitas domiciliares mensais</li>
-                <li>• A territorialização permite conhecer melhor a comunidade e suas necessidades</li>
+                <li>â€¢ Cada equipe ESF Ã© responsÃ¡vel por um territÃ³rio de atÃ© 4.000 pessoas</li>
+                <li>â€¢ O territÃ³rio Ã© dividido em microÃ¡reas (geralmente 4 a 6 por equipe)</li>
+                <li>â€¢ Cada microÃ¡rea deve ter aproximadamente 750 pessoas (150 famÃ­lias)</li>
+                <li>â€¢ O ACS Ã© o profissional responsÃ¡vel pelas visitas domiciliares mensais</li>
+                <li>â€¢ A territorializaÃ§Ã£o permite conhecer melhor a comunidade e suas necessidades</li>
               </ul>
             </CardContent>
           </Card>
@@ -259,7 +262,7 @@ export default function NovaMicroarea() {
             </Button>
             <Button type="submit" disabled={loading}>
               <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Salvando...' : 'Criar Microárea'}
+              {loading ? 'Salvando...' : 'Criar MicroÃ¡rea'}
             </Button>
           </div>
         </form>

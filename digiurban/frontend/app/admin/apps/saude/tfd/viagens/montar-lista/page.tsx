@@ -101,7 +101,7 @@ export default function MontarListaPage() {
       });
 
       toast({
-        title: '🎉 Lista montada com sucesso!',
+        title: 'Lista montada com sucesso!',
         description: 'A viagem foi criada e os veículos/motoristas foram alocados.',
       });
     } catch (error) {

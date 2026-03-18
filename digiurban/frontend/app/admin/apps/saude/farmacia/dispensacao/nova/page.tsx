@@ -14,7 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { CidadaoSelector } from '@/components/apps/saude/CidadaoSelector';
-import { Pill, Plus, Trash2, Search, Package, AlertCircle } from 'lucide-react';
+import { Pill, Plus, Trash2, Search, Package, AlertCircle, ArrowLeft } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 
 interface ItemDispensacao {
@@ -233,6 +233,7 @@ export default function NovaDispensacaoPage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { HealthAppHeader } from '@/components/apps/saude/HealthAppHeader';
 import {
   FileBarChart,
   Users,
@@ -119,34 +120,29 @@ export default function DashboardTFDPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold flex items-center gap-3">
-            <FileBarChart className="h-8 w-8 text-purple-600" />
-            TFD - Tratamento Fora do Domicílio
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Gestão completa de tratamentos médicos em outras cidades
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            className="bg-purple-600 hover:bg-purple-700"
-            onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes/nova')}
-          >
-            <Truck className="h-4 w-4 mr-2" />
-            Nova Solicitação TFD
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes')}
-          >
-            <FileText className="h-4 w-4 mr-2" />
-            Ver Todas Solicitações
-          </Button>
-        </div>
-      </div>
+      <HealthAppHeader
+        title="TFD - Tratamento Fora do Domicílio"
+        description="Gestão completa de tratamentos médicos em outras cidades."
+        icon={FileBarChart}
+        actions={
+          <>
+            <Button
+              className="bg-purple-600 hover:bg-purple-700"
+              onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes/nova')}
+            >
+              <Truck className="h-4 w-4 mr-2" />
+              Nova solicitação TFD
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/admin/apps/saude/tfd/solicitacoes')}
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Ver solicitações
+            </Button>
+          </>
+        }
+      />
 
       {/* Cards de Estatísticas Gerais */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">

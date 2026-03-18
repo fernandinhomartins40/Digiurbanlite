@@ -16,7 +16,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { criarTriagem } from '@/lib/api/atendimento-api';
-import { Activity, AlertTriangle, Heart, Thermometer, Wind, AlertCircle, Zap, CheckCircle, FileText, Siren } from 'lucide-react';
+import { Activity, AlertTriangle, Heart, Thermometer, Wind, AlertCircle, Zap, CheckCircle, FileText, Siren, ArrowLeft } from 'lucide-react';
 
 export default function TriagemPage() {
   const router = useRouter();
@@ -95,6 +95,7 @@ export default function TriagemPage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>

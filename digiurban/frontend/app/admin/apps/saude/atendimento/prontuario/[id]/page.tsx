@@ -17,6 +17,7 @@ import {
   AlertCircle,
   Activity,
   Download,
+  ArrowLeft,
 } from 'lucide-react';
 
 export default function ProntuarioPage() {
@@ -63,7 +64,10 @@ export default function ProntuarioPage() {
             <p className="text-gray-500 mb-4">
               Não foi possível carregar o prontuário deste paciente
             </p>
-            <Button onClick={() => router.back()}>Voltar</Button>
+            <Button onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -102,6 +106,7 @@ export default function ProntuarioPage() {
             Exportar Prontuário
           </Button>
           <Button variant="outline" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar
           </Button>
         </div>

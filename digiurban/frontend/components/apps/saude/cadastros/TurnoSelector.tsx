@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, Clock, X, Loader2, ChevronDown } from 'lucide-react';
+import { Search, Clock, X, Loader2, ChevronDown, Sun, Sunset, Moon, MoonStar } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -97,13 +97,14 @@ export function TurnoSelector({
 
   const getTurnoIcono = (nome: string) => {
     const lower = nome.toLowerCase();
-    if (lower.includes('manhã') || lower.includes('manha')) return '🌅';
-    if (lower.includes('tarde')) return '🌤️';
-    if (lower.includes('noite')) return '🌙';
-    if (lower.includes('madrugada')) return '🌃';
-    return '⏰';
+    if (lower.includes('manha') || lower.includes('man\u00e3')) return Sun;
+    if (lower.includes('tarde')) return Sunset;
+    if (lower.includes('noite')) return Moon;
+    if (lower.includes('madrugada')) return MoonStar;
+    return Clock;
   };
 
+  const SelectedTurnoIcon = selectedTurno ? getTurnoIcono(selectedTurno.nome) : Clock;
   const filteredTurnos = turnos.filter((turno) =>
     turno.nome.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -125,7 +126,7 @@ export function TurnoSelector({
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-lg">{getTurnoIcono(selectedTurno.nome)}</span>
+                    <SelectedTurnoIcon className="h-4 w-4 text-blue-600" />
                     <h4 className="font-semibold text-gray-900">{selectedTurno.nome}</h4>
                   </div>
                   <div className="flex items-center gap-2 text-sm text-gray-600">
@@ -209,7 +210,9 @@ export function TurnoSelector({
               {/* Lista de Turnos */}
               <div className="max-h-64 overflow-y-auto">
                 {filteredTurnos.length > 0 ? (
-                  filteredTurnos.map((turno) => (
+                  filteredTurnos.map((turno) => {
+                    const TurnoIcon = getTurnoIcono(turno.nome);
+                    return (
                     <button
                       key={turno.id}
                       type="button"
@@ -218,7 +221,7 @@ export function TurnoSelector({
                       aria-label={`Selecionar turno ${turno.nome}`}
                     >
                       <div className="flex items-start gap-2">
-                        <span className="text-xl">{getTurnoIcono(turno.nome)}</span>
+                        <TurnoIcon className="mt-0.5 h-5 w-5 text-blue-600" />
                         <div className="flex-1 min-w-0">
                           <div className="font-medium text-gray-900 mb-1">{turno.nome}</div>
                           <div className="flex items-center gap-2">
@@ -244,10 +247,11 @@ export function TurnoSelector({
                         </div>
                       </div>
                     </button>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="p-4 text-center text-sm text-gray-500">
-                    {searchTerm ? `Nenhum turno encontrado para "${searchTerm}"` : 'Nenhum turno disponível'}
+                    {searchTerm ? `Nenhum turno encontrado para "${searchTerm}"` : 'Nenhum turno disponÃƒÂ­vel'}
                   </div>
                 )}
               </div>
@@ -258,7 +262,7 @@ export function TurnoSelector({
 
       {!selectedTurno && !loading && (
         <p className="text-xs text-muted-foreground">
-          Selecione um turno de trabalho ({turnos.length} disponíveis)
+          Selecione um turno de trabalho ({turnos.length} disponÃƒÂ­veis)
         </p>
       )}
 

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { HealthAppHeader } from '@/components/apps/saude/HealthAppHeader';
 import {
   listarEstoque,
   listarAlertas,
@@ -38,7 +39,7 @@ export default function FarmaciaPage() {
 
   const loadData = async () => {
     try {
-      // Carregar estatísticas
+      // Carregar estatÃ­sticas
       const hoje = new Date();
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       const statsData = await obterEstatisticasDispensacao({
@@ -77,38 +78,37 @@ export default function FarmaciaPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Farmácia Municipal</h1>
-          <p className="text-gray-500 mt-1">
-            Gestão de estoque e dispensação de medicamentos
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button
-            onClick={() => router.push('/admin/apps/saude/farmacia/dispensacao/nova')}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <Pill className="h-4 w-4 mr-2" />
-            Nova Dispensação
-          </Button>
-          <Button
-            variant="outline"
-            onClick={() => router.push('/admin/apps/saude/farmacia/estoque/novo')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar ao Estoque
-          </Button>
-        </div>
-      </div>
+      <HealthAppHeader
+        title="Farmácia Municipal"
+        description="Gestão de estoque e dispensação de medicamentos."
+        icon={Pill}
+        actions={
+          <>
+            <Button
+              onClick={() => router.push('/admin/apps/saude/farmacia/dispensacao/nova')}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Pill className="h-4 w-4 mr-2" />
+              Nova dispensação
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/admin/apps/saude/farmacia/estoque/novo')}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Adicionar ao estoque
+            </Button>
+          </>
+        }
+      />
 
-      {/* Estatísticas Principais */}
+
+      {/* EstatÃ­sticas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              Dispensações do Mês
+              DispensaÃ§Ãµes do MÃªs
             </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -117,7 +117,7 @@ export default function FarmaciaPage() {
               {stats?.totalDispensacoes || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.mediaDiaria || 0} por dia em média
+              {stats?.mediaDiaria || 0} por dia em mÃ©dia
             </p>
           </CardContent>
         </Card>
@@ -168,7 +168,7 @@ export default function FarmaciaPage() {
           <CardContent>
             <div className="text-2xl font-bold">{alertas.length}</div>
             <p className="text-xs text-muted-foreground">
-              Requerem atenção imediata
+              Requerem atenÃ§Ã£o imediata
             </p>
           </CardContent>
         </Card>
@@ -216,13 +216,13 @@ export default function FarmaciaPage() {
                         {alerta.tipo === 'ESTOQUE_MINIMO' && (
                           <>
                             <AlertTriangle className="h-3 w-3" />
-                            <span>Estoque mínimo</span>
+                            <span>Estoque mÃ­nimo</span>
                           </>
                         )}
                         {alerta.tipo === 'VALIDADE_PROXIMA' && (
                           <>
                             <Clock className="h-3 w-3" />
-                            <span>Vencimento próximo</span>
+                            <span>Vencimento prÃ³ximo</span>
                           </>
                         )}
                         {alerta.tipo === 'VENCIDO' && (
@@ -320,17 +320,17 @@ export default function FarmaciaPage() {
         </Card>
       </div>
 
-      {/* Ações Rápidas */}
+      {/* AÃ§Ãµes RÃ¡pidas */}
       <Card>
         <CardHeader>
-          <CardTitle>Ações Rápidas</CardTitle>
+          <CardTitle>AÃ§Ãµes RÃ¡pidas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/admin/apps/saude/farmacia/dispensacao">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FileText className="h-6 w-6" />
-                <span>Nova Dispensação</span>
+                <span>Nova DispensaÃ§Ã£o</span>
               </Button>
             </Link>
             <Link href="/admin/apps/saude/farmacia/estoque">
@@ -342,7 +342,7 @@ export default function FarmaciaPage() {
             <Link href="/admin/apps/saude/farmacia/relatorios">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <TrendingUp className="h-6 w-6" />
-                <span>Relatórios</span>
+                <span>RelatÃ³rios</span>
               </Button>
             </Link>
           </div>

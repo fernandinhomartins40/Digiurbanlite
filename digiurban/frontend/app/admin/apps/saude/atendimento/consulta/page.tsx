@@ -573,7 +573,10 @@ export default function ConsultaMedicaPage() {
       <div className="flex flex-col items-center justify-center h-screen gap-4">
         <AlertCircle className="h-12 w-12 text-red-400" />
         <p className="text-gray-600">ID da entrada na fila não informado.</p>
-        <Button onClick={() => router.push('/admin/apps/saude/atendimento')}>Voltar à Lista</Button>
+        <Button onClick={() => router.push('/admin/apps/saude/atendimento')}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Voltar à Lista
+        </Button>
       </div>
     );
   }

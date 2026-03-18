@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { registrarDispensacao } from '@/lib/api/farmacia-api';
-import { Package, Plus, Trash2, FileText } from 'lucide-react';
+import { Package, Plus, Trash2, FileText, ArrowLeft } from 'lucide-react';
 
 interface ItemDispensacao {
   estoqueId: string;
@@ -101,6 +101,7 @@ export default function DispensacaoPage() {
           </p>
         </div>
         <Button variant="outline" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
           Voltar
         </Button>
       </div>

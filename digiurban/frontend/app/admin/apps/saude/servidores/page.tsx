@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * Página: Servidores da Saúde (Integrado com Sistema Unificado V2.0)
+ * PÃ¡gina: Servidores da SaÃºde (Integrado com Sistema Unificado V2.0)
  *
- * Esta página lista todos os servidores com dados de saúde e usa o
- * Sistema Unificado de Vinculação V2.0 para gerenciar seus vínculos.
+ * Esta pÃ¡gina lista todos os servidores com dados de saÃºde e usa o
+ * Sistema Unificado de VinculaÃ§Ã£o V2.0 para gerenciar seus vÃ­nculos.
  */
 
 import { useEffect, useState } from 'react';
@@ -28,6 +28,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
+import { HealthAppHeader } from '@/components/apps/saude/HealthAppHeader';
 import {
   Select,
   SelectContent,
@@ -99,9 +100,9 @@ const CATEGORIAS = [
 const STATUS_OPTIONS = [
   { value: 'ATIVO', label: 'Ativo', variant: 'default' as const },
   { value: 'INATIVO', label: 'Inativo', variant: 'secondary' as const },
-  { value: 'FERIAS', label: 'Férias', variant: 'outline' as const },
+  { value: 'FERIAS', label: 'FÃ©rias', variant: 'outline' as const },
   { value: 'AFASTADO', label: 'Afastado', variant: 'destructive' as const },
-  { value: 'LICENCA', label: 'Licença', variant: 'secondary' as const },
+  { value: 'LICENCA', label: 'LicenÃ§a', variant: 'secondary' as const },
 ];
 
 export default function ServidoresSaudePage() {
@@ -161,19 +162,18 @@ export default function ServidoresSaudePage() {
 
   return (
     <div className="container mx-auto py-6 space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Servidores da Saúde</h1>
-          <p className="text-muted-foreground">
-            Gerenciamento integrado com Sistema Unificado V2.0
-          </p>
-        </div>
-        <Button onClick={() => router.push('/admin/apps/saude/servidores/vincular')}>
-          <UserPlus className="mr-2 h-4 w-4" />
-          Vincular Servidor
-        </Button>
-      </div>
+      <HealthAppHeader
+        title="Servidores da Saúde"
+        description="Gerenciamento integrado com sistema unificado de vínculos."
+        icon={UserPlus}
+        actions={
+          <Button onClick={() => router.push('/admin/apps/saude/servidores/vincular')}>
+            <UserPlus className="mr-2 h-4 w-4" />
+            Vincular servidor
+          </Button>
+        }
+      />
+
 
       {/* Filtros */}
       <Card>
@@ -247,7 +247,7 @@ export default function ServidoresSaudePage() {
             </span>
           </CardTitle>
           <CardDescription>
-            Lista de servidores com dados profissionais de saúde
+            Lista de servidores com dados profissionais de saÃºde
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -267,9 +267,9 @@ export default function ServidoresSaudePage() {
                   <TableHead>Categoria</TableHead>
                   <TableHead>Registro</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-center">Vínculos Ativos</TableHead>
+                  <TableHead className="text-center">VÃ­nculos Ativos</TableHead>
                   <TableHead className="text-center">Equipes Ativas</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead className="text-right">AÃ§Ãµes</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
