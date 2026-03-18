@@ -161,7 +161,7 @@ COPY digiurban/backend/update-service-uniqueness.js ./update-service-uniqueness.
 # Playwright: instalar Chromium usando binário local dos node_modules copiados acima
 # IMPORTANTE: usar ./node_modules/.bin/playwright (não npx) para garantir versão correta
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
-RUN node_modules/.bin/playwright install chromium --with-deps
+RUN node_modules/.bin/playwright install chromium
 
 # Criar diretórios de dados e uploads
 RUN mkdir -p /app/data /app/uploads /app/logs && \

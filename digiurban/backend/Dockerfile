@@ -90,7 +90,7 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 # Instalar browsers do Playwright ANTES de criar usuário não-root
-RUN npx playwright install chromium --with-deps
+RUN npx playwright install chromium
 
 # Create directory for SQLite database
 RUN mkdir -p /app/data
