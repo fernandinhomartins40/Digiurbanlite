@@ -742,11 +742,11 @@ export function ProtocolPendingsTab({
               Nova Pendência
             </Button>
           </DialogTrigger>
-          <DialogContent className="flex w-[calc(100vw-1.5rem)] max-w-3xl flex-col overflow-hidden p-0 sm:w-[calc(100vw-3rem)] sm:max-h-[calc(100vh-3rem)]">
+          <DialogContent className="grid w-[calc(100vw-1.5rem)] max-w-3xl grid-rows-[auto,minmax(0,1fr),auto] gap-0 overflow-hidden p-0 max-h-[calc(100dvh-1.5rem)] sm:w-[calc(100vw-3rem)] sm:max-h-[calc(100dvh-3rem)]">
             <DialogHeader className="border-b px-4 py-4 sm:px-6">
               <DialogTitle>Criar Nova Pendência</DialogTitle>
             </DialogHeader>
-            <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6">
+            <div className="min-h-0 overflow-y-auto overscroll-contain px-4 py-4 sm:px-6">
               <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
