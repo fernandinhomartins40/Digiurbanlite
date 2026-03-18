@@ -98,6 +98,13 @@ export default function CitizenDashboard() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
+  type BotUploadItem = {
+    docId?: string;
+    documentType?: string;
+    required?: boolean;
+    file: File;
+  };
+
   // Hook unificado de conversas (✅ COM BOT AUTO-INICIADO)
   const {
     conversations,
@@ -300,14 +307,53 @@ export default function CitizenDashboard() {
     }
   };
 
-  const handleBotUpload = async (files: File[]) => {
+  const handleBotUpload = async (filesOrItems: File[] | BotUploadItem[]) => {
     if (!selectedConversation) return;
 
     setIsBotTyping(true);
 
     try {
       const formData = new FormData();
-      files.forEach((file) => formData.append('files', file));
+      const uploadItems = filesOrItems
+        .map((item) => {
+          if (item instanceof File) {
+            return {
+              file: item,
+              docId: undefined,
+              documentType: undefined,
+              required: true,
+            };
+          }
+
+          if (item?.file instanceof File) {
+            return {
+              file: item.file,
+              docId: item.docId,
+              documentType: item.documentType,
+              required: item.required !== false,
+            };
+          }
+
+          return null;
+        })
+        .filter(Boolean) as Array<{
+        file: File;
+        docId?: string;
+        documentType?: string;
+        required: boolean;
+      }>;
+
+      uploadItems.forEach(({ file }) => formData.append('files', file));
+      formData.append(
+        'fileMetadata',
+        JSON.stringify(
+          uploadItems.map(({ docId, documentType, required }) => ({
+            docId,
+            documentType,
+            required,
+          }))
+        )
+      );
       formData.append('conversationId', selectedConversation.id);
 
       const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {
@@ -353,8 +399,12 @@ export default function CitizenDashboard() {
 
   const handleBotInteraction = async (interaction: any) => {
     try {
-      // Caso 1: Upload de arquivos (array de File)
-      if (Array.isArray(interaction) && interaction.length > 0 && interaction[0] instanceof File) {
+      // Caso 1: Upload de arquivos (array de File ou payload estruturado do BotDocumentUpload)
+      if (
+        Array.isArray(interaction) &&
+        interaction.length > 0 &&
+        (interaction[0] instanceof File || interaction[0]?.file instanceof File)
+      ) {
         await handleBotUpload(interaction);
         return;
       }
@@ -1202,4 +1252,3 @@ export default function CitizenDashboard() {
     </div>
   );
 }
-

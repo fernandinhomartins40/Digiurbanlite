@@ -467,6 +467,7 @@ export default function ProtocolDetailPage() {
                   <ProtocolPendingsTab
                     protocolId={protocolId}
                     pendings={pendings}
+                    service={protocol?.service}
                     onRefresh={loadProtocolData}
                     creationContext={pendingCreationContext}
                     pendingDialogOpen={pendingDialogOpen}

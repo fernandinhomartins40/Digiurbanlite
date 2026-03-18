@@ -871,38 +871,41 @@ export class CitizenAiOrchestrator {
       };
     }
 
+    const pendingDocumentRequests = this.getPendingDocumentRequests(selectedPending);
+    const pendingFieldRequests = this.getPendingFieldRequests(selectedPending);
     const next: CitizenAiSessionState = {
       ...session,
       currentPendingId: String(selectedPending.id),
       currentPendingTitle: String(selectedPending.title || selected.label),
       currentPendingType: String(selectedPending.type || selectedPending.pendingType || 'INFORMATION'),
+      currentPendingDocumentRequests: pendingDocumentRequests,
+      currentPendingFieldRequests: pendingFieldRequests,
     };
 
     if (next.currentPendingType === 'DOCUMENT') {
       const waiting = this.withStage(next, 'awaiting_protocol_pending_document_upload');
+      const requiredDocuments = pendingDocumentRequests.map((document, index) => ({
+        id: String(document.id || document.documentId || `pending-doc-${index}`),
+        name: String(document.label || document.documentType || document.id || `Documento ${index + 1}`),
+        required: document.required !== false,
+      }));
       await this.persistSession(execution.id, waiting);
       return {
         session: waiting,
         response: {
-          message: `${next.currentPendingTitle}. Envie o documento solicitado para eu registrar a resposta no protocolo.`,
+          message: `${next.currentPendingTitle}. Envie os documentos solicitados para eu registrar a resposta no protocolo.`,
           messageType: 'upload',
           data: {
             uploadConfig: {
-              text: 'Envie o documento solicitado',
-              multiple: false,
-              maxFiles: 1,
+              text: 'Envie os documentos solicitados',
+              multiple: true,
+              maxFiles: Math.max(requiredDocuments.length, 1),
               maxFileSize: 10,
               allowSkip: false,
               allowedTypes: ['application/pdf', 'image/*'],
               saveAs: 'pendingDocument',
             },
-            requiredDocuments: [
-              {
-                id: String(selectedPending.metadata?.documentId || selectedPending.metadata?.documentType || selectedPending.id),
-                name: String(selectedPending.metadata?.documentLabel || selectedPending.metadata?.documentType || next.currentPendingTitle),
-                required: true,
-              },
-            ],
+            requiredDocuments,
           } as any,
           metadata: this.meta(execution, waiting, true),
         },
@@ -945,6 +948,8 @@ export class CitizenAiOrchestrator {
       currentPendingId: undefined,
       currentPendingTitle: undefined,
       currentPendingType: undefined,
+      currentPendingDocumentRequests: undefined,
+      currentPendingFieldRequests: undefined,
     };
     await this.persistSession(execution.id, refreshed);
 
@@ -982,37 +987,74 @@ export class CitizenAiOrchestrator {
       return { session: next, response: this.buildWelcomeResponse(execution, next) };
     }
 
-    const file = files[0];
-    const filePath = typeof file?.filePath === 'string' ? file.filePath : '';
-    if (!filePath) {
+    const validFiles = files.filter((file) => typeof file?.filePath === 'string' && file.filePath);
+    const requiredDocuments = Array.isArray(session.currentPendingDocumentRequests)
+      ? session.currentPendingDocumentRequests
+      : [];
+
+    if (!validFiles.length) {
       return {
         session,
         response: {
-          message: 'Nao consegui identificar o arquivo enviado. Tente anexar o documento novamente.',
+          message: 'Nao consegui identificar os arquivos enviados. Tente anexar os documentos novamente.',
           messageType: 'upload',
           data: {
             uploadConfig: {
-              text: 'Envie o documento solicitado',
-              multiple: false,
-              maxFiles: 1,
+              text: 'Envie os documentos solicitados',
+              multiple: true,
+              maxFiles: Math.max(requiredDocuments.length, 1),
               maxFileSize: 10,
               allowSkip: false,
               allowedTypes: ['application/pdf', 'image/*'],
               saveAs: 'pendingDocument',
             },
+            requiredDocuments,
           } as any,
           metadata: this.meta(execution, session, true),
         },
       };
     }
 
-    const result = await this.integration.resolveProtocolPendingWithDocument({
+    const missingDocuments = requiredDocuments.filter((document) =>
+      document?.required !== false &&
+      !validFiles.some((file) => this.matchesRequiredDocument(file, document))
+    );
+
+    if (missingDocuments.length > 0) {
+      return {
+        session,
+        response: {
+          message: `Ainda faltam documentos obrigatorios: ${missingDocuments.map((document) => String(document.label || document.documentType || document.id)).join(', ')}.`,
+          messageType: 'upload',
+          data: {
+            uploadConfig: {
+              text: 'Envie os documentos solicitados',
+              multiple: true,
+              maxFiles: Math.max(requiredDocuments.length, 1),
+              maxFileSize: 10,
+              allowSkip: false,
+              allowedTypes: ['application/pdf', 'image/*'],
+              saveAs: 'pendingDocument',
+            },
+            requiredDocuments,
+          } as any,
+          metadata: this.meta(execution, session, true),
+        },
+      };
+    }
+
+    const result = await (this.integration as any).resolveProtocolPendingWithDocuments({
       protocolId: session.currentProtocolId,
       pendingId: session.currentPendingId,
       citizenId: execution.citizenId,
-      filePath,
-      fileName: typeof file?.fileName === 'string' ? file.fileName : undefined,
-      mimeType: typeof file?.mimeType === 'string' ? file.mimeType : undefined,
+      files: validFiles.map((file) => ({
+        filePath: String(file.filePath),
+        fileName: typeof file?.fileName === 'string' ? file.fileName : undefined,
+        mimeType: typeof file?.mimeType === 'string' ? file.mimeType : undefined,
+        documentId: typeof file?.documentId === 'string' ? file.documentId : undefined,
+        documentType: typeof file?.documentType === 'string' ? file.documentType : undefined,
+        required: file?.required !== false,
+      })),
     });
 
     const refreshed: CitizenAiSessionState = {
@@ -1021,6 +1063,8 @@ export class CitizenAiOrchestrator {
       currentPendingId: undefined,
       currentPendingTitle: undefined,
       currentPendingType: undefined,
+      currentPendingDocumentRequests: undefined,
+      currentPendingFieldRequests: undefined,
     };
     await this.persistSession(execution.id, refreshed);
 
@@ -1298,6 +1342,52 @@ export class CitizenAiOrchestrator {
         required: doc?.required !== false,
       };
     });
+  }
+
+  private getPendingDocumentRequests(pending: Record<string, any>): Array<Record<string, any>> {
+    const metadata = pending?.metadata && typeof pending.metadata === 'object'
+      ? pending.metadata
+      : {};
+
+    const documentRequests = Array.isArray(metadata.documentRequests) && metadata.documentRequests.length > 0
+      ? metadata.documentRequests
+      : [{
+          id: metadata.documentId || metadata.documentType || pending.id,
+          documentId: metadata.documentId,
+          documentType: metadata.documentType || pending.title,
+          label: metadata.documentLabel || metadata.documentType || pending.title || 'Documento solicitado',
+          required: true,
+        }];
+
+    return documentRequests.map((document: any, index: number) => ({
+      id: String(document?.id || document?.documentId || document?.documentType || `pending-doc-${index}`),
+      documentId: typeof document?.documentId === 'string' ? document.documentId : undefined,
+      documentType: String(document?.documentType || document?.name || document?.label || `Documento ${index + 1}`),
+      label: String(document?.label || document?.name || document?.documentType || `Documento ${index + 1}`),
+      required: document?.required !== false,
+    }));
+  }
+
+  private getPendingFieldRequests(pending: Record<string, any>): Array<Record<string, any>> {
+    const metadata = pending?.metadata && typeof pending.metadata === 'object'
+      ? pending.metadata
+      : {};
+
+    if (Array.isArray(metadata.fields) && metadata.fields.length > 0) {
+      return metadata.fields;
+    }
+
+    if (metadata.fieldId || metadata.fieldKey || metadata.fieldLabel) {
+      return [{
+        id: metadata.fieldId,
+        key: metadata.fieldKey,
+        label: metadata.fieldLabel || metadata.fieldKey || pending.title || 'Informacao',
+        type: metadata.fieldType || 'text',
+        required: true,
+      }];
+    }
+
+    return [];
   }
 
   private matchesRequiredDocument(file: Record<string, unknown>, requiredDoc: Record<string, any>): boolean {

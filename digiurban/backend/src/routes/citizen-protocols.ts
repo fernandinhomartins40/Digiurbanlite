@@ -1,8 +1,8 @@
-/**
+﻿/**
  * ============================================================================
  * CITIZEN PROTOCOLS ROUTES
  * ============================================================================
- * Rotas para cidadÃƒÂ£os acessarem seus protocolos
+ * Rotas para cidadÃƒÆ’Ã‚Â£os acessarem seus protocolos
  */
 
 import { Router } from 'express';
@@ -29,7 +29,7 @@ import path from 'path';
 const router = Router();
 
 /**
- * Helper: Cria documentos PENDING baseado nas configuraÃƒÂ§ÃƒÂµes do serviÃƒÂ§o
+ * Helper: Cria documentos PENDING baseado nas configuraÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do serviÃƒÆ’Ã‚Â§o
  */
 async function createPendingDocumentsForProtocol(
   protocolId: string,
@@ -37,7 +37,7 @@ async function createPendingDocumentsForProtocol(
   uploadedFiles: any[]
 ): Promise<void> {
   try {
-    // Verificar se serviÃƒÂ§o requer documentos
+    // Verificar se serviÃƒÆ’Ã‚Â§o requer documentos
     if (!service.requiresDocuments || !service.requiredDocuments) {
       return;
     }
@@ -59,7 +59,7 @@ async function createPendingDocumentsForProtocol(
       return;
     }
 
-    // Ã¢Å“â€¦ FASE 3: MAPEAMENTO ROBUSTO com sanitizaÃƒÂ§ÃƒÂ£o
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ FASE 3: MAPEAMENTO ROBUSTO com sanitizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
     const normalizedRequiredDocs = requiredDocs.map(docConfig => ({
       id: sanitizeDocumentId(docConfig.id || docConfig.name || docConfig),
       name: docConfig.name || docConfig.id || docConfig,
@@ -89,7 +89,7 @@ async function createPendingDocumentsForProtocol(
             protocolId,
             documentType: reqDoc.name,
             isRequired: reqDoc.required,
-            fileName: uploadedFile.filename, // Ã¢Å“â€¦ Usar filename (processado) ao invÃƒÂ©s de name (original)
+            fileName: uploadedFile.filename, // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Usar filename (processado) ao invÃƒÆ’Ã‚Â©s de name (original)
             fileUrl: uploadedFile.url,
             fileSize: uploadedFile.size,
             mimeType: uploadedFile.mimetype,
@@ -97,9 +97,9 @@ async function createPendingDocumentsForProtocol(
             uploadedAt: new Date()
           }
         });
-        console.log(`   Ã¢Å“â€œ Documento UPLOADED: ${reqDoc.name} (sanitized: ${reqDoc.id})`);
+        console.log(`   ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Documento UPLOADED: ${reqDoc.name} (sanitized: ${reqDoc.id})`);
       } else {
-        // Arquivo nÃƒÂ£o foi enviado - criar como PENDING
+        // Arquivo nÃƒÆ’Ã‚Â£o foi enviado - criar como PENDING
         await prisma.protocolDocument.create({
           data: {
             protocolId,
@@ -108,29 +108,29 @@ async function createPendingDocumentsForProtocol(
             status: DocumentStatus.PENDING
           }
         });
-        console.log(`   Ã¢â€ â€™ Documento PENDING: ${reqDoc.name} (sanitized: ${reqDoc.id})`);
+        console.log(`   ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Documento PENDING: ${reqDoc.name} (sanitized: ${reqDoc.id})`);
       }
     }
 
-    // Ã¢Å¡Â Ã¯Â¸Â  AVISO: Arquivos sem mapeamento
+    // ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  AVISO: Arquivos sem mapeamento
     if (mapping.unmappedFiles.length > 0) {
       for (const idx of mapping.unmappedFiles) {
         const file = uploadedFiles[idx];
-        console.warn(`   Ã¢Å¡Â Ã¯Â¸Â  ATENÃƒâ€¡ÃƒÆ’O: Arquivo nÃƒÂ£o mapeado: ${file.name} (documentId: ${file.documentId})`);
-        console.warn(`      Ã¢â€ â€™ Sanitizado como: ${normalizedUploadedFiles[idx].documentId}`);
-        console.warn(`      Ã¢â€ â€™ Este arquivo NÃƒÆ’O serÃƒÂ¡ salvo no protocolo!`);
+        console.warn(`   ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  ATENÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O: Arquivo nÃƒÆ’Ã‚Â£o mapeado: ${file.name} (documentId: ${file.documentId})`);
+        console.warn(`      ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Sanitizado como: ${normalizedUploadedFiles[idx].documentId}`);
+        console.warn(`      ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Este arquivo NÃƒÆ’Ã†â€™O serÃƒÆ’Ã‚Â¡ salvo no protocolo!`);
       }
     }
 
-    // Ã¢Å¡Â Ã¯Â¸Â  AVISO: Documentos obrigatÃƒÂ³rios faltando
+    // ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  AVISO: Documentos obrigatÃƒÆ’Ã‚Â³rios faltando
     if (mapping.missingRequired.length > 0) {
-      console.warn(`   Ã¢Å¡Â Ã¯Â¸Â  Documentos obrigatÃƒÂ³rios nÃƒÂ£o enviados: ${mapping.missingRequired.join(', ')}`);
+      console.warn(`   ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  Documentos obrigatÃƒÆ’Ã‚Â³rios nÃƒÆ’Ã‚Â£o enviados: ${mapping.missingRequired.join(', ')}`);
     }
 
-    console.log(`   Ã¢Å“â€¦ Total processado: ${requiredDocs.length} requeridos | ${mapping.mapped.size} enviados | ${mapping.unmappedFiles.length} nÃƒÂ£o mapeados`);
+    console.log(`   ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Total processado: ${requiredDocs.length} requeridos | ${mapping.mapped.size} enviados | ${mapping.unmappedFiles.length} nÃƒÆ’Ã‚Â£o mapeados`);
   } catch (error) {
     console.error('Erro ao criar documentos PENDING:', error);
-    // NÃƒÂ£o falhar a criaÃƒÂ§ÃƒÂ£o do protocolo se documentos falharem
+    // NÃƒÆ’Ã‚Â£o falhar a criaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do protocolo se documentos falharem
   }
 }
 
@@ -160,6 +160,79 @@ function normalizeCitizenPendingResponse(pending: any) {
   return pendingService.serializePendingForCitizen(pending);
 }
 
+function getPendingFieldRequests(pending: any) {
+  const metadata = pending?.metadata && typeof pending.metadata === 'object'
+    ? pending.metadata as Record<string, any>
+    : {};
+
+  if (Array.isArray(metadata.fields) && metadata.fields.length > 0) {
+    return metadata.fields.map((field: any) => ({
+      fieldId: typeof field?.id === 'string' ? field.id : undefined,
+      fieldKey: typeof field?.key === 'string' ? field.key : undefined,
+      fieldLabel: typeof field?.label === 'string' ? field.label : undefined,
+      fieldType: typeof field?.type === 'string' ? field.type : undefined,
+      required: field?.required !== false,
+    }));
+  }
+
+  if (metadata.fieldId || metadata.fieldKey || metadata.fieldLabel) {
+    return [{
+      fieldId: typeof metadata.fieldId === 'string' ? metadata.fieldId : undefined,
+      fieldKey: typeof metadata.fieldKey === 'string' ? metadata.fieldKey : undefined,
+      fieldLabel: typeof metadata.fieldLabel === 'string' ? metadata.fieldLabel : undefined,
+      fieldType: typeof metadata.fieldType === 'string' ? metadata.fieldType : undefined,
+      required: true,
+    }];
+  }
+
+  return [];
+}
+
+function getPendingDocumentRequests(pending: any) {
+  const metadata = pending?.metadata && typeof pending.metadata === 'object'
+    ? pending.metadata as Record<string, any>
+    : {};
+
+  if (Array.isArray(metadata.documentRequests) && metadata.documentRequests.length > 0) {
+    return metadata.documentRequests.map((document: any, index: number) => ({
+      id: String(document?.id || document?.documentId || document?.documentType || document?.name || `document-${index}`),
+      documentId: typeof document?.documentId === 'string' ? document.documentId : undefined,
+      documentType: String(document?.documentType || document?.name || pending.title || `Documento ${index + 1}`),
+      label: String(document?.label || document?.name || document?.documentType || pending.title || `Documento ${index + 1}`),
+      required: document?.required !== false,
+    }));
+  }
+
+  return [{
+    id: String(metadata.documentId || metadata.documentType || pending.id),
+    documentId: typeof metadata.documentId === 'string' ? metadata.documentId : undefined,
+    documentType: String(metadata.documentType || pending.title || 'DOCUMENTO_PENDENCIA'),
+    label: String(metadata.documentLabel || metadata.documentType || pending.title || 'Documento solicitado'),
+    required: true,
+  }];
+}
+
+function parsePendingUploadMetadata(rawMetadata: unknown, filesCount: number) {
+  if (!rawMetadata || typeof rawMetadata !== 'string') {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawMetadata);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.slice(0, filesCount).map((item: any) => ({
+      documentId: item?.docId || item?.documentId || undefined,
+      documentType: item?.documentType || item?.name || undefined,
+      required: item?.required !== false,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 async function resolveCitizenPendingText(
   protocolId: string,
   pending: any,
@@ -171,21 +244,64 @@ async function resolveCitizenPendingText(
     : {};
   const { text, payload } = parseCitizenResolutionInput(resolution);
 
-  if (pending.type === 'CORRECTION' && metadata.fieldId) {
-    const candidateValue =
-      typeof payload?.[String(metadata.fieldId)] === 'string' ? payload?.[String(metadata.fieldId)] :
-      typeof payload?.[String(metadata.fieldKey || '')] === 'string' ? payload?.[String(metadata.fieldKey || '')] :
-      typeof payload?.value === 'string' ? payload.value :
-      text;
+  const fieldRequests = getPendingFieldRequests(pending);
+  if (fieldRequests.length > 0) {
+    const submittedFields = fieldRequests.map((field, index) => {
+      const candidateValue =
+        typeof payload?.[String(field.fieldId || '')] === 'string' ? payload?.[String(field.fieldId || '')] :
+        typeof payload?.[String(field.fieldKey || '')] === 'string' ? payload?.[String(field.fieldKey || '')] :
+        fieldRequests.length === 1 && typeof payload?.value === 'string' ? payload.value :
+        fieldRequests.length === 1 ? text :
+        '';
 
-    if (!candidateValue?.trim()) {
-      throw new Error('Informe o novo valor para corrigir o dado solicitado.');
+      return {
+        ...field,
+        value: candidateValue?.trim(),
+        index,
+      };
+    });
+
+    const missingFields = submittedFields.filter((field) => field.required !== false && !field.value);
+    if (missingFields.length > 0) {
+      throw new Error(`Informe os dados solicitados: ${missingFields.map((field) => field.fieldLabel || field.fieldKey || `campo ${field.index + 1}`).join(', ')}`);
     }
 
-    await dataFieldService.correctDataField({
-      fieldId: String(metadata.fieldId),
-      newValue: candidateValue.trim(),
-      correctedBy: citizenId,
+    await dataFieldService.applyPendingFieldResponses(
+      submittedFields
+        .filter((field) => field.value)
+        .map((field) => ({
+          protocolId,
+          fieldId: field.fieldId,
+          fieldKey: field.fieldKey,
+          fieldLabel: field.fieldLabel,
+          fieldType: field.fieldType,
+          value: String(field.value),
+          correctedBy: citizenId,
+          required: field.required,
+        }))
+    );
+
+    const summary = submittedFields
+      .filter((field) => field.value)
+      .map((field) => `${field.fieldLabel || field.fieldKey || 'Campo'}: ${field.value}`)
+      .join('\n');
+
+    await pendingService.submitPendingResponse(pending.id, citizenId, summary, {
+      fields: submittedFields.map((field) => ({
+        id: field.fieldId || field.fieldKey,
+        key: field.fieldKey || field.fieldId,
+        label: field.fieldLabel || field.fieldKey || 'Campo',
+        type: field.fieldType || 'text',
+        required: field.required !== false,
+      })),
+      submittedFields: submittedFields
+        .filter((field) => field.value)
+        .map((field) => ({
+          id: field.fieldId || field.fieldKey,
+          key: field.fieldKey || field.fieldId,
+          label: field.fieldLabel || field.fieldKey || 'Campo',
+          value: field.value,
+        })),
     });
 
     return prisma.protocolPending.findUnique({ where: { id: pending.id } });
@@ -203,67 +319,119 @@ async function resolveCitizenPendingWithDocument(
   protocolId: string,
   pending: any,
   citizenId: string,
-  file: Express.Multer.File
+  files: Express.Multer.File[],
+  rawUploadMetadata?: unknown
 ) {
   if (pending.type !== 'DOCUMENT') {
     throw new Error('Esta pendencia nao aceita envio de documento.');
   }
 
-  const metadata = pending?.metadata && typeof pending.metadata === 'object'
-    ? pending.metadata as Record<string, any>
-    : {};
-  const documentType = String(metadata.documentType || pending.title || 'DOCUMENTO_PENDENCIA');
-
-  const protocolDir = ensureProtocolDir(protocolId);
-  const newPath = path.join(protocolDir, file.filename);
-  fs.renameSync(file.path, newPath);
-
-  let targetDocumentId = typeof metadata.documentId === 'string' ? metadata.documentId : undefined;
-
-  if (!targetDocumentId) {
-    const existingDocument = await prisma.protocolDocument.findFirst({
-      where: {
-        protocolId,
-        documentType,
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    if (existingDocument) {
-      targetDocumentId = existingDocument.id;
-    } else {
-      const created = await prisma.protocolDocument.create({
-        data: {
-          protocolId,
-          documentType,
-          isRequired: true,
-          status: DocumentStatus.PENDING,
-        },
-      });
-      targetDocumentId = created.id;
-    }
+  if (!Array.isArray(files) || files.length === 0) {
+    throw new Error('Documento Ã© obrigatÃ³rio.');
   }
 
-  await uploadProtocolDocument(targetDocumentId, {
-    fileName: file.originalname,
-    fileUrl: getProtocolFileUrl(protocolId, file.filename),
-    fileSize: file.size,
-    mimeType: file.mimetype,
-    uploadedBy: citizenId,
+  const requestedDocuments = getPendingDocumentRequests(pending);
+  const uploadMetadata = parsePendingUploadMetadata(rawUploadMetadata, files.length);
+
+  const mapping = mapUploadedFilesToDocuments(
+    files.map((file, index) => ({
+      documentId: sanitizeDocumentId(
+        String(
+          uploadMetadata[index]?.documentId ||
+          uploadMetadata[index]?.documentType ||
+          file.originalname
+        )
+      ),
+      name: file.originalname,
+    })),
+    requestedDocuments.map((document) => ({
+      id: sanitizeDocumentId(document.id || document.documentType || document.label),
+      name: document.label,
+      required: document.required !== false,
+    }))
+  );
+
+  if (mapping.missingRequired.length > 0) {
+    throw new Error(`Ainda faltam documentos obrigatÃ³rios: ${mapping.missingRequired.join(', ')}`);
+  }
+
+  const uploadedDocuments: Array<{ id: string; documentType: string; fileName: string }> = [];
+  const protocolDir = ensureProtocolDir(protocolId);
+
+  for (const requestedDocument of requestedDocuments) {
+    const requiredId = sanitizeDocumentId(requestedDocument.id || requestedDocument.documentType || requestedDocument.label);
+    const fileIndex = mapping.mapped.get(requiredId);
+    if (fileIndex === undefined) {
+      continue;
+    }
+
+    const file = files[fileIndex];
+    const newPath = path.join(protocolDir, file.filename);
+    fs.renameSync(file.path, newPath);
+
+    let targetDocumentId = requestedDocument.documentId;
+    if (!targetDocumentId) {
+      const existingDocument = await prisma.protocolDocument.findFirst({
+        where: {
+          protocolId,
+          documentType: requestedDocument.documentType,
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      if (existingDocument) {
+        targetDocumentId = existingDocument.id;
+      } else {
+        const created = await prisma.protocolDocument.create({
+          data: {
+            protocolId,
+            documentType: requestedDocument.documentType,
+            isRequired: requestedDocument.required !== false,
+            status: DocumentStatus.PENDING,
+          },
+        });
+        targetDocumentId = created.id;
+      }
+    }
+
+    const updatedDocument = await uploadProtocolDocument(targetDocumentId, {
+      fileName: file.originalname,
+      fileUrl: getProtocolFileUrl(protocolId, file.filename),
+      fileSize: file.size,
+      mimeType: file.mimetype,
+      uploadedBy: citizenId,
+    }, {
+      skipPendingSubmission: true,
+    });
+
+    uploadedDocuments.push({
+      id: updatedDocument.id,
+      documentType: updatedDocument.documentType,
+      fileName: updatedDocument.fileName || file.originalname,
+    });
+  }
+
+  const resolutionText = uploadedDocuments.length === 1
+    ? `Documento enviado: ${uploadedDocuments[0].documentType}`
+    : `Documentos enviados: ${uploadedDocuments.map((document) => document.documentType).join(', ')}`;
+
+  await pendingService.submitPendingResponse(pending.id, citizenId, resolutionText, {
+    documentRequests: requestedDocuments,
+    submittedDocuments: uploadedDocuments,
   });
 
   return prisma.protocolPending.findUnique({ where: { id: pending.id } });
 }
 
-// Middleware de autenticaÃƒÂ§ÃƒÂ£o do cidadÃƒÂ£o
+// Middleware de autenticaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do cidadÃƒÆ’Ã‚Â£o
 router.use(citizenAuthMiddleware);
 
 // POST /api/citizen/protocols - Criar novo protocolo com upload de arquivos
-// Ã¢Å“â€¦ CORREÃƒâ€¡ÃƒÆ’O CRÃƒÂTICA: usar .any() ao invÃƒÂ©s de .array('documents')
+// ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ CORREÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O CRÃƒÆ’Ã‚ÂTICA: usar .any() ao invÃƒÆ’Ã‚Â©s de .array('documents')
 // Frontend envia: documents[0][file], documents[1][file], etc
-// Multer .array() sÃƒÂ³ aceita: documents[], documents[], etc
+// Multer .array() sÃƒÆ’Ã‚Â³ aceita: documents[], documents[], etc
 router.post('/', upload.any(), async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
@@ -271,7 +439,7 @@ router.post('/', upload.any(), async (req, res) => {
     const files = req.files as Express.Multer.File[];
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
     const {
@@ -295,22 +463,22 @@ router.post('/', upload.any(), async (req, res) => {
 
     // Debug detalhado de arquivos
     if (files && files.length > 0) {
-      console.log('Ã°Å¸â€œÂ Arquivos recebidos:');
+      console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â Arquivos recebidos:');
       files.forEach((file, idx) => {
         console.log(`  [${idx}] ${file.originalname} - ${file.size} bytes - ${file.mimetype}`);
         console.log(`      fieldname: ${file.fieldname}`);
         console.log(`      path: ${file.path}`);
       });
     } else {
-      console.log('Ã¢Å¡Â Ã¯Â¸Â  NENHUM arquivo recebido!');
+      console.log('ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  NENHUM arquivo recebido!');
       console.log('   req.files:', req.files);
       console.log('   req.file:', (req as any).file);
     }
 
     // Debug: Mostrar todos os campos do req.body
-    console.log('   Ã°Å¸â€œâ€¹ req.body keys:', Object.keys(req.body));
+    console.log('   ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ req.body keys:', Object.keys(req.body));
 
-    // Ã¢Å“â€¦ EXTRAÃƒâ€¡ÃƒÆ’O ROBUSTA: Aceitar mÃƒÂºltiplos formatos
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ EXTRAÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O ROBUSTA: Aceitar mÃƒÆ’Ã‚Âºltiplos formatos
     let documentTypes: string[] = [];
 
     // Formato 1: Array documentTypes (preferido)
@@ -328,26 +496,26 @@ router.post('/', upload.any(), async (req, res) => {
       ).filter(Boolean);
     }
 
-    console.log('   Ã°Å¸ÂÂ·Ã¯Â¸Â  Document Types extraÃƒÂ­dos:', documentTypes);
-    console.log('   Ã°Å¸â€œÂ¦ Total de arquivos:', files?.length || 0);
+    console.log('   ÃƒÂ°Ã…Â¸Ã‚ÂÃ‚Â·ÃƒÂ¯Ã‚Â¸Ã‚Â  Document Types extraÃƒÆ’Ã‚Â­dos:', documentTypes);
+    console.log('   ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã‚Â¦ Total de arquivos:', files?.length || 0);
 
-    // TEMPORÃƒÂRIO: Mover arquivos para diretÃƒÂ³rio temporÃƒÂ¡rio
-    // ApÃƒÂ³s criar protocolo, moveremos para /uploads/protocols/{protocolId}/
+    // TEMPORÃƒÆ’Ã‚ÂRIO: Mover arquivos para diretÃƒÆ’Ã‚Â³rio temporÃƒÆ’Ã‚Â¡rio
+    // ApÃƒÆ’Ã‚Â³s criar protocolo, moveremos para /uploads/protocols/{protocolId}/
     const tempUploadedFiles = files ? files.map((file, index) => {
       const documentType = documentTypes[index];
 
       if (!documentType) {
-        console.warn(`   Ã¢Å¡Â Ã¯Â¸Â  Arquivo ${index} (${file.originalname}) SEM documentType definido!`);
+        console.warn(`   ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  Arquivo ${index} (${file.originalname}) SEM documentType definido!`);
       }
 
-      console.log(`   Ã¢â€ â€™ Arquivo ${index}: ${file.originalname}`);
+      console.log(`   ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ Arquivo ${index}: ${file.originalname}`);
       console.log(`      - Tipo de documento: ${documentType || 'INDEFINIDO'}`);
 
       return {
         id: documentType || file.originalname,
         documentId: documentType || file.originalname,
         name: file.originalname,
-        tempPath: file.path,  // Caminho temporÃƒÂ¡rio em /uploads/documents
+        tempPath: file.path,  // Caminho temporÃƒÆ’Ã‚Â¡rio em /uploads/documents
         size: file.size,
         mimetype: file.mimetype,
         filename: file.filename
@@ -356,7 +524,7 @@ router.post('/', upload.any(), async (req, res) => {
 
     console.log('Uploaded Documents (temp):', tempUploadedFiles.length);
 
-    // Buscar serviÃƒÂ§o
+    // Buscar serviÃƒÆ’Ã‚Â§o
     const service = await prisma.serviceSimplified.findFirst({
       where: {
         id: serviceId
@@ -369,12 +537,12 @@ router.post('/', upload.any(), async (req, res) => {
     if (!service) {
       return res.status(404).json({
         success: false,
-        error: 'ServiÃƒÂ§o nÃƒÂ£o encontrado'
+        error: 'ServiÃƒÆ’Ã‚Â§o nÃƒÆ’Ã‚Â£o encontrado'
         });
     }
 
-    // Ã¢Å“â€¦ VALIDAÃƒâ€¡ÃƒÆ’O DE UNICIDADE: Verificar se cidadÃƒÂ£o pode criar este protocolo
-    console.log('Ã°Å¸â€Â Validando unicidade do protocolo...');
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ VALIDAÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O DE UNICIDADE: Verificar se cidadÃƒÆ’Ã‚Â£o pode criar este protocolo
+    console.log('ÃƒÂ°Ã…Â¸Ã¢â‚¬ÂÃ‚Â Validando unicidade do protocolo...');
     const uniquenessValidation = await validateProtocolUniqueness(
       citizenId,
       serviceId,
@@ -382,17 +550,17 @@ router.post('/', upload.any(), async (req, res) => {
     );
 
     if (!uniquenessValidation.canCreate) {
-      console.log(`   Ã¢ÂÅ’ ValidaÃƒÂ§ÃƒÂ£o falhou: ${uniquenessValidation.reason}`);
+      console.log(`   ÃƒÂ¢Ã‚ÂÃ…â€™ ValidaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o falhou: ${uniquenessValidation.reason}`);
       return res.status(400).json({
         success: false,
-        error: uniquenessValidation.errorMessage || 'NÃƒÂ£o ÃƒÂ© possÃƒÂ­vel criar este protocolo',
+        error: uniquenessValidation.errorMessage || 'NÃƒÆ’Ã‚Â£o ÃƒÆ’Ã‚Â© possÃƒÆ’Ã‚Â­vel criar este protocolo',
         reason: uniquenessValidation.reason,
         existingProtocolNumber: uniquenessValidation.existingProtocolNumber
       });
     }
-    console.log('   Ã¢Å“â€œ ValidaÃƒÂ§ÃƒÂ£o de unicidade passou');
+    console.log('   ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ ValidaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de unicidade passou');
 
-    // Gerar nÃƒÂºmero do protocolo - Sistema centralizado com lock
+    // Gerar nÃƒÆ’Ã‚Âºmero do protocolo - Sistema centralizado com lock
     const protocolNumber = await generateProtocolNumberSafe();
 
     // Criar protocolo
@@ -400,7 +568,7 @@ router.post('/', upload.any(), async (req, res) => {
       data: {
         number: protocolNumber,
         title: service.name,
-        description: service.description || `SolicitaÃƒÂ§ÃƒÂ£o de ${service.name}`,
+        description: service.description || `SolicitaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de ${service.name}`,
         serviceId,
         departmentId: service.department.id,
         citizenId,
@@ -428,7 +596,7 @@ router.post('/', upload.any(), async (req, res) => {
         }
         });
 
-    // Ã¢Å“â€¦ FASE 1: Mover arquivos para diretÃƒÂ³rio do protocolo com padrÃƒÂ£o ÃƒÂºnico
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ FASE 1: Mover arquivos para diretÃƒÆ’Ã‚Â³rio do protocolo com padrÃƒÆ’Ã‚Â£o ÃƒÆ’Ã‚Âºnico
     const protocolDir = ensureProtocolDir(protocol.id);
     const uploadedDocuments = tempUploadedFiles.map(file => {
       const newFilename = file.filename;
@@ -436,7 +604,7 @@ router.post('/', upload.any(), async (req, res) => {
 
       // Mover arquivo de /uploads/documents para /uploads/protocols/{protocolId}
       fs.renameSync(file.tempPath, newPath);
-      console.log(`   Ã¢Å“â€œ Arquivo movido: ${file.name} Ã¢â€ â€™ ${newPath}`);
+      console.log(`   ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Arquivo movido: ${file.name} ÃƒÂ¢Ã¢â‚¬Â Ã¢â‚¬â„¢ ${newPath}`);
 
       return {
         ...file,
@@ -445,24 +613,24 @@ router.post('/', upload.any(), async (req, res) => {
       };
     });
 
-    // Criar histÃƒÂ³rico inicial
+    // Criar histÃƒÆ’Ã‚Â³rico inicial
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId: protocol.id,
         action: 'Protocolo criado',
-        comment: `Protocolo criado pelo cidadÃƒÂ£o para o serviÃƒÂ§o: ${service.name}`,
+        comment: `Protocolo criado pelo cidadÃƒÆ’Ã‚Â£o para o serviÃƒÆ’Ã‚Â§o: ${service.name}`,
         timestamp: new Date()
         }
         });
 
-    // Criar interaÃƒÂ§ÃƒÂ£o inicial
+    // Criar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o inicial
     await prisma.protocolInteraction.create({
       data: {
         protocolId: protocol.id,
         type: 'MESSAGE',
         authorType: 'CITIZEN',
         authorId: citizenId,
-        authorName: citizenName || 'CidadÃƒÂ£o',
+        authorName: citizenName || 'CidadÃƒÆ’Ã‚Â£o',
         message: `Protocolo ${protocolNumber} criado`,
         isInternal: false,
         isRead: false
@@ -472,35 +640,35 @@ router.post('/', upload.any(), async (req, res) => {
     // Criar documentos PENDING/UPLOADED na tabela ProtocolDocument
     await createPendingDocumentsForProtocol(protocol.id, service, uploadedDocuments);
 
-    // Ã¢Å“â€¦ INICIALIZAR WORKFLOW OBRIGATORIAMENTE (FALHA SE NÃƒÆ’O CONSEGUIR)
-    console.log(`Ã°Å¸â€œâ€¹ Inicializando workflow para protocolo ${protocol.id}`);
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ INICIALIZAR WORKFLOW OBRIGATORIAMENTE (FALHA SE NÃƒÆ’Ã†â€™O CONSEGUIR)
+    console.log(`ÃƒÂ°Ã…Â¸Ã¢â‚¬Å“Ã¢â‚¬Â¹ Inicializando workflow para protocolo ${protocol.id}`);
     const stages = await applyWorkflowToProtocol(protocol.id);
 
     if (!stages || stages.length === 0) {
-      // Ã¢ÂÅ’ ServiÃƒÂ§o nÃƒÂ£o tem workflow configurado - FALHA CRIAÃƒâ€¡ÃƒÆ’O
-      throw new Error(`ServiÃƒÂ§o "${service.name}" nÃƒÂ£o possui workflow configurado. Configure o workflow antes de criar protocolos.`);
+      // ÃƒÂ¢Ã‚ÂÃ…â€™ ServiÃƒÆ’Ã‚Â§o nÃƒÆ’Ã‚Â£o tem workflow configurado - FALHA CRIAÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O
+      throw new Error(`ServiÃƒÆ’Ã‚Â§o "${service.name}" nÃƒÆ’Ã‚Â£o possui workflow configurado. Configure o workflow antes de criar protocolos.`);
     }
-    console.log(`   Ã¢Å“â€œ Workflow inicializado com ${stages.length} etapa(s), primeira IN_PROGRESS`);
+    console.log(`   ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ Workflow inicializado com ${stages.length} etapa(s), primeira IN_PROGRESS`);
 
-    // Ã¢Å“â€¦ CRIAR SLA OBRIGATORIAMENTE (FALHA SE NÃƒÆ’O CONSEGUIR)
-    console.log('Ã¢ÂÂ±Ã¯Â¸Â  Criando SLA do protocolo');
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ CRIAR SLA OBRIGATORIAMENTE (FALHA SE NÃƒÆ’Ã†â€™O CONSEGUIR)
+    console.log('ÃƒÂ¢Ã‚ÂÃ‚Â±ÃƒÂ¯Ã‚Â¸Ã‚Â  Criando SLA do protocolo');
     const sla = await createProtocolSLA(protocol.id);
 
     if (!sla) {
-      // Ã¢ÂÅ’ SLA nÃƒÂ£o foi criado - FALHA CRIAÃƒâ€¡ÃƒÆ’O
+      // ÃƒÂ¢Ã‚ÂÃ…â€™ SLA nÃƒÆ’Ã‚Â£o foi criado - FALHA CRIAÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O
       throw new Error('Erro ao criar SLA do protocolo');
     }
-    console.log('   Ã¢Å“â€œ SLA criado com sucesso');
+    console.log('   ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ SLA criado com sucesso');
 
-    console.log('Ã¢Å“â€¦ Protocolo criado:', protocol.number);
+    console.log('ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ Protocolo criado:', protocol.number);
 
-    // Ã¢Å“â€¦ FASE 1: Enviar notificaÃƒÂ§ÃƒÂ£o via mensageiro
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ FASE 1: Enviar notificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o via mensageiro
     try {
       await messageNotificationService.notifyProtocolCreated(protocol.id);
-      console.log('   Ã¢Å“â€œ NotificaÃƒÂ§ÃƒÂ£o de criaÃƒÂ§ÃƒÂ£o enviada via mensageiro');
+      console.log('   ÃƒÂ¢Ã…â€œÃ¢â‚¬Å“ NotificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de criaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o enviada via mensageiro');
     } catch (notifError) {
-      console.error('   Ã¢Å¡Â Ã¯Â¸Â  Erro ao enviar notificaÃƒÂ§ÃƒÂ£o:', notifError);
-      // NÃƒÂ£o falhar a criaÃƒÂ§ÃƒÂ£o do protocolo se notificaÃƒÂ§ÃƒÂ£o falhar
+      console.error('   ÃƒÂ¢Ã…Â¡Ã‚Â ÃƒÂ¯Ã‚Â¸Ã‚Â  Erro ao enviar notificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o:', notifError);
+      // NÃƒÆ’Ã‚Â£o falhar a criaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do protocolo se notificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o falhar
     }
 
     console.log('========== FIM POST /protocols ==========\n');
@@ -511,7 +679,7 @@ router.post('/', upload.any(), async (req, res) => {
       message: 'Protocolo criado com sucesso'
         });
   } catch (error) {
-    console.error('Ã¢ÂÅ’ Erro ao criar protocolo:', error);
+    console.error('ÃƒÂ¢Ã‚ÂÃ…â€™ Erro ao criar protocolo:', error);
     return res.status(500).json({
       success: false,
       error: 'Erro interno do servidor',
@@ -520,13 +688,13 @@ router.post('/', upload.any(), async (req, res) => {
   }
 });
 
-// GET /api/citizen/protocols - Listar protocolos do cidadÃƒÂ£o logado
+// GET /api/citizen/protocols - Listar protocolos do cidadÃƒÆ’Ã‚Â£o logado
 router.get('/', async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
     const { page = 1, limit = 100, status } = req.query;
@@ -541,7 +709,7 @@ router.get('/', async (req, res) => {
       where.status = status;
     }
 
-    // Buscar protocolos do cidadÃƒÂ£o
+    // Buscar protocolos do cidadÃƒÆ’Ã‚Â£o
     const [protocols, total] = await Promise.all([
       prisma.protocolSimplified.findMany({
         where,
@@ -595,26 +763,26 @@ router.get('/', async (req, res) => {
         }
         });
   } catch (error) {
-    console.error('Erro ao buscar protocolos do cidadÃƒÂ£o:', error);
+    console.error('Erro ao buscar protocolos do cidadÃƒÆ’Ã‚Â£o:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// GET /api/citizen/protocols/:id - Detalhes de um protocolo especÃƒÂ­fico
+// GET /api/citizen/protocols/:id - Detalhes de um protocolo especÃƒÆ’Ã‚Â­fico
 router.get('/:id', async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
     const { id } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
     // Buscar protocolo
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id,
-        citizenId, // Garantir que o protocolo pertence ao cidadÃƒÂ£o
+        citizenId, // Garantir que o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
       },
       include: {
         service: {
@@ -659,10 +827,10 @@ router.get('/:id', async (req, res) => {
         });
 
     if (!protocol) {
-      return res.status(404).json({ error: 'Protocolo nÃƒÂ£o encontrado' });
+      return res.status(404).json({ error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado' });
     }
 
-    // Buscar histÃƒÂ³rico do protocolo
+    // Buscar histÃƒÆ’Ã‚Â³rico do protocolo
     const history = await prisma.protocolHistorySimplified.findMany({
       where: {
         protocolId: id
@@ -685,17 +853,17 @@ router.get('/:id', async (req, res) => {
   }
 });
 
-// GET /api/citizen/protocols/:id/interactions - Listar interaÃƒÂ§ÃƒÂµes do protocolo
+// GET /api/citizen/protocols/:id/interactions - Listar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes do protocolo
 router.get('/:id/interactions', async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
     const { id } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id,
@@ -704,14 +872,14 @@ router.get('/:id/interactions', async (req, res) => {
         });
 
     if (!protocol) {
-      return res.status(404).json({ error: 'Protocolo nÃƒÂ£o encontrado' });
+      return res.status(404).json({ error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado' });
     }
 
-    // Buscar interaÃƒÂ§ÃƒÂµes (apenas pÃƒÂºblicas para cidadÃƒÂ£os)
+    // Buscar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes (apenas pÃƒÆ’Ã‚Âºblicas para cidadÃƒÆ’Ã‚Â£os)
     const interactions = await prisma.protocolInteraction.findMany({
       where: {
         protocolId: id,
-        isInternal: false, // Apenas interaÃƒÂ§ÃƒÂµes pÃƒÂºblicas
+        isInternal: false, // Apenas interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes pÃƒÆ’Ã‚Âºblicas
       },
       orderBy: {
         createdAt: 'asc'
@@ -722,12 +890,12 @@ router.get('/:id/interactions', async (req, res) => {
       interactions
         });
   } catch (error) {
-    console.error('Erro ao buscar interaÃƒÂ§ÃƒÂµes:', error);
+    console.error('Erro ao buscar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
 
-// POST /api/citizen/protocols/:id/interactions - Criar nova interaÃƒÂ§ÃƒÂ£o
+// POST /api/citizen/protocols/:id/interactions - Criar nova interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
 router.post('/:id/interactions', async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
@@ -736,14 +904,14 @@ router.post('/:id/interactions', async (req, res) => {
     const { message, type } = req.body;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
     if (!message || !message.trim()) {
-      return res.status(400).json({ error: 'Mensagem ÃƒÂ© obrigatÃƒÂ³ria' });
+      return res.status(400).json({ error: 'Mensagem ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³ria' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id,
@@ -752,39 +920,39 @@ router.post('/:id/interactions', async (req, res) => {
         });
 
     if (!protocol) {
-      return res.status(404).json({ error: 'Protocolo nÃƒÂ£o encontrado' });
+      return res.status(404).json({ error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado' });
     }
 
-    // Criar interaÃƒÂ§ÃƒÂ£o
+    // Criar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
     const interaction = await prisma.protocolInteraction.create({
       data: {
         protocolId: id,
         type: type || 'MESSAGE',
         authorType: 'CITIZEN',
         authorId: citizenId,
-        authorName: citizenName || 'CidadÃƒÂ£o',
+        authorName: citizenName || 'CidadÃƒÆ’Ã‚Â£o',
         message: message.trim(),
         isInternal: false,
         isRead: false
         }
         });
 
-    // Ã¢Å“â€¦ FASE 1: Notificar servidor sobre novo comentÃƒÂ¡rio do cidadÃƒÂ£o
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ FASE 1: Notificar servidor sobre novo comentÃƒÆ’Ã‚Â¡rio do cidadÃƒÆ’Ã‚Â£o
     try {
       await messageNotificationService.notifyNewComment(
         id,
         message.trim(),
-        citizenName || 'CidadÃƒÂ£o'
+        citizenName || 'CidadÃƒÆ’Ã‚Â£o'
       );
     } catch (notifError) {
-      console.error('Erro ao enviar notificaÃƒÂ§ÃƒÂ£o de comentÃƒÂ¡rio:', notifError);
+      console.error('Erro ao enviar notificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de comentÃƒÆ’Ã‚Â¡rio:', notifError);
     }
 
     return res.status(201).json({
       interaction
         });
   } catch (error) {
-    console.error('Erro ao criar interaÃƒÂ§ÃƒÂ£o:', error);
+    console.error('Erro ao criar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
@@ -798,10 +966,10 @@ router.post('/:id/cancel', async (req, res) => {
     const { reason } = req.body;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id,
@@ -810,19 +978,19 @@ router.post('/:id/cancel', async (req, res) => {
         });
 
     if (!protocol) {
-      return res.status(404).json({ error: 'Protocolo nÃƒÂ£o encontrado' });
+      return res.status(404).json({ error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado' });
     }
 
-    // Verificar se o protocolo jÃƒÂ¡ estÃƒÂ¡ cancelado ou concluÃƒÂ­do
+    // Verificar se o protocolo jÃƒÆ’Ã‚Â¡ estÃƒÆ’Ã‚Â¡ cancelado ou concluÃƒÆ’Ã‚Â­do
     if (protocol.status === 'CANCELADO') {
-      return res.status(400).json({ error: 'Protocolo jÃƒÂ¡ estÃƒÂ¡ cancelado' });
+      return res.status(400).json({ error: 'Protocolo jÃƒÆ’Ã‚Â¡ estÃƒÆ’Ã‚Â¡ cancelado' });
     }
 
     if (protocol.status === 'CONCLUIDO') {
-      return res.status(400).json({ error: 'NÃƒÂ£o ÃƒÂ© possÃƒÂ­vel cancelar um protocolo concluÃƒÂ­do' });
+      return res.status(400).json({ error: 'NÃƒÆ’Ã‚Â£o ÃƒÆ’Ã‚Â© possÃƒÆ’Ã‚Â­vel cancelar um protocolo concluÃƒÆ’Ã‚Â­do' });
     }
 
-    // Verificar se hÃƒÂ¡ interaÃƒÂ§ÃƒÂµes de servidores (exceto a criaÃƒÂ§ÃƒÂ£o do protocolo)
+    // Verificar se hÃƒÆ’Ã‚Â¡ interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes de servidores (exceto a criaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o do protocolo)
     const serverInteractions = await prisma.protocolInteraction.findMany({
       where: {
         protocolId: id,
@@ -835,12 +1003,12 @@ router.post('/:id/cancel', async (req, res) => {
 
     if (serverInteractions.length > 0) {
       return res.status(400).json({
-        error: 'NÃƒÂ£o ÃƒÂ© possÃƒÂ­vel cancelar o protocolo pois jÃƒÂ¡ hÃƒÂ¡ interaÃƒÂ§ÃƒÂµes da secretaria',
+        error: 'NÃƒÆ’Ã‚Â£o ÃƒÆ’Ã‚Â© possÃƒÆ’Ã‚Â­vel cancelar o protocolo pois jÃƒÆ’Ã‚Â¡ hÃƒÆ’Ã‚Â¡ interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes da secretaria',
         canCancel: false
         });
     }
 
-    // Verificar se hÃƒÂ¡ pendÃƒÂªncias
+    // Verificar se hÃƒÆ’Ã‚Â¡ pendÃƒÆ’Ã‚Âªncias
     const pendencies = await prisma.protocolPending.findMany({
       where: {
         protocolId: id
@@ -850,7 +1018,7 @@ router.post('/:id/cancel', async (req, res) => {
 
     if (pendencies.length > 0) {
       return res.status(400).json({
-        error: 'NÃƒÂ£o ÃƒÂ© possÃƒÂ­vel cancelar o protocolo pois hÃƒÂ¡ pendÃƒÂªncias registradas',
+        error: 'NÃƒÆ’Ã‚Â£o ÃƒÆ’Ã‚Â© possÃƒÆ’Ã‚Â­vel cancelar o protocolo pois hÃƒÆ’Ã‚Â¡ pendÃƒÆ’Ã‚Âªncias registradas',
         canCancel: false
         });
     }
@@ -861,7 +1029,7 @@ router.post('/:id/cancel', async (req, res) => {
       newStatus: 'CANCELADO',
       actorId: citizenId,
       actorRole: 'CITIZEN',
-      comment: reason || 'Cancelado a pedido do cidadÃƒÂ£o',
+      comment: reason || 'Cancelado a pedido do cidadÃƒÆ’Ã‚Â£o',
       reason: reason,
       metadata: {
         source: 'citizen-protocols',
@@ -871,15 +1039,15 @@ router.post('/:id/cancel', async (req, res) => {
 
     const updatedProtocol = result.protocol;
 
-    // Criar interaÃƒÂ§ÃƒÂ£o informando o cancelamento
+    // Criar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o informando o cancelamento
     await prisma.protocolInteraction.create({
       data: {
         protocolId: id,
         type: 'CANCELLATION',
         authorType: 'CITIZEN',
         authorId: citizenId,
-        authorName: citizenName || 'CidadÃƒÂ£o',
-        message: reason ? `Protocolo cancelado. Motivo: ${reason}` : 'Protocolo cancelado pelo cidadÃƒÂ£o',
+        authorName: citizenName || 'CidadÃƒÆ’Ã‚Â£o',
+        message: reason ? `Protocolo cancelado. Motivo: ${reason}` : 'Protocolo cancelado pelo cidadÃƒÆ’Ã‚Â£o',
         isInternal: false,
         isRead: false
         }
@@ -903,10 +1071,10 @@ router.get('/:id/can-cancel', async (req, res) => {
     const { id } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id,
@@ -915,7 +1083,7 @@ router.get('/:id/can-cancel', async (req, res) => {
         });
 
     if (!protocol) {
-      return res.status(404).json({ error: 'Protocolo nÃƒÂ£o encontrado' });
+      return res.status(404).json({ error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado' });
     }
 
     let canCancel = true;
@@ -924,12 +1092,12 @@ router.get('/:id/can-cancel', async (req, res) => {
     // Verificar status
     if (protocol.status === 'CANCELADO') {
       canCancel = false;
-      reason = 'Protocolo jÃƒÂ¡ estÃƒÂ¡ cancelado';
+      reason = 'Protocolo jÃƒÆ’Ã‚Â¡ estÃƒÆ’Ã‚Â¡ cancelado';
     } else if (protocol.status === 'CONCLUIDO') {
       canCancel = false;
-      reason = 'Protocolo jÃƒÂ¡ foi concluÃƒÂ­do';
+      reason = 'Protocolo jÃƒÆ’Ã‚Â¡ foi concluÃƒÆ’Ã‚Â­do';
     } else {
-      // Verificar interaÃƒÂ§ÃƒÂµes de servidores
+      // Verificar interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes de servidores
       const serverInteractions = await prisma.protocolInteraction.findMany({
         where: {
           protocolId: id,
@@ -942,10 +1110,10 @@ router.get('/:id/can-cancel', async (req, res) => {
 
       if (serverInteractions.length > 0) {
         canCancel = false;
-        reason = 'Protocolo jÃƒÂ¡ possui interaÃƒÂ§ÃƒÂµes da secretaria';
+        reason = 'Protocolo jÃƒÆ’Ã‚Â¡ possui interaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Âµes da secretaria';
       }
 
-      // Verificar pendÃƒÂªncias
+      // Verificar pendÃƒÆ’Ã‚Âªncias
       const pendencies = await prisma.protocolPending.findMany({
         where: {
           protocolId: id
@@ -955,7 +1123,7 @@ router.get('/:id/can-cancel', async (req, res) => {
 
       if (pendencies.length > 0) {
         canCancel = false;
-        reason = 'Protocolo possui pendÃƒÂªncias registradas';
+        reason = 'Protocolo possui pendÃƒÆ’Ã‚Âªncias registradas';
       }
     }
 
@@ -984,10 +1152,10 @@ router.get('/:id/stages', async (req, res) => {
     const { id: protocolId } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -998,7 +1166,7 @@ router.get('/:id/stages', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
@@ -1027,7 +1195,7 @@ router.get('/:id/stages', async (req, res) => {
 
 /**
  * GET /api/citizen/protocols/:id/pendings
- * Listar pendÃªncias do protocolo
+ * Listar pendÃƒÂªncias do protocolo
  */
 router.get('/:id/pendings', async (req, res) => {
   try {
@@ -1035,7 +1203,7 @@ router.get('/:id/pendings', async (req, res) => {
     const { id: protocolId } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃ£o nÃ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
     }
 
     const protocol = await prisma.protocolSimplified.findFirst({
@@ -1045,7 +1213,7 @@ router.get('/:id/pendings', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃ£o encontrado'
+        error: 'Protocolo nÃƒÂ£o encontrado'
       });
     }
 
@@ -1060,14 +1228,14 @@ router.get('/:id/pendings', async (req, res) => {
     console.error('Error fetching protocol pendings:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erro ao buscar pendÃªncias do protocolo'
+      error: 'Erro ao buscar pendÃƒÂªncias do protocolo'
     });
   }
 });
 
 /**
  * PATCH /api/citizen/protocols/:id/pendings/:pendingId/resolve
- * Resolver uma pendÃªncia com texto ou dados corrigidos
+ * Resolver uma pendÃƒÂªncia com texto ou dados corrigidos
  */
 router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
   try {
@@ -1076,11 +1244,11 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
     const { resolution } = req.body;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃ£o nÃ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
     }
 
     if (!resolution || !String(resolution).trim()) {
-      return res.status(400).json({ error: 'ResoluÃ§Ã£o Ã© obrigatÃ³ria' });
+      return res.status(400).json({ error: 'ResoluÃƒÂ§ÃƒÂ£o ÃƒÂ© obrigatÃƒÂ³ria' });
     }
 
     const protocol = await prisma.protocolSimplified.findFirst({
@@ -1090,7 +1258,7 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃ£o encontrado'
+        error: 'Protocolo nÃƒÂ£o encontrado'
       });
     }
 
@@ -1101,7 +1269,7 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
     if (!pending) {
       return res.status(404).json({
         success: false,
-        error: 'PendÃªncia nÃ£o encontrada'
+        error: 'PendÃƒÂªncia nÃƒÂ£o encontrada'
       });
     }
 
@@ -1109,8 +1277,8 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
       return res.status(400).json({
         success: false,
         error: pending.status === 'UNDER_REVIEW'
-          ? 'A pendÃªncia jÃ¡ recebeu sua resposta e aguarda anÃ¡lise da equipe'
-          : 'PendÃªncia jÃ¡ foi resolvida ou cancelada'
+          ? 'A pendÃƒÂªncia jÃƒÂ¡ recebeu sua resposta e aguarda anÃƒÂ¡lise da equipe'
+          : 'PendÃƒÂªncia jÃƒÂ¡ foi resolvida ou cancelada'
       });
     }
 
@@ -1129,27 +1297,27 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
     console.error('Error resolving pending:', error);
     return res.status(500).json({
       success: false,
-      error: error?.message || 'Erro ao resolver pendÃªncia'
+      error: error?.message || 'Erro ao resolver pendÃƒÂªncia'
     });
   }
 });
 
 /**
  * PATCH /api/citizen/protocols/:id/pendings/:pendingId/resolve-with-document
- * Resolver uma pendÃªncia enviando um documento
+ * Resolver uma pendÃƒÂªncia enviando um documento
  */
-router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('document'), async (req, res) => {
+router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.any(), async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
     const { id: protocolId, pendingId } = req.params;
-    const file = req.file;
+    const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃ£o nÃ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
     }
 
-    if (!file) {
-      return res.status(400).json({ error: 'Documento Ã© obrigatÃ³rio' });
+    if (files.length === 0) {
+      return res.status(400).json({ error: 'Documento ÃƒÂ© obrigatÃƒÂ³rio' });
     }
 
     const protocol = await prisma.protocolSimplified.findFirst({
@@ -1159,7 +1327,7 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃ£o encontrado'
+        error: 'Protocolo nÃƒÂ£o encontrado'
       });
     }
 
@@ -1170,7 +1338,7 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
     if (!pending) {
       return res.status(404).json({
         success: false,
-        error: 'PendÃªncia nÃ£o encontrada'
+        error: 'PendÃƒÂªncia nÃƒÂ£o encontrada'
       });
     }
 
@@ -1178,8 +1346,8 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
       return res.status(400).json({
         success: false,
         error: pending.status === 'UNDER_REVIEW'
-          ? 'A pendÃªncia jÃ¡ recebeu sua resposta e aguarda anÃ¡lise da equipe'
-          : 'PendÃªncia jÃ¡ foi resolvida ou cancelada'
+          ? 'A pendÃƒÂªncia jÃƒÂ¡ recebeu sua resposta e aguarda anÃƒÂ¡lise da equipe'
+          : 'PendÃƒÂªncia jÃƒÂ¡ foi resolvida ou cancelada'
       });
     }
 
@@ -1187,7 +1355,8 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
       protocolId,
       pending,
       citizenId,
-      file
+      files,
+      req.body?.fileMetadata
     );
 
     return res.json({
@@ -1209,14 +1378,14 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.single('do
 
 /**
  * GET /api/citizen/protocols/:id/citizen-links
- * Listar vÃƒÂ­nculos de cidadÃƒÂ£os do protocolo (somente leitura)
+ * Listar vÃƒÆ’Ã‚Â­nculos de cidadÃƒÆ’Ã‚Â£os do protocolo (somente leitura)
  */
 router.get('/:id/citizen-links', async (req, res) => {
   try {
     const { id: protocolId } = req.params;
     const citizenId = (req as any).citizenId;
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o logado
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o logado
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1227,11 +1396,11 @@ router.get('/:id/citizen-links', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
-    // Buscar vÃƒÂ­nculos do protocolo
+    // Buscar vÃƒÆ’Ã‚Â­nculos do protocolo
     const links = await prisma.protocolCitizenLink.findMany({
       where: { protocolId },
       include: {
@@ -1258,7 +1427,7 @@ router.get('/:id/citizen-links', async (req, res) => {
     console.error('Error fetching protocol citizen links:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erro ao buscar vÃƒÂ­nculos do protocolo'
+      error: 'Erro ao buscar vÃƒÆ’Ã‚Â­nculos do protocolo'
     });
   }
 });
@@ -1269,23 +1438,23 @@ router.get('/:id/citizen-links', async (req, res) => {
 
 /**
  * POST /api/citizen/protocols/:id/documents/upload
- * Upload de documento adicional pelo cidadÃƒÂ£o
+ * Upload de documento adicional pelo cidadÃƒÆ’Ã‚Â£o
  */
 router.post('/:id/documents/upload', upload.single('document'), async (req, res) => {
   try {
     const citizenId = (req as any).citizen?.id;
     const { id: protocolId } = req.params;
-    const file = req.file;
+    const file = req.file as Express.Multer.File | undefined;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
     if (!file) {
-      return res.status(400).json({ error: 'Documento ÃƒÂ© obrigatÃƒÂ³rio' });
+      return res.status(400).json({ error: 'Documento ÃƒÆ’Ã‚Â© obrigatÃƒÆ’Ã‚Â³rio' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1296,11 +1465,11 @@ router.post('/:id/documents/upload', upload.single('document'), async (req, res)
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
-    // Mover arquivo para diretÃƒÂ³rio do protocolo
+    // Mover arquivo para diretÃƒÆ’Ã‚Â³rio do protocolo
     const protocolDir = ensureProtocolDir(protocolId);
     const newPath = path.join(protocolDir, file.filename);
     fs.renameSync(file.path, newPath);
@@ -1321,7 +1490,7 @@ router.post('/:id/documents/upload', upload.single('document'), async (req, res)
       }
     });
 
-    // Criar histÃƒÂ³rico
+    // Criar histÃƒÆ’Ã‚Â³rico
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId,
@@ -1331,14 +1500,14 @@ router.post('/:id/documents/upload', upload.single('document'), async (req, res)
       }
     });
 
-    // Ã¢Å“â€¦ FASE 1: Notificar servidor sobre documento enviado
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ FASE 1: Notificar servidor sobre documento enviado
     try {
       await messageNotificationService.notifyDocumentUploaded(
         protocolId,
         file.originalname
       );
     } catch (notifError) {
-      console.error('Erro ao enviar notificaÃƒÂ§ÃƒÂ£o de documento:', notifError);
+      console.error('Erro ao enviar notificaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de documento:', notifError);
     }
 
     return res.json({
@@ -1356,7 +1525,7 @@ router.post('/:id/documents/upload', upload.single('document'), async (req, res)
 
 /**
  * GET /api/citizen/protocols/:id/documents
- * Listar documentos enviados pelo cidadÃƒÂ£o para o protocolo
+ * Listar documentos enviados pelo cidadÃƒÆ’Ã‚Â£o para o protocolo
  */
 router.get('/:id/documents', async (req, res) => {
   try {
@@ -1364,10 +1533,10 @@ router.get('/:id/documents', async (req, res) => {
     const { id: protocolId } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1378,7 +1547,7 @@ router.get('/:id/documents', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
@@ -1414,7 +1583,7 @@ router.get('/:id/documents', async (req, res) => {
 
 /**
  * GET /api/citizen/protocols/:id/documents/:documentId/download
- * Download ou visualizaÃƒÂ§ÃƒÂ£o de um documento
+ * Download ou visualizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o de um documento
  */
 router.get('/:id/documents/:documentId/download', async (req, res) => {
   try {
@@ -1423,10 +1592,10 @@ router.get('/:id/documents/:documentId/download', async (req, res) => {
     const inline = req.query.inline === 'true';
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1437,7 +1606,7 @@ router.get('/:id/documents/:documentId/download', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
@@ -1452,18 +1621,18 @@ router.get('/:id/documents/:documentId/download', async (req, res) => {
     if (!document) {
       return res.status(404).json({
         success: false,
-        error: 'Documento nÃƒÂ£o encontrado'
+        error: 'Documento nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
     if (!document.fileUrl) {
       return res.status(404).json({
         success: false,
-        error: 'Arquivo nÃƒÂ£o disponÃƒÂ­vel'
+        error: 'Arquivo nÃƒÆ’Ã‚Â£o disponÃƒÆ’Ã‚Â­vel'
       });
     }
 
-    // Se fileUrl ÃƒÂ© uma URL externa
+    // Se fileUrl ÃƒÆ’Ã‚Â© uma URL externa
     if (document.fileUrl.startsWith('http')) {
       return res.redirect(document.fileUrl);
     }
@@ -1476,7 +1645,7 @@ router.get('/:id/documents/:documentId/download', async (req, res) => {
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
-        error: 'Arquivo nÃƒÂ£o encontrado no servidor'
+        error: 'Arquivo nÃƒÆ’Ã‚Â£o encontrado no servidor'
       });
     }
 
@@ -1526,10 +1695,10 @@ router.get('/:id/generated-documents', async (req, res) => {
     const { id: protocolId } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1540,11 +1709,11 @@ router.get('/:id/generated-documents', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
-    // Ã¢Å“â€¦ CORREÃƒâ€¡ÃƒÆ’O: Buscar documentos gerados na tabela GeneratedDocument
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ CORREÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O: Buscar documentos gerados na tabela GeneratedDocument
     const docs = await prisma.generatedDocument.findMany({
       where: {
         protocolId,
@@ -1571,7 +1740,7 @@ router.get('/:id/generated-documents', async (req, res) => {
       expiresAt: doc.expiresAt?.toISOString() || null,
       validationCode: doc.validationCode || null,
       fileUrl: doc.fileUrl || doc.filePath,
-      // Ã¢Å“â€¦ CORREÃƒâ€¡ÃƒÆ’O: Enviar apenas metadados essenciais (sem variablesUsed)
+      // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ CORREÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O: Enviar apenas metadados essenciais (sem variablesUsed)
       metadata: {
         template: doc.template.name,
         protocolo: protocol.number
@@ -1602,10 +1771,10 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
     const inline = req.query.inline === 'true';
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1616,11 +1785,11 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
-    // Ã¢Å“â€¦ CORREÃƒâ€¡ÃƒÆ’O: Buscar na tabela GeneratedDocument
+    // ÃƒÂ¢Ã…â€œÃ¢â‚¬Â¦ CORREÃƒÆ’Ã¢â‚¬Â¡ÃƒÆ’Ã†â€™O: Buscar na tabela GeneratedDocument
     const document = await prisma.generatedDocument.findFirst({
       where: {
         id: documentId,
@@ -1632,7 +1801,7 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
     if (!document) {
       return res.status(404).json({
         success: false,
-        error: 'Documento nÃƒÂ£o encontrado'
+        error: 'Documento nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
@@ -1642,7 +1811,7 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
     if (!filePathFromDB) {
       return res.status(404).json({
         success: false,
-        error: 'Caminho do arquivo nÃƒÂ£o disponÃƒÂ­vel'
+        error: 'Caminho do arquivo nÃƒÆ’Ã‚Â£o disponÃƒÆ’Ã‚Â­vel'
       });
     }
 
@@ -1659,17 +1828,17 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
 
     // Verificar se arquivo existe no sistema de arquivos
     if (!fs.existsSync(filePath)) {
-      console.error(`[ERROR] Arquivo nÃƒÂ£o encontrado: ${filePath}`);
+      console.error(`[ERROR] Arquivo nÃƒÆ’Ã‚Â£o encontrado: ${filePath}`);
       return res.status(404).json({
         success: false,
-        error: 'Arquivo nÃƒÂ£o encontrado no servidor'
+        error: 'Arquivo nÃƒÆ’Ã‚Â£o encontrado no servidor'
       });
     }
 
     // Usar mimeType do documento gerado
     const mimeType = document.mimeType || 'application/pdf';
 
-    // Configurar headers para download ou visualizaÃƒÂ§ÃƒÂ£o
+    // Configurar headers para download ou visualizaÃƒÆ’Ã‚Â§ÃƒÆ’Ã‚Â£o
     const disposition = inline ? 'inline' : 'attachment';
     res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName}"`);
     res.setHeader('Content-Type', mimeType);
@@ -1694,7 +1863,7 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
 
 /**
  * GET /api/citizen/protocols/:id/interactions/unread-count
- * Contar mensagens nÃƒÂ£o lidas do protocolo
+ * Contar mensagens nÃƒÆ’Ã‚Â£o lidas do protocolo
  */
 router.get('/:id/interactions/unread-count', async (req, res) => {
   try {
@@ -1702,10 +1871,10 @@ router.get('/:id/interactions/unread-count', async (req, res) => {
     const { id: protocolId } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1716,11 +1885,11 @@ router.get('/:id/interactions/unread-count', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
-    // Contar mensagens nÃƒÂ£o lidas (mensagens do servidor/sistema para o cidadÃƒÂ£o)
+    // Contar mensagens nÃƒÆ’Ã‚Â£o lidas (mensagens do servidor/sistema para o cidadÃƒÆ’Ã‚Â£o)
     const unreadCount = await prisma.protocolInteraction.count({
       where: {
         protocolId,
@@ -1740,7 +1909,7 @@ router.get('/:id/interactions/unread-count', async (req, res) => {
     console.error('Error counting unread messages:', error);
     return res.status(500).json({
       success: false,
-      error: 'Erro ao contar mensagens nÃƒÂ£o lidas'
+      error: 'Erro ao contar mensagens nÃƒÆ’Ã‚Â£o lidas'
     });
   }
 });
@@ -1755,10 +1924,10 @@ router.patch('/:id/interactions/mark-read', async (req, res) => {
     const { id: protocolId } = req.params;
 
     if (!citizenId) {
-      return res.status(401).json({ error: 'CidadÃƒÂ£o nÃƒÂ£o autenticado' });
+      return res.status(401).json({ error: 'CidadÃƒÆ’Ã‚Â£o nÃƒÆ’Ã‚Â£o autenticado' });
     }
 
-    // Verificar se o protocolo pertence ao cidadÃƒÂ£o
+    // Verificar se o protocolo pertence ao cidadÃƒÆ’Ã‚Â£o
     const protocol = await prisma.protocolSimplified.findFirst({
       where: {
         id: protocolId,
@@ -1769,7 +1938,7 @@ router.patch('/:id/interactions/mark-read', async (req, res) => {
     if (!protocol) {
       return res.status(404).json({
         success: false,
-        error: 'Protocolo nÃƒÂ£o encontrado'
+        error: 'Protocolo nÃƒÆ’Ã‚Â£o encontrado'
       });
     }
 
@@ -1800,5 +1969,4 @@ router.patch('/:id/interactions/mark-read', async (req, res) => {
     });
   }
 });
-
 export default router;

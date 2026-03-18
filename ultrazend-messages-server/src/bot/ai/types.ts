@@ -75,6 +75,8 @@ export interface CitizenAiSessionState {
   currentPendingId?: string;
   currentPendingTitle?: string;
   currentPendingType?: string;
+  currentPendingDocumentRequests?: Array<Record<string, unknown>>;
+  currentPendingFieldRequests?: Array<Record<string, unknown>>;
   reviewText?: string;
   lowConfidenceFallbacks?: number;
   legacyFallbackCount?: number;

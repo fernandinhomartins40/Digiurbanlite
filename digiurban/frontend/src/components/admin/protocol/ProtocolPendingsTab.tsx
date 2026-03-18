@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -9,11 +9,15 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import { AlertCircle, CheckCircle2, Clock, Plus, RotateCcw, SearchCheck, XCircle } from 'lucide-react'
 import { ProtocolPending, PendingStatus, PendingType } from '@/types/protocol-enhancements'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { normalizeRequiredDocuments } from '@/lib/normalize-documents'
+import { extractFieldsFromSchema } from '@/lib/schema-field-extractor'
 import { PendingCreationContext } from './protocol-pending-context'
 
 interface ProtocolPendingsTabProps {
@@ -23,21 +27,34 @@ interface ProtocolPendingsTabProps {
   creationContext?: PendingCreationContext | null
   pendingDialogOpen?: boolean
   onPendingDialogOpenChange?: (open: boolean) => void
+  service?: any
 }
 
 interface ProtocolDocumentOption {
-  id: string
+  key: string
+  id?: string
   documentType: string
+  label: string
   fileName?: string | null
   status?: string
+  required: boolean
+  source: 'protocol' | 'service'
+  suggested?: boolean
 }
 
 interface ProtocolDataFieldOption {
-  id: string
+  key: string
+  id?: string
   fieldKey: string
   fieldLabel: string
   fieldType?: string | null
   status?: string
+  required: boolean
+  source: 'protocol' | 'service'
+  suggested?: boolean
+  description?: string
+  placeholder?: string
+  options?: string[]
 }
 
 interface PendingDraft {
@@ -46,8 +63,8 @@ interface PendingDraft {
   description: string
   dueDate: string
   blocksProgress: boolean
-  documentId: string
-  fieldId: string
+  documentKeys: string[]
+  fieldKeys: string[]
   requiresReview: boolean
 }
 
@@ -59,6 +76,21 @@ function normalizeText(value?: string | null) {
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '')
     .trim()
+}
+
+function parseJsonIfString<T = any>(value: unknown): T | null {
+  if (!value) return null
+  if (typeof value === 'string') {
+    try {
+      return JSON.parse(value) as T
+    } catch {
+      return null
+    }
+  }
+  if (typeof value === 'object') {
+    return value as T
+  }
+  return null
 }
 
 function buildDefaultDraft(context?: PendingCreationContext | null): PendingDraft {
@@ -84,15 +116,9 @@ function buildDefaultDraft(context?: PendingCreationContext | null): PendingDraf
           : `Pendência da etapa - ${stageName}`
 
   const descriptionParts = []
-  if (missingDocuments.length > 0) {
-    descriptionParts.push(`Documentos faltantes: ${missingDocuments.join(', ')}`)
-  }
-  if (missingFields.length > 0) {
-    descriptionParts.push(`Informações faltantes: ${missingFields.join(', ')}`)
-  }
-  if ((context?.validation?.blockers || []).length > 0) {
-    descriptionParts.push(`Motivo: ${context?.validation?.blockers?.join(' | ')}`)
-  }
+  if (missingDocuments.length > 0) descriptionParts.push(`Documentos faltantes: ${missingDocuments.join(', ')}`)
+  if (missingFields.length > 0) descriptionParts.push(`Informações faltantes: ${missingFields.join(', ')}`)
+  if ((context?.validation?.blockers || []).length > 0) descriptionParts.push(`Motivo: ${context?.validation?.blockers?.join(' | ')}`)
 
   return {
     type,
@@ -100,10 +126,128 @@ function buildDefaultDraft(context?: PendingCreationContext | null): PendingDraf
     description: descriptionParts.join('\n') || `Pendência criada na etapa ${stageName}.`,
     dueDate: '',
     blocksProgress: true,
-    documentId: '',
-    fieldId: '',
+    documentKeys: [],
+    fieldKeys: [],
     requiresReview: true,
   }
+}
+
+function buildServiceDocumentOptions(service: any): ProtocolDocumentOption[] {
+  const requiredDocuments = normalizeRequiredDocuments(service?.requiredDocuments)
+  return requiredDocuments.map((document: any, index) => {
+    const label = String(document?.name || document?.documentType || document?.label || document?.id || `Documento ${index + 1}`)
+    const documentId = String(document?.id || document?.documentId || label)
+    return {
+      key: `service:${normalizeText(documentId || label)}`,
+      documentType: label,
+      label,
+      required: document?.required !== false,
+      source: 'service' as const,
+    }
+  })
+}
+
+function buildServiceFieldOptions(service: any): ProtocolDataFieldOption[] {
+  const formSchema =
+    parseJsonIfString(service?.formSchema) ||
+    parseJsonIfString(service?.formFieldsConfig) ||
+    service?.formSchema ||
+    service?.formFieldsConfig
+  const fields = extractFieldsFromSchema(formSchema)
+
+  return fields.map((field) => ({
+    key: `service:${normalizeText(field.id || field.label)}`,
+    fieldKey: String(field.id || field.label),
+    fieldLabel: String(field.label || field.id),
+    fieldType: field.type || 'text',
+    required: field.required !== false,
+    source: 'service' as const,
+    description: field.description,
+    placeholder: field.placeholder,
+    options: Array.isArray(field.options) ? field.options : undefined,
+  }))
+}
+
+function mergeDocumentOptions(
+  protocolDocuments: Array<{ id?: string; documentType?: string; fileName?: string | null; status?: string; isRequired?: boolean }>,
+  serviceDocuments: ProtocolDocumentOption[],
+  context?: PendingCreationContext | null
+): ProtocolDocumentOption[] {
+  const requiredTypes = context?.stageMetadata?.requiredDocumentTypes || []
+  const missingDocuments = context?.validation?.missingDocuments || []
+  const merged = new Map<string, ProtocolDocumentOption>()
+
+  for (const document of serviceDocuments) {
+    merged.set(normalizeText(document.label || document.documentType), { ...document })
+  }
+
+  for (const document of protocolDocuments) {
+    const label = String(document.documentType || document.fileName || 'Documento do protocolo')
+    const key = normalizeText(label)
+    const existing = merged.get(key)
+    merged.set(key, {
+      key: existing?.key || `protocol:${document.id || key}`,
+      id: document.id,
+      documentType: label,
+      label,
+      fileName: document.fileName,
+      status: document.status,
+      required: document.isRequired ?? existing?.required ?? true,
+      source: 'protocol',
+    })
+  }
+
+  return Array.from(merged.values())
+    .map((document) => ({
+      ...document,
+      suggested:
+        missingDocuments.some((item) => normalizeText(item) === normalizeText(document.label) || normalizeText(item) === normalizeText(document.documentType)) ||
+        requiredTypes.some((item) => normalizeText(item) === normalizeText(document.label) || normalizeText(item) === normalizeText(document.documentType)),
+    }))
+    .sort((a, b) => Number(b.suggested) - Number(a.suggested) || Number(b.required) - Number(a.required) || a.label.localeCompare(b.label))
+}
+
+function mergeFieldOptions(
+  protocolFields: Array<{ id?: string; fieldKey?: string; fieldLabel?: string; fieldType?: string | null; status?: string }>,
+  serviceFields: ProtocolDataFieldOption[],
+  context?: PendingCreationContext | null
+): ProtocolDataFieldOption[] {
+  const requiredFieldIds = context?.stageMetadata?.requiredInputFieldIds || []
+  const missingFields = context?.validation?.missingFormFields || []
+  const merged = new Map<string, ProtocolDataFieldOption>()
+
+  for (const field of serviceFields) {
+    merged.set(normalizeText(field.fieldKey || field.fieldLabel), { ...field })
+  }
+
+  for (const field of protocolFields) {
+    const fieldKey = String(field.fieldKey || field.fieldLabel || field.id || 'campo')
+    const fieldLabel = String(field.fieldLabel || field.fieldKey || field.id || 'Campo')
+    const key = normalizeText(fieldKey || fieldLabel)
+    const existing = merged.get(key)
+    merged.set(key, {
+      key: existing?.key || `protocol:${field.id || key}`,
+      id: field.id,
+      fieldKey,
+      fieldLabel,
+      fieldType: field.fieldType || existing?.fieldType || 'text',
+      status: field.status,
+      required: existing?.required ?? true,
+      source: existing?.source || 'protocol',
+      description: existing?.description,
+      placeholder: existing?.placeholder,
+      options: existing?.options,
+    })
+  }
+
+  return Array.from(merged.values())
+    .map((field) => ({
+      ...field,
+      suggested:
+        missingFields.some((item) => normalizeText(item) === normalizeText(field.fieldLabel) || normalizeText(item) === normalizeText(field.fieldKey)) ||
+        requiredFieldIds.some((item) => normalizeText(item) === normalizeText(field.fieldKey) || normalizeText(item) === normalizeText(field.fieldLabel)),
+    }))
+    .sort((a, b) => Number(b.suggested) - Number(a.suggested) || Number(b.required) - Number(a.required) || a.fieldLabel.localeCompare(b.fieldLabel))
 }
 
 export function ProtocolPendingsTab({
@@ -113,6 +257,7 @@ export function ProtocolPendingsTab({
   creationContext,
   pendingDialogOpen,
   onPendingDialogOpenChange,
+  service,
 }: ProtocolPendingsTabProps) {
   const [internalDialogOpen, setInternalDialogOpen] = useState(false)
   const dialogOpen = pendingDialogOpen ?? internalDialogOpen
@@ -143,10 +288,7 @@ export function ProtocolPendingsTab({
 
   useEffect(() => {
     if (!dialogOpen) return
-    setNewPending((prev) => ({
-      ...buildDefaultDraft(creationContext),
-      dueDate: prev.dueDate || '',
-    }))
+    setNewPending(buildDefaultDraft(creationContext))
   }, [dialogOpen, creationContext])
 
   useEffect(() => {
@@ -166,8 +308,8 @@ export function ProtocolPendingsTab({
         const nextDocuments = Array.isArray(documentsPayload?.documents) ? documentsPayload.documents : []
         const nextFields = Array.isArray(fieldsPayload?.data?.fields) ? fieldsPayload.data.fields : []
 
-        setDocuments(nextDocuments)
-        setDataFields(nextFields)
+        setDocuments(mergeDocumentOptions(nextDocuments, buildServiceDocumentOptions(service), creationContext))
+        setDataFields(mergeFieldOptions(nextFields, buildServiceFieldOptions(service), creationContext))
       } catch (error) {
         console.error('Erro ao carregar contexto de pendências:', error)
         toast({
@@ -181,38 +323,32 @@ export function ProtocolPendingsTab({
     }
 
     loadContext()
-  }, [dialogOpen, protocolId, toast])
+  }, [dialogOpen, protocolId, service, creationContext, toast])
 
   useEffect(() => {
     if (!dialogOpen) return
 
     setNewPending((prev) => {
-      if (prev.documentId || prev.fieldId) return prev
+      if (prev.documentKeys.length > 0 || prev.fieldKeys.length > 0) return prev
 
-      const missingDocuments = creationContext?.validation?.missingDocuments || []
-      const missingFields = creationContext?.validation?.missingFormFields || []
-
-      const matchedDocument =
+      const suggestedDocumentKeys =
         prev.type === PendingType.DOCUMENT
-          ? documents.find((document) => missingDocuments.some((item) => normalizeText(item) === normalizeText(document.documentType)))
-          : undefined
-
-      const matchedField =
+          ? documents.filter((document) => document.suggested).map((document) => document.key)
+          : []
+      const suggestedFieldKeys =
         [PendingType.INFORMATION, PendingType.CORRECTION, PendingType.VALIDATION].includes(prev.type)
-          ? dataFields.find((field) =>
-              missingFields.some((item) => normalizeText(item) === normalizeText(field.fieldLabel) || normalizeText(item) === normalizeText(field.fieldKey))
-            )
-          : undefined
+          ? dataFields.filter((field) => field.suggested).map((field) => field.key)
+          : []
 
-      if (!matchedDocument && !matchedField) return prev
+      if (!suggestedDocumentKeys.length && !suggestedFieldKeys.length) return prev
 
       return {
         ...prev,
-        documentId: matchedDocument?.id || prev.documentId,
-        fieldId: matchedField?.id || prev.fieldId,
+        documentKeys: suggestedDocumentKeys,
+        fieldKeys: suggestedFieldKeys,
       }
     })
-  }, [dialogOpen, creationContext, documents, dataFields])
+  }, [dialogOpen, documents, dataFields])
 
   const getStatusBadge = (status: PendingStatus) => {
     const config = {
@@ -232,13 +368,29 @@ export function ProtocolPendingsTab({
     )
   }
 
-  const resetForm = () => {
-    setNewPending(buildDefaultDraft(creationContext))
+  const resetForm = () => setNewPending(buildDefaultDraft(creationContext))
+
+  const toggleDocument = (documentKey: string) => {
+    setNewPending((prev) => ({
+      ...prev,
+      documentKeys: prev.documentKeys.includes(documentKey)
+        ? prev.documentKeys.filter((key) => key !== documentKey)
+        : [...prev.documentKeys, documentKey],
+    }))
+  }
+
+  const toggleField = (fieldKey: string) => {
+    setNewPending((prev) => ({
+      ...prev,
+      fieldKeys: prev.fieldKeys.includes(fieldKey)
+        ? prev.fieldKeys.filter((key) => key !== fieldKey)
+        : [...prev.fieldKeys, fieldKey],
+    }))
   }
 
   const buildPendingPayload = () => {
-    const selectedDocument = documents.find((doc) => doc.id === newPending.documentId)
-    const selectedField = dataFields.find((field) => field.id === newPending.fieldId)
+    const selectedDocuments = documents.filter((document) => newPending.documentKeys.includes(document.key))
+    const selectedFields = dataFields.filter((field) => newPending.fieldKeys.includes(field.key))
     const payload: Record<string, any> = {
       type: newPending.type,
       title: newPending.title.trim(),
@@ -255,38 +407,51 @@ export function ProtocolPendingsTab({
       sourceAction: creationContext?.sourceAction || 'MANUAL',
     }
 
-    if (newPending.type === PendingType.DOCUMENT && selectedDocument) {
+    if (newPending.type === PendingType.DOCUMENT && selectedDocuments.length > 0) {
+      const documentRequests = selectedDocuments.map((document) => ({
+        id: document.id || document.key,
+        documentId: document.id,
+        documentType: document.documentType,
+        label: document.label,
+        required: document.required !== false,
+        source: document.source,
+      }))
+      const firstDocument = documentRequests[0]
       payload.sourceType = 'DOCUMENT'
       payload.sourceEntityType = 'DOCUMENT'
-      payload.sourceEntityId = selectedDocument.id
-      payload.dedupeKey = `${protocolId}:${creationContext?.stageId || 'no-stage'}:DOCUMENT:${selectedDocument.id}`
+      payload.sourceEntityId = firstDocument.documentId || firstDocument.id
+      payload.dedupeKey = `${protocolId}:${creationContext?.stageId || 'no-stage'}:DOCUMENT:${documentRequests.map((document) => document.id).sort().join('|')}`
       payload.metadata = {
         ...baseMetadata,
-        documentId: selectedDocument.id,
-        documentType: selectedDocument.documentType,
-        documentLabel: selectedDocument.documentType,
+        documentId: documentRequests.length === 1 ? firstDocument.documentId || firstDocument.id : undefined,
+        documentType: documentRequests.length === 1 ? firstDocument.documentType : undefined,
+        documentLabel: documentRequests.length === 1 ? firstDocument.label : undefined,
+        documentRequests,
       }
-    } else if ([PendingType.INFORMATION, PendingType.CORRECTION, PendingType.VALIDATION].includes(newPending.type) && selectedField) {
+    } else if ([PendingType.INFORMATION, PendingType.CORRECTION, PendingType.VALIDATION].includes(newPending.type) && selectedFields.length > 0) {
+      const fields = selectedFields.map((field) => ({
+        id: field.id || field.key,
+        key: field.fieldKey,
+        label: field.fieldLabel,
+        type: field.fieldType || 'text',
+        required: field.required !== false,
+        description: field.description || newPending.description.trim(),
+        placeholder: field.placeholder,
+        options: field.options,
+        source: field.source,
+      }))
+      const firstField = fields[0]
       payload.sourceType = 'DATA_FIELD'
       payload.sourceEntityType = 'DATA_FIELD'
-      payload.sourceEntityId = selectedField.id
-      payload.dedupeKey = `${protocolId}:${creationContext?.stageId || 'no-stage'}:${newPending.type}:${selectedField.id}`
+      payload.sourceEntityId = firstField.id
+      payload.dedupeKey = `${protocolId}:${creationContext?.stageId || 'no-stage'}:${newPending.type}:${fields.map((field) => field.id).sort().join('|')}`
       payload.metadata = {
         ...baseMetadata,
-        fieldId: selectedField.id,
-        fieldKey: selectedField.fieldKey,
-        fieldLabel: selectedField.fieldLabel,
-        fieldType: selectedField.fieldType || 'text',
-        fields: [
-          {
-            id: selectedField.id,
-            key: selectedField.fieldKey,
-            label: selectedField.fieldLabel,
-            type: selectedField.fieldType || 'text',
-            required: true,
-            description: newPending.description.trim(),
-          },
-        ],
+        fieldId: fields.length === 1 ? firstField.id : undefined,
+        fieldKey: fields.length === 1 ? firstField.key : undefined,
+        fieldLabel: fields.length === 1 ? firstField.label : undefined,
+        fieldType: fields.length === 1 ? firstField.type : undefined,
+        fields,
       }
     } else {
       payload.metadata = baseMetadata
@@ -301,6 +466,27 @@ export function ProtocolPendingsTab({
       toast({
         title: 'Campos obrigatórios',
         description: 'Informe o título e a descrição da pendência.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    const canSelectDocument = newPending.type === PendingType.DOCUMENT
+    const canSelectField = [PendingType.INFORMATION, PendingType.CORRECTION, PendingType.VALIDATION].includes(newPending.type)
+
+    if (canSelectDocument && newPending.documentKeys.length === 0) {
+      toast({
+        title: 'Selecione os documentos',
+        description: 'Escolha pelo menos um documento exigido pelo serviço para esta pendência.',
+        variant: 'destructive',
+      })
+      return
+    }
+
+    if (canSelectField && newPending.fieldKeys.length === 0) {
+      toast({
+        title: 'Selecione os dados',
+        description: 'Escolha pelo menos um campo ou dado exigido pelo serviço para esta pendência.',
         variant: 'destructive',
       })
       return
@@ -462,7 +648,7 @@ export function ProtocolPendingsTab({
                 </Badge>
               )}
             </div>
-            <p className="text-sm text-muted-foreground whitespace-pre-line">{pending.description}</p>
+            <p className="whitespace-pre-line text-sm text-muted-foreground">{pending.description}</p>
 
             <div className="flex flex-wrap gap-4 text-xs text-muted-foreground">
               {pending.dueDate && (
@@ -556,7 +742,7 @@ export function ProtocolPendingsTab({
               Nova Pendência
             </Button>
           </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className="max-w-3xl">
             <DialogHeader>
               <DialogTitle>Criar Nova Pendência</DialogTitle>
             </DialogHeader>
@@ -566,7 +752,7 @@ export function ProtocolPendingsTab({
                   <Label>Tipo</Label>
                   <Select
                     value={newPending.type}
-                    onValueChange={(value) => setNewPending((prev) => ({ ...prev, type: value as PendingType, documentId: '', fieldId: '' }))}
+                    onValueChange={(value) => setNewPending((prev) => ({ ...prev, type: value as PendingType, documentKeys: [], fieldKeys: [] }))}
                   >
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
@@ -595,40 +781,65 @@ export function ProtocolPendingsTab({
               </div>
 
               {canSelectDocument && (
-                <div>
-                  <Label>Documento relacionado</Label>
-                  <Select value={newPending.documentId || 'none'} onValueChange={(value) => setNewPending((prev) => ({ ...prev, documentId: value === 'none' ? '' : value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingContext ? 'Carregando documentos...' : 'Selecione um documento do protocolo'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem vínculo específico</SelectItem>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Documentos exigidos pelo serviço</Label>
+                    <span className="text-xs text-muted-foreground">{newPending.documentKeys.length} selecionado(s)</span>
+                  </div>
+                  <ScrollArea className="h-56 rounded-md border">
+                    <div className="space-y-2 p-3">
                       {documents.map((document) => (
-                        <SelectItem key={document.id} value={document.id}>
-                          {document.documentType}{document.fileName ? ` • ${document.fileName}` : ''}
-                        </SelectItem>
+                        <label key={document.key} className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/50">
+                          <Checkbox checked={newPending.documentKeys.includes(document.key)} onCheckedChange={() => toggleDocument(document.key)} />
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-foreground">{document.label}</span>
+                              {document.required && <Badge variant="outline" className="text-[11px]">Obrigatório</Badge>}
+                              {document.suggested && <Badge className="bg-blue-100 text-blue-700 text-[11px]">Sugerido</Badge>}
+                              <Badge variant="outline" className="text-[11px]">{document.source === 'protocol' ? 'Já no protocolo' : 'Do serviço'}</Badge>
+                              {document.status && <Badge variant="outline" className="text-[11px]">{document.status}</Badge>}
+                            </div>
+                            {document.fileName && <p className="text-xs text-muted-foreground">Arquivo atual: {document.fileName}</p>}
+                          </div>
+                        </label>
                       ))}
-                    </SelectContent>
-                  </Select>
+                      {!loadingContext && documents.length === 0 && (
+                        <p className="text-sm text-muted-foreground">Nenhum documento disponível para seleção.</p>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </div>
               )}
 
               {canSelectField && (
-                <div>
-                  <Label>Campo relacionado</Label>
-                  <Select value={newPending.fieldId || 'none'} onValueChange={(value) => setNewPending((prev) => ({ ...prev, fieldId: value === 'none' ? '' : value }))}>
-                    <SelectTrigger>
-                      <SelectValue placeholder={loadingContext ? 'Carregando campos...' : 'Selecione um campo do protocolo'} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="none">Sem vínculo específico</SelectItem>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Dados ou campos exigidos pelo serviço</Label>
+                    <span className="text-xs text-muted-foreground">{newPending.fieldKeys.length} selecionado(s)</span>
+                  </div>
+                  <ScrollArea className="h-56 rounded-md border">
+                    <div className="space-y-2 p-3">
                       {dataFields.map((field) => (
-                        <SelectItem key={field.id} value={field.id}>
-                          {field.fieldLabel}{field.fieldKey ? ` • ${field.fieldKey}` : ''}
-                        </SelectItem>
+                        <label key={field.key} className="flex cursor-pointer items-start gap-3 rounded-md border p-3 hover:bg-muted/50">
+                          <Checkbox checked={newPending.fieldKeys.includes(field.key)} onCheckedChange={() => toggleField(field.key)} />
+                          <div className="min-w-0 flex-1 space-y-1">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="font-medium text-foreground">{field.fieldLabel}</span>
+                              <Badge variant="outline" className="text-[11px]">{field.fieldType || 'text'}</Badge>
+                              {field.required && <Badge variant="outline" className="text-[11px]">Obrigatório</Badge>}
+                              {field.suggested && <Badge className="bg-blue-100 text-blue-700 text-[11px]">Sugerido</Badge>}
+                              <Badge variant="outline" className="text-[11px]">{field.source === 'protocol' ? 'Já no protocolo' : 'Do serviço'}</Badge>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Chave: {field.fieldKey}</p>
+                            {field.description && <p className="text-xs text-muted-foreground">{field.description}</p>}
+                          </div>
+                        </label>
                       ))}
-                    </SelectContent>
-                  </Select>
+                      {!loadingContext && dataFields.length === 0 && (
+                        <p className="text-sm text-muted-foreground">Nenhum campo disponível para seleção.</p>
+                      )}
+                    </div>
+                  </ScrollArea>
                 </div>
               )}
 

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { AlertCircle, CheckCircle2, XCircle, Loader2 } from 'lucide-react'
-import { CitizenPendingCard, ProtocolPending } from './CitizenPendingCard'
+import { CitizenPendingCard, CitizenPendingUploadFile, ProtocolPending } from './CitizenPendingCard'
 import { toast } from 'sonner'
 
 interface CitizenPendingsTabProps {
@@ -37,12 +37,35 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
     }
   }
 
-  const handleResolvePending = async (pendingId: string, resolution: string, file?: File) => {
+  const handleResolvePending = async (
+    pendingId: string,
+    resolution: string,
+    file?: File,
+    files?: CitizenPendingUploadFile[]
+  ) => {
     try {
-      if (file) {
+      if ((Array.isArray(files) && files.length > 0) || file) {
         // Resolver com documento (upload)
         const formData = new FormData()
-        formData.append('document', file)
+        const uploadFiles = Array.isArray(files) && files.length > 0
+          ? files
+          : file
+            ? [{ docId: undefined, documentType: file.name, required: true, file }]
+            : []
+
+        uploadFiles.forEach(({ file: uploadFile }) => {
+          formData.append('documents', uploadFile)
+        })
+        formData.append(
+          'fileMetadata',
+          JSON.stringify(
+            uploadFiles.map(({ docId, documentType, required }) => ({
+              docId,
+              documentType,
+              required,
+            }))
+          )
+        )
 
         const response = await apiRequest(
           `/citizen/protocols/${protocolId}/pendings/${pendingId}/resolve-with-document`,
@@ -153,6 +176,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
                 key={pending.id}
                 pending={pending}
                 onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
               />
             ))
           )}
@@ -172,6 +196,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
                 key={pending.id}
                 pending={pending}
                 onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
               />
             ))
           )}
@@ -190,6 +215,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
                 key={pending.id}
                 pending={pending}
                 onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
               />
             ))
           )}
@@ -208,6 +234,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
                 key={pending.id}
                 pending={pending}
                 onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
               />
             ))
           )}
@@ -226,6 +253,7 @@ export function CitizenPendingsTab({ protocolId, apiRequest }: CitizenPendingsTa
                 key={pending.id}
                 pending={pending}
                 onResolve={(resolution, file) => handleResolvePending(pending.id, resolution, file)}
+                onResolveWithDocument={(files) => handleResolvePending(pending.id, '', undefined, files)}
               />
             ))
           )}

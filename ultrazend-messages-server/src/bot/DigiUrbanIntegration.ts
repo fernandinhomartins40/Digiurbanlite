@@ -459,3 +459,85 @@ export function getDigiUrbanIntegration(): DigiUrbanIntegration {
 }
 
 export default DigiUrbanIntegration;
+
+;(DigiUrbanIntegration.prototype as any).resolveProtocolPendingWithDocuments = async function (data: {
+  protocolId: string;
+  pendingId: string;
+  citizenId: string;
+  files: Array<{
+    filePath: string;
+    fileName?: string;
+    mimeType?: string;
+    documentId?: string;
+    documentType?: string;
+    required?: boolean;
+  }>;
+}) {
+  if (!Array.isArray(data.files) || data.files.length === 0) {
+    throw new Error('Nenhum documento informado para resolver a pendência');
+  }
+
+  const formData = new FormData();
+  const uploadedFilePaths: string[] = [];
+  const fileMetadata: Array<{ docId?: string; documentType?: string; required: boolean }> = [];
+  formData.append('citizenId', data.citizenId);
+
+  for (const item of data.files) {
+    const resolvedPath = path.isAbsolute(item.filePath)
+      ? item.filePath
+      : path.resolve(process.cwd(), item.filePath);
+    const buffer = await fs.readFile(resolvedPath);
+    const blob = new Blob([buffer], { type: item.mimeType || 'application/octet-stream' });
+
+    formData.append('documents', blob, item.fileName || path.basename(resolvedPath));
+    uploadedFilePaths.push(resolvedPath);
+    fileMetadata.push({
+      docId: item.documentId,
+      documentType: item.documentType,
+      required: item.required !== false,
+    });
+  }
+
+  formData.append('fileMetadata', JSON.stringify(fileMetadata));
+
+  const response = await fetch(
+    `${this.apiUrl}/internal/protocols/${data.protocolId}/pendings/${data.pendingId}/resolve-document`,
+    {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${this.serviceToken}`,
+      },
+      body: formData,
+    }
+  );
+
+  const responseText = await response.text();
+  let payload: any;
+  try {
+    payload = responseText ? JSON.parse(responseText) : {};
+  } catch {
+    payload = { raw: responseText };
+  }
+
+  if (!response.ok) {
+    const errorMessage = payload?.error || `HTTP ${response.status} ao resolver pendência`;
+    const err = new Error(errorMessage) as any;
+    err.response = { status: response.status, data: payload };
+    throw err;
+  }
+
+  await Promise.all(
+    uploadedFilePaths.map(async (filePath) => {
+      try {
+        const normalized = filePath.replace(/\\/g, '/');
+        if (normalized.includes('/uploads/bot/')) {
+          await fs.unlink(filePath);
+        }
+      } catch {
+        // Ignorar falha de limpeza local
+      }
+    })
+  );
+
+  return payload;
+};

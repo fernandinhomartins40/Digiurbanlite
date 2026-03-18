@@ -113,12 +113,16 @@ export function CitizenAuthProvider({ children }: { children: React.ReactNode })
 
   // ✅ SEGURANÇA: Função para fazer requisições autenticadas (usa cookies automáticos)
   const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
+    const isFormData = typeof FormData !== 'undefined' && options.body instanceof FormData;
     const headers = {
-      'Content-Type': 'application/json',
       // ✅ CORRIGIDO: Não precisa enviar X-Tenant-ID - backend extrai do JWT cookie
       ...(tenantId && { 'X-Tenant-ID': tenantId }), // Opcional: apenas se tenantId já estiver em state
       ...options.headers
-    };
+    } as Record<string, string>;
+
+    if (!isFormData && !headers['Content-Type']) {
+      headers['Content-Type'] = 'application/json';
+    }
 
     const { getFullApiUrl } = await import('@/lib/api-config');
     const cleanEndpoint = endpoint.replace(/^\/api/, '');

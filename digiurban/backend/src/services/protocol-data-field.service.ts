@@ -40,6 +40,17 @@ export interface CorrectFieldInput {
   correctedBy: string;
 }
 
+export interface PendingFieldResponseInput {
+  protocolId: string;
+  fieldId?: string;
+  fieldKey?: string;
+  fieldLabel?: string;
+  fieldType?: string;
+  value: string;
+  correctedBy: string;
+  required?: boolean;
+}
+
 // ============================================================================
 // HELPER FUNCTIONS
 // ============================================================================
@@ -90,6 +101,12 @@ function detectFieldType(value: any): string {
   if (str.length > 100) return 'textarea';
 
   return 'text';
+}
+
+function coerceCustomData(value: unknown): Record<string, any> {
+  return value && typeof value === 'object' && !Array.isArray(value)
+    ? { ...(value as Record<string, any>) }
+    : {};
 }
 
 // ============================================================================
@@ -479,6 +496,127 @@ export async function correctDataField(input: CorrectFieldInput) {
   });
 
   return updatedField;
+}
+
+export async function applyPendingFieldResponses(
+  responses: PendingFieldResponseInput[]
+) {
+  if (!Array.isArray(responses) || responses.length === 0) {
+    return [];
+  }
+
+  const protocolId = responses[0].protocolId;
+  const correctedBy = responses[0].correctedBy;
+
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: { customData: true }
+  });
+
+  if (!protocol) {
+    throw new Error('Protocolo não encontrado');
+  }
+
+  const nextCustomData = coerceCustomData(protocol.customData);
+  const updatedFields = [];
+
+  for (const response of responses) {
+    const normalizedValue = String(response.value ?? '').trim();
+    if (!normalizedValue) {
+      continue;
+    }
+
+    let existingField = response.fieldId
+      ? await prisma.protocolDataField.findFirst({
+          where: {
+            id: response.fieldId,
+            protocolId,
+          },
+        })
+      : null;
+
+    if (!existingField && response.fieldKey) {
+      existingField = await prisma.protocolDataField.findUnique({
+        where: {
+          protocolId_fieldKey: {
+            protocolId,
+            fieldKey: response.fieldKey,
+          },
+        },
+      });
+    }
+
+    const fieldKey = response.fieldKey || existingField?.fieldKey;
+    const fieldLabel =
+      response.fieldLabel ||
+      existingField?.fieldLabel ||
+      formatFieldName(fieldKey || response.fieldId || 'campo');
+    const fieldType =
+      response.fieldType ||
+      existingField?.fieldType ||
+      detectFieldType(normalizedValue);
+
+    if (!fieldKey && !existingField) {
+      throw new Error(`Não foi possível identificar o campo para a resposta "${fieldLabel}"`);
+    }
+
+    if (existingField) {
+      const changed = existingField.fieldValue !== normalizedValue;
+      const updatedField = await prisma.protocolDataField.update({
+        where: { id: existingField.id },
+        data: {
+          fieldValue: normalizedValue,
+          previousValue: changed ? existingField.fieldValue : existingField.previousValue,
+          version: changed ? existingField.version + 1 : existingField.version,
+          status: DataFieldStatus.UNDER_REVIEW,
+          rejectionReason: null,
+          rejectedAt: null,
+        },
+      });
+      updatedFields.push(updatedField);
+      if (fieldKey) {
+        nextCustomData[fieldKey] = normalizedValue;
+      }
+    } else {
+      const createdField = await prisma.protocolDataField.create({
+        data: {
+          protocolId,
+          fieldKey: String(fieldKey),
+          fieldLabel,
+          fieldValue: normalizedValue,
+          isRequired: response.required !== false,
+          fieldType,
+          status: DataFieldStatus.UNDER_REVIEW,
+        },
+      });
+      updatedFields.push(createdField);
+      nextCustomData[String(fieldKey)] = normalizedValue;
+    }
+
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId,
+        action: 'CAMPO_CORRIGIDO',
+        comment: `Campo "${fieldLabel}" enviado pelo cidadão e aguardando análise`,
+        userId: correctedBy,
+        metadata: {
+          fieldId: existingField?.id || updatedFields[updatedFields.length - 1].id,
+          fieldKey: fieldKey || undefined,
+          newValue: normalizedValue,
+          source: 'pending_response',
+        },
+      },
+    });
+  }
+
+  await prisma.protocolSimplified.update({
+    where: { id: protocolId },
+    data: {
+      customData: nextCustomData,
+    },
+  });
+
+  return updatedFields;
 }
 
 /**

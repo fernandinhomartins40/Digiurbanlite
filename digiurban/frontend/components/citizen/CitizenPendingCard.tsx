@@ -45,17 +45,31 @@ export interface ProtocolPending {
   blocksProgress?: boolean
 }
 
+export interface CitizenPendingUploadFile {
+  docId?: string
+  documentType: string
+  required: boolean
+  file: File
+}
+
+interface PendingDocumentRequest {
+  id: string
+  documentType: string
+  label: string
+  required: boolean
+}
+
 interface CitizenPendingCardProps {
   pending: ProtocolPending
   onResolve: (resolution: string, file?: File) => Promise<void>
-  onResolveWithDocument?: (file: File) => Promise<void>
+  onResolveWithDocument?: (files: CitizenPendingUploadFile[]) => Promise<void>
   isResolving?: boolean
 }
 
 export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, isResolving = false }: CitizenPendingCardProps) {
   const [resolution, setResolution] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [uploadedFile, setUploadedFile] = useState<File | null>(null)
+  const [uploadedFiles, setUploadedFiles] = useState<Record<string, File | null>>({})
   const [dynamicFieldValues, setDynamicFieldValues] = useState<Record<string, any>>({})
 
   const pendingType = pending.pendingType || pending.type || 'OTHER'
@@ -64,18 +78,52 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
   const isPending = ['PENDING', 'OPEN', 'IN_PROGRESS'].includes(pending.status)
   const isUnderReview = pending.status === 'UNDER_REVIEW'
   const isOverdue = Boolean(pending.dueDate && new Date(pending.dueDate) < new Date())
+  const documentRequests: PendingDocumentRequest[] = Array.isArray(pending.metadata?.documentRequests) && pending.metadata.documentRequests.length > 0
+    ? pending.metadata.documentRequests.map((document: any, index: number) => ({
+        id: String(document?.id || document?.documentId || document?.documentType || `pending-doc-${index}`),
+        documentType: String(document?.documentType || document?.name || document?.label || pending.metadata?.documentLabel || pending.title || `Documento ${index + 1}`),
+        label: String(document?.label || document?.name || document?.documentType || pending.metadata?.documentLabel || pending.title || `Documento ${index + 1}`),
+        required: document?.required !== false,
+      }))
+    : [{
+        id: String(pending.metadata?.documentId || pending.metadata?.documentType || pending.id),
+        documentType: String(pending.metadata?.documentType || pending.metadata?.documentLabel || pending.title || 'Documento solicitado'),
+        label: String(pending.metadata?.documentLabel || pending.metadata?.documentType || pending.title || 'Documento solicitado'),
+        required: true,
+      }]
+  const uploadedCount = documentRequests.filter((document) => uploadedFiles[document.id]).length
+  const requiredCount = documentRequests.filter((document) => document.required).length
+  const requiredUploadedCount = documentRequests.filter((document) => document.required && uploadedFiles[document.id]).length
+  const allRequiredDocumentsProvided = requiredCount === 0 || requiredUploadedCount >= requiredCount
 
   const handleSubmit = async () => {
     try {
       setIsSubmitting(true)
 
-      if (isDocumentType && uploadedFile) {
-        if (onResolveWithDocument) {
-          await onResolveWithDocument(uploadedFile)
-        } else {
-          await onResolve(`Documento enviado: ${uploadedFile.name}`, uploadedFile)
+      if (isDocumentType) {
+        const files = documentRequests
+          .map((document) => {
+            const file = uploadedFiles[document.id]
+            if (!file) return null
+            return {
+              docId: document.id,
+              documentType: document.documentType,
+              required: document.required !== false,
+              file,
+            }
+          })
+          .filter(Boolean) as CitizenPendingUploadFile[]
+
+        if (files.length === 0) {
+          return
         }
-        setUploadedFile(null)
+
+        if (onResolveWithDocument) {
+          await onResolveWithDocument(files)
+        } else {
+          await onResolve(`Documentos enviados: ${files.map((item) => item.file.name).join(', ')}`, files[0].file)
+        }
+        setUploadedFiles({})
         return
       }
 
@@ -102,6 +150,13 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
     setDynamicFieldValues((prev) => ({
       ...prev,
       [fieldId]: value,
+    }))
+  }
+
+  const handleDocumentFileChange = (documentId: string, file: File | null) => {
+    setUploadedFiles((prev) => ({
+      ...prev,
+      [documentId]: file,
     }))
   }
 
@@ -263,23 +318,28 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
             {isDocumentType ? (
               <>
                 <div className="mb-2 text-sm font-medium text-gray-700">
-                  Enviar documento para resolver esta pendência:
+                  Enviar documentos para resolver esta pendência:
                 </div>
-                <DocumentUpload
-                  documentConfig={{
-                    name: pending.metadata?.documentLabel || pending.title || 'Documento solicitado',
-                    description: pending.description,
-                    required: true,
-                    acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
-                    allowCameraUpload: true,
-                    maxSizeMB: 10,
-                  }}
-                  value={uploadedFile}
-                  onChange={setUploadedFile}
-                />
+                <div className="space-y-3">
+                  {documentRequests.map((document) => (
+                    <DocumentUpload
+                      key={document.id}
+                      documentConfig={{
+                        name: document.label,
+                        description: pending.description,
+                        required: document.required !== false,
+                        acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
+                        allowCameraUpload: true,
+                        maxSizeMB: 10,
+                      }}
+                      value={uploadedFiles[document.id] || null}
+                      onChange={(file) => handleDocumentFileChange(document.id, file)}
+                    />
+                  ))}
+                </div>
                 <Button
                   onClick={handleSubmit}
-                  disabled={!uploadedFile || isSubmitting || isResolving}
+                  disabled={uploadedCount === 0 || !allRequiredDocumentsProvided || isSubmitting || isResolving}
                   className="w-full"
                   size="lg"
                 >
@@ -291,10 +351,15 @@ export function CitizenPendingCard({ pending, onResolve, onResolveWithDocument, 
                   ) : (
                     <>
                       <Send className="mr-2 h-5 w-5" />
-                      Enviar Documento
+                      Enviar Documento{uploadedCount > 1 ? 's' : ''}
                     </>
                   )}
                 </Button>
+                {!allRequiredDocumentsProvided && uploadedCount > 0 && (
+                  <p className="text-xs text-amber-600">
+                    Envie todos os documentos obrigatórios para continuar.
+                  </p>
+                )}
               </>
             ) : isInformationType && Array.isArray(pending.metadata?.fields) && pending.metadata.fields.length > 0 ? (
               <>

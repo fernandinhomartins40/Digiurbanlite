@@ -684,7 +684,12 @@ router.get('/:id', requireMinRole(UserRole.USER), async (req, res) => {
             id: true,
             name: true,
             category: true,
-            description: true
+            description: true,
+            requiredDocuments: true,
+            requiresDocuments: true,
+            formSchema: true,
+            formFieldsConfig: true,
+            enabledFields: true,
           }
         },
         department: {

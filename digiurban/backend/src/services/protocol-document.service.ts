@@ -91,7 +91,10 @@ export async function uploadDocument(
     fileSize: number;
     mimeType: string;
     uploadedBy: string;
-  }
+  },
+  options: {
+    skipPendingSubmission?: boolean;
+  } = {}
 ) {
   // Buscar o documento atual para criar versão
   const currentDoc = await prisma.protocolDocument.findUnique({
@@ -139,41 +142,43 @@ export async function uploadDocument(
   }
 
   // Quando o cidadão reenviar um documento, a pendência deve ficar em revisão.
-  try {
-    const pendingService = await import('./protocol-pending.service');
+  if (!options.skipPendingSubmission) {
+    try {
+      const pendingService = await import('./protocol-pending.service');
 
-    const relatedPendings = await prisma.protocolPending.findMany({
-      where: {
-        protocolId: currentDoc.protocolId,
-        type: 'DOCUMENT',
-        status: { in: ['OPEN', 'IN_PROGRESS'] },
-        metadata: {
-          path: ['documentType'],
-          equals: currentDoc.documentType
+      const relatedPendings = await prisma.protocolPending.findMany({
+        where: {
+          protocolId: currentDoc.protocolId,
+          type: 'DOCUMENT',
+          status: { in: ['OPEN', 'IN_PROGRESS'] },
+          metadata: {
+            path: ['documentType'],
+            equals: currentDoc.documentType
+          }
+        }
+      });
+
+      if (relatedPendings.length > 0) {
+        console.log(`📄 Documento "${currentDoc.documentType}" reenviado - Movendo ${relatedPendings.length} pendência(s) para revisão`);
+
+        for (const pending of relatedPendings) {
+          await pendingService.submitPendingResponse(
+            pending.id,
+            fileData.uploadedBy,
+            `Documento reenviado pelo cidadão (versão ${updatedDocument.version})`,
+            {
+              documentId: updatedDocument.id,
+              lastSubmittedDocumentId: updatedDocument.id,
+              lastSubmittedFileName: updatedDocument.fileName,
+            }
+          );
+
+          console.log(`✅ Pendência "${pending.title}" enviada para reanálise`);
         }
       }
-    });
-
-    if (relatedPendings.length > 0) {
-      console.log(`📄 Documento "${currentDoc.documentType}" reenviado - Movendo ${relatedPendings.length} pendência(s) para revisão`);
-
-      for (const pending of relatedPendings) {
-        await pendingService.submitPendingResponse(
-          pending.id,
-          fileData.uploadedBy,
-          `Documento reenviado pelo cidadão (versão ${updatedDocument.version})`,
-          {
-            documentId: updatedDocument.id,
-            lastSubmittedDocumentId: updatedDocument.id,
-            lastSubmittedFileName: updatedDocument.fileName,
-          }
-        );
-
-        console.log(`✅ Pendência "${pending.title}" enviada para reanálise`);
-      }
+    } catch (error) {
+      console.error('⚠️ Erro ao atualizar pendências do documento reenviado:', error);
     }
-  } catch (error) {
-    console.error('⚠️ Erro ao atualizar pendências do documento reenviado:', error);
   }
 
   return updatedDocument;

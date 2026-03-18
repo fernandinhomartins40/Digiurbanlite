@@ -19,6 +19,7 @@ import {
 } from '../services/protocol-document.service';
 import * as pendingService from '../services/protocol-pending.service';
 import * as dataFieldService from '../services/protocol-data-field.service';
+import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import { normalizeEmail, normalizeNullableString } from '../utils/identity';
 import fs from 'fs';
 import path from 'path';
@@ -68,6 +69,79 @@ const parseInternalPendingResolution = (rawResolution: unknown) => {
   }
 
   return { text: trimmed, payload: null as Record<string, any> | null };
+};
+
+const getPendingFieldRequests = (pending: any) => {
+  const metadata = pending?.metadata && typeof pending.metadata === 'object'
+    ? pending.metadata as Record<string, any>
+    : {};
+
+  if (Array.isArray(metadata.fields) && metadata.fields.length > 0) {
+    return metadata.fields.map((field: any) => ({
+      fieldId: typeof field?.id === 'string' ? field.id : undefined,
+      fieldKey: typeof field?.key === 'string' ? field.key : undefined,
+      fieldLabel: typeof field?.label === 'string' ? field.label : undefined,
+      fieldType: typeof field?.type === 'string' ? field.type : undefined,
+      required: field?.required !== false,
+    }));
+  }
+
+  if (metadata.fieldId || metadata.fieldKey || metadata.fieldLabel) {
+    return [{
+      fieldId: typeof metadata.fieldId === 'string' ? metadata.fieldId : undefined,
+      fieldKey: typeof metadata.fieldKey === 'string' ? metadata.fieldKey : undefined,
+      fieldLabel: typeof metadata.fieldLabel === 'string' ? metadata.fieldLabel : undefined,
+      fieldType: typeof metadata.fieldType === 'string' ? metadata.fieldType : undefined,
+      required: true,
+    }];
+  }
+
+  return [];
+};
+
+const getPendingDocumentRequests = (pending: any) => {
+  const metadata = pending?.metadata && typeof pending.metadata === 'object'
+    ? pending.metadata as Record<string, any>
+    : {};
+
+  if (Array.isArray(metadata.documentRequests) && metadata.documentRequests.length > 0) {
+    return metadata.documentRequests.map((document: any, index: number) => ({
+      id: String(document?.id || document?.documentId || document?.documentType || document?.name || `document-${index}`),
+      documentId: typeof document?.documentId === 'string' ? document.documentId : undefined,
+      documentType: String(document?.documentType || document?.name || pending.title || `Documento ${index + 1}`),
+      label: String(document?.label || document?.name || document?.documentType || pending.title || `Documento ${index + 1}`),
+      required: document?.required !== false,
+    }));
+  }
+
+  return [{
+    id: String(metadata.documentId || metadata.documentType || pending.id),
+    documentId: typeof metadata.documentId === 'string' ? metadata.documentId : undefined,
+    documentType: String(metadata.documentType || pending.title || 'DOCUMENTO_PENDENCIA'),
+    label: String(metadata.documentLabel || metadata.documentType || pending.title || 'Documento solicitado'),
+    required: true,
+  }];
+};
+
+const parsePendingUploadMetadata = (rawMetadata: unknown, filesCount: number) => {
+  if (!rawMetadata || typeof rawMetadata !== 'string') {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(rawMetadata);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.slice(0, filesCount).map((item: any) => ({
+      documentId: item?.docId || item?.documentId || undefined,
+      documentType: item?.documentType || item?.name || undefined,
+      required: item?.required !== false,
+    }));
+  } catch {
+    return [];
+  }
 };
 
 // ========================================
@@ -745,38 +819,78 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve', async (req: Re
       });
     }
 
-    const metadata = pending.metadata && typeof pending.metadata === 'object'
-      ? pending.metadata as Record<string, any>
-      : {};
     const parsed = parseInternalPendingResolution(resolution);
+    const fieldRequests = getPendingFieldRequests(pending);
 
-    let updatedPending;
-    if (pending.type === 'CORRECTION' && metadata.fieldId) {
-      const candidateValue =
-        typeof parsed.payload?.[String(metadata.fieldId)] === 'string' ? parsed.payload?.[String(metadata.fieldId)] :
-        typeof parsed.payload?.[String(metadata.fieldKey || '')] === 'string' ? parsed.payload?.[String(metadata.fieldKey || '')] :
-        typeof parsed.payload?.value === 'string' ? parsed.payload.value :
-        parsed.text;
+    if (fieldRequests.length > 0) {
+      const submittedFields = fieldRequests.map((field, index) => {
+        const candidateValue =
+          typeof parsed.payload?.[String(field.fieldId || '')] === 'string' ? parsed.payload?.[String(field.fieldId || '')] :
+          typeof parsed.payload?.[String(field.fieldKey || '')] === 'string' ? parsed.payload?.[String(field.fieldKey || '')] :
+          fieldRequests.length === 1 && typeof parsed.payload?.value === 'string' ? parsed.payload.value :
+          fieldRequests.length === 1 ? parsed.text :
+          '';
 
-      if (!candidateValue?.trim()) {
-        return res.status(400).json({ error: 'resolution is required' });
-      }
-
-      await dataFieldService.correctDataField({
-        fieldId: String(metadata.fieldId),
-        newValue: candidateValue.trim(),
-        correctedBy: citizenId,
+        return {
+          ...field,
+          value: candidateValue?.trim(),
+          index,
+        };
       });
 
-      updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
+      const missingFields = submittedFields.filter((field) => field.required !== false && !field.value);
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: `resolution is required for: ${missingFields.map((field) => field.fieldLabel || field.fieldKey || `field ${field.index + 1}`).join(', ')}`
+        });
+      }
+
+      await dataFieldService.applyPendingFieldResponses(
+        submittedFields
+          .filter((field) => field.value)
+          .map((field) => ({
+            protocolId,
+            fieldId: field.fieldId,
+            fieldKey: field.fieldKey,
+            fieldLabel: field.fieldLabel,
+            fieldType: field.fieldType,
+            value: String(field.value),
+            correctedBy: citizenId,
+            required: field.required,
+          }))
+      );
+
+      const summary = submittedFields
+        .filter((field) => field.value)
+        .map((field) => `${field.fieldLabel || field.fieldKey || 'Campo'}: ${field.value}`)
+        .join('\n');
+
+      await pendingService.submitPendingResponse(pendingId, citizenId, summary, {
+        fields: submittedFields.map((field) => ({
+          id: field.fieldId || field.fieldKey,
+          key: field.fieldKey || field.fieldId,
+          label: field.fieldLabel || field.fieldKey || 'Campo',
+          type: field.fieldType || 'text',
+          required: field.required !== false,
+        })),
+        submittedFields: submittedFields
+          .filter((field) => field.value)
+          .map((field) => ({
+            id: field.fieldId || field.fieldKey,
+            key: field.fieldKey || field.fieldId,
+            label: field.fieldLabel || field.fieldKey || 'Campo',
+            value: field.value,
+          })),
+      });
     } else {
       if (!parsed.text) {
         return res.status(400).json({ error: 'resolution is required' });
       }
 
       await pendingService.submitPendingResponse(pendingId, citizenId, parsed.text);
-      updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
     }
+
+    const updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
 
     res.json({ pending: updatedPending ? pendingService.serializePendingForCitizen(updatedPending as any) : null });
   } catch (error) {
@@ -791,13 +905,12 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve-document', uploa
     const { protocolId, pendingId } = req.params;
     const citizenId = String(req.body?.citizenId || '');
     const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
-    const file = files[0];
 
     if (!citizenId) {
       return res.status(400).json({ error: 'citizenId is required' });
     }
 
-    if (!file) {
+    if (files.length === 0) {
       return res.status(400).json({ error: 'document is required' });
     }
 
@@ -829,44 +942,92 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve-document', uploa
       return res.status(400).json({ error: 'Pending does not accept document upload' });
     }
 
-    const metadata = pending.metadata && typeof pending.metadata === 'object'
-      ? pending.metadata as Record<string, any>
-      : {};
-    const documentType = String(metadata.documentType || pending.title || 'DOCUMENTO_PENDENCIA');
+    const requestedDocuments = getPendingDocumentRequests(pending);
+    const uploadMetadata = parsePendingUploadMetadata(req.body?.fileMetadata, files.length);
+    const mapping = mapUploadedFilesToDocuments(
+      files.map((file, index) => ({
+        documentId: sanitizeDocumentId(
+          String(
+            uploadMetadata[index]?.documentId ||
+            uploadMetadata[index]?.documentType ||
+            file.originalname
+          )
+        ),
+        name: file.originalname,
+      })),
+      requestedDocuments.map((document) => ({
+        id: sanitizeDocumentId(document.id || document.documentType || document.label),
+        name: document.label,
+        required: document.required !== false,
+      }))
+    );
 
-    const protocolDir = ensureProtocolDir(protocolId);
-    const newPath = path.join(protocolDir, file.filename);
-    fs.renameSync(file.path, newPath);
-
-    let targetDocumentId = typeof metadata.documentId === 'string' ? metadata.documentId : undefined;
-
-    if (!targetDocumentId) {
-      const existingDocument = await prisma.protocolDocument.findFirst({
-        where: { protocolId, documentType },
-        orderBy: { createdAt: 'asc' },
+    if (mapping.missingRequired.length > 0) {
+      return res.status(400).json({
+        error: `Missing required documents: ${mapping.missingRequired.join(', ')}`
       });
-
-      if (existingDocument) {
-        targetDocumentId = existingDocument.id;
-      } else {
-        const createdDocument = await prisma.protocolDocument.create({
-          data: {
-            protocolId,
-            documentType,
-            isRequired: true,
-            status: 'PENDING',
-          },
-        });
-        targetDocumentId = createdDocument.id;
-      }
     }
 
-    await uploadProtocolDocument(targetDocumentId, {
-      fileName: file.originalname,
-      fileUrl: getProtocolFileUrl(protocolId, file.filename),
-      fileSize: file.size,
-      mimeType: file.mimetype,
-      uploadedBy: citizenId,
+    const protocolDir = ensureProtocolDir(protocolId);
+    const uploadedDocuments: Array<{ id: string; documentType: string; fileName: string }> = [];
+
+    for (const requestedDocument of requestedDocuments) {
+      const requiredId = sanitizeDocumentId(requestedDocument.id || requestedDocument.documentType || requestedDocument.label);
+      const fileIndex = mapping.mapped.get(requiredId);
+      if (fileIndex === undefined) {
+        continue;
+      }
+
+      const file = files[fileIndex];
+      const newPath = path.join(protocolDir, file.filename);
+      fs.renameSync(file.path, newPath);
+
+      let targetDocumentId = requestedDocument.documentId;
+      if (!targetDocumentId) {
+        const existingDocument = await prisma.protocolDocument.findFirst({
+          where: { protocolId, documentType: requestedDocument.documentType },
+          orderBy: { createdAt: 'asc' },
+        });
+
+        if (existingDocument) {
+          targetDocumentId = existingDocument.id;
+        } else {
+          const createdDocument = await prisma.protocolDocument.create({
+            data: {
+              protocolId,
+              documentType: requestedDocument.documentType,
+              isRequired: requestedDocument.required !== false,
+              status: 'PENDING',
+            },
+          });
+          targetDocumentId = createdDocument.id;
+        }
+      }
+
+      const updatedDocument = await uploadProtocolDocument(targetDocumentId, {
+        fileName: file.originalname,
+        fileUrl: getProtocolFileUrl(protocolId, file.filename),
+        fileSize: file.size,
+        mimeType: file.mimetype,
+        uploadedBy: citizenId,
+      }, {
+        skipPendingSubmission: true,
+      });
+
+      uploadedDocuments.push({
+        id: updatedDocument.id,
+        documentType: updatedDocument.documentType,
+        fileName: updatedDocument.fileName || file.originalname,
+      });
+    }
+
+    const resolutionText = uploadedDocuments.length === 1
+      ? `Documento enviado: ${uploadedDocuments[0].documentType}`
+      : `Documentos enviados: ${uploadedDocuments.map((document) => document.documentType).join(', ')}`;
+
+    await pendingService.submitPendingResponse(pendingId, citizenId, resolutionText, {
+      documentRequests: requestedDocuments,
+      submittedDocuments: uploadedDocuments,
     });
 
     const updatedPending = await prisma.protocolPending.findUnique({ where: { id: pendingId } });
