@@ -1,7 +1,8 @@
 import { DocumentStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { syncProtocolRequiredDocuments } from './required-protocol-documents.service';
-import { matchDocumentType } from '../utils/document-mapping';
+import { matchDocumentType, resolveCanonicalDocumentType } from '../utils/document-mapping';
+import { normalizeDocumentConfigs } from '../utils/document-validation';
 
 export interface CreateDocumentData {
   protocolId: string;
@@ -23,6 +24,201 @@ export interface UpdateDocumentData {
   uploadedBy?: string;
   validatedBy?: string;
   rejectionReason?: string;
+}
+
+function getDocumentStatusRank(status: DocumentStatus) {
+  switch (status) {
+    case DocumentStatus.APPROVED:
+      return 5;
+    case DocumentStatus.UNDER_REVIEW:
+      return 4;
+    case DocumentStatus.UPLOADED:
+      return 3;
+    case DocumentStatus.REJECTED:
+      return 2;
+    case DocumentStatus.PENDING:
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+function parseRequiredDocumentNames(raw: unknown): string[] {
+  if (!raw) return [];
+
+  let docsRaw: any[] = [];
+  if (typeof raw === 'string') {
+    try {
+      docsRaw = JSON.parse(raw);
+    } catch {
+      return [];
+    }
+  } else if (Array.isArray(raw)) {
+    docsRaw = raw;
+  }
+
+  return normalizeDocumentConfigs(docsRaw)
+    .map((config) => String(config?.name || '').trim())
+    .filter(Boolean);
+}
+
+async function getProtocolRequiredDocumentNames(protocolId: string): Promise<string[]> {
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: {
+      service: {
+        select: {
+          requiresDocuments: true,
+          requiredDocuments: true,
+        },
+      },
+      stages: {
+        select: {
+          metadata: true,
+        },
+      },
+    },
+  });
+
+  const requiredNames = new Set<string>();
+
+  if (protocol?.service?.requiresDocuments !== false) {
+    for (const documentName of parseRequiredDocumentNames(protocol?.service?.requiredDocuments)) {
+      requiredNames.add(documentName);
+    }
+  }
+
+  for (const stage of protocol?.stages || []) {
+    const metadata = stage.metadata as Record<string, unknown> | null;
+    const requiredDocumentTypes = Array.isArray(metadata?.requiredDocumentTypes)
+      ? metadata.requiredDocumentTypes
+      : [];
+
+    for (const requiredDocumentType of requiredDocumentTypes) {
+      if (typeof requiredDocumentType !== 'string') continue;
+      const trimmed = requiredDocumentType.trim();
+      if (trimmed) {
+        requiredNames.add(trimmed);
+      }
+    }
+  }
+
+  return Array.from(requiredNames);
+}
+
+function mergeListedDocumentEntries(existing: any, candidate: any) {
+  const keepCandidate =
+    (!existing.fileUrl && candidate.fileUrl) ||
+    getDocumentStatusRank(candidate.status) > getDocumentStatusRank(existing.status) ||
+    (
+      getDocumentStatusRank(candidate.status) === getDocumentStatusRank(existing.status) &&
+      new Date(candidate.updatedAt).getTime() > new Date(existing.updatedAt).getTime()
+    );
+
+  const base = keepCandidate ? candidate : existing;
+  const other = keepCandidate ? existing : candidate;
+
+  return {
+    ...base,
+    documentType: base.documentType,
+    isRequired: Boolean(base.isRequired || other.isRequired),
+  };
+}
+
+function normalizeProtocolDocumentList<T extends {
+  id: string;
+  documentType: string;
+  fileName?: string | null;
+  fileUrl?: string | null;
+  isRequired?: boolean | null;
+  status: DocumentStatus;
+  updatedAt: Date;
+  createdAt: Date;
+}>(documents: T[], requiredNames: string[]): T[] {
+  const grouped = new Map<string, T>();
+
+  for (const document of documents) {
+    const canonicalType =
+      resolveCanonicalDocumentType(String(document.documentType || ''), requiredNames) ||
+      resolveCanonicalDocumentType(String(document.fileName || ''), requiredNames);
+
+    const normalizedDocument = {
+      ...document,
+      documentType: canonicalType || document.documentType,
+      isRequired: canonicalType ? true : document.isRequired,
+    } as T;
+
+    const key = canonicalType ? `required:${canonicalType}` : `raw:${document.id}`;
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      grouped.set(key, normalizedDocument);
+      continue;
+    }
+
+    grouped.set(key, mergeListedDocumentEntries(existing, normalizedDocument));
+  }
+
+  return Array.from(grouped.values()).sort((left, right) => {
+    if (Boolean(left.isRequired) !== Boolean(right.isRequired)) {
+      return Number(Boolean(right.isRequired)) - Number(Boolean(left.isRequired));
+    }
+
+    return new Date(left.createdAt).getTime() - new Date(right.createdAt).getTime();
+  });
+}
+
+async function getNormalizedProtocolDocuments(protocolId: string) {
+  const requiredNames = await getProtocolRequiredDocumentNames(protocolId);
+
+  const documents = await prisma.protocolDocument.findMany({
+    where: { protocolId },
+    orderBy: [
+      { isRequired: 'desc' },
+      { createdAt: 'asc' },
+    ],
+  });
+
+  return normalizeProtocolDocumentList(documents, requiredNames);
+}
+
+async function getRequiredDocumentProgress(protocolId: string) {
+  const requiredNames = await getProtocolRequiredDocumentNames(protocolId);
+  if (requiredNames.length === 0) {
+    return {
+      requiredNames: [],
+      uploadedNames: [] as string[],
+      approvedNames: [] as string[],
+    };
+  }
+
+  const documents = await getNormalizedProtocolDocuments(protocolId);
+  const uploadedNames: string[] = [];
+  const approvedNames: string[] = [];
+
+  for (const requiredName of requiredNames) {
+    const matchingDocuments = documents.filter((document) =>
+      matchDocumentType(document.documentType || document.fileName || '', requiredName)
+    );
+
+    if (matchingDocuments.some((document) =>
+      document.status === DocumentStatus.UPLOADED ||
+      document.status === DocumentStatus.UNDER_REVIEW ||
+      document.status === DocumentStatus.APPROVED
+    )) {
+      uploadedNames.push(requiredName);
+    }
+
+    if (matchingDocuments.some((document) => document.status === DocumentStatus.APPROVED)) {
+      approvedNames.push(requiredName);
+    }
+  }
+
+  return {
+    requiredNames,
+    uploadedNames,
+    approvedNames,
+  };
 }
 
 /**
@@ -63,13 +259,7 @@ export async function getProtocolDocuments(protocolId: string) {
     console.error('[protocol-document.service] Failed to sync required documents before listing:', error);
   }
 
-  return prisma.protocolDocument.findMany({
-    where: { protocolId },
-    orderBy: [
-      { isRequired: 'desc' },
-      { createdAt: 'asc' },
-    ]
-  });
+  return getNormalizedProtocolDocuments(protocolId);
 }
 
 /**
@@ -298,23 +488,9 @@ export async function markDocumentUnderReview(documentId: string) {
  */
 export async function checkRequiredDocuments(protocolId: string) {
   await syncProtocolRequiredDocuments(protocolId);
-
-  const required = await prisma.protocolDocument.count({
-    where: {
-      protocolId,
-      isRequired: true
-        }
-        });
-
-  const uploaded = await prisma.protocolDocument.count({
-    where: {
-      protocolId,
-      isRequired: true,
-      status: {
-        in: [DocumentStatus.UPLOADED, DocumentStatus.UNDER_REVIEW, DocumentStatus.APPROVED]
-        }
-        }
-        });
+  const progress = await getRequiredDocumentProgress(protocolId);
+  const required = progress.requiredNames.length;
+  const uploaded = progress.uploadedNames.length;
 
   return {
     total: required,
@@ -329,21 +505,9 @@ export async function checkRequiredDocuments(protocolId: string) {
  */
 export async function checkAllDocumentsApproved(protocolId: string) {
   await syncProtocolRequiredDocuments(protocolId);
-
-  const required = await prisma.protocolDocument.count({
-    where: {
-      protocolId,
-      isRequired: true
-        }
-        });
-
-  const approved = await prisma.protocolDocument.count({
-    where: {
-      protocolId,
-      isRequired: true,
-      status: DocumentStatus.APPROVED
-        }
-        });
+  const progress = await getRequiredDocumentProgress(protocolId);
+  const required = progress.requiredNames.length;
+  const approved = progress.approvedNames.length;
 
   return {
     total: required,

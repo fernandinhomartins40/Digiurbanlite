@@ -268,9 +268,11 @@ export function ProtocolDocumentsTab({
 
   const requiredDocs = documents.filter((d) => d.isRequired)
   const optionalDocs = documents.filter((d) => !d.isRequired)
-  const pendingCount = documents.filter(
-    (d) => d.status === DocumentStatus.PENDING || d.status === DocumentStatus.UPLOADED
+  const missingCount = documents.filter((d) => d.status === DocumentStatus.PENDING).length
+  const awaitingReviewCount = documents.filter(
+    (d) => d.status === DocumentStatus.UPLOADED || d.status === DocumentStatus.UNDER_REVIEW
   ).length
+  const rejectedCount = documents.filter((d) => d.status === DocumentStatus.REJECTED).length
 
   return (
     <div className="space-y-4">
@@ -278,9 +280,24 @@ export function ProtocolDocumentsTab({
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-muted-foreground" />
-          <h3 className="text-lg font-semibold">
-            Documentos {pendingCount > 0 && `(${pendingCount} pendentes)`}
-          </h3>
+          <h3 className="text-lg font-semibold">Documentos</h3>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          {missingCount > 0 && (
+            <Badge variant="outline" className="border-amber-300 bg-amber-50 text-amber-700">
+              {missingCount} não enviado(s)
+            </Badge>
+          )}
+          {awaitingReviewCount > 0 && (
+            <Badge variant="outline" className="border-blue-300 bg-blue-50 text-blue-700">
+              {awaitingReviewCount} aguardando análise
+            </Badge>
+          )}
+          {rejectedCount > 0 && (
+            <Badge variant="outline" className="border-red-300 bg-red-50 text-red-700">
+              {rejectedCount} rejeitado(s)
+            </Badge>
+          )}
         </div>
       </div>
 
