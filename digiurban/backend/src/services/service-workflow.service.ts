@@ -182,6 +182,20 @@ function normalizeStringArray(value: unknown): string[] {
   return normalized;
 }
 
+function isReceptionStage(stage: WorkflowStage | Record<string, any> | null | undefined): boolean {
+  if (!stage || typeof stage !== 'object') {
+    return false;
+  }
+
+  const stageType = typeof (stage as any).stageType === 'string' ? (stage as any).stageType.trim() : '';
+  if (stageType === 'RECEPTION') {
+    return true;
+  }
+
+  const stageName = typeof (stage as any).name === 'string' ? (stage as any).name.toLowerCase() : '';
+  return stageName.includes('recep') || stageName.includes('receb');
+}
+
 function normalizeWorkflowTab(tab: unknown): string | null {
   if (typeof tab !== 'string') {
     return null;
@@ -512,8 +526,9 @@ function normalizeStageSupportAssignment(
 function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, index: number): WorkflowStage {
   const availableTabs = normalizeWorkflowTabs(stage.availableTabs);
   const primaryTab = normalizeWorkflowPrimaryTab(stage.primaryTab, availableTabs);
-  const requiredInputFieldIds = getRequiredInputFieldIds(stage);
-  const requiredStageOutputs = getRequiredStageOutputs(stage);
+  const isReception = isReceptionStage(stage);
+  const requiredInputFieldIds = isReception ? [] : getRequiredInputFieldIds(stage);
+  const requiredStageOutputs = isReception ? [] : getRequiredStageOutputs(stage);
 
   const supportAssignments = Array.isArray(stage.supportAssignments)
     ? stage.supportAssignments
@@ -535,7 +550,7 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
     slaDays: typeof stage.slaDays === 'number' && stage.slaDays > 0 ? stage.slaDays : undefined,
     availableTabs,
     primaryTab,
-    requiredDocumentTypes: normalizeStringArray((stage as any).requiredDocumentTypes),
+    requiredDocumentTypes: isReception ? [] : normalizeStringArray((stage as any).requiredDocumentTypes),
     requiredInputFieldIds,
     requiredStageOutputs,
     allowedActions: normalizeWorkflowStageActions(stage.allowedActions),
@@ -737,16 +752,17 @@ export function buildStageSupportAssignmentsSnapshot(stage: WorkflowStage) {
 }
 
 export function buildProtocolStageMetadataFromWorkflowStage(stage: WorkflowStage) {
+  const isReception = isReceptionStage(stage);
   return {
     stageId: stage.id,
     description: stage.description,
-    stageType: (stage as any).stageType,
+    stageType: isReception ? 'RECEPTION' : (stage as any).stageType,
     actionLabels: (stage as any).actionLabels,
     availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
     primaryTab: stage.primaryTab || 'resumo',
-    requiredDocumentTypes: stage.requiredDocumentTypes || [],
-    requiredInputFieldIds: stage.requiredInputFieldIds || [],
-    requiredStageOutputs: stage.requiredStageOutputs || [],
+    requiredDocumentTypes: isReception ? [] : stage.requiredDocumentTypes || [],
+    requiredInputFieldIds: isReception ? [] : stage.requiredInputFieldIds || [],
+    requiredStageOutputs: isReception ? [] : stage.requiredStageOutputs || [],
     allowedActions: stage.allowedActions || [],
     canSkip: stage.canSkip || false,
     skipCondition: stage.skipCondition,
@@ -1081,9 +1097,13 @@ export async function validateStageConditions(
   const awaitingReviewDocuments: string[] = [];
   const rejectedDocuments: string[] = [];
   const missingFormFields: string[] = [];
+  const isReception = isReceptionStage({
+    name: stage.stageName,
+    stageType: metadata?.stageType
+  });
 
   // ===== VALIDAR DOCUMENTOS =====
-  const requiredDocTypes = metadata?.requiredDocumentTypes || [];
+  const requiredDocTypes = isReception ? [] : metadata?.requiredDocumentTypes || [];
 
   if (requiredDocTypes.length > 0) {
     const documents = await prisma.protocolDocument.findMany({
@@ -1143,7 +1163,7 @@ export async function validateStageConditions(
 
   // ===== VALIDAR CAMPOS DO FORMULÁRIO (usando ProtocolDataField.status) =====
   const serviceFormFieldCatalog = extractServiceFormFields(service || {});
-  const allRequiredFieldIds = getRequiredInputFieldIds(metadata || {});
+  const allRequiredFieldIds = isReception ? [] : getRequiredInputFieldIds(metadata || {});
   const unresolvedRequiredFieldIds = allRequiredFieldIds.filter(
     fieldId => !serviceFormFieldCatalog.byId.has(fieldId)
   );
@@ -1191,7 +1211,7 @@ export async function validateStageConditions(
   }
 
   // ===== VALIDAR PENDÊNCIAS BLOQUEANTES =====
-  const requiredStageOutputs = getRequiredStageOutputs(metadata || {});
+  const requiredStageOutputs = isReception ? [] : getRequiredStageOutputs(metadata || {});
   const stageOutputs =
     metadata?.stageOutputs && typeof metadata.stageOutputs === 'object'
       ? (metadata.stageOutputs as Record<string, unknown>)

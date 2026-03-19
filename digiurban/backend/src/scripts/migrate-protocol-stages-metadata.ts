@@ -72,6 +72,16 @@ interface WorkflowStage {
   [key: string]: any;
 }
 
+function isReceptionStage(stage: WorkflowStage | null | undefined, stageName?: string): boolean {
+  const stageType = typeof stage?.stageType === 'string' ? stage.stageType.trim() : '';
+  if (stageType === 'RECEPTION') {
+    return true;
+  }
+
+  const normalizedStageName = typeof stageName === 'string' ? stageName.toLowerCase() : '';
+  return normalizedStageName.includes('recep') || normalizedStageName.includes('receb');
+}
+
 async function migrateProtocolStagesMetadata() {
   console.log('\n🔄 Iniciando migração de metadados de ProtocolStages...\n');
 
@@ -151,6 +161,7 @@ async function migrateProtocolStagesMetadata() {
             const availableTabs = normalizeTabs(templateStage.availableTabs);
             const primaryTab = normalizePrimaryTab(templateStage.primaryTab, availableTabs);
 
+            const isReception = isReceptionStage(templateStage, protocolStage.stageName);
             const updatedMetadata = {
               ...currentMetadata,
 
@@ -163,15 +174,17 @@ async function migrateProtocolStagesMetadata() {
               primaryTab,
 
               // Atualizar requisitos
-              requiredDocumentTypes: templateStage.requiredDocumentTypes || [],
-              requiredInputFieldIds:
-                templateStage.requiredInputFieldIds ||
-                currentMetadata.requiredInputFieldIds ||
-                [],
-              requiredStageOutputs:
-                templateStage.requiredStageOutputs ||
-                currentMetadata.requiredStageOutputs ||
-                [],
+              requiredDocumentTypes: isReception ? [] : templateStage.requiredDocumentTypes || [],
+              requiredInputFieldIds: isReception
+                ? []
+                : templateStage.requiredInputFieldIds ||
+                  currentMetadata.requiredInputFieldIds ||
+                  [],
+              requiredStageOutputs: isReception
+                ? []
+                : templateStage.requiredStageOutputs ||
+                  currentMetadata.requiredStageOutputs ||
+                  [],
 
               // Atualizar ações
               allowedActions: templateStage.allowedActions || currentMetadata.allowedActions || [],

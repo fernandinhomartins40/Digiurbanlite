@@ -79,7 +79,31 @@ function formatExecutionRule(assignment: WorkflowStageSupportAssignment) {
   return `setor ${assignment.organizationalUnit?.nome || assignment.organizationalUnitName || 'vinculado'}`
 }
 
-function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata: any }>(
+function isReceptionStageMetadata(stageName: string | undefined, metadata: Record<string, any>) {
+  const stageType = typeof metadata.stageType === 'string' ? metadata.stageType.trim() : '';
+  if (stageType === 'RECEPTION') {
+    return true;
+  }
+
+  const normalizedStageName = typeof stageName === 'string' ? stageName.toLowerCase() : '';
+  return normalizedStageName.includes('recep') || normalizedStageName.includes('receb');
+}
+
+function sanitizeProtocolStageMetadata(stageName: string | undefined, metadata: Record<string, any>) {
+  if (!isReceptionStageMetadata(stageName, metadata)) {
+    return metadata;
+  }
+
+  return {
+    ...metadata,
+    stageType: metadata.stageType || 'RECEPTION',
+    requiredDocumentTypes: [],
+    requiredInputFieldIds: [],
+    requiredStageOutputs: []
+  };
+}
+
+function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata: any; stageName?: string }>(
   stage: T,
   workflowStagesById: Map<string, WorkflowStage>
 ): T {
@@ -88,34 +112,29 @@ function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata
     ? metadata.stageSupportAssignments
     : [];
 
-  if (currentSupportAssignments.length > 0) {
-    return stage;
-  }
-
   const workflowStageId =
     typeof metadata.stageId === 'string' && metadata.stageId ? metadata.stageId : null;
 
-  if (!workflowStageId) {
-    return stage;
-  }
-
-  const workflowStage = workflowStagesById.get(workflowStageId);
-
-  if (!workflowStage || (workflowStage.supportAssignments?.length || 0) === 0) {
-    return stage;
-  }
+  const workflowStage = workflowStageId ? workflowStagesById.get(workflowStageId) : null;
+  const workflowSupportAssignments = workflowStage
+    ? buildStageSupportAssignmentsSnapshot(workflowStage)
+    : [];
+  const nextMetadata = sanitizeProtocolStageMetadata(stage.stageName as string | undefined, {
+    ...metadata,
+    requiredInputFieldIds:
+      metadata.requiredInputFieldIds ||
+      workflowStage?.requiredInputFieldIds ||
+      [],
+    requiredStageOutputs: metadata.requiredStageOutputs || workflowStage?.requiredStageOutputs || [],
+    stageSupportAssignments:
+      currentSupportAssignments.length > 0
+        ? currentSupportAssignments
+        : workflowSupportAssignments
+  });
 
   return {
     ...stage,
-    metadata: {
-      ...metadata,
-      requiredInputFieldIds:
-        metadata.requiredInputFieldIds ||
-        workflowStage.requiredInputFieldIds ||
-        [],
-      requiredStageOutputs: metadata.requiredStageOutputs || workflowStage.requiredStageOutputs || [],
-      stageSupportAssignments: buildStageSupportAssignmentsSnapshot(workflowStage)
-    }
+    metadata: nextMetadata
   };
 }
 

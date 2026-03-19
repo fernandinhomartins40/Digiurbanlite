@@ -107,6 +107,16 @@ function getStageRequiredOutputs(stage: Record<string, any>): string[] {
   return normalizeStringArray(stage.requiredStageOutputs ?? []);
 }
 
+function isReceptionStage(stage: Record<string, any>): boolean {
+  const stageType = typeof stage.stageType === 'string' ? stage.stageType.trim() : '';
+  if (stageType === 'RECEPTION') {
+    return true;
+  }
+
+  const stageName = typeof stage.name === 'string' ? stage.name.toLowerCase() : '';
+  return stageName.includes('recep') || stageName.includes('receb');
+}
+
 async function main() {
   const services = await prisma.serviceSimplified.findMany({
     select: {
@@ -191,8 +201,30 @@ async function main() {
 
       const requiredOutputs = getStageRequiredOutputs(stage || {});
       const stageType = typeof stage.stageType === 'string' ? stage.stageType.trim() : '';
+      const isReception = isReceptionStage(stage || {});
       const isConclusionStage = stageType === 'CONCLUSION';
       const isGenerationStage = stageType === 'DOCUMENT_GENERATION';
+
+      if (isReception) {
+        if (requiredInputs.length > 0) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" de recepção não pode exigir requiredInputFieldIds: ${requiredInputs.join(', ')}`
+          );
+        }
+
+        if (requiredOutputs.length > 0) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" de recepção não pode exigir requiredStageOutputs: ${requiredOutputs.join(', ')}`
+          );
+        }
+
+        const requiredDocuments = normalizeStringArray(stage.requiredDocumentTypes ?? []);
+        if (requiredDocuments.length > 0) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" de recepção não pode exigir requiredDocumentTypes: ${requiredDocuments.join(', ')}`
+          );
+        }
+      }
 
       if (requiredOutputs.length > 0 && !normalizedTabs.includes('resumo')) {
         errors.push(
