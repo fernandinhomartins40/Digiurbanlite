@@ -117,6 +117,20 @@ function isReceptionStage(stage: Record<string, any>): boolean {
   return stageName.includes('recep') || stageName.includes('receb');
 }
 
+function hasStageRequirements(stage: Record<string, any>): boolean {
+  const requiredDocuments = normalizeStringArray(stage.requiredDocumentTypes ?? []);
+  const requiredInputs = normalizeStringArray(stage.requiredInputFieldIds ?? []);
+  const requiredOutputs = normalizeStringArray(stage.requiredStageOutputs ?? []);
+  const allowedActions = normalizeStringArray(stage.allowedActions ?? []);
+
+  return (
+    requiredDocuments.length > 0 ||
+    requiredInputs.length > 0 ||
+    requiredOutputs.length > 0 ||
+    allowedActions.some(action => action === 'REJECT' || action === 'REQUEST_INFO' || action === 'CREATE_PENDING')
+  );
+}
+
 async function main() {
   const services = await prisma.serviceSimplified.findMany({
     select: {
@@ -235,6 +249,12 @@ async function main() {
       if (isGenerationStage && !normalizedTabs.includes('documentos-gerados')) {
         errors.push(
           `Workflow "${workflow.name}" / etapa "${stageName}" é DOCUMENT_GENERATION mas não expõe a aba documentos-gerados`
+        );
+      }
+
+      if (isGenerationStage && hasStageRequirements(stage || {})) {
+        errors.push(
+          `Workflow "${workflow.name}" / etapa "${stageName}" está marcada como DOCUMENT_GENERATION, mas ainda exige validações/pendências`
         );
       }
 

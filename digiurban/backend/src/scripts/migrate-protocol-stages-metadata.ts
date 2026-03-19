@@ -82,6 +82,84 @@ function isReceptionStage(stage: WorkflowStage | null | undefined, stageName?: s
   return normalizedStageName.includes('recep') || normalizedStageName.includes('receb');
 }
 
+function isConclusionStage(stage: WorkflowStage | null | undefined, stageName?: string): boolean {
+  const stageType = typeof stage?.stageType === 'string' ? stage.stageType.trim() : '';
+  if (stageType === 'CONCLUSION') {
+    return true;
+  }
+
+  const normalizedStageName = typeof stageName === 'string' ? stageName.toLowerCase() : '';
+  return normalizedStageName.includes('conclus') || normalizedStageName.includes('conclu');
+}
+
+function hasStageRequirements(stage: WorkflowStage | Record<string, any> | null | undefined): boolean {
+  if (!stage || typeof stage !== 'object') return false;
+
+  const requiredDocumentTypes = Array.isArray(stage.requiredDocumentTypes) ? stage.requiredDocumentTypes : [];
+  const requiredInputFieldIds = Array.isArray(stage.requiredInputFieldIds) ? stage.requiredInputFieldIds : [];
+  const requiredStageOutputs = Array.isArray(stage.requiredStageOutputs) ? stage.requiredStageOutputs : [];
+  const allowedActions = Array.isArray(stage.allowedActions) ? stage.allowedActions : [];
+
+  return (
+    requiredDocumentTypes.length > 0 ||
+    requiredInputFieldIds.length > 0 ||
+    requiredStageOutputs.length > 0 ||
+    allowedActions.some(action => action === 'REJECT' || action === 'REQUEST_INFO' || action === 'CREATE_PENDING')
+  );
+}
+
+function resolveStageType(stage: WorkflowStage | null | undefined, stageName?: string, primaryTab?: string, availableTabs?: string[]) {
+  if (isReceptionStage(stage, stageName)) {
+    return 'RECEPTION';
+  }
+
+  if (isConclusionStage(stage, stageName)) {
+    return 'CONCLUSION';
+  }
+
+  const stageType = typeof stage?.stageType === 'string' ? stage.stageType.trim() : '';
+  const normalizedStageName = typeof stageName === 'string' ? stageName.toLowerCase() : '';
+  const hasGeneratedTab =
+    primaryTab === 'documentos-gerados' || Boolean(availableTabs?.includes('documentos-gerados'));
+  const hasGenerationName = [
+    'emiss',
+    'emitir',
+    'expedi',
+    'impress',
+    'disponibil',
+    'gerar',
+    'gerac',
+    'assin',
+    'publica',
+    'homolog'
+  ].some(keyword => normalizedStageName.includes(keyword));
+  const hasAnalysisName = [
+    'analis',
+    'analise',
+    'valid',
+    'vistoria',
+    'triagem',
+    'parecer',
+    'fiscal',
+    'tecnic',
+    'socioeconom'
+  ].some(keyword => normalizedStageName.includes(keyword));
+
+  if (hasGeneratedTab) {
+    return 'DOCUMENT_GENERATION';
+  }
+
+  if (hasStageRequirements(stage) || hasAnalysisName) {
+    return undefined;
+  }
+
+  if (stageType === 'DOCUMENT_GENERATION' || hasGenerationName) {
+    return 'DOCUMENT_GENERATION';
+  }
+
+  return undefined;
+}
+
 async function migrateProtocolStagesMetadata() {
   console.log('\n🔄 Iniciando migração de metadados de ProtocolStages...\n');
 
@@ -150,18 +228,28 @@ async function migrateProtocolStagesMetadata() {
             const currentMetadata = (protocolStage.metadata as any) || {};
             const hasAvailableTabs = currentMetadata.availableTabs && currentMetadata.availableTabs.length > 0;
             const hasPrimaryTab = !!currentMetadata.primaryTab;
+            const expectedAvailableTabs = normalizeTabs(templateStage.availableTabs);
+            const expectedPrimaryTab = normalizePrimaryTab(templateStage.primaryTab, expectedAvailableTabs);
+            const expectedStageType = resolveStageType(
+              templateStage,
+              protocolStage.stageName,
+              expectedPrimaryTab,
+              expectedAvailableTabs
+            );
+            const currentStageType =
+              typeof currentMetadata.stageType === 'string' ? currentMetadata.stageType.trim() : undefined;
 
-            if (hasAvailableTabs && hasPrimaryTab) {
+            if (hasAvailableTabs && hasPrimaryTab && currentStageType === expectedStageType) {
               console.log(`   ✓ Stage "${protocolStage.stageName}" já tem metadados completos - pulando`);
               stagesSkipped++;
               continue;
             }
 
             // Construir metadados atualizados
-            const availableTabs = normalizeTabs(templateStage.availableTabs);
-            const primaryTab = normalizePrimaryTab(templateStage.primaryTab, availableTabs);
-
+            const availableTabs = expectedAvailableTabs;
+            const primaryTab = expectedPrimaryTab;
             const isReception = isReceptionStage(templateStage, protocolStage.stageName);
+            const stageType = resolveStageType(templateStage, protocolStage.stageName, primaryTab, availableTabs);
             const updatedMetadata = {
               ...currentMetadata,
 
@@ -172,6 +260,7 @@ async function migrateProtocolStagesMetadata() {
               // ✅ ADICIONAR METADADOS DE UI
               availableTabs,
               primaryTab,
+              stageType,
 
               // Atualizar requisitos
               requiredDocumentTypes: isReception ? [] : templateStage.requiredDocumentTypes || [],

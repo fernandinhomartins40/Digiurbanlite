@@ -89,18 +89,104 @@ function isReceptionStageMetadata(stageName: string | undefined, metadata: Recor
   return normalizedStageName.includes('recep') || normalizedStageName.includes('receb');
 }
 
-function sanitizeProtocolStageMetadata(stageName: string | undefined, metadata: Record<string, any>) {
-  if (!isReceptionStageMetadata(stageName, metadata)) {
-    return metadata;
+function isConclusionStageMetadata(stageName: string | undefined, metadata: Record<string, any>) {
+  const stageType = typeof metadata.stageType === 'string' ? metadata.stageType.trim() : '';
+  if (stageType === 'CONCLUSION') {
+    return true;
   }
 
-  return {
+  const normalizedStageName = typeof stageName === 'string' ? stageName.toLowerCase() : '';
+  return normalizedStageName.includes('conclus') || normalizedStageName.includes('conclu');
+}
+
+function hasStageRequirements(metadata: Record<string, any>) {
+  const requiredDocumentTypes = Array.isArray(metadata.requiredDocumentTypes) ? metadata.requiredDocumentTypes : [];
+  const requiredInputFieldIds = Array.isArray(metadata.requiredInputFieldIds) ? metadata.requiredInputFieldIds : [];
+  const requiredStageOutputs = Array.isArray(metadata.requiredStageOutputs) ? metadata.requiredStageOutputs : [];
+  const allowedActions = Array.isArray(metadata.allowedActions) ? metadata.allowedActions : [];
+
+  return (
+    requiredDocumentTypes.length > 0 ||
+    requiredInputFieldIds.length > 0 ||
+    requiredStageOutputs.length > 0 ||
+    allowedActions.some(action => action === 'REJECT' || action === 'REQUEST_INFO' || action === 'CREATE_PENDING')
+  );
+}
+
+function isDocumentGenerationStageMetadata(stageName: string | undefined, metadata: Record<string, any>) {
+  const primaryTab = typeof metadata.primaryTab === 'string' ? metadata.primaryTab.trim() : '';
+  const availableTabs = Array.isArray(metadata.availableTabs) ? metadata.availableTabs : [];
+  const stageType = typeof metadata.stageType === 'string' ? metadata.stageType.trim() : '';
+  const normalizedStageName = typeof stageName === 'string' ? stageName.toLowerCase() : '';
+  const hasGeneratedTab = primaryTab === 'documentos-gerados' || availableTabs.includes('documentos-gerados');
+  const hasGenerationName = [
+    'emiss',
+    'emitir',
+    'expedi',
+    'impress',
+    'disponibil',
+    'gerar',
+    'gerac',
+    'assin',
+    'publica',
+    'homolog'
+  ].some(keyword => normalizedStageName.includes(keyword));
+  const hasAnalysisName = [
+    'analis',
+    'analise',
+    'valid',
+    'vistoria',
+    'triagem',
+    'parecer',
+    'fiscal',
+    'tecnic',
+    'socioeconom'
+  ].some(keyword => normalizedStageName.includes(keyword));
+
+  if (hasGeneratedTab) {
+    return true;
+  }
+
+  if (hasStageRequirements(metadata) || hasAnalysisName) {
+    return false;
+  }
+
+  if (stageType === 'DOCUMENT_GENERATION') {
+    return true;
+  }
+
+  return hasGenerationName;
+}
+
+function sanitizeProtocolStageMetadata(stageName: string | undefined, metadata: Record<string, any>) {
+  if (isReceptionStageMetadata(stageName, metadata)) {
+    return {
+      ...metadata,
+      stageType: 'RECEPTION',
+      requiredDocumentTypes: [],
+      requiredInputFieldIds: [],
+      requiredStageOutputs: []
+    };
+  }
+
+  if (isConclusionStageMetadata(stageName, metadata)) {
+    return {
+      ...metadata,
+      stageType: 'CONCLUSION'
+    };
+  }
+
+  const isDocumentGeneration = isDocumentGenerationStageMetadata(stageName, metadata);
+  const nextMetadata = {
     ...metadata,
-    stageType: metadata.stageType || 'RECEPTION',
-    requiredDocumentTypes: [],
-    requiredInputFieldIds: [],
-    requiredStageOutputs: []
+    stageType: isDocumentGeneration ? 'DOCUMENT_GENERATION' : undefined
   };
+
+  if (!isDocumentGeneration) {
+    delete nextMetadata.stageType;
+  }
+
+  return nextMetadata;
 }
 
 function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata: any; stageName?: string }>(
@@ -121,11 +207,24 @@ function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata
     : [];
   const nextMetadata = sanitizeProtocolStageMetadata(stage.stageName as string | undefined, {
     ...metadata,
-    requiredInputFieldIds:
-      metadata.requiredInputFieldIds ||
-      workflowStage?.requiredInputFieldIds ||
+    stageType: workflowStage ? workflowStage.stageType : metadata.stageType,
+    availableTabs: workflowStage?.availableTabs || metadata.availableTabs || [],
+    primaryTab: workflowStage?.primaryTab || metadata.primaryTab,
+    requiredDocumentTypes:
+      workflowStage?.requiredDocumentTypes ??
+      metadata.requiredDocumentTypes ??
       [],
-    requiredStageOutputs: metadata.requiredStageOutputs || workflowStage?.requiredStageOutputs || [],
+    requiredInputFieldIds:
+      workflowStage?.requiredInputFieldIds ??
+      metadata.requiredInputFieldIds ??
+      [],
+    requiredStageOutputs:
+      workflowStage?.requiredStageOutputs ??
+      metadata.requiredStageOutputs ??
+      [],
+    allowedActions: workflowStage?.allowedActions || metadata.allowedActions || [],
+    canSkip: workflowStage?.canSkip ?? metadata.canSkip ?? false,
+    requiresApproval: workflowStage?.requiresApproval ?? metadata.requiresApproval,
     stageSupportAssignments:
       currentSupportAssignments.length > 0
         ? currentSupportAssignments

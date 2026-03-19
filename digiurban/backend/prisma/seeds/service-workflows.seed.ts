@@ -14,6 +14,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
+import { generateCompleteWorkflowBySubtype } from '../../src/services/workflow-template.service';
 
 const prisma = new PrismaClient();
 
@@ -32,7 +33,7 @@ interface SpecificWorkflow {
 }
 
 // Workflows especÃ­ficos por moduleType
-const specificWorkflows: Record<string, SpecificWorkflow> = {
+export const specificWorkflows: Record<string, SpecificWorkflow> = {
   // ========== SAÃšDE ==========
   ENCAMINHAMENTOS_TFD: {
     moduleType: 'ENCAMINHAMENTOS_TFD',
@@ -26459,6 +26460,40 @@ function normalizeStringArray(value: unknown): string[] {
   return normalized;
 }
 
+const LEGACY_WORKFLOW_TAB_MAP: Record<string, string> = {
+  generated: 'documentos-gerados',
+  'document-generation': 'documentos-gerados',
+  send: 'enviar',
+  documents: 'documentos',
+  communication: 'comunicacao',
+  involved: 'envolvidos',
+  location: 'dados',
+  photos: 'documentos'
+};
+
+function normalizeWorkflowTab(tab: unknown): string | null {
+  if (typeof tab !== 'string') return null;
+  const trimmed = tab.trim();
+  if (!trimmed) return null;
+  return LEGACY_WORKFLOW_TAB_MAP[trimmed] || trimmed;
+}
+
+function normalizeWorkflowTabs(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  const tabs: string[] = [];
+  const seen = new Set<string>();
+
+  for (const item of value) {
+    const normalizedTab = normalizeWorkflowTab(item);
+    if (!normalizedTab || seen.has(normalizedTab)) continue;
+    seen.add(normalizedTab);
+    tabs.push(normalizedTab);
+  }
+
+  return tabs;
+}
+
 function parseJsonObject(value: unknown): Record<string, any> | null {
   if (!value) return null;
   if (typeof value === 'string') {
@@ -26542,6 +26577,61 @@ function isReceptionStage(stage: Record<string, any> | null | undefined): boolea
   return stageName.includes('recep') || stageName.includes('receb');
 }
 
+function stageHasValidationRequirements(stage: Record<string, any> | null | undefined): boolean {
+  if (!stage || typeof stage !== 'object') return false;
+
+  const requiredDocumentTypes = normalizeStringArray(stage.requiredDocumentTypes ?? []);
+  const requiredInputFieldIds = normalizeStringArray(stage.requiredInputFieldIds ?? []);
+  const requiredStageOutputs = normalizeStringArray(stage.requiredStageOutputs ?? []);
+  const allowedActions = normalizeStringArray(stage.allowedActions ?? []);
+
+  return (
+    requiredDocumentTypes.length > 0 ||
+    requiredInputFieldIds.length > 0 ||
+    requiredStageOutputs.length > 0 ||
+    allowedActions.some(action => action === 'REJECT' || action === 'REQUEST_INFO' || action === 'CREATE_PENDING')
+  );
+}
+
+function shouldTreatAsDocumentGenerationStage(stage: Record<string, any> | null | undefined): boolean {
+  if (!stage || typeof stage !== 'object') return false;
+
+  const stageType = typeof stage.stageType === 'string' ? stage.stageType.trim() : '';
+  const stageName = typeof stage.name === 'string' ? stage.name.toLowerCase() : '';
+  const primaryTab = normalizeWorkflowTab(stage.primaryTab);
+  const availableTabs = normalizeWorkflowTabs(stage.availableTabs ?? []);
+  const hasGeneratedTab = primaryTab === 'documentos-gerados' || availableTabs.includes('documentos-gerados');
+  const hasGenerationName = [
+    'emiss',
+    'emitir',
+    'expedi',
+    'impress',
+    'disponibil',
+    'gerar',
+    'gerac',
+    'assin',
+    'publica',
+    'homolog'
+  ].some(keyword => stageName.includes(keyword));
+  const hasAnalysisName = [
+    'analis',
+    'analise',
+    'valid',
+    'vistoria',
+    'triagem',
+    'parecer',
+    'fiscal',
+    'tecnic',
+    'socioeconom'
+  ].some(keyword => stageName.includes(keyword));
+
+  if (hasGeneratedTab) return true;
+  if (stageHasValidationRequirements(stage) || hasAnalysisName) return false;
+  if (stageType === 'DOCUMENT_GENERATION') return true;
+
+  return hasGenerationName;
+}
+
 function sanitizeStageRequirementsForService(service: any, stages: any[]) {
   const fieldCatalog = buildServiceFieldCatalog(service);
   let unresolvedInputCount = 0;
@@ -26614,46 +26704,10 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
 
 function normalizeWorkflowStages(stages: any[]): any[] {
   const normalized = (stages || []).map(stage => ({ ...stage }));
-  const normalizeName = (value: string) => String(value || '').toLowerCase();
-  const isReception = (name: string) => normalizeName(name).includes('recep') || normalizeName(name).includes('receb');
-  const isConclusion = (name: string) => normalizeName(name).includes('conclus') || normalizeName(name).includes('conclu');
-  const isGenerationStage = (name: string) => {
-    const normalizedName = normalizeName(name);
-    return [
-      'emiss',
-      'emitir',
-      'gerar',
-      'gerac',
-      'certida',
-      'comprov',
-      'declar',
-      'document',
-      'alvara',
-      'licenc',
-      'carteira',
-      'relator',
-      'resultado',
-      'registro',
-      'autoriz',
-      'segunda via',
-      '2 via',
-      'elabora',
-      'laudo',
-      'guia',
-      'carne',
-      'projeto',
-      'outorga',
-      'passe',
-      'credencial',
-      'portaria',
-      'termo',
-      'parecer',
-      'certificado',
-      'proposta'
-    ].some(keyword => normalizedName.includes(keyword));
-  };
+  const isReception = (name: string) => String(name || '').toLowerCase().includes('recep') || String(name || '').toLowerCase().includes('receb');
+  const isConclusion = (name: string) => String(name || '').toLowerCase().includes('conclus') || String(name || '').toLowerCase().includes('conclu');
   const mergeTabs = (tabs: string[] | undefined, extras: string[]) => {
-    const current = Array.isArray(tabs) ? tabs : [];
+    const current = normalizeWorkflowTabs(tabs ?? []);
     const combined = [...current];
     for (const tab of extras) {
       if (!combined.includes(tab)) {
@@ -26735,9 +26789,9 @@ function normalizeWorkflowStages(stages: any[]): any[] {
   }
 
   return normalized.map((stage, index) => {
-    const isGeneration = isGenerationStage(stage?.name);
     const generationTabs = ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'];
     const stageRecord = stage && typeof stage === 'object' ? (stage as Record<string, any>) : {};
+    const isGeneration = shouldTreatAsDocumentGenerationStage(stageRecord);
     const requiredInputFieldIds = normalizeStringArray(stageRecord.requiredInputFieldIds ?? []);
     const requiredStageOutputs = normalizeStringArray(stageRecord.requiredStageOutputs ?? []);
     const {
@@ -26752,11 +26806,235 @@ function normalizeWorkflowStages(stages: any[]): any[] {
       requiredDocumentTypes: normalizeStringArray(stageRecord.requiredDocumentTypes ?? []),
       requiredInputFieldIds,
       requiredStageOutputs,
-      availableTabs: isGeneration ? mergeTabs(stage?.availableTabs, generationTabs) : stage?.availableTabs,
-      primaryTab: isGeneration ? stage?.primaryTab || 'documentos-gerados' : stage?.primaryTab,
-      stageType: isGeneration ? stage?.stageType || 'DOCUMENT_GENERATION' : stage?.stageType
+      availableTabs: isGeneration
+        ? mergeTabs(stageRecord.availableTabs, generationTabs)
+        : normalizeWorkflowTabs(stageRecord.availableTabs),
+      primaryTab: isGeneration
+        ? normalizeWorkflowTab(stageRecord.primaryTab) || 'documentos-gerados'
+        : normalizeWorkflowTab(stageRecord.primaryTab) || undefined,
+      stageType: isGeneration ? 'DOCUMENT_GENERATION' : stageRecord.stageType || undefined
     };
   });
+}
+
+function parseServiceRequiredDocuments(service: any): string[] {
+  const rawDocuments =
+    typeof service?.requiredDocuments === 'string'
+      ? parseJsonObject(service.requiredDocuments)
+      : service?.requiredDocuments;
+
+  const documentsArray = Array.isArray(rawDocuments)
+    ? rawDocuments
+    : Array.isArray(service?.requiredDocuments)
+      ? service.requiredDocuments
+      : [];
+
+  const parsedDocuments = documentsArray
+    .map((document) => {
+      if (typeof document === 'string') return document;
+      if (document && typeof document === 'object') {
+        const record = document as Record<string, any>;
+        return typeof record.type === 'string'
+          ? record.type
+          : typeof record.name === 'string'
+            ? record.name
+            : null;
+      }
+      return null;
+    })
+    .filter((document): document is string => typeof document === 'string');
+
+  return normalizeStringArray(parsedDocuments);
+}
+
+function extractServiceRequiredFieldIds(service: any): string[] {
+  const requiredFieldIds = new Set<string>();
+  const formSchema = parseJsonObject(service?.formSchema);
+
+  const schemaRequired = Array.isArray(formSchema?.required)
+    ? formSchema.required.filter((fieldId: unknown): fieldId is string => typeof fieldId === 'string')
+    : [];
+
+  for (const fieldId of schemaRequired) {
+    const resolvedFieldId = resolveFieldId(fieldId, buildServiceFieldCatalog(service));
+    if (resolvedFieldId) {
+      requiredFieldIds.add(resolvedFieldId);
+    }
+  }
+
+  const formFieldsConfig = Array.isArray(service?.formFieldsConfig) ? service.formFieldsConfig : [];
+  for (const field of formFieldsConfig) {
+    if (!field || typeof field !== 'object') continue;
+    const fieldRecord = field as Record<string, any>;
+    if (!fieldRecord.required) continue;
+    const rawFieldId = fieldRecord.id ?? fieldRecord.key ?? fieldRecord.name;
+    if (typeof rawFieldId !== 'string') continue;
+    const resolvedFieldId = resolveFieldId(rawFieldId, buildServiceFieldCatalog(service));
+    if (resolvedFieldId) {
+      requiredFieldIds.add(resolvedFieldId);
+    }
+  }
+
+  return Array.from(requiredFieldIds);
+}
+
+function isConclusionStage(stage: Record<string, any> | null | undefined): boolean {
+  if (!stage || typeof stage !== 'object') return false;
+
+  const stageType = typeof stage.stageType === 'string' ? stage.stageType.trim() : '';
+  if (stageType === 'CONCLUSION') return true;
+
+  const stageName = typeof stage.name === 'string' ? stage.name.toLowerCase() : '';
+  return stageName.includes('conclus') || stageName.includes('conclu');
+}
+
+function isDocumentGenerationStage(stage: Record<string, any> | null | undefined): boolean {
+  return shouldTreatAsDocumentGenerationStage(stage);
+}
+
+function isActionableWorkflowStage(stage: Record<string, any> | null | undefined): boolean {
+  return Boolean(stage) && !isReceptionStage(stage) && !isConclusionStage(stage) && !isDocumentGenerationStage(stage);
+}
+
+function looksLikeDocumentAnalysisStage(stage: Record<string, any>): boolean {
+  const stageName = typeof stage.name === 'string' ? stage.name.toLowerCase() : '';
+  const availableTabs = normalizeWorkflowTabs(stage.availableTabs ?? []);
+  const primaryTab = normalizeWorkflowTab(stage.primaryTab) || '';
+  return (
+    normalizeStringArray(stage.requiredDocumentTypes ?? []).length > 0 ||
+    stageName.includes('document') ||
+    primaryTab === 'documentos' ||
+    availableTabs.includes('documentos')
+  );
+}
+
+function looksLikeDataAnalysisStage(stage: Record<string, any>): boolean {
+  const stageName = typeof stage.name === 'string' ? stage.name.toLowerCase() : '';
+  const availableTabs = normalizeWorkflowTabs(stage.availableTabs ?? []);
+  const primaryTab = normalizeWorkflowTab(stage.primaryTab) || '';
+  return (
+    normalizeStringArray(stage.requiredInputFieldIds ?? []).length > 0 ||
+    stageName.includes('dados') ||
+    stageName.includes('valida') ||
+    (stageName.includes('anal') && !stageName.includes('document')) ||
+    primaryTab === 'dados' ||
+    availableTabs.includes('dados')
+  );
+}
+
+function createDocumentAnalysisStage(order: number) {
+  return {
+    name: 'Análise Documental',
+    order,
+    description: 'Verificação dos documentos exigidos pelo serviço',
+    slaDays: 3,
+    availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
+    primaryTab: 'documentos',
+    requiredDocumentTypes: [],
+    requiredInputFieldIds: [],
+    requiredStageOutputs: [],
+    allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
+    canSkip: false
+  };
+}
+
+function createDataValidationStage(order: number) {
+  return {
+    name: 'Validação de Dados',
+    order,
+    description: 'Verificação e validação dos dados obrigatórios do serviço',
+    slaDays: 3,
+    availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
+    primaryTab: 'dados',
+    requiredDocumentTypes: [],
+    requiredInputFieldIds: [],
+    requiredStageOutputs: [],
+    allowedActions: ['APPROVE', 'REJECT', 'CREATE_PENDING', 'REQUEST_INFO'],
+    canSkip: false
+  };
+}
+
+function mergeUniqueStrings(current: unknown, additions: string[]): string[] {
+  return Array.from(new Set([...normalizeStringArray(current), ...normalizeStringArray(additions)]));
+}
+
+function ensureWorkflowCoverageForService(service: any, stages: any[]) {
+  const normalizedStages = stages.map((stage) => ({ ...(stage as Record<string, any>) }));
+  const requiredDocuments = parseServiceRequiredDocuments(service);
+  const requiredFieldIds = extractServiceRequiredFieldIds(service);
+  const actionableStageIndexes = normalizedStages
+    .map((stage, index) => ({ stage, index }))
+    .filter(({ stage }) => isActionableWorkflowStage(stage));
+
+  const findReceptionIndex = () => normalizedStages.findIndex(stage => isReceptionStage(stage));
+  const findDocumentStageIndex = () =>
+    actionableStageIndexes.find(({ stage }) => looksLikeDocumentAnalysisStage(stage))?.index ?? -1;
+  const findDataStageIndex = () =>
+    actionableStageIndexes.find(({ stage }) => looksLikeDataAnalysisStage(stage))?.index ?? -1;
+
+  let documentStageIndex = findDocumentStageIndex();
+  let dataStageIndex = findDataStageIndex();
+
+  if (requiredDocuments.length > 0 && documentStageIndex === -1) {
+    const receptionIndex = findReceptionIndex();
+    const insertIndex = receptionIndex >= 0 ? receptionIndex + 1 : 0;
+    normalizedStages.splice(insertIndex, 0, createDocumentAnalysisStage(insertIndex + 1));
+    documentStageIndex = insertIndex;
+    if (dataStageIndex >= insertIndex) {
+      dataStageIndex += 1;
+    }
+  }
+
+  if (requiredFieldIds.length > 0 && dataStageIndex === -1) {
+    const insertAfter = documentStageIndex >= 0 ? documentStageIndex : findReceptionIndex();
+    const insertIndex = insertAfter >= 0 ? insertAfter + 1 : 0;
+    normalizedStages.splice(insertIndex, 0, createDataValidationStage(insertIndex + 1));
+    dataStageIndex = insertIndex;
+  }
+
+  if (documentStageIndex >= 0 && requiredDocuments.length > 0) {
+    normalizedStages[documentStageIndex] = {
+      ...normalizedStages[documentStageIndex],
+      requiredDocumentTypes: mergeUniqueStrings(
+        normalizedStages[documentStageIndex].requiredDocumentTypes,
+        requiredDocuments
+      )
+    };
+  }
+
+  if (dataStageIndex >= 0 && requiredFieldIds.length > 0) {
+    normalizedStages[dataStageIndex] = {
+      ...normalizedStages[dataStageIndex],
+      requiredInputFieldIds: mergeUniqueStrings(
+        normalizedStages[dataStageIndex].requiredInputFieldIds,
+        requiredFieldIds
+      )
+    };
+  }
+
+  return normalizedStages.map((stage, index) => ({
+    ...stage,
+    order: index + 1
+  }));
+}
+
+export function buildSeedWorkflowStagesForService(service: any) {
+  const workflowTemplate =
+    service.moduleType && specificWorkflows[service.moduleType]
+      ? specificWorkflows[service.moduleType].stages
+      : generateCompleteWorkflowBySubtype(service as any).stages;
+
+  const normalizedStages = normalizeWorkflowStages(workflowTemplate as any[]);
+  const coveredStages = ensureWorkflowCoverageForService(service, normalizedStages);
+  const { sanitizedStages, unresolvedInputCount, movedOutputCount } =
+    sanitizeStageRequirementsForService(service, coveredStages as any[]);
+
+  return {
+    stages: sanitizedStages,
+    unresolvedInputCount,
+    movedOutputCount,
+    source: service.moduleType && specificWorkflows[service.moduleType] ? 'specific' : 'generated'
+  };
 }
 export async function seedServiceWorkflows() {
   console.log('\nðŸ“¦ Iniciando seed de ServiceWorkflows (COM METADADOS DE UI)...');
@@ -26785,8 +27063,6 @@ export async function seedServiceWorkflows() {
         where: { serviceId: service.id }
       });
 
-      // Determinar qual workflow usar
-      let workflowStages: any;
       let workflowName: string;
       let workflowDescription: string;
       let defaultSLA: number;
@@ -26794,26 +27070,30 @@ export async function seedServiceWorkflows() {
       if (service.moduleType && specificWorkflows[service.moduleType]) {
         // Usar workflow especÃ­fico
         const specific = specificWorkflows[service.moduleType];
-        workflowStages = normalizeWorkflowStages(specific.stages as any[]);
         workflowName = specific.name;
         workflowDescription = specific.description;
         defaultSLA = specific.defaultSLA;
       } else {
         // Usar workflow genÃ©rico
-        workflowStages = normalizeWorkflowStages(generateGenericWorkflow(service));
         workflowName = `Workflow - ${service.name}`;
         workflowDescription = `Fluxo padrÃ£o para ${service.name}`;
         defaultSLA = service.estimatedDays || 10;
       }
 
-      const { sanitizedStages, unresolvedInputCount, movedOutputCount } =
-        sanitizeStageRequirementsForService(service, workflowStages as any[]);
-      workflowStages = sanitizedStages;
+      const { stages: workflowStages, unresolvedInputCount, movedOutputCount, source } =
+        buildSeedWorkflowStagesForService(service);
 
       if (unresolvedInputCount > 0) {
         console.warn(
           `   Ã¢Å¡Â Ã¯Â¸Â ${service.name}: ${unresolvedInputCount} campo(s) de entrada nÃƒÂ£o mapeado(s) movido(s) para requiredStageOutputs (${movedOutputCount} novo(s)).`
         );
+      }
+
+      if (source === 'generated') {
+        defaultSLA = workflowStages.reduce(
+          (total, stage) => total + (typeof stage?.slaDays === 'number' ? stage.slaDays : 0),
+          0
+        ) || defaultSLA;
       }
 
       if (existing) {

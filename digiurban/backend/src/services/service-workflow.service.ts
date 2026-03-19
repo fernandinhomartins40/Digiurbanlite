@@ -245,6 +245,101 @@ function normalizeWorkflowPrimaryTab(primaryTab: unknown, availableTabs: string[
   return availableTabs[0] || 'resumo';
 }
 
+function hasStageValidationRequirements(stage: WorkflowStage | Record<string, any>): boolean {
+  const requiredDocumentTypes = normalizeStringArray((stage as any).requiredDocumentTypes ?? []);
+  const requiredInputFieldIds = normalizeStringArray((stage as any).requiredInputFieldIds ?? []);
+  const requiredStageOutputs = normalizeStringArray((stage as any).requiredStageOutputs ?? []);
+  const allowedActions = normalizeStringArray((stage as any).allowedActions ?? []);
+
+  return (
+    requiredDocumentTypes.length > 0 ||
+    requiredInputFieldIds.length > 0 ||
+    requiredStageOutputs.length > 0 ||
+    allowedActions.some(action => action === 'REJECT' || action === 'REQUEST_INFO' || action === 'CREATE_PENDING')
+  );
+}
+
+function isConclusionStage(stage: WorkflowStage | Record<string, any> | null | undefined): boolean {
+  if (!stage || typeof stage !== 'object') {
+    return false;
+  }
+
+  const stageType = typeof (stage as any).stageType === 'string' ? (stage as any).stageType.trim() : '';
+  if (stageType === 'CONCLUSION') {
+    return true;
+  }
+
+  const stageName = typeof (stage as any).name === 'string' ? (stage as any).name.toLowerCase() : '';
+  return stageName.includes('conclus') || stageName.includes('conclu');
+}
+
+function isDocumentGenerationStage(
+  stage: WorkflowStage | Record<string, any>,
+  availableTabs: string[],
+  primaryTab: string
+): boolean {
+  const stageType = typeof (stage as any).stageType === 'string' ? (stage as any).stageType.trim() : '';
+  const stageName = typeof (stage as any).name === 'string' ? (stage as any).name.toLowerCase() : '';
+  const hasGeneratedTab = primaryTab === 'documentos-gerados' || availableTabs.includes('documentos-gerados');
+  const hasGenerationName = [
+    'emiss',
+    'emitir',
+    'expedi',
+    'impress',
+    'disponibil',
+    'gerar',
+    'gerac',
+    'assin',
+    'publica',
+    'homolog'
+  ].some(keyword => stageName.includes(keyword));
+  const hasAnalysisName = [
+    'analis',
+    'analise',
+    'valid',
+    'vistoria',
+    'triagem',
+    'parecer',
+    'fiscal',
+    'tecnic',
+    'socioeconom'
+  ].some(keyword => stageName.includes(keyword));
+
+  if (hasGeneratedTab) {
+    return true;
+  }
+
+  if (hasStageValidationRequirements(stage) || hasAnalysisName) {
+    return false;
+  }
+
+  if (stageType === 'DOCUMENT_GENERATION') {
+    return true;
+  }
+
+  return hasGenerationName;
+}
+
+function normalizeWorkflowStageType(
+  stage: WorkflowStage | Record<string, any>,
+  availableTabs: string[],
+  primaryTab: string
+): WorkflowStage['stageType'] | undefined {
+  if (isReceptionStage(stage)) {
+    return 'RECEPTION';
+  }
+
+  if (isConclusionStage(stage)) {
+    return 'CONCLUSION';
+  }
+
+  if (isDocumentGenerationStage(stage, availableTabs, primaryTab)) {
+    return 'DOCUMENT_GENERATION';
+  }
+
+  return undefined;
+}
+
 function normalizeWorkflowStageActions(value: unknown): WorkflowStage['allowedActions'] {
   return normalizeStringArray(value).filter(
     (action): action is WorkflowStage['allowedActions'][number] => VALID_WORKFLOW_STAGE_ACTIONS.has(action)
@@ -527,6 +622,7 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
   const availableTabs = normalizeWorkflowTabs(stage.availableTabs);
   const primaryTab = normalizeWorkflowPrimaryTab(stage.primaryTab, availableTabs);
   const isReception = isReceptionStage(stage);
+  const normalizedStageType = normalizeWorkflowStageType(stage, availableTabs, primaryTab);
   const requiredInputFieldIds = isReception ? [] : getRequiredInputFieldIds(stage);
   const requiredStageOutputs = isReception ? [] : getRequiredStageOutputs(stage);
 
@@ -557,7 +653,7 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
     canSkip: Boolean(stage.canSkip),
     skipCondition:
       typeof stage.skipCondition === 'string' && stage.skipCondition ? stage.skipCondition : undefined,
-    stageType: typeof stage.stageType === 'string' && stage.stageType ? stage.stageType : undefined,
+    stageType: normalizedStageType,
     actionLabels: stage.actionLabels && typeof stage.actionLabels === 'object' ? stage.actionLabels : undefined,
     role: typeof stage.role === 'string' && stage.role ? stage.role : undefined,
     department: typeof stage.department === 'string' && stage.department ? stage.department : undefined,
@@ -753,13 +849,16 @@ export function buildStageSupportAssignmentsSnapshot(stage: WorkflowStage) {
 
 export function buildProtocolStageMetadataFromWorkflowStage(stage: WorkflowStage) {
   const isReception = isReceptionStage(stage);
+  const availableTabs = stage.availableTabs || ['resumo', 'comunicacao'];
+  const primaryTab = stage.primaryTab || availableTabs[0] || 'resumo';
+  const stageType = normalizeWorkflowStageType(stage, availableTabs, primaryTab);
   return {
     stageId: stage.id,
     description: stage.description,
-    stageType: isReception ? 'RECEPTION' : (stage as any).stageType,
+    stageType,
     actionLabels: (stage as any).actionLabels,
-    availableTabs: stage.availableTabs || ['resumo', 'comunicacao'],
-    primaryTab: stage.primaryTab || 'resumo',
+    availableTabs,
+    primaryTab,
     requiredDocumentTypes: isReception ? [] : stage.requiredDocumentTypes || [],
     requiredInputFieldIds: isReception ? [] : stage.requiredInputFieldIds || [],
     requiredStageOutputs: isReception ? [] : stage.requiredStageOutputs || [],
