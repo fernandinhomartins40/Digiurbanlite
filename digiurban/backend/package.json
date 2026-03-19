@@ -39,6 +39,8 @@
     "db:studio": "prisma studio",
     "db:seed": "tsx prisma/seed-consolidated.ts && tsx scripts/create-super-admin.ts",
     "db:seed:services-only": "tsx prisma/seeds/services/index.ts",
+    "db:seed:document-templates": "tsx prisma/seeds/document-templates.seed.ts",
+    "db:seed:workflow-document-templates": "tsx prisma/seeds/workflow-document-templates.seed.ts",
     "db:seed:legacy": "tsx prisma/seed.ts",
     "db:seed:superadmin": "tsx scripts/create-super-admin.ts",
     "db:seed:deploy-safe": "npm run db:seed:superadmin",

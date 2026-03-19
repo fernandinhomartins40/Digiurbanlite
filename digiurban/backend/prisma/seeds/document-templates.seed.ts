@@ -5,23 +5,15 @@
  */
 
 import { PrismaClient } from '@prisma/client';
+import { seedWorkflowDocumentTemplates } from './workflow-document-templates.seed';
 
 const prisma = new PrismaClient();
 
 async function seedDocumentTemplates() {
   console.log('🌱 Seeding document templates...');
 
-  // Obter um usuário SUPER_ADMIN para ser o criador
-  const superAdmin = await prisma.user.findFirst({
-    where: { role: 'SUPER_ADMIN' }
-  });
-
-  if (!superAdmin) {
-    console.error('❌ Nenhum SUPER_ADMIN encontrado. Execute o seed de usuários primeiro.');
-    return;
-  }
-
-  const createdBy = superAdmin.id;
+  // Obter um usuario administrativo para ser o criador
+  const createdBy = 'SYSTEM_SEED';
 
   // ============================================================================
   // TEMPLATE 1: CERTIDÃO DE PROTOCOLO
@@ -1030,7 +1022,16 @@ async function seedDocumentTemplates() {
 
   console.log(`   ✓ Template criado: ${parecerTemplate.name}`);
 
-  console.log(`✅ ${6} templates de documentos criados com sucesso!`);
+  const workflowSummary = await seedWorkflowDocumentTemplates({
+    prisma,
+    createdBy,
+  });
+
+  console.log(
+    `✅ Seed de templates concluido: 6 templates base + ` +
+      `${workflowSummary.templatesCreated} criado(s) e ` +
+      `${workflowSummary.templatesUpdated} atualizado(s) por servico/workflow.`
+  );
 }
 
 export default seedDocumentTemplates;

@@ -301,7 +301,7 @@ export default function TemplatesDocumentosPage() {
                   <p className="text-xs text-yellow-700 text-left">
                     Execute o comando no backend:<br/>
                     <code className="bg-yellow-100 px-2 py-1 rounded mt-1 inline-block">
-                      npx tsx prisma/seeds/insert-templates-pg.ts
+                      npm run db:seed:document-templates
                     </code>
                   </p>
                 </div>
