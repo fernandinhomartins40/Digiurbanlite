@@ -685,7 +685,7 @@ export function generateSpecializedWorkflow(input: {
         APPROVE: 'Confirmar agendamento',
         CREATE_PENDING: 'Solicitar reagendamento'
       },
-      availableTabs: ['resumo', 'dados', 'location', 'comunicacao'],
+      availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados'
     });
     remainingSLA -= scheduleSLA;
@@ -1120,7 +1120,6 @@ export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): C
     }
   };
 }
-
 
 
 

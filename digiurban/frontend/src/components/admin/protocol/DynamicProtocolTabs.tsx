@@ -39,7 +39,8 @@ const TAB_CONFIG: Record<string, { label: string; icon: any }> = {
 
   // Modo Archived
   timeline: { label: 'Timeline', icon: Clock },
-  envolvidos: { label: 'Envolvidos', icon: Users }
+  envolvidos: { label: 'Envolvidos', icon: Users },
+  atribuicoes: { label: 'Atribuições', icon: Users }
   // Nota: 'documentos', 'documentos-gerados' e 'comunicacao' são compartilhados entre modos
 }
 

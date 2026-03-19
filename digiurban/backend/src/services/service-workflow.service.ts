@@ -123,6 +123,40 @@ export class WorkflowValidationError extends Error {
   }
 }
 
+const LEGACY_WORKFLOW_TAB_MAP: Record<string, string> = {
+  generated: 'documentos-gerados',
+  'document-generation': 'documentos-gerados',
+  send: 'enviar',
+  documents: 'documentos',
+  communication: 'comunicacao',
+  involved: 'envolvidos',
+  location: 'dados',
+  photos: 'documentos'
+};
+
+const VALID_WORKFLOW_TABS = new Set([
+  'resumo',
+  'documentos',
+  'dados',
+  'pendencias',
+  'comunicacao',
+  'payment',
+  'resumo-final',
+  'documentos-gerados',
+  'enviar',
+  'timeline',
+  'envolvidos',
+  'atribuicoes'
+]);
+
+const VALID_WORKFLOW_STAGE_ACTIONS = new Set([
+  'APPROVE',
+  'REJECT',
+  'CREATE_PENDING',
+  'REQUEST_INFO',
+  'SKIP'
+]);
+
 function normalizeStringArray(value: unknown): string[] {
   if (!Array.isArray(value)) {
     return [];
@@ -146,6 +180,61 @@ function normalizeStringArray(value: unknown): string[] {
   }
 
   return normalized;
+}
+
+function normalizeWorkflowTab(tab: unknown): string | null {
+  if (typeof tab !== 'string') {
+    return null;
+  }
+
+  const trimmed = tab.trim();
+  if (!trimmed) {
+    return null;
+  }
+
+  return LEGACY_WORKFLOW_TAB_MAP[trimmed] || trimmed;
+}
+
+function normalizeWorkflowTabs(
+  value: unknown,
+  fallback: string[] = ['resumo', 'comunicacao']
+): string[] {
+  const seen = new Set<string>();
+  const normalized = Array.isArray(value)
+    ? value
+        .map(normalizeWorkflowTab)
+        .filter((tab): tab is string => Boolean(tab))
+        .filter(tab => VALID_WORKFLOW_TABS.has(tab))
+        .filter(tab => {
+          if (seen.has(tab)) {
+            return false;
+          }
+          seen.add(tab);
+          return true;
+        })
+    : [];
+
+  if (normalized.length > 0) {
+    return normalized;
+  }
+
+  return [...fallback];
+}
+
+function normalizeWorkflowPrimaryTab(primaryTab: unknown, availableTabs: string[]): string {
+  const normalizedPrimaryTab = normalizeWorkflowTab(primaryTab);
+
+  if (normalizedPrimaryTab && availableTabs.includes(normalizedPrimaryTab)) {
+    return normalizedPrimaryTab;
+  }
+
+  return availableTabs[0] || 'resumo';
+}
+
+function normalizeWorkflowStageActions(value: unknown): WorkflowStage['allowedActions'] {
+  return normalizeStringArray(value).filter(
+    (action): action is WorkflowStage['allowedActions'][number] => VALID_WORKFLOW_STAGE_ACTIONS.has(action)
+  );
 }
 
 function parseJsonObject(input: unknown): Record<string, any> | null {
@@ -421,11 +510,8 @@ function normalizeStageSupportAssignment(
 }
 
 function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, index: number): WorkflowStage {
-  const availableTabs = Array.isArray(stage.availableTabs) ? stage.availableTabs : ['resumo', 'comunicacao'];
-  const primaryTab =
-    typeof stage.primaryTab === 'string' && stage.primaryTab
-      ? stage.primaryTab
-      : availableTabs[0] || 'resumo';
+  const availableTabs = normalizeWorkflowTabs(stage.availableTabs);
+  const primaryTab = normalizeWorkflowPrimaryTab(stage.primaryTab, availableTabs);
   const requiredInputFieldIds = getRequiredInputFieldIds(stage);
   const requiredStageOutputs = getRequiredStageOutputs(stage);
 
@@ -452,7 +538,7 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
     requiredDocumentTypes: normalizeStringArray((stage as any).requiredDocumentTypes),
     requiredInputFieldIds,
     requiredStageOutputs,
-    allowedActions: Array.isArray(stage.allowedActions) ? stage.allowedActions : [],
+    allowedActions: normalizeWorkflowStageActions(stage.allowedActions),
     canSkip: Boolean(stage.canSkip),
     skipCondition:
       typeof stage.skipCondition === 'string' && stage.skipCondition ? stage.skipCondition : undefined,

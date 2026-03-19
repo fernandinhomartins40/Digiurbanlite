@@ -49,9 +49,21 @@ async function updateEmissionStages() {
       const metadata = stage.metadata as any || {};
       const availableTabs = metadata.availableTabs || [];
 
-      // Se já tem documentos-gerados, pular
-      if (availableTabs.includes('documentos-gerados')) {
-        console.log(`⏭️  Stage "${stage.stageName}" (${stage.protocolId}) - já tem documentos-gerados`);
+      const normalizedTabs = availableTabs.map((tab: string) => {
+        if (tab === 'generated' || tab === 'document-generation') return 'documentos-gerados';
+        if (tab === 'send') return 'enviar';
+        if (tab === 'documents') return 'documentos';
+        if (tab === 'communication') return 'comunicacao';
+        if (tab === 'location') return 'dados';
+        if (tab === 'photos') return 'documentos';
+        return tab;
+      });
+
+      const dedupedTabs = normalizedTabs.filter((tab: string, index: number) => normalizedTabs.indexOf(tab) === index);
+
+      // Se já tem o conjunto atualizado, pular
+      if (dedupedTabs.includes('documentos-gerados') && dedupedTabs.includes('enviar')) {
+        console.log(`⏭️  Stage "${stage.stageName}" (${stage.protocolId}) - já está com abas de emissão atualizadas`);
         skipped++;
         continue;
       }
@@ -59,24 +71,42 @@ async function updateEmissionStages() {
       // Adicionar documentos-gerados após resumo
       let newAvailableTabs: string[];
 
-      if (availableTabs.includes('resumo')) {
+      if (dedupedTabs.includes('resumo')) {
         // Inserir após resumo
-        const resumoIndex = availableTabs.indexOf('resumo');
+        const resumoIndex = dedupedTabs.indexOf('resumo');
         newAvailableTabs = [
-          ...availableTabs.slice(0, resumoIndex + 1),
+          ...dedupedTabs.slice(0, resumoIndex + 1),
           'documentos-gerados',
-          ...availableTabs.slice(resumoIndex + 1)
+          'enviar',
+          ...dedupedTabs
+            .slice(resumoIndex + 1)
+            .filter((tab: string) => tab !== 'documentos-gerados' && tab !== 'enviar')
         ];
-      } else if (availableTabs.length === 0) {
+      } else if (dedupedTabs.length === 0) {
         // Se vazio, criar com abas padrão
-        newAvailableTabs = ['resumo', 'documentos-gerados', 'comunicacao'];
+        newAvailableTabs = ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'];
       } else {
         // Adicionar no início
-        newAvailableTabs = ['documentos-gerados', ...availableTabs];
+        newAvailableTabs = [
+          'documentos-gerados',
+          'enviar',
+          ...dedupedTabs.filter((tab: string) => tab !== 'documentos-gerados' && tab !== 'enviar')
+        ];
       }
 
-      // Atualizar primaryTab para documentos-gerados se for resumo
-      const newPrimaryTab = metadata.primaryTab === 'resumo' ? 'documentos-gerados' : metadata.primaryTab;
+      const rawPrimaryTab = typeof metadata.primaryTab === 'string' ? metadata.primaryTab : '';
+      const normalizedPrimaryTab =
+        rawPrimaryTab === 'generated' || rawPrimaryTab === 'document-generation'
+          ? 'documentos-gerados'
+          : rawPrimaryTab === 'send'
+            ? 'enviar'
+            : rawPrimaryTab === 'location'
+              ? 'dados'
+              : rawPrimaryTab || 'documentos-gerados';
+      const newPrimaryTab =
+        normalizedPrimaryTab === 'resumo' || !newAvailableTabs.includes(normalizedPrimaryTab)
+          ? 'documentos-gerados'
+          : normalizedPrimaryTab;
 
       // Atualizar no banco
       await prisma.protocolStage.update({

@@ -6,6 +6,48 @@
 
 import { StageStatus } from '@/types/protocol-enhancements'
 
+const LEGACY_TAB_MAP: Record<string, string> = {
+  generated: 'documentos-gerados',
+  'document-generation': 'documentos-gerados',
+  send: 'enviar',
+  documents: 'documentos',
+  communication: 'comunicacao',
+  involved: 'envolvidos',
+  location: 'dados',
+  photos: 'documentos',
+}
+
+function normalizeTabId(tabId: unknown): string | null {
+  if (typeof tabId !== 'string') {
+    return null
+  }
+
+  const trimmed = tabId.trim()
+  if (!trimmed) {
+    return null
+  }
+
+  return LEGACY_TAB_MAP[trimmed] || trimmed
+}
+
+function normalizeTabs(tabIds: unknown, fallback: string[]): string[] {
+  const seen = new Set<string>()
+  const normalized = Array.isArray(tabIds)
+    ? tabIds
+        .map(normalizeTabId)
+        .filter((tabId): tabId is string => Boolean(tabId))
+        .filter(tabId => {
+          if (seen.has(tabId)) {
+            return false
+          }
+          seen.add(tabId)
+          return true
+        })
+    : []
+
+  return normalized.length > 0 ? normalized : fallback
+}
+
 export enum ProtocolViewMode {
   ACTIVE = 'ACTIVE',           // Workflow em andamento
   COMPLETING = 'COMPLETING',   // Última etapa - finalizando
@@ -56,7 +98,7 @@ export function getProtocolViewMode(
       currentStage: undefined,
       isLastStage: false,
       canComplete: false,
-      availableTabs: ['timeline', 'documents', 'generated', 'communication', 'involved'],
+      availableTabs: ['timeline', 'documentos', 'documentos-gerados', 'comunicacao', 'envolvidos'],
       primaryTab: 'timeline',
       message: protocolStatus === 'CONCLUIDO'
         ? 'Protocolo concluído - Visualização histórica'
@@ -139,7 +181,7 @@ export function getContextualTabs(
   if (viewMode === ProtocolViewMode.COMPLETING) {
     // Priorizar abas definidas no metadata do stage
     if (currentStage?.metadata?.availableTabs) {
-      const tabs = [...currentStage.metadata.availableTabs]
+      const tabs = normalizeTabs(currentStage.metadata.availableTabs, ['resumo-final', 'documentos-gerados', 'enviar', 'comunicacao'])
       const allowedActions = currentStage?.metadata?.allowedActions || []
       if ((allowedActions.includes('CREATE_PENDING') || allowedActions.includes('REQUEST_INFO')) && !tabs.includes('pendencias')) {
         tabs.push('pendencias')
@@ -157,7 +199,7 @@ export function getContextualTabs(
 
   // Se a etapa define abas customizadas, usar elas
   if (currentStage.metadata?.availableTabs) {
-    const tabs = [...currentStage.metadata.availableTabs]
+    const tabs = normalizeTabs(currentStage.metadata.availableTabs, ['resumo', 'comunicacao'])
     const allowedActions = currentStage.metadata?.allowedActions || []
     if ((allowedActions.includes('CREATE_PENDING') || allowedActions.includes('REQUEST_INFO')) && !tabs.includes('pendencias')) {
       tabs.push('pendencias')
@@ -231,7 +273,7 @@ export function getPrimaryTab(
 
   // Se definido explicitamente
   if (currentStage.metadata?.primaryTab) {
-    return currentStage.metadata.primaryTab
+    return normalizeTabId(currentStage.metadata.primaryTab) || 'resumo'
   }
 
   // Inferir baseado no nome da etapa
@@ -246,7 +288,7 @@ export function getPrimaryTab(
   }
 
   if (stageName.includes('vistoria') || stageName.includes('inspeção')) {
-    return 'location' // ou 'photos' se existir
+    return 'dados'
   }
 
   if (stageName.includes('emissão') || stageName.includes('geração')) {

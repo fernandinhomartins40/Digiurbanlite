@@ -16,6 +16,46 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+const LEGACY_WORKFLOW_TAB_MAP: Record<string, string> = {
+  generated: 'documentos-gerados',
+  'document-generation': 'documentos-gerados',
+  send: 'enviar',
+  documents: 'documentos',
+  communication: 'comunicacao',
+  involved: 'envolvidos',
+  location: 'dados',
+  photos: 'documentos'
+};
+
+function normalizeTabs(value: unknown, fallback: string[] = ['resumo', 'comunicacao']): string[] {
+  if (!Array.isArray(value)) {
+    return [...fallback];
+  }
+
+  const seen = new Set<string>();
+  const normalized = value
+    .map(tab => (typeof tab === 'string' ? (LEGACY_WORKFLOW_TAB_MAP[tab.trim()] || tab.trim()) : null))
+    .filter((tab): tab is string => Boolean(tab))
+    .filter(tab => {
+      if (seen.has(tab)) return false;
+      seen.add(tab);
+      return true;
+    });
+
+  return normalized.length > 0 ? normalized : [...fallback];
+}
+
+function normalizePrimaryTab(primaryTab: unknown, availableTabs: string[]): string {
+  if (typeof primaryTab === 'string' && primaryTab.trim()) {
+    const normalized = LEGACY_WORKFLOW_TAB_MAP[primaryTab.trim()] || primaryTab.trim();
+    if (availableTabs.includes(normalized)) {
+      return normalized;
+    }
+  }
+
+  return availableTabs[0] || 'resumo';
+}
+
 interface WorkflowStage {
   id: string;
   name: string;
@@ -108,6 +148,9 @@ async function migrateProtocolStagesMetadata() {
             }
 
             // Construir metadados atualizados
+            const availableTabs = normalizeTabs(templateStage.availableTabs);
+            const primaryTab = normalizePrimaryTab(templateStage.primaryTab, availableTabs);
+
             const updatedMetadata = {
               ...currentMetadata,
 
@@ -116,8 +159,8 @@ async function migrateProtocolStagesMetadata() {
               description: templateStage.description || currentMetadata.description,
 
               // ✅ ADICIONAR METADADOS DE UI
-              availableTabs: templateStage.availableTabs || ['resumo', 'comunicacao'],
-              primaryTab: templateStage.primaryTab || 'resumo',
+              availableTabs,
+              primaryTab,
 
               // Atualizar requisitos
               requiredDocumentTypes: templateStage.requiredDocumentTypes || [],
