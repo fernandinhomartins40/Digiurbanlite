@@ -14,7 +14,6 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
-import { generateCompleteWorkflowBySubtype } from '../../src/services/workflow-template.service';
 
 const prisma = new PrismaClient();
 
@@ -27022,7 +27021,7 @@ export function buildSeedWorkflowStagesForService(service: any) {
   const workflowTemplate =
     service.moduleType && specificWorkflows[service.moduleType]
       ? specificWorkflows[service.moduleType].stages
-      : generateCompleteWorkflowBySubtype(service as any).stages;
+      : generateGenericWorkflow(service);
 
   const normalizedStages = normalizeWorkflowStages(workflowTemplate as any[]);
   const coveredStages = ensureWorkflowCoverageForService(service, normalizedStages);
