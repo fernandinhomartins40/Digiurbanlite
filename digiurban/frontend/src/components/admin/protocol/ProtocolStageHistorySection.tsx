@@ -6,6 +6,7 @@ import { ptBR } from 'date-fns/locale'
 import {
   AlertCircle,
   Calendar,
+  ChevronRight,
   CheckCircle2,
   Clock,
   Download,
@@ -559,13 +560,19 @@ export function ProtocolStageHistorySection({
                 )}
               </section>
 
-              <section className="space-y-4 rounded-xl border border-orange-100 bg-orange-50/40 p-4">
-                <div className="flex items-center gap-2">
-                  <FilePlus2 className="h-4 w-4 text-orange-600" />
-                  <h4 className="font-semibold text-slate-900">Adicionar documento ao histórico da etapa</h4>
-                </div>
+              <details className="group rounded-xl border border-orange-100 bg-orange-50/40 p-4">
+                <summary className="flex cursor-pointer list-none items-start justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <FilePlus2 className="mt-0.5 h-4 w-4 text-orange-600" />
+                    <div className="space-y-1">
+                      <h4 className="font-semibold text-slate-900">Adicionar documento ao histórico da etapa</h4>
+                      <p className="text-xs text-slate-600">Expanda para gerar um novo documento ou anexar arquivos externos.</p>
+                    </div>
+                  </div>
+                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-orange-600 transition-transform group-open:rotate-90" />
+                </summary>
 
-                <div className="grid gap-4 xl:grid-cols-2">
+                <div className="mt-4 grid gap-4 xl:grid-cols-2">
                   <div className="rounded-xl border bg-white p-4">
                     <div className="mb-3 flex items-center gap-2">
                       <FilePlus2 className="h-4 w-4 text-orange-600" />
@@ -672,7 +679,7 @@ export function ProtocolStageHistorySection({
                     </div>
                   </div>
                 </div>
-              </section>
+              </details>
             </CardContent>
           </Card>
         )
