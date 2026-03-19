@@ -411,7 +411,10 @@ export default function ProtocolDetailPage() {
                 <TabsContent value="resumo" className="mt-0">
                   <ProtocolSummaryTab
                     protocol={protocol}
+                    stages={stages}
+                    pendings={pendings}
                     citizenLinks={citizenLinks}
+                    onRefresh={loadProtocolData}
                   />
                 </TabsContent>
               )}

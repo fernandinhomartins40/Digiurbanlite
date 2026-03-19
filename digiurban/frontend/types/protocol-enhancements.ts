@@ -12,9 +12,50 @@
 export enum StageStatus {
   PENDING = 'PENDING',
   IN_PROGRESS = 'IN_PROGRESS',
+  PAUSED = 'PAUSED',
   COMPLETED = 'COMPLETED',
   SKIPPED = 'SKIPPED',
   FAILED = 'FAILED',
+}
+
+export interface ProtocolStageArtifact {
+  id: string
+  protocolId: string
+  stageId: string
+  sourceType: 'UPLOADED' | 'GENERATED' | 'LINKED' | string
+  title: string
+  description?: string | null
+  parecer?: string | null
+  fileName?: string | null
+  filePath?: string | null
+  fileUrl?: string | null
+  fileSize?: number | null
+  mimeType?: string | null
+  generatedDocumentId?: string | null
+  createdBy: string
+  createdAt: Date | string
+  updatedAt: Date | string
+  stage?: {
+    id: string
+    stageName: string
+    stageOrder: number
+    status: string
+  }
+  generatedDocument?: {
+    id: string
+    fileName: string
+    filePath: string
+    fileUrl?: string | null
+    mimeType: string
+    fileSize: number
+    generatedAt: Date | string
+    template?: {
+      id: string
+      name: string
+      code?: string | null
+      documentType?: string | null
+    }
+  }
 }
 
 export interface ProtocolStageSupportAssignmentSnapshot {

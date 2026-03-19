@@ -776,6 +776,7 @@ model ProtocolSimplified {
   dataFields              ProtocolDataField[]
   pendings                ProtocolPending[]
   stages                  ProtocolStage[]
+  stageArtifacts          ProtocolStageArtifact[]
   currentStage            ProtocolStage?                   @relation("CurrentStage", fields: [currentStageId], references: [id], onDelete: SetNull)
   sla                     ProtocolSLA?
   citizenLinks            ProtocolCitizenLink[]
@@ -1283,11 +1284,44 @@ model ProtocolStage {
 
   protocol              ProtocolSimplified     @relation(fields: [protocolId], references: [id], onDelete: Cascade)
   protocolsAsCurrent    ProtocolSimplified[]   @relation("CurrentStage")
+  artifacts             ProtocolStageArtifact[]
   centralCalendarEvents CentralCalendarEvent[] @relation("CentralCalendarEventStage")
 
   @@index([protocolId, stageOrder])
   @@index([protocolId])
   @@map("protocol_stages")
+}
+
+model ProtocolStageArtifact {
+  id         String @id @default(cuid())
+  protocolId String
+  stageId    String
+
+  sourceType  String  @default("UPLOADED")
+  title       String
+  description String?
+  parecer     String?
+
+  fileName String?
+  filePath String?
+  fileUrl  String?
+  fileSize Int?
+  mimeType String?
+
+  generatedDocumentId String?
+
+  createdBy String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  protocol          ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  stage             ProtocolStage      @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  generatedDocument GeneratedDocument? @relation(fields: [generatedDocumentId], references: [id], onDelete: SetNull)
+
+  @@index([protocolId, stageId, createdAt])
+  @@index([stageId, createdAt])
+  @@index([generatedDocumentId])
+  @@map("protocol_stage_artifacts")
 }
 
 enum StageStatus {
@@ -5908,9 +5942,10 @@ model GeneratedDocument {
   lastValidatedAt DateTime? // Última validação pública
 
   // Relacionamentos
-  protocol   ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
-  template   DocumentTemplate   @relation(fields: [templateId], references: [id])
-  signatures Signature[]
+  protocol       ProtocolSimplified    @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  template       DocumentTemplate      @relation(fields: [templateId], references: [id])
+  stageArtifacts ProtocolStageArtifact[]
+  signatures     Signature[]
 
   @@index([protocolId])
   @@index([templateId])

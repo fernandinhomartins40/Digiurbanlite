@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -11,11 +11,13 @@ import {
   MapPin,
   Phone,
   Mail,
-  Users
+  Users,
 } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { CitizenLinksDisplay } from '@/components/protocol/CitizenLinksDisplay'
+import type { ProtocolPending, ProtocolStage } from '@/types/protocol-enhancements'
+import { ProtocolStageHistorySection } from './ProtocolStageHistorySection'
 
 interface AddressObject {
   uf?: string
@@ -60,31 +62,30 @@ interface ProtocolSummaryTabProps {
       email: string
     }
     moduleType?: string
-    metadata?: any
+    metadata?: Record<string, unknown>
   }
+  stages: ProtocolStage[]
+  pendings: ProtocolPending[]
   citizenLinks?: any[]
+  onRefresh: () => Promise<void> | void
 }
 
-export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTabProps) {
+export function ProtocolSummaryTab({ protocol, stages, pendings, citizenLinks, onRefresh }: ProtocolSummaryTabProps) {
   const formatDate = (date: Date | string | null | undefined): string => {
     if (!date) return 'Data não disponível'
     try {
       const dateObj = typeof date === 'string' ? new Date(date) : date
       if (isNaN(dateObj.getTime())) return 'Data inválida'
       return format(dateObj, "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
-    } catch (error) {
+    } catch {
       return 'Data inválida'
     }
   }
 
   const formatAddress = (address: string | AddressObject | undefined): string => {
     if (!address) return ''
+    if (typeof address === 'string') return address
 
-    if (typeof address === 'string') {
-      return address
-    }
-
-    // É um objeto
     const parts = []
     if (address.logradouro) parts.push(address.logradouro)
     if (address.numero) parts.push(address.numero)
@@ -97,7 +98,7 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
     if (address.uf) line2Parts.push(address.uf)
     if (address.cep) line2Parts.push(`CEP: ${address.cep}`)
 
-    return line1 + (line2Parts.length > 0 ? '\n' + line2Parts.join(' - ') : '')
+    return line1 + (line2Parts.length > 0 ? `\n${line2Parts.join(' - ')}` : '')
   }
 
   const getStatusLabel = (status: string) => {
@@ -107,7 +108,7 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
       CONCLUIDO: { label: 'Concluído', className: 'bg-green-50 text-green-700' },
       PENDENCIA: { label: 'Pendente', className: 'bg-orange-50 text-orange-700' },
       CANCELADO: { label: 'Cancelado', className: 'bg-red-50 text-red-700' },
-      ATUALIZACAO: { label: 'Atualização', className: 'bg-purple-50 text-purple-700' }
+      ATUALIZACAO: { label: 'Atualização', className: 'bg-purple-50 text-purple-700' },
     }
     return statusMap[status] || { label: status, className: 'bg-gray-50 text-gray-700' }
   }
@@ -116,17 +117,16 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
 
   return (
     <div className="space-y-4">
-      {/* Informações do Protocolo */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2 text-base">
             <FileText className="h-4 w-4" />
             Informações do Protocolo
           </CardTitle>
         </CardHeader>
-        <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               <Hash className="h-4 w-4 text-gray-500" />
               <p className="text-xs text-gray-600">Número do Protocolo</p>
             </div>
@@ -134,35 +134,33 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-1">
-              <Badge variant="outline" className={statusInfo.className}>
-                {statusInfo.label}
-              </Badge>
+            <div className="mb-1 flex items-center gap-2">
+              <Badge variant="outline" className={statusInfo.className}>{statusInfo.label}</Badge>
             </div>
             <p className="text-xs text-gray-600">Status atual</p>
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <p className="text-xs text-gray-600">Data de Criação</p>
+              <p className="text-xs text-gray-600">Data de criação</p>
             </div>
             <p className="text-sm font-medium text-gray-900">{formatDate(protocol.createdAt)}</p>
           </div>
 
           <div>
-            <div className="flex items-center gap-2 mb-1">
+            <div className="mb-1 flex items-center gap-2">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <p className="text-xs text-gray-600">Última Atualização</p>
+              <p className="text-xs text-gray-600">Última atualização</p>
             </div>
             <p className="text-sm font-medium text-gray-900">{formatDate(protocol.updatedAt)}</p>
           </div>
 
           {protocol.assignedTo && (
             <div className="sm:col-span-2">
-              <div className="flex items-center gap-2 mb-1">
+              <div className="mb-1 flex items-center gap-2">
                 <User className="h-4 w-4 text-gray-500" />
-                <p className="text-xs text-gray-600">Responsável pelo Atendimento</p>
+                <p className="text-xs text-gray-600">Responsável pelo atendimento</p>
               </div>
               <p className="text-sm font-medium text-gray-900">{protocol.assignedTo.name}</p>
               <p className="text-xs text-gray-600">{protocol.assignedTo.email}</p>
@@ -171,33 +169,32 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
         </CardContent>
       </Card>
 
-      {/* Informações do Serviço */}
       {protocol.service && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <Building className="h-4 w-4" />
-              Serviço Solicitado
+              Serviço solicitado
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="text-xs text-gray-600 mb-1">Nome do Serviço</p>
+              <p className="mb-1 text-xs text-gray-600">Nome do serviço</p>
               <p className="text-sm font-medium text-gray-900">{protocol.service.name}</p>
             </div>
 
             {protocol.service.description && (
               <div>
-                <p className="text-xs text-gray-600 mb-1">Descrição</p>
+                <p className="mb-1 text-xs text-gray-600">Descrição</p>
                 <p className="text-sm text-gray-700">{protocol.service.description}</p>
               </div>
             )}
 
             {protocol.service.department && (
               <div>
-                <p className="text-xs text-gray-600 mb-1">Departamento</p>
+                <p className="mb-1 text-xs text-gray-600">Departamento</p>
                 <Badge variant="outline" className="text-xs">
-                  <Building className="h-3 w-3 mr-1" />
+                  <Building className="mr-1 h-3 w-3" />
                   {protocol.service.department.name}
                 </Badge>
               </div>
@@ -205,8 +202,8 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
 
             {protocol.moduleType && (
               <div>
-                <p className="text-xs text-gray-600 mb-1">Tipo de Módulo</p>
-                <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700">
+                <p className="mb-1 text-xs text-gray-600">Tipo de módulo</p>
+                <Badge variant="outline" className="bg-blue-50 text-xs text-blue-700">
                   {protocol.moduleType}
                 </Badge>
               </div>
@@ -215,40 +212,39 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
         </Card>
       )}
 
-      {/* Informações do Cidadão */}
       {protocol.citizen && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <User className="h-4 w-4" />
-              Dados do Cidadão
+              Dados do cidadão
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <div>
-              <p className="text-xs text-gray-600 mb-1">Nome Completo</p>
+              <p className="mb-1 text-xs text-gray-600">Nome completo</p>
               <p className="text-sm font-medium text-gray-900">{protocol.citizen.name}</p>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <p className="text-xs text-gray-600 mb-1">CPF</p>
+                <p className="mb-1 text-xs text-gray-600">CPF</p>
                 <p className="text-sm text-gray-900">{protocol.citizen.cpf}</p>
               </div>
 
               {protocol.citizen.email && (
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="mb-1 flex items-center gap-2">
                     <Mail className="h-3 w-3 text-gray-500" />
                     <p className="text-xs text-gray-600">E-mail</p>
                   </div>
-                  <p className="text-sm text-gray-900 break-words">{protocol.citizen.email}</p>
+                  <p className="break-words text-sm text-gray-900">{protocol.citizen.email}</p>
                 </div>
               )}
 
               {protocol.citizen.phone && (
                 <div>
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="mb-1 flex items-center gap-2">
                     <Phone className="h-3 w-3 text-gray-500" />
                     <p className="text-xs text-gray-600">Telefone</p>
                   </div>
@@ -259,12 +255,12 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
 
             {(protocol.citizen.address || protocol.citizen.city) && (
               <div>
-                <div className="flex items-center gap-2 mb-1">
+                <div className="mb-1 flex items-center gap-2">
                   <MapPin className="h-3 w-3 text-gray-500" />
                   <p className="text-xs text-gray-600">Endereço</p>
                 </div>
                 {protocol.citizen.address && (
-                  <p className="text-sm text-gray-900 whitespace-pre-line">
+                  <p className="whitespace-pre-line text-sm text-gray-900">
                     {formatAddress(protocol.citizen.address)}
                   </p>
                 )}
@@ -279,37 +275,49 @@ export function ProtocolSummaryTab({ protocol, citizenLinks }: ProtocolSummaryTa
         </Card>
       )}
 
-      {/* Vínculos Cidadãos (se existirem) */}
       {citizenLinks && citizenLinks.length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base flex items-center gap-2">
+            <CardTitle className="flex items-center gap-2 text-base">
               <Users className="h-4 w-4" />
-              Pessoas Vinculadas ({citizenLinks.length})
+              Pessoas vinculadas ({citizenLinks.length})
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <CitizenLinksDisplay
-              protocolId={protocol.id}
-              citizenLinks={citizenLinks}
-              editable={false}
-            />
+            <CitizenLinksDisplay protocolId={protocol.id} citizenLinks={citizenLinks} editable={false} />
           </CardContent>
         </Card>
       )}
 
-      {/* Metadados Adicionais (se existirem) */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <FileText className="h-4 w-4" />
+            Histórico por etapa até o estágio atual
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <ProtocolStageHistorySection
+            protocolId={protocol.id}
+            serviceId={protocol.service?.id}
+            stages={stages}
+            pendings={pendings}
+            onRefresh={onRefresh}
+          />
+        </CardContent>
+      </Card>
+
       {protocol.metadata && Object.keys(protocol.metadata).length > 0 && (
         <Card>
           <CardHeader>
-            <CardTitle className="text-base">Informações Adicionais</CardTitle>
+            <CardTitle className="text-base">Informações adicionais</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               {Object.entries(protocol.metadata).map(([key, value]) => (
-                <div key={key} className="flex items-start justify-between gap-4 py-2 border-b last:border-b-0">
-                  <p className="text-xs text-gray-600 font-medium">{key}</p>
-                  <p className="text-sm text-gray-900 text-right break-words">
+                <div key={key} className="flex items-start justify-between gap-4 border-b py-2 last:border-b-0">
+                  <p className="text-xs font-medium text-gray-600">{key}</p>
+                  <p className="break-words text-right text-sm text-gray-900">
                     {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                   </p>
                 </div>

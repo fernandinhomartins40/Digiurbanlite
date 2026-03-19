@@ -4,6 +4,9 @@ import { requireRole } from '../middleware/auth';
 import { AuthenticatedRequest } from '../types';
 import { UserRole, StageStatus } from '@prisma/client';
 import * as stageService from '../services/protocol-stage.service';
+import { uploadDocuments } from '../config/upload';
+import * as stageArtifactService from '../services/protocol-stage-artifact.service';
+import fs from 'fs';
 
 const router = express.Router();
 
@@ -74,6 +77,202 @@ router.get('/:protocolId/stages', adminAuthMiddleware, async (req, res) => {
         });
   }
 });
+
+/**
+ * GET /api/protocols/:protocolId/stage-artifacts
+ * Listar documentos/artefatos vinculados às etapas do protocolo
+ */
+router.get('/:protocolId/stage-artifacts', adminAuthMiddleware, async (req, res) => {
+  try {
+    const { protocolId } = req.params;
+    const artifacts = await stageArtifactService.listProtocolStageArtifacts(protocolId);
+
+    return res.json({
+      success: true,
+      data: artifacts,
+    });
+  } catch (error) {
+    console.error('Erro ao listar artefatos das etapas:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao listar artefatos das etapas',
+      details: error instanceof Error ? error.message : 'Erro desconhecido',
+    });
+  }
+});
+
+/**
+ * POST /api/protocols/:protocolId/stages/:stageId/artifacts/upload
+ * Anexar documento ao histórico de uma etapa
+ */
+router.post(
+  '/:protocolId/stages/:stageId/artifacts/upload',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  uploadDocuments,
+  async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { protocolId, stageId } = req.params;
+      const files = ((req.files as Express.Multer.File[]) || []).filter(Boolean);
+
+      if (files.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: 'Envie ao menos um arquivo para anexar à etapa',
+        });
+      }
+
+      const { title, description, parecer } = req.body;
+
+      const artifacts = await Promise.all(
+        files.map((file) =>
+          stageArtifactService.createUploadedStageArtifact({
+            protocolId,
+            stageId,
+            createdBy: authReq.userId,
+            file,
+            title,
+            description,
+            parecer,
+          })
+        )
+      );
+
+      return res.status(201).json({
+        success: true,
+        data: artifacts,
+      });
+    } catch (error) {
+      console.error('Erro ao anexar documento à etapa:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao anexar documento à etapa',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    }
+  }
+);
+
+/**
+ * POST /api/protocols/:protocolId/stages/:stageId/artifacts/link-generated
+ * Vincular documento já gerado ao histórico de uma etapa
+ */
+router.post(
+  '/:protocolId/stages/:stageId/artifacts/link-generated',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { protocolId, stageId } = req.params;
+      const { generatedDocumentId, title, description, parecer } = req.body;
+
+      if (!generatedDocumentId) {
+        return res.status(400).json({
+          success: false,
+          error: 'generatedDocumentId é obrigatório',
+        });
+      }
+
+      const artifact = await stageArtifactService.linkGeneratedDocumentToStage({
+        protocolId,
+        stageId,
+        createdBy: authReq.userId,
+        generatedDocumentId,
+        title,
+        description,
+        parecer,
+      });
+
+      return res.status(201).json({
+        success: true,
+        data: artifact,
+      });
+    } catch (error) {
+      console.error('Erro ao vincular documento gerado à etapa:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao vincular documento gerado à etapa',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    }
+  }
+);
+
+/**
+ * PUT /api/protocols/:protocolId/stages/:stageId/artifacts/:artifactId
+ * Atualizar metadados/parecer de um documento da etapa
+ */
+router.put(
+  '/:protocolId/stages/:stageId/artifacts/:artifactId',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const authReq = req as AuthenticatedRequest;
+      const { protocolId, stageId, artifactId } = req.params;
+      const artifact = await stageArtifactService.updateStageArtifact(
+        protocolId,
+        stageId,
+        artifactId,
+        authReq.userId,
+        req.body || {}
+      );
+
+      return res.json({
+        success: true,
+        data: artifact,
+      });
+    } catch (error) {
+      console.error('Erro ao atualizar documento da etapa:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao atualizar documento da etapa',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/:protocolId/stages/:stageId/artifacts/:artifactId/download
+ * Download/visualização de documento vinculado à etapa
+ */
+router.get(
+  '/:protocolId/stages/:stageId/artifacts/:artifactId/download',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId, stageId, artifactId } = req.params;
+      const inline = req.query.inline === 'true';
+      const file = await stageArtifactService.resolveStageArtifactFile(protocolId, stageId, artifactId);
+
+      if (!fs.existsSync(file.absolutePath)) {
+        return res.status(404).json({
+          success: false,
+          error: 'Arquivo do documento da etapa não encontrado no servidor',
+        });
+      }
+
+      const disposition = inline ? 'inline' : 'attachment';
+      res.setHeader('Content-Disposition', `${disposition}; filename="${file.fileName}"`);
+      res.setHeader('Content-Type', file.mimeType);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Allow-Methods', 'GET');
+
+      const fileStream = fs.createReadStream(file.absolutePath);
+      fileStream.pipe(res);
+    } catch (error) {
+      console.error('Erro ao baixar documento da etapa:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao baixar documento da etapa',
+        details: error instanceof Error ? error.message : 'Erro desconhecido',
+      });
+    }
+  }
+);
 
 /**
  * GET /api/protocols/:protocolId/stages/current
