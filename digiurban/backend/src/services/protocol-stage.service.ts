@@ -197,6 +197,9 @@ function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata
   const currentSupportAssignments = Array.isArray(metadata.stageSupportAssignments)
     ? metadata.stageSupportAssignments
     : [];
+  const currentDocumentTemplateIds = Array.isArray(metadata.documentTemplateIds)
+    ? metadata.documentTemplateIds
+    : [];
 
   const workflowStageId =
     typeof metadata.stageId === 'string' && metadata.stageId ? metadata.stageId : null;
@@ -222,6 +225,9 @@ function enrichStageWithWorkflowSupport<T extends { protocolId: string; metadata
       workflowStage?.requiredStageOutputs ??
       metadata.requiredStageOutputs ??
       [],
+    documentTemplateIds:
+      workflowStage?.documentTemplateIds ??
+      currentDocumentTemplateIds,
     allowedActions: workflowStage?.allowedActions || metadata.allowedActions || [],
     canSkip: workflowStage?.canSkip ?? metadata.canSkip ?? false,
     requiresApproval: workflowStage?.requiresApproval ?? metadata.requiresApproval,

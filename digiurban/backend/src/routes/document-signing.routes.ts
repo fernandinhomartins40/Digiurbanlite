@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { PrismaClient, Prisma } from '@prisma/client';
-import { authenticateAdmin, authenticateCitizen } from '../middleware/auth';
+import { authenticateToken } from '../middleware/auth';
 import * as forge from 'node-forge';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
@@ -28,9 +28,11 @@ interface SignDocumentRequest {
  * POST /api/documents/sign
  * Assinar documento digitalmente (funciona para ambos: admin e cidadão)
  */
-router.post('/sign', async (req, res) => {
+router.post('/sign', authenticateToken, async (req, res) => {
   try {
     const { documentId, externalDocumentId, certificateId, position }: SignDocumentRequest = req.body;
+    const authenticatedUser = (req as any).user;
+    const authenticatedCitizen = (req as any).citizen;
 
     // Validar que ao menos um tipo de documento foi fornecido
     if (!documentId && !externalDocumentId) {
@@ -57,6 +59,8 @@ router.post('/sign', async (req, res) => {
         expiresAt: true,
         encryptedPrivateKey: true,
         publicKey: true,
+        userId: true,
+        citizenId: true,
       },
     });
 
@@ -82,6 +86,20 @@ router.post('/sign', async (req, res) => {
       });
     }
 
+    if (authenticatedUser && certificate.userId !== authenticatedUser.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'O certificado selecionado não pertence ao usuário autenticado',
+      });
+    }
+
+    if (authenticatedCitizen && certificate.citizenId !== authenticatedCitizen.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'O certificado selecionado não pertence ao cidadão autenticado',
+      });
+    }
+
     // Descriptografar chave privada automaticamente
     let privateKey: string;
     try {
@@ -100,7 +118,12 @@ router.post('/sign', async (req, res) => {
     if (documentId) {
       const doc = await prisma.generatedDocument.findUnique({
         where: { id: documentId },
-        select: { filePath: true },
+        select: {
+          filePath: true,
+          generatedBy: true,
+          isSigned: true,
+          status: true,
+        },
       });
 
       if (!doc) {
@@ -110,18 +133,72 @@ router.post('/sign', async (req, res) => {
         });
       }
 
+      if (!authenticatedUser) {
+        return res.status(403).json({
+          success: false,
+          message: 'Somente servidores autenticados podem assinar documentos gerados',
+        });
+      }
+
+      if (doc.generatedBy !== authenticatedUser.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'Apenas o servidor que gerou o documento pode assiná-lo',
+        });
+      }
+
+      if (doc.isSigned || doc.status === 'SIGNED' || doc.status === 'PUBLISHED') {
+        return res.status(400).json({
+          success: false,
+          message: 'O documento já foi assinado',
+        });
+      }
+
+      if (doc.status === 'SUPERSEDED') {
+        return res.status(400).json({
+          success: false,
+          message: 'O documento foi substituído por uma revisão mais recente',
+        });
+      }
+
       filePath = doc.filePath;
       documentType = 'generated';
     } else {
       const doc = await prisma.externalDocument.findUnique({
         where: { id: externalDocumentId },
-        select: { filePath: true },
+        select: {
+          filePath: true,
+          userId: true,
+          citizenId: true,
+          isSigned: true,
+        },
       });
 
       if (!doc) {
         return res.status(404).json({
           success: false,
           message: 'Documento externo não encontrado',
+        });
+      }
+
+      if (authenticatedUser && doc.userId && doc.userId !== authenticatedUser.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'O documento externo não pertence ao usuário autenticado',
+        });
+      }
+
+      if (authenticatedCitizen && doc.citizenId && doc.citizenId !== authenticatedCitizen.id) {
+        return res.status(403).json({
+          success: false,
+          message: 'O documento externo não pertence ao cidadão autenticado',
+        });
+      }
+
+      if (doc.isSigned) {
+        return res.status(400).json({
+          success: false,
+          message: 'O documento já foi assinado',
         });
       }
 
@@ -243,7 +320,10 @@ router.post('/sign', async (req, res) => {
     if (documentType === 'generated' && documentId) {
       await prisma.generatedDocument.update({
         where: { id: documentId },
-        data: { isSigned: true },
+        data: {
+          isSigned: true,
+          status: 'SIGNED',
+        },
       });
     } else if (documentType === 'external' && externalDocumentId) {
       await prisma.externalDocument.update({

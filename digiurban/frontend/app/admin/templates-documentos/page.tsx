@@ -141,6 +141,7 @@ export default function TemplatesDocumentosPage() {
 
   // Verificar permissões - SUPER_ADMIN, ADMIN e MANAGER podem editar templates
   const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'MANAGER'
+  const canCreate = user?.role === 'SUPER_ADMIN'
 
   if (loading) {
     return (
@@ -173,8 +174,8 @@ export default function TemplatesDocumentosPage() {
             Gerenciar templates para geração de documentos PDF
           </p>
         </div>
-        {canEdit && (
-          <Button disabled>
+        {canCreate && (
+          <Button onClick={() => router.push('/admin/templates-documentos/novo')}>
             <Plus className="h-4 w-4 mr-2" />
             Novo Template
           </Button>

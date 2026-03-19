@@ -1717,7 +1717,10 @@ router.get('/:id/generated-documents', async (req, res) => {
     const docs = await prisma.generatedDocument.findMany({
       where: {
         protocolId,
-        isActive: true
+        isActive: true,
+        isSigned: true,
+        publishedToCitizen: true,
+        status: 'PUBLISHED'
       },
       include: {
         template: {
@@ -1794,7 +1797,10 @@ router.get('/:id/generated-documents/:documentId/download', async (req, res) => 
       where: {
         id: documentId,
         protocolId,
-        isActive: true
+        isActive: true,
+        isSigned: true,
+        publishedToCitizen: true,
+        status: 'PUBLISHED'
       }
     });
 

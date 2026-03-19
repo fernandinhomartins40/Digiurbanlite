@@ -487,6 +487,10 @@ function getRequiredStageOutputs(stage: WorkflowStage | Record<string, any>): st
   return normalizeStringArray((stage as any).requiredStageOutputs ?? []);
 }
 
+function getDocumentTemplateIds(stage: WorkflowStage | Record<string, any>): string[] {
+  return normalizeStringArray((stage as any).documentTemplateIds ?? []);
+}
+
 function hasFilledValue(value: unknown): boolean {
   if (value === null || value === undefined) {
     return false;
@@ -513,6 +517,7 @@ function mapFieldIdsToLabels(fieldIds: string[], catalog: ServiceFormFieldCatalo
 
 function assertStagesAlignedWithService(
   service: {
+    id?: string;
     name: string;
     formSchema?: unknown;
     formFieldsConfig?: unknown;
@@ -559,6 +564,109 @@ function assertStagesAlignedWithService(
   throw new WorkflowValidationError(
     `Workflow inválido para "${service.name}". Campos de entrada não encontrados no serviço: ${details}. Campos válidos: ${availableFieldIds.join(', ')}`
   );
+}
+
+async function assertDocumentTemplatesAlignedWithService(
+  service: {
+    id: string;
+    name: string;
+  },
+  stages: WorkflowStage[]
+) {
+  const generationStages = stages.filter(stage => {
+    const availableTabs = stage.availableTabs || [];
+    const primaryTab = stage.primaryTab || availableTabs[0] || 'resumo';
+    return (
+      getDocumentTemplateIds(stage).length > 0 ||
+      isDocumentGenerationStage(stage, availableTabs, primaryTab)
+    );
+  });
+
+  const stagesMissingTemplates = generationStages.filter(
+    stage => getDocumentTemplateIds(stage).length === 0
+  );
+
+  if (stagesMissingTemplates.length > 0) {
+    throw new WorkflowValidationError(
+      `Workflow inválido para "${service.name}". Etapas de emissão/geração precisam ter ao menos um template vinculado: ${stagesMissingTemplates
+        .map(stage => stage.name)
+        .join(', ')}`
+    );
+  }
+
+  const templateIds = Array.from(
+    new Set(stages.flatMap(stage => getDocumentTemplateIds(stage)))
+  );
+
+  if (templateIds.length === 0) {
+    return;
+  }
+
+  const templates = await prisma.documentTemplate.findMany({
+    where: {
+      id: { in: templateIds }
+    },
+    select: {
+      id: true,
+      name: true,
+      isActive: true,
+      isGlobal: true,
+      serviceIds: true,
+      allowedStageTypes: true
+    }
+  });
+
+  const templatesById = new Map(templates.map(template => [template.id, template]));
+  const missingTemplateIds = templateIds.filter(templateId => !templatesById.has(templateId));
+
+  if (missingTemplateIds.length > 0) {
+    throw new WorkflowValidationError(
+      `Workflow inválido para "${service.name}". Templates não encontrados: ${missingTemplateIds.join(', ')}`
+    );
+  }
+
+  for (const stage of stages) {
+    const stageTemplateIds = getDocumentTemplateIds(stage);
+    if (stageTemplateIds.length === 0) {
+      continue;
+    }
+
+    for (const templateId of stageTemplateIds) {
+      const template = templatesById.get(templateId);
+      if (!template) {
+        continue;
+      }
+
+      if (!template.isActive) {
+        throw new WorkflowValidationError(
+          `Workflow inválido para "${service.name}". O template "${template.name}" vinculado à etapa "${stage.name}" está inativo.`
+        );
+      }
+
+      const allowedServiceIds = Array.isArray(template.serviceIds)
+        ? template.serviceIds.filter((value): value is string => typeof value === 'string')
+        : [];
+
+      if (!template.isGlobal && !allowedServiceIds.includes(service.id)) {
+        throw new WorkflowValidationError(
+          `Workflow inválido para "${service.name}". O template "${template.name}" não está vinculado a este serviço.`
+        );
+      }
+
+      const allowedStageTypes = Array.isArray(template.allowedStageTypes)
+        ? template.allowedStageTypes.filter((value): value is string => typeof value === 'string')
+        : [];
+
+      if (
+        allowedStageTypes.length > 0 &&
+        (!stage.stageType || !allowedStageTypes.includes(stage.stageType))
+      ) {
+        throw new WorkflowValidationError(
+          `Workflow inválido para "${service.name}". O template "${template.name}" não pode ser usado na etapa "${stage.name}" (${stage.stageType || 'sem stageType'}).`
+        );
+      }
+    }
+  }
 }
 
 function normalizeStageSupportAssignment(
@@ -625,6 +733,7 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
   const normalizedStageType = normalizeWorkflowStageType(stage, availableTabs, primaryTab);
   const requiredInputFieldIds = isReception ? [] : getRequiredInputFieldIds(stage);
   const requiredStageOutputs = isReception ? [] : getRequiredStageOutputs(stage);
+  const documentTemplateIds = isReception ? [] : getDocumentTemplateIds(stage);
 
   const supportAssignments = Array.isArray(stage.supportAssignments)
     ? stage.supportAssignments
@@ -649,6 +758,7 @@ function normalizeWorkflowStage(stage: WorkflowStage | Record<string, any>, inde
     requiredDocumentTypes: isReception ? [] : normalizeStringArray((stage as any).requiredDocumentTypes),
     requiredInputFieldIds,
     requiredStageOutputs,
+    documentTemplateIds,
     allowedActions: normalizeWorkflowStageActions(stage.allowedActions),
     canSkip: Boolean(stage.canSkip),
     skipCondition:
@@ -862,6 +972,7 @@ export function buildProtocolStageMetadataFromWorkflowStage(stage: WorkflowStage
     requiredDocumentTypes: isReception ? [] : stage.requiredDocumentTypes || [],
     requiredInputFieldIds: isReception ? [] : stage.requiredInputFieldIds || [],
     requiredStageOutputs: isReception ? [] : stage.requiredStageOutputs || [],
+    documentTemplateIds: isReception ? [] : stage.documentTemplateIds || [],
     allowedActions: stage.allowedActions || [],
     canSkip: stage.canSkip || false,
     skipCondition: stage.skipCondition,
@@ -900,6 +1011,7 @@ export async function createServiceWorkflow(data: CreateServiceWorkflowData) {
 
   const stages = getWorkflowStagesFromJson(data.stages);
   assertStagesAlignedWithService(service, stages);
+  await assertDocumentTemplatesAlignedWithService(service, stages);
   const stagesForStorage = stages.map(({ supportAssignments, ...stage }) => stage);
 
   const workflow = await prisma.$transaction(async (tx) => {
@@ -1008,6 +1120,7 @@ export async function updateServiceWorkflow(
   if (data.stages) {
     normalizedStages = getWorkflowStagesFromJson(data.stages);
     assertStagesAlignedWithService(service, normalizedStages);
+    await assertDocumentTemplatesAlignedWithService(service, normalizedStages);
     updateData.stages = normalizedStages.map(({ supportAssignments, ...stage }) => stage);
   }
 
@@ -1196,6 +1309,7 @@ export async function validateStageConditions(
   const awaitingReviewDocuments: string[] = [];
   const rejectedDocuments: string[] = [];
   const missingFormFields: string[] = [];
+  const missingGeneratedDocuments: string[] = [];
   const isReception = isReceptionStage({
     name: stage.stageName,
     stageType: metadata?.stageType
@@ -1257,6 +1371,52 @@ export async function validateStageConditions(
 
     if (rejectedDocuments.length > 0) {
       blockers.push(`Documentos rejeitados aguardando reenvio: ${rejectedDocuments.join(', ')}`);
+    }
+  }
+
+  // ===== VALIDAR DOCUMENTOS GERADOS/ASSINADOS =====
+  const requiredGeneratedTemplateIds = isReception
+    ? []
+    : normalizeStringArray(metadata?.documentTemplateIds || []);
+
+  if (requiredGeneratedTemplateIds.length > 0) {
+    const [generatedDocuments, templates] = await Promise.all([
+      prisma.generatedDocument.findMany({
+        where: {
+          protocolId,
+          templateId: { in: requiredGeneratedTemplateIds },
+          isActive: true,
+          isSigned: true,
+          status: { not: 'SUPERSEDED' }
+        },
+        select: {
+          templateId: true
+        }
+      }),
+      prisma.documentTemplate.findMany({
+        where: {
+          id: { in: requiredGeneratedTemplateIds }
+        },
+        select: {
+          id: true,
+          name: true
+        }
+      })
+    ]);
+
+    const generatedTemplateIds = new Set(generatedDocuments.map(document => document.templateId));
+    const templatesById = new Map(templates.map(template => [template.id, template.name]));
+
+    for (const templateId of requiredGeneratedTemplateIds) {
+      if (!generatedTemplateIds.has(templateId)) {
+        missingGeneratedDocuments.push(templatesById.get(templateId) || templateId);
+      }
+    }
+
+    if (missingGeneratedDocuments.length > 0) {
+      blockers.push(
+        `Documentos gerados obrigatórios ainda não foram emitidos e assinados: ${missingGeneratedDocuments.join(', ')}`
+      );
     }
   }
 
@@ -1341,7 +1501,8 @@ export async function validateStageConditions(
     awaitingReviewDocuments,
     rejectedDocuments,
     missingFormFields,
-    missingStageOutputs
+    missingStageOutputs,
+    missingGeneratedDocuments
   };
 }
 

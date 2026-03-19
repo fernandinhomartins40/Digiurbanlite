@@ -27,6 +27,12 @@ interface GenerateDocumentInput {
   protocolId: string;
   generatedBy: string;
   additionalData?: Record<string, any>;
+  initialStatus?: string;
+  inputData?: Record<string, any>;
+  sourceStageId?: string;
+  sourceStageName?: string;
+  previousVersionId?: string;
+  revisionNumber?: number;
   certificateInfo?: {
     serialNumber: string;
     commonName: string;
@@ -117,7 +123,18 @@ Handlebars.registerHelper('exists', function(value) {
 // ============================================================================
 
 export async function generateDocument(input: GenerateDocumentInput) {
-  const { templateId, protocolId, generatedBy, additionalData = {} } = input;
+  const {
+    templateId,
+    protocolId,
+    generatedBy,
+    additionalData = {},
+    initialStatus = 'PENDING_SIGNATURE',
+    inputData = additionalData,
+    sourceStageId,
+    sourceStageName,
+    previousVersionId,
+    revisionNumber = 1,
+  } = input;
 
   console.log(`📄 Gerando documento: template=${templateId}, protocol=${protocolId}`);
 
@@ -294,11 +311,9 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
   // 4.1. Detectar placeholder de assinatura digital
   const hasSignaturePlaceholder = html.includes('signature-placeholder');
-  let shouldAutoSign = false;
 
   if (hasSignaturePlaceholder) {
     console.log('   → Placeholder de assinatura detectado no template');
-    shouldAutoSign = true;
     // Remover o placeholder do HTML final (será substituído pela assinatura visual)
     html = html.replace(
       /<div[^>]*class="signature-placeholder"[^>]*>[\s\S]*?<\/div>/gi,
@@ -515,6 +530,13 @@ export async function generateDocument(input: GenerateDocumentInput) {
         generatedBy,
         templateVersion: template.version,
         variablesUsed: variables as any,
+        inputData: inputData as any,
+        status: initialStatus,
+        publishedToCitizen: false,
+        revisionNumber,
+        previousVersionId,
+        sourceStageId,
+        sourceStageName,
         // SISTEMA DE VALIDAÇÃO
         validationCode,
         documentHash,
@@ -525,72 +547,6 @@ export async function generateDocument(input: GenerateDocumentInput) {
 
     console.log(`✅ Documento gerado: ${fileName} (${(stats.size / 1024).toFixed(2)} KB)`);
     console.log(`   🔐 Código de validação: ${validationCode}`);
-
-    // 10. Assinatura automática se placeholder foi detectado
-    if (shouldAutoSign) {
-      console.log('   → Iniciando assinatura automática do documento...');
-      try {
-        // Buscar certificado ativo do sistema para assinatura automática
-        // Critério: certificado sem userId e sem citizenId (certificado do sistema)
-        const systemCertificate = await prisma.digitalCertificate.findFirst({
-          where: {
-            status: 'ACTIVE',
-            userId: null,
-            citizenId: null,
-            expiresAt: { gt: new Date() }
-          },
-          orderBy: { createdAt: 'desc' }
-        });
-
-        if (systemCertificate) {
-          // Importar serviço de assinatura dinamicamente para evitar dependência circular
-          const { signDocument } = await import('./document-signing.service');
-          const crypto = await import('crypto');
-
-          // Descriptografar chave privada
-          // Nota: A chave está criptografada com AES-256-GCM usando a senha do sistema
-          const encryptionKey = process.env.CERTIFICATE_ENCRYPTION_KEY || 'default-key-change-in-production';
-          const decipher = crypto.createDecipheriv(
-            'aes-256-gcm',
-            Buffer.from(encryptionKey.padEnd(32, '0').substring(0, 32)),
-            Buffer.from(systemCertificate.id.substring(0, 16))
-          );
-
-          let decryptedPrivateKey: string;
-          try {
-            decryptedPrivateKey = decipher.update(systemCertificate.encryptedPrivateKey, 'base64', 'utf8');
-            decryptedPrivateKey += decipher.final('utf8');
-          } catch (decryptError) {
-            // Se falhar, pode ser que a chave não esteja criptografada (caso antigo)
-            // Tentar usar diretamente
-            console.log('   ⚠️ Falha ao descriptografar, tentando usar chave diretamente');
-            decryptedPrivateKey = systemCertificate.encryptedPrivateKey;
-          }
-
-          // Assinar documento
-          await signDocument({
-            documentId: generatedDoc.id,
-            certificateId: systemCertificate.id,
-            privateKey: decryptedPrivateKey,
-            ipAddress: '127.0.0.1',
-            userAgent: 'DigiUrban Auto-Sign Service'
-          });
-
-          // Atualizar flag isSigned
-          await prisma.generatedDocument.update({
-            where: { id: generatedDoc.id },
-            data: { isSigned: true }
-          });
-
-          console.log(`   ✅ Documento assinado automaticamente com certificado: ${systemCertificate.commonName}`);
-        } else {
-          console.log('   ⚠️ Certificado do sistema não encontrado, documento gerado sem assinatura');
-        }
-      } catch (signError: any) {
-        console.error(`   ❌ Erro ao assinar automaticamente: ${signError.message}`);
-        // Não falhar a geração do documento, apenas log do erro
-      }
-    }
 
     return generatedDoc;
 
@@ -745,7 +701,18 @@ export async function getGeneratedDocuments(protocolId: string) {
           code: true,
           documentType: true
         }
-      }
+      },
+      signatures: {
+        orderBy: { signedAt: 'desc' },
+        take: 1,
+        include: {
+          certificate: {
+            select: {
+              commonName: true,
+            },
+          },
+        },
+      },
     },
     orderBy: { generatedAt: 'desc' }
   });
@@ -762,6 +729,7 @@ export async function getGeneratedDocuments(protocolId: string) {
 
     return {
       id: doc.id,
+      templateId: doc.templateId,
       // Campo usado pelo componente admin
       documentType: doc.template.documentType || doc.template.name || 'Documento',
       // Campos adicionais para compatibilidade e informação completa
@@ -777,6 +745,15 @@ export async function getGeneratedDocuments(protocolId: string) {
       generatedAt: doc.generatedAt.toISOString(),
       // Informações de assinatura
       isSigned: doc.isSigned || false,
+      status: doc.status,
+      publishedToCitizen: doc.publishedToCitizen,
+      publishedAt: doc.publishedAt?.toISOString(),
+      revisionNumber: doc.revisionNumber,
+      previousVersionId: doc.previousVersionId,
+      sourceStageName: doc.sourceStageName,
+      inputData: (doc.inputData as Record<string, unknown> | null) || {},
+      signedAt: doc.signatures[0]?.signedAt?.toISOString(),
+      signedBy: doc.signatures[0]?.certificate?.commonName || null,
       // Informações de envio
       wasSent: doc.wasSent,
       sentAt: doc.sentAt?.toISOString(),

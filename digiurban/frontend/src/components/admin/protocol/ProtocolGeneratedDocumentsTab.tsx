@@ -10,10 +10,14 @@ import { getFullApiUrl } from '@/lib/api-config'
 
 interface GeneratedDocument {
   id: string
+  name?: string
   documentType?: string
   fileUrl?: string
   filePath?: string
   createdAt?: string
+  status?: string
+  isSigned?: boolean
+  publishedAt?: string
 }
 
 interface ProtocolGeneratedDocumentsTabProps {
@@ -48,10 +52,27 @@ export function ProtocolGeneratedDocumentsTab({
                     <div className="flex items-center gap-2 mb-1">
                       <FilePlus className="h-4 w-4 text-purple-600" />
                       <p className="text-sm font-medium text-gray-900">
-                        {doc.documentType || 'Documento gerado'}
+                        {doc.name || doc.documentType || 'Documento gerado'}
                       </p>
-                      <Badge variant="outline" className="text-xs bg-purple-100 text-purple-700">
-                        Gerado
+                      <Badge
+                        variant="outline"
+                        className={`text-xs ${
+                          doc.status === 'PUBLISHED'
+                            ? 'bg-green-100 text-green-700'
+                            : doc.status === 'SIGNED'
+                              ? 'bg-blue-100 text-blue-700'
+                              : doc.status === 'SUPERSEDED'
+                                ? 'bg-slate-100 text-slate-700'
+                                : 'bg-amber-100 text-amber-700'
+                        }`}
+                      >
+                        {doc.status === 'PUBLISHED'
+                          ? 'Publicado'
+                          : doc.status === 'SIGNED'
+                            ? 'Assinado'
+                            : doc.status === 'SUPERSEDED'
+                              ? 'Substituído'
+                              : 'Pendente assinatura'}
                       </Badge>
                     </div>
                     {doc.createdAt && (

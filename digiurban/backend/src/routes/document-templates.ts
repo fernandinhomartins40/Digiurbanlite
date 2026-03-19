@@ -9,6 +9,15 @@ import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middlewar
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { PrismaClient, UserRole } from '@prisma/client';
 import * as documentGenerator from '../services/document-generator.service';
+import {
+  ensureTemplateAllowedForProtocol,
+  getAvailableTemplatesForProtocol,
+  validateTemplateInputData,
+} from '../services/document-template-policy.service';
+import {
+  publishGeneratedDocument,
+  supersedeGeneratedDocument,
+} from '../services/generated-document-lifecycle.service';
 import { uploadDocuments } from '../config/upload';
 import path from 'path';
 import fs from 'fs/promises';
@@ -67,9 +76,13 @@ router.get('/document-templates', authenticateToken, requireAdmin, async (req, r
         footerHtml: true,
         cssStyles: true,
         availableVariables: true,
+        inputSchema: true,
         pageSize: true,
         orientation: true,
         margins: true,
+        allowedStageTypes: true,
+        requiresSignature: true,
+        signatureFields: true,
         _count: {
           select: { generatedDocuments: true }
         }
@@ -206,6 +219,23 @@ router.delete('/document-templates/:id', authenticateToken, requireAdmin, async 
 // ============================================================================
 
 /**
+ * GET /api/protocols/:protocolId/document-templates
+ * Listar templates disponíveis para a etapa atual do protocolo
+ */
+router.get('/protocols/:protocolId/document-templates', adminAuthMiddleware, async (req, res) => {
+  try {
+    const templates = await getAvailableTemplatesForProtocol(req.params.protocolId);
+    res.json({ success: true, data: templates });
+  } catch (error: any) {
+    console.error('Error fetching protocol templates:', error);
+    res.status(400).json({
+      success: false,
+      error: error.message || 'Erro ao buscar templates da etapa atual',
+    });
+  }
+});
+
+/**
  * POST /api/protocols/:protocolId/generate-document
  * Gerar documento para protocolo com assinatura digital
  */
@@ -218,7 +248,7 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
     console.log('Headers:', req.headers);
 
     const { protocolId } = req.params;
-    const { templateId, additionalData } = req.body;
+    const { templateId, additionalData, sourceDocumentId } = req.body;
     const userId = req.user!.id;
 
     if (!templateId) {
@@ -315,15 +345,59 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
     console.log(`✅ Certificado digital ativo encontrado: ${activeCertificate.serialNumber}`);
     console.log(`✅ Iniciando geração: templateId=${templateId}, protocolId=${protocolId}`);
 
-    // 4. Gerar documento SEM assinatura automática
-    // A assinatura deve ser feita manualmente pelo usuário através do modal de assinatura
+    const { context, template } = await ensureTemplateAllowedForProtocol(protocolId, templateId);
+    const inputValidation = validateTemplateInputData(template.inputSchema, additionalData);
+
+    if (!inputValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Os dados informados não atendem ao schema do template',
+        details: inputValidation.errors,
+      });
+    }
+
+    let previousVersionId: string | undefined;
+    let revisionNumber = 1;
+
+    if (sourceDocumentId) {
+      const sourceDocument = await prisma.generatedDocument.findUnique({
+        where: { id: sourceDocumentId },
+        select: {
+          id: true,
+          protocolId: true,
+          templateId: true,
+          revisionNumber: true,
+          inputData: true,
+        },
+      });
+
+      if (!sourceDocument || sourceDocument.protocolId !== protocolId) {
+        return res.status(404).json({
+          success: false,
+          error: 'Documento original da revisão não encontrado',
+        });
+      }
+
+      previousVersionId = sourceDocument.id;
+      revisionNumber = (sourceDocument.revisionNumber || 1) + 1;
+    }
+
     const document = await documentGenerator.generateDocument({
       templateId,
       protocolId,
       generatedBy: userId,
-      additionalData
-      // certificateInfo removido - assinatura manual apenas
+      additionalData: inputValidation.data,
+      inputData: inputValidation.data,
+      initialStatus: 'PENDING_SIGNATURE',
+      sourceStageId: context.currentStage?.id,
+      sourceStageName: context.currentStage?.stageName,
+      previousVersionId,
+      revisionNumber,
     });
+
+    if (previousVersionId) {
+      await supersedeGeneratedDocument(previousVersionId);
+    }
 
     console.log(`✅ Documento gerado: ${document.id}`);
     console.log(`ℹ️  Documento criado sem assinatura - necessita assinatura manual`);
@@ -332,6 +406,7 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
       success: true,
       data: {
         ...document,
+        fileUrl: `/api/generated-documents/${document.id}/download?inline=true`,
         needsSignature: true, // Indica que precisa assinar manualmente
         certificateAvailable: {
           id: activeCertificate.id,
@@ -348,6 +423,142 @@ router.post('/protocols/:protocolId/generate-document', adminAuthMiddleware, req
     res.status(400).json({
       success: false,
       error: error.message || 'Erro ao gerar documento'
+    });
+  }
+});
+
+/**
+ * POST /api/generated-documents/:id/revise
+ * Criar nova revisão de um documento gerado
+ */
+router.post('/generated-documents/:id/revise', adminAuthMiddleware, requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const sourceDocument = await prisma.generatedDocument.findUnique({
+      where: { id: req.params.id },
+      include: {
+        template: {
+          select: {
+            inputSchema: true,
+          }
+        }
+      }
+    });
+
+    if (!sourceDocument) {
+      return res.status(404).json({
+        success: false,
+        error: 'Documento não encontrado',
+      });
+    }
+
+    const activeCertificate = await prisma.digitalCertificate.findFirst({
+      where: {
+        userId,
+        status: 'ACTIVE',
+        expiresAt: {
+          gt: new Date()
+        }
+      },
+      orderBy: {
+        issuedAt: 'desc'
+      }
+    });
+
+    if (!activeCertificate) {
+      return res.status(403).json({
+        success: false,
+        error: 'CERTIFICATE_REQUIRED',
+        message: 'É necessário possuir certificado digital ativo para gerar a revisão do documento',
+      });
+    }
+
+    const mergedInputData = {
+      ...((sourceDocument.inputData as Record<string, any> | null) || {}),
+      ...((req.body?.additionalData as Record<string, any> | null) || {}),
+    };
+
+    const { context, template } = await ensureTemplateAllowedForProtocol(
+      sourceDocument.protocolId,
+      sourceDocument.templateId
+    );
+    const inputValidation = validateTemplateInputData(template.inputSchema, mergedInputData);
+
+    if (!inputValidation.valid) {
+      return res.status(400).json({
+        success: false,
+        error: 'Os dados informados não atendem ao schema do template',
+        details: inputValidation.errors,
+      });
+    }
+
+    const revisedDocument = await documentGenerator.generateDocument({
+      templateId: sourceDocument.templateId,
+      protocolId: sourceDocument.protocolId,
+      generatedBy: userId,
+      additionalData: inputValidation.data,
+      inputData: inputValidation.data,
+      initialStatus: 'PENDING_SIGNATURE',
+      sourceStageId: context.currentStage?.id,
+      sourceStageName: context.currentStage?.stageName,
+      previousVersionId: sourceDocument.id,
+      revisionNumber: (sourceDocument.revisionNumber || 1) + 1,
+    });
+
+    await supersedeGeneratedDocument(sourceDocument.id);
+
+    return res.json({
+      success: true,
+      data: {
+        ...revisedDocument,
+        fileUrl: `/api/generated-documents/${revisedDocument.id}/download?inline=true`,
+        needsSignature: true,
+        certificateAvailable: {
+          id: activeCertificate.id,
+          serialNumber: activeCertificate.serialNumber,
+          commonName: activeCertificate.commonName,
+          expiresAt: activeCertificate.expiresAt
+        }
+      },
+      message: 'Nova revisão gerada com sucesso. Assine a revisão antes de publicar ao cidadão.',
+    });
+  } catch (error: any) {
+    console.error('Error revising generated document:', error);
+    return res.status(400).json({
+      success: false,
+      error: error.message || 'Erro ao criar revisão do documento',
+    });
+  }
+});
+
+/**
+ * POST /api/generated-documents/:id/publish
+ * Publicar documento assinado ao cidadão
+ */
+router.post('/generated-documents/:id/publish', adminAuthMiddleware, async (req, res) => {
+  try {
+    if (!req.user?.id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Usuário autenticado é obrigatório para publicar documento',
+      });
+    }
+
+    const publishedDocument = await publishGeneratedDocument({
+      documentId: req.params.id,
+      publishedBy: req.user.id,
+    });
+
+    return res.json({
+      success: true,
+      data: publishedDocument,
+      message: 'Documento publicado ao cidadão com sucesso'
+    });
+  } catch (error: any) {
+    console.error('Error publishing generated document:', error);
+    return res.status(400).json({
+      success: false,
+      error: error.message || 'Erro ao publicar documento ao cidadão'
     });
   }
 });
@@ -380,6 +591,17 @@ router.get('/generated-documents/:id', adminAuthMiddleware, async (req, res) => 
       where: { id: req.params.id },
       include: {
         template: true,
+        signatures: {
+          orderBy: { signedAt: 'desc' },
+          include: {
+            certificate: {
+              select: {
+                commonName: true,
+                email: true
+              }
+            }
+          }
+        },
         protocol: {
           select: {
             number: true,
@@ -464,7 +686,7 @@ router.get('/generated-documents/:id/download', adminAuthMiddleware, async (req,
  * POST /api/generated-documents/:id/send
  * Enviar documento por email
  */
-router.post('/generated-documents/:id/send', authenticateToken, async (req, res) => {
+router.post('/generated-documents/:id/send', adminAuthMiddleware, async (req, res) => {
   try {
     const { recipientEmail, recipientName, subject, message } = req.body;
 
@@ -475,13 +697,25 @@ router.post('/generated-documents/:id/send', authenticateToken, async (req, res)
       });
     }
 
+    if (!req.user?.id) {
+      return res.status(401).json({
+        success: false,
+        error: 'Usuário autenticado é obrigatório para enviar documento'
+      });
+    }
+
+    await publishGeneratedDocument({
+      documentId: req.params.id,
+      publishedBy: req.user.id
+    });
+
     await documentGenerator.sendDocumentByEmail({
       documentId: req.params.id,
       recipientEmail,
       recipientName,
       subject,
       message,
-      sentBy: req.user!.id
+      sentBy: req.user.id
     });
 
     res.json({
@@ -502,7 +736,7 @@ router.post('/generated-documents/:id/send', authenticateToken, async (req, res)
  * Enviar múltiplos documentos por email e adicionar aos documentos do cidadão
  * Aceita arquivos adicionais via multipart/form-data
  */
-router.post('/generated-documents/send-multiple', authenticateToken, uploadDocuments, async (req, res) => {
+router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDocuments, async (req, res) => {
   try {
     // Parse documentIds como JSON se vier como string (FormData)
     const documentIds = typeof req.body.documentIds === 'string'
@@ -557,6 +791,14 @@ router.post('/generated-documents/send-multiple', authenticateToken, uploadDocum
       return res.status(404).json({
         success: false,
         error: 'Nenhum documento encontrado'
+      });
+    }
+
+    const unsignedDocuments = documents.filter(doc => !doc.isSigned || doc.status === 'SUPERSEDED');
+    if (unsignedDocuments.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Somente documentos assinados e vigentes podem ser enviados. Documentos inválidos: ${unsignedDocuments.map(doc => doc.fileName).join(', ')}`
       });
     }
 
@@ -634,46 +876,29 @@ router.post('/generated-documents/send-multiple', authenticateToken, uploadDocum
       results.errors.push(`Erro ao enviar email: ${emailError.message}`);
     }
 
-    // 3. Adicionar documentos aos documentos do cidadão
+    // 3. Publicar documentos assinados ao cidadão
     for (const doc of documents) {
       try {
-        // Verificar se já existe
-        const existingDoc = await prisma.citizenDocument.findFirst({
-          where: {
-            citizenId,
-            sourceDocumentId: doc.id
+        await publishGeneratedDocument({
+          documentId: doc.id,
+          publishedBy: req.user!.id
+        });
+
+        await prisma.generatedDocument.update({
+          where: { id: doc.id },
+          data: {
+            wasSent: true,
+            sentAt: new Date(),
+            sentBy: req.user!.id,
+            sentTo: recipientEmail
           }
         });
 
-        if (!existingDoc) {
-          await prisma.citizenDocument.create({
-            data: {
-              citizenId,
-              documentType: `Protocolo: ${doc.template.documentType || doc.template.name}`,
-              fileName: doc.fileName,
-              filePath: doc.filePath,
-              fileUrl: doc.fileUrl || undefined,
-              fileSize: doc.fileSize,
-              mimeType: doc.mimeType,
-              status: 'APPROVED',
-              sourceType: 'PROTOCOL',
-              sourceDocumentId: doc.id,
-              notes: message || `Documento gerado a partir do protocolo ${protocolNumber}`,
-              isVerified: true,
-              verifiedAt: new Date(),
-              verifiedBy: req.user!.id,
-              reviewedBy: req.user!.id,
-              reviewedAt: new Date()
-            }
-          });
-          results.documentsAdded++;
-          console.log(`   ✓ Documento adicionado: ${doc.template.name}`);
-        } else {
-          console.log(`   ⊙ Documento já existe: ${doc.template.name}`);
-        }
+        results.documentsAdded++;
+        console.log(`   ✓ Documento publicado: ${doc.template.name}`);
       } catch (docError: any) {
-        console.error(`   ✗ Erro ao adicionar documento ${doc.template.name}:`, docError.message);
-        results.errors.push(`Erro ao adicionar ${doc.template.name}: ${docError.message}`);
+        console.error(`   ✗ Erro ao publicar documento ${doc.template.name}:`, docError.message);
+        results.errors.push(`Erro ao publicar ${doc.template.name}: ${docError.message}`);
       }
     }
 

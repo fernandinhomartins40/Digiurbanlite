@@ -5859,6 +5859,7 @@ model DocumentTemplate {
 
   // Variáveis disponíveis (documentação)
   availableVariables Json? @default("[]") // Array de {name, description, example}
+  inputSchema        Json? // JSON Schema para coletar dados específicos deste template
 
   // Configurações de geração
   pageSize    String @default("A4") // A4, Letter, Legal
@@ -5920,6 +5921,7 @@ model GeneratedDocument {
 
   // Dados usados na geração (snapshot)
   variablesUsed Json // Snapshot dos dados usados {protocolNumber, citizenName, etc}
+  inputData     Json? // Dados informados pelo servidor para este template
 
   // Envio
   wasSent Boolean   @default(false)
@@ -5929,6 +5931,21 @@ model GeneratedDocument {
 
   // Assinatura Digital
   isSigned Boolean @default(false) // Se o documento foi assinado digitalmente
+  status   String  @default("PENDING_SIGNATURE") // PENDING_SIGNATURE, SIGNED, PUBLISHED, SUPERSEDED
+
+  // Publicação ao cidadão
+  publishedToCitizen Boolean   @default(false)
+  publishedAt        DateTime?
+  publishedBy        String?
+
+  // Versionamento/Revisão
+  revisionNumber   Int       @default(1)
+  previousVersionId String?
+  supersededAt     DateTime?
+
+  // Contexto da geração
+  sourceStageId   String?
+  sourceStageName String?
 
   // Controle
   isActive  Boolean   @default(true) // Soft delete
@@ -5950,6 +5967,8 @@ model GeneratedDocument {
   @@index([protocolId])
   @@index([templateId])
   @@index([generatedAt])
+  @@index([status])
+  @@index([publishedToCitizen])
   @@index([validationCode])
   @@index([documentHash])
   @@map("generated_documents")

@@ -84,6 +84,7 @@ export interface WorkflowStage {
   requiredDocumentTypes: string[];      // Tipos de documentos do serviço
   requiredInputFieldIds?: string[];     // IDs de campos de entrada (formSchema.properties)
   requiredStageOutputs?: string[];      // Chaves de saídas obrigatórias da etapa
+  documentTemplateIds?: string[];       // IDs dos templates de documentos permitidos na etapa
 
   // Configurações da etapa
   allowedActions: WorkflowStageAction[]; // Ações permitidas
@@ -163,6 +164,7 @@ export interface StageValidationResult {
   rejectedDocuments?: string[];         // Documentos rejeitados aguardando reenvio
   missingFormFields: string[];          // Campos de formulário não preenchidos
   missingStageOutputs?: string[];       // Saídas obrigatórias da etapa não preenchidas
+  missingGeneratedDocuments?: string[]; // Templates de documentos gerados ainda não emitidos/assinados
 }
 
 // ============================================================================

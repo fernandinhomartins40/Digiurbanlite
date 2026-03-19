@@ -107,6 +107,10 @@ function getStageRequiredOutputs(stage: Record<string, any>): string[] {
   return normalizeStringArray(stage.requiredStageOutputs ?? []);
 }
 
+function getStageDocumentTemplateIds(stage: Record<string, any>): string[] {
+  return normalizeStringArray(stage.documentTemplateIds ?? []);
+}
+
 function isReceptionStage(stage: Record<string, any>): boolean {
   const stageType = typeof stage.stageType === 'string' ? stage.stageType.trim() : '';
   if (stageType === 'RECEPTION') {
@@ -150,6 +154,19 @@ async function main() {
       stages: true
     }
   });
+
+  const templates = await prisma.documentTemplate.findMany({
+    select: {
+      id: true,
+      name: true,
+      isActive: true,
+      isGlobal: true,
+      serviceIds: true,
+      allowedStageTypes: true
+    }
+  });
+
+  const templatesById = new Map(templates.map(template => [template.id, template]));
 
   const servicesById = new Map(services.map(service => [service.id, service]));
   const errors: string[] = [];
@@ -214,6 +231,7 @@ async function main() {
       }
 
       const requiredOutputs = getStageRequiredOutputs(stage || {});
+      const documentTemplateIds = getStageDocumentTemplateIds(stage || {});
       const stageType = typeof stage.stageType === 'string' ? stage.stageType.trim() : '';
       const isReception = isReceptionStage(stage || {});
       const isConclusionStage = stageType === 'CONCLUSION';
@@ -250,6 +268,48 @@ async function main() {
         errors.push(
           `Workflow "${workflow.name}" / etapa "${stageName}" é DOCUMENT_GENERATION mas não expõe a aba documentos-gerados`
         );
+      }
+
+      if (isGenerationStage && documentTemplateIds.length === 0) {
+        errors.push(
+          `Workflow "${workflow.name}" / etapa "${stageName}" é DOCUMENT_GENERATION mas não possui documentTemplateIds`
+        );
+      }
+
+      for (const templateId of documentTemplateIds) {
+        const template = templatesById.get(templateId);
+        if (!template) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" referencia template inexistente: ${templateId}`
+          );
+          continue;
+        }
+
+        if (!template.isActive) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" referencia template inativo: ${template.name}`
+          );
+        }
+
+        const serviceIds = Array.isArray(template.serviceIds)
+          ? template.serviceIds.filter((value): value is string => typeof value === 'string')
+          : [];
+
+        if (!template.isGlobal && !serviceIds.includes(service.id)) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" referencia template não vinculado ao serviço: ${template.name}`
+          );
+        }
+
+        const allowedStageTypes = Array.isArray(template.allowedStageTypes)
+          ? template.allowedStageTypes.filter((value): value is string => typeof value === 'string')
+          : [];
+
+        if (allowedStageTypes.length > 0 && (!stageType || !allowedStageTypes.includes(stageType))) {
+          errors.push(
+            `Workflow "${workflow.name}" / etapa "${stageName}" usa template "${template.name}" incompatível com stageType ${stageType || 'sem stageType'}`
+          );
+        }
       }
 
       if (isGenerationStage && hasStageRequirements(stage || {})) {

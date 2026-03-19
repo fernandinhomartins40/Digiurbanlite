@@ -18,6 +18,9 @@ interface GeneratedDocument {
   name?: string
   fileName?: string
   createdAt?: string
+  isSigned?: boolean
+  status?: string
+  publishedAt?: string
   wasSent?: boolean
   sentAt?: string
   sentTo?: string
@@ -58,6 +61,10 @@ export function ProtocolSendGeneratedDocumentTab({
     })
   }, [generatedDocuments])
 
+  const eligibleDocuments = useMemo(() => {
+    return sortedDocuments.filter((doc) => doc.isSigned && doc.status !== 'SUPERSEDED')
+  }, [sortedDocuments])
+
   const toggleDocument = (docId: string) => {
     setSelectedDocumentIds(prev =>
       prev.includes(docId)
@@ -67,10 +74,10 @@ export function ProtocolSendGeneratedDocumentTab({
   }
 
   const toggleSelectAll = () => {
-    if (selectedDocumentIds.length === sortedDocuments.length) {
+    if (selectedDocumentIds.length === eligibleDocuments.length) {
       setSelectedDocumentIds([])
     } else {
-      setSelectedDocumentIds(sortedDocuments.map(doc => doc.id))
+      setSelectedDocumentIds(eligibleDocuments.map(doc => doc.id))
     }
   }
 
@@ -172,7 +179,7 @@ export function ProtocolSendGeneratedDocumentTab({
     }
   }
 
-  const allSelected = sortedDocuments.length > 0 && selectedDocumentIds.length === sortedDocuments.length
+  const allSelected = eligibleDocuments.length > 0 && selectedDocumentIds.length === eligibleDocuments.length
 
   return (
     <Card>
@@ -189,8 +196,8 @@ export function ProtocolSendGeneratedDocumentTab({
         {/* Seleção de Documentos */}
         <div className="space-y-3">
           <div className="flex items-center justify-between">
-            <Label>Documentos Disponíveis ({sortedDocuments.length})</Label>
-            {sortedDocuments.length > 0 && (
+            <Label>Documentos Disponíveis ({eligibleDocuments.length})</Label>
+            {eligibleDocuments.length > 0 && (
               <Button
                 variant="outline"
                 size="sm"
@@ -201,17 +208,17 @@ export function ProtocolSendGeneratedDocumentTab({
             )}
           </div>
 
-          {sortedDocuments.length === 0 ? (
+          {eligibleDocuments.length === 0 ? (
             <div className="p-8 text-center border-2 border-dashed rounded-lg">
               <FileText className="h-12 w-12 mx-auto mb-2 text-muted-foreground opacity-50" />
-              <p className="text-muted-foreground">Nenhum documento gerado ainda</p>
+              <p className="text-muted-foreground">Nenhum documento assinado disponível para envio</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Vá para a aba "Gerar Documentos" para criar documentos
+                Gere, assine e publique os documentos antes de enviá-los ao cidadão
               </p>
             </div>
           ) : (
             <div className="border rounded-lg divide-y max-h-96 overflow-y-auto">
-              {sortedDocuments.map((doc) => (
+              {eligibleDocuments.map((doc) => (
                 <div
                   key={doc.id}
                   className={`p-3 flex items-start gap-3 hover:bg-muted/50 transition-colors ${
@@ -244,6 +251,11 @@ export function ProtocolSendGeneratedDocumentTab({
                           <CheckCircle2 className="h-3 w-3" />
                           Enviado em: {format(new Date(doc.sentAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                           {doc.sentTo && ` para ${doc.sentTo}`}
+                        </p>
+                      )}
+                      {doc.publishedAt && (
+                        <p className="text-blue-600">
+                          Publicado ao cidadão em {format(new Date(doc.publishedAt), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
                         </p>
                       )}
                     </div>

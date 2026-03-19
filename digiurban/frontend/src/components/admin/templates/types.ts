@@ -16,7 +16,20 @@ export interface DocumentTemplate {
     description: string
     example: string
   }>
+  inputSchema?: {
+    type?: 'object'
+    properties?: Record<string, any>
+    required?: string[]
+    citizenFields?: string[]
+  } | null
   serviceIds?: string[]
+  allowedStageTypes?: string[]
+  requiresSignature?: boolean
+  signatureFields?: Array<{
+    label: string
+    role?: string
+    position?: Record<string, any>
+  }>
   isGlobal: boolean
   isActive: boolean
   version: number

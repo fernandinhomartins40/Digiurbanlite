@@ -21,6 +21,7 @@ import {
 import { WorkflowProgressBar } from './WorkflowProgressBar'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
+import { DocumentSigningModalSimple } from '@/components/shared/DocumentSigningModalSimple'
 
 interface CompletingProtocolViewProps {
   protocol: {
@@ -57,7 +58,8 @@ export function CompletingProtocolView({
   const { toast } = useToast()
   const [activeTab, setActiveTab] = useState<'resumo-final' | 'documentos-gerados' | 'enviar'>('resumo-final')
   const [finalNotes, setFinalNotes] = useState('')
-  const [generatedDocument, setGeneratedDocument] = useState<{ id: string; url: string; name: string } | null>(null)
+  const [generatedDocument, setGeneratedDocument] = useState<{ id: string; url: string; name: string; isSigned: boolean } | null>(null)
+  const [showSigningModal, setShowSigningModal] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSending, setIsSending] = useState(false)
   const [isCompleting, setIsCompleting] = useState(false)
@@ -96,14 +98,15 @@ export function CompletingProtocolView({
       if (result.success) {
         setGeneratedDocument({
           id: result.data.id,
-          url: `/api/generated-documents/${result.data.id}/download`,
-          name: result.data.fileName
+          url: `/api/generated-documents/${result.data.id}/download?inline=true`,
+          name: result.data.fileName,
+          isSigned: false
         })
         toast({
           title: 'Documento gerado',
-          description: 'Documento de conclusão criado com sucesso'
+          description: 'Documento de conclusão criado. Assine o documento antes de enviá-lo ao cidadão.'
         })
-        setActiveTab('enviar')
+        setShowSigningModal(true)
       } else {
         throw new Error(result.error || 'Erro ao gerar documento')
       }
@@ -116,6 +119,16 @@ export function CompletingProtocolView({
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const handleSigningComplete = () => {
+    setShowSigningModal(false)
+    setGeneratedDocument((current) => current ? { ...current, isSigned: true } : current)
+    setActiveTab('enviar')
+    toast({
+      title: 'Documento assinado',
+      description: 'Agora o documento pode ser enviado ao cidadão e usado na conclusão do protocolo'
+    })
   }
 
   // Enviar para cidadão
@@ -133,6 +146,15 @@ export function CompletingProtocolView({
       toast({
         title: 'Email não cadastrado',
         description: 'O cidadão não possui email cadastrado',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (!generatedDocument.isSigned) {
+      toast({
+        title: 'Assinatura obrigatória',
+        description: 'Assine o documento antes de enviá-lo ao cidadão',
         variant: 'destructive'
       })
       return
@@ -182,6 +204,15 @@ export function CompletingProtocolView({
       toast({
         title: 'Documento necessário',
         description: 'Gere o documento de conclusão antes de finalizar',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (!generatedDocument.isSigned) {
+      toast({
+        title: 'Assinatura obrigatória',
+        description: 'Assine o documento de conclusão antes de finalizar o protocolo',
         variant: 'destructive'
       })
       return
@@ -392,6 +423,11 @@ export function CompletingProtocolView({
                     </p>
                   </div>
                   <p className="text-sm text-gray-700">{generatedDocument.name}</p>
+                  <p className="text-xs text-gray-600">
+                    {generatedDocument.isSigned
+                      ? 'Documento assinado e pronto para envio/publicação.'
+                      : 'Assine o documento antes de enviá-lo ao cidadão ou concluir o protocolo.'}
+                  </p>
                   <div className="flex gap-2">
                     <Button
                       variant="outline"
@@ -414,6 +450,14 @@ export function CompletingProtocolView({
                       <Download className="h-4 w-4 mr-2" />
                       Baixar
                     </Button>
+                    {!generatedDocument.isSigned && (
+                      <Button
+                        size="sm"
+                        onClick={() => setShowSigningModal(true)}
+                      >
+                        Assinar agora
+                      </Button>
+                    )}
                   </div>
                 </div>
               ) : (
@@ -477,7 +521,7 @@ export function CompletingProtocolView({
 
               <Button
                 onClick={handleSendToCitizen}
-                disabled={isSending || !generatedDocument || !sendMessage.trim()}
+                disabled={isSending || !generatedDocument || !generatedDocument.isSigned || !sendMessage.trim()}
                 className="w-full"
               >
                 {isSending ? (
@@ -508,7 +552,7 @@ export function CompletingProtocolView({
             </div>
             <Button
               onClick={handleCompleteProtocol}
-              disabled={isCompleting || !generatedDocument}
+              disabled={isCompleting || !generatedDocument || !generatedDocument.isSigned}
               size="lg"
               className="bg-green-600 hover:bg-green-700 shrink-0"
             >
@@ -524,6 +568,20 @@ export function CompletingProtocolView({
           </div>
         </CardContent>
       </Card>
+
+      {showSigningModal && generatedDocument && (
+        <DocumentSigningModalSimple
+          document={{
+            id: generatedDocument.id,
+            fileName: generatedDocument.name,
+            fileUrl: generatedDocument.url,
+          }}
+          userType="admin"
+          documentType="generated"
+          onClose={() => setShowSigningModal(false)}
+          onSuccess={handleSigningComplete}
+        />
+      )}
     </div>
   )
 }

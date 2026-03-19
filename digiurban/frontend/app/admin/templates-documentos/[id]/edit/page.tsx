@@ -44,10 +44,15 @@ export default function TemplateEditPage() {
     description: '',
     fullTemplate: '', // Template completo (header + body + footer combinados)
     isActive: true,
+    allowedStageTypes: [] as string[],
+    requiresSignature: true,
+    inputSchemaText: '',
+    signatureFieldsText: '[]',
   })
 
   const [previewHtml, setPreviewHtml] = useState('')
   const [editMode, setEditMode] = useState<'visual' | 'preview'>('visual')
+  const stageTypeOptions = ['RECEPTION', 'CONCLUSION', 'DOCUMENT_GENERATION']
 
   // Verificar permissões - SUPER_ADMIN, ADMIN e MANAGER podem editar templates
   const canEdit = user?.role === 'SUPER_ADMIN' || user?.role === 'ADMIN' || user?.role === 'MANAGER'
@@ -184,6 +189,10 @@ export default function TemplateEditPage() {
           description: result.data.description || '',
           fullTemplate: combinedTemplate || '<p>Comece a editar o template...</p>',
           isActive: result.data.isActive,
+          allowedStageTypes: Array.isArray(result.data.allowedStageTypes) ? result.data.allowedStageTypes : [],
+          requiresSignature: result.data.requiresSignature !== false,
+          inputSchemaText: result.data.inputSchema ? JSON.stringify(result.data.inputSchema, null, 2) : '',
+          signatureFieldsText: JSON.stringify(result.data.signatureFields || [], null, 2),
         })
       } else {
         throw new Error(result.error || 'Erro ao carregar template')
@@ -215,6 +224,17 @@ export default function TemplateEditPage() {
 
     setSaving(true)
     try {
+      let inputSchema: Record<string, any> | null = null
+      let signatureFields: Array<Record<string, any>> = []
+
+      if (formData.inputSchemaText.trim()) {
+        inputSchema = JSON.parse(formData.inputSchemaText)
+      }
+
+      if (formData.signatureFieldsText.trim()) {
+        signatureFields = JSON.parse(formData.signatureFieldsText)
+      }
+
       // Enviar o template completo como htmlTemplate (backend espera essa estrutura)
       const dataToSave = {
         name: formData.name,
@@ -223,6 +243,10 @@ export default function TemplateEditPage() {
         headerHtml: '', // Deixar vazio pois estamos usando template unificado
         footerHtml: '', // Deixar vazio pois estamos usando template unificado
         isActive: formData.isActive,
+        allowedStageTypes: formData.allowedStageTypes,
+        requiresSignature: formData.requiresSignature,
+        inputSchema,
+        signatureFields,
       }
 
       const result = await apiRequest(`/document-templates/${templateId}`, {
@@ -332,6 +356,79 @@ export default function TemplateEditPage() {
                 placeholder="Descreva para que serve este template"
                 rows={2}
               />
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label>Etapas permitidas</Label>
+              <div className="grid gap-2 md:grid-cols-3">
+                {stageTypeOptions.map((stageType) => (
+                  <label key={stageType} className="flex items-center gap-2 rounded border p-3 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={formData.allowedStageTypes.includes(stageType)}
+                      onChange={(event) => {
+                        setFormData((current) => ({
+                          ...current,
+                          allowedStageTypes: event.target.checked
+                            ? [...current.allowedStageTypes, stageType]
+                            : current.allowedStageTypes.filter((value) => value !== stageType)
+                        }))
+                      }}
+                      className="h-4 w-4 rounded border-gray-300"
+                    />
+                    <span>{stageType}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Se vazio, o template fica disponível para qualquer etapa compatível do serviço.
+              </p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="requiresSignature">Assinatura</Label>
+              <div className="flex items-center gap-2 h-10">
+                <input
+                  type="checkbox"
+                  id="requiresSignature"
+                  checked={formData.requiresSignature}
+                  onChange={(e) => setFormData({ ...formData, requiresSignature: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300"
+                />
+                <label htmlFor="requiresSignature" className="text-sm cursor-pointer">
+                  Exigir assinatura digital antes da publicação ao cidadão
+                </label>
+              </div>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="inputSchemaText">Schema de dados do template</Label>
+              <Textarea
+                id="inputSchemaText"
+                value={formData.inputSchemaText}
+                onChange={(e) => setFormData({ ...formData, inputSchemaText: e.target.value })}
+                placeholder={`{\n  "type": "object",\n  "properties": {\n    "parecerTecnico": {\n      "type": "string",\n      "title": "Parecer técnico",\n      "widget": "textarea"\n    }\n  },\n  "required": ["parecerTecnico"]\n}`}
+                rows={10}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                Use JSON Schema para pedir informações adicionais específicas deste template no momento da geração.
+              </p>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="signatureFieldsText">Configuração de campos de assinatura</Label>
+              <Textarea
+                id="signatureFieldsText"
+                value={formData.signatureFieldsText}
+                onChange={(e) => setFormData({ ...formData, signatureFieldsText: e.target.value })}
+                placeholder={`[\n  {\n    "label": "Assinatura do servidor responsável"\n  }\n]`}
+                rows={6}
+                className="font-mono text-xs"
+              />
+              <p className="text-xs text-muted-foreground">
+                Estrutura opcional para documentar campos e papéis de assinatura deste template.
+              </p>
             </div>
           </div>
         </CardContent>
