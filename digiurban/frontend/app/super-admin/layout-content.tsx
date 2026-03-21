@@ -86,6 +86,7 @@ const menuItems: MenuItem[] = [
     children: [
       { title: 'Dashboard', href: '/super-admin/email-server', icon: LayoutDashboard },
       { title: 'Planos', href: '/super-admin/email-plans', icon: CreditCard },
+      { title: 'Assinaturas', href: '/super-admin/email-subscriptions', icon: Users },
       { title: 'Configurações', href: '/super-admin/email-server/config', icon: Settings },
       { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Globe },
       { title: 'Logs', href: '/super-admin/email-server/logs', icon: FileText },
