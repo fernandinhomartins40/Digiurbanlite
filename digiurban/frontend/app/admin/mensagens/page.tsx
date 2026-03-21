@@ -181,6 +181,12 @@ export default function AdminMessagesPage() {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  useEffect(() => {
+    if (isMobileView) {
+      setShowConversationsList(!selectedConversation);
+    }
+  }, [isMobileView, selectedConversation]);
+
   // Carregar estatísticas
   useEffect(() => {
     loadStats();
@@ -459,10 +465,12 @@ export default function AdminMessagesPage() {
    * Filtrar conversas
    */
   const filteredConversations = filterConversations(conversations, searchQuery);
+  const showConversationPane = !isMobileView || showConversationsList;
+  const showChatPane = !isMobileView || !showConversationsList;
 
   if (loading && conversations.length === 0) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="flex min-h-[50vh] items-center justify-center rounded-3xl border border-slate-200 bg-white shadow-sm">
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="text-sm text-gray-600">Carregando...</p>
@@ -472,7 +480,7 @@ export default function AdminMessagesPage() {
   }
 
   return (
-    <div className="h-screen flex bg-gray-50 overflow-hidden">
+    <div className="flex h-[calc(100dvh-7rem)] overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm sm:h-[calc(100dvh-8rem)] md:h-[calc(100dvh-9rem)]">
       {/* Sidebar Menu Lateral */}
       {showSidebar && (
         <>
@@ -480,7 +488,7 @@ export default function AdminMessagesPage() {
             className="fixed inset-0 z-40 bg-black/50"
             onClick={() => setShowSidebar(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl flex flex-col">
+          <div className="fixed inset-y-0 left-0 z-50 flex w-full max-w-[22rem] flex-col bg-white shadow-xl">
             {/* Header Sidebar */}
             <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600">
               <div className="flex items-center gap-3">
@@ -567,7 +575,7 @@ export default function AdminMessagesPage() {
             className="fixed inset-0 z-40 bg-black/50"
             onClick={() => setShowStats(false)}
           />
-          <div className="fixed inset-y-0 right-0 z-50 w-96 bg-white shadow-xl flex flex-col">
+          <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-[24rem] flex-col bg-white shadow-xl">
             <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600">
               <h3 className="font-bold text-white">Estatísticas</h3>
               <Button
@@ -657,14 +665,16 @@ export default function AdminMessagesPage() {
       )}
       {/* Lista de Conversas */}
       <div
-        className={`${
+        className={cn(
+          'min-h-0 flex-col bg-white',
+          showConversationPane ? 'flex' : 'hidden',
           isMobileView
-            ? showConversationsList ? 'w-full' : 'hidden'
-            : 'w-96 border-r'
-        } bg-white flex flex-col`}
+            ? 'w-full min-w-0'
+            : 'w-[22rem] min-w-[22rem] border-r border-slate-200 lg:w-[24rem] lg:min-w-[24rem] xl:w-[26rem] xl:min-w-[26rem] 2xl:w-[28rem] 2xl:min-w-[28rem]'
+        )}
       >
         {/* Header da Lista */}
-        <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="border-b bg-gradient-to-r from-blue-600 to-purple-600 p-3 sm:p-4">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Button
@@ -705,8 +715,8 @@ export default function AdminMessagesPage() {
         </div>
 
         {/* ✅ NOVO: Tabs com Lista de Conversas + Fila de Handover */}
-        <Tabs defaultValue="conversations" className="flex-1 flex flex-col">
-          <TabsList className="w-full grid grid-cols-2 m-2">
+        <Tabs defaultValue="conversations" className="flex min-h-0 flex-1 flex-col">
+          <TabsList className="mx-2 mt-2 grid w-auto grid-cols-2 rounded-xl bg-slate-100 p-1">
             <TabsTrigger value="conversations">
               Conversas ({conversations.length})
             </TabsTrigger>
@@ -719,7 +729,7 @@ export default function AdminMessagesPage() {
           </TabsList>
 
           {/* Tab: Lista de Conversas */}
-          <TabsContent value="conversations" className="flex-1 m-0">
+          <TabsContent value="conversations" className="m-0 min-h-0 flex-1">
             <ScrollArea className="h-full">
               {loading ? (
                 <div className="flex items-center justify-center py-12">
@@ -738,12 +748,12 @@ export default function AdminMessagesPage() {
                   key={conversation.id}
                   onClick={() => handleSelectConversation(conversation)}
                   className={cn(
-                    "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
+                    "cursor-pointer border-b px-3 py-3 transition-colors hover:bg-gray-50 sm:px-4 sm:py-4",
                     selectedConversation?.id === conversation.id && "bg-blue-50",
-                    conversation.isBotConversation && "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-l-blue-600"
+                    conversation.isBotConversation && "border-l-4 border-l-blue-600 bg-gradient-to-r from-blue-50 to-purple-50"
                   )}
                 >
-                  <div className="flex items-start gap-3">
+                  <div className="flex min-w-0 items-start gap-3">
                     <div className="relative">
                       <Avatar className={cn(
                         "w-12 h-12",
@@ -768,10 +778,10 @@ export default function AdminMessagesPage() {
                     </div>
 
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
+                      <div className="mb-1 flex items-start justify-between gap-3">
+                        <div className="flex min-w-0 flex-wrap items-center gap-2">
                           <h3 className={cn(
-                            "font-medium truncate",
+                            "min-w-0 truncate font-medium",
                             conversation.isBotConversation && "text-blue-700 font-bold"
                           )}>
                             {conversation.title || conversation.citizenName || 'Conversa'}
@@ -789,7 +799,7 @@ export default function AdminMessagesPage() {
                           )}
                         </div>
                         {conversation.lastMessageAt && (
-                          <span className="text-xs text-gray-500">
+                          <span className="shrink-0 text-xs text-gray-500">
                             {formatRelativeTime(conversation.lastMessageAt)}
                           </span>
                         )}
@@ -819,7 +829,7 @@ export default function AdminMessagesPage() {
           </TabsContent>
 
           {/* ✅ NOVO: Tab: Fila de Handover */}
-          <TabsContent value="handover" className="flex-1 m-0">
+          <TabsContent value="handover" className="m-0 min-h-0 flex-1">
             <ScrollArea className="h-full">
               {handoverQueue.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
@@ -885,20 +895,19 @@ export default function AdminMessagesPage() {
 
       {/* Área de Chat */}
       <div
-        className={`${
-          isMobileView
-            ? showConversationsList ? 'hidden' : 'w-full'
-            : 'flex-1'
-        } flex flex-col bg-white`}
+        className={cn(
+          'min-h-0 min-w-0 flex-1 flex-col bg-white',
+          showChatPane ? 'flex' : 'hidden'
+        )}
       >
         {selectedConversation ? (
           <>
             {/* Header do Chat */}
             <div className={cn(
-              "p-4 border-b flex items-center justify-between",
+              "flex flex-col gap-3 border-b px-3 py-3 sm:px-4 lg:flex-row lg:items-center lg:justify-between lg:px-6",
               selectedConversation.isBotConversation && "bg-gradient-to-r from-blue-600 to-purple-600"
             )}>
-              <div className="flex items-center gap-3">
+              <div className="flex min-w-0 items-center gap-3">
                 {isMobileView && (
                   <Button
                     variant="ghost"
@@ -911,7 +920,7 @@ export default function AdminMessagesPage() {
                 )}
 
                 <Avatar className={cn(
-                  "w-10 h-10",
+                  "w-10 h-10 shrink-0",
                   selectedConversation.isBotConversation && "ring-2 ring-white"
                 )}>
                   {selectedConversation.isBotConversation ? (
@@ -928,12 +937,14 @@ export default function AdminMessagesPage() {
                   )}
                 </Avatar>
 
-                <div>
+                <div className="min-w-0">
                   <h3 className={cn(
-                    "font-medium flex items-center gap-2",
+                    "flex items-center gap-2 font-medium",
                     selectedConversation.isBotConversation && "text-white"
                   )}>
-                    {selectedConversation.title || selectedConversation.citizenName}
+                    <span className="truncate">
+                      {selectedConversation.title || selectedConversation.citizenName}
+                    </span>
                     {selectedConversation.isBotConversation && (
                       <Badge className="bg-white text-blue-600 text-xs">IA</Badge>
                     )}
@@ -947,12 +958,12 @@ export default function AdminMessagesPage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 lg:justify-end">
                 {getConversationStatus(selectedConversation) === 'bot' ? (
                   <Button
                     size="sm"
                     onClick={handleTakeOver}
-                    className="gap-2 bg-white text-blue-600 hover:bg-blue-50"
+                    className="gap-2 whitespace-nowrap bg-white text-blue-600 hover:bg-blue-50"
                   >
                     <UserCheck className="w-4 h-4" />
                     Assumir
@@ -962,7 +973,7 @@ export default function AdminMessagesPage() {
                     size="sm"
                     variant="outline"
                     onClick={handleHandBackToBot}
-                    className="gap-2"
+                    className="gap-2 whitespace-nowrap"
                   >
                     <Bot className="w-4 h-4" />
                     Devolver ao Bot
@@ -1037,13 +1048,13 @@ export default function AdminMessagesPage() {
             </div>
 
             {/* Mensagens */}
-            <ScrollArea className="flex-1 p-4 bg-gray-50">
+            <ScrollArea className="min-h-0 flex-1 bg-gray-50 px-3 py-4 sm:px-4 lg:px-6">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
-                <div className="space-y-4 max-w-4xl mx-auto">
+                <div className="mx-auto w-full max-w-5xl space-y-4">
                   {messages.map((message, index) => {
                     const isOwnMessage = message.senderType === 'SERVER';
                     const isBot = message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';
@@ -1068,7 +1079,7 @@ export default function AdminMessagesPage() {
                         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                           <div
                             className={cn(
-                              "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
+                              "w-fit max-w-[88%] rounded-2xl px-4 py-2 shadow-sm sm:max-w-[78%] xl:max-w-[68%]",
                               isOwnMessage
                                 ? 'bg-blue-600 text-white'
                                 : isBot
@@ -1131,8 +1142,8 @@ export default function AdminMessagesPage() {
             </ScrollArea>
 
             {/* Input de Mensagem */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
-              <div className="flex items-center gap-2 max-w-4xl mx-auto">
+            <form onSubmit={handleSendMessage} className="border-t bg-white px-3 py-3 sm:px-4 lg:px-6">
+              <div className="mx-auto flex w-full max-w-5xl items-center gap-1.5 sm:gap-2">
                 <Button type="button" variant="ghost" size="icon" className="text-gray-500">
                   <Smile className="w-5 h-5" />
                 </Button>
@@ -1145,7 +1156,7 @@ export default function AdminMessagesPage() {
                   placeholder="Digite uma mensagem..."
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
-                  className="flex-1"
+                  className="min-w-0 flex-1"
                   disabled={!isConnected || selectedConversation.status === 'CLOSED'}
                 />
 
@@ -1162,8 +1173,8 @@ export default function AdminMessagesPage() {
             </form>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-blue-50 to-purple-50">
-            <div className="text-center p-8">
+          <div className="flex flex-1 items-center justify-center bg-gradient-to-br from-blue-50 to-purple-50 p-6 text-gray-500 sm:p-8 lg:p-10">
+            <div className="max-w-md text-center">
               <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
