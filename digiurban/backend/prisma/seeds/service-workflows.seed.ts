@@ -1,14 +1,14 @@
 /**
  * ============================================================================
- * SERVICE WORKFLOWS SEED - Workflows por ServiÃ§o COM METADADOS DE UI
+ * SERVICE WORKFLOWS SEED - Workflows por Serviço COM METADADOS DE UI
  * ============================================================================
  *
  * ATUALIZADO: Agora cada stage define:
  * - availableTabs: Quais abas mostrar na UI
  * - primaryTab: Qual aba destacar
- * - requiredDocumentTypes: Documentos obrigatÃ³rios
- * - requiredInputFieldIds: Campos de formulÃ¡rio obrigatÃ³rios
- * - allowedActions: AÃ§Ãµes permitidas
+ * - requiredDocumentTypes: Documentos obrigatórios
+ * - requiredInputFieldIds: Campos de formulário obrigatórios
+ * - allowedActions: Ações permitidas
  *
  * Isso permite que o WORKFLOW defina completamente a estrutura da UI
  */
@@ -19,7 +19,7 @@ const prisma = new PrismaClient();
 
 /**
  * ============================================================================
- * WORKFLOWS ESPECÃFICOS PARA SERVIÃ‡OS COM_DADOS
+ * WORKFLOWS ESPECÍFICOS PARA SERVIÇOS COM_DADOS
  * ============================================================================
  */
 
@@ -31,19 +31,19 @@ interface SpecificWorkflow {
   stages: Prisma.JsonValue;
 }
 
-// Workflows especÃ­ficos por moduleType
+// Workflows específicos por moduleType
 export const specificWorkflows: Record<string, SpecificWorkflow> = {
-  // ========== SAÃšDE ==========
+  // ========== SAÚDE ==========
   ENCAMINHAMENTOS_TFD: {
     moduleType: 'ENCAMINHAMENTOS_TFD',
-    name: 'Workflow - Tratamento Fora do DomicÃ­lio',
+    name: 'Workflow - Tratamento Fora do Domicílio',
     description: 'Fluxo para encaminhamentos TFD',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -53,12 +53,12 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios (laudos, atestados, exames)',
+        description: 'Verificação de documentos obrigatórios (laudos, atestados, exames)',
         slaDays: 2,
 
-        // âœ… METADADOS DE UI
+        // ✅ METADADOS DE UI
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
@@ -66,14 +66,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         requiredDocumentTypes: [],
         requiredInputFieldIds: [],
 
-        // AÃ§Ãµes
+        // Ações
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -86,9 +86,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'RegulaÃ§Ã£o MÃ©dica',
+        name: 'Regulação Médica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o tÃ©cnica pela regulaÃ§Ã£o mÃ©dica',
+        description: 'Avaliação técnica pela regulação médica',
         slaDays: 3,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
@@ -101,9 +101,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o GestÃ£o',
+        name: 'Aprovação Gestão',
         order: 5,
-        description: 'AprovaÃ§Ã£o final pela gestÃ£o',
+        description: 'Aprovação final pela gestão',
         slaDays: 1,
 
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
@@ -136,13 +136,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   TRANSPORTE_PACIENTES: {
     moduleType: 'TRANSPORTE_PACIENTES',
     name: 'Workflow - Transporte de Pacientes',
-    description: 'Fluxo para solicitaÃ§Ã£o de transporte de pacientes',
+    description: 'Fluxo para solicitação de transporte de pacientes',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -152,24 +152,24 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'VerificaÃ§Ã£o da solicitaÃ§Ã£o e documentos',
+        description: 'Verificação da solicitação e documentos',
         slaDays: 2,
 
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
-        requiredDocumentTypes: ['Atestado MÃ©dico', 'Comprovante de EndereÃ§o', 'CartÃ£o SUS'],
+        requiredDocumentTypes: ['Atestado Médico', 'Comprovante de Endereço', 'Cartão SUS'],
         requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -182,9 +182,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o TÃ©cnica',
+        name: 'Avaliação Técnica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o do tipo de transporte necessÃ¡rio',
+        description: 'Avaliação do tipo de transporte necessário',
         slaDays: 3,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -212,9 +212,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 6,
-        description: 'ConfirmaÃ§Ã£o do agendamento com o paciente',
+        description: 'Confirmação do agendamento com o paciente',
         slaDays: 2,
 
         availableTabs: ['resumo', 'comunicacao'],
@@ -237,9 +237,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -249,12 +249,12 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de CPF, comprovante de residÃªncia e documentos da propriedade',
+        description: 'Verificação de CPF, comprovante de residência e documentos da propriedade',
         slaDays: 3,
 
-        // âœ… UI DEFINITION
+        // ✅ UI DEFINITION
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
@@ -265,9 +265,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o dos dados cadastrais do produtor',
+        description: 'Verificação dos dados cadastrais do produtor',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -280,9 +280,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 4,
-        description: 'AprovaÃ§Ã£o final do cadastro',
+        description: 'Aprovação final do cadastro',
         slaDays: 2,
 
         availableTabs: ['resumo', 'pendencias', 'comunicacao'],
@@ -295,9 +295,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de CertidÃ£o',
+        name: 'Emissão de Certidão',
         order: 5,
-        description: 'EmissÃ£o da certidÃ£o de produtor rural',
+        description: 'Emissão da certidão de produtor rural',
         slaDays: 3,
 
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
@@ -315,29 +315,29 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   // ========== PLANEJAMENTO URBANO ==========
   LICENCA_OBRA: {
     moduleType: 'LICENCA_OBRA',
-    name: 'Workflow - LicenÃ§a para Obras',
+    name: 'Workflow - Licença para Obras',
     description: 'Fluxo para licenciamento de obras particulares',
     defaultSLA: 30,
     stages: [
       {
         name: 'Recebimento',
         order: 1,
-        description: 'Protocolo recebido e validaÃ§Ã£o inicial',
+        description: 'Protocolo recebido e validação inicial',
         slaDays: 2,
 
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
-        requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'MatrÃ­cula do ImÃ³vel'],
+        requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel'],
         requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -350,9 +350,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 3,
-        description: 'AnÃ¡lise da documentaÃ§Ã£o apresentada',
+        description: 'Análise da documentação apresentada',
         slaDays: 5,
 
         availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
@@ -367,7 +367,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria',
         order: 4,
-        description: 'Vistoria tÃ©cnica no local',
+        description: 'Vistoria técnica no local',
         slaDays: 10,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -380,9 +380,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o final e cÃ¡lculo de taxas',
+        description: 'Aprovação final e cálculo de taxas',
         slaDays: 5,
 
         availableTabs: ['resumo', 'dados', 'comunicacao'],
@@ -395,9 +395,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o',
+        name: 'Emissão',
         order: 6,
-        description: 'EmissÃ£o da licenÃ§a de obra',
+        description: 'Emissão da licença de obra',
         slaDays: 3,
 
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
@@ -414,29 +414,29 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   ALVARA_FUNCIONAMENTO: {
     moduleType: 'ALVARA_FUNCIONAMENTO',
-    name: 'Workflow - AlvarÃ¡ de Funcionamento',
-    description: 'Fluxo para emissÃ£o de alvarÃ¡ de funcionamento',
+    name: 'Workflow - Alvará de Funcionamento',
+    description: 'Fluxo para emissão de alvará de funcionamento',
     defaultSLA: 20,
     stages: [
       {
         name: 'Recebimento',
         order: 1,
-        description: 'Protocolo recebido e validaÃ§Ã£o inicial',
+        description: 'Protocolo recebido e validação inicial',
         slaDays: 2,
 
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
 
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Comprovante de EndereÃ§o do Estabelecimento', 'Planta Baixa'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Comprovante de Endereço do Estabelecimento', 'Planta Baixa'],
         requiredInputFieldIds: [],
 
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -449,9 +449,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 3,
-        description: 'AnÃ¡lise da documentaÃ§Ã£o do estabelecimento',
+        description: 'Análise da documentação do estabelecimento',
         slaDays: 5,
 
         availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
@@ -479,9 +479,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o',
+        name: 'Emissão',
         order: 5,
-        description: 'EmissÃ£o do alvarÃ¡ de funcionamento',
+        description: 'Emissão do alvará de funcionamento',
         slaDays: 5,
 
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
@@ -496,17 +496,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== SAÃšDE (continuaÃ§Ã£o) ==========
+  // ========== SAÚDE (continuação) ==========
   AGENDAMENTO_CONSULTA: {
     moduleType: 'AGENDAMENTO_CONSULTA',
-    name: 'Workflow - Agendamento de Consulta MÃ©dica',
-    description: 'Fluxo para agendamento de consultas mÃ©dicas',
+    name: 'Workflow - Agendamento de Consulta Médica',
+    description: 'Fluxo para agendamento de consultas médicas',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -516,9 +516,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Triagem e ValidaÃ§Ã£o',
+        name: 'Triagem e Validação',
         order: 2,
-        description: 'ValidaÃ§Ã£o de dados e disponibilidade',
+        description: 'Validação de dados e disponibilidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -530,7 +530,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Agendamento',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o de data e horÃ¡rio',
+        description: 'Confirmação de data e horário',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -539,9 +539,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'NotificaÃ§Ã£o ao paciente',
+        description: 'Notificação ao paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -553,14 +553,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_EXAMES: {
     moduleType: 'SOLICITACAO_EXAMES',
-    name: 'Workflow - SolicitaÃ§Ã£o de Exames',
-    description: 'Fluxo para solicitaÃ§Ã£o de exames laboratoriais',
+    name: 'Workflow - Solicitação de Exames',
+    description: 'Fluxo para solicitação de exames laboratoriais',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -570,20 +570,20 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Pedido MÃ©dico',
+        name: 'Análise de Pedido Médico',
         order: 2,
-        description: 'ValidaÃ§Ã£o de requisiÃ§Ã£o mÃ©dica',
+        description: 'Validação de requisição médica',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Pedido MÃ©dico', 'CartÃ£o SUS'],
+        requiredDocumentTypes: ['Pedido Médico', 'Cartão SUS'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -598,7 +598,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Agendamento de Coleta',
         order: 4,
-        description: 'DefiniÃ§Ã£o de data para coleta',
+        description: 'Definição de data para coleta',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -607,9 +607,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao paciente',
+        description: 'Notificação ao paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -621,14 +621,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CARTAO_SUS: {
     moduleType: 'CARTAO_SUS',
-    name: 'Workflow - SolicitaÃ§Ã£o de CartÃ£o SUS',
-    description: 'Fluxo para emissÃ£o de CartÃ£o SUS',
+    name: 'Workflow - Solicitação de Cartão SUS',
+    description: 'Fluxo para emissão de Cartão SUS',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -638,21 +638,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos pessoais',
+        description: 'Verificação de documentos pessoais',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de ResidÃªncia', 'RG ou CNH'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência', 'RG ou CNH'],
         requiredInputFieldIds: ['nome_completo', 'data_nascimento', 'nome_mae'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -675,9 +675,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o do CartÃ£o',
+        name: 'Emissão do Cartão',
         order: 5,
-        description: 'ImpressÃ£o e disponibilizaÃ§Ã£o',
+        description: 'Impressão e disponibilização',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -688,17 +688,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO ==========
+  // ========== EDUCAÇÃO ==========
   MATRICULA_ESCOLAR: {
     moduleType: 'MATRICULA_ESCOLAR',
-    name: 'Workflow - MatrÃ­cula Escolar',
-    description: 'Fluxo para matrÃ­cula de alunos',
+    name: 'Workflow - Matrícula Escolar',
+    description: 'Fluxo para matrícula de alunos',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -708,19 +708,19 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos escolares',
+        description: 'Verificação de documentos escolares',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CertidÃ£o de Nascimento', 'Comprovante de ResidÃªncia', 'CartÃ£o de Vacina'],
+        requiredDocumentTypes: ['Certidão de Nascimento', 'Comprovante de Residência', 'Cartão de Vacina'],
         requiredInputFieldIds: ['nome_aluno', 'data_nascimento', 'serie_pretendida'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
         description: 'Consulta de disponibilidade',
         slaDays: 1,
@@ -731,9 +731,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EfetivaÃ§Ã£o da MatrÃ­cula',
+        name: 'Efetivação da Matrícula',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o e registro no sistema',
+        description: 'Confirmação e registro no sistema',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -745,14 +745,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   TRANSFERENCIA_ESCOLAR: {
     moduleType: 'TRANSFERENCIA_ESCOLAR',
-    name: 'Workflow - TransferÃªncia Escolar',
-    description: 'Fluxo para transferÃªncia entre escolas',
+    name: 'Workflow - Transferência Escolar',
+    description: 'Fluxo para transferência entre escolas',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -762,19 +762,19 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos e motivo',
+        description: 'Verificação de documentos e motivo',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['HistÃ³rico Escolar', 'DeclaraÃ§Ã£o de TransferÃªncia'],
+        requiredDocumentTypes: ['Histórico Escolar', 'Declaração de Transferência'],
         requiredInputFieldIds: ['escola_origem', 'escola_destino', 'motivo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
         description: 'Consulta na escola destino',
         slaDays: 2,
@@ -786,7 +786,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Processamento',
         order: 4,
-        description: 'TransferÃªncia de documentaÃ§Ã£o',
+        description: 'Transferência de documentação',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -794,9 +794,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'MatrÃ­cula efetivada na nova escola',
+        description: 'Matrícula efetivada na nova escola',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -809,13 +809,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   TRANSPORTE_ESCOLAR: {
     moduleType: 'TRANSPORTE_ESCOLAR',
     name: 'Workflow - Transporte Escolar',
-    description: 'Fluxo para solicitaÃ§Ã£o de transporte escolar',
+    description: 'Fluxo para solicitação de transporte escolar',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -825,21 +825,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de critÃ©rios (distÃ¢ncia, idade)',
+        description: 'Verificação de critérios (distância, idade)',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['Comprovante de ResidÃªncia', 'Comprovante de MatrÃ­cula'],
+        requiredDocumentTypes: ['Comprovante de Residência', 'Comprovante de Matrícula'],
         requiredInputFieldIds: ['endereco_completo', 'escola', 'distancia_km'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -852,9 +852,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Rota',
+        name: 'Análise de Rota',
         order: 4,
-        description: 'Planejamento logÃ­stico',
+        description: 'Planejamento logístico',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -862,9 +862,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AutorizaÃ§Ã£o final',
+        description: 'Autorização final',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -872,9 +872,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Cadastro e OrientaÃ§Ã£o',
+        name: 'Cadastro e Orientação',
         order: 6,
-        description: 'InformaÃ§Ãµes sobre ponto e horÃ¡rio',
+        description: 'Informações sobre ponto e horário',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -884,17 +884,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== AGRICULTURA (complementaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (complementação) ==========
   ASSISTENCIA_TECNICA: {
     moduleType: 'ASSISTENCIA_TECNICA',
-    name: 'Workflow - AssistÃªncia TÃ©cnica Rural',
-    description: 'Fluxo para solicitaÃ§Ã£o de assistÃªncia tÃ©cnica',
+    name: 'Workflow - Assistência Técnica Rural',
+    description: 'Fluxo para solicitação de assistência técnica',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -904,9 +904,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'VerificaÃ§Ã£o da demanda e documentaÃ§Ã£o',
+        description: 'Verificação da demanda e documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -916,9 +916,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -933,7 +933,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Agendamento de Visita',
         order: 4,
-        description: 'Agendamento de visita tÃ©cnica',
+        description: 'Agendamento de visita técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -943,9 +943,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 5,
-        description: 'RealizaÃ§Ã£o da vistoria in loco',
+        description: 'Realização da vistoria in loco',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -955,9 +955,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'ElaboraÃ§Ã£o do laudo tÃ©cnico',
+        description: 'Elaboração do laudo técnico',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -977,9 +977,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 12,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -989,9 +989,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos da propriedade',
+        description: 'Verificação de documentos da propriedade',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -1003,7 +1003,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria da Propriedade',
         order: 3,
-        description: 'Vistoria tÃ©cnica no local',
+        description: 'Vistoria técnica no local',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1013,9 +1013,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o Cadastral',
+        name: 'Validação Cadastral',
         order: 4,
-        description: 'ValidaÃ§Ã£o dos dados cadastrais',
+        description: 'Validação dos dados cadastrais',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1025,9 +1025,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o do certificado de cadastro',
+        description: 'Emissão do certificado de cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -1042,14 +1042,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_PROGRAMA_RURAL: {
     moduleType: 'INSCRICAO_PROGRAMA_RURAL',
-    name: 'Workflow - InscriÃ§Ã£o em Programa Rural',
-    description: 'Fluxo para inscriÃ§Ã£o em programas de desenvolvimento rural',
+    name: 'Workflow - Inscrição em Programa Rural',
+    description: 'Fluxo para inscrição em programas de desenvolvimento rural',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1059,9 +1059,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de critÃ©rios de elegibilidade',
+        description: 'Verificação de critérios de elegibilidade',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -1071,9 +1071,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o TÃ©cnica',
+        name: 'Validação Técnica',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica da solicitaÃ§Ã£o',
+        description: 'Análise técnica da solicitação',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1083,9 +1083,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Aprovação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1097,7 +1097,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Cadastro no Programa',
         order: 5,
-        description: 'EfetivaÃ§Ã£o do cadastro',
+        description: 'Efetivação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1111,14 +1111,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   FEIRA_PRODUTOR: {
     moduleType: 'FEIRA_PRODUTOR',
-    name: 'Workflow - InscriÃ§Ã£o em Feira do Produtor',
-    description: 'Fluxo para inscriÃ§Ã£o em feiras de produtores',
+    name: 'Workflow - Inscrição em Feira do Produtor',
+    description: 'Fluxo para inscrição em feiras de produtores',
     defaultSLA: 8,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1128,21 +1128,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de InscriÃ§Ã£o',
+        name: 'Análise de Inscrição',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos do produtor',
+        description: 'Verificação de documentos do produtor',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: ['produtos_comercializar', 'tipo_banca'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o SanitÃ¡ria',
+        name: 'Validação Sanitária',
         order: 3,
-        description: 'VerificaÃ§Ã£o de conformidade sanitÃ¡ria',
+        description: 'Verificação de conformidade sanitária',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1152,9 +1152,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AlocaÃ§Ã£o de EspaÃ§o',
+        name: 'Alocação de Espaço',
         order: 4,
-        description: 'DefiniÃ§Ã£o de local na feira',
+        description: 'Definição de local na feira',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1164,9 +1164,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -1180,14 +1180,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   LICENCA_EVENTOS_RURAIS: {
     moduleType: 'LICENCA_EVENTOS_RURAIS',
-    name: 'Workflow - LicenÃ§a para Eventos Rurais',
-    description: 'Fluxo para licenciamento de eventos em Ã¡rea rural',
+    name: 'Workflow - Licença para Eventos Rurais',
+    description: 'Fluxo para licenciamento de eventos em área rural',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1197,9 +1197,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos do evento',
+        description: 'Verificação de documentos do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -1209,9 +1209,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1226,7 +1226,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria do Local',
         order: 4,
-        description: 'Vistoria tÃ©cnica no local do evento',
+        description: 'Vistoria técnica no local do evento',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1236,9 +1236,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SeguranÃ§a',
+        name: 'Análise de Segurança',
         order: 5,
-        description: 'AvaliaÃ§Ã£o de seguranÃ§a e sanitÃ¡ria',
+        description: 'Avaliação de segurança e sanitária',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1248,9 +1248,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 6,
-        description: 'EmissÃ£o da licenÃ§a do evento',
+        description: 'Emissão da licença do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -1265,14 +1265,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   ANALISE_SOLO: {
     moduleType: 'ANALISE_SOLO',
-    name: 'Workflow - AnÃ¡lise de Solo',
-    description: 'Fluxo para solicitaÃ§Ã£o de anÃ¡lise de solo',
+    name: 'Workflow - Análise de Solo',
+    description: 'Fluxo para solicitação de análise de solo',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1282,9 +1282,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Registro de SolicitaÃ§Ã£o',
+        name: 'Registro de Solicitação',
         order: 2,
-        description: 'Registro e validaÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Registro e validação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -1294,9 +1294,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1321,9 +1321,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Laboratorial',
+        name: 'Análise Laboratorial',
         order: 5,
-        description: 'AnÃ¡lise das amostras em laboratÃ³rio',
+        description: 'Análise das amostras em laboratório',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1333,9 +1333,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'EmissÃ£o do laudo tÃ©cnico',
+        description: 'Emissão do laudo técnico',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -1355,9 +1355,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'RecepÃ§Ã£o e triagem do atendimento',
+        description: 'Recepção e triagem do atendimento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1367,9 +1367,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1382,9 +1382,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica da demanda',
+        description: 'Análise técnica da demanda',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1396,7 +1396,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Atendimento',
         order: 4,
-        description: 'ExecuÃ§Ã£o do atendimento',
+        description: 'Execução do atendimento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1406,9 +1406,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'FinalizaÃ§Ã£o',
+        name: 'Finalização',
         order: 5,
-        description: 'FinalizaÃ§Ã£o e feedback',
+        description: 'Finalização e feedback',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -1422,14 +1422,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_MAQUINAS: {
     moduleType: 'SOLICITACAO_MAQUINAS',
-    name: 'Workflow - SolicitaÃ§Ã£o de MÃ¡quinas AgrÃ­colas',
-    description: 'Fluxo para solicitaÃ§Ã£o de mÃ¡quinas e equipamentos',
+    name: 'Workflow - Solicitação de Máquinas Agrícolas',
+    description: 'Fluxo para solicitação de máquinas e equipamentos',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1439,9 +1439,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'VerificaÃ§Ã£o de elegibilidade',
+        description: 'Verificação de elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -1451,9 +1451,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1466,9 +1466,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria PrÃ©via',
+        name: 'Vistoria Prévia',
         order: 4,
-        description: 'Vistoria da Ã¡rea a ser trabalhada',
+        description: 'Vistoria da área a ser trabalhada',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1480,7 +1480,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Agendamento',
         order: 5,
-        description: 'Agendamento da mÃ¡quina',
+        description: 'Agendamento da máquina',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1490,9 +1490,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 6,
-        description: 'ConfirmaÃ§Ã£o do agendamento',
+        description: 'Confirmação do agendamento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -1504,7 +1504,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL ==========
+  // ========== ASSISTÊNCIA SOCIAL ==========
   ATENDIMENTO_CRAS: {
     moduleType: 'ATENDIMENTO_CRAS',
     name: 'Workflow - Atendimento CRAS',
@@ -1512,9 +1512,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1536,9 +1536,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1551,9 +1551,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Social',
+        name: 'Avaliação Social',
         order: 4,
-        description: 'AvaliaÃ§Ã£o pela assistente social',
+        description: 'Avaliação pela assistente social',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1565,7 +1565,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Encaminhamento',
         order: 5,
-        description: 'Encaminhamento para serviÃ§os apropriados',
+        description: 'Encaminhamento para serviços apropriados',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1591,14 +1591,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   AUXILIO_EMERGENCIAL: {
     moduleType: 'AUXILIO_EMERGENCIAL',
-    name: 'Workflow - AuxÃ­lio Emergencial',
-    description: 'Fluxo para solicitaÃ§Ã£o de auxÃ­lio emergencial',
+    name: 'Workflow - Auxílio Emergencial',
+    description: 'Fluxo para solicitação de auxílio emergencial',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1608,21 +1608,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos e elegibilidade',
+        description: 'Verificação de documentos e elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
         requiredInputFieldIds: ['composicao_familiar', 'renda_per_capita'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1635,9 +1635,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o SocioeconÃ´mica',
+        name: 'Avaliação Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação da situação socioeconômica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1647,9 +1647,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do auxÃ­lio',
+        description: 'Aprovação do auxílio',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1659,9 +1659,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'LiberaÃ§Ã£o',
+        name: 'Liberação',
         order: 6,
-        description: 'LiberaÃ§Ã£o do benefÃ­cio',
+        description: 'Liberação do benefício',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -1675,14 +1675,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CADASTRO_UNICO: {
     moduleType: 'CADASTRO_UNICO',
-    name: 'Workflow - Cadastro Ãšnico',
-    description: 'Fluxo para cadastro no CadÃšnico',
+    name: 'Workflow - Cadastro Único',
+    description: 'Fluxo para cadastro no CadÚnico',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1694,11 +1694,11 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Coleta de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos da famÃ­lia',
+        description: 'Verificação de documentos da família',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CadÃšnico', 'Documentos Pessoais', 'Comprovante de Renda'],
+        requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais', 'Comprovante de Renda'],
         requiredInputFieldIds: ['composicao_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
@@ -1716,9 +1716,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o',
+        name: 'Validação',
         order: 4,
-        description: 'ValidaÃ§Ã£o dos dados cadastrados',
+        description: 'Validação dos dados cadastrados',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1728,7 +1728,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'FinalizaÃ§Ã£o',
+        name: 'Finalização',
         order: 5,
         description: 'Envio para base nacional',
         slaDays: 1,
@@ -1744,14 +1744,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_GRUPO_OFICINA: {
     moduleType: 'INSCRICAO_GRUPO_OFICINA',
-    name: 'Workflow - InscriÃ§Ã£o em Grupo/Oficina Social',
-    description: 'Fluxo para inscriÃ§Ã£o em grupos e oficinas',
+    name: 'Workflow - Inscrição em Grupo/Oficina Social',
+    description: 'Fluxo para inscrição em grupos e oficinas',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1761,21 +1761,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de InscriÃ§Ã£o',
+        name: 'Análise de Inscrição',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos e elegibilidade',
+        description: 'Verificação de documentos e elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
         requiredInputFieldIds: ['grupo_interesse', 'faixa_etaria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o de Perfil',
+        name: 'Avaliação de Perfil',
         order: 3,
-        description: 'AvaliaÃ§Ã£o do perfil do candidato',
+        description: 'Avaliação do perfil do candidato',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1785,9 +1785,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 4,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1797,9 +1797,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -1813,14 +1813,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_PROGRAMA_SOCIAL: {
     moduleType: 'INSCRICAO_PROGRAMA_SOCIAL',
-    name: 'Workflow - InscriÃ§Ã£o em Programa Social',
-    description: 'Fluxo para inscriÃ§Ã£o em programas sociais',
+    name: 'Workflow - Inscrição em Programa Social',
+    description: 'Fluxo para inscrição em programas sociais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1830,21 +1830,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CadÃšnico', 'Documentos Pessoais'],
+        requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais'],
         requiredInputFieldIds: ['programa_solicitado'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1857,9 +1857,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o SocioeconÃ´mica',
+        name: 'Avaliação Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o familiar',
+        description: 'Avaliação da situação familiar',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1869,9 +1869,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios do programa',
+        description: 'Verificação de critérios do programa',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -1883,7 +1883,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Cadastro no Programa',
         order: 6,
-        description: 'EfetivaÃ§Ã£o do cadastro',
+        description: 'Efetivação do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1897,14 +1897,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_BENEFICIO: {
     moduleType: 'SOLICITACAO_BENEFICIO',
-    name: 'Workflow - SolicitaÃ§Ã£o de BenefÃ­cio',
-    description: 'Fluxo para solicitaÃ§Ã£o de benefÃ­cios sociais',
+    name: 'Workflow - Solicitação de Benefício',
+    description: 'Fluxo para solicitação de benefícios sociais',
     defaultSLA: 12,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1914,9 +1914,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -1926,9 +1926,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -1943,7 +1943,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Estudo Social',
         order: 4,
-        description: 'Estudo socioeconÃ´mico',
+        description: 'Estudo socioeconômico',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -1953,9 +1953,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o GestÃ£o',
+        name: 'Aprovação Gestão',
         order: 5,
-        description: 'AprovaÃ§Ã£o pela gestÃ£o',
+        description: 'Aprovação pela gestão',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1965,9 +1965,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConcessÃ£o',
+        name: 'Concessão',
         order: 6,
-        description: 'ConcessÃ£o do benefÃ­cio',
+        description: 'Concessão do benefício',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1982,13 +1982,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   VISITA_DOMICILIAR: {
     moduleType: 'VISITA_DOMICILIAR',
     name: 'Workflow - Visita Domiciliar',
-    description: 'Fluxo para agendamento e realizaÃ§Ã£o de visitas domiciliares',
+    description: 'Fluxo para agendamento e realização de visitas domiciliares',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -1998,9 +1998,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'AnÃ¡lise da demanda de visita',
+        description: 'Análise da demanda de visita',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2010,9 +2010,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2037,9 +2037,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o da Visita',
+        name: 'Realização da Visita',
         order: 5,
-        description: 'ExecuÃ§Ã£o da visita domiciliar',
+        description: 'Execução da visita domiciliar',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2049,9 +2049,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de RelatÃ³rio',
+        name: 'Elaboração de Relatório',
         order: 6,
-        description: 'ElaboraÃ§Ã£o do relatÃ³rio tÃ©cnico',
+        description: 'Elaboração do relatório técnico',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -2072,9 +2072,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2084,9 +2084,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos pessoais',
+        description: 'Verificação de documentos pessoais',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -2096,9 +2096,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2111,9 +2111,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de PortfÃ³lio',
+        name: 'Análise de Portfólio',
         order: 4,
-        description: 'AvaliaÃ§Ã£o do portfÃ³lio artÃ­stico',
+        description: 'Avaliação do portfólio artístico',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2123,9 +2123,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o',
+        name: 'Validação',
         order: 5,
-        description: 'ValidaÃ§Ã£o pela comissÃ£o de cultura',
+        description: 'Validação pela comissão de cultura',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2135,9 +2135,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Carteira',
+        name: 'Emissão de Carteira',
         order: 6,
-        description: 'EmissÃ£o da carteira de artista',
+        description: 'Emissão da carteira de artista',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -2157,9 +2157,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2169,9 +2169,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Proposta',
+        name: 'Análise de Proposta',
         order: 2,
-        description: 'VerificaÃ§Ã£o da proposta do evento',
+        description: 'Verificação da proposta do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -2181,9 +2181,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2196,9 +2196,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica da viabilidade',
+        description: 'Análise técnica da viabilidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2220,9 +2220,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final do evento',
+        description: 'Aprovação final do evento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2232,9 +2232,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'PublicaÃ§Ã£o',
+        name: 'Publicação',
         order: 7,
-        description: 'PublicaÃ§Ã£o no calendÃ¡rio cultural',
+        description: 'Publicação no calendário cultural',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2248,14 +2248,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CADASTRO_GRUPO_ARTISTICO: {
     moduleType: 'CADASTRO_GRUPO_ARTISTICO',
-    name: 'Workflow - Cadastro de Grupo ArtÃ­stico',
-    description: 'Fluxo para cadastro de grupos artÃ­sticos',
+    name: 'Workflow - Cadastro de Grupo Artístico',
+    description: 'Fluxo para cadastro de grupos artísticos',
     defaultSLA: 12,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2265,21 +2265,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos do grupo',
+        description: 'Verificação de documentos do grupo',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Documentos dos Integrantes', 'PortfÃ³lio do Grupo', 'Estatuto (opcional)'],
+        requiredDocumentTypes: ['Documentos dos Integrantes', 'Portfólio do Grupo', 'Estatuto (opcional)'],
         requiredInputFieldIds: ['nome_grupo', 'categoria', 'numero_integrantes'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2292,21 +2292,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de PortfÃ³lio',
+        name: 'Análise de Portfólio',
         order: 4,
-        description: 'AvaliaÃ§Ã£o do trabalho do grupo',
+        description: 'Avaliação do trabalho do grupo',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['area_atuacao', 'historico_grupo'],
-        requiredDocumentTypes: ['PortfÃ³lio do Grupo'],
+        requiredDocumentTypes: ['Portfólio do Grupo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o',
+        name: 'Validação',
         order: 5,
-        description: 'ValidaÃ§Ã£o pela secretaria de cultura',
+        description: 'Validação pela secretaria de cultura',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2316,9 +2316,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'CertificaÃ§Ã£o',
+        name: 'Certificação',
         order: 6,
-        description: 'EmissÃ£o de certificado de cadastro',
+        description: 'Emissão de certificado de cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2332,14 +2332,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_OFICINA: {
     moduleType: 'INSCRICAO_OFICINA',
-    name: 'Workflow - InscriÃ§Ã£o em Oficina Cultural',
-    description: 'Fluxo para inscriÃ§Ã£o em oficinas culturais',
+    name: 'Workflow - Inscrição em Oficina Cultural',
+    description: 'Fluxo para inscrição em oficinas culturais',
     defaultSLA: 8,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2349,21 +2349,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de InscriÃ§Ã£o',
+        name: 'Análise de Inscrição',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: ['oficina_escolhida', 'faixa_etaria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2373,9 +2373,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -2385,9 +2385,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'MatrÃ­cula',
+        name: 'Matrícula',
         order: 5,
-        description: 'EfetivaÃ§Ã£o da matrÃ­cula',
+        description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2401,14 +2401,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   REGISTRO_MANIFESTACAO_CULTURAL: {
     moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
-    name: 'Workflow - Registro de ManifestaÃ§Ã£o Cultural',
-    description: 'Fluxo para registro de manifestaÃ§Ãµes culturais',
+    name: 'Workflow - Registro de Manifestação Cultural',
+    description: 'Fluxo para registro de manifestações culturais',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2418,21 +2418,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Proposta',
+        name: 'Análise de Proposta',
         order: 2,
-        description: 'VerificaÃ§Ã£o da proposta de registro',
+        description: 'Verificação da proposta de registro',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['DocumentaÃ§Ã£o HistÃ³rica', 'Fotos', 'Depoimentos'],
+        requiredDocumentTypes: ['Documentação Histórica', 'Fotos', 'Depoimentos'],
         requiredInputFieldIds: ['nome_manifestacao', 'tipo', 'historico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2445,9 +2445,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Pesquisa e DocumentaÃ§Ã£o',
+        name: 'Pesquisa e Documentação',
         order: 4,
-        description: 'Levantamento histÃ³rico e documental',
+        description: 'Levantamento histórico e documental',
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2457,9 +2457,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise da ComissÃ£o',
+        name: 'Análise da Comissão',
         order: 5,
-        description: 'AvaliaÃ§Ã£o pela comissÃ£o de patrimÃ´nio',
+        description: 'Avaliação pela comissão de patrimônio',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2471,7 +2471,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro Oficial',
         order: 6,
-        description: 'Registro oficial da manifestaÃ§Ã£o',
+        description: 'Registro oficial da manifestação',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2485,14 +2485,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   RESERVA_ESPACO_CULTURAL: {
     moduleType: 'RESERVA_ESPACO_CULTURAL',
-    name: 'Workflow - Reserva de EspaÃ§o Cultural',
-    description: 'Fluxo para reserva de espaÃ§os culturais',
+    name: 'Workflow - Reserva de Espaço Cultural',
+    description: 'Fluxo para reserva de espaços culturais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2502,9 +2502,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'VerificaÃ§Ã£o da solicitaÃ§Ã£o de reserva',
+        description: 'Verificação da solicitação de reserva',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -2514,9 +2514,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Disponibilidade',
+        name: 'Verificação de Disponibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de agenda do espaÃ§o',
+        description: 'Verificação de agenda do espaço',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2526,9 +2526,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria PrÃ©via',
+        name: 'Vistoria Prévia',
         order: 4,
-        description: 'Vistoria e orientaÃ§Ãµes sobre o espaÃ§o',
+        description: 'Vistoria e orientações sobre o espaço',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2538,9 +2538,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da reserva',
+        description: 'Confirmação da reserva',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -2550,9 +2550,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'LiberaÃ§Ã£o do EspaÃ§o',
+        name: 'Liberação do Espaço',
         order: 6,
-        description: 'LiberaÃ§Ã£o das chaves/acesso',
+        description: 'Liberação das chaves/acesso',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2567,13 +2567,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   APOIO_CULTURAL: {
     moduleType: 'APOIO_CULTURAL',
     name: 'Workflow - Apoio Cultural',
-    description: 'Fluxo para solicitaÃ§Ã£o de apoio cultural',
+    description: 'Fluxo para solicitação de apoio cultural',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2583,9 +2583,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Projeto',
+        name: 'Análise de Projeto',
         order: 2,
-        description: 'VerificaÃ§Ã£o do projeto cultural',
+        description: 'Verificação do projeto cultural',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -2595,9 +2595,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2610,9 +2610,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o tÃ©cnica do projeto',
+        description: 'Avaliação técnica do projeto',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2622,9 +2622,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise OrÃ§amentÃ¡ria',
+        name: 'Análise Orçamentária',
         order: 5,
-        description: 'AnÃ¡lise da viabilidade orÃ§amentÃ¡ria',
+        description: 'Análise da viabilidade orçamentária',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2634,9 +2634,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 6,
-        description: 'FormalizaÃ§Ã£o do apoio',
+        description: 'Formalização do apoio',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2655,9 +2655,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'RecepÃ§Ã£o e triagem do atendimento',
+        description: 'Recepção e triagem do atendimento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2667,9 +2667,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2682,9 +2682,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise',
+        name: 'Análise',
         order: 3,
-        description: 'AnÃ¡lise da demanda',
+        description: 'Análise da demanda',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2696,7 +2696,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Atendimento',
         order: 4,
-        description: 'ExecuÃ§Ã£o do atendimento',
+        description: 'Execução do atendimento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2706,9 +2706,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'FinalizaÃ§Ã£o',
+        name: 'Finalização',
         order: 5,
-        description: 'FinalizaÃ§Ã£o e feedback',
+        description: 'Finalização e feedback',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -2723,13 +2723,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   PROJETO_CULTURAL: {
     moduleType: 'PROJETO_CULTURAL',
     name: 'Workflow - Projeto Cultural',
-    description: 'Fluxo para aprovaÃ§Ã£o de projetos culturais',
+    description: 'Fluxo para aprovação de projetos culturais',
     defaultSLA: 25,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2739,21 +2739,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Proposta',
+        name: 'Análise de Proposta',
         order: 2,
-        description: 'VerificaÃ§Ã£o da proposta de projeto',
+        description: 'Verificação da proposta de projeto',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['OrÃ§amento', 'CPF'],
+        requiredDocumentTypes: ['Orçamento', 'CPF'],
         requiredInputFieldIds: ['titulo_projeto', 'objetivo', 'publico_alvo'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2766,9 +2766,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o tÃ©cnica do projeto',
+        description: 'Avaliação técnica do projeto',
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2778,9 +2778,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Financeira',
+        name: 'Análise Financeira',
         order: 5,
-        description: 'AnÃ¡lise da viabilidade financeira',
+        description: 'Análise da viabilidade financeira',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2790,9 +2790,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 6,
-        description: 'AprovaÃ§Ã£o pela secretaria',
+        description: 'Aprovação pela secretaria',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2802,9 +2802,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 7,
-        description: 'FormalizaÃ§Ã£o e publicaÃ§Ã£o',
+        description: 'Formalização e publicação',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2816,7 +2816,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO ==========
+  // ========== EDUCAÇÃO ==========
   CADASTRO_PROFESSOR: {
     moduleType: 'CADASTRO_PROFESSOR',
     name: 'Workflow - Cadastro de Professor',
@@ -2824,9 +2824,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2836,21 +2836,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o Documental',
+        name: 'Validação Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos do professor',
+        description: 'Verificação de documentos do professor',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG do ResponsÃ¡vel', 'CPF do ResponsÃ¡vel', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência'],
         requiredInputFieldIds: ['nome_completo', 'disciplina', 'nivel_ensino'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -2863,9 +2863,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Curricular',
+        name: 'Análise Curricular',
         order: 4,
-        description: 'AnÃ¡lise do currÃ­culo e formaÃ§Ã£o',
+        description: 'Análise do currículo e formação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -2875,9 +2875,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o RH',
+        name: 'Aprovação RH',
         order: 5,
-        description: 'AprovaÃ§Ã£o pelo departamento de recursos humanos',
+        description: 'Aprovação pelo departamento de recursos humanos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2903,14 +2903,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CONSULTA_FREQUENCIA_NOTAS: {
     moduleType: 'CONSULTA_FREQUENCIA_NOTAS',
-    name: 'Workflow - Consulta FrequÃªncia e Notas',
-    description: 'Fluxo para solicitaÃ§Ã£o de consulta de frequÃªncia e notas',
+    name: 'Workflow - Consulta Frequência e Notas',
+    description: 'Fluxo para solicitação de consulta de frequência e notas',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2920,21 +2920,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o Solicitante',
+        name: 'Validação Solicitante',
         order: 2,
-        description: 'VerificaÃ§Ã£o de vÃ­nculo do solicitante com o aluno',
+        description: 'Verificação de vínculo do solicitante com o aluno',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['nome_aluno', 'matricula', 'vinculo'],
-        requiredDocumentTypes: ['Diploma', 'CurrÃ­culo', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['Diploma', 'Currículo', 'Comprovante de Residência'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'GeraÃ§Ã£o de RelatÃ³rio',
+        name: 'Geração de Relatório',
         order: 3,
-        description: 'GeraÃ§Ã£o do relatÃ³rio de frequÃªncia e notas',
+        description: 'Geração do relatório de frequência e notas',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -2947,7 +2947,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Entrega',
         order: 4,
-        description: 'DisponibilizaÃ§Ã£o do relatÃ³rio',
+        description: 'Disponibilização do relatório',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2961,14 +2961,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_CURSO_LIVRE: {
     moduleType: 'INSCRICAO_CURSO_LIVRE',
-    name: 'Workflow - InscriÃ§Ã£o em Curso Livre',
-    description: 'Fluxo para inscriÃ§Ã£o em cursos livres oferecidos pela prefeitura',
+    name: 'Workflow - Inscrição em Curso Livre',
+    description: 'Fluxo para inscrição em cursos livres oferecidos pela prefeitura',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -2978,9 +2978,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Requisitos',
+        name: 'Análise de Requisitos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de requisitos para o curso',
+        description: 'Verificação de requisitos para o curso',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -2990,9 +2990,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade de vagas',
+        description: 'Verificação de disponibilidade de vagas',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3002,9 +3002,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'MatrÃ­cula',
+        name: 'Matrícula',
         order: 4,
-        description: 'EfetivaÃ§Ã£o da matrÃ­cula',
+        description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3014,9 +3014,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao aluno sobre a matrÃ­cula',
+        description: 'Notificação ao aluno sobre a matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -3030,14 +3030,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   REGISTRO_OCORRENCIA_ESCOLAR: {
     moduleType: 'REGISTRO_OCORRENCIA_ESCOLAR',
-    name: 'Workflow - Registro de OcorrÃªncia Escolar',
-    description: 'Fluxo para registro e tratamento de ocorrÃªncias escolares',
+    name: 'Workflow - Registro de Ocorrência Escolar',
+    description: 'Fluxo para registro e tratamento de ocorrências escolares',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o da OcorrÃªncia',
+        name: 'Recepção da Ocorrência',
         order: 1,
-        description: 'Registro inicial da ocorrÃªncia',
+        description: 'Registro inicial da ocorrência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -3047,9 +3047,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3062,9 +3062,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise PedagÃ³gica',
+        name: 'Análise Pedagógica',
         order: 3,
-        description: 'AnÃ¡lise pela equipe pedagÃ³gica',
+        description: 'Análise pela equipe pedagógica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3074,9 +3074,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ProvidÃªncias',
+        name: 'Providências',
         order: 4,
-        description: 'ExecuÃ§Ã£o das providÃªncias necessÃ¡rias',
+        description: 'Execução das providências necessárias',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3102,14 +3102,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_DOCUMENTO_ESCOLAR: {
     moduleType: 'SOLICITACAO_DOCUMENTO_ESCOLAR',
-    name: 'Workflow - SolicitaÃ§Ã£o de Documento Escolar',
-    description: 'Fluxo para solicitaÃ§Ã£o de documentos escolares (histÃ³rico, declaraÃ§Ãµes, etc)',
+    name: 'Workflow - Solicitação de Documento Escolar',
+    description: 'Fluxo para solicitação de documentos escolares (histórico, declarações, etc)',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3119,9 +3119,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o',
+        name: 'Validação',
         order: 2,
-        description: 'ValidaÃ§Ã£o da solicitaÃ§Ã£o e documentos',
+        description: 'Validação da solicitação e documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3133,7 +3133,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Busca de Dados',
         order: 3,
-        description: 'Busca de informaÃ§Ãµes nos arquivos escolares',
+        description: 'Busca de informações nos arquivos escolares',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3143,9 +3143,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o',
+        name: 'Emissão',
         order: 4,
-        description: 'EmissÃ£o do documento solicitado',
+        description: 'Emissão do documento solicitado',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -3158,7 +3158,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Entrega',
         order: 5,
-        description: 'DisponibilizaÃ§Ã£o para retirada',
+        description: 'Disponibilização para retirada',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -3178,9 +3178,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3190,21 +3190,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o Documental',
+        name: 'Validação Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos do atleta',
+        description: 'Verificação de documentos do atleta',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico'],
         requiredInputFieldIds: ['nome_completo', 'modalidade', 'categoria'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3217,9 +3217,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o FÃ­sica',
+        name: 'Avaliação Física',
         order: 4,
-        description: 'AvaliaÃ§Ã£o de aptidÃ£o fÃ­sica',
+        description: 'Avaliação de aptidão física',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3229,9 +3229,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o TÃ©cnica',
+        name: 'Aprovação Técnica',
         order: 5,
-        description: 'AprovaÃ§Ã£o pelo tÃ©cnico responsÃ¡vel',
+        description: 'Aprovação pelo técnico responsável',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3257,14 +3257,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_COMPETICAO: {
     moduleType: 'INSCRICAO_COMPETICAO',
-    name: 'Workflow - InscriÃ§Ã£o em CompetiÃ§Ã£o',
-    description: 'Fluxo para inscriÃ§Ã£o em competiÃ§Ãµes esportivas municipais',
+    name: 'Workflow - Inscrição em Competição',
+    description: 'Fluxo para inscrição em competições esportivas municipais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3274,9 +3274,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de InscriÃ§Ã£o',
+        name: 'Validação de Inscrição',
         order: 2,
-        description: 'VerificaÃ§Ã£o de requisitos para participaÃ§Ã£o',
+        description: 'Verificação de requisitos para participação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3286,9 +3286,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3298,9 +3298,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'HomologaÃ§Ã£o',
+        name: 'Homologação',
         order: 4,
-        description: 'HomologaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Homologação da inscrição',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3310,9 +3310,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o sobre a inscriÃ§Ã£o',
+        description: 'Notificação sobre a inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -3326,14 +3326,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_ESCOLINHA: {
     moduleType: 'INSCRICAO_ESCOLINHA',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha Esportiva',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinhas esportivas municipais',
+    name: 'Workflow - Inscrição em Escolinha Esportiva',
+    description: 'Fluxo para inscrição em escolinhas esportivas municipais',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3343,9 +3343,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Requisitos',
+        name: 'Análise de Requisitos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de requisitos e faixa etÃ¡ria',
+        description: 'Verificação de requisitos e faixa etária',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3355,9 +3355,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade de vagas',
+        description: 'Verificação de disponibilidade de vagas',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3367,9 +3367,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'MatrÃ­cula',
+        name: 'Matrícula',
         order: 4,
-        description: 'EfetivaÃ§Ã£o da matrÃ­cula',
+        description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3379,9 +3379,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao responsÃ¡vel',
+        description: 'Notificação ao responsável',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -3395,14 +3395,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   RESERVA_ESPACO_ESPORTIVO: {
     moduleType: 'RESERVA_ESPACO_ESPORTIVO',
-    name: 'Workflow - Reserva de EspaÃ§o Esportivo',
-    description: 'Fluxo para reserva de quadras, ginÃ¡sios e espaÃ§os esportivos',
+    name: 'Workflow - Reserva de Espaço Esportivo',
+    description: 'Fluxo para reserva de quadras, ginásios e espaços esportivos',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3412,9 +3412,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de disponibilidade do espaÃ§o',
+        description: 'Verificação de disponibilidade do espaço',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3424,9 +3424,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3439,9 +3439,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Uso',
+        name: 'Análise de Uso',
         order: 4,
-        description: 'AnÃ¡lise da finalidade de uso',
+        description: 'Análise da finalidade de uso',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3451,9 +3451,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AutorizaÃ§Ã£o',
+        name: 'Autorização',
         order: 5,
-        description: 'AutorizaÃ§Ã£o da reserva',
+        description: 'Autorização da reserva',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3463,9 +3463,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 6,
-        description: 'ConfirmaÃ§Ã£o e entrega de autorizaÃ§Ã£o',
+        description: 'Confirmação e entrega de autorização',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -3477,17 +3477,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== HABITAÃ‡ÃƒO ==========
+  // ========== HABITAÇÃO ==========
   AUTORIZACAO_CONSTRUCAO: {
     moduleType: 'AUTORIZACAO_CONSTRUCAO',
-    name: 'Workflow - AutorizaÃ§Ã£o para ConstruÃ§Ã£o',
-    description: 'Fluxo para autorizaÃ§Ã£o de construÃ§Ãµes',
+    name: 'Workflow - Autorização para Construção',
+    description: 'Fluxo para autorização de construções',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3497,21 +3497,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o tÃ©cnica',
+        description: 'Verificação de documentação técnica',
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto ArquitetÃ´nico', 'MatrÃ­cula do ImÃ³vel', 'ART (AnotaÃ§Ã£o de Responsabilidade TÃ©cnica)'],
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'Matrícula do Imóvel', 'ART (Anotação de Responsabilidade Técnica)'],
         requiredInputFieldIds: ['area_construir', 'endereco', 'tipo_construcao'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3524,9 +3524,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica do projeto',
+        description: 'Análise técnica do projeto',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -3548,9 +3548,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3560,9 +3560,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AlvarÃ¡',
+        name: 'Emissão de Alvará',
         order: 7,
-        description: 'EmissÃ£o do alvarÃ¡ de construÃ§Ã£o',
+        description: 'Emissão do alvará de construção',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -3576,14 +3576,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   INSCRICAO_PROGRAMA_HABITACIONAL: {
     moduleType: 'INSCRICAO_PROGRAMA_HABITACIONAL',
-    name: 'Workflow - InscriÃ§Ã£o em Programa Habitacional',
-    description: 'Fluxo para inscriÃ§Ã£o em programas de habitaÃ§Ã£o popular',
+    name: 'Workflow - Inscrição em Programa Habitacional',
+    description: 'Fluxo para inscrição em programas de habitação popular',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3593,21 +3593,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o Documental',
+        name: 'Validação Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Renda', 'Comprovante de Endereço'],
         requiredInputFieldIds: ['composicao_familiar', 'renda_familiar'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3620,9 +3620,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação da situação socioeconômica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3634,7 +3634,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria Domiciliar',
         order: 5,
-        description: 'Vistoria na residÃªncia atual',
+        description: 'Vistoria na residência atual',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3656,9 +3656,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 7,
-        description: 'NotificaÃ§Ã£o sobre o cadastro',
+        description: 'Notificação sobre o cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -3672,14 +3672,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   REGULARIZACAO_FUNDIARIA: {
     moduleType: 'REGULARIZACAO_FUNDIARIA',
-    name: 'Workflow - RegularizaÃ§Ã£o FundiÃ¡ria',
-    description: 'Fluxo para regularizaÃ§Ã£o de terrenos e construÃ§Ãµes',
+    name: 'Workflow - Regularização Fundiária',
+    description: 'Fluxo para regularização de terrenos e construções',
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3689,21 +3689,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de Residência'],
         requiredInputFieldIds: ['tempo_ocupacao', 'area_terreno'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3716,7 +3716,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 15,
@@ -3728,9 +3728,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 5,
-        description: 'AnÃ¡lise jurÃ­dica da situaÃ§Ã£o',
+        description: 'Análise jurídica da situação',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3740,9 +3740,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final da regularizaÃ§Ã£o',
+        description: 'Aprovação final da regularização',
         slaDays: 10,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3752,9 +3752,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Documentos',
+        name: 'Emissão de Documentos',
         order: 7,
-        description: 'EmissÃ£o da documentaÃ§Ã£o de regularizaÃ§Ã£o',
+        description: 'Emissão da documentação de regularização',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -3768,14 +3768,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_AUXILIO_ALUGUEL: {
     moduleType: 'SOLICITACAO_AUXILIO_ALUGUEL',
-    name: 'Workflow - SolicitaÃ§Ã£o de AuxÃ­lio Aluguel',
-    description: 'Fluxo para solicitaÃ§Ã£o de auxÃ­lio aluguel',
+    name: 'Workflow - Solicitação de Auxílio Aluguel',
+    description: 'Fluxo para solicitação de auxílio aluguel',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3785,9 +3785,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -3797,9 +3797,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3812,9 +3812,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação da situação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3826,7 +3826,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria',
         order: 5,
-        description: 'Vistoria no imÃ³vel',
+        description: 'Vistoria no imóvel',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3836,9 +3836,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o do auxÃ­lio',
+        description: 'Aprovação do auxílio',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3848,9 +3848,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Cadastro BenefÃ­cio',
+        name: 'Cadastro Benefício',
         order: 7,
-        description: 'Cadastro no sistema de benefÃ­cios',
+        description: 'Cadastro no sistema de benefícios',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3865,13 +3865,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   VISTORIA_HABITACIONAL: {
     moduleType: 'VISTORIA_HABITACIONAL',
     name: 'Workflow - Vistoria Habitacional',
-    description: 'Fluxo para vistoria de condiÃ§Ãµes habitacionais',
+    description: 'Fluxo para vistoria de condições habitacionais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3893,9 +3893,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3908,9 +3908,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o da Vistoria',
+        name: 'Realização da Vistoria',
         order: 4,
-        description: 'ExecuÃ§Ã£o da vistoria tÃ©cnica',
+        description: 'Execução da vistoria técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3920,9 +3920,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 5,
-        description: 'AnÃ¡lise dos resultados da vistoria',
+        description: 'Análise dos resultados da vistoria',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3932,9 +3932,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'EmissÃ£o do laudo de vistoria',
+        description: 'Emissão do laudo de vistoria',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -3949,14 +3949,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   // ========== MEIO AMBIENTE ==========
   AUTORIZACAO_PODA_ARVORES: {
     moduleType: 'AUTORIZACAO_PODA_ARVORES',
-    name: 'Workflow - AutorizaÃ§Ã£o para Poda de Ãrvores',
-    description: 'Fluxo para autorizaÃ§Ã£o de poda ou supressÃ£o de Ã¡rvores',
+    name: 'Workflow - Autorização para Poda de Árvores',
+    description: 'Fluxo para autorização de poda ou supressão de árvores',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -3966,9 +3966,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise do Pedido',
+        name: 'Análise do Pedido',
         order: 2,
-        description: 'AnÃ¡lise inicial da solicitaÃ§Ã£o',
+        description: 'Análise inicial da solicitação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -3978,9 +3978,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -3993,7 +3993,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
         description: 'Vistoria no local por engenheiro ambiental',
         slaDays: 5,
@@ -4005,9 +4005,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Ambiental',
+        name: 'Análise Ambiental',
         order: 4,
-        description: 'AnÃ¡lise de impacto ambiental',
+        description: 'Análise de impacto ambiental',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4017,9 +4017,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AutorizaÃ§Ã£o',
+        name: 'Autorização',
         order: 6,
-        description: 'EmissÃ£o de autorizaÃ§Ã£o',
+        description: 'Emissão de autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4029,9 +4029,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 7,
-        description: 'NotificaÃ§Ã£o ao solicitante',
+        description: 'Notificação ao solicitante',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -4046,13 +4046,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   PROGRAMA_AMBIENTAL: {
     moduleType: 'PROGRAMA_AMBIENTAL',
     name: 'Workflow - Programa Ambiental',
-    description: 'Fluxo para inscriÃ§Ã£o em programas ambientais',
+    description: 'Fluxo para inscrição em programas ambientais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4062,9 +4062,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'InscriÃ§Ã£o',
+        name: 'Inscrição',
         order: 2,
-        description: 'AnÃ¡lise da inscriÃ§Ã£o',
+        description: 'Análise da inscrição',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4074,9 +4074,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4089,9 +4089,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Requisitos',
+        name: 'Análise de Requisitos',
         order: 4,
-        description: 'VerificaÃ§Ã£o de requisitos',
+        description: 'Verificação de requisitos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4113,9 +4113,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 6,
-        description: 'NotificaÃ§Ã£o sobre o cadastro',
+        description: 'Notificação sobre o cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -4129,14 +4129,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   DENUNCIA_AMBIENTAL: {
     moduleType: 'DENUNCIA_AMBIENTAL',
-    name: 'Workflow - DenÃºncia Ambiental',
-    description: 'Fluxo para processamento de denÃºncias ambientais',
+    name: 'Workflow - Denúncia Ambiental',
+    description: 'Fluxo para processamento de denúncias ambientais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'RecepÃ§Ã£o e classificaÃ§Ã£o da denÃºncia',
+        description: 'Recepção e classificação da denúncia',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -4146,9 +4146,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4173,9 +4173,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica da situaÃ§Ã£o',
+        description: 'Análise técnica da situação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4185,9 +4185,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ProvidÃªncias',
+        name: 'Providências',
         order: 5,
-        description: 'ExecuÃ§Ã£o de providÃªncias',
+        description: 'Execução de providências',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4199,7 +4199,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Fechamento',
         order: 6,
-        description: 'Fechamento da denÃºncia',
+        description: 'Fechamento da denúncia',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4218,9 +4218,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 45,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4230,9 +4230,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -4242,9 +4242,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4257,7 +4257,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 10,
@@ -4269,9 +4269,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Ambiental',
+        name: 'Análise Ambiental',
         order: 5,
-        description: 'AnÃ¡lise de impacto ambiental',
+        description: 'Análise de impacto ambiental',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4281,9 +4281,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4293,9 +4293,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 7,
-        description: 'EmissÃ£o da licenÃ§a ambiental',
+        description: 'Emissão da licença ambiental',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -4314,9 +4314,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4338,9 +4338,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4353,9 +4353,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o',
+        name: 'Realização',
         order: 4,
-        description: 'RealizaÃ§Ã£o da vistoria',
+        description: 'Realização da vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4365,9 +4365,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 5,
-        description: 'AnÃ¡lise dos resultados',
+        description: 'Análise dos resultados',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4377,9 +4377,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'EmissÃ£o do laudo',
+        description: 'Emissão do laudo',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -4391,17 +4391,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== OBRAS PÃšBLICAS ==========
+  // ========== OBRAS PÚBLICAS ==========
   AUTORIZACAO_DEMOLICAO: {
     moduleType: 'AUTORIZACAO_DEMOLICAO',
-    name: 'Workflow - AutorizaÃ§Ã£o para DemoliÃ§Ã£o',
-    description: 'Fluxo para autorizaÃ§Ã£o de demoliÃ§Ã£o de edificaÃ§Ãµes',
+    name: 'Workflow - Autorização para Demolição',
+    description: 'Fluxo para autorização de demolição de edificações',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4411,9 +4411,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -4423,9 +4423,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4438,7 +4438,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 5,
@@ -4450,9 +4450,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SeguranÃ§a',
+        name: 'Análise de Segurança',
         order: 5,
-        description: 'AnÃ¡lise de seguranÃ§a e impactos',
+        description: 'Análise de segurança e impactos',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4462,9 +4462,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4474,9 +4474,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AlvarÃ¡',
+        name: 'Emissão de Alvará',
         order: 7,
-        description: 'EmissÃ£o do alvarÃ¡ de demoliÃ§Ã£o',
+        description: 'Emissão do alvará de demolição',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -4490,14 +4490,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   AUTORIZACAO_INTERVENCAO_VIA: {
     moduleType: 'AUTORIZACAO_INTERVENCAO_VIA',
-    name: 'Workflow - AutorizaÃ§Ã£o para IntervenÃ§Ã£o em Via PÃºblica',
-    description: 'Fluxo para autorizaÃ§Ã£o de intervenÃ§Ãµes em vias pÃºblicas',
+    name: 'Workflow - Autorização para Intervenção em Via Pública',
+    description: 'Fluxo para autorização de intervenções em vias públicas',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4507,21 +4507,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise do Pedido',
+        name: 'Análise do Pedido',
         order: 2,
-        description: 'AnÃ¡lise inicial da solicitaÃ§Ã£o',
+        description: 'Análise inicial da solicitação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['endereco', 'tipo_intervencao', 'periodo'],
-        requiredDocumentTypes: ['Projeto de IntervenÃ§Ã£o', 'ART'],
+        requiredDocumentTypes: ['Projeto de Intervenção', 'ART'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4534,9 +4534,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica do projeto',
+        description: 'Análise técnica do projeto',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4546,9 +4546,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SeguranÃ§a',
+        name: 'Análise de Segurança',
         order: 5,
-        description: 'AnÃ¡lise de seguranÃ§a viÃ¡ria',
+        description: 'Análise de segurança viária',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4558,9 +4558,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4570,9 +4570,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 7,
-        description: 'EmissÃ£o da autorizaÃ§Ã£o',
+        description: 'Emissão da autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -4586,14 +4586,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_REPARO_VIA: {
     moduleType: 'SOLICITACAO_REPARO_VIA',
-    name: 'Workflow - SolicitaÃ§Ã£o de Reparo em Via PÃºblica',
-    description: 'Fluxo para solicitaÃ§Ã£o de reparos em vias pÃºblicas',
+    name: 'Workflow - Solicitação de Reparo em Via Pública',
+    description: 'Fluxo para solicitação de reparos em vias públicas',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'RecepÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Recepção da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -4603,9 +4603,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4630,9 +4630,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'OrÃ§amento',
+        name: 'Orçamento',
         order: 4,
-        description: 'ElaboraÃ§Ã£o de orÃ§amento',
+        description: 'Elaboração de orçamento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4642,9 +4642,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o para execuÃ§Ã£o',
+        description: 'Aprovação para execução',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4654,9 +4654,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ProgramaÃ§Ã£o',
+        name: 'Programação',
         order: 6,
-        description: 'ProgramaÃ§Ã£o da execuÃ§Ã£o',
+        description: 'Programação da execução',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -4672,13 +4672,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   PARCELAMENTO_SOLO: {
     moduleType: 'PARCELAMENTO_SOLO',
     name: 'Workflow - Parcelamento de Solo',
-    description: 'Fluxo para aprovaÃ§Ã£o de parcelamento de solo urbano',
+    description: 'Fluxo para aprovação de parcelamento de solo urbano',
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4688,21 +4688,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto de Parcelamento', 'MatrÃ­cula do ImÃ³vel', 'ART do ResponsÃ¡vel TÃ©cnico'],
+        requiredDocumentTypes: ['Projeto de Parcelamento', 'Matrícula do Imóvel', 'ART do Responsável Técnico'],
         requiredInputFieldIds: ['area_total', 'numero_lotes'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4715,9 +4715,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 4,
-        description: 'AnÃ¡lise de conformidade urbanÃ­stica',
+        description: 'Análise de conformidade urbanística',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4727,9 +4727,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Ambiental',
+        name: 'Análise Ambiental',
         order: 5,
-        description: 'AnÃ¡lise de impacto ambiental',
+        description: 'Análise de impacto ambiental',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4739,9 +4739,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Infraestrutura',
+        name: 'Análise de Infraestrutura',
         order: 6,
-        description: 'AnÃ¡lise de infraestrutura necessÃ¡ria',
+        description: 'Análise de infraestrutura necessária',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4751,9 +4751,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 7,
-        description: 'AprovaÃ§Ã£o final do parcelamento',
+        description: 'Aprovação final do parcelamento',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4765,7 +4765,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro',
         order: 8,
-        description: 'Registro e formalizaÃ§Ã£o',
+        description: 'Registro e formalização',
         slaDays: 5,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4779,14 +4779,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   APROVACAO_PROJETO_ARQUITETONICO: {
     moduleType: 'APROVACAO_PROJETO_ARQUITETONICO',
-    name: 'Workflow - AprovaÃ§Ã£o de Projeto ArquitetÃ´nico',
-    description: 'Fluxo para anÃ¡lise e aprovaÃ§Ã£o de projetos arquitetÃ´nicos',
+    name: 'Workflow - Aprovação de Projeto Arquitetônico',
+    description: 'Fluxo para análise e aprovação de projetos arquitetônicos',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4796,21 +4796,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o tÃ©cnica',
+        description: 'Verificação de documentação técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto ArquitetÃ´nico', 'ART'],
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4823,9 +4823,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'VerificaÃ§Ã£o de conformidade com normas',
+        description: 'Verificação de conformidade com normas',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -4837,7 +4837,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria no Local',
         order: 5,
-        description: 'InspeÃ§Ã£o tÃ©cnica in loco',
+        description: 'Inspeção técnica in loco',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -4847,9 +4847,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Parecer',
+        name: 'Análise de Parecer',
         order: 6,
-        description: 'AvaliaÃ§Ã£o do laudo tÃ©cnico',
+        description: 'Avaliação do laudo técnico',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4859,9 +4859,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 7,
-        description: 'EmissÃ£o de alvarÃ¡',
+        description: 'Emissão de alvará',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4875,14 +4875,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   VIABILIDADE_URBANISTICA: {
     moduleType: 'VIABILIDADE_URBANISTICA',
-    name: 'Workflow - Consulta de Viabilidade UrbanÃ­stica',
-    description: 'Fluxo para anÃ¡lise de viabilidade de empreendimentos',
+    name: 'Workflow - Consulta de Viabilidade Urbanística',
+    description: 'Fluxo para análise de viabilidade de empreendimentos',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4892,21 +4892,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o do imÃ³vel',
+        description: 'Verificação de documentação do imóvel',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['MatrÃ­cula do ImÃ³vel'],
+        requiredDocumentTypes: ['Matrícula do Imóvel'],
         requiredInputFieldIds: ['endereco', 'area_terreno', 'tipo_empreendimento'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -4919,9 +4919,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 4,
-        description: 'VerificaÃ§Ã£o de zoneamento e restriÃ§Ãµes',
+        description: 'Verificação de zoneamento e restrições',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -4931,9 +4931,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Parecer',
+        name: 'Emissão de Parecer',
         order: 5,
-        description: 'ElaboraÃ§Ã£o de relatÃ³rio tÃ©cnico',
+        description: 'Elaboração de relatório técnico',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -4943,9 +4943,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 6,
-        description: 'EmissÃ£o de certidÃ£o',
+        description: 'Emissão de certidão',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4959,14 +4959,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   ALVARA_CONSTRUCAO: {
     moduleType: 'ALVARA_CONSTRUCAO',
-    name: 'Workflow - AlvarÃ¡ de ConstruÃ§Ã£o',
-    description: 'Fluxo para emissÃ£o de alvarÃ¡ de construÃ§Ã£o',
+    name: 'Workflow - Alvará de Construção',
+    description: 'Fluxo para emissão de alvará de construção',
     defaultSLA: 45,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -4976,21 +4976,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o completa',
+        description: 'Verificação de documentação completa',
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'MatrÃ­cula do ImÃ³vel'],
+        requiredDocumentTypes: ['Projeto Aprovado', 'ART', 'Matrícula do Imóvel'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5003,9 +5003,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'VerificaÃ§Ã£o de conformidade tÃ©cnica',
+        description: 'Verificação de conformidade técnica',
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -5015,9 +5015,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria PrÃ©via',
+        name: 'Vistoria Prévia',
         order: 5,
-        description: 'InspeÃ§Ã£o do terreno',
+        description: 'Inspeção do terreno',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -5027,9 +5027,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Taxas',
+        name: 'Análise de Taxas',
         order: 6,
-        description: 'CÃ¡lculo e verificaÃ§Ã£o de taxas',
+        description: 'Cálculo e verificação de taxas',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5039,9 +5039,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o do AlvarÃ¡',
+        name: 'Emissão do Alvará',
         order: 7,
-        description: 'LiberaÃ§Ã£o do alvarÃ¡ de construÃ§Ã£o',
+        description: 'Liberação do alvará de construção',
         slaDays: 8,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -5055,14 +5055,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   DENUNCIA_CONSTRUCAO_IRREGULAR: {
     moduleType: 'DENUNCIA_CONSTRUCAO_IRREGULAR',
-    name: 'Workflow - DenÃºncia de ConstruÃ§Ã£o Irregular',
-    description: 'Fluxo para processamento de denÃºncias de construÃ§Ãµes irregulares',
+    name: 'Workflow - Denúncia de Construção Irregular',
+    description: 'Fluxo para processamento de denúncias de construções irregulares',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'RecepÃ§Ã£o e anÃ¡lise da denÃºncia',
+        description: 'Recepção e análise da denúncia',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -5072,9 +5072,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5099,9 +5099,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica da irregularidade',
+        description: 'Análise técnica da irregularidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5111,9 +5111,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao responsÃ¡vel',
+        description: 'Notificação ao responsável',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'comunicacao',
@@ -5125,7 +5125,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Acompanhamento',
         order: 6,
-        description: 'Acompanhamento da regularizaÃ§Ã£o',
+        description: 'Acompanhamento da regularização',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5149,17 +5149,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== SAÃšDE ==========
+  // ========== SAÚDE ==========
   CAMPANHAS_VACINACAO: {
     moduleType: 'CAMPANHAS_VACINACAO',
-    name: 'Workflow - Campanhas de VacinaÃ§Ã£o',
-    description: 'Fluxo para registro de participaÃ§Ã£o em campanhas de vacinaÃ§Ã£o',
+    name: 'Workflow - Campanhas de Vacinação',
+    description: 'Fluxo para registro de participação em campanhas de vacinação',
     defaultSLA: 1,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5171,7 +5171,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Cadastro',
         order: 2,
-        description: 'Cadastro do cidadÃ£o na campanha',
+        description: 'Cadastro do cidadão na campanha',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5181,9 +5181,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5196,9 +5196,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AplicaÃ§Ã£o',
+        name: 'Aplicação',
         order: 4,
-        description: 'AplicaÃ§Ã£o da vacina',
+        description: 'Aplicação da vacina',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5225,13 +5225,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   CONTROLE_MEDICAMENTOS: {
     moduleType: 'CONTROLE_MEDICAMENTOS',
     name: 'Workflow - Controle de Medicamentos',
-    description: 'Fluxo para controle e dispensaÃ§Ã£o de medicamentos',
+    description: 'Fluxo para controle e dispensação de medicamentos',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5241,21 +5241,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Receita',
+        name: 'Análise de Receita',
         order: 2,
-        description: 'VerificaÃ§Ã£o da receita mÃ©dica',
+        description: 'Verificação da receita médica',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredInputFieldIds: ['medicamento', 'dosagem', 'quantidade'],
-        requiredDocumentTypes: ['Receita MÃ©dica', 'RG ou CPF', 'CartÃ£o SUS'],
+        requiredDocumentTypes: ['Receita Médica', 'RG ou CPF', 'Cartão SUS'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Estoque',
+        name: 'Verificação de Estoque',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5265,7 +5265,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'DispensaÃ§Ã£o',
+        name: 'Dispensação',
         order: 4,
         description: 'Entrega do medicamento',
         slaDays: 1,
@@ -5281,14 +5281,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   PROGRAMAS_SAUDE: {
     moduleType: 'PROGRAMAS_SAUDE',
-    name: 'Workflow - Programas de SaÃºde',
-    description: 'Fluxo para inscriÃ§Ã£o em programas de saÃºde',
+    name: 'Workflow - Programas de Saúde',
+    description: 'Fluxo para inscrição em programas de saúde',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5298,9 +5298,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -5310,9 +5310,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5325,9 +5325,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o MÃ©dica',
+        name: 'Avaliação Médica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da equipe de saÃºde',
+        description: 'Avaliação da equipe de saúde',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -5339,7 +5339,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Cadastro no Programa',
         order: 5,
-        description: 'EfetivaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Efetivação da inscrição',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5351,17 +5351,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== SEGURANÃ‡A PÃšBLICA ==========
+  // ========== SEGURANÇA PÚBLICA ==========
   ALERTA_SEGURANCA: {
     moduleType: 'ALERTA_SEGURANCA',
-    name: 'Workflow - Alerta de SeguranÃ§a',
-    description: 'Fluxo para envio de alertas de seguranÃ§a',
+    name: 'Workflow - Alerta de Segurança',
+    description: 'Fluxo para envio de alertas de segurança',
     defaultSLA: 1,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5383,9 +5383,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise e VerificaÃ§Ã£o',
+        name: 'Análise e Verificação',
         order: 3,
-        description: 'AnÃ¡lise da central de monitoramento',
+        description: 'Análise da central de monitoramento',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5411,14 +5411,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   AUTORIZACAO_EVENTO_SEGURANCA: {
     moduleType: 'AUTORIZACAO_EVENTO_SEGURANCA',
-    name: 'Workflow - AutorizaÃ§Ã£o de Evento com SeguranÃ§a',
-    description: 'Fluxo para autorizaÃ§Ã£o de eventos que requerem esquema de seguranÃ§a',
+    name: 'Workflow - Autorização de Evento com Segurança',
+    description: 'Fluxo para autorização de eventos que requerem esquema de segurança',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5428,9 +5428,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'AnÃ¡lise do pedido de autorizaÃ§Ã£o',
+        description: 'Análise do pedido de autorização',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -5440,9 +5440,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5455,9 +5455,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Planejamento de SeguranÃ§a',
+        name: 'Planejamento de Segurança',
         order: 4,
-        description: 'DefiniÃ§Ã£o do esquema de seguranÃ§a',
+        description: 'Definição do esquema de segurança',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5467,7 +5467,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria PrÃ©via',
+        name: 'Vistoria Prévia',
         order: 5,
         description: 'Vistoria do local do evento',
         slaDays: 4,
@@ -5479,9 +5479,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'LiberaÃ§Ã£o do evento',
+        description: 'Liberação do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -5495,14 +5495,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CADASTRO_PONTO_CRITICO: {
     moduleType: 'CADASTRO_PONTO_CRITICO',
-    name: 'Workflow - Cadastro de Ponto CrÃ­tico',
-    description: 'Fluxo para cadastro de pontos crÃ­ticos de seguranÃ§a',
+    name: 'Workflow - Cadastro de Ponto Crítico',
+    description: 'Fluxo para cadastro de pontos críticos de segurança',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5514,7 +5514,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro do Ponto',
         order: 2,
-        description: 'Registro inicial do ponto crÃ­tico',
+        description: 'Registro inicial do ponto crítico',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5524,9 +5524,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5539,9 +5539,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da equipe de seguranÃ§a',
+        description: 'Avaliação da equipe de segurança',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5553,7 +5553,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Cadastro no Sistema',
         order: 5,
-        description: 'InclusÃ£o no mapa de pontos crÃ­ticos',
+        description: 'Inclusão no mapa de pontos críticos',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5567,14 +5567,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   DENUNCIA_ANONIMA: {
     moduleType: 'DENUNCIA_ANONIMA',
-    name: 'Workflow - DenÃºncia AnÃ´nima',
-    description: 'Fluxo para tratamento de denÃºncias anÃ´nimas',
+    name: 'Workflow - Denúncia Anônima',
+    description: 'Fluxo para tratamento de denúncias anônimas',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5586,7 +5586,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Triagem',
         order: 2,
-        description: 'ClassificaÃ§Ã£o da denÃºncia',
+        description: 'Classificação da denúncia',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5596,9 +5596,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5611,9 +5611,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'InvestigaÃ§Ã£o Preliminar',
+        name: 'Investigação Preliminar',
         order: 4,
-        description: 'VerificaÃ§Ã£o inicial das informaÃ§Ãµes',
+        description: 'Verificação inicial das informações',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5625,7 +5625,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Encaminhamento',
         order: 5,
-        description: 'Envio ao Ã³rgÃ£o competente',
+        description: 'Envio ao órgão competente',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5639,14 +5639,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   LAUDO_VISTORIA_SEGURANCA: {
     moduleType: 'LAUDO_VISTORIA_SEGURANCA',
-    name: 'Workflow - Laudo de Vistoria de SeguranÃ§a',
-    description: 'Fluxo para emissÃ£o de laudo de vistoria de seguranÃ§a',
+    name: 'Workflow - Laudo de Vistoria de Segurança',
+    description: 'Fluxo para emissão de laudo de vistoria de segurança',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5656,21 +5656,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'AnÃ¡lise do pedido de vistoria',
+        description: 'Análise do pedido de vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredInputFieldIds: ['tipo_vistoria', 'finalidade'],
-        requiredDocumentTypes: ['AlvarÃ¡ de Funcionamento', 'CNPJ'],
+        requiredDocumentTypes: ['Alvará de Funcionamento', 'CNPJ'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5695,21 +5695,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o da Vistoria',
+        name: 'Realização da Vistoria',
         order: 5,
-        description: 'ExecuÃ§Ã£o da vistoria in loco',
+        description: 'Execução da vistoria in loco',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['itens_verificados', 'conformidades', 'nao_conformidades'],
-        requiredDocumentTypes: ['AlvarÃ¡ de Funcionamento', 'CNPJ'],
+        requiredDocumentTypes: ['Alvará de Funcionamento', 'CNPJ'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'ElaboraÃ§Ã£o e emissÃ£o do laudo',
+        description: 'Elaboração e emissão do laudo',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -5723,14 +5723,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   REGISTRO_OCORRENCIA: {
     moduleType: 'REGISTRO_OCORRENCIA',
-    name: 'Workflow - Registro de OcorrÃªncia',
-    description: 'Fluxo para registro de ocorrÃªncias de seguranÃ§a',
+    name: 'Workflow - Registro de Ocorrência',
+    description: 'Fluxo para registro de ocorrências de segurança',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5742,7 +5742,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro Inicial',
         order: 2,
-        description: 'Registro da ocorrÃªncia',
+        description: 'Registro da ocorrência',
         slaDays: 0,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5752,9 +5752,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5767,9 +5767,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ClassificaÃ§Ã£o',
+        name: 'Classificação',
         order: 4,
-        description: 'ClassificaÃ§Ã£o da ocorrÃªncia',
+        description: 'Classificação da ocorrência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5781,7 +5781,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Atendimento',
         order: 5,
-        description: 'Atendimento da ocorrÃªncia',
+        description: 'Atendimento da ocorrência',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5791,9 +5791,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'FinalizaÃ§Ã£o',
+        name: 'Finalização',
         order: 6,
-        description: 'ConclusÃ£o do atendimento',
+        description: 'Conclusão do atendimento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5807,14 +5807,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_CAMERA_SEGURANCA: {
     moduleType: 'SOLICITACAO_CAMERA_SEGURANCA',
-    name: 'Workflow - SolicitaÃ§Ã£o de CÃ¢mera de SeguranÃ§a',
-    description: 'Fluxo para solicitaÃ§Ã£o de instalaÃ§Ã£o de cÃ¢meras de seguranÃ§a',
+    name: 'Workflow - Solicitação de Câmera de Segurança',
+    description: 'Fluxo para solicitação de instalação de câmeras de segurança',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5824,9 +5824,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'AnÃ¡lise da demanda',
+        description: 'Análise da demanda',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5836,9 +5836,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5853,7 +5853,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Estudo de Viabilidade',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica e financeira',
+        description: 'Análise técnica e financeira',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5863,9 +5863,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o OrÃ§amentÃ¡ria',
+        name: 'Aprovação Orçamentária',
         order: 5,
-        description: 'AprovaÃ§Ã£o de recursos',
+        description: 'Aprovação de recursos',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5875,9 +5875,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'InstalaÃ§Ã£o',
+        name: 'Instalação',
         order: 6,
-        description: 'InstalaÃ§Ã£o da cÃ¢mera',
+        description: 'Instalação da câmera',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5891,14 +5891,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   SOLICITACAO_PATRULHAMENTO: {
     moduleType: 'SOLICITACAO_PATRULHAMENTO',
-    name: 'Workflow - SolicitaÃ§Ã£o de Patrulhamento',
-    description: 'Fluxo para solicitaÃ§Ã£o de patrulhamento em Ã¡rea especÃ­fica',
+    name: 'Workflow - Solicitação de Patrulhamento',
+    description: 'Fluxo para solicitação de patrulhamento em área específica',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5908,9 +5908,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SolicitaÃ§Ã£o',
+        name: 'Análise de Solicitação',
         order: 2,
-        description: 'AnÃ¡lise da demanda',
+        description: 'Análise da demanda',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5920,9 +5920,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -5935,9 +5935,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Operacional',
+        name: 'Avaliação Operacional',
         order: 4,
-        description: 'AvaliaÃ§Ã£o da equipe operacional',
+        description: 'Avaliação da equipe operacional',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5947,9 +5947,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ImplementaÃ§Ã£o',
+        name: 'Implementação',
         order: 5,
-        description: 'InÃ­cio do patrulhamento',
+        description: 'Início do patrulhamento',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5961,17 +5961,17 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
     ]
   },
 
-  // ========== SERVIÃ‡OS PÃšBLICOS ==========
+  // ========== SERVIÇOS PÚBLICOS ==========
   DESOBSTRUCAO_BUEIRO: {
     moduleType: 'DESOBSTRUCAO_BUEIRO',
-    name: 'Workflow - DesobstruÃ§Ã£o de Bueiro',
-    description: 'Fluxo para solicitaÃ§Ã£o de desobstruÃ§Ã£o de bueiros',
+    name: 'Workflow - Desobstrução de Bueiro',
+    description: 'Fluxo para solicitação de desobstrução de bueiros',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -5983,7 +5983,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro',
         order: 2,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -5993,9 +5993,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6010,7 +6010,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Vistoria',
         order: 4,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -6020,9 +6020,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ExecuÃ§Ã£o',
+        name: 'Execução',
         order: 5,
-        description: 'DesobstruÃ§Ã£o do bueiro',
+        description: 'Desobstrução do bueiro',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6032,9 +6032,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 6,
-        description: 'ConfirmaÃ§Ã£o do serviÃ§o',
+        description: 'Confirmação do serviço',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6048,14 +6048,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   ILUMINACAO_PUBLICA: {
     moduleType: 'ILUMINACAO_PUBLICA',
-    name: 'Workflow - IluminaÃ§Ã£o PÃºblica',
-    description: 'Fluxo para solicitaÃ§Ã£o de reparo ou instalaÃ§Ã£o de iluminaÃ§Ã£o pÃºblica',
+    name: 'Workflow - Iluminação Pública',
+    description: 'Fluxo para solicitação de reparo ou instalação de iluminação pública',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6067,7 +6067,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro',
         order: 2,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6077,9 +6077,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6092,9 +6092,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o tÃ©cnica do local',
+        description: 'Avaliação técnica do local',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -6104,9 +6104,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ExecuÃ§Ã£o',
+        name: 'Execução',
         order: 5,
-        description: 'RealizaÃ§Ã£o do serviÃ§o',
+        description: 'Realização do serviço',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6116,9 +6116,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 6,
-        description: 'VerificaÃ§Ã£o do funcionamento',
+        description: 'Verificação do funcionamento',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6133,13 +6133,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   LIMPEZA_URBANA: {
     moduleType: 'LIMPEZA_URBANA',
     name: 'Workflow - Limpeza Urbana',
-    description: 'Fluxo para solicitaÃ§Ã£o de serviÃ§os de limpeza urbana',
+    description: 'Fluxo para solicitação de serviços de limpeza urbana',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6151,7 +6151,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro',
         order: 2,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6161,9 +6161,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6178,7 +6178,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Planejamento',
         order: 4,
-        description: 'Planejamento da operaÃ§Ã£o',
+        description: 'Planejamento da operação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6188,9 +6188,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ExecuÃ§Ã£o',
+        name: 'Execução',
         order: 5,
-        description: 'RealizaÃ§Ã£o da limpeza',
+        description: 'Realização da limpeza',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6200,9 +6200,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 6,
-        description: 'VerificaÃ§Ã£o do serviÃ§o',
+        description: 'Verificação do serviço',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6217,13 +6217,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   REGISTRO_PROBLEMA_FOTO: {
     moduleType: 'REGISTRO_PROBLEMA_FOTO',
     name: 'Workflow - Registro de Problema com Foto',
-    description: 'Fluxo para registro de problemas urbanos com evidÃªncia fotogrÃ¡fica',
+    description: 'Fluxo para registro de problemas urbanos com evidência fotográfica',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6233,9 +6233,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise do Registro',
+        name: 'Análise do Registro',
         order: 2,
-        description: 'AnÃ¡lise da solicitaÃ§Ã£o e fotos',
+        description: 'Análise da solicitação e fotos',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -6245,9 +6245,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6260,9 +6260,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ClassificaÃ§Ã£o e Encaminhamento',
+        name: 'Classificação e Encaminhamento',
         order: 4,
-        description: 'ClassificaÃ§Ã£o e envio ao setor competente',
+        description: 'Classificação e envio ao setor competente',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6272,9 +6272,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ResoluÃ§Ã£o',
+        name: 'Resolução',
         order: 5,
-        description: 'ResoluÃ§Ã£o do problema',
+        description: 'Resolução do problema',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6284,9 +6284,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 6,
-        description: 'ConfirmaÃ§Ã£o da resoluÃ§Ã£o',
+        description: 'Confirmação da resolução',
         slaDays: 1,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6300,14 +6300,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CAPINA_ROCAGEM: {
     moduleType: 'CAPINA_ROCAGEM',
-    name: 'Workflow - Capina e RoÃ§agem',
-    description: 'Fluxo para solicitaÃ§Ã£o de capina e roÃ§agem',
+    name: 'Workflow - Capina e Roçagem',
+    description: 'Fluxo para solicitação de capina e roçagem',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6319,7 +6319,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Registro',
         order: 2,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6329,9 +6329,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6358,7 +6358,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Planejamento',
         order: 5,
-        description: 'Planejamento da operaÃ§Ã£o',
+        description: 'Planejamento da operação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6368,9 +6368,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ExecuÃ§Ã£o',
+        name: 'Execução',
         order: 6,
-        description: 'RealizaÃ§Ã£o do serviÃ§o',
+        description: 'Realização do serviço',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6380,9 +6380,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 7,
-        description: 'VerificaÃ§Ã£o do serviÃ§o',
+        description: 'Verificação do serviço',
         slaDays: 2,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6397,14 +6397,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
   // ========== TURISMO ==========
   CADASTRO_ESTABELECIMENTO_TURISTICO: {
     moduleType: 'CADASTRO_ESTABELECIMENTO_TURISTICO',
-    name: 'Workflow - Cadastro de Estabelecimento TurÃ­stico',
-    description: 'Fluxo para cadastro de estabelecimentos turÃ­sticos',
+    name: 'Workflow - Cadastro de Estabelecimento Turístico',
+    description: 'Fluxo para cadastro de estabelecimentos turísticos',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6414,21 +6414,21 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
         requiredInputFieldIds: ['nome_estabelecimento', 'categoria', 'tipo_servico'],
-        requiredDocumentTypes: ['CNPJ', 'AlvarÃ¡ de Funcionamento', 'Contrato Social'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6448,26 +6448,26 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['relatorio_vistoria', 'adequacoes_necessarias', 'classificacao'],
-        requiredDocumentTypes: ['CNPJ', 'AlvarÃ¡ de Funcionamento', 'Contrato Social'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AdequaÃ§Ãµes',
+        name: 'Adequações',
         order: 5,
-        description: 'RealizaÃ§Ã£o de adequaÃ§Ãµes necessÃ¡rias',
+        description: 'Realização de adequações necessárias',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['adequacoes_realizadas'],
-        requiredDocumentTypes: ['CNPJ', 'AlvarÃ¡ de Funcionamento', 'Contrato Social'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Contrato Social'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: true
       },
       {
         name: 'Cadastro',
         order: 6,
-        description: 'EfetivaÃ§Ã£o do cadastro',
+        description: 'Efetivação do cadastro',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6481,14 +6481,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   CADASTRO_GUIA_TURISTICO: {
     moduleType: 'CADASTRO_GUIA_TURISTICO',
-    name: 'Workflow - Cadastro de Guia TurÃ­stico',
-    description: 'Fluxo para cadastro e credenciamento de guias turÃ­sticos',
+    name: 'Workflow - Cadastro de Guia Turístico',
+    description: 'Fluxo para cadastro e credenciamento de guias turísticos',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6498,9 +6498,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Documentos',
+        name: 'Análise de Documentos',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o',
+        description: 'Verificação de documentação',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'documentos',
@@ -6510,9 +6510,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6525,9 +6525,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o TÃ©cnica',
+        name: 'Avaliação Técnica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o de qualificaÃ§Ã£o',
+        description: 'Avaliação de qualificação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -6537,9 +6537,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Teste PrÃ¡tico',
+        name: 'Teste Prático',
         order: 5,
-        description: 'RealizaÃ§Ã£o de teste prÃ¡tico',
+        description: 'Realização de teste prático',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6551,7 +6551,7 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
       {
         name: 'Credenciamento',
         order: 6,
-        description: 'EmissÃ£o de credencial',
+        description: 'Emissão de credencial',
         slaDays: 3,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6565,14 +6565,14 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 
   REGISTRO_EVENTO_TURISTICO: {
     moduleType: 'REGISTRO_EVENTO_TURISTICO',
-    name: 'Workflow - Registro de Evento TurÃ­stico',
-    description: 'Fluxo para registro e divulgaÃ§Ã£o de eventos turÃ­sticos',
+    name: 'Workflow - Registro de Evento Turístico',
+    description: 'Fluxo para registro e divulgação de eventos turísticos',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e registro inicial da solicitaÃ§Ã£o',
+        description: 'Recebimento e registro inicial da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6582,9 +6582,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Proposta',
+        name: 'Análise de Proposta',
         order: 2,
-        description: 'AnÃ¡lise da proposta de evento',
+        description: 'Análise da proposta de evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6594,9 +6594,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o e validaÃ§Ã£o dos dados do formulÃ¡rio',
+        description: 'Verificação e validação dos dados do formulário',
         slaDays: 2,
 
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
@@ -6609,9 +6609,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o TurÃ­stica',
+        name: 'Avaliação Turística',
         order: 4,
-        description: 'AvaliaÃ§Ã£o do potencial turÃ­stico',
+        description: 'Avaliação do potencial turístico',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -6621,9 +6621,9 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
         canSkip: false
       },
       {
-        name: 'Cadastro e DivulgaÃ§Ã£o',
+        name: 'Cadastro e Divulgação',
         order: 5,
-        description: 'Registro no calendÃ¡rio turÃ­stico',
+        description: 'Registro no calendário turístico',
         slaDays: 4,
         availableTabs: ['resumo', 'comunicacao'],
         primaryTab: 'resumo',
@@ -6639,13 +6639,13 @@ export const specificWorkflows: Record<string, SpecificWorkflow> = {
 ACIONAMENTO_SIRENE: {
   moduleType: 'ACIONAMENTO_SIRENE',
   name: 'Workflow - Acionamento de Sirene de Alerta',
-  description: 'Fluxo urgente para acionamento de sirene de emergÃªncia',
+  description: 'Fluxo urgente para acionamento de sirene de emergência',
   defaultSLA: 1,
   stages: [
     {
-      name: 'RecepÃ§Ã£o Urgente',
+      name: 'Recepção Urgente',
       order: 1,
-      description: 'Recebimento imediato da solicitaÃ§Ã£o de emergÃªncia',
+      description: 'Recebimento imediato da solicitação de emergência',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -6655,9 +6655,9 @@ ACIONAMENTO_SIRENE: {
       canSkip: false
     },
     {
-      name: 'AutorizaÃ§Ã£o',
+      name: 'Autorização',
       order: 2,
-      description: 'AutorizaÃ§Ã£o pela coordenaÃ§Ã£o de defesa civil',
+      description: 'Autorização pela coordenação de defesa civil',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6671,7 +6671,7 @@ ACIONAMENTO_SIRENE: {
 
 ALERTA_EMERGENCIA: {
   moduleType: 'ALERTA_EMERGENCIA',
-  name: 'Workflow - Registro de Alerta de EmergÃªncia',
+  name: 'Workflow - Registro de Alerta de Emergência',
   description: 'Fluxo para registro e acionamento de alertas',
   defaultSLA: 1,
   stages: [
@@ -6704,14 +6704,14 @@ ALERTA_EMERGENCIA: {
 
 REMOCAO_PREVENTIVA: {
   moduleType: 'REMOCAO_PREVENTIVA',
-  name: 'Workflow - RemoÃ§Ã£o Preventiva',
-  description: 'Fluxo para remoÃ§Ã£o preventiva de famÃ­lias em Ã¡rea de risco',
+  name: 'Workflow - Remoção Preventiva',
+  description: 'Fluxo para remoção preventiva de famílias em área de risco',
   defaultSLA: 2,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Recebimento da solicitaÃ§Ã£o',
+      description: 'Recebimento da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6721,9 +6721,9 @@ REMOCAO_PREVENTIVA: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica da Ã¡rea de risco',
+      description: 'Avaliação técnica da área de risco',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -6733,9 +6733,9 @@ REMOCAO_PREVENTIVA: {
       canSkip: false
     },
     {
-      name: 'AutorizaÃ§Ã£o',
+      name: 'Autorização',
       order: 3,
-      description: 'AutorizaÃ§Ã£o da remoÃ§Ã£o preventiva',
+      description: 'Autorização da remoção preventiva',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6747,18 +6747,18 @@ REMOCAO_PREVENTIVA: {
   ]
 },
 
-// ========== SAÃšDE - URGÃŠNCIA ==========
+// ========== SAÚDE - URGÊNCIA ==========
 
 SOLICITACAO_AMBULANCIA: {
   moduleType: 'SOLICITACAO_AMBULANCIA',
-  name: 'Workflow - SolicitaÃ§Ã£o de AmbulÃ¢ncia',
-  description: 'Fluxo urgente para solicitaÃ§Ã£o de ambulÃ¢ncia',
+  name: 'Workflow - Solicitação de Ambulância',
+  description: 'Fluxo urgente para solicitação de ambulância',
   defaultSLA: 1,
   stages: [
     {
       name: 'Triagem',
       order: 1,
-      description: 'Triagem da urgÃªncia',
+      description: 'Triagem da urgência',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -6770,7 +6770,7 @@ SOLICITACAO_AMBULANCIA: {
     {
       name: 'Despacho',
       order: 2,
-      description: 'Despacho da ambulÃ¢ncia',
+      description: 'Despacho da ambulância',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -6782,7 +6782,7 @@ SOLICITACAO_AMBULANCIA: {
   ]
 },
 
-// ========== POLÃTICAS PARA MULHERES - URGÃŠNCIA ==========
+// ========== POLÍTICAS PARA MULHERES - URGÊNCIA ==========
 
 SOS_MULHER: {
   moduleType: 'SOS_MULHER',
@@ -6793,7 +6793,7 @@ SOS_MULHER: {
     {
       name: 'Acolhimento Imediato',
       order: 1,
-      description: 'Acolhimento e avaliaÃ§Ã£o imediata da situaÃ§Ã£o',
+      description: 'Acolhimento e avaliação imediata da situação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -6805,7 +6805,7 @@ SOS_MULHER: {
     {
       name: 'Acionamento',
       order: 2,
-      description: 'Acionamento da rede de proteÃ§Ã£o',
+      description: 'Acionamento da rede de proteção',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -6838,7 +6838,7 @@ CANAL_ESCUTA: {
     {
       name: 'Encaminhamento',
       order: 2,
-      description: 'Encaminhamento para serviÃ§os especializados',
+      description: 'Encaminhamento para serviços especializados',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -6850,18 +6850,18 @@ CANAL_ESCUTA: {
   ]
 },
 
-// ========== DENÃšNCIAS - FLUXO PADRÃƒO ==========
+// ========== DENÚNCIAS - FLUXO PADRÃO ==========
 
 DENUNCIA_ADMINISTRATIVA: {
   moduleType: 'DENUNCIA_ADMINISTRATIVA',
-  name: 'Workflow - DenÃºncia de Irregularidade Administrativa',
-  description: 'Fluxo para apuraÃ§Ã£o de denÃºncia administrativa',
+  name: 'Workflow - Denúncia de Irregularidade Administrativa',
+  description: 'Fluxo para apuração de denúncia administrativa',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6871,9 +6871,9 @@ DENUNCIA_ADMINISTRATIVA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Preliminar',
+      name: 'Análise Preliminar',
       order: 2,
-      description: 'AnÃ¡lise de admissibilidade e classificaÃ§Ã£o',
+      description: 'Análise de admissibilidade e classificação',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -6883,9 +6883,9 @@ DENUNCIA_ADMINISTRATIVA: {
       canSkip: false
     },
     {
-      name: 'InvestigaÃ§Ã£o',
+      name: 'Investigação',
       order: 3,
-      description: 'ApuraÃ§Ã£o e coleta de provas',
+      description: 'Apuração e coleta de provas',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -6895,9 +6895,9 @@ DENUNCIA_ADMINISTRATIVA: {
       canSkip: false
     },
     {
-      name: 'DecisÃ£o',
+      name: 'Decisão',
       order: 4,
-      description: 'DecisÃ£o sobre as providÃªncias',
+      description: 'Decisão sobre as providências',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6911,14 +6911,14 @@ DENUNCIA_ADMINISTRATIVA: {
 
 DENUNCIA_AREA_RISCO: {
   moduleType: 'DENUNCIA_AREA_RISCO',
-  name: 'Workflow - DenÃºncia de Ãrea de Risco',
-  description: 'Fluxo para denÃºncia de Ã¡rea de risco',
+  name: 'Workflow - Denúncia de Área de Risco',
+  description: 'Fluxo para denúncia de área de risco',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6928,9 +6928,9 @@ DENUNCIA_AREA_RISCO: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica no local',
+      description: 'Avaliação técnica no local',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -6940,9 +6940,9 @@ DENUNCIA_AREA_RISCO: {
       canSkip: false
     },
     {
-      name: 'NotificaÃ§Ã£o',
+      name: 'Notificação',
       order: 3,
-      description: 'NotificaÃ§Ã£o dos responsÃ¡veis',
+      description: 'Notificação dos responsáveis',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -6954,7 +6954,7 @@ DENUNCIA_AREA_RISCO: {
     {
       name: 'Acompanhamento',
       order: 4,
-      description: 'Monitoramento das providÃªncias',
+      description: 'Monitoramento das providências',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -6968,14 +6968,14 @@ DENUNCIA_AREA_RISCO: {
 
 DENUNCIA_ASSEDIO: {
   moduleType: 'DENUNCIA_ASSEDIO',
-  name: 'Workflow - DenÃºncia de AssÃ©dio no Trabalho',
-  description: 'Fluxo para denÃºncia de assÃ©dio no ambiente de trabalho',
+  name: 'Workflow - Denúncia de Assédio no Trabalho',
+  description: 'Fluxo para denúncia de assédio no ambiente de trabalho',
   defaultSLA: 3,
   stages: [
     {
       name: 'Acolhimento',
       order: 1,
-      description: 'RecepÃ§Ã£o sigilosa da denÃºncia',
+      description: 'Recepção sigilosa da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -6985,9 +6985,9 @@ DENUNCIA_ASSEDIO: {
       canSkip: false
     },
     {
-      name: 'ApuraÃ§Ã£o',
+      name: 'Apuração',
       order: 2,
-      description: 'InvestigaÃ§Ã£o sigilosa dos fatos',
+      description: 'Investigação sigilosa dos fatos',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -6997,9 +6997,9 @@ DENUNCIA_ASSEDIO: {
       canSkip: false
     },
     {
-      name: 'DecisÃ£o',
+      name: 'Decisão',
       order: 3,
-      description: 'DecisÃ£o sobre medidas a serem tomadas',
+      description: 'Decisão sobre medidas a serem tomadas',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7013,14 +7013,14 @@ DENUNCIA_ASSEDIO: {
 
 DENUNCIA_COMERCIO_IRREGULAR: {
   moduleType: 'DENUNCIA_COMERCIO_IRREGULAR',
-  name: 'Workflow - DenÃºncia de ComÃ©rcio Irregular',
-  description: 'Fluxo para denÃºncia de comÃ©rcio irregular',
+  name: 'Workflow - Denúncia de Comércio Irregular',
+  description: 'Fluxo para denúncia de comércio irregular',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7042,9 +7042,9 @@ DENUNCIA_COMERCIO_IRREGULAR: {
       canSkip: false
     },
     {
-      name: 'Auto de InfraÃ§Ã£o',
+      name: 'Auto de Infração',
       order: 3,
-      description: 'Lavratura de auto de infraÃ§Ã£o se procedente',
+      description: 'Lavratura de auto de infração se procedente',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
@@ -7056,7 +7056,7 @@ DENUNCIA_COMERCIO_IRREGULAR: {
     {
       name: 'Acompanhamento',
       order: 4,
-      description: 'Monitoramento da regularizaÃ§Ã£o',
+      description: 'Monitoramento da regularização',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7070,14 +7070,14 @@ DENUNCIA_COMERCIO_IRREGULAR: {
 
 DENUNCIA_CONSTRUCAO: {
   moduleType: 'DENUNCIA_CONSTRUCAO',
-  name: 'Workflow - DenÃºncia de ConstruÃ§Ã£o em Encosta',
-  description: 'Fluxo para denÃºncia de construÃ§Ã£o irregular em encosta',
+  name: 'Workflow - Denúncia de Construção em Encosta',
+  description: 'Fluxo para denúncia de construção irregular em encosta',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7087,9 +7087,9 @@ DENUNCIA_CONSTRUCAO: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica Urgente',
+      name: 'Vistoria Técnica Urgente',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica da construÃ§Ã£o e do risco',
+      description: 'Avaliação técnica da construção e do risco',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7101,7 +7101,7 @@ DENUNCIA_CONSTRUCAO: {
     {
       name: 'Embargo',
       order: 3,
-      description: 'Embargo da obra se necessÃ¡rio',
+      description: 'Embargo da obra se necessário',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
@@ -7113,7 +7113,7 @@ DENUNCIA_CONSTRUCAO: {
     {
       name: 'Acompanhamento',
       order: 4,
-      description: 'Monitoramento da situaÃ§Ã£o',
+      description: 'Monitoramento da situação',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7127,14 +7127,14 @@ DENUNCIA_CONSTRUCAO: {
 
 DENUNCIA_DESCARTE_IRREGULAR: {
   moduleType: 'DENUNCIA_DESCARTE_IRREGULAR',
-  name: 'Workflow - DenÃºncia de Descarte Irregular',
-  description: 'Fluxo para denÃºncia de descarte irregular de lixo',
+  name: 'Workflow - Denúncia de Descarte Irregular',
+  description: 'Fluxo para denúncia de descarte irregular de lixo',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7156,9 +7156,9 @@ DENUNCIA_DESCARTE_IRREGULAR: {
       canSkip: false
     },
     {
-      name: 'NotificaÃ§Ã£o',
+      name: 'Notificação',
       order: 3,
-      description: 'NotificaÃ§Ã£o do responsÃ¡vel para remoÃ§Ã£o',
+      description: 'Notificação do responsável para remoção',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -7168,9 +7168,9 @@ DENUNCIA_DESCARTE_IRREGULAR: {
       canSkip: false
     },
     {
-      name: 'RemoÃ§Ã£o',
+      name: 'Remoção',
       order: 4,
-      description: 'VerificaÃ§Ã£o da remoÃ§Ã£o ou remoÃ§Ã£o pela prefeitura',
+      description: 'Verificação da remoção ou remoção pela prefeitura',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7184,14 +7184,14 @@ DENUNCIA_DESCARTE_IRREGULAR: {
 
 DENUNCIA_POLUICAO_SONORA: {
   moduleType: 'DENUNCIA_POLUICAO_SONORA',
-  name: 'Workflow - DenÃºncia de PoluiÃ§Ã£o Sonora',
-  description: 'Fluxo para denÃºncia de poluiÃ§Ã£o sonora',
+  name: 'Workflow - Denúncia de Poluição Sonora',
+  description: 'Fluxo para denúncia de poluição sonora',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7203,7 +7203,7 @@ DENUNCIA_POLUICAO_SONORA: {
     {
       name: 'Vistoria',
       order: 2,
-      description: 'Vistoria com mediÃ§Ã£o sonora',
+      description: 'Vistoria com medição sonora',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7213,9 +7213,9 @@ DENUNCIA_POLUICAO_SONORA: {
       canSkip: false
     },
     {
-      name: 'NotificaÃ§Ã£o',
+      name: 'Notificação',
       order: 3,
-      description: 'NotificaÃ§Ã£o para adequaÃ§Ã£o',
+      description: 'Notificação para adequação',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -7227,7 +7227,7 @@ DENUNCIA_POLUICAO_SONORA: {
     {
       name: 'Acompanhamento',
       order: 4,
-      description: 'VerificaÃ§Ã£o da adequaÃ§Ã£o',
+      description: 'Verificação da adequação',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7241,12 +7241,12 @@ DENUNCIA_POLUICAO_SONORA: {
 
 DENUNCIA_PROBLEMA: {
   moduleType: 'DENUNCIA_PROBLEMA',
-  name: 'Workflow - DenÃºncia de Problema em Sistema',
-  description: 'Fluxo para denÃºncia de problema tÃ©cnico em sistema',
+  name: 'Workflow - Denúncia de Problema em Sistema',
+  description: 'Fluxo para denúncia de problema técnico em sistema',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
       description: 'Registro do problema',
       slaDays: 1,
@@ -7258,9 +7258,9 @@ DENUNCIA_PROBLEMA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise TÃ©cnica',
+      name: 'Análise Técnica',
       order: 2,
-      description: 'AnÃ¡lise e diagnÃ³stico do problema',
+      description: 'Análise e diagnóstico do problema',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7270,9 +7270,9 @@ DENUNCIA_PROBLEMA: {
       canSkip: false
     },
     {
-      name: 'CorreÃ§Ã£o',
+      name: 'Correção',
       order: 3,
-      description: 'ImplementaÃ§Ã£o da correÃ§Ã£o',
+      description: 'Implementação da correção',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7286,14 +7286,14 @@ DENUNCIA_PROBLEMA: {
 
 DENUNCIA_QUEIMADA: {
   moduleType: 'DENUNCIA_QUEIMADA',
-  name: 'Workflow - DenÃºncia de Queimada',
-  description: 'Fluxo para denÃºncia de queimada irregular',
+  name: 'Workflow - Denúncia de Queimada',
+  description: 'Fluxo para denúncia de queimada irregular',
   defaultSLA: 2,
   stages: [
     {
-      name: 'RecepÃ§Ã£o Urgente',
+      name: 'Recepção Urgente',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7315,9 +7315,9 @@ DENUNCIA_QUEIMADA: {
       canSkip: false
     },
     {
-      name: 'ApuraÃ§Ã£o',
+      name: 'Apuração',
       order: 3,
-      description: 'ApuraÃ§Ã£o de responsabilidade',
+      description: 'Apuração de responsabilidade',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7331,14 +7331,14 @@ DENUNCIA_QUEIMADA: {
 
 DENUNCIA_SANITARIA: {
   moduleType: 'DENUNCIA_SANITARIA',
-  name: 'Workflow - DenÃºncia SanitÃ¡ria',
-  description: 'Fluxo para denÃºncia de irregularidade sanitÃ¡ria',
+  name: 'Workflow - Denúncia Sanitária',
+  description: 'Fluxo para denúncia de irregularidade sanitária',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7348,9 +7348,9 @@ DENUNCIA_SANITARIA: {
       canSkip: false
     },
     {
-      name: 'InspeÃ§Ã£o SanitÃ¡ria',
+      name: 'Inspeção Sanitária',
       order: 2,
-      description: 'InspeÃ§Ã£o tÃ©cnica pela vigilÃ¢ncia sanitÃ¡ria',
+      description: 'Inspeção técnica pela vigilância sanitária',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7360,7 +7360,7 @@ DENUNCIA_SANITARIA: {
       canSkip: false
     },
     {
-      name: 'Auto de InfraÃ§Ã£o',
+      name: 'Auto de Infração',
       order: 3,
       description: 'Lavratura de auto se procedente',
       slaDays: 2,
@@ -7374,7 +7374,7 @@ DENUNCIA_SANITARIA: {
     {
       name: 'Acompanhamento',
       order: 4,
-      description: 'Monitoramento da adequaÃ§Ã£o',
+      description: 'Monitoramento da adequação',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7388,14 +7388,14 @@ DENUNCIA_SANITARIA: {
 
 DENUNCIA_TRANSPORTE_CLANDESTINO: {
   moduleType: 'DENUNCIA_TRANSPORTE_CLANDESTINO',
-  name: 'Workflow - DenÃºncia de Transporte Clandestino',
-  description: 'Fluxo para denÃºncia de transporte clandestino',
+  name: 'Workflow - Denúncia de Transporte Clandestino',
+  description: 'Fluxo para denúncia de transporte clandestino',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7405,9 +7405,9 @@ DENUNCIA_TRANSPORTE_CLANDESTINO: {
       canSkip: false
     },
     {
-      name: 'FiscalizaÃ§Ã£o',
+      name: 'Fiscalização',
       order: 2,
-      description: 'FiscalizaÃ§Ã£o no local',
+      description: 'Fiscalização no local',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7417,9 +7417,9 @@ DENUNCIA_TRANSPORTE_CLANDESTINO: {
       canSkip: false
     },
     {
-      name: 'Auto de InfraÃ§Ã£o',
+      name: 'Auto de Infração',
       order: 3,
-      description: 'Lavratura de auto e apreensÃ£o se necessÃ¡rio',
+      description: 'Lavratura de auto e apreensão se necessário',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'documentos',
@@ -7433,14 +7433,14 @@ DENUNCIA_TRANSPORTE_CLANDESTINO: {
 
 DENUNCIA_VEICULO_ABANDONADO: {
   moduleType: 'DENUNCIA_VEICULO_ABANDONADO',
-  name: 'Workflow - DenÃºncia de VeÃ­culo Abandonado',
-  description: 'Fluxo para denÃºncia de veÃ­culo abandonado',
+  name: 'Workflow - Denúncia de Veículo Abandonado',
+  description: 'Fluxo para denúncia de veículo abandonado',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da denÃºncia',
+      description: 'Registro da denúncia',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7452,7 +7452,7 @@ DENUNCIA_VEICULO_ABANDONADO: {
     {
       name: 'Vistoria',
       order: 2,
-      description: 'Vistoria e identificaÃ§Ã£o do veÃ­culo',
+      description: 'Vistoria e identificação do veículo',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7462,9 +7462,9 @@ DENUNCIA_VEICULO_ABANDONADO: {
       canSkip: false
     },
     {
-      name: 'NotificaÃ§Ã£o',
+      name: 'Notificação',
       order: 3,
-      description: 'NotificaÃ§Ã£o do proprietÃ¡rio',
+      description: 'Notificação do proprietário',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -7474,9 +7474,9 @@ DENUNCIA_VEICULO_ABANDONADO: {
       canSkip: false
     },
     {
-      name: 'RemoÃ§Ã£o',
+      name: 'Remoção',
       order: 4,
-      description: 'RemoÃ§Ã£o do veÃ­culo',
+      description: 'Remoção do veículo',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7490,14 +7490,14 @@ DENUNCIA_VEICULO_ABANDONADO: {
 
 DENUNCIA_VIOLENCIA: {
   moduleType: 'DENUNCIA_VIOLENCIA',
-  name: 'Workflow - DenÃºncia de ViolÃªncia contra a Mulher',
-  description: 'Fluxo urgente para denÃºncia de violÃªncia',
+  name: 'Workflow - Denúncia de Violência contra a Mulher',
+  description: 'Fluxo urgente para denúncia de violência',
   defaultSLA: 2,
   stages: [
     {
       name: 'Acolhimento Urgente',
       order: 1,
-      description: 'RecepÃ§Ã£o sigilosa e acolhimento',
+      description: 'Recepção sigilosa e acolhimento',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7507,9 +7507,9 @@ DENUNCIA_VIOLENCIA: {
       canSkip: false
     },
     {
-      name: 'Acionamento Rede ProteÃ§Ã£o',
+      name: 'Acionamento Rede Proteção',
       order: 2,
-      description: 'Acionamento imediato da rede de proteÃ§Ã£o',
+      description: 'Acionamento imediato da rede de proteção',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -7521,7 +7521,7 @@ DENUNCIA_VIOLENCIA: {
     {
       name: 'Acompanhamento',
       order: 3,
-      description: 'Acompanhamento da vÃ­tima',
+      description: 'Acompanhamento da vítima',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7535,14 +7535,14 @@ DENUNCIA_VIOLENCIA: {
 
 DENUNCIA_VIOLENCIA_DOMESTICA: {
   moduleType: 'DENUNCIA_VIOLENCIA_DOMESTICA',
-  name: 'Workflow - DenÃºncia de ViolÃªncia DomÃ©stica',
-  description: 'Fluxo urgente para denÃºncia de violÃªncia domÃ©stica',
+  name: 'Workflow - Denúncia de Violência Doméstica',
+  description: 'Fluxo urgente para denúncia de violência doméstica',
   defaultSLA: 2,
   stages: [
     {
       name: 'Acolhimento Urgente',
       order: 1,
-      description: 'RecepÃ§Ã£o sigilosa e acolhimento',
+      description: 'Recepção sigilosa e acolhimento',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7554,7 +7554,7 @@ DENUNCIA_VIOLENCIA_DOMESTICA: {
     {
       name: 'Acionamento Emergencial',
       order: 2,
-      description: 'Acionamento de polÃ­cia e rede de proteÃ§Ã£o',
+      description: 'Acionamento de polícia e rede de proteção',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -7566,7 +7566,7 @@ DENUNCIA_VIOLENCIA_DOMESTICA: {
     {
       name: 'Acompanhamento Psicossocial',
       order: 3,
-      description: 'Acompanhamento da vÃ­tima e famÃ­lia',
+      description: 'Acompanhamento da vítima e família',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7578,18 +7578,18 @@ DENUNCIA_VIOLENCIA_DOMESTICA: {
   ]
 },
 
-// ========== SERVIÃ‡OS DE LIMPEZA E MANUTENÃ‡ÃƒO URBANA ==========
+// ========== SERVIÇOS DE LIMPEZA E MANUTENÇÃO URBANA ==========
 
 COLETA_ELETRONICO: {
   moduleType: 'COLETA_ELETRONICO',
-  name: 'Workflow - Coleta de Lixo EletrÃ´nico',
-  description: 'Fluxo para solicitaÃ§Ã£o de coleta de lixo eletrÃ´nico',
+  name: 'Workflow - Coleta de Lixo Eletrônico',
+  description: 'Fluxo para solicitação de coleta de lixo eletrônico',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7611,9 +7611,9 @@ COLETA_ELETRONICO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 3,
-      description: 'RealizaÃ§Ã£o da coleta',
+      description: 'Realização da coleta',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7627,14 +7627,14 @@ COLETA_ELETRONICO: {
 
 CONTENTOR_LIXO: {
   moduleType: 'CONTENTOR_LIXO',
-  name: 'Workflow - SolicitaÃ§Ã£o de Contentor de Lixo',
-  description: 'Fluxo para solicitaÃ§Ã£o de contentor de lixo',
+  name: 'Workflow - Solicitação de Contentor de Lixo',
+  description: 'Fluxo para solicitação de contentor de lixo',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7644,9 +7644,9 @@ CONTENTOR_LIXO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise TÃ©cnica',
+      name: 'Análise Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o da viabilidade e local',
+      description: 'Avaliação da viabilidade e local',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7656,9 +7656,9 @@ CONTENTOR_LIXO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o',
+      description: 'Aprovação pela coordenação',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7668,9 +7668,9 @@ CONTENTOR_LIXO: {
       canSkip: false
     },
     {
-      name: 'InstalaÃ§Ã£o',
+      name: 'Instalação',
       order: 4,
-      description: 'InstalaÃ§Ã£o do contentor',
+      description: 'Instalação do contentor',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7684,14 +7684,14 @@ CONTENTOR_LIXO: {
 
 DEDETIZACAO: {
   moduleType: 'DEDETIZACAO',
-  name: 'Workflow - DedetizaÃ§Ã£o e Controle de Pragas',
-  description: 'Fluxo para solicitaÃ§Ã£o de dedetizaÃ§Ã£o',
+  name: 'Workflow - Dedetização e Controle de Pragas',
+  description: 'Fluxo para solicitação de dedetização',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7703,7 +7703,7 @@ DEDETIZACAO: {
     {
       name: 'Vistoria',
       order: 2,
-      description: 'Vistoria para avaliar a situaÃ§Ã£o',
+      description: 'Vistoria para avaliar a situação',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7713,9 +7713,9 @@ DEDETIZACAO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 3,
-      description: 'RealizaÃ§Ã£o do serviÃ§o',
+      description: 'Realização do serviço',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7730,13 +7730,13 @@ DEDETIZACAO: {
 LIMPEZA_BOCA_LOBO: {
   moduleType: 'LIMPEZA_BOCA_LOBO',
   name: 'Workflow - Limpeza de Boca de Lobo',
-  description: 'Fluxo para solicitaÃ§Ã£o de limpeza de boca de lobo',
+  description: 'Fluxo para solicitação de limpeza de boca de lobo',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7746,9 +7746,9 @@ LIMPEZA_BOCA_LOBO: {
       canSkip: false
     },
     {
-      name: 'ProgramaÃ§Ã£o',
+      name: 'Programação',
       order: 2,
-      description: 'ProgramaÃ§Ã£o do serviÃ§o na rota',
+      description: 'Programação do serviço na rota',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7758,9 +7758,9 @@ LIMPEZA_BOCA_LOBO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 3,
-      description: 'RealizaÃ§Ã£o da limpeza',
+      description: 'Realização da limpeza',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7775,13 +7775,13 @@ LIMPEZA_BOCA_LOBO: {
 LIMPEZA_FEIRA: {
   moduleType: 'LIMPEZA_FEIRA',
   name: 'Workflow - Limpeza de Feira Livre',
-  description: 'Fluxo para solicitaÃ§Ã£o de limpeza de feira livre',
+  description: 'Fluxo para solicitação de limpeza de feira livre',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7791,9 +7791,9 @@ LIMPEZA_FEIRA: {
       canSkip: false
     },
     {
-      name: 'ProgramaÃ§Ã£o',
+      name: 'Programação',
       order: 2,
-      description: 'ProgramaÃ§Ã£o da equipe',
+      description: 'Programação da equipe',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7803,9 +7803,9 @@ LIMPEZA_FEIRA: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 3,
-      description: 'RealizaÃ§Ã£o da limpeza',
+      description: 'Realização da limpeza',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7824,9 +7824,9 @@ LIMPEZA_TERRENO_ABANDONADO: {
   defaultSLA: 15,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7838,7 +7838,7 @@ LIMPEZA_TERRENO_ABANDONADO: {
     {
       name: 'Vistoria',
       order: 2,
-      description: 'Vistoria e identificaÃ§Ã£o do proprietÃ¡rio',
+      description: 'Vistoria e identificação do proprietário',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7848,9 +7848,9 @@ LIMPEZA_TERRENO_ABANDONADO: {
       canSkip: false
     },
     {
-      name: 'NotificaÃ§Ã£o',
+      name: 'Notificação',
       order: 3,
-      description: 'NotificaÃ§Ã£o do proprietÃ¡rio',
+      description: 'Notificação do proprietário',
       slaDays: 5,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -7860,9 +7860,9 @@ LIMPEZA_TERRENO_ABANDONADO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 4,
-      description: 'Limpeza pela prefeitura ou verificaÃ§Ã£o',
+      description: 'Limpeza pela prefeitura ou verificação',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7876,14 +7876,14 @@ LIMPEZA_TERRENO_ABANDONADO: {
 
 CONSERTO_CALCAMENTO: {
   moduleType: 'CONSERTO_CALCAMENTO',
-  name: 'Workflow - Conserto de CalÃ§amento',
-  description: 'Fluxo para solicitaÃ§Ã£o de conserto de calÃ§amento',
+  name: 'Workflow - Conserto de Calçamento',
+  description: 'Fluxo para solicitação de conserto de calçamento',
   defaultSLA: 15,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7893,9 +7893,9 @@ CONSERTO_CALCAMENTO: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica do dano',
+      description: 'Avaliação técnica do dano',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -7905,9 +7905,9 @@ CONSERTO_CALCAMENTO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o do serviÃ§o',
+      description: 'Aprovação do serviço',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7917,9 +7917,9 @@ CONSERTO_CALCAMENTO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 4,
-      description: 'RealizaÃ§Ã£o do conserto',
+      description: 'Realização do conserto',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7934,13 +7934,13 @@ CONSERTO_CALCAMENTO: {
 PINTURA_MEIO_FIO: {
   moduleType: 'PINTURA_MEIO_FIO',
   name: 'Workflow - Pintura de Meio-Fio',
-  description: 'Fluxo para solicitaÃ§Ã£o de pintura de meio-fio',
+  description: 'Fluxo para solicitação de pintura de meio-fio',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7950,9 +7950,9 @@ PINTURA_MEIO_FIO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise',
+      name: 'Análise',
       order: 2,
-      description: 'AnÃ¡lise da necessidade',
+      description: 'Análise da necessidade',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7962,9 +7962,9 @@ PINTURA_MEIO_FIO: {
       canSkip: false
     },
     {
-      name: 'ProgramaÃ§Ã£o',
+      name: 'Programação',
       order: 3,
-      description: 'ProgramaÃ§Ã£o na rota de serviÃ§os',
+      description: 'Programação na rota de serviços',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -7974,9 +7974,9 @@ PINTURA_MEIO_FIO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 4,
-      description: 'RealizaÃ§Ã£o da pintura',
+      description: 'Realização da pintura',
       slaDays: 7,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -7990,14 +7990,14 @@ PINTURA_MEIO_FIO: {
 
 VARRICAO_RUA: {
   moduleType: 'VARRICAO_RUA',
-  name: 'Workflow - VarriÃ§Ã£o de Rua',
-  description: 'Fluxo para solicitaÃ§Ã£o de varriÃ§Ã£o de rua',
+  name: 'Workflow - Varrição de Rua',
+  description: 'Fluxo para solicitação de varrição de rua',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8007,9 +8007,9 @@ VARRICAO_RUA: {
       canSkip: false
     },
     {
-      name: 'ProgramaÃ§Ã£o',
+      name: 'Programação',
       order: 2,
-      description: 'InclusÃ£o na rota de varriÃ§Ã£o',
+      description: 'Inclusão na rota de varrição',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8019,9 +8019,9 @@ VARRICAO_RUA: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 3,
-      description: 'RealizaÃ§Ã£o da varriÃ§Ã£o',
+      description: 'Realização da varrição',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8035,14 +8035,14 @@ VARRICAO_RUA: {
 
 REMOCAO_ANIMAL: {
   moduleType: 'REMOCAO_ANIMAL',
-  name: 'Workflow - RemoÃ§Ã£o de Animal Morto',
-  description: 'Fluxo para remoÃ§Ã£o de animal morto em via pÃºblica',
+  name: 'Workflow - Remoção de Animal Morto',
+  description: 'Fluxo para remoção de animal morto em via pública',
   defaultSLA: 2,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8054,7 +8054,7 @@ REMOCAO_ANIMAL: {
     {
       name: 'Acionamento',
       order: 2,
-      description: 'Acionamento da equipe de remoÃ§Ã£o',
+      description: 'Acionamento da equipe de remoção',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8064,9 +8064,9 @@ REMOCAO_ANIMAL: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 3,
-      description: 'RemoÃ§Ã£o e descarte adequado',
+      description: 'Remoção e descarte adequado',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8080,14 +8080,14 @@ REMOCAO_ANIMAL: {
 
 ECOPONTO: {
   moduleType: 'ECOPONTO',
-  name: 'Workflow - SolicitaÃ§Ã£o de Ecoponto',
-  description: 'Fluxo para solicitaÃ§Ã£o de instalaÃ§Ã£o de ecoponto',
+  name: 'Workflow - Solicitação de Ecoponto',
+  description: 'Fluxo para solicitação de instalação de ecoponto',
   defaultSLA: 30,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8099,7 +8099,7 @@ ECOPONTO: {
     {
       name: 'Estudo de Viabilidade',
       order: 2,
-      description: 'AnÃ¡lise tÃ©cnica da viabilidade',
+      description: 'Análise técnica da viabilidade',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8109,9 +8109,9 @@ ECOPONTO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o',
+      description: 'Aprovação pela coordenação',
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8121,9 +8121,9 @@ ECOPONTO: {
       canSkip: false
     },
     {
-      name: 'ImplantaÃ§Ã£o',
+      name: 'Implantação',
       order: 4,
-      description: 'ImplantaÃ§Ã£o do ecoponto',
+      description: 'Implantação do ecoponto',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8139,14 +8139,14 @@ ECOPONTO: {
 
 APROVACAO_CALCADA: {
   moduleType: 'APROVACAO_CALCADA',
-  name: 'Workflow - AprovaÃ§Ã£o de CalÃ§ada',
-  description: 'Fluxo para aprovaÃ§Ã£o de projeto de calÃ§ada',
+  name: 'Workflow - Aprovação de Calçada',
+  description: 'Fluxo para aprovação de projeto de calçada',
   defaultSLA: 20,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Recebimento da solicitaÃ§Ã£o',
+      description: 'Recebimento da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8156,9 +8156,9 @@ APROVACAO_CALCADA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o dos documentos obrigatÃ³rios',
+      description: 'Verificação dos documentos obrigatórios',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
@@ -8168,9 +8168,9 @@ APROVACAO_CALCADA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise TÃ©cnica',
+      name: 'Análise Técnica',
       order: 3,
-      description: 'AvaliaÃ§Ã£o do projeto pela engenharia',
+      description: 'Avaliação do projeto pela engenharia',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8180,9 +8180,9 @@ APROVACAO_CALCADA: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o Final',
+      name: 'Aprovação Final',
       order: 4,
-      description: 'AprovaÃ§Ã£o final do projeto',
+      description: 'Aprovação final do projeto',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8192,9 +8192,9 @@ APROVACAO_CALCADA: {
       canSkip: false
     },
     {
-      name: 'EmissÃ£o de AlvarÃ¡',
+      name: 'Emissão de Alvará',
       order: 5,
-      description: 'EmissÃ£o do alvarÃ¡ de execuÃ§Ã£o',
+      description: 'Emissão do alvará de execução',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -8208,14 +8208,14 @@ APROVACAO_CALCADA: {
 
 APROVACAO_MURO: {
   moduleType: 'APROVACAO_MURO',
-  name: 'Workflow - AprovaÃ§Ã£o de Muro e Gradil',
-  description: 'Fluxo para aprovaÃ§Ã£o de construÃ§Ã£o de muro',
+  name: 'Workflow - Aprovação de Muro e Gradil',
+  description: 'Fluxo para aprovação de construção de muro',
   defaultSLA: 20,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Recebimento da solicitaÃ§Ã£o',
+      description: 'Recebimento da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8225,9 +8225,9 @@ APROVACAO_MURO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o dos documentos obrigatÃ³rios',
+      description: 'Verificação dos documentos obrigatórios',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
@@ -8237,9 +8237,9 @@ APROVACAO_MURO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise TÃ©cnica',
+      name: 'Análise Técnica',
       order: 3,
-      description: 'AvaliaÃ§Ã£o do projeto pela engenharia',
+      description: 'Avaliação do projeto pela engenharia',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8249,9 +8249,9 @@ APROVACAO_MURO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o Final',
+      name: 'Aprovação Final',
       order: 4,
-      description: 'AprovaÃ§Ã£o final do projeto',
+      description: 'Aprovação final do projeto',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8261,9 +8261,9 @@ APROVACAO_MURO: {
       canSkip: false
     },
     {
-      name: 'EmissÃ£o de AlvarÃ¡',
+      name: 'Emissão de Alvará',
       order: 5,
-      description: 'EmissÃ£o do alvarÃ¡ de execuÃ§Ã£o',
+      description: 'Emissão do alvará de execução',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -8277,14 +8277,14 @@ APROVACAO_MURO: {
 
 APROVACAO_TERRAPLENO: {
   moduleType: 'APROVACAO_TERRAPLENO',
-  name: 'Workflow - AprovaÃ§Ã£o de Terraplanagem',
-  description: 'Fluxo para aprovaÃ§Ã£o de projeto de terraplanagem',
+  name: 'Workflow - Aprovação de Terraplanagem',
+  description: 'Fluxo para aprovação de projeto de terraplanagem',
   defaultSLA: 25,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Recebimento da solicitaÃ§Ã£o',
+      description: 'Recebimento da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8294,9 +8294,9 @@ APROVACAO_TERRAPLENO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o dos documentos obrigatÃ³rios',
+      description: 'Verificação dos documentos obrigatórios',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
@@ -8306,9 +8306,9 @@ APROVACAO_TERRAPLENO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise TÃ©cnica',
+      name: 'Análise Técnica',
       order: 3,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica do projeto',
+      description: 'Avaliação técnica do projeto',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8318,9 +8318,9 @@ APROVACAO_TERRAPLENO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o Ambiental',
+      name: 'Aprovação Ambiental',
       order: 4,
-      description: 'AnÃ¡lise de impacto ambiental',
+      description: 'Análise de impacto ambiental',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8330,9 +8330,9 @@ APROVACAO_TERRAPLENO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o Final',
+      name: 'Aprovação Final',
       order: 5,
-      description: 'AprovaÃ§Ã£o final do projeto',
+      description: 'Aprovação final do projeto',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8342,9 +8342,9 @@ APROVACAO_TERRAPLENO: {
       canSkip: false
     },
     {
-      name: 'EmissÃ£o de AlvarÃ¡',
+      name: 'Emissão de Alvará',
       order: 6,
-      description: 'EmissÃ£o do alvarÃ¡ de terraplanagem',
+      description: 'Emissão do alvará de terraplanagem',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -8359,13 +8359,13 @@ APROVACAO_TERRAPLENO: {
 VISTORIA_ESTRUTURAL: {
   moduleType: 'VISTORIA_ESTRUTURAL',
   name: 'Workflow - Vistoria Estrutural',
-  description: 'Fluxo para vistoria estrutural de edificaÃ§Ã£o',
+  description: 'Fluxo para vistoria estrutural de edificação',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8387,9 +8387,9 @@ VISTORIA_ESTRUTURAL: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 3,
-      description: 'RealizaÃ§Ã£o da vistoria no local',
+      description: 'Realização da vistoria no local',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8399,9 +8399,9 @@ VISTORIA_ESTRUTURAL: {
       canSkip: false
     },
     {
-      name: 'EmissÃ£o de Laudo',
+      name: 'Emissão de Laudo',
       order: 4,
-      description: 'EmissÃ£o do laudo tÃ©cnico',
+      description: 'Emissão do laudo técnico',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -8415,14 +8415,14 @@ VISTORIA_ESTRUTURAL: {
 
 VISTORIA_TECNICA: {
   moduleType: 'VISTORIA_TECNICA',
-  name: 'Workflow - Vistoria TÃ©cnica de EdificaÃ§Ã£o',
-  description: 'Fluxo para vistoria tÃ©cnica geral',
+  name: 'Workflow - Vistoria Técnica de Edificação',
+  description: 'Fluxo para vistoria técnica geral',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8446,7 +8446,7 @@ VISTORIA_TECNICA: {
     {
       name: 'Vistoria',
       order: 3,
-      description: 'RealizaÃ§Ã£o da vistoria',
+      description: 'Realização da vistoria',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8456,9 +8456,9 @@ VISTORIA_TECNICA: {
       canSkip: false
     },
     {
-      name: 'EmissÃ£o de Parecer',
+      name: 'Emissão de Parecer',
       order: 4,
-      description: 'EmissÃ£o do parecer tÃ©cnico',
+      description: 'Emissão do parecer técnico',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -8472,14 +8472,14 @@ VISTORIA_TECNICA: {
 
 MANUTENCAO_JARDIM: {
   moduleType: 'MANUTENCAO_JARDIM',
-  name: 'Workflow - ManutenÃ§Ã£o de Jardim PÃºblico',
-  description: 'Fluxo para manutenÃ§Ã£o de jardim pÃºblico',
+  name: 'Workflow - Manutenção de Jardim Público',
+  description: 'Fluxo para manutenção de jardim público',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8501,9 +8501,9 @@ MANUTENCAO_JARDIM: {
       canSkip: false
     },
     {
-      name: 'ProgramaÃ§Ã£o',
+      name: 'Programação',
       order: 3,
-      description: 'ProgramaÃ§Ã£o do serviÃ§o',
+      description: 'Programação do serviço',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8513,9 +8513,9 @@ MANUTENCAO_JARDIM: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 4,
-      description: 'RealizaÃ§Ã£o da manutenÃ§Ã£o',
+      description: 'Realização da manutenção',
       slaDays: 7,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8529,14 +8529,14 @@ MANUTENCAO_JARDIM: {
 
 PODA_CANTEIRO: {
   moduleType: 'PODA_CANTEIRO',
-  name: 'Workflow - Poda de Ãrvore em Canteiro',
-  description: 'Fluxo para poda de Ã¡rvore em canteiro central',
+  name: 'Workflow - Poda de Árvore em Canteiro',
+  description: 'Fluxo para poda de árvore em canteiro central',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8546,9 +8546,9 @@ PODA_CANTEIRO: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica por engenheiro florestal',
+      description: 'Avaliação técnica por engenheiro florestal',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8558,9 +8558,9 @@ PODA_CANTEIRO: {
       canSkip: false
     },
     {
-      name: 'AutorizaÃ§Ã£o',
+      name: 'Autorização',
       order: 3,
-      description: 'AutorizaÃ§Ã£o ambiental',
+      description: 'Autorização ambiental',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8570,9 +8570,9 @@ PODA_CANTEIRO: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 4,
-      description: 'RealizaÃ§Ã£o da poda',
+      description: 'Realização da poda',
       slaDays: 7,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8586,14 +8586,14 @@ PODA_CANTEIRO: {
 
 RECUPERACAO_PRACA: {
   moduleType: 'RECUPERACAO_PRACA',
-  name: 'Workflow - RecuperaÃ§Ã£o de PraÃ§a',
-  description: 'Fluxo para recuperaÃ§Ã£o de praÃ§a pÃºblica',
+  name: 'Workflow - Recuperação de Praça',
+  description: 'Fluxo para recuperação de praça pública',
   defaultSLA: 30,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8603,9 +8603,9 @@ RECUPERACAO_PRACA: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica da praÃ§a',
+      description: 'Avaliação técnica da praça',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8615,9 +8615,9 @@ RECUPERACAO_PRACA: {
       canSkip: false
     },
     {
-      name: 'ElaboraÃ§Ã£o de Projeto',
+      name: 'Elaboração de Projeto',
       order: 3,
-      description: 'ElaboraÃ§Ã£o do projeto de recuperaÃ§Ã£o',
+      description: 'Elaboração do projeto de recuperação',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -8627,9 +8627,9 @@ RECUPERACAO_PRACA: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 4,
-      description: 'AprovaÃ§Ã£o do projeto e orÃ§amento',
+      description: 'Aprovação do projeto e orçamento',
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8639,9 +8639,9 @@ RECUPERACAO_PRACA: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 5,
-      description: 'RealizaÃ§Ã£o da recuperaÃ§Ã£o',
+      description: 'Realização da recuperação',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8653,18 +8653,18 @@ RECUPERACAO_PRACA: {
   ]
 },
 
-// ========== TRÃ‚NSITO E MOBILIDADE ==========
+// ========== TRÂNSITO E MOBILIDADE ==========
 
 RECLAMACAO_TRANSITO: {
   moduleType: 'RECLAMACAO_TRANSITO',
-  name: 'Workflow - ReclamaÃ§Ã£o sobre TrÃ¢nsito',
-  description: 'Fluxo para reclamaÃ§Ã£o relacionada ao trÃ¢nsito',
+  name: 'Workflow - Reclamação sobre Trânsito',
+  description: 'Fluxo para reclamação relacionada ao trânsito',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da reclamaÃ§Ã£o',
+      description: 'Registro da reclamação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8674,9 +8674,9 @@ RECLAMACAO_TRANSITO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise',
+      name: 'Análise',
       order: 2,
-      description: 'AnÃ¡lise da reclamaÃ§Ã£o',
+      description: 'Análise da reclamação',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8688,7 +8688,7 @@ RECLAMACAO_TRANSITO: {
     {
       name: 'Vistoria',
       order: 3,
-      description: 'Vistoria no local se necessÃ¡rio',
+      description: 'Vistoria no local se necessário',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8698,9 +8698,9 @@ RECLAMACAO_TRANSITO: {
       canSkip: true
     },
     {
-      name: 'ProvidÃªncias',
+      name: 'Providências',
       order: 4,
-      description: 'ImplementaÃ§Ã£o das providÃªncias',
+      description: 'Implementação das providências',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8714,14 +8714,14 @@ RECLAMACAO_TRANSITO: {
 
 RECLAMACAO_TRANSPORTE: {
   moduleType: 'RECLAMACAO_TRANSPORTE',
-  name: 'Workflow - ReclamaÃ§Ã£o sobre Transporte',
-  description: 'Fluxo para reclamaÃ§Ã£o sobre transporte pÃºblico',
+  name: 'Workflow - Reclamação sobre Transporte',
+  description: 'Fluxo para reclamação sobre transporte público',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da reclamaÃ§Ã£o',
+      description: 'Registro da reclamação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8731,9 +8731,9 @@ RECLAMACAO_TRANSPORTE: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise',
+      name: 'Análise',
       order: 2,
-      description: 'AnÃ¡lise da reclamaÃ§Ã£o',
+      description: 'Análise da reclamação',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8743,9 +8743,9 @@ RECLAMACAO_TRANSPORTE: {
       canSkip: false
     },
     {
-      name: 'NotificaÃ§Ã£o ConcessionÃ¡ria',
+      name: 'Notificação Concessionária',
       order: 3,
-      description: 'NotificaÃ§Ã£o da empresa de transporte',
+      description: 'Notificação da empresa de transporte',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -8757,7 +8757,7 @@ RECLAMACAO_TRANSPORTE: {
     {
       name: 'Acompanhamento',
       order: 4,
-      description: 'Acompanhamento das providÃªncias',
+      description: 'Acompanhamento das providências',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8771,14 +8771,14 @@ RECLAMACAO_TRANSPORTE: {
 
 SINALIZACAO_TRANSITO: {
   moduleType: 'SINALIZACAO_TRANSITO',
-  name: 'Workflow - SolicitaÃ§Ã£o de SinalizaÃ§Ã£o de TrÃ¢nsito',
-  description: 'Fluxo para solicitaÃ§Ã£o de sinalizaÃ§Ã£o',
+  name: 'Workflow - Solicitação de Sinalização de Trânsito',
+  description: 'Fluxo para solicitação de sinalização',
   defaultSLA: 20,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8788,9 +8788,9 @@ SINALIZACAO_TRANSITO: {
       canSkip: false
     },
     {
-      name: 'Estudo TÃ©cnico',
+      name: 'Estudo Técnico',
       order: 2,
-      description: 'Estudo de viabilidade tÃ©cnica',
+      description: 'Estudo de viabilidade técnica',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8800,9 +8800,9 @@ SINALIZACAO_TRANSITO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o de trÃ¢nsito',
+      description: 'Aprovação pela coordenação de trânsito',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8812,9 +8812,9 @@ SINALIZACAO_TRANSITO: {
       canSkip: false
     },
     {
-      name: 'ImplantaÃ§Ã£o',
+      name: 'Implantação',
       order: 4,
-      description: 'ImplantaÃ§Ã£o da sinalizaÃ§Ã£o',
+      description: 'Implantação da sinalização',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8828,14 +8828,14 @@ SINALIZACAO_TRANSITO: {
 
 SOLICITACAO_LOMBADA: {
   moduleType: 'SOLICITACAO_LOMBADA',
-  name: 'Workflow - SolicitaÃ§Ã£o de Lombada',
-  description: 'Fluxo para solicitaÃ§Ã£o de lombada/redutor de velocidade',
+  name: 'Workflow - Solicitação de Lombada',
+  description: 'Fluxo para solicitação de lombada/redutor de velocidade',
   defaultSLA: 30,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8847,7 +8847,7 @@ SOLICITACAO_LOMBADA: {
     {
       name: 'Estudo de Viabilidade',
       order: 2,
-      description: 'Estudo tÃ©cnico de viabilidade e necessidade',
+      description: 'Estudo técnico de viabilidade e necessidade',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8857,9 +8857,9 @@ SOLICITACAO_LOMBADA: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o de trÃ¢nsito',
+      description: 'Aprovação pela coordenação de trânsito',
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8869,9 +8869,9 @@ SOLICITACAO_LOMBADA: {
       canSkip: false
     },
     {
-      name: 'ImplantaÃ§Ã£o',
+      name: 'Implantação',
       order: 4,
-      description: 'ImplantaÃ§Ã£o da lombada',
+      description: 'Implantação da lombada',
       slaDays: 20,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8885,14 +8885,14 @@ SOLICITACAO_LOMBADA: {
 
 SOLICITACAO_SEMAFORO: {
   moduleType: 'SOLICITACAO_SEMAFORO',
-  name: 'Workflow - SolicitaÃ§Ã£o de SemÃ¡foro',
-  description: 'Fluxo para solicitaÃ§Ã£o de instalaÃ§Ã£o de semÃ¡foro',
+  name: 'Workflow - Solicitação de Semáforo',
+  description: 'Fluxo para solicitação de instalação de semáforo',
   defaultSLA: 60,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8904,7 +8904,7 @@ SOLICITACAO_SEMAFORO: {
     {
       name: 'Estudo de Viabilidade',
       order: 2,
-      description: 'Estudo tÃ©cnico completo',
+      description: 'Estudo técnico completo',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8914,9 +8914,9 @@ SOLICITACAO_SEMAFORO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise OrÃ§amentÃ¡ria',
+      name: 'Análise Orçamentária',
       order: 3,
-      description: 'AnÃ¡lise de custos e disponibilidade orÃ§amentÃ¡ria',
+      description: 'Análise de custos e disponibilidade orçamentária',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8926,9 +8926,9 @@ SOLICITACAO_SEMAFORO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 4,
-      description: 'AprovaÃ§Ã£o final',
+      description: 'Aprovação final',
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8938,9 +8938,9 @@ SOLICITACAO_SEMAFORO: {
       canSkip: false
     },
     {
-      name: 'ImplantaÃ§Ã£o',
+      name: 'Implantação',
       order: 5,
-      description: 'InstalaÃ§Ã£o do semÃ¡foro',
+      description: 'Instalação do semáforo',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8954,14 +8954,14 @@ SOLICITACAO_SEMAFORO: {
 
 SOLICITACAO_PONTO_ONIBUS: {
   moduleType: 'SOLICITACAO_PONTO_ONIBUS',
-  name: 'Workflow - SolicitaÃ§Ã£o de Ponto de Ã”nibus',
-  description: 'Fluxo para solicitaÃ§Ã£o de ponto de Ã´nibus',
+  name: 'Workflow - Solicitação de Ponto de Ônibus',
+  description: 'Fluxo para solicitação de ponto de ônibus',
   defaultSLA: 30,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -8973,7 +8973,7 @@ SOLICITACAO_PONTO_ONIBUS: {
     {
       name: 'Estudo de Viabilidade',
       order: 2,
-      description: 'Estudo tÃ©cnico de viabilidade',
+      description: 'Estudo técnico de viabilidade',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -8983,9 +8983,9 @@ SOLICITACAO_PONTO_ONIBUS: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o de transporte',
+      description: 'Aprovação pela coordenação de transporte',
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -8995,9 +8995,9 @@ SOLICITACAO_PONTO_ONIBUS: {
       canSkip: false
     },
     {
-      name: 'ImplantaÃ§Ã£o',
+      name: 'Implantação',
       order: 4,
-      description: 'InstalaÃ§Ã£o do ponto de Ã´nibus',
+      description: 'Instalação do ponto de ônibus',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9011,14 +9011,14 @@ SOLICITACAO_PONTO_ONIBUS: {
 
 SUGESTAO_LINHA: {
   moduleType: 'SUGESTAO_LINHA',
-  name: 'Workflow - SugestÃ£o de Nova Linha de Ã”nibus',
-  description: 'Fluxo para sugestÃ£o de nova linha de transporte',
+  name: 'Workflow - Sugestão de Nova Linha de Ônibus',
+  description: 'Fluxo para sugestão de nova linha de transporte',
   defaultSLA: 60,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da sugestÃ£o',
+      description: 'Registro da sugestão',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9028,9 +9028,9 @@ SUGESTAO_LINHA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Preliminar',
+      name: 'Análise Preliminar',
       order: 2,
-      description: 'AnÃ¡lise inicial da demanda',
+      description: 'Análise inicial da demanda',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9042,7 +9042,7 @@ SUGESTAO_LINHA: {
     {
       name: 'Estudo de Viabilidade',
       order: 3,
-      description: 'Estudo tÃ©cnico completo',
+      description: 'Estudo técnico completo',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9052,9 +9052,9 @@ SUGESTAO_LINHA: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 4,
-      description: 'AprovaÃ§Ã£o pela gestÃ£o',
+      description: 'Aprovação pela gestão',
       slaDays: 10,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9064,9 +9064,9 @@ SUGESTAO_LINHA: {
       canSkip: false
     },
     {
-      name: 'ImplantaÃ§Ã£o',
+      name: 'Implantação',
       order: 5,
-      description: 'ImplantaÃ§Ã£o da nova linha',
+      description: 'Implantação da nova linha',
       slaDays: 30,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9078,18 +9078,18 @@ SUGESTAO_LINHA: {
   ]
 },
 
-// ========== SERVIÃ‡OS ADMINISTRATIVOS E ATENDIMENTO ==========
+// ========== SERVIÇOS ADMINISTRATIVOS E ATENDIMENTO ==========
 
 OUVIDORIA: {
   moduleType: 'OUVIDORIA',
-  name: 'Workflow - ManifestaÃ§Ã£o na Ouvidoria',
-  description: 'Fluxo para manifestaÃ§Ãµes na ouvidoria',
+  name: 'Workflow - Manifestação na Ouvidoria',
+  description: 'Fluxo para manifestações na ouvidoria',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da manifestaÃ§Ã£o',
+      description: 'Registro da manifestação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9099,9 +9099,9 @@ OUVIDORIA: {
       canSkip: false
     },
     {
-      name: 'ClassificaÃ§Ã£o',
+      name: 'Classificação',
       order: 2,
-      description: 'ClassificaÃ§Ã£o e encaminhamento',
+      description: 'Classificação e encaminhamento',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9111,9 +9111,9 @@ OUVIDORIA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise',
+      name: 'Análise',
       order: 3,
-      description: 'AnÃ¡lise pela Ã¡rea responsÃ¡vel',
+      description: 'Análise pela área responsável',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9125,7 +9125,7 @@ OUVIDORIA: {
     {
       name: 'Resposta',
       order: 4,
-      description: 'ElaboraÃ§Ã£o e envio de resposta',
+      description: 'Elaboração e envio de resposta',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9139,14 +9139,14 @@ OUVIDORIA: {
 
 SIC: {
   moduleType: 'SIC',
-  name: 'Workflow - SolicitaÃ§Ã£o ao SIC',
-  description: 'Fluxo para pedidos de informaÃ§Ã£o ao cidadÃ£o',
+  name: 'Workflow - Solicitação ao SIC',
+  description: 'Fluxo para pedidos de informação ao cidadão',
   defaultSLA: 20,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9156,9 +9156,9 @@ SIC: {
       canSkip: false
     },
     {
-      name: 'ClassificaÃ§Ã£o',
+      name: 'Classificação',
       order: 2,
-      description: 'ClassificaÃ§Ã£o e encaminhamento',
+      description: 'Classificação e encaminhamento',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9168,9 +9168,9 @@ SIC: {
       canSkip: false
     },
     {
-      name: 'Busca de InformaÃ§Ã£o',
+      name: 'Busca de Informação',
       order: 3,
-      description: 'Levantamento da informaÃ§Ã£o solicitada',
+      description: 'Levantamento da informação solicitada',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9182,7 +9182,7 @@ SIC: {
     {
       name: 'Resposta',
       order: 4,
-      description: 'ElaboraÃ§Ã£o e envio de resposta',
+      description: 'Elaboração e envio de resposta',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9203,7 +9203,7 @@ ATENDIMENTO_CRAS_GERAL: {
     {
       name: 'Acolhimento',
       order: 1,
-      description: 'Acolhimento inicial do cidadÃ£o',
+      description: 'Acolhimento inicial do cidadão',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9213,9 +9213,9 @@ ATENDIMENTO_CRAS_GERAL: {
       canSkip: false
     },
     {
-      name: 'AvaliaÃ§Ã£o Social',
+      name: 'Avaliação Social',
       order: 2,
-      description: 'AvaliaÃ§Ã£o pela assistÃªncia social',
+      description: 'Avaliação pela assistência social',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9227,7 +9227,7 @@ ATENDIMENTO_CRAS_GERAL: {
     {
       name: 'Encaminhamento',
       order: 3,
-      description: 'Encaminhamento para serviÃ§os e programas',
+      description: 'Encaminhamento para serviços e programas',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9241,14 +9241,14 @@ ATENDIMENTO_CRAS_GERAL: {
 
 DOCUMENTACAO_CIVIL: {
   moduleType: 'DOCUMENTACAO_CIVIL',
-  name: 'Workflow - DocumentaÃ§Ã£o Civil Gratuita',
-  description: 'Fluxo para solicitaÃ§Ã£o de documentaÃ§Ã£o civil',
+  name: 'Workflow - Documentação Civil Gratuita',
+  description: 'Fluxo para solicitação de documentação civil',
   defaultSLA: 15,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9258,9 +9258,9 @@ DOCUMENTACAO_CIVIL: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o de documentos e requisitos',
+      description: 'Verificação de documentos e requisitos',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
@@ -9270,9 +9270,9 @@ DOCUMENTACAO_CIVIL: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o da gratuidade',
+      description: 'Aprovação da gratuidade',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9282,9 +9282,9 @@ DOCUMENTACAO_CIVIL: {
       canSkip: false
     },
     {
-      name: 'Encaminhamento CartÃ³rio',
+      name: 'Encaminhamento Cartório',
       order: 4,
-      description: 'Encaminhamento ao cartÃ³rio',
+      description: 'Encaminhamento ao cartório',
       slaDays: 3,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9296,7 +9296,7 @@ DOCUMENTACAO_CIVIL: {
     {
       name: 'Acompanhamento',
       order: 5,
-      description: 'Acompanhamento da emissÃ£o',
+      description: 'Acompanhamento da emissão',
       slaDays: 10,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9310,14 +9310,14 @@ DOCUMENTACAO_CIVIL: {
 
 AGENDAMENTO_GERAL: {
   moduleType: 'AGENDAMENTO_GERAL',
-  name: 'Workflow - Agendamento de ServiÃ§os Gerais',
-  description: 'Fluxo para agendamento de serviÃ§os gerais',
+  name: 'Workflow - Agendamento de Serviços Gerais',
+  description: 'Fluxo para agendamento de serviços gerais',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o de agendamento',
+      description: 'Registro da solicitação de agendamento',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9329,7 +9329,7 @@ AGENDAMENTO_GERAL: {
     {
       name: 'Agendamento',
       order: 2,
-      description: 'ConfirmaÃ§Ã£o do agendamento',
+      description: 'Confirmação do agendamento',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9339,9 +9339,9 @@ AGENDAMENTO_GERAL: {
       canSkip: false
     },
     {
-      name: 'ConfirmaÃ§Ã£o',
+      name: 'Confirmação',
       order: 3,
-      description: 'ConfirmaÃ§Ã£o com o cidadÃ£o',
+      description: 'Confirmação com o cidadão',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9355,14 +9355,14 @@ AGENDAMENTO_GERAL: {
 
 CALENDARIO_COLETA: {
   moduleType: 'CALENDARIO_COLETA',
-  name: 'Workflow - CalendÃ¡rio de Coleta Seletiva',
-  description: 'Fluxo para consulta de calendÃ¡rio de coleta',
+  name: 'Workflow - Calendário de Coleta Seletiva',
+  description: 'Fluxo para consulta de calendário de coleta',
   defaultSLA: 1,
   stages: [
     {
       name: 'Consulta',
       order: 1,
-      description: 'Fornecimento de informaÃ§Ãµes sobre coleta',
+      description: 'Fornecimento de informações sobre coleta',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9376,14 +9376,14 @@ CALENDARIO_COLETA: {
 
 CALENDARIO_ESCOLAR: {
   moduleType: 'CALENDARIO_ESCOLAR',
-  name: 'Workflow - Consulta de CalendÃ¡rio Escolar',
-  description: 'Fluxo para consulta de calendÃ¡rio escolar',
+  name: 'Workflow - Consulta de Calendário Escolar',
+  description: 'Fluxo para consulta de calendário escolar',
   defaultSLA: 1,
   stages: [
     {
       name: 'Consulta',
       order: 1,
-      description: 'Fornecimento do calendÃ¡rio escolar',
+      description: 'Fornecimento do calendário escolar',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9397,14 +9397,14 @@ CALENDARIO_ESCOLAR: {
 
 DOACAO_DESABRIGADOS: {
   moduleType: 'DOACAO_DESABRIGADOS',
-  name: 'Workflow - DoaÃ§Ã£o para Desabrigados',
-  description: 'Fluxo para solicitaÃ§Ã£o de doaÃ§Ã£o para desabrigados',
+  name: 'Workflow - Doação para Desabrigados',
+  description: 'Fluxo para solicitação de doação para desabrigados',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9414,9 +9414,9 @@ DOACAO_DESABRIGADOS: {
       canSkip: false
     },
     {
-      name: 'AvaliaÃ§Ã£o',
+      name: 'Avaliação',
       order: 1,
-      description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o emergencial',
+      description: 'Avaliação da situação emergencial',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9426,9 +9426,9 @@ DOACAO_DESABRIGADOS: {
       canSkip: false
     },
     {
-      name: 'MobilizaÃ§Ã£o',
+      name: 'Mobilização',
       order: 3,
-      description: 'MobilizaÃ§Ã£o de doaÃ§Ãµes',
+      description: 'Mobilização de doações',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9440,7 +9440,7 @@ DOACAO_DESABRIGADOS: {
     {
       name: 'Entrega',
       order: 4,
-      description: 'DistribuiÃ§Ã£o das doaÃ§Ãµes',
+      description: 'Distribuição das doações',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9454,14 +9454,14 @@ DOACAO_DESABRIGADOS: {
 
 PATRULHA_ESCOLAR: {
   moduleType: 'PATRULHA_ESCOLAR',
-  name: 'Workflow - SolicitaÃ§Ã£o de Patrulha Escolar',
-  description: 'Fluxo para solicitaÃ§Ã£o de patrulha escolar',
+  name: 'Workflow - Solicitação de Patrulha Escolar',
+  description: 'Fluxo para solicitação de patrulha escolar',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9471,9 +9471,9 @@ PATRULHA_ESCOLAR: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise',
+      name: 'Análise',
       order: 2,
-      description: 'AnÃ¡lise da necessidade e viabilidade',
+      description: 'Análise da necessidade e viabilidade',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9483,9 +9483,9 @@ PATRULHA_ESCOLAR: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o de seguranÃ§a',
+      description: 'Aprovação pela coordenação de segurança',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9495,9 +9495,9 @@ PATRULHA_ESCOLAR: {
       canSkip: false
     },
     {
-      name: 'ImplementaÃ§Ã£o',
+      name: 'Implementação',
       order: 4,
-      description: 'OrganizaÃ§Ã£o da escala de patrulhamento',
+      description: 'Organização da escala de patrulhamento',
       slaDays: 7,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9511,14 +9511,14 @@ PATRULHA_ESCOLAR: {
 
 ILUMINACAO_SEGURANCA: {
   moduleType: 'ILUMINACAO_SEGURANCA',
-  name: 'Workflow - IluminaÃ§Ã£o para SeguranÃ§a',
-  description: 'Fluxo para solicitaÃ§Ã£o de iluminaÃ§Ã£o pÃºblica',
+  name: 'Workflow - Iluminação para Segurança',
+  description: 'Fluxo para solicitação de iluminação pública',
   defaultSLA: 15,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9528,9 +9528,9 @@ ILUMINACAO_SEGURANCA: {
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 2,
-      description: 'AvaliaÃ§Ã£o tÃ©cnica no local',
+      description: 'Avaliação técnica no local',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9540,9 +9540,9 @@ ILUMINACAO_SEGURANCA: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o pela coordenaÃ§Ã£o',
+      description: 'Aprovação pela coordenação',
       slaDays: 3,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9552,9 +9552,9 @@ ILUMINACAO_SEGURANCA: {
       canSkip: false
     },
     {
-      name: 'ExecuÃ§Ã£o',
+      name: 'Execução',
       order: 4,
-      description: 'InstalaÃ§Ã£o da iluminaÃ§Ã£o',
+      description: 'Instalação da iluminação',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9566,16 +9566,16 @@ ILUMINACAO_SEGURANCA: {
   ]
 },
 
-// ========== CADASTROS E INSCRIÃ‡Ã•ES ==========
+// ========== CADASTROS E INSCRIÇÕES ==========
 
 CADASTRO_BALCAO_EMPREGOS: {
   moduleType: 'CADASTRO_BALCAO_EMPREGOS',
-  name: 'Workflow - Cadastro no BalcÃ£o de Empregos',
+  name: 'Workflow - Cadastro no Balcão de Empregos',
   description: 'Fluxo para cadastro de candidato a emprego',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
       description: 'Registro do cadastro',
       slaDays: 1,
@@ -9587,9 +9587,9 @@ CADASTRO_BALCAO_EMPREGOS: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise de Perfil',
+      name: 'Análise de Perfil',
       order: 2,
-      description: 'AnÃ¡lise do perfil profissional',
+      description: 'Análise do perfil profissional',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9599,9 +9599,9 @@ CADASTRO_BALCAO_EMPREGOS: {
       canSkip: false
     },
     {
-      name: 'AtivaÃ§Ã£o',
+      name: 'Ativação',
       order: 3,
-      description: 'AtivaÃ§Ã£o do cadastro no sistema',
+      description: 'Ativação do cadastro no sistema',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9615,12 +9615,12 @@ CADASTRO_BALCAO_EMPREGOS: {
 
 CADASTRO_CAMERAS_BAIRRO: {
   moduleType: 'CADASTRO_CAMERAS_BAIRRO',
-  name: 'Workflow - Cadastro de CÃ¢meras de SeguranÃ§a',
-  description: 'Fluxo para cadastro de cÃ¢meras particulares',
+  name: 'Workflow - Cadastro de Câmeras de Segurança',
+  description: 'Fluxo para cadastro de câmeras particulares',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
       description: 'Registro do cadastro',
       slaDays: 1,
@@ -9632,21 +9632,21 @@ CADASTRO_CAMERAS_BAIRRO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o de documentos',
+      description: 'Verificação de documentos',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
-      requiredDocumentTypes: ['Justificativa', 'Projeto ou Memorial', 'AutorizaÃ§Ã£o do ResponsÃ¡vel'],
+      requiredDocumentTypes: ['Justificativa', 'Projeto ou Memorial', 'Autorização do Responsável'],
       requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false
     },
     {
-      name: 'Vistoria TÃ©cnica',
+      name: 'Vistoria Técnica',
       order: 3,
-      description: 'Vistoria das cÃ¢meras cadastradas',
+      description: 'Vistoria das câmeras cadastradas',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9656,9 +9656,9 @@ CADASTRO_CAMERAS_BAIRRO: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 4,
-      description: 'AprovaÃ§Ã£o e inclusÃ£o no sistema',
+      description: 'Aprovação e inclusão no sistema',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -9672,14 +9672,14 @@ CADASTRO_CAMERAS_BAIRRO: {
 
 GRUPO_WHATSAPP_VIZINHANCA: {
   moduleType: 'GRUPO_WHATSAPP_VIZINHANCA',
-  name: 'Workflow - Cadastro em Grupo de WhatsApp de SeguranÃ§a',
-  description: 'Fluxo para cadastro em grupo de vizinhanÃ§a',
+  name: 'Workflow - Cadastro em Grupo de WhatsApp de Segurança',
+  description: 'Fluxo para cadastro em grupo de vizinhança',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9689,9 +9689,9 @@ GRUPO_WHATSAPP_VIZINHANCA: {
       canSkip: false
     },
     {
-      name: 'ValidaÃ§Ã£o',
+      name: 'Validação',
       order: 2,
-      description: 'ValidaÃ§Ã£o dos dados e comprovaÃ§Ã£o de residÃªncia',
+      description: 'Validação dos dados e comprovação de residência',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9701,9 +9701,9 @@ GRUPO_WHATSAPP_VIZINHANCA: {
       canSkip: false
     },
     {
-      name: 'InclusÃ£o',
+      name: 'Inclusão',
       order: 3,
-      description: 'InclusÃ£o no grupo correspondente',
+      description: 'Inclusão no grupo correspondente',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9717,14 +9717,14 @@ GRUPO_WHATSAPP_VIZINHANCA: {
 
 GRUPOS_APOIO: {
   moduleType: 'GRUPOS_APOIO',
-  name: 'Workflow - InscriÃ§Ã£o em Grupos de Apoio',
-  description: 'Fluxo para inscriÃ§Ã£o em grupos de apoio',
+  name: 'Workflow - Inscrição em Grupos de Apoio',
+  description: 'Fluxo para inscrição em grupos de apoio',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da inscriÃ§Ã£o',
+      description: 'Registro da inscrição',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9734,9 +9734,9 @@ GRUPOS_APOIO: {
       canSkip: false
     },
     {
-      name: 'AvaliaÃ§Ã£o',
+      name: 'Avaliação',
       order: 2,
-      description: 'AvaliaÃ§Ã£o por profissional especializado',
+      description: 'Avaliação por profissional especializado',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -9746,9 +9746,9 @@ GRUPOS_APOIO: {
       canSkip: false
     },
     {
-      name: 'InclusÃ£o',
+      name: 'Inclusão',
       order: 3,
-      description: 'InclusÃ£o no grupo',
+      description: 'Inclusão no grupo',
       slaDays: 2,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9762,14 +9762,14 @@ GRUPOS_APOIO: {
 
 INSCRICAO_QUALIFICACAO: {
   moduleType: 'INSCRICAO_QUALIFICACAO',
-  name: 'Workflow - InscriÃ§Ã£o em Cursos de QualificaÃ§Ã£o',
-  description: 'Fluxo para inscriÃ§Ã£o em cursos de qualificaÃ§Ã£o profissional',
+  name: 'Workflow - Inscrição em Cursos de Qualificação',
+  description: 'Fluxo para inscrição em cursos de qualificação profissional',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da inscriÃ§Ã£o',
+      description: 'Registro da inscrição',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9779,9 +9779,9 @@ INSCRICAO_QUALIFICACAO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o de documentos e requisitos',
+      description: 'Verificação de documentos e requisitos',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
@@ -9791,9 +9791,9 @@ INSCRICAO_QUALIFICACAO: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise de Perfil',
+      name: 'Análise de Perfil',
       order: 3,
-      description: 'VerificaÃ§Ã£o de adequaÃ§Ã£o ao curso',
+      description: 'Verificação de adequação ao curso',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9803,9 +9803,9 @@ INSCRICAO_QUALIFICACAO: {
       canSkip: false
     },
     {
-      name: 'MatrÃ­cula',
+      name: 'Matrícula',
       order: 4,
-      description: 'EfetivaÃ§Ã£o da matrÃ­cula',
+      description: 'Efetivação da matrícula',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9819,14 +9819,14 @@ INSCRICAO_QUALIFICACAO: {
 
 INSCRICAO_HACKATHON: {
   moduleType: 'INSCRICAO_HACKATHON',
-  name: 'Workflow - InscriÃ§Ã£o em Hackathon',
-  description: 'Fluxo para inscriÃ§Ã£o em hackathon/desafio de inovaÃ§Ã£o',
+  name: 'Workflow - Inscrição em Hackathon',
+  description: 'Fluxo para inscrição em hackathon/desafio de inovação',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da inscriÃ§Ã£o',
+      description: 'Registro da inscrição',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9836,9 +9836,9 @@ INSCRICAO_HACKATHON: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Documental',
+      name: 'Análise Documental',
       order: 2,
-      description: 'VerificaÃ§Ã£o de documentos',
+      description: 'Verificação de documentos',
       slaDays: 2,
       availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
       primaryTab: 'documentos',
@@ -9848,9 +9848,9 @@ INSCRICAO_HACKATHON: {
       canSkip: false
     },
     {
-      name: 'ValidaÃ§Ã£o',
+      name: 'Validação',
       order: 3,
-      description: 'ValidaÃ§Ã£o da inscriÃ§Ã£o',
+      description: 'Validação da inscrição',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9864,14 +9864,14 @@ INSCRICAO_HACKATHON: {
 
 OFICINAS_WORKSHOPS: {
   moduleType: 'OFICINAS_WORKSHOPS',
-  name: 'Workflow - InscriÃ§Ã£o em Oficinas e Workshops',
-  description: 'Fluxo para inscriÃ§Ã£o em oficinas e workshops',
+  name: 'Workflow - Inscrição em Oficinas e Workshops',
+  description: 'Fluxo para inscrição em oficinas e workshops',
   defaultSLA: 5,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da inscriÃ§Ã£o',
+      description: 'Registro da inscrição',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9881,9 +9881,9 @@ OFICINAS_WORKSHOPS: {
       canSkip: false
     },
     {
-      name: 'VerificaÃ§Ã£o de Vagas',
+      name: 'Verificação de Vagas',
       order: 2,
-      description: 'VerificaÃ§Ã£o de disponibilidade de vagas',
+      description: 'Verificação de disponibilidade de vagas',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9893,9 +9893,9 @@ OFICINAS_WORKSHOPS: {
       canSkip: false
     },
     {
-      name: 'ConfirmaÃ§Ã£o',
+      name: 'Confirmação',
       order: 3,
-      description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+      description: 'Confirmação da inscrição',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9914,7 +9914,7 @@ AGENDAMENTO_SALA_EMPREENDEDOR: {
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
       description: 'Registro do agendamento',
       slaDays: 1,
@@ -9928,7 +9928,7 @@ AGENDAMENTO_SALA_EMPREENDEDOR: {
     {
       name: 'Agendamento',
       order: 2,
-      description: 'ConfirmaÃ§Ã£o de data e horÃ¡rio',
+      description: 'Confirmação de data e horário',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -9938,9 +9938,9 @@ AGENDAMENTO_SALA_EMPREENDEDOR: {
       canSkip: false
     },
     {
-      name: 'ConfirmaÃ§Ã£o',
+      name: 'Confirmação',
       order: 3,
-      description: 'ConfirmaÃ§Ã£o com o empreendedor',
+      description: 'Confirmação com o empreendedor',
       slaDays: 1,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -9961,9 +9961,9 @@ PAGAMENTO_IPTU: {
   defaultSLA: 1,
   stages: [
     {
-      name: 'GeraÃ§Ã£o de Guia',
+      name: 'Geração de Guia',
       order: 1,
-      description: 'GeraÃ§Ã£o da guia de pagamento',
+      description: 'Geração da guia de pagamento',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -9982,9 +9982,9 @@ PAGAMENTO_ISS: {
   defaultSLA: 1,
   stages: [
     {
-      name: 'GeraÃ§Ã£o de Guia',
+      name: 'Geração de Guia',
       order: 1,
-      description: 'GeraÃ§Ã£o da guia de pagamento',
+      description: 'Geração da guia de pagamento',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -10003,9 +10003,9 @@ PAGAMENTO_TAXA_LIXO: {
   defaultSLA: 1,
   stages: [
     {
-      name: 'GeraÃ§Ã£o de Guia',
+      name: 'Geração de Guia',
       order: 1,
-      description: 'GeraÃ§Ã£o da guia de pagamento',
+      description: 'Geração da guia de pagamento',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -10017,16 +10017,16 @@ PAGAMENTO_TAXA_LIXO: {
   ]
 },
 
-// ========== DESENVOLVIMENTO ECONÃ”MICO E CONSULTORIAS ==========
+// ========== DESENVOLVIMENTO ECONÔMICO E CONSULTORIAS ==========
 
 ATRACAO_EMPRESAS: {
   moduleType: 'ATRACAO_EMPRESAS',
-  name: 'Workflow - AtraÃ§Ã£o de Empresas e Investimentos',
-  description: 'Fluxo para atraÃ§Ã£o de empresas',
+  name: 'Workflow - Atração de Empresas e Investimentos',
+  description: 'Fluxo para atração de empresas',
   defaultSLA: 30,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
       description: 'Registro do interesse',
       slaDays: 1,
@@ -10038,9 +10038,9 @@ ATRACAO_EMPRESAS: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise Preliminar',
+      name: 'Análise Preliminar',
       order: 2,
-      description: 'AnÃ¡lise do perfil da empresa',
+      description: 'Análise do perfil da empresa',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'dados',
@@ -10050,9 +10050,9 @@ ATRACAO_EMPRESAS: {
       canSkip: false
     },
     {
-      name: 'ElaboraÃ§Ã£o de Proposta',
+      name: 'Elaboração de Proposta',
       order: 3,
-      description: 'ElaboraÃ§Ã£o de proposta de incentivos',
+      description: 'Elaboração de proposta de incentivos',
       slaDays: 15,
       availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
       primaryTab: 'documentos-gerados',
@@ -10062,9 +10062,9 @@ ATRACAO_EMPRESAS: {
       canSkip: false
     },
     {
-      name: 'NegociaÃ§Ã£o',
+      name: 'Negociação',
       order: 4,
-      description: 'NegociaÃ§Ã£o com a empresa',
+      description: 'Negociação com a empresa',
       slaDays: 20,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'comunicacao',
@@ -10078,14 +10078,14 @@ ATRACAO_EMPRESAS: {
 
 SOLICITACAO_CONSULTORIA: {
   moduleType: 'SOLICITACAO_CONSULTORIA',
-  name: 'Workflow - SolicitaÃ§Ã£o de Consultoria Empresarial',
-  description: 'Fluxo para solicitaÃ§Ã£o de consultoria',
+  name: 'Workflow - Solicitação de Consultoria Empresarial',
+  description: 'Fluxo para solicitação de consultoria',
   defaultSLA: 10,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10095,9 +10095,9 @@ SOLICITACAO_CONSULTORIA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise',
+      name: 'Análise',
       order: 2,
-      description: 'AnÃ¡lise da demanda',
+      description: 'Análise da demanda',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10121,7 +10121,7 @@ SOLICITACAO_CONSULTORIA: {
     {
       name: 'Atendimento',
       order: 4,
-      description: 'RealizaÃ§Ã£o da consultoria',
+      description: 'Realização da consultoria',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
       primaryTab: 'resumo',
@@ -10135,14 +10135,14 @@ SOLICITACAO_CONSULTORIA: {
 
 ORIENTACAO_ECONOMIA_CRIATIVA: {
   moduleType: 'ORIENTACAO_ECONOMIA_CRIATIVA',
-  name: 'Workflow - OrientaÃ§Ã£o para Economia Criativa',
-  description: 'Fluxo para orientaÃ§Ã£o em economia criativa',
+  name: 'Workflow - Orientação para Economia Criativa',
+  description: 'Fluxo para orientação em economia criativa',
   defaultSLA: 7,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da solicitaÃ§Ã£o',
+      description: 'Registro da solicitação',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10152,9 +10152,9 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise de Perfil',
+      name: 'Análise de Perfil',
       order: 2,
-      description: 'AnÃ¡lise do perfil do empreendedor criativo',
+      description: 'Análise do perfil do empreendedor criativo',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10176,9 +10176,9 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
       canSkip: false
     },
     {
-      name: 'OrientaÃ§Ã£o',
+      name: 'Orientação',
       order: 4,
-      description: 'RealizaÃ§Ã£o da orientaÃ§Ã£o',
+      description: 'Realização da orientação',
       slaDays: 3,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -10190,18 +10190,18 @@ ORIENTACAO_ECONOMIA_CRIATIVA: {
   ]
 },
 
-// ========== SUGESTÃ•ES E SUPORTE TÃ‰CNICO ==========
+// ========== SUGESTÕES E SUPORTE TÉCNICO ==========
 
 SUGESTAO_MELHORIA: {
   moduleType: 'SUGESTAO_MELHORIA',
-  name: 'Workflow - SugestÃ£o de Melhoria em Sistemas',
-  description: 'Fluxo para sugestÃ£o de melhoria',
+  name: 'Workflow - Sugestão de Melhoria em Sistemas',
+  description: 'Fluxo para sugestão de melhoria',
   defaultSLA: 15,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
-      description: 'Registro da sugestÃ£o',
+      description: 'Registro da sugestão',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10211,9 +10211,9 @@ SUGESTAO_MELHORIA: {
       canSkip: false
     },
     {
-      name: 'AnÃ¡lise TÃ©cnica',
+      name: 'Análise Técnica',
       order: 2,
-      description: 'AnÃ¡lise de viabilidade tÃ©cnica',
+      description: 'Análise de viabilidade técnica',
       slaDays: 5,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10223,9 +10223,9 @@ SUGESTAO_MELHORIA: {
       canSkip: false
     },
     {
-      name: 'AprovaÃ§Ã£o',
+      name: 'Aprovação',
       order: 3,
-      description: 'AprovaÃ§Ã£o para implementaÃ§Ã£o',
+      description: 'Aprovação para implementação',
       slaDays: 5,
       availableTabs: ['resumo', 'comunicacao'],
       primaryTab: 'resumo',
@@ -10237,7 +10237,7 @@ SUGESTAO_MELHORIA: {
     {
       name: 'Planejamento',
       order: 4,
-      description: 'Planejamento da implementaÃ§Ã£o',
+      description: 'Planejamento da implementação',
       slaDays: 10,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'resumo',
@@ -10251,12 +10251,12 @@ SUGESTAO_MELHORIA: {
 
 SUPORTE_TECNICO: {
   moduleType: 'SUPORTE_TECNICO',
-  name: 'Workflow - Suporte TÃ©cnico em Sistemas',
-  description: 'Fluxo para suporte tÃ©cnico',
+  name: 'Workflow - Suporte Técnico em Sistemas',
+  description: 'Fluxo para suporte técnico',
   defaultSLA: 3,
   stages: [
     {
-      name: 'RecepÃ§Ã£o',
+      name: 'Recepção',
       order: 1,
       description: 'Registro do chamado',
       slaDays: 1,
@@ -10270,7 +10270,7 @@ SUPORTE_TECNICO: {
     {
       name: 'Triagem',
       order: 2,
-      description: 'ClassificaÃ§Ã£o e priorizaÃ§Ã£o',
+      description: 'Classificação e priorização',
       slaDays: 1,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10282,7 +10282,7 @@ SUPORTE_TECNICO: {
     {
       name: 'Atendimento',
       order: 3,
-      description: 'Atendimento e resoluÃ§Ã£o',
+      description: 'Atendimento e resolução',
       slaDays: 2,
       availableTabs: ['resumo', 'dados', 'comunicacao'],
       primaryTab: 'dados',
@@ -10294,17 +10294,17 @@ SUPORTE_TECNICO: {
   ]
 },
 
-  // ========== EDUCAÃ‡ÃƒO ==========
+  // ========== EDUCAÇÃO ==========
   RECLAMACAO_TRANSPORTE_ESCOLAR: {
     moduleType: 'RECLAMACAO_TRANSPORTE_ESCOLAR',
-    name: 'Workflow - ReclamaÃ§Ã£o sobre Transporte Escolar',
-    description: 'Fluxo para registro e resoluÃ§Ã£o de reclamaÃ§Ãµes sobre transporte escolar',
+    name: 'Workflow - Reclamação sobre Transporte Escolar',
+    description: 'Fluxo para registro e resolução de reclamações sobre transporte escolar',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da reclamaÃ§Ã£o',
+        description: 'Registro da reclamação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10314,9 +10314,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise',
+        name: 'Análise',
         order: 2,
-        description: 'AnÃ¡lise da reclamaÃ§Ã£o e verificaÃ§Ã£o',
+        description: 'Análise da reclamação e verificação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -10326,9 +10326,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ProvidÃªncias',
+        name: 'Providências',
         order: 3,
-        description: 'Tomada de providÃªncias',
+        description: 'Tomada de providências',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10343,14 +10343,14 @@ SUPORTE_TECNICO: {
   // ========== MOBILIDADE URBANA ==========
   RECLAMACAO_TRANSPORTE_PUBLICO: {
     moduleType: 'RECLAMACAO_TRANSPORTE_PUBLICO',
-    name: 'Workflow - ReclamaÃ§Ã£o sobre Transporte PÃºblico',
-    description: 'Fluxo para registro e resoluÃ§Ã£o de reclamaÃ§Ãµes sobre transporte pÃºblico',
+    name: 'Workflow - Reclamação sobre Transporte Público',
+    description: 'Fluxo para registro e resolução de reclamações sobre transporte público',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da reclamaÃ§Ã£o',
+        description: 'Registro da reclamação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10360,9 +10360,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise',
+        name: 'Análise',
         order: 2,
-        description: 'AnÃ¡lise da reclamaÃ§Ã£o',
+        description: 'Análise da reclamação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -10374,7 +10374,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Encaminhamento',
         order: 3,
-        description: 'Encaminhamento para empresa responsÃ¡vel',
+        description: 'Encaminhamento para empresa responsável',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10386,7 +10386,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Retorno',
         order: 4,
-        description: 'Retorno e providÃªncias tomadas',
+        description: 'Retorno e providências tomadas',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10399,17 +10399,17 @@ SUPORTE_TECNICO: {
   },
 
   // ========== PLANEJAMENTO URBANO ==========
-  // ========== EDUCAÃ‡ÃƒO (continuaÃ§Ã£o) ==========
+  // ========== EDUCAÇÃO (continuação) ==========
   INSCRICAO_EJA: {
     moduleType: 'INSCRICAO_EJA',
-    name: 'Workflow - InscriÃ§Ã£o em EJA',
-    description: 'Fluxo para inscriÃ§Ã£o em EducaÃ§Ã£o de Jovens e Adultos',
+    name: 'Workflow - Inscrição em EJA',
+    description: 'Fluxo para inscrição em Educação de Jovens e Adultos',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10419,9 +10419,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -10431,9 +10431,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise PedagÃ³gica',
+        name: 'Análise Pedagógica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o pedagÃ³gica',
+        description: 'Avaliação pedagógica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10443,9 +10443,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'MatrÃ­cula',
+        name: 'Matrícula',
         order: 4,
-        description: 'EfetivaÃ§Ã£o da matrÃ­cula',
+        description: 'Efetivação da matrícula',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -10456,9 +10456,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula concluÃ­da',
+        description: 'Matrícula concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -10473,14 +10473,14 @@ SUPORTE_TECNICO: {
 
   CALENDARIO_ESCOLAR: {
     moduleType: 'CALENDARIO_ESCOLAR',
-    name: 'Workflow - Consulta de CalendÃ¡rio Escolar',
-    description: 'Fluxo simplificado para consulta de calendÃ¡rio escolar',
+    name: 'Workflow - Consulta de Calendário Escolar',
+    description: 'Fluxo simplificado para consulta de calendário escolar',
     defaultSLA: 1,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10492,7 +10492,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Resposta',
         order: 2,
-        description: 'Envio de calendÃ¡rio',
+        description: 'Envio de calendário',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -10507,12 +10507,12 @@ SUPORTE_TECNICO: {
 
   ALVARA_FUNCIONAMENTO_PLANEJAMENTO: {
     moduleType: 'ALVARA_FUNCIONAMENTO_PLANEJAMENTO',
-    name: 'Workflow - AlvarÃ¡ de Funcionamento (Planejamento Urbano)',
-    description: 'Fluxo para emissÃ£o de alvarÃ¡ de funcionamento sob aspecto urbanÃ­stico',
+    name: 'Workflow - Alvará de Funcionamento (Planejamento Urbano)',
+    description: 'Fluxo para emissão de alvará de funcionamento sob aspecto urbanístico',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Recebimento e protocolo',
         slaDays: 1,
@@ -10524,21 +10524,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Laudo TÃ©cnico', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Laudo Técnico', 'Comprovante de Endereço'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 3,
-        description: 'AnÃ¡lise de conformidade com legislaÃ§Ã£o urbanÃ­stica',
+        description: 'Análise de conformidade com legislação urbanística',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10560,9 +10560,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 5,
-        description: 'AprovaÃ§Ã£o e emissÃ£o do alvarÃ¡',
+        description: 'Aprovação e emissão do alvará',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -10573,9 +10573,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Protocolo concluÃ­do',
+        description: 'Protocolo concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -10588,15 +10588,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL ==========
+  // ========== ASSISTÊNCIA SOCIAL ==========
   ATENDIMENTO_CRAS: {
     moduleType: 'ATENDIMENTO_CRAS',
     name: 'Workflow - Atendimento no CRAS',
-    description: 'Fluxo para atendimento no Centro de ReferÃªncia de AssistÃªncia Social',
+    description: 'Fluxo para atendimento no Centro de Referência de Assistência Social',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do atendimento',
         slaDays: 1,
@@ -10608,9 +10608,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Social',
+        name: 'Análise Social',
         order: 2,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10622,7 +10622,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Encaminhamento',
         order: 3,
-        description: 'Encaminhamento para serviÃ§os',
+        description: 'Encaminhamento para serviços',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10649,14 +10649,14 @@ SUPORTE_TECNICO: {
 
   AUXILIO_EMERGENCIAL: {
     moduleType: 'AUXILIO_EMERGENCIAL',
-    name: 'Workflow - AuxÃ­lio Emergencial',
-    description: 'Fluxo para concessÃ£o de auxÃ­lio emergencial',
+    name: 'Workflow - Auxílio Emergencial',
+    description: 'Fluxo para concessão de auxílio emergencial',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10666,21 +10666,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Endereço'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Social',
+        name: 'Análise Social',
         order: 3,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o',
+        description: 'Avaliação da situação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10690,9 +10690,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do benefÃ­cio',
+        description: 'Aprovação do benefício',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10707,12 +10707,12 @@ SUPORTE_TECNICO: {
 
   CADASTRO_UNICO: {
     moduleType: 'CADASTRO_UNICO',
-    name: 'Workflow - Cadastro Ãšnico',
-    description: 'Fluxo para cadastramento no CadÃšnico',
+    name: 'Workflow - Cadastro Único',
+    description: 'Fluxo para cadastramento no CadÚnico',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -10724,9 +10724,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -10738,7 +10738,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrevista',
         order: 3,
-        description: 'Entrevista socioeconÃ´mica',
+        description: 'Entrevista socioeconômica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10750,7 +10750,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Processamento',
         order: 4,
-        description: 'InclusÃ£o no sistema',
+        description: 'Inclusão no sistema',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10765,14 +10765,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_PROGRAMA_SOCIAL: {
     moduleType: 'INSCRICAO_PROGRAMA_SOCIAL',
-    name: 'Workflow - InscriÃ§Ã£o em Programa Social',
-    description: 'Fluxo para inscriÃ§Ã£o em programas sociais',
+    name: 'Workflow - Inscrição em Programa Social',
+    description: 'Fluxo para inscrição em programas sociais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10782,21 +10782,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CadÃšnico', 'Documentos Pessoais'],
+        requiredDocumentTypes: ['CadÚnico', 'Documentos Pessoais'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de requisitos',
+        description: 'Verificação de requisitos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10806,9 +10806,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'InclusÃ£o',
+        name: 'Inclusão',
         order: 4,
-        description: 'InclusÃ£o no programa',
+        description: 'Inclusão no programa',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -10819,9 +10819,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'InscriÃ§Ã£o concluÃ­da',
+        description: 'Inscrição concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -10836,14 +10836,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_BENEFICIO: {
     moduleType: 'SOLICITACAO_BENEFICIO',
-    name: 'Workflow - SolicitaÃ§Ã£o de BenefÃ­cio',
-    description: 'Fluxo para solicitaÃ§Ã£o de benefÃ­cios assistenciais',
+    name: 'Workflow - Solicitação de Benefício',
+    description: 'Fluxo para solicitação de benefícios assistenciais',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10853,9 +10853,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -10867,7 +10867,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 3,
-        description: 'Visita tÃ©cnica',
+        description: 'Visita técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10879,7 +10879,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Parecer Social',
         order: 4,
-        description: 'ElaboraÃ§Ã£o de parecer',
+        description: 'Elaboração de parecer',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10889,9 +10889,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do benefÃ­cio',
+        description: 'Aprovação do benefício',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -10902,9 +10902,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'BenefÃ­cio concedido',
+        description: 'Benefício concedido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -10920,13 +10920,13 @@ SUPORTE_TECNICO: {
   VISITA_DOMICILIAR: {
     moduleType: 'VISITA_DOMICILIAR',
     name: 'Workflow - Visita Domiciliar',
-    description: 'Fluxo para agendamento e realizaÃ§Ã£o de visita domiciliar',
+    description: 'Fluxo para agendamento e realização de visita domiciliar',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10948,9 +10948,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o',
+        name: 'Realização',
         order: 3,
-        description: 'RealizaÃ§Ã£o da visita',
+        description: 'Realização da visita',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -10960,9 +10960,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'FinalizaÃ§Ã£o',
+        description: 'Finalização',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -10977,14 +10977,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_GRUPO_OFICINA: {
     moduleType: 'INSCRICAO_GRUPO_OFICINA',
-    name: 'Workflow - InscriÃ§Ã£o em Grupo ou Oficina',
-    description: 'Fluxo para inscriÃ§Ã£o em grupos e oficinas sociais',
+    name: 'Workflow - Inscrição em Grupo ou Oficina',
+    description: 'Fluxo para inscrição em grupos e oficinas sociais',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -10994,9 +10994,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 2,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11006,9 +11006,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11019,9 +11019,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'InscriÃ§Ã£o efetivada',
+        description: 'Inscrição efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11042,7 +11042,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -11054,9 +11054,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -11066,9 +11066,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 3,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11079,9 +11079,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11097,11 +11097,11 @@ SUPORTE_TECNICO: {
   CADASTRO_EVENTO_CULTURAL: {
     moduleType: 'CADASTRO_EVENTO_CULTURAL',
     name: 'Workflow - Cadastro de Evento Cultural',
-    description: 'Fluxo para cadastramento e aprovaÃ§Ã£o de eventos culturais',
+    description: 'Fluxo para cadastramento e aprovação de eventos culturais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do evento',
         slaDays: 1,
@@ -11113,9 +11113,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Projeto',
+        name: 'Análise de Projeto',
         order: 2,
-        description: 'AnÃ¡lise do projeto cultural',
+        description: 'Análise do projeto cultural',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11125,9 +11125,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 3,
-        description: 'AprovaÃ§Ã£o do evento',
+        description: 'Aprovação do evento',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11138,7 +11138,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
         description: 'Evento aprovado',
         slaDays: 1,
@@ -11155,14 +11155,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_OFICINA: {
     moduleType: 'INSCRICAO_OFICINA',
-    name: 'Workflow - InscriÃ§Ã£o em Oficina Cultural',
-    description: 'Fluxo para inscriÃ§Ã£o em oficinas culturais',
+    name: 'Workflow - Inscrição em Oficina Cultural',
+    description: 'Fluxo para inscrição em oficinas culturais',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11172,9 +11172,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 2,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11184,9 +11184,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11197,9 +11197,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'InscriÃ§Ã£o efetivada',
+        description: 'Inscrição efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11214,14 +11214,14 @@ SUPORTE_TECNICO: {
 
   RESERVA_ESPACO_CULTURAL: {
     moduleType: 'RESERVA_ESPACO_CULTURAL',
-    name: 'Workflow - Reserva de EspaÃ§o Cultural',
-    description: 'Fluxo para reserva de espaÃ§os culturais',
+    name: 'Workflow - Reserva de Espaço Cultural',
+    description: 'Fluxo para reserva de espaços culturais',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11231,9 +11231,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Disponibilidade',
+        name: 'Verificação de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de agenda',
+        description: 'Verificação de agenda',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11243,9 +11243,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Projeto',
+        name: 'Análise de Projeto',
         order: 3,
-        description: 'AnÃ¡lise da proposta',
+        description: 'Análise da proposta',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11255,9 +11255,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da reserva',
+        description: 'Confirmação da reserva',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11268,7 +11268,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Reserva confirmada',
         slaDays: 1,
@@ -11286,11 +11286,11 @@ SUPORTE_TECNICO: {
   PROJETO_CULTURAL: {
     moduleType: 'PROJETO_CULTURAL',
     name: 'Workflow - Projeto Cultural',
-    description: 'Fluxo para aprovaÃ§Ã£o de projetos culturais e captaÃ§Ã£o de recursos',
+    description: 'Fluxo para aprovação de projetos culturais e captação de recursos',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do projeto',
         slaDays: 2,
@@ -11302,21 +11302,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto Detalhado', 'OrÃ§amento'],
+        requiredDocumentTypes: ['Projeto Detalhado', 'Orçamento'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o tÃ©cnica do projeto',
+        description: 'Avaliação técnica do projeto',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11338,9 +11338,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11351,7 +11351,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Projeto aprovado',
         slaDays: 1,
@@ -11369,13 +11369,13 @@ SUPORTE_TECNICO: {
   APOIO_CULTURAL: {
     moduleType: 'APOIO_CULTURAL',
     name: 'Workflow - Apoio Cultural',
-    description: 'Fluxo para solicitaÃ§Ã£o de apoio a eventos culturais',
+    description: 'Fluxo para solicitação de apoio a eventos culturais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11385,9 +11385,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 2,
-        description: 'AnÃ¡lise de viabilidade',
+        description: 'Análise de viabilidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11397,9 +11397,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 3,
-        description: 'AprovaÃ§Ã£o do apoio',
+        description: 'Aprovação do apoio',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11410,7 +11410,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
         description: 'Apoio concedido',
         slaDays: 1,
@@ -11427,12 +11427,12 @@ SUPORTE_TECNICO: {
 
   CADASTRO_GRUPO_ARTISTICO: {
     moduleType: 'CADASTRO_GRUPO_ARTISTICO',
-    name: 'Workflow - Cadastro de Grupo ArtÃ­stico',
-    description: 'Fluxo para cadastramento de grupos artÃ­sticos',
+    name: 'Workflow - Cadastro de Grupo Artístico',
+    description: 'Fluxo para cadastramento de grupos artísticos',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -11444,21 +11444,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['PortfÃ³lio do Grupo'],
+        requiredDocumentTypes: ['Portfólio do Grupo'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 3,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11469,9 +11469,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11486,14 +11486,14 @@ SUPORTE_TECNICO: {
 
   REGISTRO_MANIFESTACAO_CULTURAL: {
     moduleType: 'REGISTRO_MANIFESTACAO_CULTURAL',
-    name: 'Workflow - Registro de ManifestaÃ§Ã£o Cultural',
-    description: 'Fluxo para registro de manifestaÃ§Ãµes culturais tradicionais',
+    name: 'Workflow - Registro de Manifestação Cultural',
+    description: 'Fluxo para registro de manifestações culturais tradicionais',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da manifestaÃ§Ã£o',
+        description: 'Registro da manifestação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11505,7 +11505,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Pesquisa',
         order: 2,
-        description: 'Pesquisa histÃ³rica e cultural',
+        description: 'Pesquisa histórica e cultural',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11515,9 +11515,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o',
+        name: 'Validação',
         order: 3,
-        description: 'ValidaÃ§Ã£o tÃ©cnica',
+        description: 'Validação técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11540,9 +11540,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'ManifestaÃ§Ã£o registrada',
+        description: 'Manifestação registrada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11562,7 +11562,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do atendimento',
         slaDays: 1,
@@ -11576,7 +11576,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Atendimento',
         order: 2,
-        description: 'PrestaÃ§Ã£o do atendimento',
+        description: 'Prestação do atendimento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11586,9 +11586,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 3,
-        description: 'Atendimento concluÃ­do',
+        description: 'Atendimento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11609,7 +11609,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -11621,21 +11621,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 3,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11646,9 +11646,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11663,14 +11663,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_COMPETICAO: {
     moduleType: 'INSCRICAO_COMPETICAO',
-    name: 'Workflow - InscriÃ§Ã£o em CompetiÃ§Ã£o',
-    description: 'Fluxo para inscriÃ§Ã£o em competiÃ§Ãµes esportivas',
+    name: 'Workflow - Inscrição em Competição',
+    description: 'Fluxo para inscrição em competições esportivas',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11680,9 +11680,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 2,
-        description: 'VerificaÃ§Ã£o de elegibilidade',
+        description: 'Verificação de elegibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11692,9 +11692,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11705,9 +11705,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'InscriÃ§Ã£o efetivada',
+        description: 'Inscrição efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11722,14 +11722,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA: {
     moduleType: 'INSCRICAO_ESCOLINHA',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha Esportiva',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinhas esportivas',
+    name: 'Workflow - Inscrição em Escolinha Esportiva',
+    description: 'Fluxo para inscrição em escolinhas esportivas',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11739,9 +11739,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -11751,9 +11751,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11763,9 +11763,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11776,9 +11776,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11793,14 +11793,14 @@ SUPORTE_TECNICO: {
 
   RESERVA_ESPACO_ESPORTIVO: {
     moduleType: 'RESERVA_ESPACO_ESPORTIVO',
-    name: 'Workflow - Reserva de EspaÃ§o Esportivo',
-    description: 'Fluxo para reserva de espaÃ§os esportivos',
+    name: 'Workflow - Reserva de Espaço Esportivo',
+    description: 'Fluxo para reserva de espaços esportivos',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11810,9 +11810,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Disponibilidade',
+        name: 'Verificação de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de agenda',
+        description: 'Verificação de agenda',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -11822,9 +11822,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o da reserva',
+        description: 'Confirmação da reserva',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11835,7 +11835,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
         description: 'Reserva confirmada',
         slaDays: 1,
@@ -11850,17 +11850,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== HABITAÃ‡ÃƒO ==========
+  // ========== HABITAÇÃO ==========
   REGULARIZACAO_FUNDIARIA: {
     moduleType: 'REGULARIZACAO_FUNDIARIA',
-    name: 'Workflow - RegularizaÃ§Ã£o FundiÃ¡ria',
-    description: 'Fluxo para regularizaÃ§Ã£o de imÃ³vel',
+    name: 'Workflow - Regularização Fundiária',
+    description: 'Fluxo para regularização de imóvel',
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento e protocolo da solicitaÃ§Ã£o',
+        description: 'Recebimento e protocolo da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -11870,21 +11870,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentaÃ§Ã£o obrigatÃ³ria',
+        description: 'Verificação de documentação obrigatória',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['Escritura (se possuir)', 'IPTU', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria no imÃ³vel para levantamento',
+        description: 'Vistoria no imóvel para levantamento',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11894,9 +11894,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 4,
-        description: 'AnÃ¡lise jurÃ­dica da situaÃ§Ã£o do imÃ³vel',
+        description: 'Análise jurídica da situação do imóvel',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11906,9 +11906,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de DocumentaÃ§Ã£o',
+        name: 'Elaboração de Documentação',
         order: 5,
-        description: 'ElaboraÃ§Ã£o de plantas e memorial descritivo',
+        description: 'Elaboração de plantas e memorial descritivo',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11918,9 +11918,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 6,
-        description: 'AprovaÃ§Ã£o e encaminhamento para registro',
+        description: 'Aprovação e encaminhamento para registro',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11930,9 +11930,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Documentos',
+        name: 'Emissão de Documentos',
         order: 7,
-        description: 'EmissÃ£o de documentos de regularizaÃ§Ã£o',
+        description: 'Emissão de documentos de regularização',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -11943,9 +11943,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'Processo concluÃ­do',
+        description: 'Processo concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -11960,14 +11960,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_PROGRAMA_HABITACIONAL: {
     moduleType: 'INSCRICAO_PROGRAMA_HABITACIONAL',
-    name: 'Workflow - InscriÃ§Ã£o em Programa Habitacional',
-    description: 'Fluxo para inscriÃ§Ã£o em programas habitacionais (MCMV, Casa Verde e Amarela)',
+    name: 'Workflow - Inscrição em Programa Habitacional',
+    description: 'Fluxo para inscrição em programas habitacionais (MCMV, Casa Verde e Amarela)',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -11977,21 +11977,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'CadÃšnico', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico', 'Comprovante de Endereço'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o socioeconÃ´mica da famÃ­lia',
+        description: 'Avaliação da situação socioeconômica da família',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12003,7 +12003,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 4,
-        description: 'Visita tÃ©cnica ao domicÃ­lio',
+        description: 'Visita técnica ao domicílio',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12013,9 +12013,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios de elegibilidade',
+        description: 'Verificação de critérios de elegibilidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12025,9 +12025,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o e ClassificaÃ§Ã£o',
+        name: 'Aprovação e Classificação',
         order: 6,
-        description: 'AprovaÃ§Ã£o e classificaÃ§Ã£o na lista de espera',
+        description: 'Aprovação e classificação na lista de espera',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12037,9 +12037,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 7,
-        description: 'EmissÃ£o de comprovante de inscriÃ§Ã£o',
+        description: 'Emissão de comprovante de inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12050,9 +12050,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'InscriÃ§Ã£o concluÃ­da',
+        description: 'Inscrição concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12067,14 +12067,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_AUXILIO_ALUGUEL: {
     moduleType: 'SOLICITACAO_AUXILIO_ALUGUEL',
-    name: 'Workflow - SolicitaÃ§Ã£o de AuxÃ­lio Aluguel',
-    description: 'Fluxo para concessÃ£o de auxÃ­lio moradia temporÃ¡rio',
+    name: 'Workflow - Solicitação de Auxílio Aluguel',
+    description: 'Fluxo para concessão de auxílio moradia temporário',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12084,21 +12084,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'DeclaraÃ§Ã£o de Vulnerabilidade'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'Declaração de Vulnerabilidade'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Visita TÃ©cnica',
+        name: 'Visita Técnica',
         order: 3,
-        description: 'Visita tÃ©cnica para avaliaÃ§Ã£o da situaÃ§Ã£o',
+        description: 'Visita técnica para avaliação da situação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12108,9 +12108,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Social',
+        name: 'Análise Social',
         order: 4,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12120,9 +12120,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o TÃ©cnica',
+        name: 'Aprovação Técnica',
         order: 5,
-        description: 'AprovaÃ§Ã£o tÃ©cnica do benefÃ­cio',
+        description: 'Aprovação técnica do benefício',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12132,9 +12132,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o GestÃ£o',
+        name: 'Aprovação Gestão',
         order: 6,
-        description: 'AprovaÃ§Ã£o final pela gestÃ£o',
+        description: 'Aprovação final pela gestão',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12144,9 +12144,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Portaria',
+        name: 'Emissão de Portaria',
         order: 7,
-        description: 'EmissÃ£o de portaria de concessÃ£o',
+        description: 'Emissão de portaria de concessão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12157,9 +12157,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'BenefÃ­cio concedido',
+        description: 'Benefício concedido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12174,12 +12174,12 @@ SUPORTE_TECNICO: {
 
   AUTORIZACAO_CONSTRUCAO: {
     moduleType: 'AUTORIZACAO_CONSTRUCAO',
-    name: 'Workflow - AutorizaÃ§Ã£o para ConstruÃ§Ã£o',
-    description: 'Fluxo para autorizaÃ§Ã£o de construÃ§Ã£o em lote regularizado',
+    name: 'Workflow - Autorização para Construção',
+    description: 'Fluxo para autorização de construção em lote regularizado',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Recebimento e protocolo',
         slaDays: 1,
@@ -12191,21 +12191,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto ArquitetÃ´nico', 'ART (AnotaÃ§Ã£o de Responsabilidade TÃ©cnica)', 'MatrÃ­cula do ImÃ³vel'],
+        requiredDocumentTypes: ['Projeto Arquitetônico', 'ART (Anotação de Responsabilidade Técnica)', 'Matrícula do Imóvel'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica de Projeto',
+        name: 'Análise Técnica de Projeto',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica do projeto arquitetÃ´nico',
+        description: 'Análise técnica do projeto arquitetônico',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12215,9 +12215,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 4,
-        description: 'VerificaÃ§Ã£o de conformidade urbanÃ­stica',
+        description: 'Verificação de conformidade urbanística',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12239,9 +12239,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o do alvarÃ¡ de construÃ§Ã£o',
+        description: 'Emissão do alvará de construção',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12252,9 +12252,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o concedida',
+        description: 'Autorização concedida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12270,13 +12270,13 @@ SUPORTE_TECNICO: {
   VISTORIA_HABITACIONAL: {
     moduleType: 'VISTORIA_HABITACIONAL',
     name: 'Workflow - Vistoria Habitacional',
-    description: 'Fluxo para solicitaÃ§Ã£o de vistoria tÃ©cnica habitacional',
+    description: 'Fluxo para solicitação de vistoria técnica habitacional',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12286,13 +12286,13 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de EndereÃ§o'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Endereço'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -12310,7 +12310,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o da Vistoria',
+        name: 'Realização da Vistoria',
         order: 4,
         description: 'Vistoria in loco',
         slaDays: 7,
@@ -12322,9 +12322,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de Laudo',
+        name: 'Elaboração de Laudo',
         order: 5,
-        description: 'ElaboraÃ§Ã£o do laudo tÃ©cnico',
+        description: 'Elaboração do laudo técnico',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12334,9 +12334,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'EmissÃ£o do laudo tÃ©cnico',
+        description: 'Emissão do laudo técnico',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12347,7 +12347,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Laudo emitido',
         slaDays: 1,
@@ -12364,14 +12364,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_MCMV_MUNICIPAL: {
     moduleType: 'INSCRICAO_MCMV_MUNICIPAL',
-    name: 'Workflow - InscriÃ§Ã£o MCMV Municipal',
-    description: 'Fluxo para inscriÃ§Ã£o no programa municipal Minha Casa Minha Vida',
+    name: 'Workflow - Inscrição MCMV Municipal',
+    description: 'Fluxo para inscrição no programa municipal Minha Casa Minha Vida',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12381,21 +12381,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'CadÃšnico', 'Comprovante de EndereÃ§o', 'CertidÃ£o de Casamento (se aplicÃ¡vel)'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda', 'CadÚnico', 'Comprovante de Endereço', 'Certidão de Casamento (se aplicável)'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Cadastros',
+        name: 'Verificação de Cadastros',
         order: 3,
-        description: 'VerificaÃ§Ã£o em bases de dados',
+        description: 'Verificação em bases de dados',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12405,9 +12405,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12419,7 +12419,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 5,
-        description: 'Visita tÃ©cnica',
+        description: 'Visita técnica',
         slaDays: 8,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12429,9 +12429,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ClassificaÃ§Ã£o Final',
+        name: 'Classificação Final',
         order: 6,
-        description: 'ClassificaÃ§Ã£o e pontuaÃ§Ã£o final',
+        description: 'Classificação e pontuação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12441,9 +12441,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 7,
-        description: 'EmissÃ£o de comprovante de inscriÃ§Ã£o',
+        description: 'Emissão de comprovante de inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12454,9 +12454,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'InscriÃ§Ã£o concluÃ­da',
+        description: 'Inscrição concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12471,14 +12471,14 @@ SUPORTE_TECNICO: {
 
   REGULARIZACAO_POSSE: {
     moduleType: 'REGULARIZACAO_POSSE',
-    name: 'Workflow - RegularizaÃ§Ã£o de Posse',
-    description: 'Fluxo para regularizaÃ§Ã£o de posse de terreno ou imÃ³vel',
+    name: 'Workflow - Regularização de Posse',
+    description: 'Fluxo para regularização de posse de terreno ou imóvel',
     defaultSLA: 90,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento da solicitaÃ§Ã£o',
+        description: 'Recebimento da solicitação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -12488,19 +12488,19 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de OcupaÃ§Ã£o', 'DeclaraÃ§Ã£o de Posse', 'Croqui do Terreno'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Ocupação', 'Declaração de Posse', 'Croqui do Terreno'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria no terreno',
         slaDays: 15,
@@ -12512,9 +12512,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 4,
-        description: 'AnÃ¡lise jurÃ­dica da posse',
+        description: 'Análise jurídica da posse',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12526,7 +12526,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Pesquisa de Titularidade',
         order: 5,
-        description: 'Pesquisa em cartÃ³rio e cadastros',
+        description: 'Pesquisa em cartório e cadastros',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12536,9 +12536,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de Planta e Memorial',
+        name: 'Elaboração de Planta e Memorial',
         order: 6,
-        description: 'ElaboraÃ§Ã£o de documentos tÃ©cnicos',
+        description: 'Elaboração de documentos técnicos',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12548,9 +12548,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 7,
-        description: 'AprovaÃ§Ã£o e encaminhamento',
+        description: 'Aprovação e encaminhamento',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12560,9 +12560,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Documentos',
+        name: 'Emissão de Documentos',
         order: 8,
-        description: 'EmissÃ£o de certidÃ£o ou tÃ­tulo',
+        description: 'Emissão de certidão ou título',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12573,9 +12573,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 9,
-        description: 'Processo concluÃ­do',
+        description: 'Processo concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12590,14 +12590,14 @@ SUPORTE_TECNICO: {
 
   USUCAPIAO_URBANO: {
     moduleType: 'USUCAPIAO_URBANO',
-    name: 'Workflow - UsucapiÃ£o Urbano',
-    description: 'Fluxo para solicitaÃ§Ã£o de usucapiÃ£o de imÃ³vel urbano',
+    name: 'Workflow - Usucapião Urbano',
+    description: 'Fluxo para solicitação de usucapião de imóvel urbano',
     defaultSLA: 180,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Recebimento da solicitaÃ§Ã£o',
+        description: 'Recebimento da solicitação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -12607,21 +12607,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental Inicial',
+        name: 'Análise Documental Inicial',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 15,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'DeclaraÃ§Ã£o de Posse Mansa e PacÃ­fica', 'Comprovantes de ResidÃªncia', 'DeclaraÃ§Ã£o de Testemunhas'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Declaração de Posse Mansa e Pacífica', 'Comprovantes de Residência', 'Declaração de Testemunhas'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria e levantamento topogrÃ¡fico',
+        description: 'Vistoria e levantamento topográfico',
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12631,9 +12631,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica Preliminar',
+        name: 'Análise Jurídica Preliminar',
         order: 4,
-        description: 'AnÃ¡lise jurÃ­dica inicial',
+        description: 'Análise jurídica inicial',
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12645,7 +12645,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Pesquisa Registral',
         order: 5,
-        description: 'Pesquisa em cartÃ³rios e registros',
+        description: 'Pesquisa em cartórios e registros',
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12667,9 +12667,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico Final',
+        name: 'Parecer Técnico Final',
         order: 7,
-        description: 'ElaboraÃ§Ã£o de parecer tÃ©cnico final',
+        description: 'Elaboração de parecer técnico final',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12679,9 +12679,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica Final',
+        name: 'Análise Jurídica Final',
         order: 8,
-        description: 'AnÃ¡lise jurÃ­dica conclusiva',
+        description: 'Análise jurídica conclusiva',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12691,9 +12691,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o GestÃ£o',
+        name: 'Aprovação Gestão',
         order: 9,
-        description: 'AprovaÃ§Ã£o pela gestÃ£o',
+        description: 'Aprovação pela gestão',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12705,7 +12705,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Encaminhamento Judicial',
         order: 10,
-        description: 'PreparaÃ§Ã£o e encaminhamento ao JudiciÃ¡rio',
+        description: 'Preparação e encaminhamento ao Judiciário',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -12715,7 +12715,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 11,
         description: 'Processo encaminhado',
         slaDays: 1,
@@ -12733,14 +12733,14 @@ SUPORTE_TECNICO: {
   // ========== AGRICULTURA ==========
   SOLICITACAO_MAQUINAS: {
     moduleType: 'SOLICITACAO_MAQUINAS',
-    name: 'Workflow - SolicitaÃ§Ã£o de MÃ¡quinas AgrÃ­colas',
-    description: 'Fluxo para solicitaÃ§Ã£o de uso de mÃ¡quinas e equipamentos agrÃ­colas',
+    name: 'Workflow - Solicitação de Máquinas Agrícolas',
+    description: 'Fluxo para solicitação de uso de máquinas e equipamentos agrícolas',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12750,9 +12750,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -12762,9 +12762,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Disponibilidade',
+        name: 'Verificação de Disponibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de mÃ¡quinas disponÃ­veis',
+        description: 'Verificação de máquinas disponíveis',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12776,7 +12776,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento',
         order: 4,
-        description: 'Agendamento do serviÃ§o',
+        description: 'Agendamento do serviço',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12786,9 +12786,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ExecuÃ§Ã£o',
+        name: 'Execução',
         order: 5,
-        description: 'ExecuÃ§Ã£o do serviÃ§o',
+        description: 'Execução do serviço',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12798,9 +12798,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'ServiÃ§o concluÃ­do',
+        description: 'Serviço concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12815,14 +12815,14 @@ SUPORTE_TECNICO: {
 
   FEIRA_PRODUTOR: {
     moduleType: 'FEIRA_PRODUTOR',
-    name: 'Workflow - InscriÃ§Ã£o na Feira do Produtor',
-    description: 'Fluxo para inscriÃ§Ã£o em feira municipal de produtores',
+    name: 'Workflow - Inscrição na Feira do Produtor',
+    description: 'Fluxo para inscrição em feira municipal de produtores',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12832,9 +12832,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -12844,9 +12844,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o dos produtos',
+        description: 'Avaliação dos produtos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12856,9 +12856,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AlocaÃ§Ã£o de EspaÃ§o',
+        name: 'Alocação de Espaço',
         order: 4,
-        description: 'DefiniÃ§Ã£o de espaÃ§o na feira',
+        description: 'Definição de espaço na feira',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12868,9 +12868,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 5,
-        description: 'EmissÃ£o de credencial',
+        description: 'Emissão de credencial',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12881,9 +12881,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o concluÃ­da',
+        description: 'Inscrição concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -12900,11 +12900,11 @@ SUPORTE_TECNICO: {
   LICENCIAMENTO_AMBIENTAL: {
     moduleType: 'LICENCIAMENTO_AMBIENTAL',
     name: 'Workflow - Licenciamento Ambiental',
-    description: 'Fluxo para solicitaÃ§Ã£o de licenÃ§a ambiental',
+    description: 'Fluxo para solicitação de licença ambiental',
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Recebimento e protocolo',
         slaDays: 3,
@@ -12916,9 +12916,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 10,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -12928,9 +12928,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica Preliminar',
+        name: 'Análise Técnica Preliminar',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica inicial do projeto',
+        description: 'Análise técnica inicial do projeto',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12940,7 +12940,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 10,
@@ -12952,9 +12952,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 5,
-        description: 'ElaboraÃ§Ã£o de parecer tÃ©cnico',
+        description: 'Elaboração de parecer técnico',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -12964,9 +12964,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o GestÃ£o',
+        name: 'Aprovação Gestão',
         order: 6,
-        description: 'AprovaÃ§Ã£o pela gestÃ£o ambiental',
+        description: 'Aprovação pela gestão ambiental',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -12976,9 +12976,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 7,
-        description: 'EmissÃ£o da licenÃ§a ambiental',
+        description: 'Emissão da licença ambiental',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -12989,9 +12989,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'LicenÃ§a emitida',
+        description: 'Licença emitida',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13006,14 +13006,14 @@ SUPORTE_TECNICO: {
 
   AUTORIZACAO_PODA_ARVORES: {
     moduleType: 'AUTORIZACAO_PODA_ARVORES',
-    name: 'Workflow - AutorizaÃ§Ã£o para Poda ou SupressÃ£o de Ãrvores',
-    description: 'Fluxo para autorizaÃ§Ã£o de poda ou corte de Ã¡rvores',
+    name: 'Workflow - Autorização para Poda ou Supressão de Árvores',
+    description: 'Fluxo para autorização de poda ou corte de árvores',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13023,9 +13023,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -13035,7 +13035,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria no local',
         slaDays: 5,
@@ -13047,9 +13047,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 4,
-        description: 'ElaboraÃ§Ã£o de parecer',
+        description: 'Elaboração de parecer',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13059,9 +13059,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Aprovação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13071,9 +13071,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o do documento de autorizaÃ§Ã£o',
+        description: 'Emissão do documento de autorização',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13084,9 +13084,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13099,17 +13099,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== SAÃšDE (complementares) ==========
+  // ========== SAÚDE (complementares) ==========
   AGENDAMENTO_CONSULTA: {
     moduleType: 'AGENDAMENTO_CONSULTA',
     name: 'Workflow - Agendamento de Consulta',
-    description: 'Fluxo para agendamento de consultas mÃ©dicas',
+    description: 'Fluxo para agendamento de consultas médicas',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13131,9 +13131,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o do agendamento',
+        description: 'Confirmação do agendamento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13144,7 +13144,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
         description: 'Consulta agendada',
         slaDays: 1,
@@ -13161,14 +13161,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_EXAMES: {
     moduleType: 'SOLICITACAO_EXAMES',
-    name: 'Workflow - SolicitaÃ§Ã£o de Exames',
-    description: 'Fluxo para solicitaÃ§Ã£o de exames mÃ©dicos',
+    name: 'Workflow - Solicitação de Exames',
+    description: 'Fluxo para solicitação de exames médicos',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -13178,13 +13178,13 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Pedido MÃ©dico',
+        name: 'Análise de Pedido Médico',
         order: 2,
-        description: 'VerificaÃ§Ã£o do pedido mÃ©dico',
+        description: 'Verificação do pedido médico',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Pedido MÃ©dico', 'CartÃ£o SUS'],
+        requiredDocumentTypes: ['Pedido Médico', 'Cartão SUS'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13202,9 +13202,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o do agendamento',
+        description: 'Confirmação do agendamento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13215,7 +13215,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Exame agendado',
         slaDays: 1,
@@ -13232,14 +13232,14 @@ SUPORTE_TECNICO: {
 
   CARTAO_SUS: {
     moduleType: 'CARTAO_SUS',
-    name: 'Workflow - EmissÃ£o de CartÃ£o SUS',
-    description: 'Fluxo para solicitaÃ§Ã£o de cartÃ£o SUS',
+    name: 'Workflow - Emissão de Cartão SUS',
+    description: 'Fluxo para solicitação de cartão SUS',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13249,13 +13249,13 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG ou CNH', 'CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG ou CNH', 'CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -13273,9 +13273,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o do CartÃ£o',
+        name: 'Emissão do Cartão',
         order: 4,
-        description: 'EmissÃ£o fÃ­sica do cartÃ£o',
+        description: 'Emissão física do cartão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13286,9 +13286,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'CartÃ£o emitido',
+        description: 'Cartão emitido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13301,17 +13301,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO (complementares) ==========
+  // ========== EDUCAÇÃO (complementares) ==========
   MATRICULA_ESCOLAR: {
     moduleType: 'MATRICULA_ESCOLAR',
-    name: 'Workflow - MatrÃ­cula Escolar',
-    description: 'Fluxo para matrÃ­cula em escola municipal',
+    name: 'Workflow - Matrícula Escolar',
+    description: 'Fluxo para matrícula em escola municipal',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o de matrÃ­cula',
+        description: 'Registro da solicitação de matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13321,21 +13321,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CertidÃ£o de Nascimento', 'RG do ResponsÃ¡vel', 'Comprovante de ResidÃªncia', 'CartÃ£o de Vacina'],
+        requiredDocumentTypes: ['Certidão de Nascimento', 'RG do Responsável', 'Comprovante de Residência', 'Cartão de Vacina'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13345,9 +13345,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EfetivaÃ§Ã£o da MatrÃ­cula',
+        name: 'Efetivação da Matrícula',
         order: 4,
-        description: 'EfetivaÃ§Ã£o no sistema',
+        description: 'Efetivação no sistema',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13357,9 +13357,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 5,
-        description: 'EmissÃ£o de comprovante de matrÃ­cula',
+        description: 'Emissão de comprovante de matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13370,9 +13370,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13387,14 +13387,14 @@ SUPORTE_TECNICO: {
 
   TRANSFERENCIA_ESCOLAR: {
     moduleType: 'TRANSFERENCIA_ESCOLAR',
-    name: 'Workflow - TransferÃªncia Escolar',
-    description: 'Fluxo para transferÃªncia entre escolas municipais',
+    name: 'Workflow - Transferência Escolar',
+    description: 'Fluxo para transferência entre escolas municipais',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13404,9 +13404,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 2,
-        description: 'VerificaÃ§Ã£o na escola destino',
+        description: 'Verificação na escola destino',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13416,9 +13416,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise PedagÃ³gica',
+        name: 'Análise Pedagógica',
         order: 3,
-        description: 'AnÃ¡lise pela coordenaÃ§Ã£o pedagÃ³gica',
+        description: 'Análise pela coordenação pedagógica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13428,9 +13428,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EfetivaÃ§Ã£o',
+        name: 'Efetivação',
         order: 4,
-        description: 'EfetivaÃ§Ã£o da transferÃªncia',
+        description: 'Efetivação da transferência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13441,9 +13441,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'TransferÃªncia efetivada',
+        description: 'Transferência efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13459,13 +13459,13 @@ SUPORTE_TECNICO: {
   TRANSPORTE_ESCOLAR: {
     moduleType: 'TRANSPORTE_ESCOLAR',
     name: 'Workflow - Transporte Escolar',
-    description: 'Fluxo para solicitaÃ§Ã£o de transporte escolar',
+    description: 'Fluxo para solicitação de transporte escolar',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13475,21 +13475,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Comprovante de MatrÃ­cula', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['Comprovante de Matrícula', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de distÃ¢ncia e critÃ©rios',
+        description: 'Verificação de distância e critérios',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13499,9 +13499,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AlocaÃ§Ã£o de Rota',
+        name: 'Alocação de Rota',
         order: 4,
-        description: 'DefiniÃ§Ã£o de rota e veÃ­culo',
+        description: 'Definição de rota e veículo',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13511,9 +13511,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Passe',
+        name: 'Emissão de Passe',
         order: 5,
-        description: 'EmissÃ£o de cartÃ£o de transporte',
+        description: 'Emissão de cartão de transporte',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13524,7 +13524,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Transporte concedido',
         slaDays: 1,
@@ -13542,12 +13542,12 @@ SUPORTE_TECNICO: {
   // ========== PLANEJAMENTO URBANO ==========
   PARCELAMENTO_SOLO: {
     moduleType: 'PARCELAMENTO_SOLO',
-    name: 'Workflow - AutorizaÃ§Ã£o de Parcelamento do Solo',
-    description: 'Fluxo para autorizaÃ§Ã£o de loteamento, desmembramento ou remembramento',
+    name: 'Workflow - Autorização de Parcelamento do Solo',
+    description: 'Fluxo para autorização de loteamento, desmembramento ou remembramento',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Recebimento e protocolo',
         slaDays: 2,
@@ -13559,21 +13559,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos obrigatÃ³rios',
+        description: 'Verificação de documentos obrigatórios',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'CNPJ (se empresa)', 'MatrÃ­cula do ImÃ³vel', 'Projeto de Parcelamento', 'ART do ResponsÃ¡vel TÃ©cnico'],
+        requiredDocumentTypes: ['CPF', 'RG', 'CNPJ (se empresa)', 'Matrícula do Imóvel', 'Projeto de Parcelamento', 'ART do Responsável Técnico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 3,
-        description: 'AnÃ¡lise de conformidade urbanÃ­stica',
+        description: 'Análise de conformidade urbanística',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13583,9 +13583,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Infraestrutura',
+        name: 'Análise de Infraestrutura',
         order: 4,
-        description: 'AnÃ¡lise de infraestrutura necessÃ¡ria',
+        description: 'Análise de infraestrutura necessária',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13595,9 +13595,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 5,
-        description: 'ElaboraÃ§Ã£o de parecer tÃ©cnico',
+        description: 'Elaboração de parecer técnico',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13607,9 +13607,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13619,9 +13619,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 7,
-        description: 'EmissÃ£o do alvarÃ¡ de parcelamento',
+        description: 'Emissão do alvará de parcelamento',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13632,9 +13632,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13647,7 +13647,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (continuação) ==========
   CADASTRO_PROPRIEDADE_RURAL: {
     moduleType: 'CADASTRO_PROPRIEDADE_RURAL',
     name: 'Workflow - Cadastro de Propriedade Rural',
@@ -13655,7 +13655,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -13667,9 +13667,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -13679,7 +13679,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria na propriedade',
         slaDays: 5,
@@ -13693,7 +13693,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 4,
-        description: 'InclusÃ£o no cadastro municipal',
+        description: 'Inclusão no cadastro municipal',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13703,9 +13703,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o de certificado de cadastro',
+        description: 'Emissão de certificado de cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13716,9 +13716,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13733,14 +13733,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_PROGRAMA_RURAL: {
     moduleType: 'INSCRICAO_PROGRAMA_RURAL',
-    name: 'Workflow - InscriÃ§Ã£o em Programa Rural',
-    description: 'Fluxo para inscriÃ§Ã£o em programas de desenvolvimento rural',
+    name: 'Workflow - Inscrição em Programa Rural',
+    description: 'Fluxo para inscrição em programas de desenvolvimento rural',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13750,9 +13750,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -13762,9 +13762,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13774,9 +13774,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Visita TÃ©cnica',
+        name: 'Visita Técnica',
         order: 4,
-        description: 'Visita Ã  propriedade',
+        description: 'Visita à propriedade',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13786,9 +13786,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Aprovação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13799,9 +13799,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o efetivada',
+        description: 'Inscrição efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13816,14 +13816,14 @@ SUPORTE_TECNICO: {
 
   LICENCA_EVENTOS_RURAIS: {
     moduleType: 'LICENCA_EVENTOS_RURAIS',
-    name: 'Workflow - LicenÃ§a para Eventos Rurais',
-    description: 'Fluxo para autorizaÃ§Ã£o de eventos em Ã¡reas rurais',
+    name: 'Workflow - Licença para Eventos Rurais',
+    description: 'Fluxo para autorização de eventos em áreas rurais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13833,9 +13833,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -13847,7 +13847,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria do Local',
         order: 3,
-        description: 'Vistoria tÃ©cnica no local',
+        description: 'Vistoria técnica no local',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -13857,9 +13857,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 4,
-        description: 'ElaboraÃ§Ã£o de parecer',
+        description: 'Elaboração de parecer',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13869,9 +13869,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 5,
-        description: 'EmissÃ£o da autorizaÃ§Ã£o',
+        description: 'Emissão da autorização',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13882,9 +13882,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'LicenÃ§a emitida',
+        description: 'Licença emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -13899,14 +13899,14 @@ SUPORTE_TECNICO: {
 
   ANALISE_SOLO: {
     moduleType: 'ANALISE_SOLO',
-    name: 'Workflow - AnÃ¡lise de Solo',
-    description: 'Fluxo para solicitaÃ§Ã£o de anÃ¡lise de solo',
+    name: 'Workflow - Análise de Solo',
+    description: 'Fluxo para solicitação de análise de solo',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13940,9 +13940,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Laboratorial',
+        name: 'Análise Laboratorial',
         order: 4,
-        description: 'AnÃ¡lise em laboratÃ³rio',
+        description: 'Análise em laboratório',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -13952,9 +13952,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de Laudo',
+        name: 'Elaboração de Laudo',
         order: 5,
-        description: 'ElaboraÃ§Ã£o do laudo tÃ©cnico',
+        description: 'Elaboração do laudo técnico',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13964,9 +13964,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'EmissÃ£o do laudo',
+        description: 'Emissão do laudo',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -13977,7 +13977,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Laudo entregue',
         slaDays: 1,
@@ -13999,7 +13999,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do atendimento',
         slaDays: 1,
@@ -14011,9 +14011,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 2,
-        description: 'AnÃ¡lise da demanda',
+        description: 'Análise da demanda',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14025,7 +14025,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Atendimento',
         order: 3,
-        description: 'PrestaÃ§Ã£o do atendimento',
+        description: 'Prestação do atendimento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14035,9 +14035,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'Atendimento concluÃ­do',
+        description: 'Atendimento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14052,14 +14052,14 @@ SUPORTE_TECNICO: {
 
   ASSISTENCIA_TECNICA: {
     moduleType: 'ASSISTENCIA_TECNICA',
-    name: 'Workflow - AssistÃªncia TÃ©cnica Rural',
-    description: 'Fluxo para assistÃªncia tÃ©cnica a produtores rurais',
+    name: 'Workflow - Assistência Técnica Rural',
+    description: 'Fluxo para assistência técnica a produtores rurais',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14071,7 +14071,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Triagem',
         order: 2,
-        description: 'ClassificaÃ§Ã£o da demanda',
+        description: 'Classificação da demanda',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14083,7 +14083,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento de Visita',
         order: 3,
-        description: 'Agendamento da visita tÃ©cnica',
+        description: 'Agendamento da visita técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14093,9 +14093,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Visita TÃ©cnica',
+        name: 'Visita Técnica',
         order: 4,
-        description: 'RealizaÃ§Ã£o da visita',
+        description: 'Realização da visita',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14105,9 +14105,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de Plano',
+        name: 'Elaboração de Plano',
         order: 5,
-        description: 'ElaboraÃ§Ã£o de plano de aÃ§Ã£o',
+        description: 'Elaboração de plano de ação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14117,9 +14117,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'AssistÃªncia prestada',
+        description: 'Assistência prestada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14132,17 +14132,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ESPORTES (continuaÃ§Ã£o) ==========
+  // ========== ESPORTES (continuação) ==========
   INSCRICAO_ESCOLINHA_FUTEBOL: {
     moduleType: 'INSCRICAO_ESCOLINHA_FUTEBOL',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de Futebol',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de futebol',
+    name: 'Workflow - Inscrição em Escolinha de Futebol',
+    description: 'Fluxo para inscrição em escolinha de futebol',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14152,9 +14152,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -14164,9 +14164,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14176,9 +14176,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14189,9 +14189,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14206,14 +14206,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA_VOLEI: {
     moduleType: 'INSCRICAO_ESCOLINHA_VOLEI',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de VÃ´lei',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de vÃ´lei',
+    name: 'Workflow - Inscrição em Escolinha de Vôlei',
+    description: 'Fluxo para inscrição em escolinha de vôlei',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14223,21 +14223,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14247,9 +14247,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14260,9 +14260,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14277,14 +14277,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA_BASQUETE: {
     moduleType: 'INSCRICAO_ESCOLINHA_BASQUETE',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de Basquete',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de basquete',
+    name: 'Workflow - Inscrição em Escolinha de Basquete',
+    description: 'Fluxo para inscrição em escolinha de basquete',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14294,21 +14294,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14318,9 +14318,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14331,9 +14331,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14348,14 +14348,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA_NATACAO: {
     moduleType: 'INSCRICAO_ESCOLINHA_NATACAO',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de NataÃ§Ã£o',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de nataÃ§Ã£o',
+    name: 'Workflow - Inscrição em Escolinha de Natação',
+    description: 'Fluxo para inscrição em escolinha de natação',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14365,21 +14365,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14389,9 +14389,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14402,9 +14402,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14419,14 +14419,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA_JUDO: {
     moduleType: 'INSCRICAO_ESCOLINHA_JUDO',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de JudÃ´',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de judÃ´',
+    name: 'Workflow - Inscrição em Escolinha de Judô',
+    description: 'Fluxo para inscrição em escolinha de judô',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14436,21 +14436,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14460,9 +14460,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14473,9 +14473,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14490,14 +14490,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA_GINASTICA: {
     moduleType: 'INSCRICAO_ESCOLINHA_GINASTICA',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de GinÃ¡stica',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de ginÃ¡stica',
+    name: 'Workflow - Inscrição em Escolinha de Ginástica',
+    description: 'Fluxo para inscrição em escolinha de ginástica',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14507,21 +14507,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14531,9 +14531,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14544,9 +14544,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14561,14 +14561,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_ESCOLINHA_CAPOEIRA: {
     moduleType: 'INSCRICAO_ESCOLINHA_CAPOEIRA',
-    name: 'Workflow - InscriÃ§Ã£o em Escolinha de Capoeira',
-    description: 'Fluxo para inscriÃ§Ã£o em escolinha de capoeira',
+    name: 'Workflow - Inscrição em Escolinha de Capoeira',
+    description: 'Fluxo para inscrição em escolinha de capoeira',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14578,21 +14578,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14602,9 +14602,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da matrÃ­cula',
+        description: 'Confirmação da matrícula',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14615,9 +14615,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'MatrÃ­cula efetivada',
+        description: 'Matrícula efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14633,13 +14633,13 @@ SUPORTE_TECNICO: {
   BOLSA_ATLETA: {
     moduleType: 'BOLSA_ATLETA',
     name: 'Workflow - Bolsa Atleta',
-    description: 'Fluxo para concessÃ£o de bolsa atleta',
+    description: 'Fluxo para concessão de bolsa atleta',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14649,21 +14649,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'HistÃ³rico Esportivo'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Histórico Esportivo'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o do histÃ³rico esportivo',
+        description: 'Avaliação do histórico esportivo',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14673,9 +14673,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14685,9 +14685,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da bolsa',
+        description: 'Aprovação da bolsa',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14697,9 +14697,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Portaria',
+        name: 'Emissão de Portaria',
         order: 6,
-        description: 'EmissÃ£o de portaria de concessÃ£o',
+        description: 'Emissão de portaria de concessão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14710,7 +14710,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Bolsa concedida',
         slaDays: 1,
@@ -14725,17 +14725,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO (continuaÃ§Ã£o) ==========
+  // ========== EDUCAÇÃO (continuação) ==========
   INSCRICAO_CRECHE: {
     moduleType: 'INSCRICAO_CRECHE',
-    name: 'Workflow - InscriÃ§Ã£o em Creche',
-    description: 'Fluxo para inscriÃ§Ã£o em creche municipal',
+    name: 'Workflow - Inscrição em Creche',
+    description: 'Fluxo para inscrição em creche municipal',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14745,9 +14745,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -14757,9 +14757,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica da famÃ­lia',
+        description: 'Avaliação socioeconômica da família',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14769,9 +14769,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ClassificaÃ§Ã£o',
+        name: 'Classificação',
         order: 4,
-        description: 'ClassificaÃ§Ã£o na lista de espera',
+        description: 'Classificação na lista de espera',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14781,9 +14781,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 5,
-        description: 'EmissÃ£o de comprovante de inscriÃ§Ã£o',
+        description: 'Emissão de comprovante de inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14794,9 +14794,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o concluÃ­da',
+        description: 'Inscrição concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14816,7 +14816,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -14828,21 +14828,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG do ResponsÃ¡vel', 'CPF do ResponsÃ¡vel', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG do Responsável', 'CPF do Responsável', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Curricular',
+        name: 'Análise Curricular',
         order: 3,
-        description: 'AnÃ¡lise do currÃ­culo',
+        description: 'Análise do currículo',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14854,7 +14854,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 4,
-        description: 'InclusÃ£o no banco de professores',
+        description: 'Inclusão no banco de professores',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14864,9 +14864,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o de certificado de cadastro',
+        description: 'Emissão de certificado de cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14877,9 +14877,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -14894,14 +14894,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_DOCUMENTO_ESCOLAR: {
     moduleType: 'SOLICITACAO_DOCUMENTO_ESCOLAR',
-    name: 'Workflow - SolicitaÃ§Ã£o de Documento Escolar',
-    description: 'Fluxo para solicitaÃ§Ã£o de documentos escolares',
+    name: 'Workflow - Solicitação de Documento Escolar',
+    description: 'Fluxo para solicitação de documentos escolares',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14911,9 +14911,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Dados',
+        name: 'Verificação de Dados',
         order: 2,
-        description: 'VerificaÃ§Ã£o no sistema escolar',
+        description: 'Verificação no sistema escolar',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14923,9 +14923,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o do Documento',
+        name: 'Elaboração do Documento',
         order: 3,
-        description: 'ElaboraÃ§Ã£o do documento solicitado',
+        description: 'Elaboração do documento solicitado',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14935,9 +14935,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o',
+        name: 'Emissão',
         order: 4,
-        description: 'EmissÃ£o do documento',
+        description: 'Emissão do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -14948,7 +14948,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Documento emitido',
         slaDays: 1,
@@ -14965,14 +14965,14 @@ SUPORTE_TECNICO: {
 
   REGISTRO_OCORRENCIA_ESCOLAR: {
     moduleType: 'REGISTRO_OCORRENCIA_ESCOLAR',
-    name: 'Workflow - Registro de OcorrÃªncia Escolar',
-    description: 'Fluxo para registro de ocorrÃªncias escolares',
+    name: 'Workflow - Registro de Ocorrência Escolar',
+    description: 'Fluxo para registro de ocorrências escolares',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da ocorrÃªncia',
+        description: 'Registro da ocorrência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -14982,9 +14982,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Preliminar',
+        name: 'Análise Preliminar',
         order: 2,
-        description: 'AnÃ¡lise inicial da ocorrÃªncia',
+        description: 'Análise inicial da ocorrência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -14994,9 +14994,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'InvestigaÃ§Ã£o',
+        name: 'Investigação',
         order: 3,
-        description: 'InvestigaÃ§Ã£o da ocorrÃªncia',
+        description: 'Investigação da ocorrência',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15006,9 +15006,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ProvidÃªncias',
+        name: 'Providências',
         order: 4,
-        description: 'Tomada de providÃªncias',
+        description: 'Tomada de providências',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15023,12 +15023,12 @@ SUPORTE_TECNICO: {
 
   CONSULTA_FREQUENCIA_NOTAS: {
     moduleType: 'CONSULTA_FREQUENCIA_NOTAS',
-    name: 'Workflow - Consulta de FrequÃªncia e Notas',
-    description: 'Fluxo para consulta de frequÃªncia e notas',
+    name: 'Workflow - Consulta de Frequência e Notas',
+    description: 'Fluxo para consulta de frequência e notas',
     defaultSLA: 2,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro da consulta',
         slaDays: 1,
@@ -15042,7 +15042,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Consulta no Sistema',
         order: 2,
-        description: 'Busca de informaÃ§Ãµes',
+        description: 'Busca de informações',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15057,14 +15057,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_CURSO_LIVRE: {
     moduleType: 'INSCRICAO_CURSO_LIVRE',
-    name: 'Workflow - InscriÃ§Ã£o em Curso Livre',
-    description: 'Fluxo para inscriÃ§Ã£o em cursos livres',
+    name: 'Workflow - Inscrição em Curso Livre',
+    description: 'Fluxo para inscrição em cursos livres',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15074,9 +15074,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 2,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15086,9 +15086,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 3,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15099,9 +15099,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'InscriÃ§Ã£o efetivada',
+        description: 'Inscrição efetivada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -15114,7 +15114,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== SAÃšDE (continuaÃ§Ã£o) ==========
+  // ========== SAÚDE (continuação) ==========
   AGENDAMENTO_ESPECIALIZADO: {
     moduleType: 'AGENDAMENTO_ESPECIALIZADO',
     name: 'Workflow - Agendamento de Consulta Especializada',
@@ -15122,9 +15122,9 @@ SUPORTE_TECNICO: {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15134,9 +15134,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Encaminhamento',
+        name: 'Análise de Encaminhamento',
         order: 2,
-        description: 'VerificaÃ§Ã£o do encaminhamento mÃ©dico',
+        description: 'Verificação do encaminhamento médico',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -15146,9 +15146,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'RegulaÃ§Ã£o',
+        name: 'Regulação',
         order: 3,
-        description: 'RegulaÃ§Ã£o mÃ©dica',
+        description: 'Regulação médica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15170,9 +15170,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o do agendamento',
+        description: 'Confirmação do agendamento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15183,7 +15183,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Consulta agendada',
         slaDays: 1,
@@ -15200,14 +15200,14 @@ SUPORTE_TECNICO: {
 
   AGENDAMENTO_ODONTOLOGIA: {
     moduleType: 'AGENDAMENTO_ODONTOLOGIA',
-    name: 'Workflow - Agendamento OdontolÃ³gico',
-    description: 'Fluxo para agendamento de consultas odontolÃ³gicas',
+    name: 'Workflow - Agendamento Odontológico',
+    description: 'Fluxo para agendamento de consultas odontológicas',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15219,7 +15219,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Triagem',
         order: 2,
-        description: 'ClassificaÃ§Ã£o de urgÃªncia',
+        description: 'Classificação de urgência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15241,9 +15241,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o do agendamento',
+        description: 'Confirmação do agendamento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15254,7 +15254,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Consulta agendada',
         slaDays: 1,
@@ -15272,13 +15272,13 @@ SUPORTE_TECNICO: {
   MEDICAMENTOS_ALTO_CUSTO: {
     moduleType: 'MEDICAMENTOS_ALTO_CUSTO',
     name: 'Workflow - Medicamentos de Alto Custo',
-    description: 'Fluxo para solicitaÃ§Ã£o de medicamentos de alto custo',
+    description: 'Fluxo para solicitação de medicamentos de alto custo',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -15288,21 +15288,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Receita MÃ©dica Especial', 'Laudo MÃ©dico', 'Exames Complementares', 'CartÃ£o SUS', 'RG ou CPF'],
+        requiredDocumentTypes: ['Receita Médica Especial', 'Laudo Médico', 'Exames Complementares', 'Cartão SUS', 'RG ou CPF'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o tÃ©cnica farmacÃªutica',
+        description: 'Avaliação técnica farmacêutica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15312,9 +15312,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise MÃ©dica',
+        name: 'Análise Médica',
         order: 4,
-        description: 'AnÃ¡lise por mÃ©dico auditor',
+        description: 'Análise por médico auditor',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15324,9 +15324,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Aprovação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15336,9 +15336,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AutorizaÃ§Ã£o',
+        name: 'Autorização',
         order: 6,
-        description: 'EmissÃ£o de autorizaÃ§Ã£o',
+        description: 'Emissão de autorização',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15349,7 +15349,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Medicamento autorizado',
         slaDays: 1,
@@ -15364,17 +15364,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MEIO AMBIENTE (continuaÃ§Ã£o) ==========
+  // ========== MEIO AMBIENTE (continuação) ==========
   AUTORIZACAO_SUPRESSAO_VEGETAL: {
     moduleType: 'AUTORIZACAO_SUPRESSAO_VEGETAL',
-    name: 'Workflow - AutorizaÃ§Ã£o para SupressÃ£o Vegetal',
-    description: 'Fluxo para autorizaÃ§Ã£o de supressÃ£o vegetal',
+    name: 'Workflow - Autorização para Supressão Vegetal',
+    description: 'Fluxo para autorização de supressão vegetal',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -15387,9 +15387,9 @@ SUPORTE_TECNICO: {
         actionLabels: { APPROVE: 'Iniciar/Aceitar protocolo' }
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -15399,7 +15399,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria no local',
         slaDays: 7,
@@ -15411,9 +15411,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 4,
-        description: 'ElaboraÃ§Ã£o de parecer tÃ©cnico',
+        description: 'Elaboração de parecer técnico',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15423,9 +15423,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Aprovação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15435,9 +15435,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o do documento de autorizaÃ§Ã£o',
+        description: 'Emissão do documento de autorização',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15448,9 +15448,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -15465,14 +15465,14 @@ SUPORTE_TECNICO: {
 
   LICENCA_AMBIENTAL_SIMPLIFICADA: {
     moduleType: 'LICENCA_AMBIENTAL_SIMPLIFICADA',
-    name: 'Workflow - LicenÃ§a Ambiental Simplificada',
+    name: 'Workflow - Licença Ambiental Simplificada',
     description: 'Fluxo para licenciamento ambiental simplificado',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -15482,9 +15482,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -15494,9 +15494,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica do projeto',
+        description: 'Análise técnica do projeto',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15518,9 +15518,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da licenÃ§a',
+        description: 'Aprovação da licença',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15530,9 +15530,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 6,
-        description: 'EmissÃ£o da licenÃ§a',
+        description: 'Emissão da licença',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15543,9 +15543,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'LicenÃ§a emitida',
+        description: 'Licença emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -15560,14 +15560,14 @@ SUPORTE_TECNICO: {
 
   AUTORIZACAO_CAPTACAO_AGUA: {
     moduleType: 'AUTORIZACAO_CAPTACAO_AGUA',
-    name: 'Workflow - AutorizaÃ§Ã£o para CaptaÃ§Ã£o de Ãgua',
-    description: 'Fluxo para autorizaÃ§Ã£o de captaÃ§Ã£o de Ã¡gua',
+    name: 'Workflow - Autorização para Captação de Água',
+    description: 'Fluxo para autorização de captação de água',
     defaultSLA: 25,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15577,21 +15577,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Projeto HidrÃ¡ulico', 'ART'],
+        requiredDocumentTypes: ['CPF', 'Projeto Hidráulico', 'ART'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise HidrolÃ³gica',
+        name: 'Análise Hidrológica',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica hidrolÃ³gica',
+        description: 'Análise técnica hidrológica',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15601,7 +15601,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 7,
@@ -15613,9 +15613,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da outorga',
+        description: 'Aprovação da outorga',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15625,9 +15625,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Outorga',
+        name: 'Emissão de Outorga',
         order: 6,
-        description: 'EmissÃ£o da outorga',
+        description: 'Emissão da outorga',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15638,7 +15638,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Outorga emitida',
         slaDays: 1,
@@ -15653,7 +15653,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes) ==========
   ACOLHIMENTO_CASA_ABRIGO: {
     moduleType: 'ACOLHIMENTO_CASA_ABRIGO',
     name: 'Workflow - Acolhimento em Casa de Abrigo',
@@ -15661,7 +15661,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 1,
     stages: [
       {
-        name: 'RecepÃ§Ã£o Emergencial',
+        name: 'Recepção Emergencial',
         order: 1,
         description: 'Acolhimento imediato',
         slaDays: 1,
@@ -15673,9 +15673,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Social',
+        name: 'Avaliação Social',
         order: 2,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o social',
+        description: 'Avaliação da situação social',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15685,9 +15685,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o PsicolÃ³gica',
+        name: 'Avaliação Psicológica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o psicolÃ³gica',
+        description: 'Avaliação psicológica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15699,7 +15699,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Plano Individual de Atendimento',
         order: 4,
-        description: 'ElaboraÃ§Ã£o do PIA',
+        description: 'Elaboração do PIA',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15721,7 +15721,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Acolhimento efetivado',
         slaDays: 1,
@@ -15739,11 +15739,11 @@ SUPORTE_TECNICO: {
   ACOMPANHAMENTO_SOCIAL: {
     moduleType: 'ACOMPANHAMENTO_SOCIAL',
     name: 'Workflow - Acompanhamento Social',
-    description: 'Fluxo para acompanhamento social de famÃ­lias',
+    description: 'Fluxo para acompanhamento social de famílias',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do acompanhamento',
         slaDays: 2,
@@ -15755,9 +15755,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'DiagnÃ³stico Social',
+        name: 'Diagnóstico Social',
         order: 2,
-        description: 'ElaboraÃ§Ã£o do diagnÃ³stico',
+        description: 'Elaboração do diagnóstico',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15769,7 +15769,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Plano de Acompanhamento',
         order: 3,
-        description: 'ElaboraÃ§Ã£o do plano',
+        description: 'Elaboração do plano',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15779,9 +15779,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ExecuÃ§Ã£o',
+        name: 'Execução',
         order: 4,
-        description: 'ExecuÃ§Ã£o do acompanhamento',
+        description: 'Execução do acompanhamento',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15791,9 +15791,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o',
+        name: 'Avaliação',
         order: 5,
-        description: 'AvaliaÃ§Ã£o dos resultados',
+        description: 'Avaliação dos resultados',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15803,9 +15803,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Acompanhamento concluÃ­do',
+        description: 'Acompanhamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -15818,7 +15818,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO (workflows faltantes) ==========
+  // ========== EDUCAÇÃO (workflows faltantes) ==========
   AEE: {
     moduleType: 'AEE',
     name: 'Workflow - Atendimento Educacional Especializado',
@@ -15826,9 +15826,9 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15838,21 +15838,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o PedagÃ³gica',
+        name: 'Avaliação Pedagógica',
         order: 2,
-        description: 'AvaliaÃ§Ã£o pedagÃ³gica do aluno',
+        description: 'Avaliação pedagógica do aluno',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['relatorio_pedagogico', 'necessidades_identificadas', 'potencialidades'],
-        requiredDocumentTypes: ['Laudo MÃ©dico'],
+        requiredDocumentTypes: ['Laudo Médico'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
       {
         name: 'Plano de Atendimento',
         order: 3,
-        description: 'ElaboraÃ§Ã£o do plano de AEE',
+        description: 'Elaboração do plano de AEE',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15862,9 +15862,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do plano',
+        description: 'Aprovação do plano',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15874,9 +15874,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'InÃ­cio do Atendimento',
+        name: 'Início do Atendimento',
         order: 5,
-        description: 'InÃ­cio dos atendimentos',
+        description: 'Início dos atendimentos',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15887,7 +15887,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'AEE autorizado',
         slaDays: 1,
@@ -15902,17 +15902,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== SAÃšDE (workflows faltantes) ==========
+  // ========== SAÚDE (workflows faltantes) ==========
   AGENDAMENTO_CAPS: {
     moduleType: 'AGENDAMENTO_CAPS',
     name: 'Workflow - Agendamento em CAPS',
-    description: 'Fluxo para agendamento em Centro de AtenÃ§Ã£o Psicossocial',
+    description: 'Fluxo para agendamento em Centro de Atenção Psicossocial',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15924,7 +15924,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Triagem',
         order: 2,
-        description: 'Triagem e avaliaÃ§Ã£o inicial',
+        description: 'Triagem e avaliação inicial',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15936,7 +15936,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento',
         order: 3,
-        description: 'DefiniÃ§Ã£o de data e horÃ¡rio',
+        description: 'Definição de data e horário',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -15946,9 +15946,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o com o paciente',
+        description: 'Confirmação com o paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -15959,7 +15959,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Agendamento confirmado',
         slaDays: 1,
@@ -15976,14 +15976,14 @@ SUPORTE_TECNICO: {
 
   AGENDAMENTO_CENTRO_REFERENCIA: {
     moduleType: 'AGENDAMENTO_CENTRO_REFERENCIA',
-    name: 'Workflow - Agendamento em Centro de ReferÃªncia',
-    description: 'Fluxo para agendamento em centros de referÃªncia especializados',
+    name: 'Workflow - Agendamento em Centro de Referência',
+    description: 'Fluxo para agendamento em centros de referência especializados',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -15993,9 +15993,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Encaminhamento',
+        name: 'Verificação de Encaminhamento',
         order: 2,
-        description: 'ValidaÃ§Ã£o do encaminhamento mÃ©dico',
+        description: 'Validação do encaminhamento médico',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -16005,9 +16005,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'RegulaÃ§Ã£o',
+        name: 'Regulação',
         order: 3,
-        description: 'RegulaÃ§Ã£o e priorizaÃ§Ã£o',
+        description: 'Regulação e priorização',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16019,7 +16019,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento',
         order: 4,
-        description: 'DefiniÃ§Ã£o de data e horÃ¡rio',
+        description: 'Definição de data e horário',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16029,9 +16029,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao paciente',
+        description: 'Notificação ao paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16042,7 +16042,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Agendamento efetivado',
         slaDays: 1,
@@ -16060,14 +16060,14 @@ SUPORTE_TECNICO: {
   // ========== PLANEJAMENTO URBANO (workflows faltantes) ==========
   ALVARA_REFORMA: {
     moduleType: 'ALVARA_REFORMA',
-    name: 'Workflow - AlvarÃ¡ para Reforma',
-    description: 'Fluxo para autorizaÃ§Ã£o de reforma em edificaÃ§Ã£o',
+    name: 'Workflow - Alvará para Reforma',
+    description: 'Fluxo para autorização de reforma em edificação',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16077,21 +16077,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['MatrÃ­cula do ImÃ³vel', 'Projeto de Reforma', 'ART'],
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto de Reforma', 'ART'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise do projeto',
+        description: 'Análise do projeto',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16113,9 +16113,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16125,9 +16125,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AlvarÃ¡',
+        name: 'Emissão de Alvará',
         order: 6,
-        description: 'EmissÃ£o do alvarÃ¡',
+        description: 'Emissão do alvará',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16138,9 +16138,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AlvarÃ¡ emitido',
+        description: 'Alvará emitido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -16155,12 +16155,12 @@ SUPORTE_TECNICO: {
 
   APROVACAO_PROJETO: {
     moduleType: 'APROVACAO_PROJETO',
-    name: 'Workflow - AprovaÃ§Ã£o de Projeto',
-    description: 'Fluxo para aprovaÃ§Ã£o de projetos arquitetÃ´nicos',
+    name: 'Workflow - Aprovação de Projeto',
+    description: 'Fluxo para aprovação de projetos arquitetônicos',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do projeto',
         slaDays: 2,
@@ -16172,21 +16172,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['MatrÃ­cula do ImÃ³vel', 'Projeto ArquitetÃ´nico', 'ART', 'Planta de SituaÃ§Ã£o'],
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto Arquitetônico', 'ART', 'Planta de Situação'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 3,
-        description: 'AnÃ¡lise de conformidade urbanÃ­stica',
+        description: 'Análise de conformidade urbanística',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16196,9 +16196,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise ArquitetÃ´nica',
+        name: 'Análise Arquitetônica',
         order: 4,
-        description: 'AnÃ¡lise do projeto arquitetÃ´nico',
+        description: 'Análise do projeto arquitetônico',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16210,7 +16210,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Parecer Final',
         order: 5,
-        description: 'ConsolidaÃ§Ã£o de pareceres',
+        description: 'Consolidação de pareceres',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16220,9 +16220,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AprovaÃ§Ã£o',
+        name: 'Emissão de Aprovação',
         order: 6,
-        description: 'EmissÃ£o do documento de aprovaÃ§Ã£o',
+        description: 'Emissão do documento de aprovação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16233,7 +16233,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Projeto aprovado',
         slaDays: 1,
@@ -16250,12 +16250,12 @@ SUPORTE_TECNICO: {
 
   APROVACAO_LOTEAMENTO: {
     moduleType: 'APROVACAO_LOTEAMENTO',
-    name: 'Workflow - AprovaÃ§Ã£o de Loteamento',
-    description: 'Fluxo para aprovaÃ§Ã£o de projeto de loteamento',
+    name: 'Workflow - Aprovação de Loteamento',
+    description: 'Fluxo para aprovação de projeto de loteamento',
     defaultSLA: 45,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do projeto',
         slaDays: 3,
@@ -16267,9 +16267,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 7,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -16279,9 +16279,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 3,
-        description: 'AnÃ¡lise de conformidade urbanÃ­stica',
+        description: 'Análise de conformidade urbanística',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16291,21 +16291,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Ambiental',
+        name: 'Análise Ambiental',
         order: 4,
-        description: 'AnÃ¡lise de impacto ambiental',
+        description: 'Análise de impacto ambiental',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['parecer_ambiental', 'areas_preservacao', 'drenagem', 'impactos_identificados'],
-        requiredDocumentTypes: ['LicenÃ§a Ambiental'],
+        requiredDocumentTypes: ['Licença Ambiental'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Infraestrutura',
+        name: 'Análise de Infraestrutura',
         order: 5,
-        description: 'AnÃ¡lise de infraestrutura',
+        description: 'Análise de infraestrutura',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16315,9 +16315,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o TÃ©cnica',
+        name: 'Aprovação Técnica',
         order: 6,
-        description: 'AprovaÃ§Ã£o tÃ©cnica consolidada',
+        description: 'Aprovação técnica consolidada',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16327,9 +16327,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AprovaÃ§Ã£o',
+        name: 'Emissão de Aprovação',
         order: 7,
-        description: 'EmissÃ£o do documento de aprovaÃ§Ã£o',
+        description: 'Emissão do documento de aprovação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16340,7 +16340,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
         description: 'Loteamento aprovado',
         slaDays: 1,
@@ -16357,14 +16357,14 @@ SUPORTE_TECNICO: {
 
   CERTIDAO_USO_SOLO: {
     moduleType: 'CERTIDAO_USO_SOLO',
-    name: 'Workflow - CertidÃ£o de Uso do Solo',
-    description: 'Fluxo para emissÃ£o de certidÃ£o de uso e ocupaÃ§Ã£o do solo',
+    name: 'Workflow - Certidão de Uso do Solo',
+    description: 'Fluxo para emissão de certidão de uso e ocupação do solo',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16374,21 +16374,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'MatrÃ­cula do ImÃ³vel'],
+        requiredDocumentTypes: ['CPF', 'Matrícula do Imóvel'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 3,
-        description: 'Consulta de legislaÃ§Ã£o urbanÃ­stica',
+        description: 'Consulta de legislação urbanística',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16398,9 +16398,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o da CertidÃ£o',
+        name: 'Elaboração da Certidão',
         order: 4,
-        description: 'ElaboraÃ§Ã£o do documento',
+        description: 'Elaboração do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16410,9 +16410,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de CertidÃ£o',
+        name: 'Emissão de Certidão',
         order: 5,
-        description: 'EmissÃ£o da certidÃ£o',
+        description: 'Emissão da certidão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16423,9 +16423,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'CertidÃ£o emitida',
+        description: 'Certidão emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -16438,17 +16438,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== DESENVOLVIMENTO ECONÃ”MICO (workflows faltantes) ==========
+  // ========== DESENVOLVIMENTO ECONÔMICO (workflows faltantes) ==========
   ANALISE_VIABILIDADE_EMPREENDIMENTO: {
     moduleType: 'ANALISE_VIABILIDADE_EMPREENDIMENTO',
-    name: 'Workflow - AnÃ¡lise de Viabilidade de Empreendimento',
-    description: 'Fluxo para anÃ¡lise de viabilidade de novos empreendimentos',
+    name: 'Workflow - Análise de Viabilidade de Empreendimento',
+    description: 'Fluxo para análise de viabilidade de novos empreendimentos',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16458,9 +16458,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -16470,9 +16470,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise EconÃ´mica',
+        name: 'Análise Econômica',
         order: 3,
-        description: 'AnÃ¡lise de viabilidade econÃ´mica',
+        description: 'Análise de viabilidade econômica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16482,9 +16482,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 4,
-        description: 'AnÃ¡lise de adequaÃ§Ã£o urbanÃ­stica',
+        description: 'Análise de adequação urbanística',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16494,9 +16494,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 5,
-        description: 'ConsolidaÃ§Ã£o de pareceres',
+        description: 'Consolidação de pareceres',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16506,9 +16506,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Parecer',
+        name: 'Emissão de Parecer',
         order: 6,
-        description: 'EmissÃ£o do documento',
+        description: 'Emissão do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16519,9 +16519,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AnÃ¡lise concluÃ­da',
+        description: 'Análise concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -16537,14 +16537,14 @@ SUPORTE_TECNICO: {
   // ========== TECNOLOGIA (workflows faltantes) ==========
   API_INTEGRACAO: {
     moduleType: 'API_INTEGRACAO',
-    name: 'Workflow - SolicitaÃ§Ã£o de IntegraÃ§Ã£o API',
-    description: 'Fluxo para solicitaÃ§Ã£o de integraÃ§Ã£o com APIs municipais',
+    name: 'Workflow - Solicitação de Integração API',
+    description: 'Fluxo para solicitação de integração com APIs municipais',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16554,9 +16554,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Requisitos',
+        name: 'Análise de Requisitos',
         order: 2,
-        description: 'AnÃ¡lise dos requisitos tÃ©cnicos',
+        description: 'Análise dos requisitos técnicos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16566,9 +16566,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SeguranÃ§a',
+        name: 'Análise de Segurança',
         order: 3,
-        description: 'AnÃ¡lise de seguranÃ§a da informaÃ§Ã£o',
+        description: 'Análise de segurança da informação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16578,9 +16578,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da integraÃ§Ã£o',
+        description: 'Aprovação da integração',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16590,9 +16590,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfiguraÃ§Ã£o',
+        name: 'Configuração',
         order: 5,
-        description: 'ConfiguraÃ§Ã£o tÃ©cnica',
+        description: 'Configuração técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16602,9 +16602,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credenciais',
+        name: 'Emissão de Credenciais',
         order: 6,
-        description: 'Envio de credenciais e documentaÃ§Ã£o',
+        description: 'Envio de credenciais e documentação',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16615,9 +16615,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'IntegraÃ§Ã£o liberada',
+        description: 'Integração liberada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -16633,14 +16633,14 @@ SUPORTE_TECNICO: {
   // ========== AGRICULTURA (workflows faltantes) ==========
   APOIO_FEIRA_EXPOSICAO: {
     moduleType: 'APOIO_FEIRA_EXPOSICAO',
-    name: 'Workflow - Apoio para Feira ou ExposiÃ§Ã£o',
-    description: 'Fluxo para solicitaÃ§Ã£o de apoio a feiras e exposiÃ§Ãµes agropecuÃ¡rias',
+    name: 'Workflow - Apoio para Feira ou Exposição',
+    description: 'Fluxo para solicitação de apoio a feiras e exposições agropecuárias',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16650,9 +16650,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -16662,9 +16662,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 3,
-        description: 'AnÃ¡lise de viabilidade do apoio',
+        description: 'Análise de viabilidade do apoio',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16674,9 +16674,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do apoio',
+        description: 'Aprovação do apoio',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16686,9 +16686,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 5,
-        description: 'FormalizaÃ§Ã£o do apoio',
+        description: 'Formalização do apoio',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'documentos',
@@ -16698,9 +16698,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Termo',
+        name: 'Emissão de Termo',
         order: 6,
-        description: 'EmissÃ£o do termo de apoio',
+        description: 'Emissão do termo de apoio',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16711,7 +16711,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Apoio formalizado',
         slaDays: 1,
@@ -16726,17 +16726,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== PLANEJAMENTO URBANO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== PLANEJAMENTO URBANO (workflows faltantes - continuação) ==========
   APROVACAO_DEMOLICAO_PARCIAL: {
     moduleType: 'APROVACAO_DEMOLICAO_PARCIAL',
-    name: 'Workflow - AprovaÃ§Ã£o de DemoliÃ§Ã£o Parcial',
-    description: 'Fluxo para autorizaÃ§Ã£o de demoliÃ§Ã£o parcial de edificaÃ§Ã£o',
+    name: 'Workflow - Aprovação de Demolição Parcial',
+    description: 'Fluxo para autorização de demolição parcial de edificação',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16746,21 +16746,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['MatrÃ­cula do ImÃ³vel', 'Projeto de DemoliÃ§Ã£o', 'ART'],
+        requiredDocumentTypes: ['Matrícula do Imóvel', 'Projeto de Demolição', 'ART'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Estrutural',
+        name: 'Análise Estrutural',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica estrutural',
+        description: 'Análise técnica estrutural',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16782,9 +16782,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16794,9 +16794,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o do documento',
+        description: 'Emissão do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16807,9 +16807,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -16824,12 +16824,12 @@ SUPORTE_TECNICO: {
 
   APROVACAO_PROJETO_URBANIZACAO: {
     moduleType: 'APROVACAO_PROJETO_URBANIZACAO',
-    name: 'Workflow - AprovaÃ§Ã£o de Projeto de UrbanizaÃ§Ã£o',
-    description: 'Fluxo para aprovaÃ§Ã£o de projetos de urbanizaÃ§Ã£o de Ã¡reas',
+    name: 'Workflow - Aprovação de Projeto de Urbanização',
+    description: 'Fluxo para aprovação de projetos de urbanização de áreas',
     defaultSLA: 40,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do projeto',
         slaDays: 3,
@@ -16841,21 +16841,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Projeto de UrbanizaÃ§Ã£o', 'Memorial Descritivo', 'ART'],
+        requiredDocumentTypes: ['Projeto de Urbanização', 'Memorial Descritivo', 'ART'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise UrbanÃ­stica',
+        name: 'Análise Urbanística',
         order: 3,
-        description: 'AnÃ¡lise de conformidade urbanÃ­stica',
+        description: 'Análise de conformidade urbanística',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16865,9 +16865,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Ambiental',
+        name: 'Análise Ambiental',
         order: 4,
-        description: 'AnÃ¡lise de impacto ambiental',
+        description: 'Análise de impacto ambiental',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16877,9 +16877,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Social',
+        name: 'Análise Social',
         order: 5,
-        description: 'AnÃ¡lise de impacto social',
+        description: 'Análise de impacto social',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16889,9 +16889,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico Consolidado',
+        name: 'Parecer Técnico Consolidado',
         order: 6,
-        description: 'ConsolidaÃ§Ã£o de pareceres',
+        description: 'Consolidação de pareceres',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -16901,9 +16901,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AprovaÃ§Ã£o',
+        name: 'Emissão de Aprovação',
         order: 7,
-        description: 'EmissÃ£o do documento de aprovaÃ§Ã£o',
+        description: 'Emissão do documento de aprovação',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16914,7 +16914,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
         description: 'Projeto aprovado',
         slaDays: 1,
@@ -16929,17 +16929,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== SAÃšDE (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== SAÚDE (workflows faltantes - continuação) ==========
   ATENDIMENTO_DOMICILIAR: {
     moduleType: 'ATENDIMENTO_DOMICILIAR',
     name: 'Workflow - Atendimento Domiciliar',
-    description: 'Fluxo para solicitaÃ§Ã£o de atendimento domiciliar de saÃºde',
+    description: 'Fluxo para solicitação de atendimento domiciliar de saúde',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -16951,12 +16951,12 @@ SUPORTE_TECNICO: {
       {
         name: 'Triagem',
         order: 2,
-        description: 'Triagem e avaliaÃ§Ã£o da necessidade',
+        description: 'Triagem e avaliação da necessidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['criterios_elegibilidade', 'prioridade', 'tipo_atendimento_necessario'],
-        requiredDocumentTypes: ['CartÃ£o SUS'],
+        requiredDocumentTypes: ['Cartão SUS'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false
       },
@@ -16973,9 +16973,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 4,
-        description: 'NotificaÃ§Ã£o ao paciente',
+        description: 'Notificação ao paciente',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -16986,7 +16986,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Atendimento agendado',
         slaDays: 1,
@@ -17001,17 +17001,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== DESENVOLVIMENTO ECONÃ”MICO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== DESENVOLVIMENTO ECONÔMICO (workflows faltantes - continuação) ==========
   ATUALIZACAO_CADASTRAL_EMPRESA: {
     moduleType: 'ATUALIZACAO_CADASTRAL_EMPRESA',
-    name: 'Workflow - AtualizaÃ§Ã£o Cadastral de Empresa',
-    description: 'Fluxo para atualizaÃ§Ã£o de dados cadastrais de empresa',
+    name: 'Workflow - Atualização Cadastral de Empresa',
+    description: 'Fluxo para atualização de dados cadastrais de empresa',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17021,21 +17021,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Contrato Social Atualizado', 'Comprovante de EndereÃ§o Comercial'],
+        requiredDocumentTypes: ['Contrato Social Atualizado', 'Comprovante de Endereço Comercial'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Dados',
+        name: 'Verificação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o dos dados informados',
+        description: 'Verificação dos dados informados',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17045,9 +17045,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AtualizaÃ§Ã£o',
+        name: 'Atualização',
         order: 4,
-        description: 'AtualizaÃ§Ã£o no sistema',
+        description: 'Atualização no sistema',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17057,9 +17057,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 5,
-        description: 'EmissÃ£o de comprovante',
+        description: 'Emissão de comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17070,9 +17070,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'AtualizaÃ§Ã£o concluÃ­da',
+        description: 'Atualização concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17085,17 +17085,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== FINANÃ‡AS (workflows faltantes) ==========
+  // ========== FINANÇAS (workflows faltantes) ==========
   ATUALIZACAO_CADASTRAL_IMOVEL: {
     moduleType: 'ATUALIZACAO_CADASTRAL_IMOVEL',
-    name: 'Workflow - AtualizaÃ§Ã£o Cadastral de ImÃ³vel',
-    description: 'Fluxo para atualizaÃ§Ã£o de dados cadastrais de imÃ³vel',
+    name: 'Workflow - Atualização Cadastral de Imóvel',
+    description: 'Fluxo para atualização de dados cadastrais de imóvel',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17105,21 +17105,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Escritura ou Contrato de Compra e Venda', 'RG e CPF do ProprietÃ¡rio', 'Comprovante de EndereÃ§o', 'CarnÃª de IPTU'],
+        requiredDocumentTypes: ['Escritura ou Contrato de Compra e Venda', 'RG e CPF do Proprietário', 'Comprovante de Endereço', 'Carnê de IPTU'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o Cadastral',
+        name: 'Verificação Cadastral',
         order: 3,
-        description: 'VerificaÃ§Ã£o dos dados cadastrais',
+        description: 'Verificação dos dados cadastrais',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17129,9 +17129,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria (se necessÃ¡rio)',
+        name: 'Vistoria (se necessário)',
         order: 4,
-        description: 'Vistoria no imÃ³vel',
+        description: 'Vistoria no imóvel',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17141,9 +17141,9 @@ SUPORTE_TECNICO: {
         canSkip: true
       },
       {
-        name: 'AtualizaÃ§Ã£o',
+        name: 'Atualização',
         order: 5,
-        description: 'AtualizaÃ§Ã£o no cadastro',
+        description: 'Atualização no cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17153,9 +17153,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 6,
-        description: 'EmissÃ£o de comprovante',
+        description: 'Emissão de comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17166,9 +17166,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AtualizaÃ§Ã£o concluÃ­da',
+        description: 'Atualização concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17184,14 +17184,14 @@ SUPORTE_TECNICO: {
   // ========== MOBILIDADE URBANA (workflows faltantes) ==========
   AUTORIZACAO_EVENTO_VIA: {
     moduleType: 'AUTORIZACAO_EVENTO_VIA',
-    name: 'Workflow - AutorizaÃ§Ã£o para Evento em Via PÃºblica',
-    description: 'Fluxo para autorizaÃ§Ã£o de eventos em vias pÃºblicas',
+    name: 'Workflow - Autorização para Evento em Via Pública',
+    description: 'Fluxo para autorização de eventos em vias públicas',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17201,9 +17201,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -17213,9 +17213,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de TrÃ¢nsito',
+        name: 'Análise de Trânsito',
         order: 3,
-        description: 'AnÃ¡lise de impacto no trÃ¢nsito',
+        description: 'Análise de impacto no trânsito',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17225,9 +17225,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de SeguranÃ§a',
+        name: 'Análise de Segurança',
         order: 4,
-        description: 'AnÃ¡lise de seguranÃ§a',
+        description: 'Análise de segurança',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17239,7 +17239,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria do Local',
         order: 5,
-        description: 'Vistoria tÃ©cnica no local',
+        description: 'Vistoria técnica no local',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17249,9 +17249,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17261,9 +17261,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 7,
-        description: 'EmissÃ£o do alvarÃ¡',
+        description: 'Emissão do alvará',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17274,9 +17274,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17292,14 +17292,14 @@ SUPORTE_TECNICO: {
   // ========== MEIO AMBIENTE (workflows faltantes) ==========
   AUTORIZACAO_MANEJO_FAUNA: {
     moduleType: 'AUTORIZACAO_MANEJO_FAUNA',
-    name: 'Workflow - AutorizaÃ§Ã£o para Manejo de Fauna',
-    description: 'Fluxo para autorizaÃ§Ã£o de manejo e captura de fauna silvestre',
+    name: 'Workflow - Autorização para Manejo de Fauna',
+    description: 'Fluxo para autorização de manejo e captura de fauna silvestre',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17309,9 +17309,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -17321,9 +17321,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica do pedido',
+        description: 'Análise técnica do pedido',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17345,9 +17345,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17357,9 +17357,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o da licenÃ§a',
+        description: 'Emissão da licença',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17370,9 +17370,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17385,17 +17385,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO / TRANSPORTE ESCOLAR (workflows faltantes) ==========
+  // ========== EDUCAÇÃO / TRANSPORTE ESCOLAR (workflows faltantes) ==========
   AUTORIZACAO_TRANSPORTE_ESCOLAR: {
     moduleType: 'AUTORIZACAO_TRANSPORTE_ESCOLAR',
-    name: 'Workflow - AutorizaÃ§Ã£o de Transporte Escolar',
-    description: 'Fluxo para autorizaÃ§Ã£o de veÃ­culo para transporte escolar',
+    name: 'Workflow - Autorização de Transporte Escolar',
+    description: 'Fluxo para autorização de veículo para transporte escolar',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17405,21 +17405,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Seguro do VeÃ­culo'],
+        requiredDocumentTypes: ['Seguro do Veículo'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria do VeÃ­culo',
+        name: 'Vistoria do Veículo',
         order: 3,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17429,9 +17429,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Rotas',
+        name: 'Análise de Rotas',
         order: 4,
-        description: 'AnÃ¡lise e definiÃ§Ã£o de rotas',
+        description: 'Análise e definição de rotas',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17441,9 +17441,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17453,9 +17453,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o do documento',
+        description: 'Emissão do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17466,9 +17466,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17484,14 +17484,14 @@ SUPORTE_TECNICO: {
   // ========== TURISMO (workflows faltantes) ==========
   AUTORIZACAO_TRANSPORTE_TURISTICO: {
     moduleType: 'AUTORIZACAO_TRANSPORTE_TURISTICO',
-    name: 'Workflow - AutorizaÃ§Ã£o de Transporte TurÃ­stico',
-    description: 'Fluxo para autorizaÃ§Ã£o de transporte turÃ­stico',
+    name: 'Workflow - Autorização de Transporte Turístico',
+    description: 'Fluxo para autorização de transporte turístico',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17501,21 +17501,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Seguro dos VeÃ­culos'],
+        requiredDocumentTypes: ['CNPJ', 'Seguro dos Veículos'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria do VeÃ­culo',
+        name: 'Vistoria do Veículo',
         order: 3,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17525,9 +17525,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17537,9 +17537,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 5,
-        description: 'EmissÃ£o da autorizaÃ§Ã£o',
+        description: 'Emissão da autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17550,9 +17550,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17565,17 +17565,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== HABITAÃ‡ÃƒO (workflows faltantes) ==========
+  // ========== HABITAÇÃO (workflows faltantes) ==========
   AUXILIO_ALUGUEL: {
     moduleType: 'AUXILIO_ALUGUEL',
-    name: 'Workflow - AuxÃ­lio Aluguel',
-    description: 'Fluxo para concessÃ£o de auxÃ­lio aluguel',
+    name: 'Workflow - Auxílio Aluguel',
+    description: 'Fluxo para concessão de auxílio aluguel',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17585,9 +17585,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -17597,9 +17597,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17611,7 +17611,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 4,
-        description: 'Visita tÃ©cnica',
+        description: 'Visita técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17621,9 +17621,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17633,9 +17633,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17646,9 +17646,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AuxÃ­lio concedido',
+        description: 'Auxílio concedido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17663,14 +17663,14 @@ SUPORTE_TECNICO: {
 
   AUXILIO_CONSTRUCAO: {
     moduleType: 'AUXILIO_CONSTRUCAO',
-    name: 'Workflow - AuxÃ­lio ConstruÃ§Ã£o',
-    description: 'Fluxo para concessÃ£o de auxÃ­lio para construÃ§Ã£o',
+    name: 'Workflow - Auxílio Construção',
+    description: 'Fluxo para concessão de auxílio para construção',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17680,9 +17680,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -17692,9 +17692,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17716,9 +17716,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17728,9 +17728,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17740,9 +17740,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Termo',
+        name: 'Emissão de Termo',
         order: 7,
-        description: 'EmissÃ£o do termo de concessÃ£o',
+        description: 'Emissão do termo de concessão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17753,9 +17753,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'AuxÃ­lio concedido',
+        description: 'Auxílio concedido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17768,7 +17768,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== DESENVOLVIMENTO ECONÃ”MICO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== DESENVOLVIMENTO ECONÔMICO (workflows faltantes - continuação) ==========
   BAIXA_EMPRESA: {
     moduleType: 'BAIXA_EMPRESA',
     name: 'Workflow - Baixa de Empresa',
@@ -17776,9 +17776,9 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17788,21 +17788,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CertidÃµes Negativas (Tributos Municipais, Estaduais e Federais)', 'CNPJ'],
+        requiredDocumentTypes: ['Certidões Negativas (Tributos Municipais, Estaduais e Federais)', 'CNPJ'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de DÃ©bitos',
+        name: 'Verificação de Débitos',
         order: 3,
-        description: 'VerificaÃ§Ã£o de pendÃªncias fiscais',
+        description: 'Verificação de pendências fiscais',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -17812,7 +17812,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria (se necessÃ¡rio)',
+        name: 'Vistoria (se necessário)',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 3,
@@ -17824,9 +17824,9 @@ SUPORTE_TECNICO: {
         canSkip: true
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da baixa',
+        description: 'Aprovação da baixa',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17848,9 +17848,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 7,
-        description: 'EmissÃ£o do comprovante',
+        description: 'Emissão do comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17861,9 +17861,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'Baixa concluÃ­da',
+        description: 'Baixa concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17876,17 +17876,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   BENEFICIO_EVENTUAL: {
     moduleType: 'BENEFICIO_EVENTUAL',
-    name: 'Workflow - BenefÃ­cio Eventual',
-    description: 'Fluxo para concessÃ£o de benefÃ­cios eventuais',
+    name: 'Workflow - Benefício Eventual',
+    description: 'Fluxo para concessão de benefícios eventuais',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17896,9 +17896,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -17908,9 +17908,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Social',
+        name: 'Avaliação Social',
         order: 3,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o',
+        description: 'Avaliação da situação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17920,9 +17920,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 4,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -17932,9 +17932,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o e concessÃ£o',
+        description: 'Aprovação e concessão',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -17945,9 +17945,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'BenefÃ­cio concedido',
+        description: 'Benefício concedido',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -17962,14 +17962,14 @@ SUPORTE_TECNICO: {
 
   BOLSA_FAMILIA_MUNICIPAL: {
     moduleType: 'BOLSA_FAMILIA_MUNICIPAL',
-    name: 'Workflow - Bolsa FamÃ­lia Municipal',
-    description: 'Fluxo para inscriÃ§Ã£o em programa de transferÃªncia de renda municipal',
+    name: 'Workflow - Bolsa Família Municipal',
+    description: 'Fluxo para inscrição em programa de transferência de renda municipal',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -17979,21 +17979,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda Familiar', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda Familiar', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18005,7 +18005,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 4,
-        description: 'Visita tÃ©cnica',
+        description: 'Visita técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18015,9 +18015,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o final de critÃ©rios',
+        description: 'Verificação final de critérios',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18027,9 +18027,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o e inclusÃ£o',
+        description: 'Aprovação e inclusão',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18040,9 +18040,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'FamÃ­lia incluÃ­da no programa',
+        description: 'Família incluída no programa',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18055,15 +18055,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (workflows faltantes - continuação) ==========
   CADASTRO_AGROINDUSTRIA: {
     moduleType: 'CADASTRO_AGROINDUSTRIA',
-    name: 'Workflow - Cadastro de AgroindÃºstria',
-    description: 'Fluxo para cadastramento de agroindÃºstria',
+    name: 'Workflow - Cadastro de Agroindústria',
+    description: 'Fluxo para cadastramento de agroindústria',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -18075,9 +18075,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -18087,9 +18087,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria nas instalaÃ§Ãµes',
+        description: 'Vistoria nas instalações',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18099,9 +18099,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica da produÃ§Ã£o',
+        description: 'Análise técnica da produção',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18111,9 +18111,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18123,9 +18123,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18136,9 +18136,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18151,15 +18151,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== TURISMO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== TURISMO (workflows faltantes - continuação) ==========
   CADASTRO_ATRACAO_TURISTICA: {
     moduleType: 'CADASTRO_ATRACAO_TURISTICA',
-    name: 'Workflow - Cadastro de AtraÃ§Ã£o TurÃ­stica',
-    description: 'Fluxo para cadastramento de atraÃ§Ã£o turÃ­stica',
+    name: 'Workflow - Cadastro de Atração Turística',
+    description: 'Fluxo para cadastramento de atração turística',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -18171,9 +18171,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -18183,7 +18183,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria no local',
         slaDays: 5,
@@ -18195,9 +18195,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18207,9 +18207,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18220,9 +18220,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18235,7 +18235,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== FINANÃ‡AS (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== FINANÇAS (workflows faltantes - continuação) ==========
   CADASTRO_CONTRIBUINTE: {
     moduleType: 'CADASTRO_CONTRIBUINTE',
     name: 'Workflow - Cadastro de Contribuinte',
@@ -18243,7 +18243,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -18255,9 +18255,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -18267,9 +18267,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Dados',
+        name: 'Verificação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o dos dados cadastrais',
+        description: 'Verificação dos dados cadastrais',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18281,7 +18281,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 4,
-        description: 'InclusÃ£o no cadastro',
+        description: 'Inclusão no cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18291,9 +18291,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 5,
-        description: 'EmissÃ£o do comprovante',
+        description: 'Emissão do comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18304,9 +18304,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18319,15 +18319,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== HABITAÃ‡ÃƒO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== HABITAÇÃO (workflows faltantes - continuação) ==========
   CADASTRO_DEFICIT_HABITACIONAL: {
     moduleType: 'CADASTRO_DEFICIT_HABITACIONAL',
-    name: 'Workflow - Cadastro em DÃ©ficit Habitacional',
-    description: 'Fluxo para cadastramento em lista de dÃ©ficit habitacional',
+    name: 'Workflow - Cadastro em Déficit Habitacional',
+    description: 'Fluxo para cadastramento em lista de déficit habitacional',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -18339,9 +18339,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -18351,9 +18351,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18365,7 +18365,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 4,
-        description: 'Visita tÃ©cnica',
+        description: 'Visita técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18377,7 +18377,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 5,
-        description: 'InclusÃ£o na lista',
+        description: 'Inclusão na lista',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18388,9 +18388,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18403,15 +18403,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   CADASTRO_FAMILIA_RISCO: {
     moduleType: 'CADASTRO_FAMILIA_RISCO',
-    name: 'Workflow - Cadastro de FamÃ­lia em Risco',
-    description: 'Fluxo para cadastramento de famÃ­lia em situaÃ§Ã£o de risco',
+    name: 'Workflow - Cadastro de Família em Risco',
+    description: 'Fluxo para cadastramento de família em situação de risco',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -18423,9 +18423,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Inicial',
+        name: 'Avaliação Inicial',
         order: 2,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o de risco',
+        description: 'Avaliação da situação de risco',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18449,7 +18449,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Plano de Acompanhamento',
         order: 4,
-        description: 'ElaboraÃ§Ã£o do plano',
+        description: 'Elaboração do plano',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18461,7 +18461,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 5,
-        description: 'InclusÃ£o no sistema de acompanhamento',
+        description: 'Inclusão no sistema de acompanhamento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18472,9 +18472,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'FamÃ­lia em acompanhamento',
+        description: 'Família em acompanhamento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18494,7 +18494,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -18506,21 +18506,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'CertidÃµes Negativas'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Certidões Negativas'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Dados',
+        name: 'Verificação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o dos dados cadastrais',
+        description: 'Verificação dos dados cadastrais',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18530,9 +18530,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de HabilitaÃ§Ã£o',
+        name: 'Análise de Habilitação',
         order: 4,
-        description: 'AnÃ¡lise de habilitaÃ§Ã£o',
+        description: 'Análise de habilitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18544,7 +18544,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 5,
-        description: 'InclusÃ£o no sistema',
+        description: 'Inclusão no sistema',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18554,9 +18554,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18567,9 +18567,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18582,15 +18582,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MEIO AMBIENTE (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== MEIO AMBIENTE (workflows faltantes - continuação) ==========
   CADASTRO_GERADOR_RESIDUOS: {
     moduleType: 'CADASTRO_GERADOR_RESIDUOS',
-    name: 'Workflow - Cadastro de Gerador de ResÃ­duos',
-    description: 'Fluxo para cadastramento de gerador de resÃ­duos',
+    name: 'Workflow - Cadastro de Gerador de Resíduos',
+    description: 'Fluxo para cadastramento de gerador de resíduos',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -18602,9 +18602,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -18614,9 +18614,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria nas instalaÃ§Ãµes',
+        description: 'Vistoria nas instalações',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18626,9 +18626,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise do PGRS',
+        description: 'Análise do PGRS',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18638,9 +18638,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18650,9 +18650,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18663,9 +18663,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18678,17 +18678,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== TECNOLOGIA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== TECNOLOGIA (workflows faltantes - continuação) ==========
   CADASTRO_LOGIN_UNICO: {
     moduleType: 'CADASTRO_LOGIN_UNICO',
-    name: 'Workflow - Cadastro em Login Ãšnico',
-    description: 'Fluxo para cadastramento em sistema de login Ãºnico',
+    name: 'Workflow - Cadastro em Login Único',
+    description: 'Fluxo para cadastramento em sistema de login único',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18698,9 +18698,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de Dados',
+        name: 'Validação de Dados',
         order: 2,
-        description: 'ValidaÃ§Ã£o dos dados informados',
+        description: 'Validação dos dados informados',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18710,9 +18710,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'CriaÃ§Ã£o de Conta',
+        name: 'Criação de Conta',
         order: 3,
-        description: 'CriaÃ§Ã£o da conta no sistema',
+        description: 'Criação da conta no sistema',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18723,9 +18723,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18745,7 +18745,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -18757,21 +18757,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG e CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG e CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 3,
-        description: 'AnÃ¡lise de viabilidade de localizaÃ§Ã£o',
+        description: 'Análise de viabilidade de localização',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18781,7 +18781,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria (se necessÃ¡rio)',
+        name: 'Vistoria (se necessário)',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 2,
@@ -18795,7 +18795,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 5,
-        description: 'InclusÃ£o no cadastro municipal',
+        description: 'Inclusão no cadastro municipal',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18805,9 +18805,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 6,
-        description: 'EmissÃ£o do comprovante',
+        description: 'Emissão do comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18818,9 +18818,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18833,7 +18833,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (workflows faltantes - continuação) ==========
   CADASTRO_PISCICULTURA: {
     moduleType: 'CADASTRO_PISCICULTURA',
     name: 'Workflow - Cadastro de Piscicultura',
@@ -18841,7 +18841,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -18853,9 +18853,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -18865,9 +18865,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria nas instalaÃ§Ãµes',
+        description: 'Vistoria nas instalações',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18877,9 +18877,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica do empreendimento',
+        description: 'Análise técnica do empreendimento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18889,9 +18889,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18901,9 +18901,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -18914,9 +18914,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -18937,7 +18937,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -18949,21 +18949,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'PortfÃ³lio'],
+        requiredDocumentTypes: ['CPF', 'Portfólio'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise do plano de aÃ§Ã£o',
+        description: 'Análise do plano de ação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18973,9 +18973,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria (se necessÃ¡rio)',
+        name: 'Vistoria (se necessário)',
         order: 4,
-        description: 'Vistoria no espaÃ§o',
+        description: 'Vistoria no espaço',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -18985,9 +18985,9 @@ SUPORTE_TECNICO: {
         canSkip: true
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -18997,9 +18997,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19010,9 +19010,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19025,15 +19025,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== DESENVOLVIMENTO ECONÃ”MICO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== DESENVOLVIMENTO ECONÔMICO (workflows faltantes - continuação) ==========
   CADASTRO_STARTUP: {
     moduleType: 'CADASTRO_STARTUP',
     name: 'Workflow - Cadastro de Startup',
-    description: 'Fluxo para cadastramento de startup no ecossistema de inovaÃ§Ã£o municipal',
+    description: 'Fluxo para cadastramento de startup no ecossistema de inovação municipal',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -19045,9 +19045,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19057,9 +19057,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de InovaÃ§Ã£o',
+        name: 'Análise de Inovação',
         order: 3,
-        description: 'AnÃ¡lise do carÃ¡ter inovador',
+        description: 'Análise do caráter inovador',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19069,9 +19069,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19081,9 +19081,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19094,9 +19094,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19109,7 +19109,7 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MEIO AMBIENTE (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== MEIO AMBIENTE (workflows faltantes - continuação) ==========
   CADASTRO_VIVEIRO_MUDAS: {
     moduleType: 'CADASTRO_VIVEIRO_MUDAS',
     name: 'Workflow - Cadastro de Viveiro de Mudas',
@@ -19117,7 +19117,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 2,
@@ -19129,9 +19129,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19141,9 +19141,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria nas instalaÃ§Ãµes',
+        description: 'Vistoria nas instalações',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19153,9 +19153,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise tÃ©cnica da produÃ§Ã£o',
+        description: 'Análise técnica da produção',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19165,9 +19165,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do cadastro',
+        description: 'Aprovação do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19177,9 +19177,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19190,9 +19190,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19205,15 +19205,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   CADASTRO_VOLUNTARIO: {
     moduleType: 'CADASTRO_VOLUNTARIO',
-    name: 'Workflow - Cadastro de VoluntÃ¡rio',
-    description: 'Fluxo para cadastramento de voluntÃ¡rio',
+    name: 'Workflow - Cadastro de Voluntário',
+    description: 'Fluxo para cadastramento de voluntário',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do cadastro',
         slaDays: 1,
@@ -19225,9 +19225,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19249,9 +19249,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'CapacitaÃ§Ã£o',
+        name: 'Capacitação',
         order: 4,
-        description: 'CapacitaÃ§Ã£o inicial',
+        description: 'Capacitação inicial',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19263,7 +19263,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 5,
-        description: 'InclusÃ£o no banco de voluntÃ¡rios',
+        description: 'Inclusão no banco de voluntários',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19274,9 +19274,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Cadastro concluÃ­do',
+        description: 'Cadastro concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19292,14 +19292,14 @@ SUPORTE_TECNICO: {
   // ========== ESPORTES (workflows faltantes) ==========
   CAMPEONATO_MUNICIPAL: {
     moduleType: 'CAMPEONATO_MUNICIPAL',
-    name: 'Workflow - InscriÃ§Ã£o em Campeonato Municipal',
-    description: 'Fluxo para inscriÃ§Ã£o em campeonatos municipais',
+    name: 'Workflow - Inscrição em Campeonato Municipal',
+    description: 'Fluxo para inscrição em campeonatos municipais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19309,9 +19309,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19321,9 +19321,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Elegibilidade',
+        name: 'Verificação de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19333,9 +19333,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'HomologaÃ§Ã£o',
+        name: 'Homologação',
         order: 4,
-        description: 'HomologaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Homologação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19345,9 +19345,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de ConfirmaÃ§Ã£o',
+        name: 'Emissão de Confirmação',
         order: 5,
-        description: 'EmissÃ£o do comprovante',
+        description: 'Emissão do comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19358,9 +19358,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19373,17 +19373,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO / TRANSPORTE (workflows faltantes) ==========
+  // ========== EDUCAÇÃO / TRANSPORTE (workflows faltantes) ==========
   CARTAO_ESTUDANTE: {
     moduleType: 'CARTAO_ESTUDANTE',
-    name: 'Workflow - CartÃ£o de Estudante',
-    description: 'Fluxo para solicitaÃ§Ã£o de cartÃ£o de estudante',
+    name: 'Workflow - Cartão de Estudante',
+    description: 'Fluxo para solicitação de cartão de estudante',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19393,21 +19393,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG ou CPF', 'DeclaraÃ§Ã£o de MatrÃ­cula', 'Foto 3x4 recente'],
+        requiredDocumentTypes: ['RG ou CPF', 'Declaração de Matrícula', 'Foto 3x4 recente'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o de MatrÃ­cula',
+        name: 'Validação de Matrícula',
         order: 3,
-        description: 'ValidaÃ§Ã£o junto Ã  escola',
+        description: 'Validação junto à escola',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19417,9 +19417,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ProduÃ§Ã£o do CartÃ£o',
+        name: 'Produção do Cartão',
         order: 4,
-        description: 'ConfecÃ§Ã£o do cartÃ£o',
+        description: 'Confecção do cartão',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19431,7 +19431,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrega',
         order: 5,
-        description: 'Entrega do cartÃ£o',
+        description: 'Entrega do cartão',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19442,9 +19442,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'CartÃ£o entregue',
+        description: 'Cartão entregue',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19459,14 +19459,14 @@ SUPORTE_TECNICO: {
 
   CARTAO_PCD: {
     moduleType: 'CARTAO_PCD',
-    name: 'Workflow - CartÃ£o PCD',
-    description: 'Fluxo para solicitaÃ§Ã£o de cartÃ£o de pessoa com deficiÃªncia',
+    name: 'Workflow - Cartão PCD',
+    description: 'Fluxo para solicitação de cartão de pessoa com deficiência',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19476,21 +19476,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Laudo MÃ©dico', 'Comprovante de ResidÃªncia', 'Foto 3x4 recente'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Laudo Médico', 'Comprovante de Residência', 'Foto 3x4 recente'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o MÃ©dica',
+        name: 'Avaliação Médica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o do laudo mÃ©dico',
+        description: 'Avaliação do laudo médico',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19500,9 +19500,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Aprovação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19512,9 +19512,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ProduÃ§Ã£o do CartÃ£o',
+        name: 'Produção do Cartão',
         order: 5,
-        description: 'ConfecÃ§Ã£o do cartÃ£o',
+        description: 'Confecção do cartão',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19526,7 +19526,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrega',
         order: 6,
-        description: 'Entrega do cartÃ£o',
+        description: 'Entrega do cartão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19537,9 +19537,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'CartÃ£o entregue',
+        description: 'Cartão entregue',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19554,14 +19554,14 @@ SUPORTE_TECNICO: {
 
   CARTAO_TRANSPORTE: {
     moduleType: 'CARTAO_TRANSPORTE',
-    name: 'Workflow - CartÃ£o de Transporte',
-    description: 'Fluxo para solicitaÃ§Ã£o de cartÃ£o de transporte pÃºblico',
+    name: 'Workflow - Cartão de Transporte',
+    description: 'Fluxo para solicitação de cartão de transporte público',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19571,21 +19571,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG ou CPF', 'Comprovante de ResidÃªncia', 'Foto 3x4 recente'],
+        requiredDocumentTypes: ['RG ou CPF', 'Comprovante de Residência', 'Foto 3x4 recente'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19595,9 +19595,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ProduÃ§Ã£o do CartÃ£o',
+        name: 'Produção do Cartão',
         order: 4,
-        description: 'ConfecÃ§Ã£o do cartÃ£o',
+        description: 'Confecção do cartão',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19609,7 +19609,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrega',
         order: 5,
-        description: 'Entrega do cartÃ£o',
+        description: 'Entrega do cartão',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19620,9 +19620,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'CartÃ£o entregue',
+        description: 'Cartão entregue',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19635,17 +19635,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   CASA_LAR_IDOSO: {
     moduleType: 'CASA_LAR_IDOSO',
     name: 'Workflow - Casa Lar para Idoso',
-    description: 'Fluxo para solicitaÃ§Ã£o de vaga em casa lar para idoso',
+    description: 'Fluxo para solicitação de vaga em casa lar para idoso',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19655,9 +19655,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19667,9 +19667,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Social',
+        name: 'Avaliação Social',
         order: 3,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o social',
+        description: 'Avaliação da situação social',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19679,9 +19679,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o de SaÃºde',
+        name: 'Avaliação de Saúde',
         order: 4,
-        description: 'AvaliaÃ§Ã£o mÃ©dica',
+        description: 'Avaliação médica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19691,9 +19691,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19703,9 +19703,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'InclusÃ£o em Lista de Espera',
+        name: 'Inclusão em Lista de Espera',
         order: 6,
-        description: 'InclusÃ£o na lista',
+        description: 'Inclusão na lista',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19716,9 +19716,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'SolicitaÃ§Ã£o registrada',
+        description: 'Solicitação registrada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19731,17 +19731,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== PATRIMÃ”NIO HISTÃ“RICO (workflows faltantes) ==========
+  // ========== PATRIMÔNIO HISTÓRICO (workflows faltantes) ==========
   CERTIDAO_BEM_TOMBADO: {
     moduleType: 'CERTIDAO_BEM_TOMBADO',
-    name: 'Workflow - CertidÃ£o de Bem Tombado',
-    description: 'Fluxo para emissÃ£o de certidÃ£o de bem tombado',
+    name: 'Workflow - Certidão de Bem Tombado',
+    description: 'Fluxo para emissão de certidão de bem tombado',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19751,9 +19751,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19765,7 +19765,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Consulta ao Registro',
         order: 3,
-        description: 'VerificaÃ§Ã£o no registro de bens tombados',
+        description: 'Verificação no registro de bens tombados',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19775,9 +19775,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o da CertidÃ£o',
+        name: 'Elaboração da Certidão',
         order: 4,
-        description: 'ElaboraÃ§Ã£o do documento',
+        description: 'Elaboração do documento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19787,9 +19787,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de CertidÃ£o',
+        name: 'Emissão de Certidão',
         order: 5,
-        description: 'EmissÃ£o da certidÃ£o',
+        description: 'Emissão da certidão',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19800,9 +19800,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'CertidÃ£o emitida',
+        description: 'Certidão emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -19815,17 +19815,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== TECNOLOGIA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== TECNOLOGIA (workflows faltantes - continuação) ==========
   CERTIFICADO_DIGITAL: {
     moduleType: 'CERTIFICADO_DIGITAL',
-    name: 'Workflow - SolicitaÃ§Ã£o de Certificado Digital',
-    description: 'Fluxo para solicitaÃ§Ã£o de certificado digital',
+    name: 'Workflow - Solicitação de Certificado Digital',
+    description: 'Fluxo para solicitação de certificado digital',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19835,9 +19835,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -19847,9 +19847,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ValidaÃ§Ã£o Presencial',
+        name: 'Validação Presencial',
         order: 3,
-        description: 'ValidaÃ§Ã£o presencial de identidade',
+        description: 'Validação presencial de identidade',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19859,9 +19859,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o do Certificado',
+        name: 'Emissão do Certificado',
         order: 4,
-        description: 'EmissÃ£o do certificado digital',
+        description: 'Emissão do certificado digital',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19884,7 +19884,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Certificado entregue',
         slaDays: 1,
@@ -19899,17 +19899,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   CESTA_BASICA: {
     moduleType: 'CESTA_BASICA',
-    name: 'Workflow - Cesta BÃ¡sica',
-    description: 'Fluxo para solicitaÃ§Ã£o de cesta bÃ¡sica',
+    name: 'Workflow - Cesta Básica',
+    description: 'Fluxo para solicitação de cesta básica',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -19919,21 +19919,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o Social',
+        name: 'Avaliação Social',
         order: 3,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o',
+        description: 'Avaliação da situação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19943,9 +19943,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o e disponibilizaÃ§Ã£o',
+        description: 'Aprovação e disponibilização',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -19955,9 +19955,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao beneficiÃ¡rio',
+        description: 'Notificação ao beneficiário',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -19968,7 +19968,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Cesta disponibilizada',
         slaDays: 1,
@@ -19983,17 +19983,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== TRÃ‚NSITO (workflows faltantes) ==========
+  // ========== TRÂNSITO (workflows faltantes) ==========
   CNH_SOCIAL: {
     moduleType: 'CNH_SOCIAL',
     name: 'Workflow - CNH Social',
-    description: 'Fluxo para inscriÃ§Ã£o em programa de CNH social',
+    description: 'Fluxo para inscrição em programa de CNH social',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20003,21 +20003,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de ResidÃªncia', 'Comprovante de Renda Familiar'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência', 'Comprovante de Renda Familiar'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20039,9 +20039,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o e inclusÃ£o no programa',
+        description: 'Aprovação e inclusão no programa',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20051,9 +20051,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 6,
-        description: 'NotificaÃ§Ã£o ao beneficiÃ¡rio',
+        description: 'Notificação ao beneficiário',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20064,9 +20064,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20079,17 +20079,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (workflows faltantes - continuação) ==========
   COMPRA_DIRETA_PRODUTOR: {
     moduleType: 'COMPRA_DIRETA_PRODUTOR',
     name: 'Workflow - Compra Direta do Produtor',
-    description: 'Fluxo para participaÃ§Ã£o em programa de compra direta',
+    description: 'Fluxo para participação em programa de compra direta',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20099,9 +20099,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -20113,7 +20113,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria na Propriedade',
         order: 3,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20123,9 +20123,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 4,
-        description: 'AnÃ¡lise de capacidade de fornecimento',
+        description: 'Análise de capacidade de fornecimento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20135,9 +20135,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o e habilitaÃ§Ã£o',
+        description: 'Aprovação e habilitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20147,9 +20147,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 6,
-        description: 'FormalizaÃ§Ã£o do cadastro',
+        description: 'Formalização do cadastro',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20160,7 +20160,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Produtor habilitado',
         slaDays: 1,
@@ -20175,17 +20175,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== PLANEJAMENTO URBANO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== PLANEJAMENTO URBANO (workflows faltantes - continuação) ==========
   CONCESSAO_USO_ESPECIAL: {
     moduleType: 'CONCESSAO_USO_ESPECIAL',
-    name: 'Workflow - ConcessÃ£o de Uso Especial',
-    description: 'Fluxo para concessÃ£o de uso especial de bem pÃºblico',
+    name: 'Workflow - Concessão de Uso Especial',
+    description: 'Fluxo para concessão de uso especial de bem público',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20195,9 +20195,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -20207,9 +20207,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o Dominial',
+        name: 'Verificação Dominial',
         order: 3,
-        description: 'VerificaÃ§Ã£o da titularidade do bem',
+        description: 'Verificação da titularidade do bem',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20231,9 +20231,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 5,
-        description: 'AnÃ¡lise jurÃ­dica do pedido',
+        description: 'Análise jurídica do pedido',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20243,9 +20243,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 6,
-        description: 'Parecer tÃ©cnico consolidado',
+        description: 'Parecer técnico consolidado',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20255,9 +20255,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 7,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20267,9 +20267,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o do Termo',
+        name: 'Emissão do Termo',
         order: 8,
-        description: 'EmissÃ£o do termo de concessÃ£o',
+        description: 'Emissão do termo de concessão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20280,9 +20280,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 9,
-        description: 'ConcessÃ£o formalizada',
+        description: 'Concessão formalizada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20298,14 +20298,14 @@ SUPORTE_TECNICO: {
   // ========== PROTOCOLO GERAL (workflows faltantes) ==========
   COPIA_PROCESSOS: {
     moduleType: 'COPIA_PROCESSOS',
-    name: 'Workflow - CÃ³pia de Processos',
-    description: 'Fluxo para solicitaÃ§Ã£o de cÃ³pia de processos',
+    name: 'Workflow - Cópia de Processos',
+    description: 'Fluxo para solicitação de cópia de processos',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20315,9 +20315,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'LocalizaÃ§Ã£o do Processo',
+        name: 'Localização do Processo',
         order: 2,
-        description: 'LocalizaÃ§Ã£o do processo',
+        description: 'Localização do processo',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20327,9 +20327,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Acesso',
+        name: 'Verificação de Acesso',
         order: 3,
-        description: 'VerificaÃ§Ã£o de permissÃ£o de acesso',
+        description: 'Verificação de permissão de acesso',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20339,9 +20339,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ReproduÃ§Ã£o',
+        name: 'Reprodução',
         order: 4,
-        description: 'ReproduÃ§Ã£o das cÃ³pias',
+        description: 'Reprodução das cópias',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20353,7 +20353,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrega',
         order: 5,
-        description: 'DisponibilizaÃ§Ã£o das cÃ³pias',
+        description: 'Disponibilização das cópias',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20364,9 +20364,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'CÃ³pias entregues',
+        description: 'Cópias entregues',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20379,15 +20379,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== TURISMO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== TURISMO (workflows faltantes - continuação) ==========
   CREDENCIAMENTO_AGENCIA_TURISMO: {
     moduleType: 'CREDENCIAMENTO_AGENCIA_TURISMO',
-    name: 'Workflow - Credenciamento de AgÃªncia de Turismo',
-    description: 'Fluxo para credenciamento de agÃªncia de turismo',
+    name: 'Workflow - Credenciamento de Agência de Turismo',
+    description: 'Fluxo para credenciamento de agência de turismo',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do credenciamento',
         slaDays: 2,
@@ -20399,13 +20399,13 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Cadastur', 'AlvarÃ¡ de Funcionamento'],
+        requiredDocumentTypes: ['CNPJ', 'Contrato Social', 'Cadastur', 'Alvará de Funcionamento'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -20413,7 +20413,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria',
         order: 3,
-        description: 'Vistoria nas instalaÃ§Ãµes',
+        description: 'Vistoria nas instalações',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20423,9 +20423,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do credenciamento',
+        description: 'Aprovação do credenciamento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20435,9 +20435,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20448,9 +20448,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Credenciamento concluÃ­do',
+        description: 'Credenciamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20470,7 +20470,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do credenciamento',
         slaDays: 2,
@@ -20482,21 +20482,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'CurrÃ­culo', 'Certificados'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Currículo', 'Certificados'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de QualificaÃ§Ã£o',
+        name: 'Análise de Qualificação',
         order: 3,
-        description: 'AnÃ¡lise da qualificaÃ§Ã£o',
+        description: 'Análise da qualificação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20506,9 +20506,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Entrevista/AvaliaÃ§Ã£o',
+        name: 'Entrevista/Avaliação',
         order: 4,
-        description: 'Entrevista tÃ©cnica',
+        description: 'Entrevista técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20518,9 +20518,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do credenciamento',
+        description: 'Aprovação do credenciamento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20530,9 +20530,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 6,
-        description: 'EmissÃ£o da credencial',
+        description: 'Emissão da credencial',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20543,9 +20543,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Credenciamento concluÃ­do',
+        description: 'Credenciamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20558,15 +20558,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MOBILIDADE URBANA / TRÃ‚NSITO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== MOBILIDADE URBANA / TRÂNSITO (workflows faltantes - continuação) ==========
   CREDENCIAMENTO_MOTOTAXI: {
     moduleType: 'CREDENCIAMENTO_MOTOTAXI',
-    name: 'Workflow - Credenciamento de MototÃ¡xi',
+    name: 'Workflow - Credenciamento de Mototáxi',
     description: 'Fluxo para credenciamento de mototaxista',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do credenciamento',
         slaDays: 2,
@@ -20578,21 +20578,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH Categoria A (mÃ­nimo)', 'CertidÃ£o de Antecedentes Criminais'],
+        requiredDocumentTypes: ['CNH Categoria A (mínimo)', 'Certidão de Antecedentes Criminais'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Curso de CapacitaÃ§Ã£o',
+        name: 'Curso de Capacitação',
         order: 3,
-        description: 'ParticipaÃ§Ã£o em curso obrigatÃ³rio',
+        description: 'Participação em curso obrigatório',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20602,9 +20602,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria do VeÃ­culo',
+        name: 'Vistoria do Veículo',
         order: 4,
-        description: 'Vistoria tÃ©cnica da motocicleta',
+        description: 'Vistoria técnica da motocicleta',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20614,9 +20614,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do credenciamento',
+        description: 'Aprovação do credenciamento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20626,9 +20626,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 6,
-        description: 'EmissÃ£o da credencial',
+        description: 'Emissão da credencial',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20639,9 +20639,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Credenciamento concluÃ­do',
+        description: 'Credenciamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20661,7 +20661,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do credenciamento',
         slaDays: 2,
@@ -20673,9 +20673,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -20685,9 +20685,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de QualificaÃ§Ã£o',
+        name: 'Análise de Qualificação',
         order: 3,
-        description: 'AnÃ¡lise da qualificaÃ§Ã£o artÃ­stica',
+        description: 'Análise da qualificação artística',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20697,9 +20697,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o PrÃ¡tica',
+        name: 'Avaliação Prática',
         order: 4,
-        description: 'AvaliaÃ§Ã£o prÃ¡tica',
+        description: 'Avaliação prática',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20709,9 +20709,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do credenciamento',
+        description: 'Aprovação do credenciamento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20721,9 +20721,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 6,
-        description: 'EmissÃ£o da credencial',
+        description: 'Emissão da credencial',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20734,9 +20734,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Credenciamento concluÃ­do',
+        description: 'Credenciamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20756,7 +20756,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do credenciamento',
         slaDays: 2,
@@ -20768,21 +20768,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH Categoria B (mÃ­nimo)', 'CertidÃ£o de Antecedentes Criminais'],
+        requiredDocumentTypes: ['CNH Categoria B (mínimo)', 'Certidão de Antecedentes Criminais'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Curso de CapacitaÃ§Ã£o',
+        name: 'Curso de Capacitação',
         order: 3,
-        description: 'ParticipaÃ§Ã£o em curso obrigatÃ³rio',
+        description: 'Participação em curso obrigatório',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20792,9 +20792,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria do VeÃ­culo',
+        name: 'Vistoria do Veículo',
         order: 4,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20804,9 +20804,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do credenciamento',
+        description: 'Aprovação do credenciamento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20816,9 +20816,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 6,
-        description: 'EmissÃ£o da credencial e placa',
+        description: 'Emissão da credencial e placa',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20829,9 +20829,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Credenciamento concluÃ­do',
+        description: 'Credenciamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20851,7 +20851,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do credenciamento',
         slaDays: 2,
@@ -20863,21 +20863,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH Categoria D', 'CRLV', 'Seguro ObrigatÃ³rio', 'CertidÃ£o de Antecedentes Criminais', 'Curso de Transporte Escolar'],
+        requiredDocumentTypes: ['CNH Categoria D', 'CRLV', 'Seguro Obrigatório', 'Certidão de Antecedentes Criminais', 'Curso de Transporte Escolar'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria do VeÃ­culo',
+        name: 'Vistoria do Veículo',
         order: 3,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20887,9 +20887,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'DefiniÃ§Ã£o de Rotas',
+        name: 'Definição de Rotas',
         order: 4,
-        description: 'AnÃ¡lise e definiÃ§Ã£o de rotas',
+        description: 'Análise e definição de rotas',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20899,9 +20899,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do credenciamento',
+        description: 'Aprovação do credenciamento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20911,9 +20911,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 6,
-        description: 'EmissÃ£o da credencial',
+        description: 'Emissão da credencial',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -20924,9 +20924,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'Credenciamento concluÃ­do',
+        description: 'Credenciamento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -20941,14 +20941,14 @@ SUPORTE_TECNICO: {
 
   CURSOS_QUALIFICACAO: {
     moduleType: 'CURSOS_QUALIFICACAO',
-    name: 'Workflow - InscriÃ§Ã£o em Cursos de QualificaÃ§Ã£o',
-    description: 'Fluxo para inscriÃ§Ã£o em cursos de qualificaÃ§Ã£o profissional',
+    name: 'Workflow - Inscrição em Cursos de Qualificação',
+    description: 'Fluxo para inscrição em cursos de qualificação profissional',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -20958,21 +20958,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Escolaridade', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de PrÃ©-requisitos',
+        name: 'Verificação de Pré-requisitos',
         order: 3,
-        description: 'VerificaÃ§Ã£o de requisitos do curso',
+        description: 'Verificação de requisitos do curso',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20982,9 +20982,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Vagas',
+        name: 'Análise de Vagas',
         order: 4,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -20994,9 +20994,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o de MatrÃ­cula',
+        name: 'Confirmação de Matrícula',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21007,9 +21007,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21024,14 +21024,14 @@ SUPORTE_TECNICO: {
 
   CURSO_INCLUSAO_DIGITAL: {
     moduleType: 'CURSO_INCLUSAO_DIGITAL',
-    name: 'Workflow - InscriÃ§Ã£o em Curso de InclusÃ£o Digital',
-    description: 'Fluxo para inscriÃ§Ã£o em cursos de inclusÃ£o digital',
+    name: 'Workflow - Inscrição em Curso de Inclusão Digital',
+    description: 'Fluxo para inscrição em cursos de inclusão digital',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21041,21 +21041,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['RG ou CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG ou CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21065,9 +21065,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AlocaÃ§Ã£o de Turma',
+        name: 'Alocação de Turma',
         order: 4,
-        description: 'DefiniÃ§Ã£o de turma',
+        description: 'Definição de turma',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21077,9 +21077,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21090,9 +21090,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21105,17 +21105,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (workflows faltantes - continuação) ==========
   DAP_DIGITAL: {
     moduleType: 'DAP_DIGITAL',
     name: 'Workflow - DAP Digital',
-    description: 'Fluxo para emissÃ£o de DeclaraÃ§Ã£o de AptidÃ£o ao Pronaf Digital',
+    description: 'Fluxo para emissão de Declaração de Aptidão ao Pronaf Digital',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21125,9 +21125,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -21149,9 +21149,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Enquadramento',
+        name: 'Análise de Enquadramento',
         order: 4,
-        description: 'VerificaÃ§Ã£o de enquadramento ao Pronaf',
+        description: 'Verificação de enquadramento ao Pronaf',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21161,9 +21161,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o da DAP',
+        name: 'Emissão da DAP',
         order: 5,
-        description: 'EmissÃ£o da declaraÃ§Ã£o',
+        description: 'Emissão da declaração',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21174,7 +21174,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'DAP emitida',
         slaDays: 1,
@@ -21192,14 +21192,14 @@ SUPORTE_TECNICO: {
   // ========== PROTOCOLO/DIVERSOS (workflows faltantes) ==========
   DECLARACOES: {
     moduleType: 'DECLARACOES',
-    name: 'Workflow - EmissÃ£o de DeclaraÃ§Ãµes',
-    description: 'Fluxo para emissÃ£o de declaraÃ§Ãµes diversas',
+    name: 'Workflow - Emissão de Declarações',
+    description: 'Fluxo para emissão de declarações diversas',
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21209,9 +21209,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -21221,9 +21221,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Dados',
+        name: 'Verificação de Dados',
         order: 3,
-        description: 'VerificaÃ§Ã£o das informaÃ§Ãµes',
+        description: 'Verificação das informações',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21233,9 +21233,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o da DeclaraÃ§Ã£o',
+        name: 'Emissão da Declaração',
         order: 4,
-        description: 'EmissÃ£o do documento',
+        description: 'Emissão do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21246,9 +21246,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'DeclaraÃ§Ã£o emitida',
+        description: 'Declaração emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21263,12 +21263,12 @@ SUPORTE_TECNICO: {
 
   DEFESA_AUTUACAO: {
     moduleType: 'DEFESA_AUTUACAO',
-    name: 'Workflow - Defesa de AutuaÃ§Ã£o',
-    description: 'Fluxo para apresentaÃ§Ã£o de defesa contra autuaÃ§Ã£o',
+    name: 'Workflow - Defesa de Autuação',
+    description: 'Fluxo para apresentação de defesa contra autuação',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro da defesa',
         slaDays: 2,
@@ -21280,21 +21280,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Preliminar',
+        name: 'Análise Preliminar',
         order: 2,
-        description: 'VerificaÃ§Ã£o de prazo e documentaÃ§Ã£o',
+        description: 'Verificação de prazo e documentação',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNH', 'CRLV', 'NotificaÃ§Ã£o de AutuaÃ§Ã£o', 'Comprovantes (se houver)'],
+        requiredDocumentTypes: ['CNH', 'CRLV', 'Notificação de Autuação', 'Comprovantes (se houver)'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise dos argumentos apresentados',
+        description: 'Análise dos argumentos apresentados',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21304,9 +21304,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'DecisÃ£o Administrativa',
+        name: 'Decisão Administrativa',
         order: 4,
-        description: 'DecisÃ£o sobre a defesa',
+        description: 'Decisão sobre a defesa',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21316,9 +21316,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o da decisÃ£o',
+        description: 'Notificação da decisão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21329,9 +21329,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Processo concluÃ­do',
+        description: 'Processo concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21346,14 +21346,14 @@ SUPORTE_TECNICO: {
 
   DISTRIBUICAO_MUDAS: {
     moduleType: 'DISTRIBUICAO_MUDAS',
-    name: 'Workflow - DistribuiÃ§Ã£o de Mudas',
-    description: 'Fluxo para solicitaÃ§Ã£o de mudas',
+    name: 'Workflow - Distribuição de Mudas',
+    description: 'Fluxo para solicitação de mudas',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21363,9 +21363,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de estoque',
+        description: 'Verificação de estoque',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21375,9 +21375,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise da adequaÃ§Ã£o',
+        description: 'Análise da adequação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21387,9 +21387,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da distribuiÃ§Ã£o',
+        description: 'Aprovação da distribuição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21399,9 +21399,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao solicitante',
+        description: 'Notificação ao solicitante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21412,7 +21412,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Mudas disponibilizadas',
         slaDays: 1,
@@ -21429,14 +21429,14 @@ SUPORTE_TECNICO: {
 
   DISTRIBUICAO_SEMENTES: {
     moduleType: 'DISTRIBUICAO_SEMENTES',
-    name: 'Workflow - DistribuiÃ§Ã£o de Sementes',
-    description: 'Fluxo para solicitaÃ§Ã£o de sementes',
+    name: 'Workflow - Distribuição de Sementes',
+    description: 'Fluxo para solicitação de sementes',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21446,9 +21446,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -21458,9 +21458,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de estoque',
+        description: 'Verificação de estoque',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21470,9 +21470,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise da adequaÃ§Ã£o',
+        description: 'Análise da adequação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21482,9 +21482,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da distribuiÃ§Ã£o',
+        description: 'Aprovação da distribuição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21494,9 +21494,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 6,
-        description: 'NotificaÃ§Ã£o ao produtor',
+        description: 'Notificação ao produtor',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21507,7 +21507,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Sementes disponibilizadas',
         slaDays: 1,
@@ -21522,17 +21522,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ESPORTES (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ESPORTES (workflows faltantes - continuação) ==========
   EMPRESTIMO_MATERIAL_ESPORTIVO: {
     moduleType: 'EMPRESTIMO_MATERIAL_ESPORTIVO',
-    name: 'Workflow - EmprÃ©stimo de Material Esportivo',
-    description: 'Fluxo para solicitaÃ§Ã£o de emprÃ©stimo de material esportivo',
+    name: 'Workflow - Empréstimo de Material Esportivo',
+    description: 'Fluxo para solicitação de empréstimo de material esportivo',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21542,9 +21542,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21554,9 +21554,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise do Pedido',
+        name: 'Análise do Pedido',
         order: 3,
-        description: 'AnÃ¡lise da finalidade',
+        description: 'Análise da finalidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21566,9 +21566,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do emprÃ©stimo',
+        description: 'Aprovação do empréstimo',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21578,7 +21578,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 5,
         description: 'Assinatura de termo',
         slaDays: 1,
@@ -21591,9 +21591,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'EmprÃ©stimo autorizado',
+        description: 'Empréstimo autorizado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21606,17 +21606,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MOBILIDADE/TRÃ‚NSITO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== MOBILIDADE/TRÂNSITO (workflows faltantes - continuação) ==========
   FAIXA_CARGA_DESCARGA: {
     moduleType: 'FAIXA_CARGA_DESCARGA',
     name: 'Workflow - Faixa de Carga e Descarga',
-    description: 'Fluxo para solicitaÃ§Ã£o de faixa de carga e descarga',
+    description: 'Fluxo para solicitação de faixa de carga e descarga',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21626,19 +21626,19 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['AlvarÃ¡ de Funcionamento'],
+        requiredDocumentTypes: ['Alvará de Funcionamento'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria no local',
         slaDays: 5,
@@ -21650,9 +21650,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de TrÃ¢nsito',
+        name: 'Análise de Trânsito',
         order: 4,
-        description: 'AnÃ¡lise de impacto no trÃ¢nsito',
+        description: 'Análise de impacto no trânsito',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21662,9 +21662,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da solicitaÃ§Ã£o',
+        description: 'Aprovação da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21674,9 +21674,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 6,
-        description: 'EmissÃ£o do documento',
+        description: 'Emissão do documento',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21687,9 +21687,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'AutorizaÃ§Ã£o emitida',
+        description: 'Autorização emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21702,17 +21702,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   GERACAO_RENDA: {
     moduleType: 'GERACAO_RENDA',
-    name: 'Workflow - Programa de GeraÃ§Ã£o de Renda',
-    description: 'Fluxo para inscriÃ§Ã£o em programa de geraÃ§Ã£o de renda',
+    name: 'Workflow - Programa de Geração de Renda',
+    description: 'Fluxo para inscrição em programa de geração de renda',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21722,21 +21722,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda (se houver)', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Renda (se houver)', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21758,9 +21758,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o e inclusÃ£o no programa',
+        description: 'Aprovação e inclusão no programa',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21770,9 +21770,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 6,
-        description: 'NotificaÃ§Ã£o ao beneficiÃ¡rio',
+        description: 'Notificação ao beneficiário',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21783,9 +21783,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21798,17 +21798,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== PATRIMÃ”NIO (workflows faltantes) ==========
+  // ========== PATRIMÔNIO (workflows faltantes) ==========
   GUARDA_PATRIMONIAL: {
     moduleType: 'GUARDA_PATRIMONIAL',
     name: 'Workflow - Guarda Patrimonial',
-    description: 'Fluxo para solicitaÃ§Ã£o de guarda de bem patrimonial',
+    description: 'Fluxo para solicitação de guarda de bem patrimonial',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21818,9 +21818,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise do Bem',
+        name: 'Análise do Bem',
         order: 2,
-        description: 'AvaliaÃ§Ã£o do bem',
+        description: 'Avaliação do bem',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21830,9 +21830,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de espaÃ§o disponÃ­vel',
+        description: 'Verificação de espaço disponível',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21842,9 +21842,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da guarda',
+        description: 'Aprovação da guarda',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21854,9 +21854,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 5,
-        description: 'FormalizaÃ§Ã£o do termo',
+        description: 'Formalização do termo',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21867,7 +21867,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Guarda autorizada',
         slaDays: 1,
@@ -21882,17 +21882,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== TURISMO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== TURISMO (workflows faltantes - continuação) ==========
   INSCRICAO_CIRCUITO_TURISTICO: {
     moduleType: 'INSCRICAO_CIRCUITO_TURISTICO',
-    name: 'Workflow - InscriÃ§Ã£o em Circuito TurÃ­stico',
-    description: 'Fluxo para inscriÃ§Ã£o de empreendimento em circuito turÃ­stico',
+    name: 'Workflow - Inscrição em Circuito Turístico',
+    description: 'Fluxo para inscrição de empreendimento em circuito turístico',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21902,19 +21902,19 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ ou CPF', 'Cadastur (se aplicÃ¡vel)'],
+        requiredDocumentTypes: ['CNPJ ou CPF', 'Cadastur (se aplicável)'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
         description: 'Vistoria no empreendimento',
         slaDays: 7,
@@ -21926,9 +21926,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 4,
-        description: 'AnÃ¡lise de adequaÃ§Ã£o ao circuito',
+        description: 'Análise de adequação ao circuito',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21938,9 +21938,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Aprovação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -21950,9 +21950,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 6,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -21963,9 +21963,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -21980,14 +21980,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_CONCURSO: {
     moduleType: 'INSCRICAO_CONCURSO',
-    name: 'Workflow - InscriÃ§Ã£o em Concurso PÃºblico',
-    description: 'Fluxo para inscriÃ§Ã£o em concurso pÃºblico',
+    name: 'Workflow - Inscrição em Concurso Público',
+    description: 'Fluxo para inscrição em concurso público',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -21997,9 +21997,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -22009,9 +22009,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Requisitos',
+        name: 'Verificação de Requisitos',
         order: 3,
-        description: 'VerificaÃ§Ã£o de requisitos',
+        description: 'Verificação de requisitos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22021,9 +22021,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'HomologaÃ§Ã£o',
+        name: 'Homologação',
         order: 4,
-        description: 'HomologaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Homologação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22033,9 +22033,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 5,
-        description: 'EmissÃ£o do comprovante',
+        description: 'Emissão do comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22046,9 +22046,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22063,14 +22063,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_CORRIDA_RUA: {
     moduleType: 'INSCRICAO_CORRIDA_RUA',
-    name: 'Workflow - InscriÃ§Ã£o em Corrida de Rua',
-    description: 'Fluxo para inscriÃ§Ã£o em corridas de rua',
+    name: 'Workflow - Inscrição em Corrida de Rua',
+    description: 'Fluxo para inscrição em corridas de rua',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22080,21 +22080,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Atestado MÃ©dico'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Atestado Médico'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Vagas',
+        name: 'Verificação de Vagas',
         order: 3,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22104,9 +22104,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22116,9 +22116,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Comprovante',
+        name: 'Emissão de Comprovante',
         order: 5,
-        description: 'EmissÃ£o do comprovante',
+        description: 'Emissão do comprovante',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22129,9 +22129,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22146,14 +22146,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_CURSO_FORMACAO: {
     moduleType: 'INSCRICAO_CURSO_FORMACAO',
-    name: 'Workflow - InscriÃ§Ã£o em Curso de FormaÃ§Ã£o',
-    description: 'Fluxo para inscriÃ§Ã£o em cursos de formaÃ§Ã£o',
+    name: 'Workflow - Inscrição em Curso de Formação',
+    description: 'Fluxo para inscrição em cursos de formação',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22163,9 +22163,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -22175,9 +22175,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de PrÃ©-requisitos',
+        name: 'Verificação de Pré-requisitos',
         order: 3,
-        description: 'VerificaÃ§Ã£o de requisitos',
+        description: 'Verificação de requisitos',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22187,9 +22187,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Vagas',
+        name: 'Análise de Vagas',
         order: 4,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22199,9 +22199,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o de MatrÃ­cula',
+        name: 'Confirmação de Matrícula',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Confirmação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22212,9 +22212,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22229,14 +22229,14 @@ SUPORTE_TECNICO: {
 
   INSCRICAO_INCUBADORA: {
     moduleType: 'INSCRICAO_INCUBADORA',
-    name: 'Workflow - InscriÃ§Ã£o em Incubadora de Empresas',
-    description: 'Fluxo para inscriÃ§Ã£o em incubadora de empresas',
+    name: 'Workflow - Inscrição em Incubadora de Empresas',
+    description: 'Fluxo para inscrição em incubadora de empresas',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22246,21 +22246,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ (se jÃ¡ constituÃ­da)', 'Pitch Deck (ApresentaÃ§Ã£o)'],
+        requiredDocumentTypes: ['CNPJ (se já constituída)', 'Pitch Deck (Apresentação)'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise do potencial do negÃ³cio',
+        description: 'Análise do potencial do negócio',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22270,9 +22270,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ApresentaÃ§Ã£o/Pitch',
+        name: 'Apresentação/Pitch',
         order: 4,
-        description: 'ApresentaÃ§Ã£o do negÃ³cio',
+        description: 'Apresentação do negócio',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22282,9 +22282,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da inscriÃ§Ã£o',
+        description: 'Aprovação da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22294,9 +22294,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 6,
-        description: 'FormalizaÃ§Ã£o do ingresso',
+        description: 'Formalização do ingresso',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22307,7 +22307,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Empresa incubada',
         slaDays: 1,
@@ -22322,17 +22322,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== FINANÃ‡AS (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== FINANÇAS (workflows faltantes - continuação) ==========
   ISENCAO_IDOSO: {
     moduleType: 'ISENCAO_IDOSO',
-    name: 'Workflow - IsenÃ§Ã£o para Idoso',
-    description: 'Fluxo para solicitaÃ§Ã£o de isenÃ§Ã£o de taxas para idoso',
+    name: 'Workflow - Isenção para Idoso',
+    description: 'Fluxo para solicitação de isenção de taxas para idoso',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22342,21 +22342,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22366,9 +22366,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da isenÃ§Ã£o',
+        description: 'Aprovação da isenção',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22378,9 +22378,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 5,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22391,9 +22391,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'IsenÃ§Ã£o concedida',
+        description: 'Isenção concedida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22408,14 +22408,14 @@ SUPORTE_TECNICO: {
 
   ISENCAO_IPTU: {
     moduleType: 'ISENCAO_IPTU',
-    name: 'Workflow - IsenÃ§Ã£o de IPTU',
-    description: 'Fluxo para solicitaÃ§Ã£o de isenÃ§Ã£o de IPTU',
+    name: 'Workflow - Isenção de IPTU',
+    description: 'Fluxo para solicitação de isenção de IPTU',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22425,9 +22425,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -22437,9 +22437,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria (se necessÃ¡rio)',
+        name: 'Vistoria (se necessário)',
         order: 3,
-        description: 'Vistoria no imÃ³vel',
+        description: 'Vistoria no imóvel',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22449,9 +22449,9 @@ SUPORTE_TECNICO: {
         canSkip: true
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 4,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22461,9 +22461,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da isenÃ§Ã£o',
+        description: 'Aprovação da isenção',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22473,9 +22473,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'LanÃ§amento no Sistema',
+        name: 'Lançamento no Sistema',
         order: 6,
-        description: 'LanÃ§amento da isenÃ§Ã£o',
+        description: 'Lançamento da isenção',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22485,9 +22485,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Certificado',
+        name: 'Emissão de Certificado',
         order: 7,
-        description: 'EmissÃ£o do certificado',
+        description: 'Emissão do certificado',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22498,9 +22498,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'IsenÃ§Ã£o concedida',
+        description: 'Isenção concedida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22515,14 +22515,14 @@ SUPORTE_TECNICO: {
 
   ISENCAO_TRANSPORTE: {
     moduleType: 'ISENCAO_TRANSPORTE',
-    name: 'Workflow - IsenÃ§Ã£o de Transporte',
-    description: 'Fluxo para solicitaÃ§Ã£o de isenÃ§Ã£o/gratuidade no transporte pÃºblico',
+    name: 'Workflow - Isenção de Transporte',
+    description: 'Fluxo para solicitação de isenção/gratuidade no transporte público',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22532,21 +22532,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22556,9 +22556,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da isenÃ§Ã£o',
+        description: 'Aprovação da isenção',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22568,9 +22568,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ProduÃ§Ã£o do CartÃ£o',
+        name: 'Produção do Cartão',
         order: 5,
-        description: 'ConfecÃ§Ã£o do cartÃ£o',
+        description: 'Confecção do cartão',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22582,7 +22582,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrega',
         order: 6,
-        description: 'Entrega do cartÃ£o',
+        description: 'Entrega do cartão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22593,9 +22593,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'IsenÃ§Ã£o concedida',
+        description: 'Isenção concedida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22608,17 +22608,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MEIO AMBIENTE (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== MEIO AMBIENTE (workflows faltantes - continuação) ==========
   LICENCA_ATIVIDADE_POLUIDORA: {
     moduleType: 'LICENCA_ATIVIDADE_POLUIDORA',
-    name: 'Workflow - LicenÃ§a para Atividade Poluidora',
+    name: 'Workflow - Licença para Atividade Poluidora',
     description: 'Fluxo para licenciamento de atividades potencialmente poluidoras',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22628,21 +22628,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'Projeto TÃ©cnico', 'ART'],
+        requiredDocumentTypes: ['CNPJ', 'Projeto Técnico', 'ART'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise do potencial poluidor',
+        description: 'Análise do potencial poluidor',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22666,7 +22666,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Parecer Consolidado',
         order: 5,
-        description: 'ConsolidaÃ§Ã£o de pareceres',
+        description: 'Consolidação de pareceres',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22676,9 +22676,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22688,9 +22688,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 7,
-        description: 'EmissÃ£o da licenÃ§a',
+        description: 'Emissão da licença',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22701,9 +22701,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'LicenÃ§a emitida',
+        description: 'Licença emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22718,14 +22718,14 @@ SUPORTE_TECNICO: {
 
   LICENCA_ATIVIDADE_TURISTICA: {
     moduleType: 'LICENCA_ATIVIDADE_TURISTICA',
-    name: 'Workflow - LicenÃ§a para Atividade TurÃ­stica',
-    description: 'Fluxo para licenciamento de atividades turÃ­sticas',
+    name: 'Workflow - Licença para Atividade Turística',
+    description: 'Fluxo para licenciamento de atividades turísticas',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22735,9 +22735,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -22747,9 +22747,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise da atividade',
+        description: 'Análise da atividade',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22771,9 +22771,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da licenÃ§a',
+        description: 'Aprovação da licença',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22783,9 +22783,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 6,
-        description: 'EmissÃ£o da licenÃ§a',
+        description: 'Emissão da licença',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22796,9 +22796,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'LicenÃ§a emitida',
+        description: 'Licença emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22813,14 +22813,14 @@ SUPORTE_TECNICO: {
 
   LICENCA_PERFURACAO_POCO: {
     moduleType: 'LICENCA_PERFURACAO_POCO',
-    name: 'Workflow - LicenÃ§a para PerfuraÃ§Ã£o de PoÃ§o',
-    description: 'Fluxo para licenciamento de perfuraÃ§Ã£o de poÃ§os artesianos',
+    name: 'Workflow - Licença para Perfuração de Poço',
+    description: 'Fluxo para licenciamento de perfuração de poços artesianos',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22830,9 +22830,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -22842,9 +22842,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise HidrogeolÃ³gica',
+        name: 'Análise Hidrogeológica',
         order: 3,
-        description: 'AnÃ¡lise hidrogeolÃ³gica',
+        description: 'Análise hidrogeológica',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22856,7 +22856,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria do Local',
         order: 4,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22866,9 +22866,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Ambiental',
+        name: 'Análise Ambiental',
         order: 5,
-        description: 'AnÃ¡lise de impacto ambiental',
+        description: 'Análise de impacto ambiental',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22878,9 +22878,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o da licenÃ§a',
+        description: 'Aprovação da licença',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22890,9 +22890,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de LicenÃ§a',
+        name: 'Emissão de Licença',
         order: 7,
-        description: 'EmissÃ£o da licenÃ§a',
+        description: 'Emissão da licença',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -22903,9 +22903,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'LicenÃ§a emitida',
+        description: 'Licença emitida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -22918,17 +22918,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== CULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== CULTURA (workflows faltantes - continuação) ==========
   LOCACAO_EQUIPAMENTO_CULTURAL: {
     moduleType: 'LOCACAO_EQUIPAMENTO_CULTURAL',
-    name: 'Workflow - LocaÃ§Ã£o de Equipamento Cultural',
-    description: 'Fluxo para locaÃ§Ã£o de equipamentos culturais',
+    name: 'Workflow - Locação de Equipamento Cultural',
+    description: 'Fluxo para locação de equipamentos culturais',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22938,9 +22938,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o de disponibilidade',
+        description: 'Verificação de disponibilidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22950,9 +22950,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise do Pedido',
+        name: 'Análise do Pedido',
         order: 3,
-        description: 'AnÃ¡lise da finalidade',
+        description: 'Análise da finalidade',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -22962,9 +22962,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da locaÃ§Ã£o',
+        description: 'Aprovação da locação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -22974,7 +22974,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 5,
         description: 'Assinatura de termo',
         slaDays: 1,
@@ -22987,9 +22987,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'LocaÃ§Ã£o autorizada',
+        description: 'Locação autorizada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -23002,17 +23002,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== HABITAÃ‡ÃƒO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== HABITAÇÃO (workflows faltantes - continuação) ==========
   MATERIAL_CONSTRUCAO: {
     moduleType: 'MATERIAL_CONSTRUCAO',
-    name: 'Workflow - Material de ConstruÃ§Ã£o',
-    description: 'Fluxo para solicitaÃ§Ã£o de material de construÃ§Ã£o',
+    name: 'Workflow - Material de Construção',
+    description: 'Fluxo para solicitação de material de construção',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23022,9 +23022,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -23034,9 +23034,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23046,7 +23046,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Visita TÃ©cnica',
+        name: 'Visita Técnica',
         order: 4,
         description: 'Vistoria no local',
         slaDays: 3,
@@ -23058,9 +23058,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23070,9 +23070,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o e disponibilizaÃ§Ã£o',
+        description: 'Aprovação e disponibilização',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23082,9 +23082,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 7,
-        description: 'NotificaÃ§Ã£o ao beneficiÃ¡rio',
+        description: 'Notificação ao beneficiário',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23095,7 +23095,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
         description: 'Material disponibilizado',
         slaDays: 1,
@@ -23110,17 +23110,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== EDUCAÃ‡ÃƒO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== EDUCAÇÃO (workflows faltantes - continuação) ==========
   MATERIAL_ESCOLAR: {
     moduleType: 'MATERIAL_ESCOLAR',
     name: 'Workflow - Material Escolar',
-    description: 'Fluxo para solicitaÃ§Ã£o de material escolar',
+    description: 'Fluxo para solicitação de material escolar',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23130,21 +23130,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Comprovante de MatrÃ­cula'],
+        requiredDocumentTypes: ['Comprovante de Matrícula'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23154,9 +23154,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o e disponibilizaÃ§Ã£o',
+        description: 'Aprovação e disponibilização',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23166,9 +23166,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o ao responsÃ¡vel',
+        description: 'Notificação ao responsável',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23179,7 +23179,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Material disponibilizado',
         slaDays: 1,
@@ -23194,15 +23194,15 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== POLÃTICAS PARA MULHERES (workflows faltantes) ==========
+  // ========== POLÍTICAS PARA MULHERES (workflows faltantes) ==========
   MEDIDA_PROTETIVA: {
     moduleType: 'MEDIDA_PROTETIVA',
     name: 'Workflow - Medida Protetiva',
-    description: 'Fluxo para solicitaÃ§Ã£o de medida protetiva',
+    description: 'Fluxo para solicitação de medida protetiva',
     defaultSLA: 1,
     stages: [
       {
-        name: 'RecepÃ§Ã£o Emergencial',
+        name: 'Recepção Emergencial',
         order: 1,
         description: 'Atendimento imediato',
         slaDays: 1,
@@ -23214,9 +23214,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AvaliaÃ§Ã£o de Risco',
+        name: 'Avaliação de Risco',
         order: 2,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o de risco',
+        description: 'Avaliação da situação de risco',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23226,9 +23226,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'OrientaÃ§Ã£o JurÃ­dica',
+        name: 'Orientação Jurídica',
         order: 3,
-        description: 'OrientaÃ§Ã£o sobre medidas protetivas',
+        description: 'Orientação sobre medidas protetivas',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23240,7 +23240,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Encaminhamento',
         order: 4,
-        description: 'Encaminhamentos necessÃ¡rios',
+        description: 'Encaminhamentos necessários',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23252,7 +23252,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Acompanhamento',
         order: 5,
-        description: 'InÃ­cio do acompanhamento',
+        description: 'Início do acompanhamento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23263,7 +23263,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Atendimento registrado',
         slaDays: 1,
@@ -23281,13 +23281,13 @@ SUPORTE_TECNICO: {
   MELHORIA_HABITACIONAL: {
     moduleType: 'MELHORIA_HABITACIONAL',
     name: 'Workflow - Melhoria Habitacional',
-    description: 'Fluxo para solicitaÃ§Ã£o de melhoria habitacional',
+    description: 'Fluxo para solicitação de melhoria habitacional',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23297,9 +23297,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -23309,9 +23309,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23321,9 +23321,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Visita TÃ©cnica',
+        name: 'Visita Técnica',
         order: 4,
-        description: 'Vistoria no imÃ³vel',
+        description: 'Vistoria no imóvel',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23333,9 +23333,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23345,9 +23345,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o final',
+        description: 'Aprovação final',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23357,9 +23357,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 7,
-        description: 'NotificaÃ§Ã£o ao beneficiÃ¡rio',
+        description: 'Notificação ao beneficiário',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23370,7 +23370,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
         description: 'Melhoria aprovada',
         slaDays: 1,
@@ -23388,13 +23388,13 @@ SUPORTE_TECNICO: {
   MERENDA_ESPECIAL: {
     moduleType: 'MERENDA_ESPECIAL',
     name: 'Workflow - Merenda Especial',
-    description: 'Fluxo para solicitaÃ§Ã£o de merenda especial',
+    description: 'Fluxo para solicitação de merenda especial',
     defaultSLA: 7,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23404,21 +23404,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['Comprovante de MatrÃ­cula'],
+        requiredDocumentTypes: ['Comprovante de Matrícula'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Nutricional',
+        name: 'Análise Nutricional',
         order: 3,
-        description: 'AnÃ¡lise do nutricionista',
+        description: 'Análise do nutricionista',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23428,9 +23428,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da merenda especial',
+        description: 'Aprovação da merenda especial',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23440,9 +23440,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ComunicaÃ§Ã£o Ã  Escola',
+        name: 'Comunicação à Escola',
         order: 5,
-        description: 'ComunicaÃ§Ã£o Ã  unidade escolar',
+        description: 'Comunicação à unidade escolar',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23453,7 +23453,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Merenda especial autorizada',
         slaDays: 1,
@@ -23468,17 +23468,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== FINANÃ‡AS (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== FINANÇAS (workflows faltantes - continuação) ==========
   PAGAMENTO_ITBI: {
     moduleType: 'PAGAMENTO_ITBI',
     name: 'Workflow - Pagamento de ITBI',
-    description: 'Fluxo para pagamento de Imposto de TransmissÃ£o de Bens ImÃ³veis',
+    description: 'Fluxo para pagamento de Imposto de Transmissão de Bens Imóveis',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23488,9 +23488,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -23500,9 +23500,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'CÃ¡lculo do Imposto',
+        name: 'Cálculo do Imposto',
         order: 3,
-        description: 'CÃ¡lculo do ITBI',
+        description: 'Cálculo do ITBI',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23512,9 +23512,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Guia',
+        name: 'Emissão de Guia',
         order: 4,
-        description: 'EmissÃ£o da guia de pagamento',
+        description: 'Emissão da guia de pagamento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23524,9 +23524,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'DisponibilizaÃ§Ã£o',
+        name: 'Disponibilização',
         order: 5,
-        description: 'DisponibilizaÃ§Ã£o da guia',
+        description: 'Disponibilização da guia',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23537,7 +23537,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Guia emitida',
         slaDays: 1,
@@ -23554,14 +23554,14 @@ SUPORTE_TECNICO: {
 
   PARCELAMENTO_DEBITOS: {
     moduleType: 'PARCELAMENTO_DEBITOS',
-    name: 'Workflow - Parcelamento de DÃ©bitos',
-    description: 'Fluxo para parcelamento de dÃ©bitos municipais',
+    name: 'Workflow - Parcelamento de Débitos',
+    description: 'Fluxo para parcelamento de débitos municipais',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23571,9 +23571,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -23583,9 +23583,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de CrÃ©dito',
+        name: 'Análise de Crédito',
         order: 3,
-        description: 'AnÃ¡lise da capacidade de pagamento',
+        description: 'Análise da capacidade de pagamento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23595,9 +23595,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do parcelamento',
+        description: 'Aprovação do parcelamento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23607,9 +23607,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 5,
-        description: 'FormalizaÃ§Ã£o do parcelamento',
+        description: 'Formalização do parcelamento',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23619,9 +23619,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de CarnÃª',
+        name: 'Emissão de Carnê',
         order: 6,
-        description: 'EmissÃ£o das guias',
+        description: 'Emissão das guias',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23632,7 +23632,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Parcelamento efetivado',
         slaDays: 1,
@@ -23647,17 +23647,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (workflows faltantes - continuação) ==========
   PARTICIPACAO_FEIRAS: {
     moduleType: 'PARTICIPACAO_FEIRAS',
-    name: 'Workflow - ParticipaÃ§Ã£o em Feiras',
-    description: 'Fluxo para inscriÃ§Ã£o em feiras agropecuÃ¡rias',
+    name: 'Workflow - Participação em Feiras',
+    description: 'Fluxo para inscrição em feiras agropecuárias',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23667,21 +23667,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CNPJ', 'AlvarÃ¡ de Funcionamento', 'CatÃ¡logo de Produtos/ServiÃ§os (se houver)'],
+        requiredDocumentTypes: ['CNPJ', 'Alvará de Funcionamento', 'Catálogo de Produtos/Serviços (se houver)'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de AdequaÃ§Ã£o',
+        name: 'Análise de Adequação',
         order: 3,
-        description: 'AnÃ¡lise dos produtos',
+        description: 'Análise dos produtos',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23691,9 +23691,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Sorteio/AlocaÃ§Ã£o',
+        name: 'Sorteio/Alocação',
         order: 4,
-        description: 'AlocaÃ§Ã£o de espaÃ§o',
+        description: 'Alocação de espaço',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23703,9 +23703,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 5,
-        description: 'ConfirmaÃ§Ã£o da participaÃ§Ã£o',
+        description: 'Confirmação da participação',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23716,9 +23716,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -23731,17 +23731,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== MOBILIDADE/TRANSPORTE (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== MOBILIDADE/TRANSPORTE (workflows faltantes - continuação) ==========
   PASSE_LIVRE_INTERESTADUAL: {
     moduleType: 'PASSE_LIVRE_INTERESTADUAL',
     name: 'Workflow - Passe Livre Interestadual',
-    description: 'Fluxo para solicitaÃ§Ã£o de passe livre interestadual',
+    description: 'Fluxo para solicitação de passe livre interestadual',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23751,21 +23751,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'RG', 'Laudo MÃ©dico (modelo especÃ­fico)', 'Comprovante de ResidÃªncia', 'Foto 3x4 recente'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Laudo Médico (modelo específico)', 'Comprovante de Residência', 'Foto 3x4 recente'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise MÃ©dica',
+        name: 'Análise Médica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o do laudo mÃ©dico',
+        description: 'Avaliação do laudo médico',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23775,9 +23775,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 4,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23787,9 +23787,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do passe',
+        description: 'Aprovação do passe',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23799,9 +23799,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o',
+        name: 'Emissão',
         order: 6,
-        description: 'Envio para emissÃ£o',
+        description: 'Envio para emissão',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23812,9 +23812,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'DocumentaÃ§Ã£o enviada',
+        description: 'Documentação enviada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -23827,17 +23827,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   PERICIA_PSICOSSOCIAL: {
     moduleType: 'PERICIA_PSICOSSOCIAL',
-    name: 'Workflow - PerÃ­cia Psicossocial',
-    description: 'Fluxo para solicitaÃ§Ã£o de perÃ­cia psicossocial',
+    name: 'Workflow - Perícia Psicossocial',
+    description: 'Fluxo para solicitação de perícia psicossocial',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23847,9 +23847,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Preliminar',
+        name: 'Análise Preliminar',
         order: 2,
-        description: 'AnÃ¡lise da solicitaÃ§Ã£o',
+        description: 'Análise da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23861,7 +23861,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento',
         order: 3,
-        description: 'Agendamento da perÃ­cia',
+        description: 'Agendamento da perícia',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23871,9 +23871,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'RealizaÃ§Ã£o',
+        name: 'Realização',
         order: 4,
-        description: 'RealizaÃ§Ã£o da perÃ­cia',
+        description: 'Realização da perícia',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23883,9 +23883,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o de Laudo',
+        name: 'Elaboração de Laudo',
         order: 5,
-        description: 'ElaboraÃ§Ã£o do laudo',
+        description: 'Elaboração do laudo',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23895,9 +23895,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 6,
-        description: 'EmissÃ£o do laudo',
+        description: 'Emissão do laudo',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -23908,7 +23908,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Laudo emitido',
         slaDays: 1,
@@ -23923,17 +23923,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== AGRICULTURA (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== AGRICULTURA (workflows faltantes - continuação) ==========
   PROGRAMA_HORTAS_COMUNITARIAS: {
     moduleType: 'PROGRAMA_HORTAS_COMUNITARIAS',
-    name: 'Workflow - Programa de Hortas ComunitÃ¡rias',
-    description: 'Fluxo para inscriÃ§Ã£o em programa de hortas comunitÃ¡rias',
+    name: 'Workflow - Programa de Hortas Comunitárias',
+    description: 'Fluxo para inscrição em programa de hortas comunitárias',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -23943,21 +23943,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23979,9 +23979,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AlocaÃ§Ã£o de Lote',
+        name: 'Alocação de Lote',
         order: 5,
-        description: 'DefiniÃ§Ã£o de lote',
+        description: 'Definição de lote',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -23991,9 +23991,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'CapacitaÃ§Ã£o',
+        name: 'Capacitação',
         order: 6,
-        description: 'CapacitaÃ§Ã£o inicial',
+        description: 'Capacitação inicial',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24003,7 +24003,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'FormalizaÃ§Ã£o',
+        name: 'Formalização',
         order: 7,
         description: 'Assinatura de termo',
         slaDays: 1,
@@ -24016,9 +24016,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -24031,17 +24031,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== ASSISTÃŠNCIA SOCIAL (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== ASSISTÊNCIA SOCIAL (workflows faltantes - continuação) ==========
   PROGRAMA_PRIMEIRA_INFANCIA: {
     moduleType: 'PROGRAMA_PRIMEIRA_INFANCIA',
-    name: 'Workflow - Programa Primeira InfÃ¢ncia',
-    description: 'Fluxo para inscriÃ§Ã£o em programa de primeira infÃ¢ncia',
+    name: 'Workflow - Programa Primeira Infância',
+    description: 'Fluxo para inscrição em programa de primeira infância',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24051,9 +24051,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -24063,9 +24063,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24077,7 +24077,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita Domiciliar',
         order: 4,
-        description: 'Visita tÃ©cnica',
+        description: 'Visita técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24087,9 +24087,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24099,9 +24099,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'InclusÃ£o no Programa',
+        name: 'Inclusão no Programa',
         order: 6,
-        description: 'InclusÃ£o e orientaÃ§Ã£o',
+        description: 'Inclusão e orientação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24111,9 +24111,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 7,
-        description: 'NotificaÃ§Ã£o Ã  famÃ­lia',
+        description: 'Notificação à família',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24124,9 +24124,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'FamÃ­lia incluÃ­da',
+        description: 'Família incluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -24139,17 +24139,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== SAÃšDE (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== SAÚDE (workflows faltantes - continuação) ==========
   PROGRAMA_SAUDE_FAMILIA: {
     moduleType: 'PROGRAMA_SAUDE_FAMILIA',
-    name: 'Workflow - Programa SaÃºde da FamÃ­lia',
-    description: 'Fluxo para inscriÃ§Ã£o em programa de saÃºde da famÃ­lia',
+    name: 'Workflow - Programa Saúde da Família',
+    description: 'Fluxo para inscrição em programa de saúde da família',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da famÃ­lia',
+        description: 'Registro da família',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24159,13 +24159,13 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
-        requiredDocumentTypes: ['CartÃ£o SUS', 'RG ou CPF'],
+        requiredDocumentTypes: ['Cartão SUS', 'RG ou CPF'],
         requiredInputFieldIds: [],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
@@ -24185,7 +24185,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Cadastramento',
         order: 4,
-        description: 'InclusÃ£o no programa',
+        description: 'Inclusão no programa',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24195,9 +24195,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'NotificaÃ§Ã£o',
+        name: 'Notificação',
         order: 5,
-        description: 'NotificaÃ§Ã£o Ã  famÃ­lia',
+        description: 'Notificação à família',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24208,9 +24208,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'FamÃ­lia cadastrada',
+        description: 'Família cadastrada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -24223,17 +24223,17 @@ SUPORTE_TECNICO: {
     ]
   },
 
-  // ========== HABITAÃ‡ÃƒO (workflows faltantes - continuaÃ§Ã£o) ==========
+  // ========== HABITAÇÃO (workflows faltantes - continuação) ==========
   PROJETO_ARQUITETONICO_SOCIAL: {
     moduleType: 'PROJETO_ARQUITETONICO_SOCIAL',
-    name: 'Workflow - Projeto ArquitetÃ´nico Social',
-    description: 'Fluxo para solicitaÃ§Ã£o de projeto arquitetÃ´nico social',
+    name: 'Workflow - Projeto Arquitetônico Social',
+    description: 'Fluxo para solicitação de projeto arquitetônico social',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24243,9 +24243,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 3,
         availableTabs: ['resumo', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -24255,9 +24255,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 3,
-        description: 'AvaliaÃ§Ã£o socioeconÃ´mica',
+        description: 'Avaliação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24269,7 +24269,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Visita ao Terreno',
         order: 4,
-        description: 'Vistoria tÃ©cnica',
+        description: 'Vistoria técnica',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24279,9 +24279,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Elegibilidade',
+        name: 'Análise de Elegibilidade',
         order: 5,
-        description: 'VerificaÃ§Ã£o de critÃ©rios',
+        description: 'Verificação de critérios',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'comunicacao'],
         primaryTab: 'dados',
@@ -24291,9 +24291,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ElaboraÃ§Ã£o do Projeto',
+        name: 'Elaboração do Projeto',
         order: 6,
-        description: 'ElaboraÃ§Ã£o arquitetÃ´nica',
+        description: 'Elaboração arquitetônica',
         slaDays: 4,
         availableTabs: ['resumo', 'dados', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24305,7 +24305,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Entrega do Projeto',
         order: 7,
-        description: 'Entrega ao beneficiÃ¡rio',
+        description: 'Entrega ao beneficiário',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos-gerados', 'enviar', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24316,7 +24316,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
         description: 'Projeto entregue',
         slaDays: 1,
@@ -24338,7 +24338,7 @@ SUPORTE_TECNICO: {
     defaultSLA: 5,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
         description: 'Registro do protocolo',
         slaDays: 1,
@@ -24351,9 +24351,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise',
+        name: 'Análise',
         order: 2,
-        description: 'AnÃ¡lise e encaminhamento',
+        description: 'Análise e encaminhamento',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24363,7 +24363,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 3,
         description: 'Protocolo registrado',
         slaDays: 1,
@@ -24380,27 +24380,27 @@ SUPORTE_TECNICO: {
 
   REGULARIZACAO_OBRA: {
     moduleType: 'REGULARIZACAO_OBRA',
-    name: 'Workflow - RegularizaÃ§Ã£o de Obra',
-    description: 'Fluxo para regularizaÃ§Ã£o de obras executadas',
+    name: 'Workflow - Regularização de Obra',
+    description: 'Fluxo para regularização de obras executadas',
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['Projeto As-Built', 'ART', 'MatrÃ­cula do ImÃ³vel', 'Fotos da EdificaÃ§Ã£o'],
+        requiredDocumentTypes: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação'],
         requiredInputFieldIds: ['inscricao_imobiliaria', 'tipo_obra', 'area_construida'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise Documental',
+        name: 'Análise Documental',
         order: 2,
-        description: 'VerificaÃ§Ã£o de documentos',
+        description: 'Verificação de documentos',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'documentos',
@@ -24412,19 +24412,19 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria',
         order: 3,
-        description: 'Vistoria tÃ©cnica da obra',
+        description: 'Vistoria técnica da obra',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['laudo_tecnico', 'parecer_vistoria'],
-        requiredDocumentTypes: ['Projeto As-Built', 'ART', 'MatrÃ­cula do ImÃ³vel', 'Fotos da EdificaÃ§Ã£o'],
+        requiredDocumentTypes: ['Projeto As-Built', 'ART', 'Matrícula do Imóvel', 'Fotos da Edificação'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 4,
-        description: 'AnÃ¡lise jurÃ­dica da regularizaÃ§Ã£o',
+        description: 'Análise jurídica da regularização',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24434,9 +24434,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o Final',
+        name: 'Aprovação Final',
         order: 5,
-        description: 'AprovaÃ§Ã£o final da regularizaÃ§Ã£o',
+        description: 'Aprovação final da regularização',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24446,9 +24446,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de CertidÃ£o',
+        name: 'Emissão de Certidão',
         order: 6,
-        description: 'EmissÃ£o da certidÃ£o de regularizaÃ§Ã£o',
+        description: 'Emissão da certidão de regularização',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24459,7 +24459,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Obra regularizada',
         slaDays: 1,
@@ -24481,9 +24481,9 @@ SUPORTE_TECNICO: {
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24494,9 +24494,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 2,
-        description: 'AnÃ¡lise tÃ©cnica do remembramento',
+        description: 'Análise técnica do remembramento',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24506,9 +24506,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 3,
-        description: 'AnÃ¡lise jurÃ­dica',
+        description: 'Análise jurídica',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24518,9 +24518,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do remembramento',
+        description: 'Aprovação do remembramento',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24530,9 +24530,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de CertidÃ£o',
+        name: 'Emissão de Certidão',
         order: 5,
-        description: 'EmissÃ£o da certidÃ£o de remembramento',
+        description: 'Emissão da certidão de remembramento',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24543,9 +24543,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Remembramento concluÃ­do',
+        description: 'Remembramento concluído',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -24560,27 +24560,27 @@ SUPORTE_TECNICO: {
 
   RENOVACAO_CREDENCIAMENTO: {
     moduleType: 'RENOVACAO_CREDENCIAMENTO',
-    name: 'Workflow - RenovaÃ§Ã£o de Credenciamento',
-    description: 'Fluxo para renovaÃ§Ã£o de credenciamentos',
+    name: 'Workflow - Renovação de Credenciamento',
+    description: 'Fluxo para renovação de credenciamentos',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da renovaÃ§Ã£o',
+        description: 'Registro da renovação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['CNH Atualizada', 'CRLV Atualizado', 'Vistoria em Dia', 'CertidÃ£o Negativa de Multas'],
+        requiredDocumentTypes: ['CNH Atualizada', 'CRLV Atualizado', 'Vistoria em Dia', 'Certidão Negativa de Multas'],
         requiredInputFieldIds: ['tipo_credenciamento', 'numero_credenciamento_atual'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'VerificaÃ§Ã£o',
+        name: 'Verificação',
         order: 2,
-        description: 'VerificaÃ§Ã£o de regularidade',
+        description: 'Verificação de regularidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24590,9 +24590,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise',
+        name: 'Análise',
         order: 3,
-        description: 'AnÃ¡lise da renovaÃ§Ã£o',
+        description: 'Análise da renovação',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24602,9 +24602,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da renovaÃ§Ã£o',
+        description: 'Aprovação da renovação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24614,9 +24614,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Credencial',
+        name: 'Emissão de Credencial',
         order: 5,
-        description: 'EmissÃ£o da nova credencial',
+        description: 'Emissão da nova credencial',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -24627,7 +24627,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Credenciamento renovado',
         slaDays: 1,
@@ -24644,27 +24644,27 @@ SUPORTE_TECNICO: {
 
   REURB: {
     moduleType: 'REURB',
-    name: 'Workflow - RegularizaÃ§Ã£o FundiÃ¡ria (REURB)',
-    description: 'Fluxo para RegularizaÃ§Ã£o FundiÃ¡ria Urbana',
+    name: 'Workflow - Regularização Fundiária (REURB)',
+    description: 'Fluxo para Regularização Fundiária Urbana',
     defaultSLA: 180,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG', 'CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: ['tipo_reurb', 'area_ocupacao', 'numero_familias'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise Preliminar',
+        name: 'Análise Preliminar',
         order: 2,
-        description: 'AnÃ¡lise preliminar da Ã¡rea',
+        description: 'Análise preliminar da área',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24674,21 +24674,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Levantamento TopogrÃ¡fico',
+        name: 'Levantamento Topográfico',
         order: 3,
-        description: 'Levantamento topogrÃ¡fico da Ã¡rea',
+        description: 'Levantamento topográfico da área',
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['levantamento_topografico'],
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de ResidÃªncia', 'DeclaraÃ§Ã£o de Posse', 'Levantamento TopogrÃ¡fico (se houver)'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 4,
-        description: 'AnÃ¡lise jurÃ­dica da regularizaÃ§Ã£o',
+        description: 'Análise jurídica da regularização',
         slaDays: 30,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24698,21 +24698,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Projeto de RegularizaÃ§Ã£o',
+        name: 'Projeto de Regularização',
         order: 5,
-        description: 'ElaboraÃ§Ã£o do projeto de regularizaÃ§Ã£o',
+        description: 'Elaboração do projeto de regularização',
         slaDays: 45,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['projeto_regularizacao'],
-        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de ResidÃªncia', 'DeclaraÃ§Ã£o de Posse', 'Levantamento TopogrÃ¡fico (se houver)'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Comprovante de Residência', 'Declaração de Posse', 'Levantamento Topográfico (se houver)'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o da regularizaÃ§Ã£o',
+        description: 'Aprovação da regularização',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24734,9 +24734,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'REURB concluÃ­da',
+        description: 'REURB concluída',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -24751,27 +24751,27 @@ SUPORTE_TECNICO: {
 
   REVISAO_IPTU: {
     moduleType: 'REVISAO_IPTU',
-    name: 'Workflow - RevisÃ£o de IPTU',
-    description: 'Fluxo para revisÃ£o de lanÃ§amento de IPTU',
+    name: 'Workflow - Revisão de IPTU',
+    description: 'Fluxo para revisão de lançamento de IPTU',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['CarnÃª de IPTU', 'Fotos do ImÃ³vel', 'Laudo de AvaliaÃ§Ã£o (se houver)', 'Escritura do ImÃ³vel'],
+        requiredDocumentTypes: ['Carnê de IPTU', 'Fotos do Imóvel', 'Laudo de Avaliação (se houver)', 'Escritura do Imóvel'],
         requiredInputFieldIds: ['inscricao_imobiliaria', 'motivo_revisao', 'ano_exercicio'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise Cadastral',
+        name: 'Análise Cadastral',
         order: 2,
-        description: 'AnÃ¡lise dos dados cadastrais',
+        description: 'Análise dos dados cadastrais',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24783,7 +24783,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria',
         order: 3,
-        description: 'Vistoria do imÃ³vel (se necessÃ¡rio)',
+        description: 'Vistoria do imóvel (se necessário)',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24793,9 +24793,9 @@ SUPORTE_TECNICO: {
         canSkip: true
       },
       {
-        name: 'AnÃ¡lise Fiscal',
+        name: 'Análise Fiscal',
         order: 4,
-        description: 'AnÃ¡lise fiscal da revisÃ£o',
+        description: 'Análise fiscal da revisão',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24805,9 +24805,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'DecisÃ£o',
+        name: 'Decisão',
         order: 5,
-        description: 'DecisÃ£o sobre a revisÃ£o',
+        description: 'Decisão sobre a revisão',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24817,9 +24817,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'RevisÃ£o concluÃ­da',
+        description: 'Revisão concluída',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -24835,13 +24835,13 @@ SUPORTE_TECNICO: {
   SEGURO_SAFRA: {
     moduleType: 'SEGURO_SAFRA',
     name: 'Workflow - Seguro Safra',
-    description: 'Fluxo para solicitaÃ§Ã£o de Seguro Safra',
+    description: 'Fluxo para solicitação de Seguro Safra',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24852,9 +24852,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'VerificaÃ§Ã£o DAP',
+        name: 'Verificação DAP',
         order: 2,
-        description: 'VerificaÃ§Ã£o da DAP',
+        description: 'Verificação da DAP',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24864,21 +24864,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 3,
-        description: 'Vistoria da Ã¡rea cultivada',
+        description: 'Vistoria da área cultivada',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['laudo_vistoria'],
-        requiredDocumentTypes: ['CPF', 'DAP', 'Comprovante de Ãrea Plantada'],
+        requiredDocumentTypes: ['CPF', 'DAP', 'Comprovante de Área Plantada'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise',
+        name: 'Análise',
         order: 4,
-        description: 'AnÃ¡lise da solicitaÃ§Ã£o',
+        description: 'Análise da solicitação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24888,9 +24888,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do seguro',
+        description: 'Aprovação do seguro',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24912,7 +24912,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Seguro safra aprovado',
         slaDays: 2,
@@ -24929,14 +24929,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_ABRIGO: {
     moduleType: 'SOLICITACAO_ABRIGO',
-    name: 'Workflow - SolicitaÃ§Ã£o de Abrigo',
-    description: 'Fluxo para solicitaÃ§Ã£o de abrigo temporÃ¡rio',
+    name: 'Workflow - Solicitação de Abrigo',
+    description: 'Fluxo para solicitação de abrigo temporário',
     defaultSLA: 3,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24947,9 +24947,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AvaliaÃ§Ã£o Social',
+        name: 'Avaliação Social',
         order: 2,
-        description: 'AvaliaÃ§Ã£o da situaÃ§Ã£o social',
+        description: 'Avaliação da situação social',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -24959,9 +24959,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'DefiniÃ§Ã£o de Vaga',
+        name: 'Definição de Vaga',
         order: 3,
-        description: 'DefiniÃ§Ã£o da vaga no abrigo',
+        description: 'Definição da vaga no abrigo',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -24971,7 +24971,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
         description: 'Abrigo concedido',
         slaDays: 1,
@@ -24988,14 +24988,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_FISIOTERAPIA: {
     moduleType: 'SOLICITACAO_FISIOTERAPIA',
-    name: 'Workflow - SolicitaÃ§Ã£o de Fisioterapia',
-    description: 'Fluxo para solicitaÃ§Ã£o de fisioterapia',
+    name: 'Workflow - Solicitação de Fisioterapia',
+    description: 'Fluxo para solicitação de fisioterapia',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25006,9 +25006,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise MÃ©dica',
+        name: 'Análise Médica',
         order: 2,
-        description: 'AnÃ¡lise do pedido mÃ©dico',
+        description: 'Análise do pedido médico',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25020,7 +25020,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento',
         order: 3,
-        description: 'Agendamento das sessÃµes',
+        description: 'Agendamento das sessões',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25030,7 +25030,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 4,
         description: 'Fisioterapia agendada',
         slaDays: 2,
@@ -25047,14 +25047,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_LOTE_DISTRITO: {
     moduleType: 'SOLICITACAO_LOTE_DISTRITO',
-    name: 'Workflow - SolicitaÃ§Ã£o de Lote em Distrito',
-    description: 'Fluxo para solicitaÃ§Ã£o de lote em distrito',
+    name: 'Workflow - Solicitação de Lote em Distrito',
+    description: 'Fluxo para solicitação de lote em distrito',
     defaultSLA: 60,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25065,9 +25065,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 2,
-        description: 'AnÃ¡lise socioeconÃ´mica do solicitante',
+        description: 'Análise socioeconômica do solicitante',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25077,9 +25077,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o de Disponibilidade',
+        name: 'Verificação de Disponibilidade',
         order: 3,
-        description: 'VerificaÃ§Ã£o de lotes disponÃ­veis',
+        description: 'Verificação de lotes disponíveis',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25089,9 +25089,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise JurÃ­dica',
+        name: 'Análise Jurídica',
         order: 4,
-        description: 'AnÃ¡lise jurÃ­dica da concessÃ£o',
+        description: 'Análise jurídica da concessão',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25101,9 +25101,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da concessÃ£o',
+        description: 'Aprovação da concessão',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25113,9 +25113,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Termo',
+        name: 'Emissão de Termo',
         order: 6,
-        description: 'EmissÃ£o do termo de concessÃ£o',
+        description: 'Emissão do termo de concessão',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -25126,7 +25126,7 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Lote concedido',
         slaDays: 2,
@@ -25143,14 +25143,14 @@ SUPORTE_TECNICO: {
 
   SOLICITACAO_MICROCREDITO: {
     moduleType: 'SOLICITACAO_MICROCREDITO',
-    name: 'Workflow - SolicitaÃ§Ã£o de MicrocrÃ©dito',
-    description: 'Fluxo para solicitaÃ§Ã£o de microcrÃ©dito',
+    name: 'Workflow - Solicitação de Microcrédito',
+    description: 'Fluxo para solicitação de microcrédito',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25161,9 +25161,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise Cadastral',
+        name: 'Análise Cadastral',
         order: 2,
-        description: 'AnÃ¡lise cadastral do solicitante',
+        description: 'Análise cadastral do solicitante',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25173,9 +25173,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de CrÃ©dito',
+        name: 'Análise de Crédito',
         order: 3,
-        description: 'AnÃ¡lise de crÃ©dito',
+        description: 'Análise de crédito',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25185,9 +25185,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 4,
-        description: 'AnÃ¡lise socioeconÃ´mica',
+        description: 'Análise socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25197,9 +25197,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o do microcrÃ©dito',
+        description: 'Aprovação do microcrédito',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25209,7 +25209,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ContrataÃ§Ã£o',
+        name: 'Contratação',
         order: 6,
         description: 'Assinatura do contrato',
         slaDays: 5,
@@ -25222,9 +25222,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
-        description: 'MicrocrÃ©dito aprovado',
+        description: 'Microcrédito aprovado',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -25240,13 +25240,13 @@ SUPORTE_TECNICO: {
   TARIFA_SOCIAL_ENERGIA: {
     moduleType: 'TARIFA_SOCIAL_ENERGIA',
     name: 'Workflow - Tarifa Social de Energia',
-    description: 'Fluxo para solicitaÃ§Ã£o de tarifa social de energia',
+    description: 'Fluxo para solicitação de tarifa social de energia',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25257,9 +25257,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise SocioeconÃ´mica',
+        name: 'Análise Socioeconômica',
         order: 2,
-        description: 'AnÃ¡lise da situaÃ§Ã£o socioeconÃ´mica',
+        description: 'Análise da situação socioeconômica',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25269,9 +25269,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'VerificaÃ§Ã£o CadÃšnico',
+        name: 'Verificação CadÚnico',
         order: 3,
-        description: 'VerificaÃ§Ã£o no Cadastro Ãšnico',
+        description: 'Verificação no Cadastro Único',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25281,9 +25281,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da tarifa social',
+        description: 'Aprovação da tarifa social',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25295,7 +25295,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Encaminhamento',
         order: 5,
-        description: 'Encaminhamento Ã  concessionÃ¡ria',
+        description: 'Encaminhamento à concessionária',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25305,7 +25305,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Tarifa social aprovada',
         slaDays: 2,
@@ -25322,14 +25322,14 @@ SUPORTE_TECNICO: {
 
   TOMBAMENTO_PATRIMONIO: {
     moduleType: 'TOMBAMENTO_PATRIMONIO',
-    name: 'Workflow - Tombamento de PatrimÃ´nio',
-    description: 'Fluxo para tombamento de patrimÃ´nio histÃ³rico',
+    name: 'Workflow - Tombamento de Patrimônio',
+    description: 'Fluxo para tombamento de patrimônio histórico',
     defaultSLA: 90,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25340,9 +25340,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise Preliminar',
+        name: 'Análise Preliminar',
         order: 2,
-        description: 'AnÃ¡lise preliminar do bem',
+        description: 'Análise preliminar do bem',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25352,33 +25352,33 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Pesquisa HistÃ³rica',
+        name: 'Pesquisa Histórica',
         order: 3,
-        description: 'Pesquisa histÃ³rica do bem',
+        description: 'Pesquisa histórica do bem',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['pesquisa_historica'],
-        requiredDocumentTypes: ['CPF', 'RG', 'DocumentaÃ§Ã£o HistÃ³rica', 'Fotos', 'Laudo TÃ©cnico'],
+        requiredDocumentTypes: ['CPF', 'RG', 'Documentação Histórica', 'Fotos', 'Laudo Técnico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
-        description: 'Vistoria tÃ©cnica do bem',
+        description: 'Vistoria técnica do bem',
         slaDays: 15,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['laudo_tecnico'],
-        requiredDocumentTypes: ['Laudo TÃ©cnico'],
+        requiredDocumentTypes: ['Laudo Técnico'],
         allowedActions: ['APPROVE', 'REQUEST_INFO'],
         canSkip: false
       },
       {
         name: 'Parecer Conselho',
         order: 5,
-        description: 'Parecer do conselho de patrimÃ´nio',
+        description: 'Parecer do conselho de patrimônio',
         slaDays: 20,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25388,9 +25388,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 6,
-        description: 'AprovaÃ§Ã£o do tombamento',
+        description: 'Aprovação do tombamento',
         slaDays: 10,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25400,9 +25400,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'PublicaÃ§Ã£o',
+        name: 'Publicação',
         order: 7,
-        description: 'PublicaÃ§Ã£o do tombamento',
+        description: 'Publicação do tombamento',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25412,9 +25412,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 8,
-        description: 'Tombamento concluÃ­do',
+        description: 'Tombamento concluído',
         slaDays: 5,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -25429,27 +25429,27 @@ SUPORTE_TECNICO: {
 
   TRANSFERENCIA_PONTO_TAXI: {
     moduleType: 'TRANSFERENCIA_PONTO_TAXI',
-    name: 'Workflow - TransferÃªncia de Ponto de TÃ¡xi',
-    description: 'Fluxo para transferÃªncia de ponto de tÃ¡xi',
+    name: 'Workflow - Transferência de Ponto de Táxi',
+    description: 'Fluxo para transferência de ponto de táxi',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['Credencial de Taxista', 'CertidÃ£o Negativa de Multas', 'Justificativa'],
+        requiredDocumentTypes: ['Credencial de Taxista', 'Certidão Negativa de Multas', 'Justificativa'],
         requiredInputFieldIds: ['ponto_atual', 'ponto_destino', 'justificativa'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'VerificaÃ§Ã£o de Regularidade',
+        name: 'Verificação de Regularidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o da regularidade do taxista',
+        description: 'Verificação da regularidade do taxista',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25459,9 +25459,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 3,
-        description: 'AnÃ¡lise da disponibilidade do ponto',
+        description: 'Análise da disponibilidade do ponto',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25471,9 +25471,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da transferÃªncia',
+        description: 'Aprovação da transferência',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25483,9 +25483,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 5,
-        description: 'EmissÃ£o da autorizaÃ§Ã£o de transferÃªncia',
+        description: 'Emissão da autorização de transferência',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -25496,9 +25496,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'TransferÃªncia concluÃ­da',
+        description: 'Transferência concluída',
         slaDays: 2,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -25514,26 +25514,26 @@ SUPORTE_TECNICO: {
   TRANSPORTE_ESCOLAR_GRATUITO: {
     moduleType: 'TRANSPORTE_ESCOLAR_GRATUITO',
     name: 'Workflow - Transporte Escolar Gratuito',
-    description: 'Fluxo para solicitaÃ§Ã£o de transporte escolar gratuito',
+    description: 'Fluxo para solicitação de transporte escolar gratuito',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG ou CertidÃ£o de Nascimento', 'CPF', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG ou Certidão de Nascimento', 'CPF', 'Comprovante de Residência'],
         requiredInputFieldIds: ['nome_aluno', 'escola', 'serie', 'turno', 'endereco'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'VerificaÃ§Ã£o Escolar',
+        name: 'Verificação Escolar',
         order: 2,
-        description: 'VerificaÃ§Ã£o da matrÃ­cula escolar',
+        description: 'Verificação da matrícula escolar',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25543,9 +25543,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Rota',
+        name: 'Análise de Rota',
         order: 3,
-        description: 'AnÃ¡lise da rota e disponibilidade',
+        description: 'Análise da rota e disponibilidade',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25555,9 +25555,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do transporte',
+        description: 'Aprovação do transporte',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25567,7 +25567,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Transporte aprovado',
         slaDays: 1,
@@ -25585,13 +25585,13 @@ SUPORTE_TECNICO: {
   TREINAMENTO_DEFESA_CIVIL: {
     moduleType: 'TREINAMENTO_DEFESA_CIVIL',
     name: 'Workflow - Treinamento em Defesa Civil',
-    description: 'Fluxo para inscriÃ§Ã£o em treinamento de defesa civil',
+    description: 'Fluxo para inscrição em treinamento de defesa civil',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da inscriÃ§Ã£o',
+        description: 'Registro da inscrição',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25602,9 +25602,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise de Vagas',
+        name: 'Análise de Vagas',
         order: 2,
-        description: 'VerificaÃ§Ã£o de vagas disponÃ­veis',
+        description: 'Verificação de vagas disponíveis',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25626,9 +25626,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConfirmaÃ§Ã£o',
+        name: 'Confirmação',
         order: 4,
-        description: 'ConfirmaÃ§Ã£o de participaÃ§Ã£o',
+        description: 'Confirmação de participação',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25638,9 +25638,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'InscriÃ§Ã£o confirmada',
+        description: 'Inscrição confirmada',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -25656,26 +25656,26 @@ SUPORTE_TECNICO: {
   UNIFORME_ESCOLAR: {
     moduleType: 'UNIFORME_ESCOLAR',
     name: 'Workflow - Uniforme Escolar',
-    description: 'Fluxo para solicitaÃ§Ã£o de uniforme escolar',
+    description: 'Fluxo para solicitação de uniforme escolar',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['Comprovante de MatrÃ­cula', 'DeclaraÃ§Ã£o de Baixa Renda (se aplicÃ¡vel)'],
+        requiredDocumentTypes: ['Comprovante de Matrícula', 'Declaração de Baixa Renda (se aplicável)'],
         requiredInputFieldIds: ['nome_aluno', 'escola', 'serie', 'tamanho'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'VerificaÃ§Ã£o Escolar',
+        name: 'Verificação Escolar',
         order: 2,
-        description: 'VerificaÃ§Ã£o da matrÃ­cula',
+        description: 'Verificação da matrícula',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25685,9 +25685,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'SeparaÃ§Ã£o',
+        name: 'Separação',
         order: 3,
-        description: 'SeparaÃ§Ã£o do uniforme',
+        description: 'Separação do uniforme',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25709,7 +25709,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
         description: 'Uniforme entregue',
         slaDays: 1,
@@ -25726,14 +25726,14 @@ SUPORTE_TECNICO: {
 
   USO_ESPACO_PUBLICO: {
     moduleType: 'USO_ESPACO_PUBLICO',
-    name: 'Workflow - Uso de EspaÃ§o PÃºblico',
-    description: 'Fluxo para autorizaÃ§Ã£o de uso de espaÃ§o pÃºblico',
+    name: 'Workflow - Uso de Espaço Público',
+    description: 'Fluxo para autorização de uso de espaço público',
     defaultSLA: 20,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25744,9 +25744,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o da disponibilidade do espaÃ§o',
+        description: 'Verificação da disponibilidade do espaço',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25756,9 +25756,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise TÃ©cnica',
+        name: 'Análise Técnica',
         order: 3,
-        description: 'AnÃ¡lise tÃ©cnica do evento',
+        description: 'Análise técnica do evento',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25768,9 +25768,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o do uso do espaÃ§o',
+        description: 'Aprovação do uso do espaço',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25780,9 +25780,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 5,
-        description: 'EmissÃ£o da autorizaÃ§Ã£o',
+        description: 'Emissão da autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -25793,9 +25793,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'AutorizaÃ§Ã£o concedida',
+        description: 'Autorização concedida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -25810,14 +25810,14 @@ SUPORTE_TECNICO: {
 
   USO_GINASIO: {
     moduleType: 'USO_GINASIO',
-    name: 'Workflow - Uso de GinÃ¡sio',
-    description: 'Fluxo para autorizaÃ§Ã£o de uso de ginÃ¡sio esportivo',
+    name: 'Workflow - Uso de Ginásio',
+    description: 'Fluxo para autorização de uso de ginásio esportivo',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25828,9 +25828,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise de Disponibilidade',
+        name: 'Análise de Disponibilidade',
         order: 2,
-        description: 'VerificaÃ§Ã£o da disponibilidade do ginÃ¡sio',
+        description: 'Verificação da disponibilidade do ginásio',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25840,9 +25840,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 3,
-        description: 'AprovaÃ§Ã£o do uso',
+        description: 'Aprovação do uso',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25852,9 +25852,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de AutorizaÃ§Ã£o',
+        name: 'Emissão de Autorização',
         order: 4,
-        description: 'EmissÃ£o da autorizaÃ§Ã£o',
+        description: 'Emissão da autorização',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -25865,9 +25865,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'AutorizaÃ§Ã£o concedida',
+        description: 'Autorização concedida',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -25883,13 +25883,13 @@ SUPORTE_TECNICO: {
   VAGA_ESPECIAL: {
     moduleType: 'VAGA_ESPECIAL',
     name: 'Workflow - Vaga Especial',
-    description: 'Fluxo para solicitaÃ§Ã£o de vaga especial de estacionamento',
+    description: 'Fluxo para solicitação de vaga especial de estacionamento',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25900,9 +25900,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 2,
-        description: 'AnÃ¡lise da viabilidade tÃ©cnica',
+        description: 'Análise da viabilidade técnica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25924,9 +25924,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 4,
-        description: 'AprovaÃ§Ã£o da vaga',
+        description: 'Aprovação da vaga',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25936,9 +25936,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ImplantaÃ§Ã£o',
+        name: 'Implantação',
         order: 5,
-        description: 'ImplantaÃ§Ã£o da sinalizaÃ§Ã£o',
+        description: 'Implantação da sinalização',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -25948,7 +25948,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
         description: 'Vaga implantada',
         slaDays: 1,
@@ -25966,26 +25966,26 @@ SUPORTE_TECNICO: {
   VAGA_ESPECIAL_PCD: {
     moduleType: 'VAGA_ESPECIAL_PCD',
     name: 'Workflow - Vaga Especial PCD',
-    description: 'Fluxo para solicitaÃ§Ã£o de vaga especial para pessoa com deficiÃªncia',
+    description: 'Fluxo para solicitação de vaga especial para pessoa com deficiência',
     defaultSLA: 30,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
-        requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Comprovante de Residência'],
         requiredInputFieldIds: ['endereco_vaga', 'tipo_deficiencia', 'placa_veiculo'],
         allowedActions: ['APPROVE', 'REJECT'],
         canSkip: false,
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise de Laudo',
+        name: 'Análise de Laudo',
         order: 2,
-        description: 'AnÃ¡lise do laudo mÃ©dico',
+        description: 'Análise do laudo médico',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -25995,9 +25995,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'AnÃ¡lise de Viabilidade',
+        name: 'Análise de Viabilidade',
         order: 3,
-        description: 'AnÃ¡lise da viabilidade tÃ©cnica',
+        description: 'Análise da viabilidade técnica',
         slaDays: 7,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -26014,14 +26014,14 @@ SUPORTE_TECNICO: {
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['laudo_vistoria'],
-        requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Laudo MÃ©dico', 'Documento do VeÃ­culo', 'Comprovante de ResidÃªncia'],
+        requiredDocumentTypes: ['RG', 'CPF', 'CNH (se condutor)', 'Laudo Médico', 'Documento do Veículo', 'Comprovante de Residência'],
         allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
         canSkip: false
       },
       {
-        name: 'AprovaÃ§Ã£o',
+        name: 'Aprovação',
         order: 5,
-        description: 'AprovaÃ§Ã£o da vaga PCD',
+        description: 'Aprovação da vaga PCD',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26031,9 +26031,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ImplantaÃ§Ã£o',
+        name: 'Implantação',
         order: 6,
-        description: 'ImplantaÃ§Ã£o da sinalizaÃ§Ã£o PCD',
+        description: 'Implantação da sinalização PCD',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26043,7 +26043,7 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 7,
         description: 'Vaga PCD implantada',
         slaDays: 1,
@@ -26060,14 +26060,14 @@ SUPORTE_TECNICO: {
 
   VISTORIA_AREA_RISCO: {
     moduleType: 'VISTORIA_AREA_RISCO',
-    name: 'Workflow - Vistoria de Ãrea de Risco',
-    description: 'Fluxo para vistoria de Ã¡rea de risco',
+    name: 'Workflow - Vistoria de Área de Risco',
+    description: 'Fluxo para vistoria de área de risco',
     defaultSLA: 10,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26078,9 +26078,9 @@ SUPORTE_TECNICO: {
         stageType: 'RECEPTION'
       },
       {
-        name: 'AnÃ¡lise Preliminar',
+        name: 'Análise Preliminar',
         order: 2,
-        description: 'AnÃ¡lise preliminar da urgÃªncia',
+        description: 'Análise preliminar da urgência',
         slaDays: 1,
         availableTabs: ['resumo', 'dados', 'documentos', 'pendencias', 'comunicacao'],
         primaryTab: 'dados',
@@ -26092,7 +26092,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Agendamento de Vistoria',
         order: 3,
-        description: 'Agendamento da vistoria tÃ©cnica',
+        description: 'Agendamento da vistoria técnica',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26102,21 +26102,21 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'Vistoria TÃ©cnica',
+        name: 'Vistoria Técnica',
         order: 4,
-        description: 'RealizaÃ§Ã£o da vistoria',
+        description: 'Realização da vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
         requiredInputFieldIds: ['laudo_vistoria', 'medidas_recomendadas'],
-        requiredDocumentTypes: ['Fotos do Local (se possÃ­vel)'],
+        requiredDocumentTypes: ['Fotos do Local (se possível)'],
         allowedActions: ['APPROVE'],
         canSkip: false
       },
       {
-        name: 'Parecer TÃ©cnico',
+        name: 'Parecer Técnico',
         order: 5,
-        description: 'ElaboraÃ§Ã£o do parecer tÃ©cnico',
+        description: 'Elaboração do parecer técnico',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26126,9 +26126,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 6,
-        description: 'Vistoria concluÃ­da',
+        description: 'Vistoria concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -26143,14 +26143,14 @@ SUPORTE_TECNICO: {
 
   VISTORIA_VEICULO: {
     moduleType: 'VISTORIA_VEICULO',
-    name: 'Workflow - Vistoria de VeÃ­culo',
+    name: 'Workflow - Vistoria de Veículo',
     description: 'Fluxo para vistoria veicular',
     defaultSLA: 15,
     stages: [
       {
-        name: 'RecepÃ§Ã£o',
+        name: 'Recepção',
         order: 1,
-        description: 'Registro da solicitaÃ§Ã£o',
+        description: 'Registro da solicitação',
         slaDays: 2,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26175,7 +26175,7 @@ SUPORTE_TECNICO: {
       {
         name: 'Vistoria',
         order: 3,
-        description: 'RealizaÃ§Ã£o da vistoria',
+        description: 'Realização da vistoria',
         slaDays: 5,
         availableTabs: ['resumo', 'dados', 'documentos', 'comunicacao'],
         primaryTab: 'dados',
@@ -26185,9 +26185,9 @@ SUPORTE_TECNICO: {
         canSkip: false
       },
       {
-        name: 'EmissÃ£o de Laudo',
+        name: 'Emissão de Laudo',
         order: 4,
-        description: 'EmissÃ£o do laudo de vistoria',
+        description: 'Emissão do laudo de vistoria',
         slaDays: 3,
         availableTabs: ['resumo', 'dados', 'documentos-gerados', 'comunicacao'],
         primaryTab: 'documentos-gerados',
@@ -26198,9 +26198,9 @@ SUPORTE_TECNICO: {
         stageType: 'DOCUMENT_GENERATION'
       },
       {
-        name: 'ConclusÃ£o',
+        name: 'Conclusão',
         order: 5,
-        description: 'Vistoria concluÃ­da',
+        description: 'Vistoria concluída',
         slaDays: 1,
         availableTabs: ['resumo', 'documentos', 'comunicacao'],
         primaryTab: 'resumo',
@@ -26231,37 +26231,37 @@ function generateContextualUIMetadata(service: any, stageName: string, stageOrde
     primaryTab = 'documentos';
   }
 
-  // ServiÃ§os que precisam de documentos
-  if (serviceName.includes('certidÃ£o') || serviceName.includes('declaraÃ§Ã£o') ||
+  // Serviços que precisam de documentos
+  if (serviceName.includes('certidão') || serviceName.includes('declaração') ||
       serviceName.includes('atestado') || serviceName.includes('cadastro') ||
-      serviceName.includes('inscriÃ§Ã£o') || serviceName.includes('licenÃ§a') ||
-      serviceName.includes('alvarÃ¡') || serviceName.includes('segunda via') ||
-      serviceName.includes('registro') || serviceName.includes('matrÃ­cula') ||
+      serviceName.includes('inscrição') || serviceName.includes('licença') ||
+      serviceName.includes('alvará') || serviceName.includes('segunda via') ||
+      serviceName.includes('registro') || serviceName.includes('matrícula') ||
       serviceName.includes('vistoria') || serviceName.includes('laudo')) {
     if (!tabs.includes('documentos')) tabs.push('documentos');
   }
 
-  // ServiÃ§os que precisam de dados/formulÃ¡rios
-  if (serviceName.includes('cadastro') || serviceName.includes('inscriÃ§Ã£o') ||
-      serviceName.includes('matrÃ­cula') || serviceName.includes('agendamento') ||
-      serviceName.includes('solicitaÃ§Ã£o') || serviceName.includes('reserva')) {
+  // Serviços que precisam de dados/formulários
+  if (serviceName.includes('cadastro') || serviceName.includes('inscrição') ||
+      serviceName.includes('matrícula') || serviceName.includes('agendamento') ||
+      serviceName.includes('solicitação') || serviceName.includes('reserva')) {
     if (!tabs.includes('dados')) tabs.push('dados');
     if (stageOrder === 2 && !serviceName.includes('vistoria')) {
       primaryTab = 'dados';
     }
   }
 
-  // ServiÃ§os de vistoria/inspeÃ§Ã£o
-  if (serviceName.includes('vistoria') || serviceName.includes('inspeÃ§Ã£o') ||
-      serviceName.includes('laudo') || serviceName.includes('aprovaÃ§Ã£o de projeto') ||
-      stageName.toLowerCase().includes('vistoria') || stageName.toLowerCase().includes('inspeÃ§Ã£o')) {
+  // Serviços de vistoria/inspeção
+  if (serviceName.includes('vistoria') || serviceName.includes('inspeção') ||
+      serviceName.includes('laudo') || serviceName.includes('aprovação de projeto') ||
+      stageName.toLowerCase().includes('vistoria') || stageName.toLowerCase().includes('inspeção')) {
     if (!tabs.includes('dados')) tabs.push('dados');
     if (stageOrder >= 2 && stageOrder <= 3) {
       primaryTab = 'dados';
     }
   }
 
-  // Sempre incluir pendÃªncias e comunicaÃ§Ã£o
+  // Sempre incluir pendências e comunicação
   tabs.push('pendencias');
   tabs.push('comunicacao');
 
@@ -26270,7 +26270,7 @@ function generateContextualUIMetadata(service: any, stageName: string, stageOrde
 
 /**
  * ============================================================================
- * GERADOR DE WORKFLOW GENÃ‰RICO CONTEXTUAL
+ * GERADOR DE WORKFLOW GENÉRICO CONTEXTUAL
  * ============================================================================
  */
 function generateGenericWorkflow(service: any): any[] {
@@ -26278,49 +26278,49 @@ function generateGenericWorkflow(service: any): any[] {
   const stages: any[] = [];
 
   stages.push({
-    name: 'RecepÃ§Ã£o e AnÃ¡lise Documental',
+    name: 'Recepção e Análise Documental',
     order: 1,
-    description: 'Recebimento e verificaÃ§Ã£o de documentos',
+    description: 'Recebimento e verificação de documentos',
     slaDays: 2,
     requiredDocumentTypes: [],
     requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false,
-    ...generateContextualUIMetadata(service, 'RecepÃ§Ã£o e AnÃ¡lise Documental', 1)
+    ...generateContextualUIMetadata(service, 'Recepção e Análise Documental', 1)
   });
 
   stages.push({
-    name: 'AnÃ¡lise TÃ©cnica',
+    name: 'Análise Técnica',
     order: 2,
-    description: 'AnÃ¡lise tÃ©cnica da solicitaÃ§Ã£o',
+    description: 'Análise técnica da solicitação',
     slaDays: 3,
     requiredDocumentTypes: [],
     requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REQUEST_INFO'],
     canSkip: false,
-    ...generateContextualUIMetadata(service, 'AnÃ¡lise TÃ©cnica', 2)
+    ...generateContextualUIMetadata(service, 'Análise Técnica', 2)
   });
 
-  if (serviceName.includes('vistoria') || serviceName.includes('inspeÃ§Ã£o') ||
-      serviceName.includes('aprovaÃ§Ã£o de projeto') || serviceName.includes('licenÃ§a') ||
-      serviceName.includes('alvarÃ¡') || serviceName.includes('laudo')) {
+  if (serviceName.includes('vistoria') || serviceName.includes('inspeção') ||
+      serviceName.includes('aprovação de projeto') || serviceName.includes('licença') ||
+      serviceName.includes('alvará') || serviceName.includes('laudo')) {
     stages.push({
-      name: 'Vistoria/InspeÃ§Ã£o',
+      name: 'Vistoria/Inspeção',
       order: 3,
-      description: 'Vistoria tÃ©cnica in loco',
+      description: 'Vistoria técnica in loco',
       slaDays: 5,
       requiredDocumentTypes: [],
       requiredInputFieldIds: [],
       allowedActions: ['APPROVE', 'REQUEST_INFO', 'REJECT'],
       canSkip: false,
-      ...generateContextualUIMetadata(service, 'Vistoria/InspeÃ§Ã£o', 3)
+      ...generateContextualUIMetadata(service, 'Vistoria/Inspeção', 3)
     });
   }
 
   stages.push({
     name: 'Processamento',
     order: stages.length + 1,
-    description: 'Processamento e preparaÃ§Ã£o',
+    description: 'Processamento e preparação',
     slaDays: 5,
     requiredDocumentTypes: [],
     requiredInputFieldIds: [],
@@ -26330,21 +26330,21 @@ function generateGenericWorkflow(service: any): any[] {
   });
 
   stages.push({
-    name: 'AprovaÃ§Ã£o Final',
+    name: 'Aprovação Final',
     order: stages.length + 1,
-    description: 'AprovaÃ§Ã£o final do gestor',
+    description: 'Aprovação final do gestor',
     slaDays: 2,
     requiredDocumentTypes: [],
     requiredInputFieldIds: [],
     allowedActions: ['APPROVE', 'REJECT'],
     canSkip: false,
-    ...generateContextualUIMetadata(service, 'AprovaÃ§Ã£o Final', stages.length + 1)
+    ...generateContextualUIMetadata(service, 'Aprovação Final', stages.length + 1)
   });
 
   stages.push({
-    name: 'ConclusÃ£o',
+    name: 'Conclusão',
     order: stages.length + 1,
-    description: 'EmissÃ£o de documento ou finalizaÃ§Ã£o',
+    description: 'Emissão de documento ou finalização',
     slaDays: 1,
     requiredDocumentTypes: [],
     requiredInputFieldIds: [],
@@ -26360,14 +26360,14 @@ function generateGenericWorkflow(service: any): any[] {
 
 /**
  * ============================================================================
- * WORKFLOW GENÃ‰RICO PARA SERVIÃ‡OS SEM_DADOS
+ * WORKFLOW GENÉRICO PARA SERVIÇOS SEM_DADOS
  * ============================================================================
  */
 const genericWorkflowStages: Prisma.JsonValue = [
   {
     name: 'Recebimento',
     order: 1,
-    description: 'Protocolo recebido e aguardando anÃ¡lise inicial',
+    description: 'Protocolo recebido e aguardando análise inicial',
     slaDays: 2,
 
     availableTabs: ['resumo', 'comunicacao'],
@@ -26379,9 +26379,9 @@ const genericWorkflowStages: Prisma.JsonValue = [
     canSkip: false
   },
   {
-    name: 'AnÃ¡lise',
+    name: 'Análise',
     order: 2,
-    description: 'AnÃ¡lise da solicitaÃ§Ã£o',
+    description: 'Análise da solicitação',
     slaDays: 3,
 
     availableTabs: ['resumo', 'pendencias', 'comunicacao'],
@@ -26395,7 +26395,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
   {
     name: 'Processamento',
     order: 3,
-    description: 'Processamento da solicitaÃ§Ã£o',
+    description: 'Processamento da solicitação',
     slaDays: 5,
 
     availableTabs: ['resumo', 'pendencias', 'comunicacao'],
@@ -26407,9 +26407,9 @@ const genericWorkflowStages: Prisma.JsonValue = [
     canSkip: false
   },
   {
-    name: 'AprovaÃ§Ã£o',
+    name: 'Aprovação',
     order: 4,
-    description: 'AprovaÃ§Ã£o final',
+    description: 'Aprovação final',
     slaDays: 2,
 
     availableTabs: ['resumo', 'comunicacao'],
@@ -26421,9 +26421,9 @@ const genericWorkflowStages: Prisma.JsonValue = [
     canSkip: false
   },
   {
-    name: 'ConclusÃ£o',
+    name: 'Conclusão',
     order: 5,
-    description: 'EmissÃ£o de documento ou conclusÃ£o do atendimento',
+    description: 'Emissão de documento ou conclusão do atendimento',
     slaDays: 1,
 
     availableTabs: ['resumo', 'documentos', 'documentos-gerados', 'enviar', 'comunicacao'],
@@ -26439,7 +26439,7 @@ const genericWorkflowStages: Prisma.JsonValue = [
 
 /**
  * ============================================================================
- * FUNÃ‡ÃƒO PRINCIPAL DE SEED
+ * FUNÇÃO PRINCIPAL DE SEED
  * ============================================================================
  */
 function normalizeStringArray(value: unknown): string[] {
@@ -27036,13 +27036,13 @@ export function buildSeedWorkflowStagesForService(service: any) {
   };
 }
 export async function seedServiceWorkflows() {
-  console.log('\nðŸ“¦ Iniciando seed de ServiceWorkflows (COM METADADOS DE UI)...');
+  console.log('\n📦 Iniciando seed de ServiceWorkflows (COM METADADOS DE UI)...');
 
   let created = 0;
   let updated = 0;
   let skipped = 0;
 
-  // 1. Buscar todos os serviÃ§os ativos
+  // 1. Buscar todos os serviços ativos
   const services = await prisma.serviceSimplified.findMany({
     where: {
       isActive: true
@@ -27052,12 +27052,12 @@ export async function seedServiceWorkflows() {
     }
   });
 
-  console.log(`\n   â†’ Encontrados ${services.length} serviÃ§os ativos`);
+  console.log(`\n   → Encontrados ${services.length} serviços ativos`);
 
-  // 2. Processar cada serviÃ§o
+  // 2. Processar cada serviço
   for (const service of services) {
     try {
-      // Verificar se jÃ¡ tem workflow
+      // Verificar se já tem workflow
       const existing = await prisma.serviceWorkflow.findUnique({
         where: { serviceId: service.id }
       });
@@ -27067,15 +27067,15 @@ export async function seedServiceWorkflows() {
       let defaultSLA: number;
 
       if (service.moduleType && specificWorkflows[service.moduleType]) {
-        // Usar workflow especÃ­fico
+        // Usar workflow específico
         const specific = specificWorkflows[service.moduleType];
         workflowName = specific.name;
         workflowDescription = specific.description;
         defaultSLA = specific.defaultSLA;
       } else {
-        // Usar workflow genÃ©rico
+        // Usar workflow genérico
         workflowName = `Workflow - ${service.name}`;
-        workflowDescription = `Fluxo padrÃ£o para ${service.name}`;
+        workflowDescription = `Fluxo padrão para ${service.name}`;
         defaultSLA = service.estimatedDays || 10;
       }
 
@@ -27084,7 +27084,7 @@ export async function seedServiceWorkflows() {
 
       if (unresolvedInputCount > 0) {
         console.warn(
-          `   Ã¢Å¡Â Ã¯Â¸Â ${service.name}: ${unresolvedInputCount} campo(s) de entrada nÃƒÂ£o mapeado(s) movido(s) para requiredStageOutputs (${movedOutputCount} novo(s)).`
+          `   Aviso: ${service.name}: ${unresolvedInputCount} campo(s) de entrada não mapeado(s) movido(s) para requiredStageOutputs (${movedOutputCount} novo(s)).`
         );
       }
 
@@ -27107,7 +27107,7 @@ export async function seedServiceWorkflows() {
           }
         });
         updated++;
-        console.log(`   âœ“ Atualizado: ${service.name} (${service.department?.name})`);
+        console.log(`   ✓ Atualizado: ${service.name} (${service.department?.name})`);
       } else {
         // Criar novo workflow
         await prisma.serviceWorkflow.create({
@@ -27121,15 +27121,15 @@ export async function seedServiceWorkflows() {
           }
         });
         created++;
-        console.log(`   âœ“ Criado: ${service.name} (${service.department?.name})`);
+        console.log(`   ✓ Criado: ${service.name} (${service.department?.name})`);
       }
     } catch (error: any) {
-      console.error(`   âœ— Erro ao processar ${service.name}:`, error.message);
+      console.error(`   ✗ Erro ao processar ${service.name}:`, error.message);
       skipped++;
     }
   }
 
-  console.log(`\nâœ… Seed de ServiceWorkflows concluÃ­do:`);
+  console.log(`\n✅ Seed de ServiceWorkflows concluído:`);
   console.log(`   - Criados: ${created}`);
   console.log(`   - Atualizados: ${updated}`);
   console.log(`   - Ignorados: ${skipped}`);
@@ -27138,17 +27138,17 @@ export async function seedServiceWorkflows() {
 
 /**
  * ============================================================================
- * EXECUÃ‡ÃƒO STANDALONE
+ * EXECUÇÃO STANDALONE
  * ============================================================================
  */
 if (require.main === module) {
   seedServiceWorkflows()
     .then(() => {
-      console.log('âœ… Seed executado com sucesso!');
+      console.log('✅ Seed executado com sucesso!');
       process.exit(0);
     })
     .catch((error) => {
-      console.error('âŒ Erro ao executar seed:', error);
+      console.error('❌ Erro ao executar seed:', error);
       process.exit(1);
     })
     .finally(async () => {
