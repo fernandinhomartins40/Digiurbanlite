@@ -3,6 +3,7 @@ import { superAdminAuth } from '../middleware/super-admin-auth';
 import { prisma } from '../lib/prisma';
 
 const router = Router();
+const SEND_ALLOWED_SUBSCRIPTION_STATUSES = new Set(['ACTIVE', 'TRIAL']);
 
 // Middleware de autenticação SuperAdmin
 router.use(superAdminAuth);
@@ -139,13 +140,43 @@ router.put('/email-subscriptions/:id/status', async (req, res) => {
       });
     }
 
+    const existingSubscription = await prisma.emailSubscription.findUnique({
+      where: { id }
+    });
+
+    if (!existingSubscription) {
+      return res.status(404).json({
+        success: false,
+        error: 'Subscription não encontrada',
+        message: 'Subscription não encontrada'
+      });
+    }
+
+    const now = new Date();
+    const nextPeriodEnd = new Date(now);
+    nextPeriodEnd.setDate(nextPeriodEnd.getDate() + 30);
+    const shouldReopenPeriod =
+      SEND_ALLOWED_SUBSCRIPTION_STATUSES.has(status) &&
+      existingSubscription.currentPeriodEnd < now;
+
     const subscription = await prisma.emailSubscription.update({
       where: { id },
-      data: { status }
+      data: {
+        status,
+        currentPeriodStart: shouldReopenPeriod ? now : existingSubscription.currentPeriodStart,
+        currentPeriodEnd: shouldReopenPeriod ? nextPeriodEnd : existingSubscription.currentPeriodEnd,
+        trialEndsAt:
+          status === 'TRIAL'
+            ? (existingSubscription.trialEndsAt && existingSubscription.trialEndsAt > now
+                ? existingSubscription.trialEndsAt
+                : (shouldReopenPeriod ? nextPeriodEnd : existingSubscription.currentPeriodEnd))
+            : null,
+        canceledAt: status === 'CANCELLED' ? now : null
+      }
     });
 
     // Ativar/desativar servidor baseado no status
-    const isActive = status === 'ACTIVE' || status === 'TRIAL';
+    const isActive = SEND_ALLOWED_SUBSCRIPTION_STATUSES.has(status);
     await prisma.emailServer.update({
       where: { id: subscription.emailServerId },
       data: { isActive }

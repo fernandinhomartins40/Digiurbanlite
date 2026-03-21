@@ -136,7 +136,15 @@ export default function SuperAdminEmailSubscriptionsPage() {
           ) : (
             subscriptions.map((subscription) => (
               <div key={subscription.id} className="rounded-lg border p-4">
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                {(() => {
+                  const effectiveEndDate =
+                    subscription.status === 'TRIAL'
+                      ? (subscription.trialEndsAt || subscription.currentPeriodEnd)
+                      : subscription.currentPeriodEnd;
+                  const isExpired = new Date(effectiveEndDate) < new Date();
+
+                  return (
+                    <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div className="space-y-3">
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="outline" className={statusClass[subscription.status]}>
@@ -153,13 +161,16 @@ export default function SuperAdminEmailSubscriptionsPage() {
                         {subscription.emailServer?.hostname || 'Servidor não informado'}
                       </div>
                       <div>Mensalidade: R$ {Number(subscription.monthlyPrice || 0).toFixed(2)}</div>
-                      <div>Vigência até: {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}</div>
+                      <div>Vigência até: {new Date(effectiveEndDate).toLocaleDateString('pt-BR')}</div>
+                      {isExpired && (
+                        <div className="text-amber-700">Assinatura vencida: reaplique Liberar ou Teste para renovar o período.</div>
+                      )}
                     </div>
                   </div>
 
                   <div className="grid gap-2 sm:grid-cols-2 lg:w-[320px]">
-                    <Button size="sm" onClick={() => void updateStatus(subscription.id, 'ACTIVE')} disabled={subscription.status === 'ACTIVE' || updatingId === subscription.id}>Liberar</Button>
-                    <Button size="sm" variant="outline" onClick={() => void updateStatus(subscription.id, 'TRIAL')} disabled={subscription.status === 'TRIAL' || updatingId === subscription.id}>Teste</Button>
+                    <Button size="sm" onClick={() => void updateStatus(subscription.id, 'ACTIVE')} disabled={(subscription.status === 'ACTIVE' && !isExpired) || updatingId === subscription.id}>Liberar</Button>
+                    <Button size="sm" variant="outline" onClick={() => void updateStatus(subscription.id, 'TRIAL')} disabled={(subscription.status === 'TRIAL' && !isExpired) || updatingId === subscription.id}>Teste</Button>
                     <Button size="sm" variant="outline" onClick={() => void updateStatus(subscription.id, 'SUSPENDED')} disabled={subscription.status === 'SUSPENDED' || updatingId === subscription.id}>Suspender</Button>
                     <Button size="sm" variant="outline" className="text-red-700" onClick={() => void updateStatus(subscription.id, 'CANCELLED')} disabled={subscription.status === 'CANCELLED' || updatingId === subscription.id}>
                       <XCircle className="mr-2 h-4 w-4" />
@@ -167,6 +178,8 @@ export default function SuperAdminEmailSubscriptionsPage() {
                     </Button>
                   </div>
                 </div>
+                  );
+                })()}
               </div>
             ))
           )}
