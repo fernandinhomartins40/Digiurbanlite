@@ -52,6 +52,8 @@ import {
 } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
 
+type SubscriptionStatus = 'ACTIVE' | 'TRIAL' | 'SUSPENDED' | 'CANCELLED' | 'EXPIRED'
+
 interface EmailPlan {
   id: string
   name: string
@@ -64,6 +66,18 @@ interface EmailPlan {
   recommended?: boolean
 }
 
+interface EmailSubscription {
+  id: string
+  status: SubscriptionStatus
+  statusLabel: string
+  isOperational: boolean
+  currentPeriodStart: string
+  currentPeriodEnd: string
+  trialEndsAt: string | null
+  canceledAt: string | null
+  updatedAt: string
+}
+
 interface EmailConfig {
   hasEmailService: boolean
   plan: {
@@ -74,14 +88,11 @@ interface EmailConfig {
     emailsPerMonth: number
     maxAccounts: number
   }
+  subscription?: EmailSubscription | null
   server?: {
     hostname: string
     isActive: boolean
-    subscription: {
-      planConfig: {
-        maxEmailsPerMonth: number
-      }
-    }
+    maxEmailsPerMonth?: number
   }
   domains: any[]
   accounts: any[]
@@ -125,11 +136,72 @@ export default function EmailServiceManagement() {
   const [availablePlans, setAvailablePlans] = useState<EmailPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [subscribing, setSubscribing] = useState(false)
+  const [updatingSubscriptionStatus, setUpdatingSubscriptionStatus] = useState(false)
   const [subscribeDialog, setSubscribeDialog] = useState<{ open: boolean; plan?: EmailPlan }>({ open: false })
+  const [selectedPlanStatus, setSelectedPlanStatus] = useState<SubscriptionStatus>('ACTIVE')
+  const [statusDialog, setStatusDialog] = useState<{ open: boolean; status?: SubscriptionStatus }>({ open: false })
+  const [statusReason, setStatusReason] = useState('')
   const [credentialsDialog, setCredentialsDialog] = useState<{ open: boolean; credentials?: any }>({ open: false })
   const [newDomain, setNewDomain] = useState('')
   const [selectedTemplate, setSelectedTemplate] = useState<EmailTemplate | null>(null)
   const [templateDialog, setTemplateDialog] = useState(false)
+
+  const getStatusBadgeClass = (status?: SubscriptionStatus | null) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-green-100 text-green-800 border-green-200'
+      case 'TRIAL':
+        return 'bg-blue-100 text-blue-800 border-blue-200'
+      case 'SUSPENDED':
+        return 'bg-amber-100 text-amber-900 border-amber-200'
+      case 'CANCELLED':
+        return 'bg-red-100 text-red-800 border-red-200'
+      case 'EXPIRED':
+        return 'bg-zinc-100 text-zinc-700 border-zinc-200'
+      default:
+        return 'bg-zinc-100 text-zinc-700 border-zinc-200'
+    }
+  }
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return 'Não definido'
+    return new Date(value).toLocaleDateString('pt-BR')
+  }
+
+  const getStatusActionCopy = (status?: SubscriptionStatus) => {
+    switch (status) {
+      case 'ACTIVE':
+        return {
+          title: 'Liberar serviço',
+          description: 'O plano ficará liberado e o servidor voltará a operar normalmente.'
+        }
+      case 'TRIAL':
+        return {
+          title: 'Ativar período de teste',
+          description: 'O plano ficará em teste, mas com envio liberado até nova alteração manual.'
+        }
+      case 'SUSPENDED':
+        return {
+          title: 'Bloquear serviço',
+          description: 'O envio ficará bloqueado administrativamente até nova liberação manual.'
+        }
+      case 'CANCELLED':
+        return {
+          title: 'Cancelar serviço',
+          description: 'A assinatura será cancelada e o servidor ficará inativo.'
+        }
+      case 'EXPIRED':
+        return {
+          title: 'Expirar serviço',
+          description: 'O plano ficará expirado e o envio permanecerá bloqueado.'
+        }
+      default:
+        return {
+          title: 'Alterar status',
+          description: 'Confirme a alteração manual do status da assinatura.'
+        }
+    }
+  }
 
   useEffect(() => {
     loadEmailConfig()
@@ -148,6 +220,9 @@ export default function EmailServiceManagement() {
       const response = await fetch('/api/admin/email-service', {
         credentials: 'include' // ✅ Enviar cookie de autenticação
       })
+      if (!response.ok) {
+        throw new Error('Falha ao carregar configurações de email')
+      }
       const data = await response.json()
       setEmailConfig(data)
     } catch (error) {
@@ -166,6 +241,13 @@ export default function EmailServiceManagement() {
       const response = await fetch('/api/admin/email-service/available-plans', {
         credentials: 'include'
       })
+      if (!response.ok) {
+        if (response.status === 403) {
+          setAvailablePlans([])
+          return
+        }
+        throw new Error('Falha ao carregar planos disponíveis')
+      }
       const data = await response.json()
       if (data.success && data.plans) {
         // Marcar o plano "STANDARD" como recomendado
@@ -209,7 +291,7 @@ export default function EmailServiceManagement() {
     }
   }
 
-  const subscribeToPlan = async (planId: string) => {
+  const subscribeToPlan = async (planId: string, status: SubscriptionStatus) => {
     setSubscribing(true)
     try {
       const response = await fetch('/api/admin/email-service/subscribe', {
@@ -218,30 +300,71 @@ export default function EmailServiceManagement() {
           'Content-Type': 'application/json'
         },
         credentials: 'include', // ✅ Enviar cookie de autenticação
-        body: JSON.stringify({ planId })
+        body: JSON.stringify({ planId, status })
       })
 
       const result = await response.json()
 
       if (response.ok) {
-        setCredentialsDialog({ open: true, credentials: result.credentials })
+        if (result.credentials) {
+          setCredentialsDialog({ open: true, credentials: result.credentials })
+        }
         await loadEmailConfig()
         toast({
           title: 'Sucesso',
           description: result.message
         })
       } else {
-        throw new Error(result.error || 'Erro ao contratar plano')
+        throw new Error(result.error || 'Erro ao configurar plano')
       }
     } catch (error) {
       toast({
         title: 'Erro',
-        description: error instanceof Error ? error.message : 'Erro ao contratar plano',
+        description: error instanceof Error ? error.message : 'Erro ao configurar plano',
         variant: 'destructive'
       })
     } finally {
       setSubscribing(false)
       setSubscribeDialog({ open: false })
+    }
+  }
+
+  const updateSubscriptionStatus = async (status: SubscriptionStatus) => {
+    setUpdatingSubscriptionStatus(true)
+    try {
+      const response = await fetch('/api/admin/email-service/subscription/status', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status,
+          reason: statusReason.trim() || undefined
+        })
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao atualizar status da assinatura')
+      }
+
+      await loadEmailConfig()
+      toast({
+        title: 'Sucesso',
+        description: result.message || 'Status atualizado com sucesso'
+      })
+    } catch (error) {
+      toast({
+        title: 'Erro',
+        description: error instanceof Error ? error.message : 'Erro ao atualizar status da assinatura',
+        variant: 'destructive'
+      })
+    } finally {
+      setUpdatingSubscriptionStatus(false)
+      setStatusReason('')
+      setStatusDialog({ open: false })
     }
   }
 
@@ -303,6 +426,8 @@ Senha: ${credentials.password}`
     }
   }
 
+  const statusActionCopy = getStatusActionCopy(statusDialog.status)
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
@@ -330,9 +455,9 @@ Senha: ${credentials.password}`
 
         {emailConfig?.hasEmailService && (
           <div className="flex items-center gap-2 flex-wrap">
-            <Badge variant="default" className="bg-green-100 text-green-800">
+            <Badge variant="outline" className={getStatusBadgeClass(emailConfig.subscription?.status)}>
               <CheckCircle2 className="h-3 w-3 mr-1" />
-              Serviço Ativo
+              {emailConfig.subscription?.statusLabel || 'Sem status'}
             </Badge>
             <span className="text-sm text-muted-foreground">
               Plano: {emailConfig.plan.name}
@@ -401,6 +526,81 @@ Senha: ${credentials.password}`
             </Card>
           )}
 
+          <Card className="p-4 sm:p-6 border-slate-200">
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div className="space-y-3">
+                <div>
+                  <h3 className="text-base sm:text-lg font-semibold">Liberação manual do plano</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Sem gateway de pagamento, a prefeitura controla por aqui quando o serviço fica liberado, em teste ou bloqueado.
+                  </p>
+                </div>
+
+                {emailConfig?.subscription ? (
+                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium uppercase text-muted-foreground">Plano atual</div>
+                      <div className="mt-1 font-semibold">{emailConfig.plan.name}</div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium uppercase text-muted-foreground">Status</div>
+                      <div className="mt-2">
+                        <Badge variant="outline" className={getStatusBadgeClass(emailConfig.subscription.status)}>
+                          {emailConfig.subscription.statusLabel}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium uppercase text-muted-foreground">Período</div>
+                      <div className="mt-1 text-sm">{formatDate(emailConfig.subscription.currentPeriodStart)} até {formatDate(emailConfig.subscription.currentPeriodEnd)}</div>
+                    </div>
+                    <div className="rounded-lg border p-3">
+                      <div className="text-xs font-medium uppercase text-muted-foreground">Servidor</div>
+                      <div className="mt-1 text-sm break-all">{emailConfig.server?.hostname || 'Não configurado'}</div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
+                    Nenhum plano configurado ainda. Escolha um plano abaixo e defina o status inicial.
+                  </div>
+                )}
+              </div>
+
+              {emailConfig?.subscription && (
+                <div className="grid gap-2 sm:grid-cols-2 lg:w-[340px]">
+                  <Button
+                    onClick={() => setStatusDialog({ open: true, status: 'ACTIVE' })}
+                    disabled={emailConfig.subscription.status === 'ACTIVE' || updatingSubscriptionStatus}
+                  >
+                    Liberar
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setStatusDialog({ open: true, status: 'TRIAL' })}
+                    disabled={emailConfig.subscription.status === 'TRIAL' || updatingSubscriptionStatus}
+                  >
+                    Em teste
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setStatusDialog({ open: true, status: 'SUSPENDED' })}
+                    disabled={emailConfig.subscription.status === 'SUSPENDED' || updatingSubscriptionStatus}
+                  >
+                    Bloquear
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => setStatusDialog({ open: true, status: 'CANCELLED' })}
+                    disabled={emailConfig.subscription.status === 'CANCELLED' || updatingSubscriptionStatus}
+                    className="text-red-700"
+                  >
+                    Cancelar
+                  </Button>
+                </div>
+              )}
+            </div>
+          </Card>
+
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {availablePlans.length === 0 ? (
               <div className="col-span-full text-center py-8">
@@ -457,7 +657,10 @@ Senha: ${credentials.password}`
                   </ul>
 
                   <Button
-                    onClick={() => setSubscribeDialog({ open: true, plan })}
+                    onClick={() => {
+                      setSelectedPlanStatus((emailConfig?.subscription?.status as SubscriptionStatus) || 'ACTIVE')
+                      setSubscribeDialog({ open: true, plan })
+                    }}
                     disabled={subscribing || emailConfig?.plan.id === plan.id}
                     className={`w-full text-sm ${
                       emailConfig?.plan.id === plan.id
@@ -487,7 +690,7 @@ Senha: ${credentials.password}`
                     ) : emailConfig?.hasEmailService ? (
                       'Alterar Plano'
                     ) : (
-                      'Contratar'
+                      'Configurar'
                     )}
                   </Button>
                 </Card>
@@ -784,23 +987,78 @@ Senha: ${credentials.password}`
       <AlertDialog open={subscribeDialog.open} onOpenChange={(open) => setSubscribeDialog({ open })}>
         <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-base sm:text-lg">Contratar Plano {subscribeDialog.plan?.name}</AlertDialogTitle>
+            <AlertDialogTitle className="text-base sm:text-lg">Configurar Plano {subscribeDialog.plan?.name}</AlertDialogTitle>
             <AlertDialogDescription className="text-sm">
-              Você está prestes a contratar o plano {subscribeDialog.plan?.name} por R$ {subscribeDialog.plan?.monthlyPrice}/mês.
+              Escolha o status inicial do plano {subscribeDialog.plan?.name}. Como a liberação é manual, nenhuma cobrança automática será executada.
               {subscribeDialog.plan?.maxEmailsPerMonth === -1 || (subscribeDialog.plan?.maxEmailsPerMonth ?? 0) >= 999999
                 ? ' Este plano inclui emails ilimitados.'
                 : ` Este plano inclui ${subscribeDialog.plan?.maxEmailsPerMonth.toLocaleString()} emails por mês.`
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <div className="grid gap-2 sm:grid-cols-3">
+            <Button
+              type="button"
+              variant={selectedPlanStatus === 'ACTIVE' ? 'default' : 'outline'}
+              onClick={() => setSelectedPlanStatus('ACTIVE')}
+            >
+              Liberado
+            </Button>
+            <Button
+              type="button"
+              variant={selectedPlanStatus === 'TRIAL' ? 'default' : 'outline'}
+              onClick={() => setSelectedPlanStatus('TRIAL')}
+            >
+              Em teste
+            </Button>
+            <Button
+              type="button"
+              variant={selectedPlanStatus === 'SUSPENDED' ? 'default' : 'outline'}
+              onClick={() => setSelectedPlanStatus('SUSPENDED')}
+            >
+              Bloqueado
+            </Button>
+          </div>
           <AlertDialogFooter className="flex-col sm:flex-row gap-2">
             <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => subscribeDialog.plan && subscribeToPlan(subscribeDialog.plan.id)}
+              onClick={() => subscribeDialog.plan && subscribeToPlan(subscribeDialog.plan.id, selectedPlanStatus)}
               disabled={subscribing}
               className="w-full sm:w-auto"
             >
-              {subscribing ? 'Processando...' : 'Confirmar Contratação'}
+              {subscribing ? 'Processando...' : 'Confirmar Configuração'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={statusDialog.open} onOpenChange={(open) => setStatusDialog({ open })}>
+        <AlertDialogContent className="max-w-[95vw] sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-base sm:text-lg">{statusActionCopy.title}</AlertDialogTitle>
+            <AlertDialogDescription className="text-sm">
+              {statusActionCopy.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="statusReason">Motivo administrativo</Label>
+            <Textarea
+              id="statusReason"
+              value={statusReason}
+              onChange={(event) => setStatusReason(event.target.value)}
+              placeholder="Opcional. Ex.: liberação manual após conferência interna."
+            />
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel className="w-full sm:w-auto" disabled={updatingSubscriptionStatus}>
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => statusDialog.status && updateSubscriptionStatus(statusDialog.status)}
+              disabled={updatingSubscriptionStatus}
+              className="w-full sm:w-auto"
+            >
+              {updatingSubscriptionStatus ? 'Salvando...' : 'Confirmar Alteração'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

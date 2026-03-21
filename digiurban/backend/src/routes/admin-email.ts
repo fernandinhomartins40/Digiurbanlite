@@ -6,13 +6,17 @@ import { TransactionalEmailService } from '../lib/email/TransactionalEmailServic
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
 import { asyncHandler } from '../utils/express-helpers';
 import { prisma } from '../lib/prisma';
-import { EmailPlan, UserRole } from '@prisma/client';
+import { EmailPlan, SubscriptionStatus, UserRole } from '@prisma/client';
 import * as crypto from 'crypto';
 import { emailServerHealthService } from '../services/email-server-health.service';
 
 const router = Router();
 const transactionalEmail = new TransactionalEmailService();
 const EMAIL_READ_MIN_ROLE = UserRole.COORDINATOR;
+const OPERATIONAL_SUBSCRIPTION_STATUSES = new Set<SubscriptionStatus>([
+  SubscriptionStatus.ACTIVE,
+  SubscriptionStatus.TRIAL
+]);
 
 // Middleware para autenticação
 router.use(adminAuthMiddleware);
@@ -23,7 +27,7 @@ router.use(adminAuthMiddleware);
  */
 router.get('/', requireMinRole(EMAIL_READ_MIN_ROLE), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    // Buscar servidor de email e subscription
+    // Buscar servidor de email e assinatura atual
     const emailServer = await prisma.emailServer.findFirst({
       include: {
         subscription: {
@@ -48,9 +52,11 @@ router.get('/', requireMinRole(EMAIL_READ_MIN_ROLE), asyncHandler(async (req: Au
     if (!emailServer || !emailServer.subscription) {
       return res.json({
         hasEmailService: false,
-        plan: { id: 'none', name: 'Nenhum', price: 0, emailsPerMonth: 0 },
+        plan: { id: 'none', name: 'Nenhum', code: 'NONE', price: 0, emailsPerMonth: 0, maxAccounts: 0 },
+        subscription: null,
+        server: null,
         domains: [],
-        statistics: [],
+        accounts: [],
         usage: { currentMonth: 0 }
       });
     }
@@ -60,10 +66,23 @@ router.get('/', requireMinRole(EMAIL_READ_MIN_ROLE), asyncHandler(async (req: Au
     res.json({
       hasEmailService: true,
       plan: {
-        id: subscription.plan.toLowerCase(),
+        id: subscription.planConfig?.id || subscription.plan.toLowerCase(),
         name: getEmailPlanName(subscription.plan),
+        code: subscription.planConfig?.code || subscription.plan,
         price: Number(subscription.monthlyPrice),
-        emailsPerMonth: subscription.planConfig?.maxEmailsPerMonth || 0
+        emailsPerMonth: subscription.planConfig?.maxEmailsPerMonth || 0,
+        maxAccounts: subscription.planConfig?.maxAccounts || 0
+      },
+      subscription: {
+        id: subscription.id,
+        status: subscription.status,
+        statusLabel: getSubscriptionStatusLabel(subscription.status),
+        isOperational: OPERATIONAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+        currentPeriodStart: subscription.currentPeriodStart,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        trialEndsAt: subscription.trialEndsAt,
+        canceledAt: subscription.canceledAt,
+        updatedAt: subscription.updatedAt
       },
       server: {
         hostname: emailServer.hostname,
@@ -86,12 +105,25 @@ router.get('/', requireMinRole(EMAIL_READ_MIN_ROLE), asyncHandler(async (req: Au
 
 /**
  * POST /api/admin/email-service/subscribe
- * Contratar plano de email
+ * Configurar ou alterar plano de email manualmente
  */
 router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { planId } = req.body;
+    const { planId, status } = req.body;
     const userId = req.user.id;
+
+    if (status && !isManagedSubscriptionStatus(status)) {
+      res.status(400).json({
+        success: false,
+        error: 'Status inválido',
+        message: 'Status inválido para a assinatura de email'
+      });
+      return;
+    }
+
+    const requestedStatus = status && isManagedSubscriptionStatus(status)
+      ? status
+      : SubscriptionStatus.ACTIVE;
 
     // Buscar plano configurável no banco de dados
     const planConfig = await prisma.emailPlanConfig.findUnique({
@@ -121,6 +153,8 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     };
 
     const plan = planMapping[planConfig.code] || EmailPlan.BASIC;
+    const now = new Date();
+    const defaultPeriodEnd = getNextBillingDate(now);
 
     // Verificar se já existe servidor de email
     let emailServer = await prisma.emailServer.findFirst({
@@ -134,6 +168,11 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     });
 
     if (emailServer?.subscription) {
+      const previousStatus = emailServer.subscription.status;
+      const currentPeriodEnd =
+        emailServer.subscription.currentPeriodEnd > now
+          ? emailServer.subscription.currentPeriodEnd
+          : defaultPeriodEnd;
       // Já existe assinatura - fazer upgrade/downgrade
       await prisma.emailSubscription.update({
         where: { id: emailServer.subscription.id },
@@ -141,7 +180,21 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
           plan,
           planConfigId: planConfig.id,
           monthlyPrice: planConfig.monthlyPrice,
-          currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // +30 dias
+          status: requestedStatus,
+          currentPeriodEnd,
+          trialEndsAt:
+            requestedStatus === SubscriptionStatus.TRIAL
+              ? emailServer.subscription.trialEndsAt ?? currentPeriodEnd
+              : null,
+          canceledAt: requestedStatus === SubscriptionStatus.CANCELLED ? now : null
+        }
+      });
+
+      await prisma.emailServer.update({
+        where: { id: emailServer.id },
+        data: {
+          isActive: OPERATIONAL_SUBSCRIPTION_STATUSES.has(requestedStatus),
+          monthlyPrice: planConfig.monthlyPrice
         }
       });
 
@@ -150,11 +203,13 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         where: { emailServerId: emailServer.id }
       });
 
+      let credentials: { email: string; password: string; server: string; port: number } | undefined;
+
       // Se não existir, criar conta admin padrão
       if (!existingUser) {
         const defaultPassword = generateSecurePassword();
         const passwordHash = await bcrypt.hash(defaultPassword, 12);
-        const adminEmail = `admin@digiurban.com.br`;
+        const adminEmail = 'admin@digiurban.com.br';
 
         await prisma.emailUser.create({
           data: {
@@ -169,27 +224,43 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
           }
         });
 
-        return res.json({
-          success: true,
-          message: `Plano atualizado para ${planConfig.name} com sucesso!`,
-          credentials: {
-            email: adminEmail,
-            password: defaultPassword,
-            server: emailServer.hostname,
-            port: 587
-          },
-          server: emailServer
-        });
+        credentials = {
+          email: adminEmail,
+          password: defaultPassword,
+          server: emailServer.hostname,
+          port: 587
+        };
       }
+
+      await prisma.auditLog.create({
+        data: {
+          userId,
+          action: 'EMAIL_SERVICE_PLAN_UPDATED',
+          resource: 'email_service',
+          details: {
+            planId,
+            planName: planConfig.name,
+            previousStatus,
+            newStatus: requestedStatus,
+            message: `Atualizou manualmente o plano de email para ${planConfig.name}`
+          },
+          ip: req.ip || 'unknown',
+          success: true
+        }
+      });
 
       return res.json({
         success: true,
-        message: `Plano atualizado para ${planConfig.name} com sucesso!`,
-        server: emailServer
+        message: `Plano ${planConfig.name} configurado com status ${getSubscriptionStatusLabel(requestedStatus)}.`,
+        credentials,
+        server: {
+          ...emailServer,
+          isActive: OPERATIONAL_SUBSCRIPTION_STATUSES.has(requestedStatus)
+        }
       });
     }
 
-    // Criar novo servidor de email com subscription
+    // Criar novo servidor de email com assinatura inicial controlada manualmente
     const hostname = `mail.digiurban.com.br`; // Domínio único gerenciado pelo SuperAdmin
 
     emailServer = await prisma.emailServer.create({
@@ -200,16 +271,17 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         tlsEnabled: true,
         isPremiumService: true,
         monthlyPrice: planConfig.monthlyPrice,
-        isActive: true,
+        isActive: OPERATIONAL_SUBSCRIPTION_STATUSES.has(requestedStatus),
         subscription: {
           create: {
             plan,
             planConfigId: planConfig.id,
             monthlyPrice: planConfig.monthlyPrice,
-            status: 'TRIAL', // 30 dias de trial
-            currentPeriodStart: new Date(),
-            currentPeriodEnd: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // +30 dias
-            trialEndsAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000)
+            status: requestedStatus,
+            currentPeriodStart: now,
+            currentPeriodEnd: defaultPeriodEnd,
+            trialEndsAt: requestedStatus === SubscriptionStatus.TRIAL ? defaultPeriodEnd : null,
+            canceledAt: requestedStatus === SubscriptionStatus.CANCELLED ? now : null
           }
         }
       },
@@ -225,7 +297,7 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     // Criar conta admin padrão
     const defaultPassword = generateSecurePassword();
     const passwordHash = await bcrypt.hash(defaultPassword, 12);
-    const adminEmail = `admin@digiurban.com.br`;
+    const adminEmail = 'admin@digiurban.com.br';
 
     await prisma.emailUser.create({
       data: {
@@ -260,7 +332,12 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
         userId,
         action: 'EMAIL_SERVICE_SUBSCRIBED',
         resource: 'email_service',
-        details: { planId, planName: planConfig.name, message: `Contratou plano de email: ${planConfig.name}` },
+        details: {
+          planId,
+          planName: planConfig.name,
+          status: requestedStatus,
+          message: `Configurou manualmente o plano de email: ${planConfig.name}`
+        },
         ip: req.ip || 'unknown',
         success: true
       }
@@ -268,7 +345,7 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
 
     res.json({
       success: true,
-      message: `Serviço de email contratado com sucesso! Trial de 30 dias iniciado.`,
+      message: `Serviço de email configurado com o plano ${planConfig.name} em status ${getSubscriptionStatusLabel(requestedStatus)}.`,
       credentials: {
         email: adminEmail,
         password: defaultPassword,
@@ -278,6 +355,115 @@ router.post('/subscribe', requireMinRole(UserRole.ADMIN), asyncHandler(async (re
     });
   } catch (error) {
     console.error('Error subscribing to email service:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro interno do servidor'
+    });
+  }
+}));
+
+/**
+ * PUT /api/admin/email-service/subscription/status
+ * Liberar ou bloquear manualmente a assinatura do serviço de email
+ */
+router.put('/subscription/status', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { status, reason } = req.body as { status?: SubscriptionStatus; reason?: string };
+
+    if (!isManagedSubscriptionStatus(status)) {
+      res.status(400).json({
+        success: false,
+        error: 'Status inválido',
+        message: 'Informe um status válido para a assinatura'
+      });
+      return;
+    }
+
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      }
+    });
+
+    if (!emailServer?.subscription) {
+      res.status(404).json({
+        success: false,
+        error: 'Serviço de email não configurado',
+        message: 'Configure um plano antes de alterar a liberação manual'
+      });
+      return;
+    }
+
+    const previousStatus = emailServer.subscription.status;
+    const now = new Date();
+    const currentPeriodEnd =
+      emailServer.subscription.currentPeriodEnd > now
+        ? emailServer.subscription.currentPeriodEnd
+        : getNextBillingDate(now);
+
+    const subscription = await prisma.emailSubscription.update({
+      where: { id: emailServer.subscription.id },
+      data: {
+        status,
+        currentPeriodEnd,
+        trialEndsAt:
+          status === SubscriptionStatus.TRIAL
+            ? emailServer.subscription.trialEndsAt ?? currentPeriodEnd
+            : null,
+        canceledAt: status === SubscriptionStatus.CANCELLED ? now : null
+      },
+      include: {
+        planConfig: true
+      }
+    });
+
+    await prisma.emailServer.update({
+      where: { id: emailServer.id },
+      data: {
+        isActive: OPERATIONAL_SUBSCRIPTION_STATUSES.has(status)
+      }
+    });
+
+    await prisma.auditLog.create({
+      data: {
+        userId: req.user.id,
+        action: 'EMAIL_SUBSCRIPTION_STATUS_UPDATED',
+        resource: 'email_service',
+        details: {
+          subscriptionId: subscription.id,
+          planId: subscription.planConfigId,
+          previousStatus,
+          newStatus: status,
+          reason: reason?.trim() || null,
+          message: `Alterou manualmente o status da assinatura para ${getSubscriptionStatusLabel(status)}`
+        },
+        ip: req.ip || 'unknown',
+        success: true
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `Status alterado para ${getSubscriptionStatusLabel(status)}.`,
+      subscription: {
+        id: subscription.id,
+        status: subscription.status,
+        statusLabel: getSubscriptionStatusLabel(subscription.status),
+        isOperational: OPERATIONAL_SUBSCRIPTION_STATUSES.has(subscription.status),
+        currentPeriodStart: subscription.currentPeriodStart,
+        currentPeriodEnd: subscription.currentPeriodEnd,
+        trialEndsAt: subscription.trialEndsAt,
+        canceledAt: subscription.canceledAt,
+        updatedAt: subscription.updatedAt
+      }
+    });
+  } catch (error) {
+    console.error('Error updating email subscription status:', error);
     res.status(500).json({
       success: false,
       error: 'Internal server error',
@@ -671,6 +857,28 @@ function getEmailPlanName(planType: string): string {
     ENTERPRISE: 'Enterprise'
         };
   return plans[planType] || 'Nenhum';
+}
+
+function getSubscriptionStatusLabel(status: SubscriptionStatus | string): string {
+  const labels: Record<string, string> = {
+    ACTIVE: 'Liberado',
+    TRIAL: 'Em teste',
+    SUSPENDED: 'Bloqueado',
+    CANCELLED: 'Cancelado',
+    EXPIRED: 'Expirado'
+  };
+
+  return labels[status] || status;
+}
+
+function isManagedSubscriptionStatus(status: unknown): status is SubscriptionStatus {
+  return typeof status === 'string' && Object.values(SubscriptionStatus).includes(status as SubscriptionStatus);
+}
+
+function getNextBillingDate(baseDate: Date): Date {
+  const nextBillingDate = new Date(baseDate);
+  nextBillingDate.setDate(nextBillingDate.getDate() + 30);
+  return nextBillingDate;
 }
 
 function getEmailPlanPrice(planId: string): number {
