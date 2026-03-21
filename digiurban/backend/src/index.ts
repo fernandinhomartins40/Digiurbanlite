@@ -301,6 +301,7 @@ loadRoute('/api/admin/custom-modules', './routes/custom-modules');
 loadRoute('/api/admin/email', './routes/admin-email');
 loadRoute('/api/admin/email-service', './routes/admin-email');
 loadRoute('/api/admin/email-accounts', './routes/admin-email-accounts');
+loadRoute('/api/admin/email-compose', './routes/admin-email-compose');
 loadRoute('/api/integrations', './routes/integrations');
 loadRoute('/api/municipality', './routes/municipality-config');
 loadRoute('/api/apresentacao', './routes/apresentacao-export');
@@ -395,6 +396,13 @@ const server = httpServer.listen(PORT, async () => {
     startEmailCronJobs();
   } catch (error) {
     logger.error('Failed to start email cron jobs', { error });
+  }
+
+  try {
+    const { startEmailServerMonitoring } = require('./jobs/email-server-monitor');
+    startEmailServerMonitoring();
+  } catch (error) {
+    logger.error('Failed to start email server monitoring', { error });
   }
 });
 

@@ -1,15 +1,62 @@
 import nodemailer from 'nodemailer';
-import { prisma } from '../lib/prisma';
 import fs from 'fs';
+import { prisma } from '../lib/prisma';
+import { logger } from '../config/logger.config';
+
+interface EmailSendResult {
+  sentAt: Date;
+  messageId: string;
+  response?: string;
+}
 
 export class EmailSenderService {
-  /**
-   * Envia email real via ultrazend-smtp (container separado)
-   */
-  async sendEmail(emailId: string): Promise<void> {
+  private readonly connectionTimeoutMs = parseInt(process.env.SMTP_CONNECTION_TIMEOUT_MS || '10000', 10);
+  private readonly socketTimeoutMs = parseInt(process.env.SMTP_SOCKET_TIMEOUT_MS || '15000', 10);
+  private readonly greetingTimeoutMs = parseInt(process.env.SMTP_GREETING_TIMEOUT_MS || '10000', 10);
+
+  private createTransporter(hostname?: string | null, port?: number | null) {
+    return nodemailer.createTransport({
+      host: process.env.SMTP_HOST || hostname || 'ultrazend-smtp',
+      port: parseInt(process.env.SMTP_PORT || String(port || 587), 10),
+      secure: false,
+      connectionTimeout: this.connectionTimeoutMs,
+      greetingTimeout: this.greetingTimeoutMs,
+      socketTimeout: this.socketTimeoutMs,
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+  }
+
+  private normalizeRecipients(value: unknown): string[] {
+    if (!value) {
+      return [];
+    }
+
+    if (Array.isArray(value)) {
+      return value.flatMap((entry) => this.normalizeRecipients(entry)).filter(Boolean);
+    }
+
+    if (typeof value === 'string') {
+      return value
+        .split(',')
+        .map((entry) => entry.trim())
+        .filter(Boolean);
+    }
+
+    return [];
+  }
+
+  async verifyConnection(options?: { hostname?: string | null; port?: number | null }): Promise<void> {
+    const transporter = this.createTransporter(options?.hostname, options?.port);
+    await transporter.verify();
+  }
+
+  async sendEmail(emailId: string): Promise<EmailSendResult> {
+    let email: any = null;
+
     try {
-      // Buscar email do banco
-      const email = await prisma.email.findUnique({
+      email = await prisma.email.findUnique({
         where: { id: emailId },
         include: {
           user: true,
@@ -33,96 +80,91 @@ export class EmailSenderService {
         throw new Error(`EmailUser não encontrado para email ${emailId}`);
       }
 
-      // Configurar transporter para conectar no ultrazend-smtp (container separado)
-      const transporter = nodemailer.createTransport({
-        host: process.env.SMTP_HOST || 'ultrazend-smtp',
-        port: parseInt(process.env.SMTP_PORT || '587'),
-        secure: false, // STARTTLS
-        // ⚠️ SEGURANÇA: Comunicação interna sem autenticação
-        // OK porque: containers na mesma rede Docker privada (172.20.0.0/16)
-        // IMPORTANTE: Porta 587 NÃO deve ser exposta publicamente, apenas via proxy
-        // TODO: Considerar porta 2525 exclusiva para backend (sem autenticação)
-        tls: {
-          rejectUnauthorized: false // Aceitar certificados self-signed em dev
+      await prisma.email.update({
+        where: { id: emailId },
+        data: {
+          status: 'PROCESSING',
+          errorMessage: null
         }
       });
 
-      // Preparar destinatários
-      const to = Array.isArray(email.toEmail) ? email.toEmail : [email.toEmail];
-      const cc = email.ccEmails ? (Array.isArray(email.ccEmails) ? email.ccEmails : [email.ccEmails]) : undefined;
-      const bcc = email.bccEmails ? (Array.isArray(email.bccEmails) ? email.bccEmails : [email.bccEmails]) : undefined;
+      const transporter = this.createTransporter(
+        email.emailServer?.hostname,
+        email.emailServer?.submissionPort
+      );
 
-      // Preparar anexos se existirem
-      let attachments = undefined;
+      const to = this.normalizeRecipients(email.toEmail);
+      const cc = this.normalizeRecipients(email.ccEmails);
+      const bcc = this.normalizeRecipients(email.bccEmails);
+
+      if (to.length === 0) {
+        throw new Error('Nenhum destinatário principal foi informado');
+      }
+
+      let attachments:
+        | Array<{ filename: string; content: Buffer; contentType?: string }>
+        | undefined;
+
       if (email.attachments && Array.isArray(email.attachments)) {
-        console.log('📎 [EMAIL SENDER] Processando anexos:', email.attachments.length);
+        attachments = (email.attachments as Array<Record<string, unknown>>)
+          .map((attachment) => {
+            const filePath =
+              typeof attachment.path === 'string' ? attachment.path : null;
 
-        // ✅ IMPORTANTE: Ler arquivos como Buffer
-        // Nodemailer via TCP (porta 587) não tem acesso ao filesystem do backend
-        // Precisamos enviar o conteúdo do arquivo, não apenas o caminho
-        attachments = (email.attachments as any[]).map((att: any) => {
-          const filePath = att.path;
-
-          try {
-            // Verificar se arquivo existe
-            if (!fs.existsSync(filePath)) {
-              console.error(`❌ [EMAIL SENDER] Arquivo não encontrado: ${filePath}`);
+            if (!filePath || !fs.existsSync(filePath)) {
+              logger.warn('Anexo de email não encontrado no filesystem', {
+                emailId,
+                filePath
+              });
               return null;
             }
 
-            // Ler arquivo como Buffer
-            const content = fs.readFileSync(filePath);
-            console.log(`📎 [EMAIL SENDER] Arquivo lido: ${att.filename} (${content.length} bytes)`);
+            const content = fs.readFileSync(filePath) as Buffer;
 
             return {
-              filename: att.filename,
-              content: content, // ← Buffer ao invés de path
-              contentType: att.contentType
+              filename:
+                typeof attachment.filename === 'string'
+                  ? attachment.filename
+                  : 'anexo',
+              content,
+              contentType:
+                typeof attachment.contentType === 'string'
+                  ? attachment.contentType
+                  : undefined
             };
-          } catch (error) {
-            console.error(`❌ [EMAIL SENDER] Erro ao ler arquivo ${filePath}:`, error);
-            return null;
-          }
-        }).filter(att => att !== null); // Remover anexos que falharam
-
-        console.log('📎 [EMAIL SENDER] Anexos preparados:', attachments.map(a => ({
-          filename: a.filename,
-          size: a.content.length
-        })));
+          })
+          .filter(Boolean) as Array<{
+            filename: string;
+            content: Buffer;
+            contentType?: string;
+          }>;
       }
 
-      // Enviar email
+      const sentAt = new Date();
       const info = await transporter.sendMail({
         from: email.fromEmail,
         to: to.join(', '),
-        cc: cc ? cc.join(', ') : undefined,
-        bcc: bcc ? bcc.join(', ') : undefined,
+        cc: cc.length > 0 ? cc.join(', ') : undefined,
+        bcc: bcc.length > 0 ? bcc.join(', ') : undefined,
         subject: email.subject,
         text: email.textContent || undefined,
         html: email.htmlContent || undefined,
         messageId: email.messageId,
-        priority: email.priority === 1 ? 'high' : email.priority === 5 ? 'low' : 'normal',
+        priority:
+          email.priority === 1 ? 'high' : email.priority === 5 ? 'low' : 'normal',
         attachments
       });
 
-      console.log('✅ Email enviado com sucesso:', {
-        emailId: email.id,
-        messageId: info.messageId,
-        from: email.fromEmail,
-        to: to.join(', '),
-        attachments: attachments ? attachments.length : 0
-      });
-
-      // Atualizar status no banco
       await prisma.email.update({
         where: { id: emailId },
         data: {
           status: 'SENT',
-          sentAt: new Date()
+          sentAt,
+          failedAt: null,
+          errorMessage: null
         }
       });
 
-      // Registrar evento
       await prisma.emailEvent.create({
         data: {
           emailId: email.id,
@@ -134,42 +176,129 @@ export class EmailSenderService {
         }
       });
 
-    } catch (error: any) {
-      console.error('❌ Erro ao enviar email:', error);
+      if (email.emailServerId) {
+        await prisma.emailLog
+          .create({
+            data: {
+              emailServerId: email.emailServerId,
+              from: email.fromEmail,
+              to: to.join(', '),
+              subject: email.subject,
+              status: 'SENT',
+              type: 'outbound',
+              level: 'INFO',
+              message: 'Email enviado com sucesso',
+              metadata: {
+                emailId: email.id,
+                messageId: info.messageId,
+                attachmentCount: attachments ? attachments.length : 0
+              }
+            }
+          })
+          .catch((error) => {
+            logger.warn('Falha ao registrar log de envio de email', { error });
+          });
+      }
 
-      // Atualizar status de falha
+      return {
+        sentAt,
+        messageId: info.messageId,
+        response: info.response
+      };
+    } catch (error: any) {
+      const failedAt = new Date();
+
+      logger.error('Erro ao enviar email', {
+        emailId,
+        error: error instanceof Error ? error.message : String(error)
+      });
+
       await prisma.email.update({
         where: { id: emailId },
         data: {
           status: 'FAILED',
-          failedAt: new Date(),
-          errorMessage: error.message,
+          failedAt,
+          errorMessage:
+            error instanceof Error ? error.message : 'Erro desconhecido no envio',
           retryCount: { increment: 1 }
         }
       });
+
+      if (email) {
+        await prisma.emailEvent
+          .create({
+            data: {
+              emailId: email.id,
+              type: 'FAILED',
+              data: {
+                error:
+                  error instanceof Error
+                    ? error.message
+                    : 'Erro desconhecido no envio'
+              }
+            }
+          })
+          .catch((eventError) => {
+            logger.warn('Falha ao registrar evento de falha de email', {
+              error: eventError
+            });
+          });
+
+        if (email.emailServerId) {
+          await prisma.emailLog
+            .create({
+              data: {
+                emailServerId: email.emailServerId,
+                from: email.fromEmail,
+                to: this.normalizeRecipients(email.toEmail).join(', '),
+                subject: email.subject,
+                status: 'FAILED',
+                type: 'outbound',
+                level: 'ERROR',
+                message: 'Falha ao enviar email',
+                metadata: {
+                  emailId: email.id,
+                  failedAt: failedAt.toISOString(),
+                  error:
+                    error instanceof Error
+                      ? error.message
+                      : 'Erro desconhecido no envio'
+                }
+              }
+            })
+            .catch((logError) => {
+              logger.warn('Falha ao registrar log de erro de email', {
+                error: logError
+              });
+            });
+        }
+      }
 
       throw error;
     }
   }
 
-  /**
-   * Envia email com retry automático
-   */
-  async sendEmailWithRetry(emailId: string, maxRetries: number = 3): Promise<void> {
+  async sendEmailWithRetry(
+    emailId: string,
+    maxRetries: number = 3
+  ): Promise<EmailSendResult> {
     let lastError: Error | null = null;
 
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    for (let attempt = 1; attempt <= maxRetries; attempt += 1) {
       try {
-        await this.sendEmail(emailId);
-        return; // Sucesso!
+        return await this.sendEmail(emailId);
       } catch (error: any) {
         lastError = error;
-        console.warn(`⚠️ Tentativa ${attempt}/${maxRetries} falhou para email ${emailId}`);
+        logger.warn('Tentativa de envio de email falhou', {
+          emailId,
+          attempt,
+          maxRetries,
+          error: error instanceof Error ? error.message : String(error)
+        });
 
         if (attempt < maxRetries) {
-          // Aguardar antes de retry (exponential backoff)
-          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s, 8s
-          await new Promise(resolve => setTimeout(resolve, delay));
+          const delayMs = Math.pow(2, attempt) * 1000;
+          await new Promise((resolve) => setTimeout(resolve, delayMs));
         }
       }
     }

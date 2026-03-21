@@ -62,13 +62,24 @@ interface EmailService {
   accounts?: any[];
 }
 
+interface EmailHealth {
+  status: 'idle' | 'healthy' | 'degraded' | 'unhealthy' | 'disabled';
+  details: {
+    notes: string[];
+    smtpReachable: boolean;
+    staleQueueCount: number;
+    failureRate: number;
+  };
+}
+
 export default function EmailDashboardPage() {
-  const { apiRequest } = useAdminAuth();
+  const { apiRequest, user } = useAdminAuth();
   const { toast } = useToast();
   const router = useRouter();
 
   const [stats, setStats] = useState<EmailStats | null>(null);
   const [service, setService] = useState<EmailService | null>(null);
+  const [health, setHealth] = useState<EmailHealth | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -89,11 +100,21 @@ export default function EmailDashboardPage() {
 
         // Se tem serviço ativo, buscar estatísticas
         if (serviceResponse.hasEmailService) {
-          const statsResponse = await apiRequest('/admin/email-service/stats', {
-            method: 'GET'
-          });
+          const [statsResponse, healthResponse] = await Promise.all([
+            apiRequest('/admin/email-service/stats', {
+              method: 'GET'
+            }),
+            apiRequest('/admin/email-service/health', {
+              method: 'GET'
+            }).catch(() => null)
+          ]);
+
           if (statsResponse) {
             setStats(statsResponse);
+          }
+
+          if (healthResponse?.success && healthResponse.health) {
+            setHealth(healthResponse.health);
           }
         }
       }
@@ -154,6 +175,7 @@ export default function EmailDashboardPage() {
   const usagePercentage = parseFloat(stats?.usage.percentage || '0');
   const isNearLimit = usagePercentage > 80;
   const deliveryRate = parseFloat(stats?.currentMonth.deliveryRate || '0');
+  const showHealthAlert = health && health.status !== 'healthy';
 
   return (
     <div className="space-y-4 sm:space-y-6 p-4 sm:p-6">
@@ -185,6 +207,22 @@ export default function EmailDashboardPage() {
               </p>
               <p className="text-xs sm:text-sm text-orange-700 break-words">
                 {stats?.usage.current.toLocaleString()} de {stats?.usage.limit.toLocaleString()} emails enviados ({usagePercentage.toFixed(1)}%)
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showHealthAlert && (
+        <Card className="border-red-200 bg-red-50">
+          <CardContent className="flex flex-col sm:flex-row items-start sm:items-center gap-3 py-4">
+            <AlertTriangle className="h-5 w-5 text-red-600 shrink-0" />
+            <div className="min-w-0 flex-1">
+              <p className="font-medium text-red-900 text-sm sm:text-base">
+                Servidor de email com status {health?.status}
+              </p>
+              <p className="text-xs sm:text-sm text-red-700 break-words">
+                {health?.details.notes?.[0] || 'O monitor detectou degradação no serviço de email.'}
               </p>
             </div>
           </CardContent>
@@ -351,16 +389,18 @@ export default function EmailDashboardPage() {
           </CardContent>
         </Card>
 
-        <Card className="cursor-pointer hover:shadow-lg transition-shadow"
-              onClick={() => router.push('/admin/email-accounts')}>
-          <CardContent className="flex flex-col items-center justify-center py-6 sm:py-8">
-            <Users className="h-8 sm:h-10 w-8 sm:w-10 text-primary mb-2 sm:mb-3" />
-            <h3 className="font-semibold mb-1 text-sm sm:text-base">Gerenciar Contas</h3>
-            <p className="text-xs sm:text-sm text-muted-foreground text-center px-2">
-              Criar e gerenciar contas de email
-            </p>
-          </CardContent>
-        </Card>
+        {user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN' ? (
+          <Card className="cursor-pointer hover:shadow-lg transition-shadow"
+                onClick={() => router.push('/admin/email-accounts')}>
+            <CardContent className="flex flex-col items-center justify-center py-6 sm:py-8">
+              <Users className="h-8 sm:h-10 w-8 sm:w-10 text-primary mb-2 sm:mb-3" />
+              <h3 className="font-semibold mb-1 text-sm sm:text-base">Gerenciar Contas</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground text-center px-2">
+                Criar e gerenciar contas de email
+              </p>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
     </div>
   );

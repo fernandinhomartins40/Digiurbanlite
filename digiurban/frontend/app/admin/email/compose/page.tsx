@@ -75,7 +75,7 @@ export default function ComposeEmailPage() {
       setLoadingData(true);
 
       // Buscar contas de email disponíveis
-      const accountsResponse = await apiRequest('/admin/email-accounts', {
+      const accountsResponse = await apiRequest('/admin/email-compose/senders', {
         method: 'GET'
       });
 
@@ -83,7 +83,7 @@ export default function ComposeEmailPage() {
         const activeAccounts = accountsResponse.accounts.filter((acc: EmailAccount) => acc.isActive);
         setAccounts(activeAccounts);
         if (activeAccounts.length > 0) {
-          setSelectedAccount(activeAccounts[0].id);
+          setSelectedAccount(accountsResponse.preferredAccountId || activeAccounts[0].id);
         }
       }
 
@@ -236,7 +236,7 @@ export default function ComposeEmailPage() {
           }
         }
 
-        const response = await apiRequest('/admin/email-accounts/send', {
+        const response = await apiRequest('/admin/email-compose/send', {
           method: 'POST',
           body: formDataPayload
           // Content-Type será definido automaticamente como multipart/form-data
@@ -277,7 +277,7 @@ export default function ComposeEmailPage() {
           html: formData.message
         };
 
-        const response = await apiRequest('/admin/email-accounts/send', {
+        const response = await apiRequest('/admin/email-compose/send', {
           method: 'POST',
           body: JSON.stringify(payload)
         });

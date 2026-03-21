@@ -7,10 +7,12 @@ import { prisma } from '../lib/prisma';
 import { UserRole } from '@prisma/client';
 import * as crypto from 'crypto';
 import { emailSenderService } from '../services/EmailSenderService';
+import { emailServerHealthService } from '../services/email-server-health.service';
 import { uploadDocuments } from '../config/upload';
-import path from 'path';
 
 const router = Router();
+const EMAIL_COMPOSER_MIN_ROLE = UserRole.COORDINATOR;
+const SEND_ALLOWED_SUBSCRIPTION_STATUSES = new Set(['ACTIVE', 'TRIAL']);
 
 // Middleware para autenticação
 router.use(adminAuthMiddleware);
@@ -260,6 +262,76 @@ router.post('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: Authen
  * GET /api/admin/email-accounts/:id
  * Obter detalhes de uma conta específica
  */
+router.get('/available-senders', requireMinRole(EMAIL_COMPOSER_MIN_ROLE), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const emailServer = await prisma.emailServer.findFirst({
+      include: {
+        subscription: {
+          include: {
+            planConfig: true
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+
+    if (!emailServer) {
+      return res.status(404).json({
+        success: false,
+        error: 'Serviço de email não configurado',
+        message: 'Você precisa contratar um plano de email primeiro'
+      });
+    }
+
+    const accounts = await prisma.emailUser.findMany({
+      where: {
+        emailServerId: emailServer.id,
+        isActive: true
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        isActive: true,
+        isAdmin: true,
+        dailyLimit: true,
+        monthlyLimit: true,
+        sentToday: true,
+        sentThisMonth: true,
+        createdAt: true
+      },
+      orderBy: [
+        { isAdmin: 'desc' },
+        { createdAt: 'asc' }
+      ]
+    });
+
+    const preferredAccount =
+      accounts.find((account) => account.email.toLowerCase() === req.user.email.toLowerCase()) ||
+      accounts.find((account) => account.isAdmin) ||
+      accounts[0] ||
+      null;
+
+    res.json({
+      success: true,
+      accounts,
+      preferredAccountId: preferredAccount?.id || null,
+      server: {
+        hostname: emailServer.hostname,
+        isActive: emailServer.isActive,
+        subscriptionStatus: emailServer.subscription?.status || null
+      }
+    });
+  } catch (error) {
+    console.error('Error listing available email senders:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Internal server error',
+      message: 'Erro ao listar contas disponíveis para envio'
+    });
+  }
+}));
+
 router.get('/:id', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { id } = req.params;
@@ -576,7 +648,7 @@ router.get('/:id/usage', requireMinRole(UserRole.ADMIN), asyncHandler(async (req
  * POST /api/admin/email-accounts/send
  * Enviar email via webmail interno (com suporte a anexos)
  */
-router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.post('/send', requireMinRole(EMAIL_COMPOSER_MIN_ROLE), uploadDocuments, asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     // Parse de campos JSON se vieram via FormData
     let accountId = req.body.accountId;
@@ -606,6 +678,11 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
 
     const uploadedFiles = (req.files as Express.Multer.File[]) || [];
     const userId = req.user.id;
+    const toEmails = normalizeRecipientList(to);
+    const ccEmails = normalizeRecipientList(cc);
+    const bccEmails = normalizeRecipientList(bcc);
+    const invalidRecipients = [...toEmails, ...ccEmails, ...bccEmails].filter((email) => !isValidEmail(email));
+    const normalizedPriority = normalizePriority(priority);
 
     // Log de debug
     console.log('📧 [EMAIL SEND] Content-Type:', req.headers['content-type']);
@@ -624,10 +701,10 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
     const emailBody = body || text || html;
 
     // Validar campos obrigatórios
-    if (!accountId || !to || !subject || !emailBody) {
+    if (!accountId || toEmails.length === 0 || !subject || !emailBody) {
       console.error('❌ [EMAIL SEND] Validation failed:', {
         hasAccountId: !!accountId,
-        hasTo: !!to,
+        hasTo: toEmails.length > 0,
         hasSubject: !!subject,
         hasBody: !!body,
         hasText: !!text,
@@ -641,13 +718,21 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
         message: 'accountId, to, subject e body/text/html são obrigatórios',
         debug: {
           hasAccountId: !!accountId,
-          hasTo: !!to,
+          hasTo: toEmails.length > 0,
           hasSubject: !!subject,
           hasBody: !!body,
           hasText: !!text,
           hasHtml: !!html,
           receivedFields: Object.keys(req.body)
         }
+      });
+    }
+
+    if (invalidRecipients.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: 'Destinatários inválidos',
+        message: `Os seguintes emails são inválidos: ${invalidRecipients.join(', ')}`
       });
     }
 
@@ -698,7 +783,7 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
 
     // Verificar se subscription está ativa
     const subscription = account.emailServer.subscription;
-    if (!subscription || subscription.status !== 'ACTIVE') {
+    if (!subscription || !SEND_ALLOWED_SUBSCRIPTION_STATUSES.has(subscription.status)) {
       return res.status(403).json({
         success: false,
         error: 'Assinatura inativa',
@@ -707,7 +792,11 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
     }
 
     // Verificar se subscription não expirou
-    if (subscription.currentPeriodEnd < new Date()) {
+    const subscriptionEndDate = subscription.status === 'TRIAL'
+      ? (subscription.trialEndsAt || subscription.currentPeriodEnd)
+      : subscription.currentPeriodEnd;
+
+    if (subscriptionEndDate < new Date()) {
       return res.status(402).json({
         success: false,
         error: 'Assinatura expirada',
@@ -741,6 +830,9 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
     const serverEmailsSent = await prisma.email.count({
       where: {
         emailServerId: account.emailServer.id,
+        status: {
+          in: ['SENT', 'DELIVERED']
+        },
         sentAt: { gte: currentMonth }
       }
     });
@@ -767,8 +859,7 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
     const messageId = `<${crypto.randomBytes(16).toString('hex')}@${account.emailServer.hostname}>`;
 
     // Normalizar destinatários (to pode vir como string ou array)
-    const toEmails = Array.isArray(to) ? to : [to];
-    const primaryTo = toEmails[0]; // Primeiro destinatário principal
+    const primaryTo = toEmails.join(', ');
 
     // Preparar anexos se houver arquivos
     const attachmentsData = uploadedFiles.length > 0 ? uploadedFiles.map(file => ({
@@ -785,21 +876,30 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
         userId: accountId,
         messageId,
         fromEmail: account.email,
-        toEmail: primaryTo, // String (primeiro destinatário)
-        ccEmails: cc ? (Array.isArray(cc) ? cc : cc.split(',').map((e: string) => e.trim())) : null,
-        bccEmails: bcc ? (Array.isArray(bcc) ? bcc : bcc.split(',').map((e: string) => e.trim())) : null,
+        toEmail: primaryTo,
+        ccEmails: ccEmails.length > 0 ? ccEmails : undefined,
+        bccEmails: bccEmails.length > 0 ? bccEmails : undefined,
         subject,
-        textContent: text || emailBody, // Priorizar text se existir
-        htmlContent: html || emailBody, // Priorizar html se existir
+        textContent: text || stripHtml(emailBody),
+        htmlContent: html || emailBody,
         status: 'QUEUED', // ← QUEUED ao invés de SENT
-        priority: priority ? parseInt(priority) : 3,
-        attachments: attachmentsData as any // Armazenar metadados dos anexos
+        priority: normalizedPriority,
+        attachments: attachmentsData as any,
+        metadata: {
+          requestedByUserId: userId,
+          requestedByUserEmail: req.user.email,
+          requestedByUserRole: req.user.role,
+          toRecipients: toEmails,
+          ccRecipients: ccEmails,
+          bccRecipients: bccEmails,
+          attachmentCount: uploadedFiles.length
+        }
       }
     });
 
     // ✅ ENVIAR email REAL via ultrazend-smtp
     try {
-      await emailSenderService.sendEmailWithRetry(email.id);
+      const sendResult = await emailSenderService.sendEmailWithRetry(email.id);
     } catch (sendError: any) {
       console.error('Erro ao enviar email:', sendError);
       // Email fica como FAILED no banco, mas não falha a request
@@ -888,6 +988,86 @@ router.post('/send', requireMinRole(UserRole.ADMIN), uploadDocuments, asyncHandl
 }));
 
 // Funções auxiliares
+
+function normalizeRecipientList(value: unknown): string[] {
+  if (!value) {
+    return [];
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap((entry) => normalizeRecipientList(entry)).filter(Boolean);
+  }
+
+  if (typeof value === 'string') {
+    return value
+      .split(',')
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  return [];
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function normalizePriority(value: unknown): number {
+  const parsed = typeof value === 'string' || typeof value === 'number'
+    ? Number(value)
+    : NaN;
+
+  if (!Number.isFinite(parsed)) {
+    return 3;
+  }
+
+  return Math.min(5, Math.max(1, Math.trunc(parsed)));
+}
+
+function stripHtml(content: string): string {
+  return content.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+}
+
+async function upsertEmailStats(
+  emailServerId: string,
+  increments: {
+    totalSent?: number;
+    totalFailed?: number;
+  }
+) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  await prisma.emailStats.upsert({
+    where: {
+      emailServerId_date: {
+        emailServerId,
+        date: today
+      }
+    },
+    update: {
+      ...(increments.totalSent
+        ? { totalSent: { increment: increments.totalSent } }
+        : {}),
+      ...(increments.totalFailed
+        ? { totalFailed: { increment: increments.totalFailed } }
+        : {})
+    },
+    create: {
+      emailServerId,
+      date: today,
+      totalSent: increments.totalSent || 0,
+      totalDelivered: 0,
+      totalFailed: increments.totalFailed || 0,
+      totalBounced: 0,
+      totalComplained: 0,
+      totalOpens: 0,
+      totalClicks: 0,
+      uniqueOpens: 0,
+      uniqueClicks: 0
+    }
+  });
+}
 
 function generateSecurePassword(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*';

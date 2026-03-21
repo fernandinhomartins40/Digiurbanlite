@@ -8,9 +8,11 @@ import { asyncHandler } from '../utils/express-helpers';
 import { prisma } from '../lib/prisma';
 import { EmailPlan, UserRole } from '@prisma/client';
 import * as crypto from 'crypto';
+import { emailServerHealthService } from '../services/email-server-health.service';
 
 const router = Router();
 const transactionalEmail = new TransactionalEmailService();
+const EMAIL_READ_MIN_ROLE = UserRole.COORDINATOR;
 
 // Middleware para autenticação
 router.use(adminAuthMiddleware);
@@ -19,7 +21,7 @@ router.use(adminAuthMiddleware);
  * GET /api/admin/email-service
  * Obter configurações do serviço de email
  */
-router.get('/', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+router.get('/', requireMinRole(EMAIL_READ_MIN_ROLE), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
   try {
     // Buscar servidor de email e subscription
     const emailServer = await prisma.emailServer.findFirst({
@@ -450,7 +452,7 @@ router.post('/domain/:id/verify', requireMinRole(UserRole.ADMIN), asyncHandler(a
  * GET /api/admin/email-service/stats
  * Obter estatísticas de email
  */
-router.get('/stats', requireRole(UserRole.ADMIN), async (req, res, next) => {
+router.get('/stats', requireMinRole(EMAIL_READ_MIN_ROLE), async (req, res, next) => {
   try {
     // Single tenant: tenantId removido
 
@@ -550,10 +552,47 @@ router.get('/stats', requireRole(UserRole.ADMIN), async (req, res, next) => {
 });
 
 /**
+ * GET /api/admin/email-service/health
+ * Retorna saúde atual do servidor de email
+ */
+router.get('/health', requireMinRole(EMAIL_READ_MIN_ROLE), asyncHandler(async (_req: AuthenticatedRequest, res: Response) => {
+  const health = await emailServerHealthService.checkHealth({
+    triggerRecovery: false,
+    source: 'admin-email-service'
+  });
+
+  res.json({
+    success: true,
+    health
+  });
+}));
+
+/**
+ * POST /api/admin/email-service/health/recover
+ * Força uma tentativa manual de recuperação do servidor de email
+ */
+router.post('/health/recover', requireMinRole(UserRole.ADMIN), asyncHandler(async (req: AuthenticatedRequest, res: Response) => {
+  const result = await emailServerHealthService.triggerRecovery(
+    `Recuperação manual solicitada por ${req.user.email}`
+  );
+
+  const health = await emailServerHealthService.checkHealth({
+    triggerRecovery: false,
+    source: 'manual-recovery'
+  });
+
+  res.json({
+    success: result.triggered,
+    result,
+    health
+  });
+}));
+
+/**
  * GET /api/admin/email-service/templates
  * Listar templates de email
  */
-router.get('/templates', requireRole(UserRole.ADMIN), async (req, res, next) => {
+router.get('/templates', requireMinRole(EMAIL_READ_MIN_ROLE), async (req, res, next) => {
   try {
     // Buscar o emailServer ativo
     const emailServer = await prisma.emailServer.findFirst({

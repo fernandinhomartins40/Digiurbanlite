@@ -47,7 +47,7 @@ export default function ComposeEmailPage() {
   const fetchAccounts = async () => {
     try {
       setLoading(true);
-      const response = await apiRequest('/admin/email-accounts', {
+      const response = await apiRequest('/admin/email-compose/senders', {
         method: 'GET'
       });
 
@@ -55,7 +55,7 @@ export default function ComposeEmailPage() {
         const activeAccounts = response.accounts.filter((acc: EmailAccount) => acc.isActive);
         setAccounts(activeAccounts);
         if (activeAccounts.length > 0) {
-          setFormData(prev => ({ ...prev, accountId: activeAccounts[0].id }));
+          setFormData(prev => ({ ...prev, accountId: response.preferredAccountId || activeAccounts[0].id }));
         }
       }
     } catch (error) {
@@ -79,7 +79,7 @@ export default function ComposeEmailPage() {
 
     try {
       setSending(true);
-      const response = await apiRequest('/admin/email-accounts/send', {
+      const response = await apiRequest('/admin/email-compose/send', {
         method: 'POST',
         body: JSON.stringify(formData)
       });

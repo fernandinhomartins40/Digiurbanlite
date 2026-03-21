@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth';
 import emailDomainsRouter from './email-domains';
+import { emailServerHealthService } from '../services/email-server-health.service';
 // SMTP Server agora roda em container separado (ultrazend-smtp)
 // import { getEmailServerRuntimeStatus, startEmailServer, stopEmailServer } from '../lib/email/email-server-manager';
 
@@ -20,6 +21,11 @@ router.use('/domains', emailDomainsRouter);
  */
 router.get('/status', async (req: Request, res: Response) => {
   try {
+    const health = await emailServerHealthService.checkHealth({
+      triggerRecovery: false,
+      source: 'super-admin-status'
+    });
+
     const emailServer = await prisma.emailServer.findFirst({
       orderBy: { createdAt: 'desc' }
     });
@@ -41,7 +47,8 @@ router.get('/status', async (req: Request, res: Response) => {
           connections: {
             active: 0,
             total: 0
-          }
+          },
+          monitor: health
         }
       });
     }
@@ -80,7 +87,8 @@ router.get('/status', async (req: Request, res: Response) => {
         connections: {
           active: 0,  // Container separado não reporta conexões
           total: 100
-        }
+        },
+        monitor: health
       }
     });
   } catch (error) {
@@ -396,13 +404,23 @@ router.post('/restart', async (req: Request, res: Response) => {
       });
     }
 
-    // SMTP Server agora roda em container separado
-    // await stopEmailServer();
-    // const status = await startEmailServer();
+    const recovery = await emailServerHealthService.triggerRecovery(
+      'Reinício manual solicitado via super admin'
+    );
+    const health = await emailServerHealthService.checkHealth({
+      triggerRecovery: false,
+      source: 'manual-super-admin-restart'
+    });
+
     res.json({
-      success: true,
-      message: 'Server configuration updated (restart ultrazend-smtp container to apply)',
-      status: { isRunning: true, hostname: emailServer.hostname }
+      success: recovery.triggered,
+      message: recovery.message,
+      status: {
+        isRunning: true,
+        hostname: emailServer.hostname,
+        monitor: health
+      },
+      recovery
     });
   } catch (error) {
     console.error('Error restarting server:', error);

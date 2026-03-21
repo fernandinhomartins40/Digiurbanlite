@@ -178,7 +178,7 @@ export default function DraftsPage() {
         priority: draft.priority
       };
 
-      const response = await apiRequest('/admin/email-accounts/send', {
+      const response = await apiRequest('/admin/email-compose/send', {
         method: 'POST',
         body: JSON.stringify(payload)
       });
