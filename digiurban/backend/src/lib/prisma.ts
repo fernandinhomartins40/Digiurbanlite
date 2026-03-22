@@ -39,9 +39,65 @@ const prismaBase = new PrismaClient({
   log: ['query', 'error', 'warn']
 });
 
+const isAuditStorageUnavailable = (error: unknown): boolean => {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code === 'P2021' || error.code === 'P2022';
+  }
+
+  return error instanceof Error && /audit_logs|audit logs?.*does not exist|audit_logs.*does not exist/i.test(error.message);
+};
+
+const buildAuditLogFallback = (data: Prisma.AuditLogCreateArgs['data']) => ({
+  id: `audit-log-fallback-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+  userId: data.userId ?? null,
+  citizenId: data.citizenId ?? null,
+  action: data.action,
+  resource: data.resource ?? null,
+  method: data.method ?? null,
+  details: data.details ?? null,
+  ip: data.ip ?? null,
+  userAgent: data.userAgent ?? null,
+  success: data.success ?? true,
+  errorMessage: data.errorMessage ?? null,
+  createdAt: new Date()
+});
+
+const auditLogFallbackExtension = Prisma.defineExtension({
+  query: {
+    auditLog: {
+      async create({ args, query }) {
+        try {
+          return await query(args);
+        } catch (error) {
+          if (isAuditStorageUnavailable(error)) {
+            console.warn('[PRISMA] Escrita em audit_logs ignorada porque a tabela não está disponível.');
+            return buildAuditLogFallback(args.data) as any;
+          }
+
+          throw error;
+        }
+      },
+      async createMany({ args, query }) {
+        try {
+          return await query(args);
+        } catch (error) {
+          if (isAuditStorageUnavailable(error)) {
+            console.warn('[PRISMA] Escrita em audit_logs ignorada porque a tabela não está disponível.');
+            return { count: 0 };
+          }
+
+          throw error;
+        }
+      }
+    }
+  }
+});
+
 // ✅ FASE 4: Aplicar extension de cascade delete para arquivos físicos
 // Usa Prisma Client Extensions API (compatível com Prisma 6.x)
-const prismaExtended = prismaBase.$extends(cascadeDeleteExtension) as unknown as PrismaClient;
+const prismaExtended = prismaBase
+  .$extends(cascadeDeleteExtension)
+  .$extends(auditLogFallbackExtension) as unknown as PrismaClient;
 
 // Prevent multiple instances of Prisma Client in development
 // Global declaration in src/types/globals.ts

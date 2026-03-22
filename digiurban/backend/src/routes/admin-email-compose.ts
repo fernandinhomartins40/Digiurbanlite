@@ -8,6 +8,7 @@ import { prisma } from '../lib/prisma';
 import { uploadDocuments } from '../config/upload';
 import { emailSenderService } from '../services/EmailSenderService';
 import { emailServerHealthService } from '../services/email-server-health.service';
+import { logAuditEvent } from '../utils/audit-logger';
 
 const router = Router();
 const EMAIL_COMPOSER_MIN_ROLE = UserRole.COORDINATOR;
@@ -288,20 +289,18 @@ router.post('/send', requireMinRole(EMAIL_COMPOSER_MIN_ROLE), uploadDocuments, a
   try {
     const sendResult = await emailSenderService.sendEmailWithRetry(email.id);
 
-    await prisma.emailUser.update({
-      where: { id: accountId },
-      data: {
-        sentToday: { increment: 1 },
-        sentThisMonth: { increment: 1 }
-      }
-    });
-
-    await upsertEmailStats(account.emailServer.id, {
-      totalSent: 1
-    });
-
-    await prisma.auditLog.create({
-      data: {
+    const postSendTasks = await Promise.allSettled([
+      prisma.emailUser.update({
+        where: { id: accountId },
+        data: {
+          sentToday: { increment: 1 },
+          sentThisMonth: { increment: 1 }
+        }
+      }),
+      upsertEmailStats(account.emailServer.id, {
+        totalSent: 1
+      }),
+      logAuditEvent({
         userId,
         action: 'EMAIL_SENT',
         resource: 'email',
@@ -317,6 +316,12 @@ router.post('/send', requireMinRole(EMAIL_COMPOSER_MIN_ROLE), uploadDocuments, a
         },
         ip: req.ip || 'unknown',
         success: true
+      })
+    ]);
+
+    postSendTasks.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`[Email Compose] Falha na rotina pós-envio #${index + 1}:`, result.reason);
       }
     });
 
@@ -338,12 +343,11 @@ router.post('/send', requireMinRole(EMAIL_COMPOSER_MIN_ROLE), uploadDocuments, a
       }
     });
   } catch (sendError: any) {
-    await upsertEmailStats(account.emailServer.id, {
-      totalFailed: 1
-    });
-
-    await prisma.auditLog.create({
-      data: {
+    const failureTasks = await Promise.allSettled([
+      upsertEmailStats(account.emailServer.id, {
+        totalFailed: 1
+      }),
+      logAuditEvent({
         userId,
         action: 'EMAIL_SEND_FAILED',
         resource: 'email',
@@ -360,16 +364,17 @@ router.post('/send', requireMinRole(EMAIL_COMPOSER_MIN_ROLE), uploadDocuments, a
         ip: req.ip || 'unknown',
         success: false,
         errorMessage: sendError instanceof Error ? sendError.message : 'Falha no envio'
-      }
-    }).catch((auditError) => {
-      console.error('Erro ao registrar auditoria de falha de email:', auditError);
-    });
+      }),
+      emailServerHealthService.checkHealth({
+        triggerRecovery: true,
+        source: 'send-failure'
+      })
+    ]);
 
-    await emailServerHealthService.checkHealth({
-      triggerRecovery: true,
-      source: 'send-failure'
-    }).catch((healthError) => {
-      console.error('Erro ao executar health check após falha de envio:', healthError);
+    failureTasks.forEach((result, index) => {
+      if (result.status === 'rejected') {
+        console.error(`[Email Compose] Falha na rotina de recuperação #${index + 1}:`, result.reason);
+      }
     });
 
     return res.status(502).json({

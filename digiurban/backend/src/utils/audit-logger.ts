@@ -5,6 +5,7 @@
 
 import { prisma } from '../lib/prisma';
 import { Request } from 'express';
+import { Prisma } from '@prisma/client';
 
 export interface AuditLogData {
   // Identificação do ator
@@ -57,9 +58,22 @@ export async function logAuditEvent(data: AuditLogData): Promise<void> {
       );
     }
   } catch (error) {
+    if (isAuditStorageUnavailable(error)) {
+      console.warn('[AUDIT] Registro ignorado porque a tabela audit_logs não está disponível.');
+      return;
+    }
+
     // Nunca falhar a operação por erro de auditoria
     console.error('[AUDIT] Erro ao registrar evento de auditoria:', error);
   }
+}
+
+function isAuditStorageUnavailable(error: unknown): boolean {
+  if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    return error.code === 'P2021' || error.code === 'P2022';
+  }
+
+  return error instanceof Error && /audit_logs|audit logs?.*does not exist|audit_logs.*does not exist/i.test(error.message);
 }
 
 /**
