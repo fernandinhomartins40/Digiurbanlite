@@ -18,16 +18,30 @@ import {
   TrendingUp,
   MousePointerClick,
   RefreshCw,
-  ChevronLeft
+  ChevronLeft,
+  Paperclip,
+  Download
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+
+interface EmailAttachment {
+  filename: string;
+  contentType: string | null;
+  size: number | null;
+  url: string | null;
+}
 
 interface SentEmail {
   id: string;
   messageId: string;
   fromEmail: string;
   toEmail: string;
+  ccEmails?: string[];
+  bccEmails?: string[];
   subject: string;
+  textContent?: string | null;
+  htmlContent?: string | null;
+  attachments?: EmailAttachment[];
   status: 'QUEUED' | 'SENDING' | 'SENT' | 'DELIVERED' | 'FAILED' | 'BOUNCED';
   sentAt: string | null;
   deliveredAt: string | null;
@@ -137,6 +151,37 @@ export default function SentEmailsPage() {
     } else {
       return date.toLocaleDateString('pt-BR', { day: 'numeric', month: 'short', year: 'numeric' });
     }
+  };
+
+  const formatFileSize = (size?: number | null) => {
+    if (!size || size <= 0) {
+      return 'Tamanho não informado';
+    }
+
+    if (size < 1024) {
+      return `${size} B`;
+    }
+
+    if (size < 1024 * 1024) {
+      return `${(size / 1024).toFixed(1)} KB`;
+    }
+
+    return `${(size / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getAttachmentUrl = (url?: string | null) => {
+    if (!url) {
+      return '#';
+    }
+
+    if (url.startsWith('http://') || url.startsWith('https://')) {
+      return url;
+    }
+
+    const apiBase = process.env.NEXT_PUBLIC_API_URL || '/api';
+    const backendBase = apiBase.endsWith('/api') ? apiBase.slice(0, -4) : apiBase;
+
+    return `${backendBase}${url}`;
   };
 
   const getStats = () => {
@@ -301,6 +346,12 @@ export default function SentEmailsPage() {
                           {email.toEmail}
                         </span>
                         <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
+                          {(email.attachments?.length || 0) > 0 && (
+                            <span className="text-xs text-muted-foreground" title="Anexos">
+                              <Paperclip className="h-3 w-3 sm:h-3.5 sm:w-3.5 inline" />
+                              <span className="hidden sm:inline ml-1">{email.attachments?.length}</span>
+                            </span>
+                          )}
                           {email.opens > 0 && (
                             <span className="text-xs text-purple-600" title="Aberturas">
                               <TrendingUp className="h-3 w-3 sm:h-3.5 sm:w-3.5 inline" />
@@ -360,6 +411,16 @@ export default function SentEmailsPage() {
                       <div className="text-xs sm:text-sm text-muted-foreground break-all">
                         De: {selectedEmail.fromEmail}
                       </div>
+                      {selectedEmail.ccEmails && selectedEmail.ccEmails.length > 0 && (
+                        <div className="text-xs sm:text-sm text-muted-foreground break-all">
+                          Cc: {selectedEmail.ccEmails.join(', ')}
+                        </div>
+                      )}
+                      {selectedEmail.bccEmails && selectedEmail.bccEmails.length > 0 && (
+                        <div className="text-xs sm:text-sm text-muted-foreground break-all">
+                          Cco: {selectedEmail.bccEmails.join(', ')}
+                        </div>
+                      )}
                       <div className="flex items-center gap-1 text-xs sm:text-sm text-muted-foreground sm:hidden">
                         <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
                         {new Date(selectedEmail.sentAt || selectedEmail.createdAt).toLocaleString('pt-BR', {
@@ -425,6 +486,15 @@ export default function SentEmailsPage() {
                     </span>
                   </div>
                 )}
+
+                {(selectedEmail.attachments?.length || 0) > 0 && (
+                  <div className="flex items-center gap-1.5 sm:gap-2 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-slate-100">
+                    <Paperclip className="h-3 w-3 sm:h-4 sm:w-4 text-slate-600" />
+                    <span className="text-xs sm:text-sm font-medium text-slate-700">
+                      {selectedEmail.attachments?.length} anexo{selectedEmail.attachments?.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -457,6 +527,61 @@ export default function SentEmailsPage() {
                   </div>
                 )}
               </div>
+
+              <div className="space-y-2">
+                <label className="text-xs font-medium text-muted-foreground uppercase">Conteúdo</label>
+                <div className="rounded-xl border bg-muted/20 p-3 sm:p-4">
+                  <div className="prose prose-sm sm:prose max-w-none">
+                    {selectedEmail.htmlContent ? (
+                      <div
+                        dangerouslySetInnerHTML={{ __html: selectedEmail.htmlContent }}
+                        className="email-content text-sm sm:text-base"
+                      />
+                    ) : selectedEmail.textContent ? (
+                      <pre className="whitespace-pre-wrap font-sans text-xs sm:text-sm leading-relaxed">
+                        {selectedEmail.textContent}
+                      </pre>
+                    ) : (
+                      <p className="text-xs sm:text-sm text-muted-foreground">
+                        Este email não possui conteúdo salvo para visualização.
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {(selectedEmail.attachments?.length || 0) > 0 && (
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-muted-foreground uppercase">Anexos</label>
+                  <div className="space-y-2">
+                    {selectedEmail.attachments?.map((attachment, index) => (
+                      <a
+                        key={`${selectedEmail.id}-attachment-${index}`}
+                        href={getAttachmentUrl(attachment.url)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-3 rounded-xl border bg-white p-3 transition-colors hover:bg-muted/40"
+                      >
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100 text-slate-600">
+                            <Paperclip className="h-4 w-4" />
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-medium text-slate-900">
+                              {attachment.filename}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {formatFileSize(attachment.size)}
+                              {attachment.contentType ? ` • ${attachment.contentType}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <Download className="h-4 w-4 flex-shrink-0 text-slate-500" />
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}

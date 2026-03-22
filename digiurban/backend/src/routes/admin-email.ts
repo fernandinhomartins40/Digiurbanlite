@@ -8,6 +8,7 @@ import { asyncHandler } from '../utils/express-helpers';
 import { prisma } from '../lib/prisma';
 import { EmailPlan, SubscriptionStatus, UserRole } from '@prisma/client';
 import * as crypto from 'crypto';
+import path from 'path';
 import { emailServerHealthService } from '../services/email-server-health.service';
 
 const router = Router();
@@ -972,6 +973,75 @@ async function getEmailUsage() {
   return { currentMonth: sent };
 }
 
+function normalizeEmailAddressList(value: unknown): string[] {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value.filter((item): item is string => typeof item === 'string' && item.trim().length > 0);
+}
+
+function resolveEmailAttachmentUrl(filePath: string | null): string | null {
+  if (!filePath) {
+    return null;
+  }
+
+  if (filePath.startsWith('http://') || filePath.startsWith('https://') || filePath.startsWith('/uploads/')) {
+    return filePath;
+  }
+
+  const normalizedPath = path.normalize(filePath);
+
+  if (normalizedPath.startsWith(`uploads${path.sep}`)) {
+    return `/${normalizedPath.split(path.sep).join('/')}`;
+  }
+
+  const uploadsRoot = path.join(process.cwd(), 'uploads');
+  const relativeToUploads = path.relative(uploadsRoot, normalizedPath);
+
+  if (!relativeToUploads.startsWith('..') && !path.isAbsolute(relativeToUploads)) {
+    return `/uploads/${relativeToUploads.split(path.sep).join('/')}`;
+  }
+
+  const uploadsMarker = `${path.sep}uploads${path.sep}`;
+  const uploadsIndex = normalizedPath.lastIndexOf(uploadsMarker);
+
+  if (uploadsIndex >= 0) {
+    return normalizedPath.slice(uploadsIndex).split(path.sep).join('/');
+  }
+
+  return null;
+}
+
+function normalizeEmailAttachments(value: unknown) {
+  if (!Array.isArray(value)) {
+    return [];
+  }
+
+  return value
+    .map((item) => {
+      if (!item || typeof item !== 'object') {
+        return null;
+      }
+
+      const attachment = item as Record<string, unknown>;
+      const filePath =
+        typeof attachment.path === 'string'
+          ? attachment.path
+          : typeof attachment.url === 'string'
+          ? attachment.url
+          : null;
+
+      return {
+        filename: typeof attachment.filename === 'string' ? attachment.filename : 'Anexo',
+        contentType: typeof attachment.contentType === 'string' ? attachment.contentType : null,
+        size: typeof attachment.size === 'number' ? attachment.size : null,
+        url: resolveEmailAttachmentUrl(filePath)
+      };
+    })
+    .filter((attachment): attachment is { filename: string; contentType: string | null; size: number | null; url: string | null } => attachment !== null);
+}
+
 /**
  * GET /api/admin/email/sent
  * Listar emails enviados
@@ -1006,7 +1076,12 @@ router.get('/sent', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (re
         messageId: true,
         fromEmail: true,
         toEmail: true,
+        ccEmails: true,
+        bccEmails: true,
         subject: true,
+        textContent: true,
+        htmlContent: true,
+        attachments: true,
         status: true,
         sentAt: true,
         deliveredAt: true,
@@ -1024,7 +1099,12 @@ router.get('/sent', requireMinRole(UserRole.COORDINATOR), asyncHandler(async (re
 
     res.json({
       success: true,
-      emails
+      emails: emails.map((email) => ({
+        ...email,
+        ccEmails: normalizeEmailAddressList(email.ccEmails),
+        bccEmails: normalizeEmailAddressList(email.bccEmails),
+        attachments: normalizeEmailAttachments(email.attachments)
+      }))
     });
   } catch (error) {
     console.error('Error fetching sent emails:', error);
