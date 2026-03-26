@@ -45,6 +45,11 @@ export interface StageExecutionAccess {
   requiredAssignments: WorkflowStageSupportAssignment[]
 }
 
+export interface StartStageOptions {
+  actorUserId?: string
+  assignedToUserId?: string
+}
+
 async function syncProtocolStageWithCentral(stageId: string) {
   try {
     await centralCalendarService.syncProtocolStageEventByStageId(stageId);
@@ -464,9 +469,17 @@ export async function updateStage(stageId: string, data: UpdateStageData) {
  * Inicia uma etapa
  * ✅ FASE 1: Atualiza currentStageId do protocolo
  */
-export async function startStage(stageId: string, userId?: string) {
-  if (userId) {
-    await assertUserCanExecuteStage(stageId, userId);
+export async function startStage(stageId: string, userIdOrOptions?: string | StartStageOptions) {
+  const options =
+    typeof userIdOrOptions === 'string'
+      ? {
+          actorUserId: userIdOrOptions,
+          assignedToUserId: userIdOrOptions
+        }
+      : (userIdOrOptions || {});
+
+  if (options.actorUserId) {
+    await assertUserCanExecuteStage(stageId, options.actorUserId);
   }
 
   const stage = await prisma.protocolStage.update({
@@ -474,7 +487,7 @@ export async function startStage(stageId: string, userId?: string) {
     data: {
       status: StageStatus.IN_PROGRESS,
       startedAt: new Date(),
-      assignedTo: userId
+      assignedTo: options.assignedToUserId ?? null
     }
   });
 

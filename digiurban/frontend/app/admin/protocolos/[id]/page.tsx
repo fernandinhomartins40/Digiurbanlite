@@ -598,6 +598,7 @@ export default function ProtocolDetailPage() {
         onOpenChange={setShowAssignDialog}
         protocolId={protocolId}
         departmentId={protocol.departmentId || protocol.department?.id}
+        currentStageId={currentStage?.id}
         onSuccess={() => {
           setShowAssignDialog(false)
           loadProtocolData()

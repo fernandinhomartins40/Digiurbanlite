@@ -248,6 +248,13 @@ export function WorkflowStageEditor({
   ) || stage.stageType === 'DOCUMENT_GENERATION' || stage.stageType === 'CONCLUSION'
 
   const stageTypeInfo = STAGE_TYPES.find(t => t.id === (stage.stageType || ''))
+  const primaryResponsibleAssignment =
+    stage.supportAssignments.find(assignment => assignment.mode === 'REQUIRED_EXECUTION') ||
+    stage.supportAssignments.find(assignment => assignment.mode === 'SUGGEST_ASSIGNMENT')
+  const primaryResponsibleLabel =
+    primaryResponsibleAssignment?.user?.name ||
+    primaryResponsibleAssignment?.department?.name ||
+    primaryResponsibleAssignment?.organizationalUnit?.nome
 
   return (
     <Card className="border-l-4 border-l-primary">
@@ -270,6 +277,11 @@ export function WorkflowStageEditor({
                 {stage.supportAssignments.length > 0 && (
                   <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700">
                     {stage.supportAssignments.length} regra{stage.supportAssignments.length > 1 ? 's' : ''}
+                  </Badge>
+                )}
+                {primaryResponsibleLabel && (
+                  <Badge variant="outline" className="text-[10px] bg-blue-50 text-blue-700">
+                    Resp.: {primaryResponsibleLabel}
                   </Badge>
                 )}
               </div>
@@ -671,9 +683,9 @@ export function WorkflowStageEditor({
               <div className="rounded-md border p-3 space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                   <div>
-                    <Label className="text-xs font-medium">Execução da etapa</Label>
+                    <Label className="text-xs font-medium">Responsável e execução da etapa</Label>
                     <p className="text-[10px] text-muted-foreground">
-                      Use <strong>Obrigatório</strong> quando apenas o servidor, setor ou departamento indicado puder executar a etapa. Use <strong>Sugestão</strong> para destino preferencial e <strong>Referência</strong> para orientação visual.
+                      Use <strong>Obrigatório</strong> para definir o responsável automático da etapa e restringir quem pode executá-la. Use <strong>Sugestão</strong> para destino preferencial na atribuição automática e <strong>Referência</strong> apenas para orientação visual.
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-1.5">
@@ -691,7 +703,7 @@ export function WorkflowStageEditor({
 
                 {stage.supportAssignments.length === 0 ? (
                   <div className="rounded-md border border-dashed p-3 text-xs text-muted-foreground">
-                    Nenhuma regra de execução configurada. Se a etapa deve ser obrigatoriamente executada por um setor, departamento ou servidor, cadastre aqui.
+                    Nenhuma regra de execução configurada. Se a etapa deve ter responsável automático por servidor, setor ou departamento, cadastre aqui.
                   </div>
                 ) : (
                   <div className="space-y-3">

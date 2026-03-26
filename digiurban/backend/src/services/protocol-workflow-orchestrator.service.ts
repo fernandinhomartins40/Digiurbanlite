@@ -21,6 +21,10 @@ import * as interactionService from './protocol-interaction.service';
 import { protocolStatusEngine } from './protocol-status.engine';
 import * as categoryService from './citizen-category.service';
 import { matchDocumentType } from '../utils/document-mapping';
+import {
+  autoAssignProtocolToStageResponsible,
+  resolveStageAutomaticAssignment
+} from './protocolAssignmentService';
 
 // ============================================================================
 // TIPOS
@@ -373,19 +377,46 @@ export class ProtocolWorkflowOrchestrator {
 
         // Validar se pode iniciar próxima stage
         const validation = await this.validateStageStart(nextStage.id);
+        const automaticAssignment = await resolveStageAutomaticAssignment(stage.protocolId, nextStage.id);
+
+        if (automaticAssignment.blocked && automaticAssignment.blocker) {
+          validation.canProgress = false;
+          validation.blockers = [...validation.blockers, automaticAssignment.blocker];
+        }
 
         if (validation.canProgress) {
-          await stageService.startStage(nextStage.id, completedBy);
+          const stageCompleter = await prisma.user.findUnique({
+            where: { id: completedBy },
+            select: { name: true }
+          });
+
+          if (automaticAssignment.matched && automaticAssignment.assignee) {
+            await stageService.startStage(nextStage.id, {
+              assignedToUserId: automaticAssignment.assignee.userId
+            });
+
+            await autoAssignProtocolToStageResponsible({
+              protocolId: stage.protocolId,
+              stageId: nextStage.id,
+              assignedById: completedBy,
+              assignedByName: stageCompleter?.name || 'Servidor',
+              notifyCitizen: false
+            });
+          } else {
+            await stageService.startStage(nextStage.id, completedBy);
+          }
 
           // Interação informativa
-          const stageCompleter = await prisma.user.findUnique({ where: { id: completedBy }, select: { name: true } });
           await interactionService.createInteraction({
             protocolId: stage.protocolId,
             type: 'STATUS_CHANGED',
             authorType: 'SERVER',
             authorId: completedBy,
             authorName: stageCompleter?.name || 'Servidor',
-            message: `Etapa "${stage.stageName}" concluída. Iniciando: "${nextStage.stageName}"`,
+            message:
+              automaticAssignment.matched && automaticAssignment.assignee
+                ? `Etapa "${stage.stageName}" concluída. Iniciando "${nextStage.stageName}" com responsável ${automaticAssignment.assignee.name}.`
+                : `Etapa "${stage.stageName}" concluída. Iniciando: "${nextStage.stageName}"`,
             isInternal: false
           });
         } else {

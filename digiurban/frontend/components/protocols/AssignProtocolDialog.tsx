@@ -24,6 +24,7 @@ interface AssignProtocolDialogProps {
   onOpenChange: (open: boolean) => void;
   protocolId: string;
   departmentId?: string;
+  currentStageId?: string;
   onSuccess?: () => void;
 }
 
@@ -36,6 +37,10 @@ interface ServerWithWorkload {
   protocolosPrazoVencido: number;
   cargaPercentual: number;
   status: string;
+  isStageRequired?: boolean;
+  isStageSuggested?: boolean;
+  stageAssignmentMode?: 'REQUIRED_EXECUTION' | 'SUGGEST_ASSIGNMENT' | null;
+  stageAssignmentLabel?: string | null;
   employeeAssignment?: {
     organizationalUnit?: string;
     position?: string;
@@ -51,6 +56,9 @@ interface Suggestion {
   razoes: string[];
   protocolosAtivos: number;
   cargaPercentual: number;
+  isStageRequired?: boolean;
+  isStageSuggested?: boolean;
+  stageAssignmentLabel?: string | null;
   employeeAssignment?: {
     organizationalUnit?: string;
     position?: string;
@@ -62,6 +70,7 @@ export function AssignProtocolDialog({
   onOpenChange,
   protocolId,
   departmentId,
+  currentStageId,
   onSuccess
 }: AssignProtocolDialogProps) {
   const [selectedTab, setSelectedTab] = useState('individual');
@@ -78,7 +87,7 @@ export function AssignProtocolDialog({
       fetchWorkloadStats();
       fetchSuggestions();
     }
-  }, [open, departmentId]);
+  }, [open, departmentId, currentStageId, protocolId]);
 
   const fetchWorkloadStats = async () => {
     if (!departmentId) {
@@ -87,9 +96,16 @@ export function AssignProtocolDialog({
 
     try {
       setLoadingServers(true);
-      const url = departmentId
-        ? getFullApiUrl(`/protocols/workload-stats?departmentId=${encodeURIComponent(departmentId)}`)
-        : getFullApiUrl('/protocols/workload-stats');
+      const params = new URLSearchParams();
+      if (departmentId) {
+        params.set('departmentId', departmentId);
+      }
+      params.set('protocolId', protocolId);
+      if (currentStageId) {
+        params.set('stageId', currentStageId);
+      }
+
+      const url = getFullApiUrl(`/protocols/workload-stats${params.toString() ? `?${params.toString()}` : ''}`);
 
       console.log('🌐 [ASSIGN-DIALOG] Fazendo requisição para:', url);
       const response = await fetch(url, {
@@ -102,7 +118,8 @@ export function AssignProtocolDialog({
         const data = await response.json();
         console.log('✅ [ASSIGN-DIALOG] Servidores carregados:', data.data);
         console.log('✅ [ASSIGN-DIALOG] Total de servidores:', data.data?.servidores?.length || 0);
-        setServers(data.data.servidores || []);
+        const servidores = Array.isArray(data?.data?.servidores) ? data.data.servidores : [];
+        setServers(servidores);
       } else {
         console.error('❌ [ASSIGN-DIALOG] Resposta com erro. Status:', response.status);
         const error = await response.json();
@@ -120,9 +137,17 @@ export function AssignProtocolDialog({
   const fetchSuggestions = async () => {
     try {
       setLoadingSuggestions(true);
-      const url = departmentId
-        ? getFullApiUrl(`/protocols/${protocolId}/suggest-assignee?departmentId=${encodeURIComponent(departmentId)}`)
-        : getFullApiUrl(`/protocols/${protocolId}/suggest-assignee`);
+      const params = new URLSearchParams();
+      if (departmentId) {
+        params.set('departmentId', departmentId);
+      }
+      if (currentStageId) {
+        params.set('stageId', currentStageId);
+      }
+
+      const url = getFullApiUrl(
+        `/protocols/${protocolId}/suggest-assignee${params.toString() ? `?${params.toString()}` : ''}`
+      );
 
       const response = await fetch(url, {
         credentials: 'include',
@@ -132,7 +157,8 @@ export function AssignProtocolDialog({
       if (response.ok) {
         const data = await response.json();
         console.log('Sugestões carregadas:', data.data);
-        setSuggestions(data.data.sugestoes || []);
+        const sugestoes = Array.isArray(data?.data?.sugestoes) ? data.data.sugestoes : [];
+        setSuggestions(sugestoes);
       } else {
         const error = await response.json();
         console.error('Erro ao buscar sugestões:', error);
@@ -161,7 +187,8 @@ export function AssignProtocolDialog({
         credentials: 'include',
         body: JSON.stringify({
           assignedUserId: selectedAssignee,
-          comment
+          comment,
+          stageId: currentStageId
         })
       });
 
@@ -264,6 +291,16 @@ export function AssignProtocolDialog({
                         <div className="flex-1">
                           <div className="flex items-center gap-2">
                             <p className="font-medium">{server.name}</p>
+                            {server.isStageRequired && (
+                              <Badge className="bg-emerald-600 text-white">
+                                Responsável da etapa
+                              </Badge>
+                            )}
+                            {!server.isStageRequired && server.isStageSuggested && (
+                              <Badge variant="outline" className="border-amber-300 text-amber-700">
+                                Sugestão da etapa
+                              </Badge>
+                            )}
                             {selectedAssignee === server.userId && (
                               <Check className="h-4 w-4 text-blue-600" />
                             )}
@@ -271,6 +308,11 @@ export function AssignProtocolDialog({
                           <p className="text-sm text-gray-500 mt-0.5">
                             {server.employeeAssignment?.organizationalUnit || 'Sem lotação'}
                           </p>
+                          {server.stageAssignmentLabel && (
+                            <p className="text-xs text-emerald-700 mt-1">
+                              {server.stageAssignmentLabel}
+                            </p>
+                          )}
                           {server.employeeAssignment?.position && (
                             <p className="text-xs text-gray-400">
                               {server.employeeAssignment.position}
@@ -330,6 +372,16 @@ export function AssignProtocolDialog({
                               Recomendado
                             </Badge>
                           )}
+                          {suggestion.isStageRequired && (
+                            <Badge className="bg-emerald-600 text-white">
+                              Responsável da etapa
+                            </Badge>
+                          )}
+                          {!suggestion.isStageRequired && suggestion.isStageSuggested && (
+                            <Badge variant="outline" className="border-amber-300 text-amber-700">
+                              Sugestão da etapa
+                            </Badge>
+                          )}
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
                               <p className="font-medium">{suggestion.name}</p>
@@ -343,6 +395,11 @@ export function AssignProtocolDialog({
                             {suggestion.employeeAssignment?.organizationalUnit && (
                               <p className="text-xs text-gray-400">
                                 {suggestion.employeeAssignment.organizationalUnit}
+                              </p>
+                            )}
+                            {suggestion.stageAssignmentLabel && (
+                              <p className="text-xs text-emerald-700 mt-1">
+                                {suggestion.stageAssignmentLabel}
                               </p>
                             )}
 

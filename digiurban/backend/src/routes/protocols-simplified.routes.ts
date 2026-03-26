@@ -46,11 +46,15 @@ router.get('/workload-stats', async (req: Request, res: Response) => {
     console.log('🔍 [WORKLOAD-STATS] Query params:', req.query);
     console.log('🔍 [WORKLOAD-STATS] User:', (req as any).user?.id);
 
-    const { departmentId } = req.query;
+    const { departmentId, protocolId, stageId } = req.query;
 
     console.log('🔍 [WORKLOAD-STATS] Buscando stats para departmentId:', departmentId);
     const stats = await protocolAssignmentService.getWorkloadStats(
-      departmentId as string | undefined
+      departmentId as string | undefined,
+      {
+        protocolId: protocolId as string | undefined,
+        stageId: stageId as string | undefined
+      }
     );
 
     console.log('🔍 [WORKLOAD-STATS] Stats obtidas:', stats);
@@ -1036,7 +1040,7 @@ router.patch('/:id/assign', requireMinRole(UserRole.MANAGER), async (req: Reques
   try {
     const authReq = req as AuthenticatedRequest;
     const { id } = req.params;
-    const { assignedUserId, motivo, comment } = req.body;
+    const { assignedUserId, motivo, comment, stageId } = req.body;
 
     if (!assignedUserId) {
       return res.status(400).json({
@@ -1052,7 +1056,8 @@ router.patch('/:id/assign', requireMinRole(UserRole.MANAGER), async (req: Reques
       assignedById: authReq.userId!,
       assignedByName: authReq.user.name,
       motivo,
-      comment
+      comment,
+      stageId
     });
 
     return res.json({
@@ -1274,18 +1279,12 @@ router.get('/:id/assignments', async (req: Request, res: Response) => {
 router.get('/:id/suggest-assignee', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { departmentId } = req.query;
-
-    if (!departmentId) {
-      return res.status(400).json({
-        success: false,
-        error: 'departmentId é obrigatório'
-      });
-    }
+    const { departmentId, stageId } = req.query;
 
     const suggestions = await protocolAssignmentService.suggestAssignee(
       id,
-      departmentId as string
+      departmentId as string | undefined,
+      stageId as string | undefined
     );
 
     return res.json({
@@ -1805,6 +1804,24 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
         service: true
       }
     });
+
+    if (mode === 'restart' && createdStages[0]?.id) {
+      try {
+        await protocolAssignmentService.autoAssignProtocolToStageResponsible({
+          protocolId: id,
+          stageId: createdStages[0].id,
+          assignedById: authReq.userId,
+          assignedByName: authReq.user.name,
+          notifyCitizen: false
+        });
+      } catch (error) {
+        console.warn('[protocols-simplified] Falha ao reaplicar atribuição automática na reabertura', {
+          protocolId: id,
+          stageId: createdStages[0].id,
+          error: error instanceof Error ? error.message : String(error)
+        });
+      }
+    }
 
     await prisma.protocolHistorySimplified.create({
       data: {

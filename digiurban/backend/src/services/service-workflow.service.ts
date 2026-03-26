@@ -23,6 +23,7 @@ import {
 import { randomUUID } from 'crypto';
 import { centralCalendarService } from './central-calendar.service';
 import { matchDocumentType } from '../utils/document-mapping';
+import { autoAssignProtocolToStageResponsible } from './protocolAssignmentService';
 
 // ============================================================================
 // TYPES
@@ -1261,6 +1262,32 @@ export async function applyWorkflowToProtocol(protocolId: string) {
         currentStageId: firstStage.id
       }
     });
+
+    try {
+      const autoAssignment = await autoAssignProtocolToStageResponsible({
+        protocolId,
+        stageId: firstStage.id,
+        assignedByName: 'Sistema',
+        notifyCitizen: false
+      });
+
+      if (autoAssignment.applied && autoAssignment.assignee) {
+        await centralCalendarService.syncProtocolStageEventByStageId(firstStage.id);
+        console.log(`Etapa inicial atribuída automaticamente para ${autoAssignment.assignee.name}`);
+      } else if (autoAssignment.blocked && autoAssignment.blocker) {
+        console.warn('[workflow-service] Regra obrigatória sem servidor elegível para etapa inicial', {
+          protocolId,
+          stageId: firstStage.id,
+          blocker: autoAssignment.blocker
+        });
+      }
+    } catch (error) {
+      console.warn('[workflow-service] Falha ao aplicar atribuição automática da etapa inicial', {
+        protocolId,
+        stageId: firstStage.id,
+        error: error instanceof Error ? error.message : String(error)
+      });
+    }
     console.log(`✅ Protocolo ${protocol.number} → status PROGRESSO (stage: ${firstStage.stageName})`);
   }
 
