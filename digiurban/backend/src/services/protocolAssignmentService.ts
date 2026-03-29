@@ -1,4 +1,10 @@
-import { PrismaClient, UserRole, TipoAtribuicaoProtocolo, SituacaoAtribuicao } from '@prisma/client';
+import {
+  PrismaClient,
+  UserRole,
+  TipoAtribuicaoProtocolo,
+  SituacaoAtribuicao,
+  SituacaoVinculo
+} from '@prisma/client';
 import { safeCreateAssignmentAudit } from '../utils/assignment-audit-safe';
 import {
   listDepartmentTicketAssignees,
@@ -515,30 +521,29 @@ async function getCandidateUsers(
       }
     }
   };
-
-  if (candidateIds.size > 0) {
-    const users = await prisma.user.findMany({
-      where: {
-        id: { in: Array.from(candidateIds) },
-        isActive: true
-      },
-      include,
-    });
-
-    return { users, ticketAssigneesByUserId };
-  }
-
   const where: any = {
     isActive: true
   };
 
-  if (departmentId) {
-    where.OR = [
-      { departmentId },
+  const orFilters: any[] = [];
+  const scopedDepartmentIds = Array.from(departmentIds);
+  const scopedOrganizationalUnitIds = Array.from(organizationalUnitIds);
+
+  if (candidateIds.size > 0) {
+    orFilters.push({
+      id: { in: Array.from(candidateIds) }
+    });
+  }
+
+  if (scopedDepartmentIds.length > 0) {
+    orFilters.push(
+      {
+        departmentId: { in: scopedDepartmentIds }
+      },
       {
         userDepartments: {
           some: {
-            departmentId,
+            departmentId: { in: scopedDepartmentIds },
             isActive: true
           }
         }
@@ -546,12 +551,27 @@ async function getCandidateUsers(
       {
         assignments: {
           some: {
-            departmentId,
-            situacao: 'ATIVO'
+            departmentId: { in: scopedDepartmentIds },
+            situacao: SituacaoVinculo.ATIVO
           }
         }
       }
-    ];
+    );
+  }
+
+  if (scopedOrganizationalUnitIds.length > 0) {
+    orFilters.push({
+      assignments: {
+        some: {
+          organizationalUnitId: { in: scopedOrganizationalUnitIds },
+          situacao: SituacaoVinculo.ATIVO
+        }
+      }
+    });
+  }
+
+  if (orFilters.length > 0) {
+    where.OR = orFilters;
   }
 
   const users = await prisma.user.findMany({

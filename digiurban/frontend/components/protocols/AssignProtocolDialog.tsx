@@ -65,6 +65,73 @@ interface Suggestion {
   };
 }
 
+type SuggestionSource = 'api' | 'fallback' | 'none';
+
+function buildFallbackSuggestions(servers: ServerWithWorkload[]): Suggestion[] {
+  return servers
+    .filter((server) => server.status === 'ATIVO')
+    .map((server) => {
+      let score = 0;
+
+      if (server.isStageRequired) {
+        score += 80;
+      } else if (server.isStageSuggested) {
+        score += 45;
+      }
+
+      score += (100 - server.cargaPercentual) * 0.4;
+
+      if (server.protocolosPrazoVencido === 0) {
+        score += 30;
+      }
+
+      score += Math.min(10, server.protocolosAtivos * 0.5);
+
+      const razoes: string[] = [];
+
+      if (server.isStageRequired && server.stageAssignmentLabel) {
+        razoes.push(`Responsável prioritário da etapa: ${server.stageAssignmentLabel}`);
+      } else if (server.isStageSuggested && server.stageAssignmentLabel) {
+        razoes.push(`Sugestão da etapa: ${server.stageAssignmentLabel}`);
+      }
+
+      if (server.cargaPercentual < 30) {
+        razoes.push(`Baixa carga de trabalho (${server.cargaPercentual}%)`);
+      }
+
+      if (server.protocolosPrazoVencido === 0) {
+        razoes.push('Nenhum protocolo com prazo vencido');
+      }
+
+      if (server.employeeAssignment?.organizationalUnit) {
+        razoes.push(`Lotação: ${server.employeeAssignment.organizationalUnit}`);
+      }
+
+      if (razoes.length === 0 && server.employeeAssignment?.position) {
+        razoes.push(`Cargo atual: ${server.employeeAssignment.position}`);
+      }
+
+      return {
+        userId: server.userId,
+        name: server.name,
+        email: server.email,
+        score: Math.round(score),
+        razoes,
+        protocolosAtivos: server.protocolosAtivos,
+        cargaPercentual: server.cargaPercentual,
+        employeeAssignment: {
+          organizationalUnit: server.employeeAssignment?.organizationalUnit,
+          position: server.employeeAssignment?.position,
+        },
+        isStageRequired: server.isStageRequired,
+        isStageSuggested: server.isStageSuggested,
+        stageAssignmentLabel: server.stageAssignmentLabel,
+      };
+    })
+    .sort((a, b) => b.score - a.score)
+    .slice(0, 5);
+}
+
 export function AssignProtocolDialog({
   open,
   onOpenChange,
@@ -81,6 +148,8 @@ export function AssignProtocolDialog({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loadingServers, setLoadingServers] = useState(false);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [suggestionsSource, setSuggestionsSource] = useState<SuggestionSource>('none');
+  const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -88,6 +157,13 @@ export function AssignProtocolDialog({
       fetchSuggestions();
     }
   }, [open, departmentId, currentStageId, protocolId]);
+
+  useEffect(() => {
+    if (!loadingSuggestions && suggestionsSource === 'none' && servers.length > 0) {
+      setSuggestions(buildFallbackSuggestions(servers));
+      setSuggestionsSource('fallback');
+    }
+  }, [loadingSuggestions, servers, suggestionsSource]);
 
   const fetchWorkloadStats = async () => {
     if (!departmentId) {
@@ -137,6 +213,9 @@ export function AssignProtocolDialog({
   const fetchSuggestions = async () => {
     try {
       setLoadingSuggestions(true);
+      setSuggestions([]);
+      setSuggestionsSource('none');
+      setSuggestionsError(null);
       const params = new URLSearchParams();
       if (departmentId) {
         params.set('departmentId', departmentId);
@@ -159,12 +238,17 @@ export function AssignProtocolDialog({
         console.log('Sugestões carregadas:', data.data);
         const sugestoes = Array.isArray(data?.data?.sugestoes) ? data.data.sugestoes : [];
         setSuggestions(sugestoes);
+        if (sugestoes.length > 0) {
+          setSuggestionsSource('api');
+        }
       } else {
         const error = await response.json();
         console.error('Erro ao buscar sugestões:', error);
+        setSuggestionsError(error.error || 'Não foi possível gerar sugestões agora.');
       }
     } catch (error) {
       console.error('Erro ao buscar sugestões:', error);
+      setSuggestionsError('Não foi possível gerar sugestões agora.');
     } finally {
       setLoadingSuggestions(false);
     }
@@ -251,11 +335,11 @@ export function AssignProtocolDialog({
           <TabsList className="grid w-full grid-cols-2 flex-shrink-0">
             <TabsTrigger value="individual">
               <User className="h-4 w-4 mr-2" />
-              Servidor Individual
+              Servidor
             </TabsTrigger>
             <TabsTrigger value="sugestoes">
               <Sparkles className="h-4 w-4 mr-2" />
-              Sugestões IA
+              Sugestões inteligentes
             </TabsTrigger>
           </TabsList>
 
@@ -355,6 +439,19 @@ export function AssignProtocolDialog({
                 </div>
               ) : (
                 <div className="space-y-2">
+                  {suggestions.length > 0 && (
+                    <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3">
+                      <p className="text-sm font-medium text-emerald-900">
+                        Recomendação automática para este protocolo
+                      </p>
+                      <p className="mt-1 text-xs text-emerald-800">
+                        {suggestionsSource === 'api'
+                          ? 'As sugestões consideram a etapa atual, a carga de trabalho e a lotação dos servidores.'
+                          : 'As sugestões foram calculadas a partir da etapa atual e da carga de trabalho dos servidores disponíveis.'}
+                      </p>
+                    </div>
+                  )}
+
                   {suggestions.map((suggestion, index) => (
                     <Card
                       key={suggestion.userId}
@@ -421,7 +518,7 @@ export function AssignProtocolDialog({
                           <div className="text-2xl font-bold text-green-600">
                             {suggestion.score}
                           </div>
-                          <p className="text-xs text-gray-500">Score</p>
+                          <p className="text-xs text-gray-500">Pontuação</p>
                           <Badge className={`${getCargaBadgeClass(suggestion.cargaPercentual)} mt-2`} variant="outline">
                             {suggestion.protocolosAtivos} ativos
                           </Badge>
@@ -433,7 +530,16 @@ export function AssignProtocolDialog({
                   {suggestions.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
                       <Sparkles className="h-12 w-12 mx-auto mb-2 text-gray-400" />
-                      <p>Nenhuma sugestão disponível no momento</p>
+                      <p className="font-medium text-gray-700">
+                        Nenhuma sugestão disponível no momento
+                      </p>
+                      <p className="mt-2 text-sm text-gray-500">
+                        {suggestionsError
+                          ? suggestionsError
+                          : servers.length === 0
+                            ? 'Cadastre ou vincule servidores a este departamento para gerar recomendações.'
+                            : 'Não foi possível encontrar uma recomendação melhor do que a lista manual disponível.'}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -443,7 +549,7 @@ export function AssignProtocolDialog({
         </Tabs>
 
         <div className="mt-4 flex-shrink-0">
-          <Label htmlFor="comment">Comentário/Instruções</Label>
+          <Label htmlFor="comment">Comentário ou instruções</Label>
           <Textarea
             id="comment"
             placeholder="Adicione instruções específicas para o servidor..."
