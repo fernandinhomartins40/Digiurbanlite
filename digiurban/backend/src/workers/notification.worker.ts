@@ -11,6 +11,7 @@ import { sendSSE } from '../services/notification-channels/sse';
 import { sendPush } from '../services/notification-channels/push';
 import { sendEmail } from '../services/notification-channels/email';
 import { sendSMS } from '../services/notification-channels/sms';
+import { sendWhatsApp } from '../services/notification-channels/whatsapp';
 import { NotificationPayload, NotificationChannel } from '../types/notification.types';
 
 interface NotificationJobData {
@@ -41,6 +42,9 @@ const worker = new Worker<NotificationJobData>(
           break;
         case 'sms':
           result = await sendSMS(payload);
+          break;
+        case 'whatsapp':
+          result = await sendWhatsApp(payload);
           break;
         default:
           throw new Error(`Unknown channel: ${channel}`);

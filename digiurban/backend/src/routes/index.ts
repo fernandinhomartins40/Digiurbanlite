@@ -201,12 +201,15 @@ export const loadImplementationRoutes = () => {
   const adminEmailServiceRoutes = require('./admin-email-service').default;
   const adminEmailAccountsRoutes = require('./admin-email-accounts').default;
   const municipalityConfigRoutes = require('./municipality-config').default;
+  const facePlatformRoutes = require('./face-platform.routes').default;
 
   router.use('/integrations', integrationsRoutes);
   router.use('/admin/email', adminEmailRoutes); // Webmail (inbox, sent, drafts, trash)
   router.use('/admin/email-service', adminEmailServiceRoutes); // Service management
   router.use('/admin/email-accounts', adminEmailAccountsRoutes);
   router.use('/municipality', municipalityConfigRoutes);
+  router.use('/admin/face-platform', facePlatformRoutes);
+  router.use('/apps/seguranca-escolar', facePlatformRoutes);
 
   return router;
 };

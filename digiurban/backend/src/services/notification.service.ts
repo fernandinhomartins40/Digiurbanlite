@@ -159,6 +159,7 @@ export class NotificationService {
         pushEnabled: false,
         emailEnabled: true,
         smsEnabled: false,
+        whatsappEnabled: false,
         preferences: {},
       };
     }
@@ -168,6 +169,7 @@ export class NotificationService {
       pushEnabled: prefs.pushEnabled,
       emailEnabled: prefs.emailEnabled,
       smsEnabled: prefs.smsEnabled,
+      whatsappEnabled: (prefs as any).whatsappEnabled ?? false,
       preferences: prefs.preferences as any,
       quietHoursStart: prefs.quietHoursStart || undefined,
       quietHoursEnd: prefs.quietHoursEnd || undefined,
@@ -221,10 +223,14 @@ export class NotificationService {
       if (typePrefs.push && preferences.pushEnabled) channels.push('push');
       if (typePrefs.email && preferences.emailEnabled) channels.push('email');
       if (typePrefs.sms && preferences.smsEnabled) channels.push('sms');
+      if (typePrefs.whatsapp && preferences.whatsappEnabled) channels.push('whatsapp');
     } else {
       // Usar preferências globais
       if (preferences.webEnabled) channels.push('web');
       if (preferences.pushEnabled) channels.push('push');
+      if (preferences.whatsappEnabled && this.isImportantNotification(notificationType)) {
+        channels.push('whatsapp');
+      }
       // Email e SMS apenas para tipos importantes
       if (
         preferences.emailEnabled &&
@@ -248,6 +254,8 @@ export class NotificationService {
       NotificationType.APPOINTMENT_REMINDER,
       NotificationType.EXAM_RESULT,
       NotificationType.SYSTEM_MAINTENANCE,
+      NotificationType.STUDENT_ENTRY,
+      NotificationType.STUDENT_EXIT,
     ];
 
     return importantTypes.includes(type as NotificationType);

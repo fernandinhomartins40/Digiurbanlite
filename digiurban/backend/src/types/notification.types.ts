@@ -5,7 +5,7 @@
  */
 
 export type RecipientType = 'user' | 'citizen';
-export type NotificationChannel = 'web' | 'push' | 'email' | 'sms';
+export type NotificationChannel = 'web' | 'push' | 'email' | 'sms' | 'whatsapp';
 export type NotificationPriority = 'high' | 'normal' | 'low';
 export type NotificationStatus = 'PENDING' | 'SENT' | 'FAILED' | 'DELIVERED' | 'CLICKED';
 
@@ -57,6 +57,10 @@ export enum NotificationType {
   // Admin
   NEW_CITIZEN_REGISTRATION = 'NEW_CITIZEN_REGISTRATION',
   STATS_UPDATE = 'STATS_UPDATE',
+
+  // Segurança escolar
+  STUDENT_ENTRY = 'STUDENT_ENTRY',
+  STUDENT_EXIT = 'STUDENT_EXIT',
 }
 
 export interface NotificationPayload {
@@ -75,11 +79,13 @@ export interface NotificationPreferencesData {
   pushEnabled: boolean;
   emailEnabled: boolean;
   smsEnabled: boolean;
+  whatsappEnabled?: boolean;
   preferences: Record<string, {
     web?: boolean;
     push?: boolean;
     email?: boolean;
     sms?: boolean;
+    whatsapp?: boolean;
   }>;
   quietHoursStart?: string;
   quietHoursEnd?: string;
