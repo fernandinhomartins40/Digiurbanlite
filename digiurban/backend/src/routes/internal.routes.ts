@@ -13,6 +13,7 @@ import { validateProtocolUniqueness } from '../services/protocol-uniqueness.serv
 import { ensureRequiredProtocolDocuments } from '../services/required-protocol-documents.service';
 import { protocolModuleService } from '../services/protocol-module.service';
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
+import notificationService from '../services/notification.service';
 import {
   getProtocolDocuments as getProtocolDocumentsForProtocol,
   uploadDocument as uploadProtocolDocument,
@@ -1150,6 +1151,39 @@ router.put('/notifications/read', async (req: Request, res: Response) => {
     res.json({ success: true });
   } catch (error) {
     console.error('[internal.routes] Error in PUT /notifications/read', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/internal/notifications/dispatch - Enfileirar notificação interna
+router.post('/notifications/dispatch', async (req: Request, res: Response) => {
+  try {
+    const { recipientType, recipientId, type, title, message, data, channels, priority } = req.body || {};
+
+    if (!recipientType || !recipientId || !type || !title || !message) {
+      return res.status(400).json({
+        error: 'recipientType, recipientId, type, title and message are required',
+      });
+    }
+
+    if (recipientType !== 'user' && recipientType !== 'citizen') {
+      return res.status(400).json({ error: 'recipientType must be user or citizen' });
+    }
+
+    await notificationService.notify({
+      recipientType,
+      recipientId,
+      type,
+      title,
+      message,
+      data,
+      channels,
+      priority,
+    });
+
+    res.status(202).json({ success: true });
+  } catch (error) {
+    console.error('[internal.routes] Error in POST /notifications/dispatch', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

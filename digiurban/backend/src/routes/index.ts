@@ -209,7 +209,6 @@ export const loadImplementationRoutes = () => {
   router.use('/admin/email-accounts', adminEmailAccountsRoutes);
   router.use('/municipality', municipalityConfigRoutes);
   router.use('/admin/face-platform', facePlatformRoutes);
-  router.use('/apps/seguranca-escolar', facePlatformRoutes);
 
   return router;
 };

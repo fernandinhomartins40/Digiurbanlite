@@ -8,12 +8,11 @@ import {
   Prisma,
   SituacaoMatricula,
 } from '@prisma/client';
-import { prisma } from '../lib/prisma';
+import prisma from '../utils/prisma';
 import { syncCitizenPersonIdentity } from './person-identity.service';
-import notificationService from './notification.service';
-import { NotificationChannel, NotificationType } from '../types/notification.types';
-import faceDescriptorService, { cosineSimilarity } from './face-platform/face-descriptor.service';
-import faceStorageService from './face-platform/face-storage.service';
+import digiUrbanIntegration from '../integrations/DigiUrbanIntegration';
+import faceDescriptorService, { cosineSimilarity } from './face/face-descriptor.service';
+import faceStorageService from './face/face-storage.service';
 
 const FACE_ENCRYPTION_KEY =
   process.env.FACE_PLATFORM_ENCRYPTION_KEY ||
@@ -1029,19 +1028,21 @@ export class FacePlatformService {
         : configuration?.exitMessageTemplate;
 
     const message = renderTemplate(template, variables) || fallbackMessage;
-    const preferredChannel = (configuration?.preferredChannel || 'whatsapp') as NotificationChannel;
+    const preferredChannel = (configuration?.preferredChannel || 'whatsapp') as
+      | 'web'
+      | 'push'
+      | 'email'
+      | 'sms'
+      | 'whatsapp';
     const channels = Array.from(
-      new Set<NotificationChannel>([preferredChannel, 'web'])
+      new Set<typeof preferredChannel>([preferredChannel, 'web'])
     ).filter((channel) => ['web', 'push', 'email', 'sms', 'whatsapp'].includes(channel));
 
     try {
-      await notificationService.notify({
+      await digiUrbanIntegration.dispatchNotification({
         recipientType: 'citizen',
         recipientId: event.guardianCitizenId,
-        type:
-          event.type === FaceEventType.ENTRY
-            ? NotificationType.STUDENT_ENTRY
-            : NotificationType.STUDENT_EXIT,
+        type: event.type === FaceEventType.ENTRY ? 'STUDENT_ENTRY' : 'STUDENT_EXIT',
         title,
         message,
         channels,

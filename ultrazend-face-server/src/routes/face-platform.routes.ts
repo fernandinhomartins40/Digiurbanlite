@@ -1,10 +1,7 @@
 import { Router, Request, Response } from 'express';
-import { authenticateAdmin } from '../middleware/auth';
-import facePlatformService from '../services/face-platform-client.service';
+import facePlatformService from '../services/FacePlatformService';
 
 const router = Router();
-
-router.use(authenticateAdmin);
 
 router.get('/dashboard', async (_req: Request, res: Response) => {
   try {
@@ -28,7 +25,7 @@ router.get('/schools', async (_req: Request, res: Response) => {
 
 router.get('/schools/:schoolId/students', async (req: Request, res: Response) => {
   try {
-    const data = await facePlatformService.listSchoolStudents(req.params.schoolId);
+    const data = await facePlatformService.listSchoolStudents(String(req.params.schoolId));
     return res.json(data);
   } catch (error: any) {
     console.error('Erro ao listar alunos da unidade escolar:', error);
@@ -58,7 +55,7 @@ router.post('/devices', async (req: Request, res: Response) => {
 
 router.put('/devices/:id', async (req: Request, res: Response) => {
   try {
-    const device = await facePlatformService.updateDevice(req.params.id, req.body);
+    const device = await facePlatformService.updateDevice(String(req.params.id), req.body);
     return res.json(device);
   } catch (error: any) {
     console.error('Erro ao atualizar dispositivo facial:', error);
@@ -98,7 +95,10 @@ router.get('/configurations', async (_req: Request, res: Response) => {
 
 router.put('/configurations/:schoolId', async (req: Request, res: Response) => {
   try {
-    const configuration = await facePlatformService.upsertSchoolConfiguration(req.params.schoolId, req.body);
+    const configuration = await facePlatformService.upsertSchoolConfiguration({
+      ...req.body,
+      unidadeEducacaoId: String(req.params.schoolId),
+    });
     return res.json(configuration);
   } catch (error: any) {
     console.error('Erro ao salvar configuração escolar:', error);
@@ -134,7 +134,7 @@ router.get('/events', async (req: Request, res: Response) => {
     const events = await facePlatformService.listEvents({
       unidadeEducacaoId: req.query.unidadeEducacaoId as string | undefined,
       zoneId: req.query.zoneId as string | undefined,
-      matchStatus: req.query.matchStatus as string | undefined,
+      matchStatus: req.query.matchStatus as any,
       limit: req.query.limit ? Number(req.query.limit) : undefined,
     });
     return res.json(events);
@@ -154,12 +154,13 @@ router.post('/events/ingest', async (req: Request, res: Response) => {
   }
 });
 
-router.post('/events/:id/review', async (req: any, res: Response) => {
+router.post('/events/:id/review', async (req: Request, res: Response) => {
   try {
-    const event = await facePlatformService.reviewEvent(req.params.id, {
-      reviewedById: req.userId,
-      decision: req.body.decision,
-    });
+    const event = await facePlatformService.reviewEvent(
+      String(req.params.id),
+      req.body.reviewedById,
+      req.body.decision
+    );
     return res.json(event);
   } catch (error: any) {
     console.error('Erro ao revisar evento facial:', error);

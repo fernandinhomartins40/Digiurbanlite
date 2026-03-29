@@ -73,6 +73,12 @@ O sistema é composto por **4 serviços** orquestrados via Docker Compose:
 - **Segurança:** DKIM automático (RSA 2048) + SPF + DMARC
 - **Database:** SQLite ou PostgreSQL via Prisma
 
+### Face Server (`ultrazend-face-server/`)
+- **Framework:** Express 5
+- **Database:** Prisma 6.19 (PostgreSQL compartilhado)
+- **Função:** reconhecimento facial centralizado para o ecossistema Digiurban
+- **Integração:** Digiurban Admin consome a API HTTP e mantém a operação do módulo escolar
+
 ## Pré-requisitos
 
 - **Node.js** >= 20.0.0
@@ -120,6 +126,14 @@ npm run dev            # Inicia em localhost:9001
 cd ultrazend-smtp-server
 npm install
 npm run dev
+```
+
+### 6. Face Server
+```bash
+cd ultrazend-face-server
+npm install
+npx prisma generate
+npm run dev            # Inicia em localhost:9006
 ```
 
 ## Deploy (Docker Compose)
@@ -190,6 +204,13 @@ Digiurbanlite/
 │   │   │   └── flow/flows/       # 9 fluxos JSON pré-configurados
 │   │   ├── delivery/             # Conversas, canais, WhatsApp
 │   │   └── server/               # Express + WebSocket
+│   └── prisma/
+├── ultrazend-face-server/
+│   ├── src/
+│   │   ├── integrations/         # Integração interna com Digiurban
+│   │   ├── routes/               # API HTTP do reconhecimento facial
+│   │   ├── services/             # Core do reconhecimento e segurança escolar
+│   │   └── server/               # Express server
 │   └── prisma/
 ├── ultrazend-smtp-server/
 │   ├── src/

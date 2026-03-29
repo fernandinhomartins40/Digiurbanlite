@@ -31,19 +31,14 @@ async function ensureDirectory(dirPath: string) {
 
 export class FaceStorageService {
   private readonly storageRoot: string;
+  private readonly publicBaseUrl: string;
 
   constructor() {
     this.storageRoot = process.env.FACE_PLATFORM_STORAGE_PATH || DEFAULT_STORAGE_ROOT;
+    this.publicBaseUrl = (process.env.FACE_PLATFORM_PUBLIC_URL || '').replace(/\/$/, '');
   }
 
-  public getRootPath() {
-    return this.storageRoot;
-  }
-
-  public async persistBase64Image(
-    category: 'enrollments' | 'events',
-    imageBase64: string
-  ): Promise<string> {
+  public async persistBase64Image(category: 'enrollments' | 'events', imageBase64: string): Promise<string> {
     const { mimeType, buffer } = normalizeBase64Image(imageBase64);
     const extension = extensionFromMimeType(mimeType);
     const folder = path.join(this.storageRoot, category, new Date().toISOString().slice(0, 10));
@@ -61,7 +56,8 @@ export class FaceStorageService {
       return null;
     }
 
-    return `/uploads/face-platform/${relativePath}`.replace(/\\/g, '/');
+    const pathSuffix = `/uploads/face-platform/${relativePath}`.replace(/\\/g, '/');
+    return this.publicBaseUrl ? `${this.publicBaseUrl}${pathSuffix}` : pathSuffix;
   }
 }
 

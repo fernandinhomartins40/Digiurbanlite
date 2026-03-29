@@ -187,12 +187,6 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
       title: 'Apps do Ecossistema',
       items: [
         {
-          title: 'Saúde',
-          href: '/admin/apps/saude/tfd',
-          icon: Heart,
-          minRole: 'COORDINATOR',
-        },
-        {
           title: 'Segurança Escolar',
           href: '/admin/apps/seguranca-escolar',
           icon: Shield,

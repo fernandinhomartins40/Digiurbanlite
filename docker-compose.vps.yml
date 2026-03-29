@@ -147,6 +147,43 @@ services:
   # ─────────────────────────────────────────────────────────────
   # MÓDULO: digiurban-prices — Pesquisa de Preços Públicos
   # ─────────────────────────────────────────────────────────────
+  ultrazend-face:
+    build:
+      context: ./ultrazend-face-server
+      dockerfile: Dockerfile
+    container_name: ultrazend-face
+    ports:
+      - "9006:9006"
+    environment:
+      - NODE_ENV=production
+      - PORT=9006
+      - HOST=0.0.0.0
+      - DATABASE_URL=${DATABASE_URL}
+      - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
+      - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
+      - FACE_PLATFORM_STORAGE_PATH=/app/uploads/face-platform
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+      - UPLOAD_DIR=/app/uploads
+      - RATE_LIMIT_WINDOW_MS=60000
+      - RATE_LIMIT_MAX_REQUESTS=300
+      - LOG_LEVEL=info
+    volumes:
+      - face_uploads:/app/uploads
+      - face_logs:/app/logs
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9006/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
   digiurban-opensearch:
     image: opensearchproject/opensearch:2.17.0
     container_name: digiurban-opensearch
@@ -420,6 +457,8 @@ services:
 
       # Service Token (para Messages Server)
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      - FACE_PLATFORM_API_URL=http://ultrazend-face:9006
+      - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
 
       # Logs
       - LOG_LEVEL=info
@@ -467,6 +506,8 @@ services:
         condition: service_healthy
       ultrazend-messages:
         condition: service_healthy
+      ultrazend-face:
+        condition: service_healthy
       ollama:
         condition: service_healthy
       digiurban-prices:
@@ -504,6 +545,10 @@ volumes:
   messages_uploads:
     driver: local
   messages_logs:
+    driver: local
+  face_uploads:
+    driver: local
+  face_logs:
     driver: local
   opensearch_data:
     driver: local
