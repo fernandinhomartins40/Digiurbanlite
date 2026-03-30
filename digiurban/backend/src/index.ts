@@ -298,6 +298,7 @@ loadRoute('/api/analytics', './routes/analytics');
 
 // Complementares
 loadRoute('/api/admin/custom-modules', './routes/custom-modules');
+loadRoute('/api/admin/face-platform', './routes/face-platform.routes');
 loadRoute('/api/admin/email', './routes/admin-email');
 loadRoute('/api/admin/email-service', './routes/admin-email');
 loadRoute('/api/admin/email-accounts', './routes/admin-email-accounts');
