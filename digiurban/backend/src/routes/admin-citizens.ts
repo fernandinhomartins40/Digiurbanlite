@@ -7,6 +7,12 @@ import * as bcrypt from 'bcryptjs';
 import { BCRYPT_ROUNDS } from '../config/security';
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
+import facePlatformClientService from '../services/face-platform-client.service';
+import {
+  approveLatestPendingFaceEnrollment,
+  autoPromoteToGold,
+  getCitizenAccessLevelSummary,
+} from '../services/citizen-verification.service';
 
 const router = Router();
 
@@ -449,6 +455,144 @@ router.get(
   })
 );
 
+// GET /api/admin/citizens/:id/access-level - Critérios reais de nível e biometria
+router.get(
+  '/:id/access-level',
+  requirePermission('citizens:read'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+
+    const citizen = await prisma.citizen.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!citizen) {
+      res.status(404).json({
+        success: false,
+        error: 'Cidadão não encontrado',
+      });
+      return;
+    }
+
+    const accessLevel = await getCitizenAccessLevelSummary(id);
+
+    res.json({
+      success: true,
+      data: { accessLevel },
+    });
+  })
+);
+
+// POST /api/admin/citizens/:id/face-biometry - Cadastro facial administrativo
+router.post(
+  '/:id/face-biometry',
+  requirePermission('citizens:verify'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+    const { imageBase64, sourceLabel } = authReq.body as {
+      imageBase64?: string;
+      sourceLabel?: string;
+    };
+
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      res.status(400).json({
+        success: false,
+        error: 'A captura facial é obrigatória',
+      });
+      return;
+    }
+
+    const citizen = await prisma.citizen.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        verificationStatus: true,
+      },
+    });
+
+    if (!citizen) {
+      res.status(404).json({
+        success: false,
+        error: 'Cidadão não encontrado',
+      });
+      return;
+    }
+
+    const enrollment = await facePlatformClientService.createEnrollment({
+      citizenId: id,
+      sourceType: 'ADMIN_WEBCAM',
+      sourceLabel: sourceLabel?.trim() || `Cadastro administrativo de ${citizen.name}`,
+      imageBase64,
+      approvedById: authReq.user.id,
+    });
+
+    let accessLevel = await getCitizenAccessLevelSummary(id);
+    let promotedToGold = false;
+    let promotionMessage: string | null = null;
+
+    if (citizen.verificationStatus === 'VERIFIED' && accessLevel.goldCriteria.eligible) {
+      const promotion = await autoPromoteToGold(id, authReq.user.id);
+      promotedToGold = promotion.success;
+      promotionMessage = promotion.message;
+      accessLevel = await getCitizenAccessLevelSummary(id);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: promotedToGold
+        ? 'Biometria facial confirmada e cidadão promovido para ouro'
+        : 'Biometria facial cadastrada com sucesso',
+      data: {
+        enrollment,
+        promotedToGold,
+        promotionMessage,
+        accessLevel,
+      },
+    });
+  })
+);
+
+// POST /api/admin/citizens/:id/face-biometry/approve-latest - Confirmar biometria enviada pelo cidadão
+router.post(
+  '/:id/face-biometry/approve-latest',
+  requirePermission('citizens:verify'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+
+    const citizen = await prisma.citizen.findUnique({
+      where: { id },
+      select: { id: true },
+    });
+
+    if (!citizen) {
+      res.status(404).json({
+        success: false,
+        error: 'Cidadão não encontrado',
+      });
+      return;
+    }
+
+    const approval = await approveLatestPendingFaceEnrollment(id, authReq.user.id);
+    const accessLevel = await getCitizenAccessLevelSummary(id);
+
+    res.json({
+      success: true,
+      message: approval.promotedToGold
+        ? 'Biometria facial confirmada e cidadão promovido para ouro'
+        : 'Biometria facial confirmada com sucesso',
+      data: {
+        ...approval,
+        accessLevel,
+      },
+    });
+  })
+);
+
 // PUT /api/admin/citizens/:id/verify - Aprovar cidadão (Bronze → Prata)
 router.put(
   '/:id/verify',
@@ -589,62 +733,41 @@ router.put(
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
-    const { notes } = authReq.body;
-
-    // Validação: cidadão deve estar no status VERIFIED (Prata)
-    const citizen = await prisma.citizen.findFirst({
-      where: {
-        id,
-        verificationStatus: 'VERIFIED'
-        }
-        });
+    const citizen = await prisma.citizen.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        verificationStatus: true,
+      },
+    });
 
     if (!citizen) {
       res.status(404).json({
         success: false,
-        error: 'Cidadão não encontrado ou não possui nível Prata'
-        });
+        error: 'Cidadão não encontrado',
+      });
       return;
     }
 
-    // Transação para garantir integridade
-    const updatedCitizen = await prisma.$transaction(async (tx) => {
-      // 1. Promover para GOLD
-      const updated = await tx.citizen.update({
-        where: { id },
-        data: {
-          verificationStatus: 'GOLD',
-          verificationNotes: notes
-        },
-        select: {
-          id: true,
-          name: true,
-          cpf: true,
-          email: true,
-          verificationStatus: true
-        }
+    if (citizen.verificationStatus !== 'VERIFIED') {
+      res.status(400).json({
+        success: false,
+        error: 'A promoção para ouro só pode ocorrer a partir do nível prata',
       });
+      return;
+    }
 
-      // 2. Criar notificação para o cidadão
-      await tx.notification.create({
-        data: {
-          citizenId: id,
-          title: 'Cadastro Promovido para Ouro! 🥇',
-          message:
-            'Parabéns! Seu cadastro foi promovido para o nível OURO. Agora você tem acesso prioritário máximo a todos os serviços e programas municipais.',
-          type: 'VERIFICATION_UPGRADED',
-          isRead: false
-        }
-        });
-
-      return updated;
-    });
+    const promotion = await autoPromoteToGold(id, authReq.user.id);
+    const accessLevel = await getCitizenAccessLevelSummary(id);
 
     res.json({
       success: true,
-      message: 'Cidadão promovido para nível GOLD com sucesso',
-      data: { citizen: updatedCitizen }
-        });
+      message: promotion.message,
+      data: {
+        citizen: promotion.citizen,
+        accessLevel,
+      },
+    });
   })
 );
 

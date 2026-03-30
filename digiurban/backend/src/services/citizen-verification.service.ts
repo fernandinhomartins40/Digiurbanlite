@@ -1,58 +1,79 @@
-// ============================================================================
-// CITIZEN-VERIFICATION.SERVICE.TS - Serviço de Verificação e Promoção de Cidadãos
-// ============================================================================
-
+import {
+  Citizen,
+  CitizenDocument,
+  FaceEnrollmentStatus,
+  FaceRecognitionIdentityStatus,
+  Prisma,
+  type VerificationStatus,
+} from '@prisma/client';
 import { prisma } from '../lib/prisma';
-import { CitizenDocument, Citizen } from '@prisma/client';
 
-// ============================================================================
-// CONFIGURAÇÕES
-// ============================================================================
+export type RegistrationLevel = 'BRONZE' | 'SILVER' | 'GOLD';
 
-/**
- * Requisitos para promoção ao nível GOLD (Ouro)
- */
 export const GOLD_REQUIREMENTS = {
-  // Tipos de documentos obrigatórios
   requiredTypes: ['rg_frente', 'rg_verso', 'cpf', 'comprovante_residencia'],
-
-  // Número mínimo de documentos aprovados
   minApprovedCount: 4,
-
-  // Tempo de validade de documentos (em dias)
   expirationDays: {
-    comprovante_residencia: 90,  // 3 meses
-    comprovante_renda: 60,        // 2 meses
-    default: 365                  // 1 ano
-  }
-};
+    comprovante_residencia: 90,
+    comprovante_renda: 60,
+    default: 365,
+  },
+} as const;
 
-const PERSONAL_DOCUMENT_WHERE = {
+const PERSONAL_DOCUMENT_WHERE: Prisma.CitizenDocumentWhereInput = {
   AND: [
     {
-      OR: [
-        { sourceType: null },
-        { sourceType: 'UPLOAD' }
-      ]
+      OR: [{ sourceType: null }, { sourceType: 'UPLOAD' }],
     },
     {
       NOT: {
         documentType: {
-          startsWith: 'Protocolo:'
-        }
-      }
-    }
-  ]
+          startsWith: 'Protocolo:',
+        },
+      },
+    },
+  ],
 };
 
-// ============================================================================
-// INTERFACES
-// ============================================================================
+const REQUIRED_PROFILE_FIELDS = [
+  { key: 'name', label: 'Nome completo' },
+  { key: 'cpf', label: 'CPF' },
+  { key: 'email', label: 'E-mail' },
+  { key: 'birthDate', label: 'Data de nascimento' },
+  { key: 'rg', label: 'RG' },
+  { key: 'motherName', label: 'Nome da mãe' },
+] as const;
+
+interface CitizenProfileSnapshot {
+  name: string | null;
+  cpf: string | null;
+  email: string | null;
+  phone: string | null;
+  phoneSecondary: string | null;
+  birthDate: Date | null;
+  rg: string | null;
+  motherName: string | null;
+  address: any;
+}
+
+export interface FaceBiometryStatus {
+  hasIdentity: boolean;
+  confirmed: boolean;
+  approvedEnrollments: number;
+  pendingEnrollments: number;
+  rejectedEnrollments: number;
+  totalEmbeddings: number;
+  latestEnrollmentStatus: FaceEnrollmentStatus | null;
+  latestCapturedAt: string | null;
+}
 
 export interface GoldEligibilityResult {
   eligible: boolean;
   approvedDocs: CitizenDocument[];
   missingTypes: string[];
+  missingProfileFields: string[];
+  profileComplete: boolean;
+  biometric: FaceBiometryStatus;
   currentStatus: string;
   reason?: string;
 }
@@ -65,17 +86,80 @@ export interface PromotionResult {
   message: string;
 }
 
-// ============================================================================
-// FUNÇÕES AUXILIARES
-// ============================================================================
+export interface CitizenAccessLevelSummary {
+  currentStatus: VerificationStatus;
+  currentLevel: RegistrationLevel;
+  nextLevel: RegistrationLevel | null;
+  profileComplete: boolean;
+  missingProfileFields: string[];
+  silverCriteria: {
+    profileComplete: boolean;
+    missingProfileFields: string[];
+    adminReviewRequired: boolean;
+  };
+  goldCriteria: {
+    eligible: boolean;
+    approvedDocsCount: number;
+    requiredDocCount: number;
+    missingDocumentTypes: string[];
+    profileComplete: boolean;
+    missingProfileFields: string[];
+    biometricConfirmed: boolean;
+    biometric: FaceBiometryStatus;
+    reason?: string;
+  };
+}
 
-/**
- * Verifica se um documento está expirado
- */
+function mapVerificationStatusToLevel(status: VerificationStatus): RegistrationLevel {
+  if (status === 'GOLD') return 'GOLD';
+  if (status === 'VERIFIED') return 'SILVER';
+  return 'BRONZE';
+}
+
+function getNextLevel(currentStatus: VerificationStatus): RegistrationLevel | null {
+  if (currentStatus === 'PENDING' || currentStatus === 'REJECTED') {
+    return 'SILVER';
+  }
+
+  if (currentStatus === 'VERIFIED') {
+    return 'GOLD';
+  }
+
+  return null;
+}
+
+function isFilled(value: unknown): boolean {
+  return typeof value === 'string' ? value.trim().length > 0 : Boolean(value);
+}
+
+function getMissingProfileFields(citizen: CitizenProfileSnapshot): string[] {
+  const missingFields: string[] = REQUIRED_PROFILE_FIELDS
+    .filter((field) => !isFilled(citizen[field.key]))
+    .map((field) => field.label);
+
+  if (!isFilled(citizen.phone) && !isFilled(citizen.phoneSecondary)) {
+    missingFields.push('Telefone principal ou secundário');
+  }
+
+  const address = citizen.address && typeof citizen.address === 'object' ? citizen.address : {};
+  const hasAddress =
+    isFilled(address.cep) &&
+    isFilled(address.logradouro) &&
+    isFilled(address.numero) &&
+    isFilled(address.bairro) &&
+    isFilled(address.cidade) &&
+    isFilled(address.uf);
+
+  if (!hasAddress) {
+    missingFields.push('Endereço completo');
+  }
+
+  return missingFields;
+}
+
 function isDocumentExpired(document: CitizenDocument): boolean {
   const expirationConfig = GOLD_REQUIREMENTS.expirationDays as Record<string, number>;
-  const expirationDays = expirationConfig[document.documentType]
-    || expirationConfig.default;
+  const expirationDays = expirationConfig[document.documentType] || expirationConfig.default;
 
   const uploadDate = new Date(document.uploadedAt);
   const now = new Date();
@@ -84,146 +168,230 @@ function isDocumentExpired(document: CitizenDocument): boolean {
   return daysDiff > expirationDays;
 }
 
-/**
- * Obtém label amigável do tipo de documento
- */
+function buildBiometricStatus(faceIdentity?: {
+  enrollments: Array<{
+    status: FaceEnrollmentStatus;
+    capturedAt: Date;
+  }>;
+  embeddings: Array<{ id: string; isActive: boolean }>;
+} | null): FaceBiometryStatus {
+  const enrollments = faceIdentity?.enrollments || [];
+  const approvedEnrollments = enrollments.filter((enrollment) => enrollment.status === 'APPROVED').length;
+  const pendingEnrollments = enrollments.filter((enrollment) => enrollment.status === 'PENDING').length;
+  const rejectedEnrollments = enrollments.filter((enrollment) => enrollment.status === 'REJECTED').length;
+  const latestEnrollment = enrollments[0];
+  const totalEmbeddings = (faceIdentity?.embeddings || []).filter((embedding) => embedding.isActive).length;
+
+  return {
+    hasIdentity: Boolean(faceIdentity),
+    confirmed: approvedEnrollments > 0 && totalEmbeddings > 0,
+    approvedEnrollments,
+    pendingEnrollments,
+    rejectedEnrollments,
+    totalEmbeddings,
+    latestEnrollmentStatus: latestEnrollment?.status || null,
+    latestCapturedAt: latestEnrollment?.capturedAt?.toISOString() || null,
+  };
+}
+
 export function getDocumentLabel(type: string): string {
   const labels: Record<string, string> = {
-    rg_frente: 'RG (Frente)',
-    rg_verso: 'RG (Verso)',
+    rg_frente: 'RG (frente)',
+    rg_verso: 'RG (verso)',
     cpf: 'CPF',
-    comprovante_residencia: 'Comprovante de Residência',
-    certidao_nascimento: 'Certidão de Nascimento',
-    certidao_casamento: 'Certidão de Casamento',
-    titulo_eleitor: 'Título de Eleitor',
-    carteira_trabalho: 'Carteira de Trabalho',
-    comprovante_renda: 'Comprovante de Renda',
-    declaracao_escolar: 'Declaração Escolar',
+    comprovante_residencia: 'Comprovante de residência',
+    certidao_nascimento: 'Certidão de nascimento',
+    certidao_casamento: 'Certidão de casamento',
+    titulo_eleitor: 'Título de eleitor',
+    carteira_trabalho: 'Carteira de trabalho',
+    comprovante_renda: 'Comprovante de renda',
+    declaracao_escolar: 'Declaração escolar',
     cartao_sus: 'Cartão do SUS',
-    laudo_medico: 'Laudo Médico',
-    outro: 'Outro Documento'
+    laudo_medico: 'Laudo médico',
+    outro: 'Outro documento',
   };
 
   return labels[type] || type;
 }
 
-// ============================================================================
-// FUNÇÕES PRINCIPAIS
-// ============================================================================
-
-/**
- * Verifica se um cidadão está elegível para promoção ao nível GOLD
- */
-export async function checkGoldEligibility(
-  citizenId: string
-): Promise<GoldEligibilityResult> {
-  // 1. Buscar cidadão
+export async function checkGoldEligibility(citizenId: string): Promise<GoldEligibilityResult> {
   const citizen = await prisma.citizen.findUnique({
     where: { id: citizenId },
-    include: {
-      documents: {
-        where: {
-          status: 'APPROVED',
-          ...PERSONAL_DOCUMENT_WHERE
-        }
-      }
-    }
   });
 
   if (!citizen) {
     return {
       eligible: false,
       approvedDocs: [],
-      missingTypes: GOLD_REQUIREMENTS.requiredTypes,
+      missingTypes: [...GOLD_REQUIREMENTS.requiredTypes],
+      missingProfileFields: [...REQUIRED_PROFILE_FIELDS.map((field) => field.label), 'Telefone principal ou secundário', 'Endereço completo'],
+      profileComplete: false,
+      biometric: buildBiometricStatus(null),
       currentStatus: 'UNKNOWN',
-      reason: 'Cidadão não encontrado'
+      reason: 'Cidadão não encontrado',
     };
   }
 
-  // 2. Verificar se já é GOLD
+  const [documents, faceIdentity] = await Promise.all([
+    prisma.citizenDocument.findMany({
+      where: {
+        citizenId,
+        status: 'APPROVED',
+        ...PERSONAL_DOCUMENT_WHERE,
+      },
+    }),
+    prisma.faceRecognitionIdentity.findFirst({
+      where: { citizenId },
+      include: {
+        enrollments: {
+          orderBy: { createdAt: 'desc' },
+        },
+        embeddings: {
+          where: { isActive: true },
+        },
+      },
+    }),
+  ]);
+
+  const missingProfileFields = getMissingProfileFields(citizen);
+  const profileComplete = missingProfileFields.length === 0;
+  const biometric = buildBiometricStatus(faceIdentity);
+
   if (citizen.verificationStatus === 'GOLD') {
     return {
       eligible: false,
-      approvedDocs: citizen.documents,
+      approvedDocs: documents,
       missingTypes: [],
+      missingProfileFields,
+      profileComplete,
+      biometric,
       currentStatus: citizen.verificationStatus,
-      reason: 'Cidadão já possui nível GOLD'
+      reason: 'Cidadão já possui nível ouro',
     };
   }
 
-  // 3. Verificar se está em VERIFIED (Prata) - requisito para GOLD
   if (citizen.verificationStatus !== 'VERIFIED') {
     return {
       eligible: false,
-      approvedDocs: citizen.documents,
-      missingTypes: GOLD_REQUIREMENTS.requiredTypes,
+      approvedDocs: documents,
+      missingTypes: [...GOLD_REQUIREMENTS.requiredTypes],
+      missingProfileFields,
+      profileComplete,
+      biometric,
       currentStatus: citizen.verificationStatus,
-      reason: 'Cidadão precisa estar no nível VERIFIED (Prata) para ser promovido'
+      reason: 'Cidadão precisa estar no nível prata para ser promovido ao ouro',
     };
   }
 
-  // 4. Verificar se cidadão está ativo
   if (!citizen.isActive) {
     return {
       eligible: false,
-      approvedDocs: citizen.documents,
-      missingTypes: GOLD_REQUIREMENTS.requiredTypes,
+      approvedDocs: documents,
+      missingTypes: [...GOLD_REQUIREMENTS.requiredTypes],
+      missingProfileFields,
+      profileComplete,
+      biometric,
       currentStatus: citizen.verificationStatus,
-      reason: 'Cidadão está inativo'
+      reason: 'Cidadão está inativo',
     };
   }
 
-  // 5. Filtrar documentos não expirados
-  const validDocs = citizen.documents.filter(doc => !isDocumentExpired(doc));
+  const validDocs = documents.filter((document: CitizenDocument) => !isDocumentExpired(document));
+  const approvedTypes = validDocs.map((document) => document.documentType);
+  const missingTypes = GOLD_REQUIREMENTS.requiredTypes.filter((type) => !approvedTypes.includes(type));
 
-  // 6. Verificar tipos obrigatórios
-  const approvedTypes = validDocs.map(d => d.documentType);
-  const missingTypes = GOLD_REQUIREMENTS.requiredTypes.filter(
-    type => !approvedTypes.includes(type)
-  );
+  const hasAllRequiredDocs = missingTypes.length === 0;
+  const hasMinApprovedDocs = validDocs.length >= GOLD_REQUIREMENTS.minApprovedCount;
+  const biometricConfirmed = biometric.confirmed;
+  const eligible = profileComplete && hasAllRequiredDocs && hasMinApprovedDocs && biometricConfirmed;
 
-  // 7. Verificar contagem mínima
-  const hasAllRequired = missingTypes.length === 0;
-  const hasMinCount = validDocs.length >= GOLD_REQUIREMENTS.minApprovedCount;
+  let reason = 'Todos os critérios foram atendidos';
 
-  const eligible = hasAllRequired && hasMinCount;
-
-  let reason = '';
-  if (!hasAllRequired) {
-    const missing = missingTypes.map(t => getDocumentLabel(t)).join(', ');
-    reason = `Documentos faltando: ${missing}`;
-  } else if (!hasMinCount) {
+  if (!profileComplete) {
+    reason = `Perfil incompleto: ${missingProfileFields.join(', ')}`;
+  } else if (!hasAllRequiredDocs) {
+    reason = `Documentos faltando: ${missingTypes.map((type) => getDocumentLabel(type)).join(', ')}`;
+  } else if (!hasMinApprovedDocs) {
     reason = `Mínimo de ${GOLD_REQUIREMENTS.minApprovedCount} documentos aprovados necessários (atual: ${validDocs.length})`;
+  } else if (!biometricConfirmed) {
+    reason = biometric.pendingEnrollments > 0
+      ? 'A biometria facial foi enviada, mas ainda depende de confirmação do servidor'
+      : 'É necessário cadastrar e confirmar a biometria facial para alcançar o nível ouro';
   }
 
   return {
     eligible,
     approvedDocs: validDocs,
     missingTypes,
+    missingProfileFields,
+    profileComplete,
+    biometric,
     currentStatus: citizen.verificationStatus,
-    reason: eligible ? 'Todos os requisitos atendidos' : reason
+    reason,
   };
 }
 
-/**
- * Promove um cidadão automaticamente para o nível GOLD
- */
-export async function autoPromoteToGold(
-  citizenId: string,
-  approvedBy: string
-): Promise<PromotionResult> {
-  // 1. Verificar elegibilidade primeiro
+export async function getCitizenAccessLevelSummary(citizenId: string): Promise<CitizenAccessLevelSummary> {
+  const citizen = await prisma.citizen.findUnique({
+    where: { id: citizenId },
+    select: {
+      id: true,
+      verificationStatus: true,
+      name: true,
+      cpf: true,
+      email: true,
+      phone: true,
+      phoneSecondary: true,
+      birthDate: true,
+      rg: true,
+      motherName: true,
+      address: true,
+    },
+  });
+
+  if (!citizen) {
+    throw new Error('Cidadão não encontrado');
+  }
+
+  const missingProfileFields = getMissingProfileFields(citizen);
+  const profileComplete = missingProfileFields.length === 0;
+  const eligibility = await checkGoldEligibility(citizenId);
+
+  return {
+    currentStatus: citizen.verificationStatus,
+    currentLevel: mapVerificationStatusToLevel(citizen.verificationStatus),
+    nextLevel: getNextLevel(citizen.verificationStatus),
+    profileComplete,
+    missingProfileFields,
+    silverCriteria: {
+      profileComplete,
+      missingProfileFields,
+      adminReviewRequired: citizen.verificationStatus !== 'VERIFIED' && citizen.verificationStatus !== 'GOLD',
+    },
+    goldCriteria: {
+      eligible: eligibility.eligible,
+      approvedDocsCount: eligibility.approvedDocs.length,
+      requiredDocCount: GOLD_REQUIREMENTS.minApprovedCount,
+      missingDocumentTypes: eligibility.missingTypes,
+      profileComplete: eligibility.profileComplete,
+      missingProfileFields: eligibility.missingProfileFields,
+      biometricConfirmed: eligibility.biometric.confirmed,
+      biometric: eligibility.biometric,
+      reason: eligibility.reason,
+    },
+  };
+}
+
+export async function autoPromoteToGold(citizenId: string, approvedBy: string): Promise<PromotionResult> {
   const eligibility = await checkGoldEligibility(citizenId);
 
   if (!eligibility.eligible) {
     throw new Error(`Cidadão não elegível para promoção: ${eligibility.reason}`);
   }
 
-  // 2. Realizar promoção em transação
   const result = await prisma.$transaction(async (tx) => {
-    // 2.1. Buscar cidadão atual
     const currentCitizen = await tx.citizen.findUnique({
-      where: { id: citizenId }
+      where: { id: citizenId },
     });
 
     if (!currentCitizen) {
@@ -232,29 +400,28 @@ export async function autoPromoteToGold(
 
     const previousStatus = currentCitizen.verificationStatus;
 
-    // 2.2. Promover cidadão
     const promotedCitizen = await tx.citizen.update({
       where: { id: citizenId },
       data: {
         verificationStatus: 'GOLD',
         verifiedAt: new Date(),
         verifiedBy: approvedBy,
-        verificationNotes: 'Promovido automaticamente após aprovação de todos os documentos obrigatórios'
-      }
+        verificationNotes:
+          'Promovido para o nível ouro após validação do perfil, documentos obrigatórios e biometria facial confirmada',
+      },
     });
 
-    // 2.3. Criar notificação para o cidadão
     await tx.notification.create({
       data: {
         citizenId,
-        title: 'Cadastro Promovido para Ouro! 🥇',
-        message: `Parabéns! Todos os seus documentos foram aprovados e seu cadastro foi promovido para o nível OURO. Agora você tem acesso prioritário máximo a todos os serviços e programas municipais.`,
+        title: 'Cadastro promovido para Ouro',
+        message:
+          'Seu cadastro agora está no nível Ouro. Os documentos obrigatórios, o perfil e a biometria facial foram confirmados.',
         type: 'VERIFICATION_UPGRADED',
-        isRead: false
-      }
+        isRead: false,
+      },
     });
 
-    // 2.4. Criar log de auditoria
     await tx.auditLog.create({
       data: {
         userId: approvedBy,
@@ -262,17 +429,27 @@ export async function autoPromoteToGold(
         action: 'CITIZEN_PROMOTED_TO_GOLD',
         resource: 'CITIZEN',
         details: {
-          promotionReason: 'AUTO_DOCUMENT_APPROVAL',
+          promotionReason: 'PROFILE_DOCUMENTS_AND_FACE_BIOMETRY_CONFIRMED',
           previousStatus,
           newStatus: 'GOLD',
           promotedAt: new Date().toISOString(),
-          approvedDocuments: eligibility.approvedDocs.map(d => ({
-            id: d.id,
-            type: d.documentType,
-            fileName: d.fileName
-          }))
-        }
-      }
+          approvedDocuments: eligibility.approvedDocs.map((document) => ({
+            id: document.id,
+            type: document.documentType,
+            fileName: document.fileName,
+          })),
+          biometric: {
+            hasIdentity: eligibility.biometric.hasIdentity,
+            confirmed: eligibility.biometric.confirmed,
+            approvedEnrollments: eligibility.biometric.approvedEnrollments,
+            pendingEnrollments: eligibility.biometric.pendingEnrollments,
+            rejectedEnrollments: eligibility.biometric.rejectedEnrollments,
+            totalEmbeddings: eligibility.biometric.totalEmbeddings,
+            latestEnrollmentStatus: eligibility.biometric.latestEnrollmentStatus,
+            latestCapturedAt: eligibility.biometric.latestCapturedAt,
+          },
+        } as Prisma.InputJsonObject,
+      },
     });
 
     return {
@@ -280,35 +457,129 @@ export async function autoPromoteToGold(
       citizen: promotedCitizen,
       previousStatus,
       newStatus: 'GOLD',
-      message: 'Cidadão promovido para nível GOLD com sucesso'
+      message: 'Cidadão promovido para o nível ouro com sucesso',
     };
   });
 
   return result;
 }
 
-/**
- * Obtém estatísticas de documentos para o dashboard
- */
+export async function approveLatestPendingFaceEnrollment(
+  citizenId: string,
+  approvedById: string
+): Promise<{
+  enrollmentId: string;
+  promotedToGold: boolean;
+  promotionMessage?: string;
+  eligibility: GoldEligibilityResult;
+}> {
+  const identity = await prisma.faceRecognitionIdentity.findFirst({
+    where: { citizenId },
+    include: {
+      enrollments: {
+        orderBy: { createdAt: 'desc' },
+        include: {
+          embeddings: true,
+        },
+      },
+      embeddings: {
+        where: { isActive: true },
+      },
+    },
+  });
+
+  if (!identity) {
+    throw new Error('Nenhuma identidade facial foi encontrada para este cidadão');
+  }
+
+  const latestPendingEnrollment = identity.enrollments.find((enrollment) => enrollment.status === 'PENDING');
+
+  if (!latestPendingEnrollment) {
+    throw new Error('Não existe biometria facial pendente para confirmação');
+  }
+
+  await prisma.$transaction(async (tx) => {
+    await tx.faceEnrollment.update({
+      where: { id: latestPendingEnrollment.id },
+      data: {
+        status: 'APPROVED',
+        approvedById,
+        approvedAt: new Date(),
+      },
+    });
+
+    await tx.faceRecognitionIdentity.update({
+      where: { id: identity.id },
+      data: {
+        status:
+          identity.embeddings.length > 0 || latestPendingEnrollment.embeddings.length > 0
+            ? FaceRecognitionIdentityStatus.ACTIVE
+            : FaceRecognitionIdentityStatus.REVIEW,
+      },
+    });
+
+    await tx.notification.create({
+      data: {
+        citizenId,
+        title: 'Biometria facial confirmada',
+        message:
+          'Sua biometria facial foi validada por um servidor e já pode ser usada nas funcionalidades do ecossistema Digiurban.',
+        type: 'SUCCESS',
+        isRead: false,
+      },
+    });
+
+    await tx.auditLog.create({
+      data: {
+        userId: approvedById,
+        citizenId,
+        action: 'CITIZEN_FACE_ENROLLMENT_APPROVED',
+        resource: 'FACE_ENROLLMENT',
+        details: {
+          enrollmentId: latestPendingEnrollment.id,
+          identityId: identity.id,
+        },
+      },
+    });
+  });
+
+  const eligibility = await checkGoldEligibility(citizenId);
+  let promotedToGold = false;
+  let promotionMessage: string | undefined;
+
+  if (eligibility.eligible) {
+    const promotion = await autoPromoteToGold(citizenId, approvedById);
+    promotedToGold = promotion.success;
+    promotionMessage = promotion.message;
+  }
+
+  return {
+    enrollmentId: latestPendingEnrollment.id,
+    promotedToGold,
+    promotionMessage,
+    eligibility,
+  };
+}
+
 export async function getDocumentStats() {
   const [pending, underReview, approved, rejected] = await Promise.all([
     prisma.citizenDocument.count({ where: { status: 'PENDING', ...PERSONAL_DOCUMENT_WHERE } }),
     prisma.citizenDocument.count({ where: { status: 'UNDER_REVIEW', ...PERSONAL_DOCUMENT_WHERE } }),
     prisma.citizenDocument.count({ where: { status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE } }),
-    prisma.citizenDocument.count({ where: { status: 'REJECTED', ...PERSONAL_DOCUMENT_WHERE } })
+    prisma.citizenDocument.count({ where: { status: 'REJECTED', ...PERSONAL_DOCUMENT_WHERE } }),
   ]);
 
-  // Cidadãos elegíveis para promoção
   const verifiedCitizens = await prisma.citizen.findMany({
     where: { verificationStatus: 'VERIFIED' },
-    include: { documents: { where: { status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE } } }
+    select: { id: true },
   });
 
   let eligibleForGold = 0;
+
   for (const citizen of verifiedCitizens) {
     const result = await checkGoldEligibility(citizen.id);
     if (result.eligible) {
-      eligibleForGold++;
+      eligibleForGold += 1;
     }
   }
 
@@ -318,24 +589,23 @@ export async function getDocumentStats() {
     approved,
     rejected,
     total: pending + underReview + approved + rejected,
-    eligibleForGold
+    eligibleForGold,
   };
 }
 
-/**
- * Lista cidadãos elegíveis para promoção GOLD
- */
 export async function getEligibleCitizensForGold() {
   const verifiedCitizens = await prisma.citizen.findMany({
     where: {
       verificationStatus: 'VERIFIED',
-      isActive: true
+      isActive: true,
     },
-    include: {
-      documents: {
-        where: { status: 'APPROVED', ...PERSONAL_DOCUMENT_WHERE }
-      }
-    }
+    select: {
+      id: true,
+      name: true,
+      cpf: true,
+      email: true,
+      verificationStatus: true,
+    },
   });
 
   const eligible = [];
@@ -346,7 +616,9 @@ export async function getEligibleCitizensForGold() {
       eligible.push({
         citizen,
         approvedDocsCount: result.approvedDocs.length,
-        missingTypes: result.missingTypes
+        biometric: result.biometric,
+        missingTypes: result.missingTypes,
+        missingProfileFields: result.missingProfileFields,
       });
     }
   }

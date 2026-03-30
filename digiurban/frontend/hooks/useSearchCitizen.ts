@@ -80,7 +80,19 @@ export function useSearchCitizen() {
       }
 
       const data = await response.json()
-      return data.data?.citizens || []
+      if (Array.isArray(data.data)) {
+        return data.data
+      }
+
+      if (Array.isArray(data.data?.citizens)) {
+        return data.data.citizens
+      }
+
+      if (Array.isArray(data.citizens)) {
+        return data.citizens
+      }
+
+      return []
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
       setError(errorMessage)

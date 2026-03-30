@@ -34,6 +34,7 @@ interface Citizen {
   isActive: boolean;
   verificationStatus: 'PENDING' | 'VERIFIED' | 'GOLD' | 'REJECTED';
   createdAt: string;
+  updatedAt?: string;
   lastLogin?: string;
   protocols?: any[];
   familyAsHead?: any[];

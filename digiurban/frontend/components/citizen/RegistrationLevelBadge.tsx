@@ -69,7 +69,7 @@ export function RegistrationLevelBadge({ level, onUpgradeClick }: RegistrationLe
           title="Solicitar aumento de nível"
         >
           <ArrowUpCircle className="h-3.5 w-3.5" />
-          <span className="hidden sm:inline">Aumentar Nível</span>
+          <span className="hidden sm:inline">Ver critérios</span>
         </button>
       )}
     </div>

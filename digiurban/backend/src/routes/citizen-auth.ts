@@ -16,6 +16,9 @@ import messageNotificationService from '../lib/messages/MessageNotificationServi
 import { getSystemEmail } from '../utils/email-domain.utils';
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
+import { citizenAuthMiddleware } from '../middleware/citizen-auth';
+import facePlatformClientService from '../services/face-platform-client.service';
+import { getCitizenAccessLevelSummary } from '../services/citizen-verification.service';
 
 const router = Router();
 
@@ -527,6 +530,68 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
 }));
+
+// GET /api/auth/citizen/access-level - Critérios reais dos níveis do cidadão
+router.get(
+  '/access-level',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    const accessLevel = await getCitizenAccessLevelSummary(citizenId);
+
+    return res.json({
+      success: true,
+      data: { accessLevel },
+    });
+  })
+);
+
+// POST /api/auth/citizen/face-biometry - Autoatendimento de biometria facial
+router.post(
+  '/face-biometry',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    const { imageBase64, sourceLabel } = req.body as {
+      imageBase64?: string;
+      sourceLabel?: string;
+    };
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      return res.status(400).json({ error: 'A captura facial é obrigatória' });
+    }
+
+    const enrollment = await facePlatformClientService.createEnrollment({
+      citizenId,
+      sourceType: 'SELF_SERVICE',
+      sourceLabel: sourceLabel?.trim() || 'Autoatendimento do cidadão',
+      imageBase64,
+    });
+
+    const accessLevel = await getCitizenAccessLevelSummary(citizenId);
+
+    return res.status(201).json({
+      success: true,
+      message:
+        accessLevel.goldCriteria.biometric.pendingEnrollments > 0
+          ? 'Biometria facial enviada para confirmação do servidor'
+          : 'Biometria facial cadastrada com sucesso',
+      data: {
+        enrollment,
+        accessLevel,
+      },
+    });
+  })
+);
 
 // POST /api/auth/citizen/change-password - Trocar senha
 router.post('/change-password', asyncHandler(async (req: Request, res: Response) => {

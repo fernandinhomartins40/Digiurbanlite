@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CitizenLayout } from '@/components/citizen/CitizenLayout';
+import { CitizenAccessLevelCard } from '@/components/citizen/CitizenAccessLevelCard';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -66,6 +67,32 @@ export default function PerfilPage() {
     newPassword: '',
     confirmPassword: ''
   });
+
+  const verificationStatus = citizen?.verificationStatus || 'PENDING';
+  const accountStatus =
+    verificationStatus === 'GOLD'
+      ? {
+          title: 'Conta Ouro',
+          description: 'Seu cadastro atende aos critérios máximos e possui biometria facial confirmada',
+          badge: 'Status: Ouro',
+        }
+      : verificationStatus === 'VERIFIED'
+        ? {
+            title: 'Conta Verificada',
+            description: 'Seu cadastro já foi validado e está no nível Prata',
+            badge: 'Status: Prata',
+          }
+        : verificationStatus === 'REJECTED'
+          ? {
+              title: 'Cadastro com pendências',
+              description: 'Seu cadastro precisa de ajuste antes de voltar ao fluxo de verificação',
+              badge: 'Status: Revisar',
+            }
+          : {
+              title: 'Conta em análise',
+              description: 'Seu cadastro básico foi recebido e aguarda validação da administração',
+              badge: 'Status: Bronze',
+            };
 
   // ✅ PADRONIZADO: Carrega dados do cidadão usando nomenclatura do banco
   // ✅ FORMATAÇÃO: Aplica máscaras aos valores vindos do backend
@@ -210,18 +237,20 @@ export default function PerfilPage() {
                 <Shield className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="text-base sm:text-lg font-semibold text-blue-900">Conta Verificada</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-blue-900">{accountStatus.title}</h3>
                 <p className="text-xs sm:text-sm text-blue-700">
-                  Seu cadastro foi verificado pela administração municipal
+                  {accountStatus.description}
                 </p>
               </div>
               <div className="flex items-center gap-2 bg-blue-100 px-3 py-1.5 sm:px-4 sm:py-2 rounded-lg self-end sm:self-auto">
                 <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
-                <span className="text-xs sm:text-sm font-medium text-blue-900">Status: Prata</span>
+                <span className="text-xs sm:text-sm font-medium text-blue-900">{accountStatus.badge}</span>
               </div>
             </div>
           </CardContent>
         </Card>
+
+        <CitizenAccessLevelCard />
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Informações Pessoais */}

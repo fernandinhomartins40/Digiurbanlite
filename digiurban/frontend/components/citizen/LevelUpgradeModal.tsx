@@ -1,9 +1,13 @@
 'use client';
 
-import { X, CheckCircle2, ArrowRight, Check, Trophy, Medal } from 'lucide-react';
+import { X, ArrowRight, CheckCircle2, Medal, Trophy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
-import { mapVerificationStatusToLevel, getNextLevel, getRegistrationLevelInfo } from '@/lib/citizen-utils';
+import {
+  getNextLevel,
+  getRegistrationLevelInfo,
+  mapVerificationStatusToLevel,
+} from '@/lib/citizen-utils';
 
 interface LevelUpgradeModalProps {
   isOpen: boolean;
@@ -14,7 +18,9 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
   const { citizen } = useCitizenAuth();
   const router = useRouter();
 
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   const currentLevel = mapVerificationStatusToLevel(citizen?.verificationStatus || 'PENDING');
   const nextLevelName = getNextLevel(citizen?.verificationStatus || 'PENDING');
@@ -22,57 +28,45 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
   const nextLevelInfo = nextLevelName ? getRegistrationLevelInfo(nextLevelName) : null;
 
   const requirementsByLevel: Record<string, string[]> = {
-    BRONZE: [
-      'CPF válido',
-      'Nome completo',
-      'Data de nascimento',
-      'Email ou telefone'
-    ],
     SILVER: [
-      'Aguardar verificação do administrador',
-      'Manter dados cadastrais atualizados'
+      'Manter o perfil do cidadão completo e atualizado',
+      'Aguardar a análise e validação da administração municipal',
     ],
     GOLD: [
-      'RG (Frente) - Enviar na página "Meus Documentos"',
-      'RG (Verso) - Enviar na página "Meus Documentos"',
-      'CPF - Enviar na página "Meus Documentos"',
-      'Comprovante de Residência - Enviar na página "Meus Documentos"'
-    ]
+      'Perfil completo com dados civis e endereço atualizados',
+      'Documentos pessoais obrigatórios aprovados',
+      'Biometria facial cadastrada e confirmada por um servidor',
+    ],
   };
 
   const requirements = nextLevelName ? requirementsByLevel[nextLevelName] || [] : [];
 
-  const handleUpgradeClick = () => {
-    // Se o próximo nível for GOLD, redirecionar para página de documentos
-    if (nextLevelName === 'GOLD') {
-      onClose();
-      router.push('/cidadao/documentos');
-    } else {
-      alert('Para ser promovido ao nível Prata, aguarde a verificação do administrador.');
-    }
+  const handleOpenProfile = () => {
+    onClose();
+    router.push('/cidadao/perfil');
+  };
+
+  const handleOpenDocuments = () => {
+    onClose();
+    router.push('/cidadao/documentos');
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 px-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b border-gray-200 p-6">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-full bg-blue-100 flex items-center justify-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100">
               {nextLevelInfo?.name === 'Ouro' ? (
                 <Trophy className="h-5 w-5 text-blue-600" />
-              ) : nextLevelInfo?.name === 'Prata' ? (
-                <Medal className="h-5 w-5 text-blue-600" />
               ) : (
                 <Medal className="h-5 w-5 text-blue-600" />
               )}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">
-                Solicitar Aumento de Nível
-              </h2>
+              <h2 className="text-lg font-semibold text-gray-900">Critérios de nível</h2>
               {nextLevelInfo && (
-                <p className="text-sm text-gray-600 flex items-center gap-1">
+                <p className="flex items-center gap-1 text-sm text-gray-600">
                   <span>{currentLevelInfo.name}</span>
                   <ArrowRight className="h-3 w-3" />
                   <span>{nextLevelInfo.name}</span>
@@ -82,104 +76,92 @@ export function LevelUpgradeModal({ isOpen, onClose }: LevelUpgradeModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
+            className="rounded-md p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="p-6 space-y-6">
+        <div className="space-y-6 p-6">
           {!nextLevelInfo ? (
-            <div className="text-center py-8">
-              <div className="h-16 w-16 rounded-full bg-yellow-100 flex items-center justify-center mx-auto">
+            <div className="py-8 text-center">
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-yellow-100">
                 <Trophy className="h-10 w-10 text-yellow-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mt-4">
-                Parabéns!
-              </h3>
-              <p className="text-gray-600 mt-2">
-                Você já possui o nível máximo de cadastro.
+              <h3 className="mt-4 text-lg font-semibold text-gray-900">Nível máximo alcançado</h3>
+              <p className="mt-2 text-gray-600">
+                Seu cadastro já está no nível máximo disponível para o cidadão.
               </p>
             </div>
           ) : (
             <>
-              {/* Benefícios */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-semibold text-blue-900 mb-2">
-                  Benefícios do Nível {nextLevelInfo.name}
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <h3 className="mb-2 text-sm font-semibold text-blue-900">
+                  Benefícios do nível {nextLevelInfo.name}
                 </h3>
                 <ul className="space-y-2 text-sm text-blue-800">
-                  {nextLevelInfo.benefits.map((benefit, index) => (
-                    <li key={index} className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  {nextLevelInfo.benefits.map((benefit) => (
+                    <li key={benefit} className="flex items-start gap-2">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0" />
                       <span>{benefit}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Requisitos */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                  Documentos Necessários
-                </h3>
+                <h3 className="mb-3 text-sm font-semibold text-gray-900">O que é necessário</h3>
                 <ul className="space-y-2">
-                  {requirements.map((req: string, index: number) => (
-                    <li
-                      key={index}
-                      className="flex items-start gap-3 text-sm text-gray-700"
-                    >
-                      <div className="h-5 w-5 rounded-full bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                        <span className="text-xs font-medium text-gray-600">
-                          {index + 1}
-                        </span>
+                  {requirements.map((requirement, index) => (
+                    <li key={requirement} className="flex items-start gap-3 text-sm text-gray-700">
+                      <div className="mt-0.5 flex h-5 w-5 flex-shrink-0 items-center justify-center rounded-full bg-gray-100">
+                        <span className="text-xs font-medium text-gray-600">{index + 1}</span>
                       </div>
-                      <span>{req}</span>
+                      <span>{requirement}</span>
                     </li>
                   ))}
                 </ul>
               </div>
 
-              {/* Aviso */}
-              {nextLevelName === 'GOLD' ? (
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                  <p className="text-sm text-green-800 flex items-start gap-2">
-                    <Check className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <span>
-                      <strong>Funcionalidade Disponível!</strong> Você já pode enviar seus documentos
-                      pela página "Meus Documentos". Após a aprovação de todos os documentos obrigatórios,
-                      você será automaticamente promovido para o nível Ouro!
-                    </span>
-                  </p>
-                </div>
-              ) : (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <p className="text-sm text-blue-800">
-                    Para ser promovido ao nível Prata, aguarde a verificação do administrador.
-                    Certifique-se de que seus dados cadastrais estão completos e corretos.
-                  </p>
+              {nextLevelName === 'GOLD' && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+                  A confirmação do nível Ouro agora depende também da biometria facial. Use a página de perfil para cadastrar a imagem do rosto e acompanhe a confirmação administrativa.
                 </div>
               )}
             </>
           )}
         </div>
 
-        {/* Footer */}
-        <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
+        <div className="flex flex-wrap items-center justify-end gap-3 border-t border-gray-200 p-6">
           <button
             onClick={onClose}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
+            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
           >
             Fechar
           </button>
-          {nextLevelInfo && nextLevelName === 'GOLD' && (
+          {nextLevelName === 'SILVER' && (
             <button
-              onClick={handleUpgradeClick}
-              className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition-colors"
+              onClick={handleOpenProfile}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
             >
-              Ir para Meus Documentos
+              Revisar meu perfil
             </button>
+          )}
+          {nextLevelName === 'GOLD' && (
+            <>
+              <button
+                onClick={handleOpenDocuments}
+                className="rounded-md border border-blue-200 bg-white px-4 py-2 text-sm font-medium text-blue-700 transition-colors hover:bg-blue-50"
+              >
+                Abrir documentos
+              </button>
+              <button
+                onClick={handleOpenProfile}
+                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+              >
+                Abrir perfil
+              </button>
+            </>
           )}
         </div>
       </div>
