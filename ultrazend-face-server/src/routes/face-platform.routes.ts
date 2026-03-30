@@ -3,6 +3,14 @@ import facePlatformService from '../services/FacePlatformService';
 
 const router = Router();
 
+router.get('/status', async (_req: Request, res: Response) => {
+  return res.json({
+    available: true,
+    service: 'ultrazend-face-server',
+    timestamp: new Date().toISOString(),
+  });
+});
+
 router.get('/dashboard', async (_req: Request, res: Response) => {
   try {
     const data = await facePlatformService.getDashboard();

@@ -6,6 +6,11 @@ const router = Router();
 
 router.use(authenticateAdmin);
 
+router.get('/status', async (_req: Request, res: Response) => {
+  const status = await facePlatformService.getStatus();
+  return res.json(status);
+});
+
 router.get('/dashboard', async (_req: Request, res: Response) => {
   try {
     const data = await facePlatformService.getDashboard();

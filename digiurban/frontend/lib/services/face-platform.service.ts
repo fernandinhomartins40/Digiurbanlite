@@ -1,6 +1,11 @@
 import { api } from '@/lib/services/api';
 
 export const facePlatformService = {
+  getStatus: async () => {
+    const response = await api.get('/admin/face-platform/status');
+    return response.data;
+  },
+
   getDashboard: async () => {
     const response = await api.get('/admin/face-platform/dashboard');
     return response.data;

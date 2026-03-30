@@ -1,11 +1,13 @@
 import axios, { type AxiosInstance } from 'axios';
 
+const DEFAULT_FACE_PLATFORM_SERVICE_TOKEN = 'ultrazend-face-service-token';
+
 class FacePlatformClientService {
   private api: AxiosInstance;
 
   constructor() {
     const baseURL = process.env.FACE_PLATFORM_API_URL || 'http://localhost:9006';
-    const serviceToken = process.env.FACE_PLATFORM_SERVICE_TOKEN || '';
+    const serviceToken = process.env.FACE_PLATFORM_SERVICE_TOKEN || DEFAULT_FACE_PLATFORM_SERVICE_TOKEN;
 
     this.api = axios.create({
       baseURL: `${baseURL.replace(/\/$/, '')}/api/face-platform`,
@@ -15,6 +17,28 @@ class FacePlatformClientService {
         'Content-Type': 'application/json',
       },
     });
+  }
+
+  async getStatus() {
+    try {
+      const response = await this.api.get('/status');
+      return response.data;
+    } catch (error: any) {
+      const upstreamMessage =
+        error?.response?.data?.message ||
+        error?.response?.data?.error ||
+        error?.message ||
+        'Serviço facial indisponível';
+
+      return {
+        available: false,
+        status: error?.response?.status || 503,
+        message:
+          error?.code === 'ECONNREFUSED' || error?.code === 'ENOTFOUND'
+            ? 'Serviço facial não está ativo ou acessível em FACE_PLATFORM_API_URL.'
+            : upstreamMessage,
+      };
+    }
   }
 
   async getDashboard() {
