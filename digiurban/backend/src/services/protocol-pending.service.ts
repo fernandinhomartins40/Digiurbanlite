@@ -1,4 +1,4 @@
-﻿import { InteractionType, PendingStatus, PendingType, Prisma } from '@prisma/client';
+import { InteractionType, PendingStatus, PendingType, Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
 import notificationService from './notification.service';

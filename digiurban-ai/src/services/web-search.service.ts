@@ -16,9 +16,9 @@ type WebSearchCacheEntry = {
 
 function decodeHtml(input: string): string {
   return input
-    .replace(/&amp;/g, '&')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
+    .replace(/&/g, '&')
+    .replace(/"/g, '"')
+    .replace(/'/g, "'")
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>');
 }

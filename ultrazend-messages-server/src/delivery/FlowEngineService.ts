@@ -8,7 +8,7 @@ import { actionHandlers } from '../bot/flow/ActionHandlers';
 import { citizenAiOrchestrator } from '../bot/ai/CitizenAiOrchestrator';
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
-import { HandoverService } from './HandoverService'; // Ã¢Å“â€¦ NOVO
+import { HandoverService } from './HandoverService'; // ✅ NOVO
 import fs from 'fs/promises';
 import path from 'path';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
@@ -16,13 +16,13 @@ import { ensureActiveMessageServerId } from '../utils/messageServer';
 export class FlowEngineService {
   private flowEngine: FlowEngine;
   private wsServer: WebSocketServer | null = null;
-  private handoverService: HandoverService; // Ã¢Å“â€¦ NOVO
+  private handoverService: HandoverService; // ✅ NOVO
   private botInactivityTimeouts: Map<string, NodeJS.Timeout> = new Map();
   private readonly botInactivityTimeoutMs: number;
 
   constructor(wsServer?: WebSocketServer) {
     this.flowEngine = new FlowEngine(actionHandlers);
-    this.handoverService = new HandoverService(wsServer); // Ã¢Å“â€¦ NOVO
+    this.handoverService = new HandoverService(wsServer); // ✅ NOVO
     this.botInactivityTimeoutMs = Math.max(
       Number.parseInt(process.env.DIGIBOT_INACTIVITY_TIMEOUT_MS || '600000', 10),
       0
@@ -34,10 +34,10 @@ export class FlowEngineService {
 
   setWebSocketServer(wsServer: WebSocketServer) {
     this.wsServer = wsServer;
-    this.handoverService.setWebSocketServer(wsServer); // Ã¢Å“â€¦ NOVO
+    this.handoverService.setWebSocketServer(wsServer); // ✅ NOVO
   }
 
-  // Ã¢Å“â€¦ NOVO: Expor HandoverService para rotas
+  // ✅ NOVO: Expor HandoverService para rotas
   getHandoverService(): HandoverService {
     return this.handoverService;
   }
@@ -214,7 +214,7 @@ export class FlowEngineService {
       metadata.cards = JSON.parse(JSON.stringify(response.data.cards));
     }
 
-    // Passa campos extras de display para o frontend (carrossÃƒÂ©is, categorias, etc.)
+    // Passa campos extras de display para o frontend (carrosséis, categorias, etc.)
     if (response.data?.displayMode) {
       metadata.displayMode = response.data.displayMode;
     }
@@ -225,7 +225,7 @@ export class FlowEngineService {
       metadata.departmentName = response.data.departmentName;
     }
 
-    // Documentos obrigatÃƒÂ³rios para upload rico no bot
+    // Documentos obrigatórios para upload rico no bot
     if (response.data?.requiredDocuments) {
       metadata.requiredDocuments = response.data.requiredDocuments;
     }
@@ -277,7 +277,7 @@ export class FlowEngineService {
     }
 
     if (Array.isArray(message)) {
-      // Para uploads, gerar descriÃƒÂ§ÃƒÂ£o legÃƒÂ­vel
+      // Para uploads, gerar descrição legível
       if (message.length > 0 && message[0]?.fileName) {
         const fileNames = message.map((f: any) => f.fileName).join(', ');
         return `Arquivos enviados: ${fileNames}`;
@@ -286,12 +286,12 @@ export class FlowEngineService {
     }
 
     if (typeof message === 'object' && message !== null) {
-      // SeleÃƒÂ§ÃƒÂ£o de menu (frontend envia { optionId, label })
+      // Seleção de menu (frontend envia { optionId, label })
       if (typeof (message as any).label === 'string' && (message as any).label.trim()) {
         return (message as any).label.trim();
       }
 
-      // Para formulÃƒÂ¡rios, gerar resumo legÃƒÂ­vel dos campos
+      // Para formulários, gerar resumo legível dos campos
       const entries = Object.entries(message).filter(([_, v]) => v !== null && v !== undefined && v !== '');
       if (entries.length > 0) {
         const summary = entries
@@ -360,7 +360,7 @@ export class FlowEngineService {
     }
     const botMetadata = this.buildBotMetadata(response);
 
-    // 3. Vincular conversa ÃƒÂ  execuÃƒÂ§ÃƒÂ£o ativa do bot (Ã¢Å“â€¦ REFATORADO)
+    // 3. Vincular conversa à execução ativa do bot (✅ REFATORADO)
     if (normalizedFlowName !== 'ai_assistant') {
       const execution = await this.getActiveExecution(citizenId);
       if (execution) {
@@ -368,7 +368,7 @@ export class FlowEngineService {
           where: { id: conversationId },
           data: {
             isBotConversation: true,
-            activeFlowExecutionId: execution.id, // Ã¢Å“â€¦ FK para FlowExecution
+            activeFlowExecutionId: execution.id, // ✅ FK para FlowExecution
             metadata: this.mergeConversationMetadata(conversation?.metadata as Record<string, any> | null, {
               botStatus: 'ACTIVE',
               botStatusUpdatedAt: new Date().toISOString(),
@@ -378,7 +378,7 @@ export class FlowEngineService {
       }
     }
 
-    // 4. Salvar mensagem do bot (Ã¢Å“â€¦ REFATORADO com campos queryable)
+    // 4. Salvar mensagem do bot (✅ REFATORADO com campos queryable)
     const message = await prisma.message.create({
       data: {
         conversationId,
@@ -389,7 +389,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // Ã¢Å“â€¦ NOVOS CAMPOS QUERYABLE
+        // ✅ NOVOS CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
@@ -418,7 +418,7 @@ export class FlowEngineService {
         message,
       });
 
-      // Notificar tambÃƒÂ©m o cidadÃƒÂ£o diretamente
+      // Notificar também o cidadão diretamente
       this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
         conversationId,
         message,
@@ -447,7 +447,7 @@ export class FlowEngineService {
   }
 
   /**
-   * Processa mensagem do usuÃƒÂ¡rio
+   * Processa mensagem do usuário
    */
   async processMessage(citizenId: string, message: any, conversationId?: string) {
     console.log('[FlowEngineService.processMessage]', { citizenId, message, conversationId });
@@ -476,7 +476,7 @@ export class FlowEngineService {
 
     this.cancelBotInactivityTimeout(conversationId);
 
-    // 2. Salvar mensagem do cidadÃƒÂ£o (Ã¢Å“â€¦ REFATORADO com campos queryable)
+    // 2. Salvar mensagem do cidadão (✅ REFATORADO com campos queryable)
     const userMessageMetadata: any = {};
     let botInteractionType: string | null = null;
     let botSelectedOption: string | null = null;
@@ -511,7 +511,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         ...(Object.keys(userMessageMetadata).length > 0 ? { metadata: userMessageMetadata as any } : {}),
-        // Ã¢Å“â€¦ CAMPOS QUERYABLE
+        // ✅ CAMPOS QUERYABLE
         botInteractionType,
         botSelectedOption,
         botStructuredData: botStructuredData as any,
@@ -583,7 +583,7 @@ export class FlowEngineService {
     const botMetadata = this.buildBotMetadata(response);
     const botContent = response.message || 'Ocorreu um erro ao processar sua solicitacao.';
 
-    // 4. Salvar resposta do bot (Ã¢Å“â€¦ REFATORADO)
+    // 4. Salvar resposta do bot (✅ REFATORADO)
     const botMessage = await prisma.message.create({
       data: {
         conversationId,
@@ -594,7 +594,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // Ã¢Å“â€¦ CAMPOS QUERYABLE
+        // ✅ CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId || null,
@@ -602,7 +602,7 @@ export class FlowEngineService {
       },
     });
 
-    // 5. Atualizar conversa (Ã¢Å“â€¦ REFATORADO - sem botFlowData)
+    // 5. Atualizar conversa (✅ REFATORADO - sem botFlowData)
     await prisma.conversation.update({
       where: { id: conversationId },
       data: {
@@ -646,7 +646,7 @@ export class FlowEngineService {
   }
 
   /**
-   * ObtÃƒÂ©m execuÃƒÂ§ÃƒÂ£o ativa
+   * Obtém execução ativa
    */
   async getActiveExecution(citizenId: string) {
     const execution = await prisma.flowExecution.findFirst({
@@ -674,12 +674,12 @@ export class FlowEngineService {
   }
 
   /**
-   * Pausa execuÃƒÂ§ÃƒÂ£o (para atendimento humano) - Ã¢Å“â€¦ REFATORADO COM HANDOVER
+   * Pausa execução (para atendimento humano) - ✅ REFATORADO COM HANDOVER
    */
   async pauseExecution(citizenId: string, conversationId?: string, pausedBy?: string, reason?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
-      throw new Error('Nenhuma execuÃƒÂ§ÃƒÂ£o ativa encontrada para este cidadÃƒÂ£o');
+      throw new Error('Nenhuma execução ativa encontrada para este cidadão');
     }
 
     this.cancelBotInactivityTimeout(conversationId);
@@ -721,7 +721,7 @@ export class FlowEngineService {
         },
       });
 
-      // Ã¢Å“â€¦ NOVO: Notificar departamento via HandoverService
+      // ✅ NOVO: Notificar departamento via HandoverService
       if (conversation.departmentId) {
         await this.handoverService.notifyDepartmentHandover(
           conversationId,
@@ -735,12 +735,12 @@ export class FlowEngineService {
   }
 
   /**
-   * Retoma execuÃƒÂ§ÃƒÂ£o - Ã¢Å“â€¦ REFATORADO
+   * Retoma execução - ✅ REFATORADO
    */
   async resumeExecution(citizenId: string, conversationId?: string, resumedBy?: string) {
     const execution = await this.getActiveExecution(citizenId);
     if (!execution) {
-      throw new Error('Nenhuma execuÃƒÂ§ÃƒÂ£o ativa encontrada para este cidadÃƒÂ£o');
+      throw new Error('Nenhuma execução ativa encontrada para este cidadão');
     }
 
     // Retomar no FlowExecution (fonte de verdade)
@@ -796,7 +796,7 @@ export class FlowEngineService {
     const destDir = path.join(uploadDir, 'bot', subfolder);
     await fs.mkdir(destDir, { recursive: true });
 
-    // Nome ÃƒÂºnico preservando extensÃƒÂ£o original
+    // Nome único preservando extensão original
     const ext = path.extname(file.originalname || '');
     const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
     const destPath = path.join(destDir, uniqueName);
@@ -940,7 +940,7 @@ export class FlowEngineService {
         status: 'SENT',
         sentAt: new Date(),
         metadata: botMetadata as any,
-        // Ã¢Å“â€¦ CAMPOS QUERYABLE
+        // ✅ CAMPOS QUERYABLE
         isBotMessage: true,
         botInteractionType: response.messageType || 'message',
         botFlowNodeId: response.metadata?.nodeId,
@@ -948,7 +948,7 @@ export class FlowEngineService {
       },
     });
 
-    // Ã¢Å“â€¦ REFATORADO - atualizaÃƒÂ§ÃƒÂ£o simplificada
+    // ✅ REFATORADO - atualização simplificada
     const conv2 = await prisma.conversation.findUnique({
       where: { id: conversationId },
       select: {
@@ -1106,7 +1106,7 @@ export class FlowEngineService {
     });
 
     if (!conversation) {
-      // Criar nova conversa (Ã¢Å“â€¦ REFATORADO - sem campos antigos)
+      // Criar nova conversa (✅ REFATORADO - sem campos antigos)
       conversation = await prisma.conversation.create({
         data: {
           messageServerId,
@@ -1117,7 +1117,7 @@ export class FlowEngineService {
           type: 'SUPPORT',
           status: 'ACTIVE',
           isBotConversation: true,
-          // activeFlowExecutionId serÃƒÂ¡ setado quando o fluxo iniciar
+          // activeFlowExecutionId será setado quando o fluxo iniciar
           metadata: {
             botStatus: 'IDLE',
             botStatusUpdatedAt: new Date().toISOString(),

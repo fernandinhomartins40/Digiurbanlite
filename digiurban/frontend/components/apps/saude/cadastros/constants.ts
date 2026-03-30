@@ -1,12 +1,12 @@
 /**
- * CONSTANTES - Tipos, Status e ConfiguraÃ§Ãµes dos Selectors
+ * CONSTANTES - Tipos, Status e Configurações dos Selectors
  *
  * Este arquivo centraliza as constantes utilizadas nos componentes selectors
- * para facilitar manutenÃ§Ã£o e garantir consistÃªncia.
+ * para facilitar manutenção e garantir consistência.
  */
 
 // ============================================================================
-// TIPOS DE UNIDADES DE SAÃšDE
+// TIPOS DE UNIDADES DE SAÚDE
 // ============================================================================
 
 export const TIPOS_UNIDADE = {
@@ -23,10 +23,10 @@ export const TIPOS_UNIDADE_LABELS: Record<string, string> = {
   [TIPOS_UNIDADE.UBS]: 'UBS',
   [TIPOS_UNIDADE.UPA]: 'UPA',
   [TIPOS_UNIDADE.HOSPITAL]: 'Hospital',
-  [TIPOS_UNIDADE.CLINICA]: 'ClÃ­nica',
+  [TIPOS_UNIDADE.CLINICA]: 'Clínica',
   [TIPOS_UNIDADE.PRONTO_SOCORRO]: 'Pronto Socorro',
   [TIPOS_UNIDADE.CAPS]: 'CAPS',
-  [TIPOS_UNIDADE.LABORATORIO]: 'LaboratÃ³rio',
+  [TIPOS_UNIDADE.LABORATORIO]: 'Laboratório',
 };
 
 export const TIPOS_UNIDADE_COLORS: Record<string, string> = {
@@ -40,7 +40,7 @@ export const TIPOS_UNIDADE_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// CATEGORIAS DE PROFISSIONAIS DE SAÃšDE
+// CATEGORIAS DE PROFISSIONAIS DE SAÚDE
 // ============================================================================
 
 export const CATEGORIAS_PROFISSIONAL = {
@@ -57,16 +57,16 @@ export const CATEGORIAS_PROFISSIONAL = {
 } as const;
 
 export const CATEGORIAS_PROFISSIONAL_LABELS: Record<string, string> = {
-  [CATEGORIAS_PROFISSIONAL.MEDICO]: 'MÃ©dico(a)',
+  [CATEGORIAS_PROFISSIONAL.MEDICO]: 'Médico(a)',
   [CATEGORIAS_PROFISSIONAL.ENFERMEIRO]: 'Enfermeiro(a)',
-  [CATEGORIAS_PROFISSIONAL.TECNICO_ENFERMAGEM]: 'TÃ©c. Enfermagem',
+  [CATEGORIAS_PROFISSIONAL.TECNICO_ENFERMAGEM]: 'Téc. Enfermagem',
   [CATEGORIAS_PROFISSIONAL.DENTISTA]: 'Dentista',
-  [CATEGORIAS_PROFISSIONAL.PSICOLOGO]: 'PsicÃ³logo(a)',
+  [CATEGORIAS_PROFISSIONAL.PSICOLOGO]: 'Psicólogo(a)',
   [CATEGORIAS_PROFISSIONAL.FISIOTERAPEUTA]: 'Fisioterapeuta',
   [CATEGORIAS_PROFISSIONAL.NUTRICIONISTA]: 'Nutricionista',
-  [CATEGORIAS_PROFISSIONAL.FARMACEUTICO]: 'FarmacÃªutico(a)',
+  [CATEGORIAS_PROFISSIONAL.FARMACEUTICO]: 'Farmacêutico(a)',
   [CATEGORIAS_PROFISSIONAL.ASSISTENTE_SOCIAL]: 'Assistente Social',
-  [CATEGORIAS_PROFISSIONAL.AGENTE_SAUDE]: 'Agente de SaÃºde',
+  [CATEGORIAS_PROFISSIONAL.AGENTE_SAUDE]: 'Agente de Saúde',
 };
 
 // ============================================================================
@@ -83,9 +83,9 @@ export const STATUS_PROFISSIONAL = {
 
 export const STATUS_PROFISSIONAL_LABELS: Record<string, string> = {
   [STATUS_PROFISSIONAL.ATIVO]: 'Ativo',
-  [STATUS_PROFISSIONAL.FERIAS]: 'FÃ©rias',
+  [STATUS_PROFISSIONAL.FERIAS]: 'Férias',
   [STATUS_PROFISSIONAL.AFASTADO]: 'Afastado',
-  [STATUS_PROFISSIONAL.LICENCA]: 'LicenÃ§a',
+  [STATUS_PROFISSIONAL.LICENCA]: 'Licença',
   [STATUS_PROFISSIONAL.INATIVO]: 'Inativo',
 };
 
@@ -98,7 +98,7 @@ export const STATUS_PROFISSIONAL_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// ÃREAS DE ESPECIALIDADES
+// ÁREAS DE ESPECIALIDADES
 // ============================================================================
 
 export const AREAS_ESPECIALIDADE = {
@@ -139,16 +139,16 @@ export const TIPOS_SALA = {
 } as const;
 
 export const TIPOS_SALA_LABELS: Record<string, string> = {
-  [TIPOS_SALA.CONSULTORIO]: 'ConsultÃ³rio',
-  [TIPOS_SALA.CIRURGICA]: 'CirÃºrgica',
-  [TIPOS_SALA.EMERGENCIA]: 'EmergÃªncia',
+  [TIPOS_SALA.CONSULTORIO]: 'Consultório',
+  [TIPOS_SALA.CIRURGICA]: 'Cirúrgica',
+  [TIPOS_SALA.EMERGENCIA]: 'Emergência',
   [TIPOS_SALA.EXAME]: 'Exames',
-  [TIPOS_SALA.INTERNACAO]: 'InternaÃ§Ã£o',
+  [TIPOS_SALA.INTERNACAO]: 'Internação',
   [TIPOS_SALA.PROCEDIMENTO]: 'Procedimentos',
-  [TIPOS_SALA.OBSERVACAO]: 'ObservaÃ§Ã£o',
+  [TIPOS_SALA.OBSERVACAO]: 'Observação',
   [TIPOS_SALA.ENFERMAGEM]: 'Enfermagem',
   [TIPOS_SALA.ODONTOLOGIA]: 'Odontologia',
-  [TIPOS_SALA.VACINA]: 'VacinaÃ§Ã£o',
+  [TIPOS_SALA.VACINA]: 'Vacinação',
 };
 
 export const TIPOS_SALA_COLORS: Record<string, string> = {
@@ -176,9 +176,9 @@ export const STATUS_SALA = {
 } as const;
 
 export const STATUS_SALA_LABELS: Record<string, string> = {
-  [STATUS_SALA.DISPONIVEL]: 'DisponÃ­vel',
+  [STATUS_SALA.DISPONIVEL]: 'Disponível',
   [STATUS_SALA.EM_USO]: 'Em Uso',
-  [STATUS_SALA.MANUTENCAO]: 'ManutenÃ§Ã£o',
+  [STATUS_SALA.MANUTENCAO]: 'Manutenção',
   [STATUS_SALA.DESATIVADA]: 'Desativada',
 };
 
@@ -190,7 +190,7 @@ export const STATUS_SALA_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// CONFIGURAÃ‡Ã•ES DE BUSCA
+// CONFIGURAÇÕES DE BUSCA
 // ============================================================================
 
 export const SEARCH_CONFIG = {
@@ -201,7 +201,7 @@ export const SEARCH_CONFIG = {
 } as const;
 
 // ============================================================================
-// ÃCONES DE TURNOS
+// ÍCONES DE TURNOS
 // ============================================================================
 
 export const getTurnoIcone = (
@@ -214,7 +214,7 @@ export const getTurnoIcone = (
   if (lower.includes('madrugada')) return 'madrugada';
   return 'padrao';
 };
-// CORES PADRÃƒO DE TURNOS
+// CORES PADRÃO DE TURNOS
 // ============================================================================
 
 export const TURNO_COLORS: Record<string, string> = {
@@ -230,7 +230,7 @@ export const TURNO_COLORS: Record<string, string> = {
 };
 
 // ============================================================================
-// FUNÃ‡Ã•ES UTILITÃRIAS
+// FUNÇÕES UTILITÁRIAS
 // ============================================================================
 
 /**
@@ -265,7 +265,7 @@ export const formatHora = (hora: string): string => {
 };
 
 /**
- * Formata tempo em minutos para string legÃ­vel
+ * Formata tempo em minutos para string legível
  */
 export const formatTempo = (minutos?: number): string => {
   if (!minutos) return '';

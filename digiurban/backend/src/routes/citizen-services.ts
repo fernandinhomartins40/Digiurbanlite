@@ -1,4 +1,4 @@
-﻿import { Router, Response } from 'express';
+import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { uploadDocuments } from '../config/upload';
@@ -172,7 +172,7 @@ router.get('/departments/:department/no-data', async (req, res) => {
   try {
     const { department } = req.params;
 
-    // Converter slug para code (saude ÔåÆ SAUDE, assistencia-social ÔåÆ ASSISTENCIA_SOCIAL)
+    // Converter slug para code (saude  SAUDE, assistencia-social  ASSISTENCIA_SOCIAL)
     const departmentCode = department.toUpperCase().replace(/-/g, '_');
 
     // Buscar departamento pelo code
@@ -369,7 +369,7 @@ router.get('/:id', async (req, res) => {
         citizenFields: allCitizenFields  // Ô£à Lista unificada de citizen_* (sem duplica+º+úo)
       };
 
-      console.log('Ô£à [Schema Conversion] Schema convertido:', {
+      console.log(' [Schema Conversion] Schema convertido:', {
         customFieldsCount: customFields.length,
         citizenFieldsCount: allCitizenFields.length,
         customFields: customFields.map(f => f.id),
@@ -841,7 +841,7 @@ router.post('/:id/request', (req, res, next) => {
 
       console.log('Ô£à [Service Request] Valida+º+úo OK - campos v+ílidos:', Object.keys(customFormData));
     } else {
-      console.log('Ôä¦´©Å [Service Request] Nenhum customFormData enviado (servi+ºo SEM_DADOS ou apenas description)');
+      console.log('Ô䦴©Å [Service Request] Nenhum customFormData enviado (servi+ºo SEM_DADOS ou apenas description)');
     }
 
     const {

@@ -141,8 +141,8 @@ export default function ListaAtendimentosPage() {
       // Status iniciais
       AGUARDANDO: { cor: 'bg-yellow-100 text-yellow-800 border-yellow-300', label: 'Aguardando', icon: Clock },
 
-      // UPA - ClassificaÃ§Ã£o de Risco
-      EM_CLASSIFICACAO_RISCO: { cor: 'bg-red-50 text-red-800 border-red-300', label: 'Em ClassificaÃ§Ã£o Risco', icon: AlertCircle },
+      // UPA - Classificação de Risco
+      EM_CLASSIFICACAO_RISCO: { cor: 'bg-red-50 text-red-800 border-red-300', label: 'Em Classificação Risco', icon: AlertCircle },
       AGUARDANDO_ATENDIMENTO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Aguardando Atendimento', icon: Clock },
 
       // UBS - Acolhimento
@@ -152,27 +152,27 @@ export default function ListaAtendimentosPage() {
       // Fluxo comum (depreciados mas mantidos para compatibilidade)
       EM_ESCUTA_INICIAL: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Escuta Inicial', icon: Activity },
       EM_TRIAGEM: { cor: 'bg-green-100 text-green-800 border-green-300', label: 'Em Triagem', icon: Stethoscope },
-      AGUARDANDO_MEDICO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Aguardando MÃ©dico', icon: Clock },
+      AGUARDANDO_MEDICO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Aguardando Médico', icon: Clock },
 
       // Atendimento
       EM_CONSULTA: { cor: 'bg-purple-100 text-purple-800 border-purple-300', label: 'Em Consulta', icon: Stethoscope },
       EM_PROCEDIMENTO: { cor: 'bg-indigo-100 text-indigo-800 border-indigo-300', label: 'Em Procedimento', icon: Activity },
-      EM_VACINACAO: { cor: 'bg-pink-100 text-pink-800 border-pink-300', label: 'Em VacinaÃ§Ã£o', icon: Activity },
+      EM_VACINACAO: { cor: 'bg-pink-100 text-pink-800 border-pink-300', label: 'Em Vacinação', icon: Activity },
 
-      // FinalizaÃ§Ãµes
+      // Finalizações
       FINALIZADO: { cor: 'bg-gray-100 text-gray-800 border-gray-300', label: 'Finalizado', icon: CheckCircle },
       ENCAMINHADO_EXTERNO: { cor: 'bg-orange-100 text-orange-800 border-orange-300', label: 'Encaminhado Externo', icon: AlertCircle },
       INTERNADO: { cor: 'bg-red-100 text-red-800 border-red-300', label: 'Internado', icon: AlertCircle },
-      NAO_AGUARDOU: { cor: 'bg-gray-200 text-gray-700 border-gray-400', label: 'NÃ£o Aguardou', icon: Clock },
+      NAO_AGUARDOU: { cor: 'bg-gray-200 text-gray-700 border-gray-400', label: 'Não Aguardou', icon: Clock },
       RETORNOU: { cor: 'bg-blue-50 text-blue-700 border-blue-200', label: 'Retornou', icon: RefreshCw },
       TRANSFERIDO: { cor: 'bg-cyan-100 text-cyan-800 border-cyan-300', label: 'Transferido', icon: Activity },
 
       // Outros
       CHAMADO: { cor: 'bg-blue-100 text-blue-800 border-blue-300', label: 'Chamado', icon: Activity },
-      CONSULTA_CONCLUIDA: { cor: 'bg-indigo-100 text-indigo-800 border-indigo-300', label: 'Consulta ConcluÃ­da', icon: CheckCircle },
+      CONSULTA_CONCLUIDA: { cor: 'bg-indigo-100 text-indigo-800 border-indigo-300', label: 'Consulta Concluída', icon: CheckCircle },
     };
 
-    // Sobrescrever cor se for urgÃªncia/emergÃªncia (Protocolo de Manchester)
+    // Sobrescrever cor se for urgência/emergência (Protocolo de Manchester)
     if (['EMERGENCIA', 'MUITO_URGENTE'].includes(prioridade)) {
       return { cor: 'bg-red-100 text-red-800 border-red-300', label: configs[status]?.label || status, icon: AlertCircle };
     }
@@ -235,49 +235,49 @@ export default function ListaAtendimentosPage() {
 
   const getAcoesDisponiveis = (status: string) => {
     const acoes: Record<string, { label: string; acao: string; variante: any }[]> = {
-      // UPA - Iniciar ClassificaÃ§Ã£o de Risco
+      // UPA - Iniciar Classificação de Risco
       AGUARDANDO: [
-        { label: 'ClassificaÃ§Ã£o Risco (UPA)', acao: 'classificacao-risco', variante: 'default' },
+        { label: 'Classificação Risco (UPA)', acao: 'classificacao-risco', variante: 'default' },
         { label: 'Acolhimento (UBS)', acao: 'acolhimento', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
 
-      // Em classificaÃ§Ã£o ou acolhimento
+      // Em classificação ou acolhimento
       EM_CLASSIFICACAO_RISCO: [
-        { label: 'Continuar ClassificaÃ§Ã£o', acao: 'classificacao-risco', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Continuar Classificação', acao: 'classificacao-risco', variante: 'default' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
       EM_ACOLHIMENTO: [
         { label: 'Continuar Acolhimento', acao: 'acolhimento', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
 
-      // Aguardando atendimento (apÃ³s triagem/acolhimento)
+      // Aguardando atendimento (após triagem/acolhimento)
       AGUARDANDO_ATENDIMENTO: [
         { label: 'Iniciar Consulta', acao: 'consulta', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
 
       // Depreciados mas mantidos
       EM_ESCUTA_INICIAL: [
         { label: 'Continuar Enfermagem', acao: 'escuta-inicial', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
       EM_TRIAGEM: [
         { label: 'Continuar Triagem', acao: 'triagem', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
       AGUARDANDO_MEDICO: [
         { label: 'Iniciar Consulta', acao: 'consulta', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
       EM_CONSULTA: [
         { label: 'Continuar Consulta', acao: 'consulta', variante: 'default' },
-        { label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' },
+        { label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' },
       ],
     };
 
-    return acoes[status] || [{ label: 'Ver ProntuÃ¡rio', acao: 'prontuario', variante: 'outline' }];
+    return acoes[status] || [{ label: 'Ver Prontuário', acao: 'prontuario', variante: 'outline' }];
   };
 
   // Filtros
@@ -302,7 +302,7 @@ export default function ListaAtendimentosPage() {
     return true;
   });
 
-  // EstatÃ­sticas
+  // Estatísticas
   const stats = {
     total: atendimentos.length,
     aguardando: atendimentos.filter((a) => a.status === 'AGUARDANDO').length,
@@ -368,7 +368,7 @@ export default function ListaAtendimentosPage() {
         }
       />
 
-      {/* EstatÃ­sticas RÃ¡pidas */}
+      {/* Estatísticas Rápidas */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -405,7 +405,7 @@ export default function ListaAtendimentosPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">UrgÃªncias</CardTitle>
+            <CardTitle className="text-sm font-medium">Urgências</CardTitle>
             <AlertCircle className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -440,9 +440,9 @@ export default function ListaAtendimentosPage() {
                   <SelectItem value="AGUARDANDO">Aguardando</SelectItem>
                   <SelectItem value="EM_ESCUTA_INICIAL">Em Escuta Inicial</SelectItem>
                   <SelectItem value="EM_TRIAGEM">Em Triagem</SelectItem>
-                  <SelectItem value="AGUARDANDO_MEDICO">Aguardando MÃ©dico</SelectItem>
+                  <SelectItem value="AGUARDANDO_MEDICO">Aguardando Médico</SelectItem>
                   <SelectItem value="EM_CONSULTA">Em Consulta</SelectItem>
-                  <SelectItem value="CONSULTA_CONCLUIDA">Consulta ConcluÃ­da</SelectItem>
+                  <SelectItem value="CONSULTA_CONCLUIDA">Consulta Concluída</SelectItem>
                   <SelectItem value="FINALIZADO">Finalizado</SelectItem>
                 </SelectContent>
               </Select>
@@ -466,7 +466,7 @@ export default function ListaAtendimentosPage() {
               <div className="text-sm text-gray-400 mt-1">
                 {filtroBusca || filtroStatus !== 'TODOS'
                   ? 'Tente ajustar os filtros'
-                  : 'Adicione pacientes Ã  lista para comeÃ§ar'}
+                  : 'Adicione pacientes à lista para começar'}
               </div>
             </div>
           ) : (
@@ -482,7 +482,7 @@ export default function ListaAtendimentosPage() {
                     className={`flex items-center justify-between p-4 border-2 rounded-lg hover:shadow-md transition-all ${statusConfig.cor}`}
                   >
                     <div className="flex-1 flex items-center gap-4">
-                      {/* NÃºmero da Ordem */}
+                      {/* Número da Ordem */}
                       <div className="flex flex-col items-center">
                         <div className="text-2xl font-bold text-gray-700">
                           #{atendimento.ordem}
@@ -523,7 +523,7 @@ export default function ListaAtendimentosPage() {
                       </div>
                     </div>
 
-                    {/* AÃ§Ãµes */}
+                    {/* Ações */}
                     <div className="flex items-center gap-2 ml-4">
                       {acoes.map((acao) => (
                         <Button
@@ -544,10 +544,10 @@ export default function ListaAtendimentosPage() {
         </CardContent>
       </Card>
 
-      {/* RodapÃ© */}
+      {/* Rodapé */}
       <div className="text-center text-sm text-gray-500 pt-6 border-t">
         <p>
-          AtualizaÃ§Ã£o automÃ¡tica a cada 30 segundos â€¢ Sistema compatÃ­vel com PEC e-SUS APS
+          Atualização automática a cada 30 segundos • Sistema compatível com PEC e-SUS APS
         </p>
       </div>
     </div>

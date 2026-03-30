@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { ProtocolDocumentsTab } from './ProtocolDocumentsTab'
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'

@@ -1,4 +1,4 @@
-﻿/**
+/**
  * ============================================================================
  * DOCUMENT UPLOAD ROUTES
  * ============================================================================
@@ -19,7 +19,7 @@ const router = Router();
 
 /**
  * POST /api/document-upload/protocol/:protocolId
- * Upload de documentos para protocolo (cidadÃ£o)
+ * Upload de documentos para protocolo (cidadão)
  */
 router.post(
   '/protocol/:protocolId',
@@ -44,7 +44,7 @@ router.post(
       if (!protocolId) {
         return res.status(400).json({
           success: false,
-          error: 'ID do protocolo Ã© obrigatÃ³rio'
+          error: 'ID do protocolo é obrigatório'
         });
       }
 
@@ -164,7 +164,7 @@ router.post(
   }
 );/**
  * GET /api/document-upload/service/:serviceId/requirements
- * ObtÃ©m requisitos de documentos de um serviÃ§o
+ * Obtém requisitos de documentos de um serviço
  */
 router.get(
   '/service/:serviceId/requirements',
@@ -294,7 +294,7 @@ router.post(
 
 /**
  * POST /api/document-upload/validate-cpf
- * Valida CPF extraÃ­do do documento
+ * Valida CPF extraído do documento
  */
 router.post(
   '/validate-cpf',
@@ -305,7 +305,7 @@ router.post(
       if (!cpf) {
         return res.status(400).json({
           success: false,
-          error: 'CPF Ã© obrigatÃ³rio'
+          error: 'CPF é obrigatório'
         });
       }
 
@@ -316,10 +316,10 @@ router.post(
         valid: isValid
       });
     } catch (error) {
-      console.error('Erro na validaÃ§Ã£o de CPF:', error);
+      console.error('Erro na validação de CPF:', error);
       return res.status(500).json({
         success: false,
-        error: error instanceof Error ? error.message : 'Erro na validaÃ§Ã£o'
+        error: error instanceof Error ? error.message : 'Erro na validação'
       });
     }
   }

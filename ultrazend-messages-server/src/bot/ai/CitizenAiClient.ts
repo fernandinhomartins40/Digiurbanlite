@@ -1,4 +1,4 @@
-﻿import axios, { AxiosInstance } from 'axios';
+import axios, { AxiosInstance } from 'axios';
 import logger from '../../utils/logger';
 import {
   CitizenAiFieldExtraction,

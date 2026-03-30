@@ -39,7 +39,7 @@ export default function FarmaciaPage() {
 
   const loadData = async () => {
     try {
-      // Carregar estatÃ­sticas
+      // Carregar estatísticas
       const hoje = new Date();
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
       const statsData = await obterEstatisticasDispensacao({
@@ -103,12 +103,12 @@ export default function FarmaciaPage() {
       />
 
 
-      {/* EstatÃ­sticas Principais */}
+      {/* Estatísticas Principais */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
-              DispensaÃ§Ãµes do MÃªs
+              Dispensações do Mês
             </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
@@ -117,7 +117,7 @@ export default function FarmaciaPage() {
               {stats?.totalDispensacoes || 0}
             </div>
             <p className="text-xs text-muted-foreground">
-              {stats?.mediaDiaria || 0} por dia em mÃ©dia
+              {stats?.mediaDiaria || 0} por dia em média
             </p>
           </CardContent>
         </Card>
@@ -168,7 +168,7 @@ export default function FarmaciaPage() {
           <CardContent>
             <div className="text-2xl font-bold">{alertas.length}</div>
             <p className="text-xs text-muted-foreground">
-              Requerem atenÃ§Ã£o imediata
+              Requerem atenção imediata
             </p>
           </CardContent>
         </Card>
@@ -216,13 +216,13 @@ export default function FarmaciaPage() {
                         {alerta.tipo === 'ESTOQUE_MINIMO' && (
                           <>
                             <AlertTriangle className="h-3 w-3" />
-                            <span>Estoque mÃ­nimo</span>
+                            <span>Estoque mínimo</span>
                           </>
                         )}
                         {alerta.tipo === 'VALIDADE_PROXIMA' && (
                           <>
                             <Clock className="h-3 w-3" />
-                            <span>Vencimento prÃ³ximo</span>
+                            <span>Vencimento próximo</span>
                           </>
                         )}
                         {alerta.tipo === 'VENCIDO' && (
@@ -320,17 +320,17 @@ export default function FarmaciaPage() {
         </Card>
       </div>
 
-      {/* AÃ§Ãµes RÃ¡pidas */}
+      {/* Ações Rápidas */}
       <Card>
         <CardHeader>
-          <CardTitle>AÃ§Ãµes RÃ¡pidas</CardTitle>
+          <CardTitle>Ações Rápidas</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <Link href="/admin/apps/saude/farmacia/dispensacao">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FileText className="h-6 w-6" />
-                <span>Nova DispensaÃ§Ã£o</span>
+                <span>Nova Dispensação</span>
               </Button>
             </Link>
             <Link href="/admin/apps/saude/farmacia/estoque">
@@ -342,7 +342,7 @@ export default function FarmaciaPage() {
             <Link href="/admin/apps/saude/farmacia/relatorios">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <TrendingUp className="h-6 w-6" />
-                <span>RelatÃ³rios</span>
+                <span>Relatórios</span>
               </Button>
             </Link>
           </div>

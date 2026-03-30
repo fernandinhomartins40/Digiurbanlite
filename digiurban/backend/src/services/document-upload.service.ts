@@ -2,7 +2,7 @@
  * ============================================================================
  * DOCUMENT UPLOAD SERVICE
  * ============================================================================
- * ServiÃ§o integrado de upload de documentos com protocolo e validaÃ§Ã£o
+ * Serviço integrado de upload de documentos com protocolo e validação
  */
 
 import * as path from 'path';
@@ -72,7 +72,7 @@ export interface DocumentRequirement {
 
 export class DocumentUploadService {
   /**
-   * Faz upload de documentos para um protocolo com validaÃ§Ã£o completa
+   * Faz upload de documentos para um protocolo com validação completa
    */
   async uploadDocumentsToProtocol(input: UploadDocumentInput): Promise<UploadResult> {
     const { protocolId, files, uploadedBy, documentTypes, citizenId } = input;
@@ -90,15 +90,15 @@ export class DocumentUploadService {
       });
 
       if (!protocol) {
-        throw new Error('Protocolo nÃ£o encontrado');
+        throw new Error('Protocolo não encontrado');
       }
 
-      // 2. Verificar permissÃ£o (se citizenId fornecido)
+      // 2. Verificar permissão (se citizenId fornecido)
       if (citizenId && protocol.citizenId !== citizenId) {
-        throw new Error('Acesso negado: protocolo nÃ£o pertence ao cidadÃ£o');
+        throw new Error('Acesso negado: protocolo não pertence ao cidadão');
       }
 
-      // 3. Obter configuraÃ§Ãµes de documentos do serviÃ§o
+      // 3. Obter configurações de documentos do serviço
       const serviceDocConfigs = await this.getServiceDocumentConfigs(protocol.serviceId);
 
       // 4. Processar cada arquivo
@@ -138,14 +138,14 @@ export class DocumentUploadService {
             }
           }
 
-          // 4.3 Verificar conteÃºdo malicioso
+          // 4.3 Verificar conteúdo malicioso
           if (checkForMaliciousContent(file.path)) {
             fs.unlinkSync(file.path);
             errors.push(`${file.originalname}: Arquivo suspeito detectado`);
             continue;
           }
 
-          // 4.4 Mover arquivo para diretÃ³rio do protocolo
+          // 4.4 Mover arquivo para diretório do protocolo
           const finalPath = await this.moveFileToProtocol(file, protocolId, uploadedBy);
 
           // 4.5 Buscar documento PENDING correspondente ou criar novo
@@ -160,7 +160,7 @@ export class DocumentUploadService {
 
           let document;
           if (existingDoc) {
-            // Atualizar documento PENDING â†’ UPLOADED
+            // Atualizar documento PENDING → UPLOADED
             document = await prisma.protocolDocument.update({
               where: { id: existingDoc.id },
               data: {
@@ -171,7 +171,7 @@ export class DocumentUploadService {
                 uploadedBy,
                 uploadedAt: new Date(),
                 status: DocumentStatus.UPLOADED,
-                rejectionReason: null // Limpar rejeiÃ§Ã£o anterior
+                rejectionReason: null // Limpar rejeição anterior
               }
             });
           } else {
@@ -202,7 +202,7 @@ export class DocumentUploadService {
           console.error(`Erro ao processar arquivo ${file.originalname}:`, fileError);
           errors.push(`${file.originalname}: ${fileError instanceof Error ? fileError.message : 'Erro desconhecido'}`);
 
-          // Limpar arquivo temporÃ¡rio
+          // Limpar arquivo temporário
           if (fs.existsSync(file.path)) {
             fs.unlinkSync(file.path);
           }
@@ -212,7 +212,7 @@ export class DocumentUploadService {
       // 5. Atualizar campo documents do protocolo (JSON)
       await this.updateProtocolDocuments(protocolId, uploadedDocuments);
 
-      // 6. Criar entrada no histÃ³rico
+      // 6. Criar entrada no histórico
       await prisma.protocolHistorySimplified.create({
         data: {
           protocolId,
@@ -222,19 +222,19 @@ export class DocumentUploadService {
         }
       });
 
-      // 7. Verificar se todos documentos obrigatÃ³rios foram enviados
+      // 7. Verificar se todos documentos obrigatórios foram enviados
       const docCheck = await documentService.checkRequiredDocuments(protocolId);
       if (docCheck.allUploaded) {
-        // Criar notificaÃ§Ã£o ou atualizar status
+        // Criar notificação ou atualizar status
         await prisma.notification.create({
           data: {
             citizenId: protocol.citizenId,
             title: 'Documentos Completos',
-            message: `Todos os documentos obrigatÃ³rios do protocolo ${protocol.number} foram enviados`,
+            message: `Todos os documentos obrigatórios do protocolo ${protocol.number} foram enviados`,
             type: 'SUCCESS',
             protocolId
           }
-        }).catch(err => console.error('Erro ao criar notificaÃ§Ã£o:', err));
+        }).catch(err => console.error('Erro ao criar notificação:', err));
       }
 
       return {
@@ -252,14 +252,14 @@ export class DocumentUploadService {
   }
 
   /**
-   * Move arquivo para diretÃ³rio do protocolo
+   * Move arquivo para diretório do protocolo
    */
   private async moveFileToProtocol(
     file: Express.Multer.File,
     protocolId: string,
     userId: string
   ): Promise<string> {
-    // Criar diretÃ³rio: uploads/protocols/[protocolId]/
+    // Criar diretório: uploads/protocols/[protocolId]/
     const protocolDir = path.join(
       process.cwd(),
       'uploads',
@@ -269,15 +269,15 @@ export class DocumentUploadService {
 
     createSecureDirectory(protocolDir);
 
-    // âœ… CORREÃ‡ÃƒO: Usar filename do Multer (jÃ¡ processado com timestamp e extensÃ£o)
-    // originalname pode ser "blob" se vier de cÃ¢mera, filename sempre estÃ¡ correto
+    // ✅ CORREÇÃO: Usar filename do Multer (já processado com timestamp e extensão)
+    // originalname pode ser "blob" se vier de câmera, filename sempre está correto
     const secureFilename = file.filename;
     const targetPath = path.join(protocolDir, secureFilename);
 
     // Mover arquivo
     fs.renameSync(file.path, targetPath);
 
-    // Retornar caminho pÃ‡Â§blico normalizado (usado pelo static /uploads)
+    // Retornar caminho pǧblico normalizado (usado pelo static /uploads)
     const publicPath = path.posix.join('/uploads', 'protocols', protocolId, secureFilename);
     return publicPath;
   }
@@ -319,13 +319,13 @@ export class DocumentUploadService {
     protocolId: string,
     newDocuments: any[]
   ) {
-    // MÃ©todo mantido por compatibilidade mas nÃ£o faz nada
-    // Documentos jÃ¡ estÃ£o salvos na tabela ProtocolDocument
+    // Método mantido por compatibilidade mas não faz nada
+    // Documentos já estão salvos na tabela ProtocolDocument
     return;
   }
 
   /**
-   * ObtÃ©m configuraÃ§Ãµes de documentos do serviÃ§o
+   * Obtém configurações de documentos do serviço
    */
   private async getServiceDocumentConfigs(serviceId: string): Promise<DocumentConfig[]> {
     const service = await prisma.serviceSimplified.findUnique({
@@ -350,12 +350,12 @@ export class DocumentUploadService {
       }
     }
 
-    // Normalizar configuraÃ§Ãµes
+    // Normalizar configurações
     return normalizeDocumentConfigs(requiredDocs as any[]);
   }
 
   /**
-   * Valida documentos contra configuraÃ§Ãµes do serviÃ§o
+   * Valida documentos contra configurações do serviço
    */
   async validateServiceDocuments(input: ValidateServiceDocumentsInput) {
     const { serviceId, files } = input;
@@ -367,13 +367,13 @@ export class DocumentUploadService {
       return {
         valid: true,
         errors: [],
-        warnings: ['ServiÃ§o sem configuraÃ§Ãµes de documentos definidas']
+        warnings: ['Serviço sem configurações de documentos definidas']
       };
     }
 
     // Validar cada arquivo
     for (const file of files) {
-      const docConfig = docConfigs[0]; // Usar configuraÃ§Ã£o padrÃ£o
+      const docConfig = docConfigs[0]; // Usar configuração padrão
       const validation = validateFile(file, docConfig);
 
       if (!validation.valid) {
@@ -401,15 +401,15 @@ export class DocumentUploadService {
       });
 
       if (!document) {
-        throw new Error('Documento nÃ£o encontrado');
+        throw new Error('Documento não encontrado');
       }
 
-      // Verificar se o protocolo permite remoÃ§Ã£o
+      // Verificar se o protocolo permite remoção
       if (document.protocol.status === 'CONCLUIDO') {
-        throw new Error('NÃ£o Ã© possÃ­vel remover documentos de protocolos concluÃ­dos');
+        throw new Error('Não é possível remover documentos de protocolos concluídos');
       }
 
-      // Deletar arquivo fÃ­sico
+      // Deletar arquivo físico
       if (document.fileUrl) {
         secureDeleteFile(document.fileUrl);
       }
@@ -419,7 +419,7 @@ export class DocumentUploadService {
         where: { id: documentId }
       });
 
-      // Criar histÃ³rico
+      // Criar histórico
       await prisma.protocolHistorySimplified.create({
         data: {
           protocolId: document.protocolId,
@@ -437,7 +437,7 @@ export class DocumentUploadService {
   }
 
   /**
-   * ObtÃ©m requisitos de documentos de um serviÃ§o
+   * Obtém requisitos de documentos de um serviço
    */
   async getServiceDocumentRequirements(serviceId: string): Promise<DocumentRequirement[]> {
     const configs = await this.getServiceDocumentConfigs(serviceId);
@@ -452,7 +452,7 @@ export class DocumentUploadService {
   }
 
   /**
-   * Verifica se protocolo tem todos documentos necessÃ¡rios
+   * Verifica se protocolo tem todos documentos necessários
    */
   async checkProtocolDocumentsComplete(protocolId: string): Promise<{
     complete: boolean;
@@ -485,5 +485,5 @@ export class DocumentUploadService {
   }
 }
 
-// Exportar instÃ¢ncia singleton
+// Exportar instância singleton
 export const documentUploadService = new DocumentUploadService();

@@ -95,7 +95,7 @@ export default function NovaEquipeESF() {
     e.preventDefault();
 
     if (!formData.ine || !formData.nome || !formData.tipo || !formData.unidadeId || !formData.teamId) {
-      alert('Preencha todos os campos obrigatÃ³rios');
+      alert('Preencha todos os campos obrigatórios');
       return;
     }
 
@@ -137,7 +137,7 @@ export default function NovaEquipeESF() {
               Nova Equipe ESF
             </h1>
             <p className="text-gray-600">
-              Cadastrar nova equipe de SaÃºde da FamÃ­lia
+              Cadastrar nova equipe de Saúde da Família
             </p>
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function NovaEquipeESF() {
                 {/* INE */}
                 <div className="space-y-2">
                   <Label htmlFor="ine">
-                    INE (IdentificaÃ§Ã£o Nacional de Equipes) <span className="text-red-500">*</span>
+                    INE (Identificação Nacional de Equipes) <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="ine"
@@ -163,7 +163,7 @@ export default function NovaEquipeESF() {
                     required
                   />
                   <p className="text-xs text-gray-500">
-                    CÃ³digo de 13 dÃ­gitos fornecido pelo MinistÃ©rio da SaÃºde
+                    Código de 13 dígitos fornecido pelo Ministério da Saúde
                   </p>
                 </div>
 
@@ -180,12 +180,12 @@ export default function NovaEquipeESF() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="eSF">Equipe SaÃºde da FamÃ­lia (eSF)</SelectItem>
-                      <SelectItem value="eAP">Equipe AtenÃ§Ã£o PrimÃ¡ria (eAP)</SelectItem>
-                      <SelectItem value="eAB">Equipe AtenÃ§Ã£o BÃ¡sica (eAB)</SelectItem>
-                      <SelectItem value="NASF">NÃºcleo Apoio SaÃºde FamÃ­lia (NASF)</SelectItem>
-                      <SelectItem value="eCR">Equipe ConsultÃ³rio de Rua (eCR)</SelectItem>
-                      <SelectItem value="eAD">Equipe AtenÃ§Ã£o Domiciliar (eAD)</SelectItem>
+                      <SelectItem value="eSF">Equipe Saúde da Família (eSF)</SelectItem>
+                      <SelectItem value="eAP">Equipe Atenção Primária (eAP)</SelectItem>
+                      <SelectItem value="eAB">Equipe Atenção Básica (eAB)</SelectItem>
+                      <SelectItem value="NASF">Núcleo Apoio Saúde Família (NASF)</SelectItem>
+                      <SelectItem value="eCR">Equipe Consultório de Rua (eCR)</SelectItem>
+                      <SelectItem value="eAD">Equipe Atenção Domiciliar (eAD)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -204,10 +204,10 @@ export default function NovaEquipeESF() {
                   />
                 </div>
 
-                {/* Unidade de SaÃºde */}
+                {/* Unidade de Saúde */}
                 <div className="space-y-2 md:col-span-2">
                   <Label htmlFor="unidade">
-                    Unidade de SaÃºde <span className="text-red-500">*</span>
+                    Unidade de Saúde <span className="text-red-500">*</span>
                   </Label>
                   <Select
                     value={formData.unidadeId}
@@ -263,16 +263,16 @@ export default function NovaEquipeESF() {
                   Próximos Passos
                 </h3>
                 <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
-                  <li>ApÃ³s criar a equipe, vocÃª poderÃ¡ adicionar profissionais</li>
-                  <li>Definir microÃ¡reas de atuaÃ§Ã£o</li>
-                  <li>Vincular Agentes ComunitÃ¡rios de SaÃºde (ACS)</li>
-                  <li>Atribuir cidadÃ£os Ã s microÃ¡reas</li>
+                  <li>Após criar a equipe, você poderá adicionar profissionais</li>
+                  <li>Definir microáreas de atuação</li>
+                  <li>Vincular Agentes Comunitários de Saúde (ACS)</li>
+                  <li>Atribuir cidadãos às microáreas</li>
                 </ul>
               </div>
             </CardContent>
           </Card>
 
-          {/* BotÃµes de AÃ§Ã£o */}
+          {/* Botões de Ação */}
           <div className="mt-6 flex justify-end gap-4">
             <Button
               type="button"

@@ -166,7 +166,7 @@ Posso indicar o melhor método técnico e juridicamente mais seguro para seu cas
 Essas ferramentas privadas elas usam essas opções p7blicas ?
 
 Sim — quase todas as ferramentas privadas usam dados das bases públicas oficiais.
-Elas não “inventam” preços nem possuem base própria independente do governo.
+Elas não "inventam" preços nem possuem base própria independente do governo.
 
 👉 O que muda é como esses dados são coletados, tratados e apresentados.
 
@@ -206,7 +206,7 @@ Plataformas de pregão eletrônico regionais
 
 ⚙️ O que as ferramentas privadas realmente fazem
 
-Elas funcionam como um “Google especializado em licitações” + análise automática.
+Elas funcionam como um "Google especializado em licitações" + análise automática.
 
 ✔️ Agregação
 
@@ -218,11 +218,11 @@ Transformam descrições diferentes em itens comparáveis.
 
 Exemplo:
 
-“Computador desktop i5 8GB”
+"Computador desktop i5 8GB"
 
-“Microcomputador corporativo”
+"Microcomputador corporativo"
 
-“PC tipo 1”
+"PC tipo 1"
 
 ➡️ A ferramenta tenta entender que é o mesmo produto.
 
@@ -260,7 +260,7 @@ Algumas usam IA ou regras semânticas para encontrar itens equivalentes.
 
 ❗ O que elas NÃO têm
 
-🚫 Não têm dados “secretos” do governo
+🚫 Não têm dados "secretos" do governo
 🚫 Não possuem cotações exclusivas oficiais
 🚫 Não substituem a validação técnica do gestor
 
@@ -284,22 +284,22 @@ Com ferramenta:
 Se quiser, posso te explicar também 👇
 
 ✅ Qual é a melhor forma de fazer pesquisa de preços sem pagar nada
-✅ Como montar uma pesquisa juridicamente “blindada” pela Lei 14.133
+✅ Como montar uma pesquisa juridicamente "blindada" pela Lei 14.133
 ✅ Como automatizar isso via API para um sistema próprio
 ✅ Como empresas privadas podem usar esses dados para ganhar licitações
 
 É só falar o seu objetivo 👍
 
-Eu quero criar uma aplicação minha própria nesse estilo que citou um“Google especializado em licitações” + análise automática. Uma espécie de buscador com base em um item ou uma lista de itens, consegue me gerar um modelo de negócios e detalhar como funcionará essa aplicação?
+Eu quero criar uma aplicação minha própria nesse estilo que citou um"Google especializado em licitações" + análise automática. Uma espécie de buscador com base em um item ou uma lista de itens, consegue me gerar um modelo de negócios e detalhar como funcionará essa aplicação?
 
 Excelente ideia — esse tipo de sistema tem altíssimo valor no mercado público e privado e ainda há muito espaço para soluções inteligentes (principalmente focadas em municípios).
 
 Vou te entregar um modelo completo:
 
-🚀 Modelo de negócio + arquitetura de um “Google de Licitações e Preços Públicos”
+🚀 Modelo de negócio + arquitetura de um "Google de Licitações e Preços Públicos"
 🎯 Proposta de valor
 
-“Encontrar rapidamente preços reais praticados pelo governo para qualquer item ou serviço, com análise automática e segurança jurídica.”
+"Encontrar rapidamente preços reais praticados pelo governo para qualquer item ou serviço, com análise automática e segurança jurídica."
 
 Seu produto pode servir tanto para:
 
@@ -417,9 +417,9 @@ Atas de registro de preços
 
 Usuário digita:
 
-“computador i5 8GB”
+"computador i5 8GB"
 
-“serviço de limpeza predial”
+"serviço de limpeza predial"
 
 Lista de itens (planilha)
 
@@ -441,14 +441,14 @@ Não apenas texto exato.
 
 Exemplo:
 
-“notebook i5 16GB”
+"notebook i5 16GB"
 → encontra também:
 
-“microcomputador portátil”
+"microcomputador portátil"
 
-“laptop corporativo”
+"laptop corporativo"
 
-“notebook padrão tipo 2”
+"notebook padrão tipo 2"
 
 4️⃣ Filtragem inteligente
 
@@ -579,7 +579,7 @@ orçamento preliminar
 
 ➡️ Sistema retorna estimativa completa.
 
-🥇 Estimativa de preço “juridicamente defensável”
+🥇 Estimativa de preço "juridicamente defensável"
 
 Com metodologia transparente.
 
@@ -654,16 +654,16 @@ Posso te entregar:
 
 👉 Se quiser, diga:
 
-“Quero montar uma startup real disso.”
+"Quero montar uma startup real disso."
 
 ou
 
-“Quero apenas um sistema interno.”
+"Quero apenas um sistema interno."
 
 que eu desenho o plano ideal para o seu caso 🚀
 
 Eu quero que me gere um prompt para que o claude code implemente essa aplicação como um módulo da minha aplicação que se chama digiurban, esse prompt deve pedir para que o claude code implemente de forma separada e modular essa aplicação dentro do digiurban em container separado
-Você é o Claude Code (engenheiro de software sênior). Quero que você implemente um NOVO MÓDULO dentro do meu produto chamado “digiurban”, porém de forma TOTALMENTE SEPARADA e MODULAR, rodando em um CONTAINER PRÓPRIO (stack isolada), com comunicação via HTTP (API) e/ou fila. Esse módulo será um “Buscador de Preços e Contratos Públicos” (um “Google especializado em licitações”) com análise automática.
+Você é o Claude Code (engenheiro de software sênior). Quero que você implemente um NOVO MÓDULO dentro do meu produto chamado "digiurban", porém de forma TOTALMENTE SEPARADA e MODULAR, rodando em um CONTAINER PRÓPRIO (stack isolada), com comunicação via HTTP (API) e/ou fila. Esse módulo será um "Buscador de Preços e Contratos Públicos" (um "Google especializado em licitações") com análise automática.
 
 OBJETIVO DO MÓDULO
 - Permitir buscar por um item/serviço (texto livre) ou por uma lista de itens (upload CSV/XLSX/JSON)
@@ -672,7 +672,7 @@ OBJETIVO DO MÓDULO
   - estatísticas: média, mediana, min, max, quartis, desvio padrão (quando aplicável)
   - limpeza de outliers e normalização de unidade (quando possível)
   - metodologia transparente (logs/explicações)
-- Gerar um relatório de “Pesquisa de Preços” (PDF/HTML) exportável para processo administrativo
+- Gerar um relatório de "Pesquisa de Preços" (PDF/HTML) exportável para processo administrativo
 
 RESTRIÇÕES IMPORTANTES
 1) Implementar como um módulo separado do digiurban:
@@ -701,7 +701,7 @@ A) Um novo diretório/repositório de módulo (ex.: digiurban-public-prices/) co
    - Migrações do banco
    - Seed/dados fake para desenvolvimento
 B) Integração mínima com o digiurban:
-   - Um “client” (biblioteca) no digiurban (ex.: TypeScript ou Python, conforme o digiurban) para chamar a API
+   - Um "client" (biblioteca) no digiurban (ex.: TypeScript ou Python, conforme o digiurban) para chamar a API
    - Um exemplo de tela/endpoint no digiurban que consome o módulo (pode ser simples/placeholder), sem acoplar regras do módulo ao core.
 
 STACK SUGERIDA (se não houver preferência)
@@ -714,7 +714,7 @@ STACK SUGERIDA (se não houver preferência)
 
 FUNCIONALIDADES - ESCOPO MVP (implementar completo)
 1) Conectores de dados
-   - PNCP: implementar um “connector” com client HTTP, paginação, retries e cache.
+   - PNCP: implementar um "connector" com client HTTP, paginação, retries e cache.
    - Armazenar bruto (raw) + normalizado:
      - Raw JSON em tabela raw_payloads (ou storage local) para auditoria
      - Normalização em tabelas relacionais:
@@ -724,7 +724,7 @@ FUNCIONALIDADES - ESCOPO MVP (implementar completo)
        - contracts (contratos)
        - line_items (itens/serviços)
    - A ingestão deve rodar via worker agendado (ex.: diariamente) e também sob demanda.
-   - Parâmetro: “últimos 12 meses” (configurável).
+   - Parâmetro: "últimos 12 meses" (configurável).
 
 2) Normalização e qualidade dos dados
    - Normalizar texto: lower, remover acentos, remover stopwords básicas PT-BR
@@ -750,7 +750,7 @@ FUNCIONALIDADES - ESCOPO MVP (implementar completo)
      - (Opcional) Embeddings/busca semântica como feature flag; no MVP, deixar preparado mas não obrigatório.
 
 4) Relatório
-   - Endpoint para gerar “Relatório de Pesquisa de Preços”:
+   - Endpoint para gerar "Relatório de Pesquisa de Preços":
      - parâmetros: query, filtros, período, metodologia
      - saída: PDF e também HTML
      - incluir: tabela de amostra (top 20), estatísticas, gráfico simples (pode ser ASCII ou gerado no HTML), metodologia e fontes (PNCP)
@@ -765,7 +765,7 @@ FUNCIONALIDADES - ESCOPO MVP (implementar completo)
 
 6) Segurança e integração
    - Autenticação por API key:
-     - digiurban envia “X-Digiurban-Key”
+     - digiurban envia "X-Digiurban-Key"
      - módulo valida em config/env
    - Rate limit simples por IP/chave
    - CORS configurável
@@ -852,7 +852,7 @@ DOCUMENTAÇÃO
 - OpenAPI/Swagger habilitado
 
 CRITÉRIOS DE PRONTO (Definition of Done)
-- “docker compose up” sobe tudo e /health responde OK
+- "docker compose up" sobe tudo e /health responde OK
 - ingestão de exemplo popula DB e índice com dados fake ou subset real do PNCP (se possível)
 - busca retorna resultados com stats e explicação
 - batch search funciona com um CSV simples
@@ -860,5 +860,5 @@ CRITÉRIOS DE PRONTO (Definition of Done)
 - auditoria registra consultas
 - testes passam
 
-IMPORTANTE: Faça suposições razoáveis quando faltar detalhe do digiurban (linguagem do core, estrutura de pastas). Documente as suposições no README e implemente a integração como “adapter” bem isolado.
+IMPORTANTE: Faça suposições razoáveis quando faltar detalhe do digiurban (linguagem do core, estrutura de pastas). Documente as suposições no README e implemente a integração como "adapter" bem isolado.
 Comece entregando a estrutura do projeto, depois implemente os componentes principais e finalize com testes e docs.

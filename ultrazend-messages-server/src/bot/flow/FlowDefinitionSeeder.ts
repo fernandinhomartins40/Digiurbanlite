@@ -111,7 +111,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
           continue;
         }
 
-        // NÃƒÂ£o sobrescrever fluxos gerenciados pelo painel (admin) via seeds do filesystem.
+        // Não sobrescrever fluxos gerenciados pelo painel (admin) via seeds do filesystem.
         if (String(managedBy || '').toLowerCase() === 'admin') {
           summary.skipped += 1;
           continue;

@@ -1,7 +1,7 @@
 {
     "name":  "@digiurban/prices",
     "version":  "1.0.0",
-    "description":  "MÃƒÂ³dulo de consulta de preÃƒÂ§os e cotaÃƒÂ§ÃƒÂµes pÃƒÂºblicas Ã¢â‚¬â€ DigiUrban",
+    "description":  "Módulo de consulta de preços e cotações públicas — DigiUrban",
     "main":  "dist/index.js",
     "scripts":  {
                     "dev":  "tsx watch src/index.ts",

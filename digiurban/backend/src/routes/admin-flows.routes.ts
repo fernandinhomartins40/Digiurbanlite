@@ -257,7 +257,7 @@ const updateFlowHandler = async (req: Request, res: Response) => {
     if (version !== undefined) updateData.version = version;
     if (nodes !== undefined) updateData.nodes = nodes;
 
-    // Sinalizar que este fluxo Ã© gerenciado pelo painel (para nÃ£o ser sobrescrito por seeds do filesystem).
+    // Sinalizar que este fluxo é gerenciado pelo painel (para não ser sobrescrito por seeds do filesystem).
     updateData.metadata = stampAdminManagedMetadata(flow.metadata, metadata);
 
     if (isActive !== undefined) updateData.isActive = isActive;

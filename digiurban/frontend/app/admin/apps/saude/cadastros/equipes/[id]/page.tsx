@@ -82,7 +82,7 @@ export default function EditarEquipeESF() {
       });
 
       if (!response.ok) {
-        throw new Error('Equipe nÃ£o encontrada');
+        throw new Error('Equipe não encontrada');
       }
 
       const data: Equipe = await response.json();
@@ -134,7 +134,7 @@ export default function EditarEquipeESF() {
     e.preventDefault();
 
     if (!formData.ine || !formData.nome || !formData.tipo || !formData.teamId) {
-      alert('Preencha todos os campos obrigatÃ³rios');
+      alert('Preencha todos os campos obrigatórios');
       return;
     }
 
@@ -191,12 +191,12 @@ export default function EditarEquipeESF() {
               Editar Equipe ESF
             </h1>
             <p className="text-gray-600">
-              Atualizar informaÃ§Ãµes da equipe de SaÃºde da FamÃ­lia
+              Atualizar informações da equipe de Saúde da Família
             </p>
           </div>
         </div>
 
-        {/* EstatÃ­sticas da Equipe */}
+        {/* Estatísticas da Equipe */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
           <Card>
             <CardContent className="pt-6">
@@ -220,7 +220,7 @@ export default function EditarEquipeESF() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{equipe._count.microareas}</p>
-                  <p className="text-sm text-gray-600">MicroÃ¡reas</p>
+                  <p className="text-sm text-gray-600">Microáreas</p>
                 </div>
               </div>
             </CardContent>
@@ -234,7 +234,7 @@ export default function EditarEquipeESF() {
                 </div>
                 <div>
                   <p className="text-2xl font-bold">{equipe._count.citizens}</p>
-                  <p className="text-sm text-gray-600">CidadÃ£os Vinculados</p>
+                  <p className="text-sm text-gray-600">Cidadãos Vinculados</p>
                 </div>
               </div>
             </CardContent>
@@ -247,14 +247,14 @@ export default function EditarEquipeESF() {
               <CardTitle>Dados da Equipe</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
-              {/* Unidade de SaÃºde (nÃ£o editÃ¡vel) */}
+              {/* Unidade de Saúde (não editável) */}
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                <Label className="text-sm font-medium text-gray-700">Unidade de SaÃºde</Label>
+                <Label className="text-sm font-medium text-gray-700">Unidade de Saúde</Label>
                 <p className="mt-1 text-lg font-semibold">
                   {equipe.unidade.nome} <span className="text-gray-500">({equipe.unidade.tipo})</span>
                 </p>
                 <p className="text-xs text-gray-500 mt-1">
-                  A unidade de saÃºde nÃ£o pode ser alterada apÃ³s a criaÃ§Ã£o da equipe
+                  A unidade de saúde não pode ser alterada após a criação da equipe
                 </p>
               </div>
 
@@ -262,7 +262,7 @@ export default function EditarEquipeESF() {
                 {/* INE */}
                 <div className="space-y-2">
                   <Label htmlFor="ine">
-                    INE (IdentificaÃ§Ã£o Nacional de Equipes) <span className="text-red-500">*</span>
+                    INE (Identificação Nacional de Equipes) <span className="text-red-500">*</span>
                   </Label>
                   <Input
                     id="ine"
@@ -273,7 +273,7 @@ export default function EditarEquipeESF() {
                     required
                   />
                   <p className="text-xs text-gray-500">
-                    CÃ³digo de 13 dÃ­gitos fornecido pelo MinistÃ©rio da SaÃºde
+                    Código de 13 dígitos fornecido pelo Ministério da Saúde
                   </p>
                 </div>
 
@@ -290,12 +290,12 @@ export default function EditarEquipeESF() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="eSF">Equipe SaÃºde da FamÃ­lia (eSF)</SelectItem>
-                      <SelectItem value="eAP">Equipe AtenÃ§Ã£o PrimÃ¡ria (eAP)</SelectItem>
-                      <SelectItem value="eAB">Equipe AtenÃ§Ã£o BÃ¡sica (eAB)</SelectItem>
-                      <SelectItem value="NASF">NÃºcleo Apoio SaÃºde FamÃ­lia (NASF)</SelectItem>
-                      <SelectItem value="eCR">Equipe ConsultÃ³rio de Rua (eCR)</SelectItem>
-                      <SelectItem value="eAD">Equipe AtenÃ§Ã£o Domiciliar (eAD)</SelectItem>
+                      <SelectItem value="eSF">Equipe Saúde da Família (eSF)</SelectItem>
+                      <SelectItem value="eAP">Equipe Atenção Primária (eAP)</SelectItem>
+                      <SelectItem value="eAB">Equipe Atenção Básica (eAB)</SelectItem>
+                      <SelectItem value="NASF">Núcleo Apoio Saúde Família (NASF)</SelectItem>
+                      <SelectItem value="eCR">Equipe Consultório de Rua (eCR)</SelectItem>
+                      <SelectItem value="eAD">Equipe Atenção Domiciliar (eAD)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -353,7 +353,7 @@ export default function EditarEquipeESF() {
                     </SelectContent>
                   </Select>
                   <p className="text-xs text-gray-500">
-                    Se a equipe estÃ¡ ativa no sistema
+                    Se a equipe está ativa no sistema
                   </p>
                 </div>
               </div>
@@ -365,14 +365,14 @@ export default function EditarEquipeESF() {
                 </h3>
                 <ul className="text-sm text-blue-800 space-y-1 list-disc list-inside">
                   <li>Para gerenciar profissionais, acesse a aba de Profissionais</li>
-                  <li>Para gerenciar microÃ¡reas, acesse a aba de MicroÃ¡reas</li>
-                  <li>A desativaÃ§Ã£o da equipe afetarÃ¡ todos os vÃ­nculos ativos</li>
+                  <li>Para gerenciar microáreas, acesse a aba de Microáreas</li>
+                  <li>A desativação da equipe afetará todos os vínculos ativos</li>
                 </ul>
               </div>
             </CardContent>
           </Card>
 
-          {/* BotÃµes de AÃ§Ã£o */}
+          {/* Botões de Ação */}
           <div className="mt-6 flex justify-end gap-4">
             <Button
               type="button"
@@ -388,11 +388,11 @@ export default function EditarEquipeESF() {
               onClick={() => router.push(`/admin/apps/saude/cadastros/equipes/${id}/microareas`)}
             >
               <MapPin className="h-4 w-4 mr-2" />
-              Gerenciar MicroÃ¡reas
+              Gerenciar Microáreas
             </Button>
             <Button type="submit" disabled={loading}>
               <Save className="h-4 w-4 mr-2" />
-              {loading ? 'Salvando...' : 'Salvar AlteraÃ§Ãµes'}
+              {loading ? 'Salvando...' : 'Salvar Alterações'}
             </Button>
           </div>
         </form>

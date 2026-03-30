@@ -1,11 +1,11 @@
-// Conector ComprasNet/SIASG Ã¢â‚¬â€ usa dadosabertos.compras.gov.br
+// Conector ComprasNet/SIASG — usa dadosabertos.compras.gov.br
 // Fontes:
-//   1. /modulo-legado/4_consultarItensPregoes Ã¢â‚¬â€ pregÃƒÂµes homologados (preÃƒÂ§o real praticado)
-//   2. /modulo-arp/2_consultarARPItem         Ã¢â‚¬â€ itens de Atas de Registro de PreÃƒÂ§o
+//   1. /modulo-legado/4_consultarItensPregoes — pregões homologados (preço real praticado)
+//   2. /modulo-arp/2_consultarARPItem         — itens de Atas de Registro de Preço
 //
-// NÃƒÆ’O usa PNCP Ã¢â‚¬â€ sÃƒÂ£o sistemas distintos.
-// - PNCP (pncp.gov.br): contrataÃƒÂ§ÃƒÂµes/editais da Lei 14.133/2021
-// - ComprasNet (dadosabertos.compras.gov.br): SIASG, pregÃƒÂµes, ARPs (todos os regimes)
+// NÃO usa PNCP — são sistemas distintos.
+// - PNCP (pncp.gov.br): contratações/editais da Lei 14.133/2021
+// - ComprasNet (dadosabertos.compras.gov.br): SIASG, pregões, ARPs (todos os regimes)
 
 import { prisma } from '../../models/prisma';
 import { getComprasnetClient } from '../../connectors/comprasnet/comprasnet.client';
@@ -21,7 +21,7 @@ import type { ComprasnetItemPregao, ComprasnetARPItem } from '../../connectors/c
 export interface ComprasnetIngestOptions {
   sinceDays?: number;
   runId?: string;
-  skipARP?: boolean;    // pular ATAs (ÃƒÂºtil em testes Ã¢â‚¬â€ endpoint pode ser lento)
+  skipARP?: boolean;    // pular ATAs (útil em testes — endpoint pode ser lento)
 }
 
 export interface IngestSourceResult {
@@ -39,7 +39,7 @@ export async function runComprasnetIngest(options: ComprasnetIngestOptions = {})
   let ingested = 0, updated = 0, skipped = 0, errors = 0;
   logger.info('[ComprasNet Ingest] Starting (dadosabertos.compras.gov.br)', { sinceDays, runId });
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ 1. PregÃƒÂµes homologados Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ── 1. Pregões homologados ──────────────────────────────────────────────────
   try {
     logger.info('[ComprasNet Ingest] Fetching pregoes homologados...');
     const itens = await client.fetchAllPregoes(sinceDays, config.comprasnet.maxPagesPregoes);
@@ -64,7 +64,7 @@ export async function runComprasnetIngest(options: ComprasnetIngestOptions = {})
     errors++;
   }
 
-  // Ã¢â€â‚¬Ã¢â€â‚¬ 2. Itens de ATAs de Registro de PreÃƒÂ§o Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+  // ── 2. Itens de ATAs de Registro de Preço ──────────────────────────────────
   if (!skipARP) {
     try {
       logger.info('[ComprasNet Ingest] Fetching ARP itens...');
@@ -95,7 +95,7 @@ export async function runComprasnetIngest(options: ComprasnetIngestOptions = {})
   return { ingested, updated, skipped, errors };
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ Processadores individuais Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ── Processadores individuais ─────────────────────────────────────────────────
 
 async function processPregaoItem(
   item: ComprasnetItemPregao,
@@ -107,7 +107,7 @@ async function processPregaoItem(
 
   const validation = validateLineItem({ description: desc, unitPrice });
   if (!validation.isValid) return 'skipped';
-  // Ignorar itens cancelados sem preÃƒÂ§o
+  // Ignorar itens cancelados sem preço
   if (item.situacaoItem === 'cancelado' && !unitPrice) return 'skipped';
 
   const sourceId = `comprasnet_pregao_${item.idCompraItem ?? item.idCompra}_${item.tbVwItensPregaoId?.coItem}`
@@ -173,11 +173,11 @@ async function processPregaoItem(
   const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality: 'PregÃƒÂ£o' });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality: 'Pregão' });
     return 'updated';
   }
   const dbItem = await prisma.lineItem.create({ data });
-  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality: 'PregÃƒÂ£o' });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality: 'Pregão' });
   return 'ingested';
 }
 
@@ -272,15 +272,15 @@ async function processARPItem(
   const existing = await prisma.lineItem.findFirst({ where: { sourceId } });
   if (existing) {
     await prisma.lineItem.update({ where: { id: existing.id }, data });
-    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality: 'Ata de Registro de PreÃƒÂ§o' });
+    await indexToOpenSearch(osClient, { ...data, id: existing.id, organizationName: org.name, modality: 'Ata de Registro de Preço' });
     return 'updated';
   }
   const dbItem = await prisma.lineItem.create({ data });
-  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality: 'Ata de Registro de PreÃƒÂ§o' });
+  await indexToOpenSearch(osClient, { ...data, id: dbItem.id, organizationName: org.name, modality: 'Ata de Registro de Preço' });
   return 'ingested';
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬ OpenSearch indexing Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ── OpenSearch indexing ───────────────────────────────────────────────────────
 
 async function indexToOpenSearch(
   osClient: ReturnType<typeof getOpenSearchClient>,

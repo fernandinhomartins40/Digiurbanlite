@@ -1,4 +1,4 @@
-﻿import { BotResponse, MenuOption } from '../types';
+import { BotResponse, MenuOption } from '../types';
 
 export type CitizenAiIntent =
   | 'greeting'

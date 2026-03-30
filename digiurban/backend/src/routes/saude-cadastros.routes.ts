@@ -330,7 +330,7 @@ router.post('/unidades', async (req: Request, res: Response) => {
     }
 
     if (!organizationalUnitId) {
-      return res.status(400).json({ error: 'organizationalUnitId Ã© obrigatÃ³rio' });
+      return res.status(400).json({ error: 'organizationalUnitId é obrigatório' });
     }
 
     const organizationalUnit = await prisma.organizationalUnit.findUnique({
@@ -346,11 +346,11 @@ router.post('/unidades', async (req: Request, res: Response) => {
     });
 
     if (!organizationalUnit) {
-      return res.status(404).json({ error: 'Unidade organizacional nÃ£o encontrada' });
+      return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
     }
 
     if (!organizationalUnit.isActive) {
-      return res.status(400).json({ error: 'A unidade organizacional estÃ¡ inativa' });
+      return res.status(400).json({ error: 'A unidade organizacional está inativa' });
     }
 
     const unidadeVinculada = await prisma.unidadeSaude.findFirst({
@@ -360,7 +360,7 @@ router.post('/unidades', async (req: Request, res: Response) => {
 
     if (unidadeVinculada) {
       return res.status(400).json({
-        error: `A unidade organizacional jÃ¡ estÃ¡ vinculada Ã  unidade de saÃºde \"${unidadeVinculada.nome}\"`,
+        error: `A unidade organizacional já está vinculada à unidade de saúde \"${unidadeVinculada.nome}\"`,
       });
     }
 
@@ -433,12 +433,12 @@ router.put('/unidades/:id', async (req: Request, res: Response) => {
     });
 
     if (!unidadeExistente) {
-      return res.status(404).json({ error: 'Unidade nÃ£o encontrada' });
+      return res.status(404).json({ error: 'Unidade não encontrada' });
     }
 
     const resolvedOrganizationalUnitId = organizationalUnitId ?? unidadeExistente.organizationalUnitId;
     if (!resolvedOrganizationalUnitId) {
-      return res.status(400).json({ error: 'organizationalUnitId Ã© obrigatÃ³rio' });
+      return res.status(400).json({ error: 'organizationalUnitId é obrigatório' });
     }
 
     const organizationalUnit = await prisma.organizationalUnit.findUnique({
@@ -454,11 +454,11 @@ router.put('/unidades/:id', async (req: Request, res: Response) => {
     });
 
     if (!organizationalUnit) {
-      return res.status(404).json({ error: 'Unidade organizacional nÃ£o encontrada' });
+      return res.status(404).json({ error: 'Unidade organizacional não encontrada' });
     }
 
     if (!organizationalUnit.isActive) {
-      return res.status(400).json({ error: 'A unidade organizacional estÃ¡ inativa' });
+      return res.status(400).json({ error: 'A unidade organizacional está inativa' });
     }
 
     const unidadeVinculada = await prisma.unidadeSaude.findFirst({
@@ -471,7 +471,7 @@ router.put('/unidades/:id', async (req: Request, res: Response) => {
 
     if (unidadeVinculada) {
       return res.status(400).json({
-        error: `A unidade organizacional jÃ¡ estÃ¡ vinculada Ã  unidade de saÃºde "${unidadeVinculada.nome}"`,
+        error: `A unidade organizacional já está vinculada à unidade de saúde "${unidadeVinculada.nome}"`,
       });
     }
 
@@ -1702,18 +1702,18 @@ router.post('/equipes', async (req: Request, res: Response) => {
     });
 
     if (!team) {
-      return res.status(404).json({ error: 'Equipe organizacional nÃ£o encontrada' });
+      return res.status(404).json({ error: 'Equipe organizacional não encontrada' });
     }
 
     if (!team.ativo) {
-      return res.status(400).json({ error: 'A equipe organizacional estÃ¡ inativa' });
+      return res.status(400).json({ error: 'A equipe organizacional está inativa' });
     }
 
     if (unidade.organizationalUnitId && team.organizationalUnitId) {
       if (unidade.organizationalUnitId !== team.organizationalUnitId) {
         return res.status(400).json({
           error:
-            'A equipe organizacional selecionada deve pertencer ao mesmo setor da unidade de saÃºde',
+            'A equipe organizacional selecionada deve pertencer ao mesmo setor da unidade de saúde',
         });
       }
     }
@@ -1725,7 +1725,7 @@ router.post('/equipes', async (req: Request, res: Response) => {
 
     if (equipeVinculada) {
       return res.status(400).json({
-        error: `A equipe organizacional jÃ¡ estÃ¡ vinculada Ã  equipe de saÃºde "${equipeVinculada.nome}"`,
+        error: `A equipe organizacional já está vinculada à equipe de saúde "${equipeVinculada.nome}"`,
       });
     }
 
@@ -1814,7 +1814,7 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
 
     const resolvedTeamId = teamId ?? equipeExistente.teamId;
     if (!resolvedTeamId) {
-      return res.status(400).json({ error: 'teamId Ã© obrigatÃ³rio' });
+      return res.status(400).json({ error: 'teamId é obrigatório' });
     }
 
     const team = await prisma.team.findUnique({
@@ -1828,11 +1828,11 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
     });
 
     if (!team) {
-      return res.status(404).json({ error: 'Equipe organizacional nÃ£o encontrada' });
+      return res.status(404).json({ error: 'Equipe organizacional não encontrada' });
     }
 
     if (!team.ativo) {
-      return res.status(400).json({ error: 'A equipe organizacional estÃ¡ inativa' });
+      return res.status(400).json({ error: 'A equipe organizacional está inativa' });
     }
 
     const unidade = await prisma.unidadeSaude.findUnique({
@@ -1848,7 +1848,7 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
       if (unidade.organizationalUnitId !== team.organizationalUnitId) {
         return res.status(400).json({
           error:
-            'A equipe organizacional selecionada deve pertencer ao mesmo setor da unidade de saÃºde',
+            'A equipe organizacional selecionada deve pertencer ao mesmo setor da unidade de saúde',
         });
       }
     }
@@ -1863,7 +1863,7 @@ router.put('/equipes/:id', async (req: Request, res: Response) => {
 
     if (equipeVinculada) {
       return res.status(400).json({
-        error: `A equipe organizacional jÃ¡ estÃ¡ vinculada Ã  equipe de saÃºde "${equipeVinculada.nome}"`,
+        error: `A equipe organizacional já está vinculada à equipe de saúde "${equipeVinculada.nome}"`,
       });
     }
 

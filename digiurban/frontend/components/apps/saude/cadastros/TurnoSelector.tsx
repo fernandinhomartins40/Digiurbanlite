@@ -251,7 +251,7 @@ export function TurnoSelector({
                   })
                 ) : (
                   <div className="p-4 text-center text-sm text-gray-500">
-                    {searchTerm ? `Nenhum turno encontrado para "${searchTerm}"` : 'Nenhum turno disponÃƒÂ­vel'}
+                    {searchTerm ? `Nenhum turno encontrado para "${searchTerm}"` : 'Nenhum turno disponível'}
                   </div>
                 )}
               </div>
@@ -262,7 +262,7 @@ export function TurnoSelector({
 
       {!selectedTurno && !loading && (
         <p className="text-xs text-muted-foreground">
-          Selecione um turno de trabalho ({turnos.length} disponÃƒÂ­veis)
+          Selecione um turno de trabalho ({turnos.length} disponíveis)
         </p>
       )}
 

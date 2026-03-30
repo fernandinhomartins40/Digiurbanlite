@@ -11,26 +11,26 @@
 ==========================================
 
 📋 Validando status do Git...
-[0;32m✓[0m Branch: main
-[0;32m✓[0m Sem alterações não comitadas
-[0;32m✓[0m Sincronizado com origin/main
+✓ Branch: main
+✓ Sem alterações não comitadas
+✓ Sincronizado com origin/main
 
 📁 Validando arquivos críticos...
-[0;32m✓[0m admin-citizens.ts (com correção headId)
-[0;32m✓[0m cidadao/familia/page.tsx (com optional chaining)
-[0;32m✓[0m AddFamilyMemberDialog.tsx (com debounce)
-[0;32m✓[0m CitizenFamilyCompositionEnhanced.tsx (com debounce)
-[0;32m✓[0m AdminSidebar.tsx (sem link de equipe)
+✓ admin-citizens.ts (com correção headId)
+✓ cidadao/familia/page.tsx (com optional chaining)
+✓ AddFamilyMemberDialog.tsx (com debounce)
+✓ CitizenFamilyCompositionEnhanced.tsx (com debounce)
+✓ AdminSidebar.tsx (sem link de equipe)
 
 🐳 Validando arquivos Docker...
-[0;32m✓[0m Dockerfile encontrado
-[0;32m✓[0m docker-compose.vps.yml encontrado
+✓ Dockerfile encontrado
+✓ docker-compose.vps.yml encontrado
 
 ==========================================
 📊 Resumo da Validação
 ==========================================
 
-[0;32m✅ Validação concluída com sucesso![0m
+✅ Validação concluída com sucesso!
 
 ✓ Código está pronto para deploy
 

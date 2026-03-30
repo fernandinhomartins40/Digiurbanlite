@@ -1,10 +1,10 @@
 'use client';
 
 /**
- * PÃ¡gina: Servidores da SaÃºde (Integrado com Sistema Unificado V2.0)
+ * Página: Servidores da Saúde (Integrado com Sistema Unificado V2.0)
  *
- * Esta pÃ¡gina lista todos os servidores com dados de saÃºde e usa o
- * Sistema Unificado de VinculaÃ§Ã£o V2.0 para gerenciar seus vÃ­nculos.
+ * Esta página lista todos os servidores com dados de saúde e usa o
+ * Sistema Unificado de Vinculação V2.0 para gerenciar seus vínculos.
  */
 
 import { useEffect, useState } from 'react';
@@ -100,9 +100,9 @@ const CATEGORIAS = [
 const STATUS_OPTIONS = [
   { value: 'ATIVO', label: 'Ativo', variant: 'default' as const },
   { value: 'INATIVO', label: 'Inativo', variant: 'secondary' as const },
-  { value: 'FERIAS', label: 'FÃ©rias', variant: 'outline' as const },
+  { value: 'FERIAS', label: 'Férias', variant: 'outline' as const },
   { value: 'AFASTADO', label: 'Afastado', variant: 'destructive' as const },
-  { value: 'LICENCA', label: 'LicenÃ§a', variant: 'secondary' as const },
+  { value: 'LICENCA', label: 'Licença', variant: 'secondary' as const },
 ];
 
 export default function ServidoresSaudePage() {
@@ -247,7 +247,7 @@ export default function ServidoresSaudePage() {
             </span>
           </CardTitle>
           <CardDescription>
-            Lista de servidores com dados profissionais de saÃºde
+            Lista de servidores com dados profissionais de saúde
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -267,9 +267,9 @@ export default function ServidoresSaudePage() {
                   <TableHead>Categoria</TableHead>
                   <TableHead>Registro</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead className="text-center">VÃ­nculos Ativos</TableHead>
+                  <TableHead className="text-center">Vínculos Ativos</TableHead>
                   <TableHead className="text-center">Equipes Ativas</TableHead>
-                  <TableHead className="text-right">AÃ§Ãµes</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

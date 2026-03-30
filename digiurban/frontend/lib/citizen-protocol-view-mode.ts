@@ -1,18 +1,18 @@
-﻿/**
+/**
  * ============================================================================
- * CITIZEN PROTOCOL VIEW MODE - Sistema de DetecÃ§Ã£o de Modo para CidadÃ£os
+ * CITIZEN PROTOCOL VIEW MODE - Sistema de Detecção de Modo para Cidadãos
  * ============================================================================
- * Determina como o protocolo deve ser exibido para o CIDADÃƒO baseado em:
+ * Determina como o protocolo deve ser exibido para o CIDADÃO baseado em:
  * - Status do protocolo
- * - PendÃªncias que requerem aÃ§Ã£o do cidadÃ£o
+ * - Pendências que requerem ação do cidadão
  * - Etapa atual do workflow
  */
 
 export enum CitizenProtocolViewMode {
   ACTIVE = 'ACTIVE',           // Protocolo em andamento (aguardando servidor)
-  WAITING = 'WAITING',         // Aguardando aÃ§Ã£o do cidadÃ£o (tem pendÃªncias)
-  COMPLETING = 'COMPLETING',   // Ãšltima etapa - quase pronto
-  ARCHIVED = 'ARCHIVED'        // ConcluÃ­do/Cancelado
+  WAITING = 'WAITING',         // Aguardando ação do cidadão (tem pendências)
+  COMPLETING = 'COMPLETING',   // Última etapa - quase pronto
+  ARCHIVED = 'ARCHIVED'        // Concluído/Cancelado
 }
 
 export interface CitizenProtocolViewModeResult {
@@ -33,7 +33,7 @@ export interface CitizenProtocolViewModeResult {
 }
 
 /**
- * Determina o modo de visualizaÃ§Ã£o para o cidadÃ£o
+ * Determina o modo de visualização para o cidadão
  */
 export function getCitizenProtocolViewMode(
   protocolStatus: string,
@@ -50,7 +50,7 @@ export function getCitizenProtocolViewMode(
     requiresCitizenAction?: boolean
   }>
 ): CitizenProtocolViewModeResult {
-  // 1. Protocolo concluÃ­do ou cancelado â†’ ARCHIVED
+  // 1. Protocolo concluído ou cancelado → ARCHIVED
   if (protocolStatus === 'CONCLUIDO' || protocolStatus === 'CANCELADO') {
     return {
       mode: CitizenProtocolViewMode.ARCHIVED,
@@ -59,7 +59,7 @@ export function getCitizenProtocolViewMode(
       availableTabs: ['resumo', 'generated', 'documents', 'messages', 'timeline'],
       primaryTab: 'resumo',
       message: protocolStatus === 'CONCLUIDO'
-        ? 'Protocolo concluÃ­do - Seu documento estÃ¡ disponÃ­vel'
+        ? 'Protocolo concluído - Seu documento está disponível'
         : 'Protocolo cancelado',
       actionRequired: false
     }
@@ -68,7 +68,7 @@ export function getCitizenProtocolViewMode(
   // Encontrar etapa atual
   const currentStage = stages.find(s => s.status === 'IN_PROGRESS')
 
-  // 2. Tem pendÃªncias aguardando o cidadÃ£o? â†’ WAITING (PRIORIDADE!)
+  // 2. Tem pendências aguardando o cidadão? → WAITING (PRIORIDADE!)
   const openCitizenPendings = citizenPendings.filter(
     p => ['OPEN', 'IN_PROGRESS'].includes(p.status) && p.requiresCitizenAction === true
   )
@@ -87,13 +87,13 @@ export function getCitizenProtocolViewMode(
       isLastStage: false,
       availableTabs: ['pendings', 'resumo', 'documents', 'messages'],
       primaryTab: 'pendings',
-      message: `VocÃª precisa resolver ${openCitizenPendings.length} pendÃªncia(s)`,
+      message: `Você precisa resolver ${openCitizenPendings.length} pendência(s)`,
       actionRequired: true,
       actionMessage: openCitizenPendings.length === 1
-        ? (hasDocumentOnlyPendings ? 'Envie o documento solicitado' : 'Responda Ã  pendÃªncia solicitada')
+        ? (hasDocumentOnlyPendings ? 'Envie o documento solicitado' : 'Responda à pendência solicitada')
         : (hasDocumentOnlyPendings
           ? `Envie ${openCitizenPendings.length} documentos solicitados`
-          : `Resolva ${openCitizenPendings.length} pendÃªncias para continuar`)
+          : `Resolva ${openCitizenPendings.length} pendências para continuar`)
     }
   }
 
@@ -110,12 +110,12 @@ export function getCitizenProtocolViewMode(
     }
   }
 
-  // 3. Determinar se Ã© a Ãºltima etapa
+  // 3. Determinar se é a última etapa
   if (currentStage && stages.length > 0) {
     const maxStageOrder = Math.max(...stages.map(s => s.stageOrder))
     const isLastStage = currentStage.stageOrder === maxStageOrder
 
-    // EstÃ¡ na Ãºltima etapa â†’ COMPLETING
+    // Está na última etapa → COMPLETING
     if (isLastStage) {
       return {
         mode: CitizenProtocolViewMode.COMPLETING,
@@ -123,13 +123,13 @@ export function getCitizenProtocolViewMode(
         isLastStage: true,
         availableTabs: ['resumo', 'documents', 'messages', 'timeline'],
         primaryTab: 'resumo',
-        message: 'Seu protocolo estÃ¡ em fase final!',
+        message: 'Seu protocolo está em fase final!',
         actionRequired: false
       }
     }
   }
 
-  // 4. Protocolo em andamento normal â†’ ACTIVE
+  // 4. Protocolo em andamento normal → ACTIVE
   return {
     mode: CitizenProtocolViewMode.ACTIVE,
     currentStage: currentStage as any,
@@ -137,20 +137,20 @@ export function getCitizenProtocolViewMode(
     availableTabs: ['resumo', 'documents', 'messages', 'timeline'],
     primaryTab: 'resumo',
     message: currentStage
-      ? `Aguardando anÃ¡lise: ${currentStage.stageName}`
+      ? `Aguardando análise: ${currentStage.stageName}`
       : 'Protocolo em andamento',
     actionRequired: false
   }
 }
 
 /**
- * Mapeia IDs de tabs para labels amigÃ¡veis (versÃ£o cidadÃ£o)
+ * Mapeia IDs de tabs para labels amigáveis (versão cidadão)
  */
 export const CITIZEN_TAB_LABELS: Record<string, { label: string; icon: string }> = {
   resumo: { label: 'Resumo', icon: 'FileText' },
-  pendings: { label: 'PendÃªncias', icon: 'AlertCircle' },
+  pendings: { label: 'Pendências', icon: 'AlertCircle' },
   documents: { label: 'Meus Documentos', icon: 'Upload' },
   generated: { label: 'Documentos Gerados', icon: 'FileCheck' },
   messages: { label: 'Mensagens', icon: 'MessageSquare' },
-  timeline: { label: 'HistÃ³rico', icon: 'Clock' }
+  timeline: { label: 'Histórico', icon: 'Clock' }
 }

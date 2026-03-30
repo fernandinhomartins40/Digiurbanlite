@@ -93,14 +93,14 @@ export default function MicroareasListagem() {
       const data = await response.json();
       setMicroareas(data);
     } catch (error) {
-      console.error('Erro ao carregar microÃ¡reas:', error);
+      console.error('Erro ao carregar microáreas:', error);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string, numero: string) => {
-    if (!confirm(`Deseja realmente desativar a microÃ¡rea ${numero}?`)) return;
+    if (!confirm(`Deseja realmente desativar a microárea ${numero}?`)) return;
 
     try {
       const response = await fetch(`/api/apps/saude/cadastros/microareas/${id}`, {
@@ -110,15 +110,15 @@ export default function MicroareasListagem() {
 
       if (!response.ok) {
         const error = await response.json();
-        alert(error.error || 'Erro ao desativar microÃ¡rea');
+        alert(error.error || 'Erro ao desativar microárea');
         return;
       }
 
-      alert('MicroÃ¡rea desativada com sucesso!');
+      alert('Microárea desativada com sucesso!');
       loadMicroareas();
     } catch (error) {
-      console.error('Erro ao desativar microÃ¡rea:', error);
-      alert('Erro ao desativar microÃ¡rea');
+      console.error('Erro ao desativar microárea:', error);
+      alert('Erro ao desativar microárea');
     }
   };
 
@@ -141,14 +141,14 @@ export default function MicroareasListagem() {
             <div>
               <h1 className="text-3xl font-bold flex items-center gap-2">
                 <MapPin className="h-8 w-8 text-purple-600" />
-                MicroÃ¡reas
+                Microáreas
               </h1>
-              <p className="text-gray-600">TerritorializaÃ§Ã£o e ACS responsÃ¡veis</p>
+              <p className="text-gray-600">Territorialização e ACS responsáveis</p>
             </div>
           </div>
           <Button onClick={() => router.push('/admin/apps/saude/cadastros/microareas/nova')}>
             <Plus className="h-4 w-4 mr-2" />
-            Nova MicroÃ¡rea
+            Nova Microárea
           </Button>
         </div>
 
@@ -192,7 +192,7 @@ export default function MicroareasListagem() {
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
-                    placeholder="NÃºmero, descriÃ§Ã£o, equipe ou ACS..."
+                    placeholder="Número, descrição, equipe ou ACS..."
                     value={busca}
                     onChange={(e) => setBusca(e.target.value)}
                     className="pl-10"
@@ -249,7 +249,7 @@ export default function MicroareasListagem() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600">FamÃ­lias Cadastradas</p>
+                  <p className="text-sm text-gray-600">Famílias Cadastradas</p>
                   <p className="text-2xl font-bold text-orange-600">
                     {microareas.reduce((acc, m) => acc + (m._count?.citizens || 0), 0)}
                   </p>
@@ -263,25 +263,25 @@ export default function MicroareasListagem() {
         {/* Tabela */}
         <Card>
           <CardHeader>
-            <CardTitle>MicroÃ¡reas Cadastradas ({microareasFiltradas.length})</CardTitle>
+            <CardTitle>Microáreas Cadastradas ({microareasFiltradas.length})</CardTitle>
           </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-8">
                 <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-purple-600 border-r-transparent"></div>
-                <p className="mt-4 text-gray-600">Carregando microÃ¡reas...</p>
+                <p className="mt-4 text-gray-600">Carregando microáreas...</p>
               </div>
             ) : microareasFiltradas.length === 0 ? (
               <div className="text-center py-8">
                 <MapPin className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600">Nenhuma microÃ¡rea encontrada</p>
+                <p className="text-gray-600">Nenhuma microárea encontrada</p>
                 <Button
                   variant="outline"
                   className="mt-4"
                   onClick={() => router.push('/admin/apps/saude/cadastros/microareas/nova')}
                 >
                   <Plus className="h-4 w-4 mr-2" />
-                  Criar primeira microÃ¡rea
+                  Criar primeira microárea
                 </Button>
               </div>
             ) : (
@@ -289,21 +289,21 @@ export default function MicroareasListagem() {
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>NÃºmero</TableHead>
-                      <TableHead>DescriÃ§Ã£o</TableHead>
+                      <TableHead>Número</TableHead>
+                      <TableHead>Descrição</TableHead>
                       <TableHead>Equipe ESF</TableHead>
                       <TableHead>Unidade</TableHead>
-                      <TableHead>ACS ResponsÃ¡vel</TableHead>
-                      <TableHead className="text-center">FamÃ­lias</TableHead>
+                      <TableHead>ACS Responsável</TableHead>
+                      <TableHead className="text-center">Famílias</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="text-right">AÃ§Ãµes</TableHead>
+                      <TableHead className="text-right">Ações</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {microareasFiltradas.map((microarea) => (
                       <TableRow key={microarea.id}>
                         <TableCell className="font-medium">
-                          MicroÃ¡rea {microarea.numero}
+                          Microárea {microarea.numero}
                         </TableCell>
                         <TableCell className="text-gray-600">
                           {microarea.descricao || '-'}
@@ -378,11 +378,11 @@ export default function MicroareasListagem() {
               </span>
             </h3>
             <ul className="text-sm text-purple-800 space-y-1">
-              <li>â€¢ <strong>MicroÃ¡rea</strong>: SubdivisÃ£o do territÃ³rio de uma equipe ESF</li>
-              <li>â€¢ <strong>ACS</strong>: Agente ComunitÃ¡rio de SaÃºde responsÃ¡vel pelo territÃ³rio</li>
-              <li>â€¢ Cada microÃ¡rea deve ter aproximadamente 750 pessoas (150 famÃ­lias)</li>
-              <li>â€¢ O ACS realiza visitas domiciliares mensais em seu territÃ³rio</li>
-              <li>â€¢ A territorializaÃ§Ã£o fortalece o vÃ­nculo com a comunidade</li>
+              <li>• <strong>Microárea</strong>: Subdivisão do território de uma equipe ESF</li>
+              <li>• <strong>ACS</strong>: Agente Comunitário de Saúde responsável pelo território</li>
+              <li>• Cada microárea deve ter aproximadamente 750 pessoas (150 famílias)</li>
+              <li>• O ACS realiza visitas domiciliares mensais em seu território</li>
+              <li>• A territorialização fortalece o vínculo com a comunidade</li>
             </ul>
           </CardContent>
         </Card>

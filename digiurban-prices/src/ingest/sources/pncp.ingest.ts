@@ -79,7 +79,7 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
       }
     }
 
-    // Contratos (fornecedores) Ã¢â‚¬â€ PNCP limita a 365 dias por request, usar multi-janela
+    // Contratos (fornecedores) — PNCP limita a 365 dias por request, usar multi-janela
     const contratos = await client.fetchContratosMultiWindow(sinceDays, config.pncp.pageSize, config.pncp.maxPagesContratos);
 
     logger.info('[PNCP Ingest] Contratos fetched', { count: contratos.length });
@@ -126,7 +126,7 @@ export async function runPncpIngest(options: PncpIngestOptions = {}): Promise<In
   return { ingested, updated, skipped, errors };
 }
 
-// Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬ Helpers Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬Ã¢â€â‚¬
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
 async function upsertOrganization(c: PncpContratacao) {
   return prisma.organization.upsert({

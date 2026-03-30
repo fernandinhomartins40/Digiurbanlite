@@ -216,7 +216,7 @@ router.get('/prontuario/:citizenId', async (req, res) => {
       medico: medicosById.has(consulta.medicoId)
         ? {
             id: consulta.medicoId,
-            name: medicosById.get(consulta.medicoId)?.name || 'NÃ£o informado',
+            name: medicosById.get(consulta.medicoId)?.name || 'Não informado',
           }
         : null,
     }));

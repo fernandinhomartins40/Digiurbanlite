@@ -6,7 +6,7 @@ import { logger } from '../../utils/logger';
 
 const router = Router();
 
-// POST /api/v1/ingest/run â€” disparar ingestÃ£o manual
+// POST /api/v1/ingest/run — disparar ingestão manual
 router.post('/ingest/run', ingestAuthMiddleware, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { since_days: sinceDays, uf, source, bps_max_files: bpsMaxFiles } = req.body as {
@@ -27,7 +27,7 @@ router.post('/ingest/run', ingestAuthMiddleware, async (req: Request, res: Respo
     });
 
     res.json({
-      message: 'IngestÃ£o enfileirada com sucesso',
+      message: 'Ingestão enfileirada com sucesso',
       jobId,
     });
   } catch (err) {
