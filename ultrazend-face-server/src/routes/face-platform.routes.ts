@@ -1,41 +1,14 @@
 import { Router, Request, Response } from 'express';
-import prisma from '../utils/prisma';
 import facePlatformService from '../services/FacePlatformService';
 
 const router = Router();
 
 router.get('/status', async (_req: Request, res: Response) => {
   try {
-    await Promise.all([
-      prisma.faceRecognitionIdentity.count(),
-      prisma.faceDevice.count(),
-      prisma.faceZone.count(),
-      prisma.faceRecognitionEvent.count(),
-      prisma.schoolSecurityConfiguration.count(),
-    ]);
-
-    return res.json({
-      available: true,
-      schemaReady: true,
-      service: 'ultrazend-face-server',
-      timestamp: new Date().toISOString(),
-    });
+    return res.json(await facePlatformService.getStatus());
   } catch (error: any) {
-    const missingSchema =
-      error?.code === 'P2021' ||
-      /relation .* does not exist/i.test(error?.message || '') ||
-      /table .* does not exist/i.test(error?.message || '');
-
-    return res.json({
-      available: false,
-      schemaReady: false,
-      service: 'ultrazend-face-server',
-      code: error?.code || null,
-      message: missingSchema
-        ? 'As tabelas do reconhecimento facial ainda não foram aplicadas no banco.'
-        : 'O serviço facial está ativo, mas a base ainda não está pronta.',
-      timestamp: new Date().toISOString(),
-    });
+    console.error('Erro ao carregar status do serviço facial:', error);
+    return res.status(500).json({ error: error.message });
   }
 });
 

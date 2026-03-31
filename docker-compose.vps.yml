@@ -147,6 +147,109 @@ services:
   # ─────────────────────────────────────────────────────────────
   # MÓDULO: digiurban-prices — Pesquisa de Preços Públicos
   # ─────────────────────────────────────────────────────────────
+  compreface-postgres-db:
+    image: exadel/compreface-postgres-db:1.2.0
+    container_name: compreface-postgres-db
+    environment:
+      - POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${COMPREFACE_POSTGRES_DB:-frs}
+    volumes:
+      - compreface_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+
+  compreface-core:
+    image: exadel/compreface-core:1.2.0
+    container_name: compreface-core
+    environment:
+      - ML_PORT=3000
+      - IMG_LENGTH_LIMIT=${COMPREFACE_MAX_DETECT_SIZE:-640}
+      - UWSGI_PROCESSES=${COMPREFACE_UWSGI_PROCESSES:-2}
+      - UWSGI_THREADS=${COMPREFACE_UWSGI_THREADS:-1}
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail http://localhost:3000/healthcheck || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  compreface-api:
+    image: exadel/compreface-api:1.2.0
+    container_name: compreface-api
+    environment:
+      - POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_URL=jdbc:postgresql://compreface-postgres-db:5432/${COMPREFACE_POSTGRES_DB:-frs}
+      - SPRING_PROFILES_ACTIVE=dev
+      - API_JAVA_OPTS=${COMPREFACE_API_JAVA_OPTS:--Xmx4g}
+      - SAVE_IMAGES_TO_DB=${COMPREFACE_SAVE_IMAGES_TO_DB:-true}
+      - MAX_FILE_SIZE=${COMPREFACE_MAX_FILE_SIZE:-5MB}
+      - MAX_REQUEST_SIZE=${COMPREFACE_MAX_REQUEST_SIZE:-10M}B
+      - CONNECTION_TIMEOUT=${COMPREFACE_CONNECTION_TIMEOUT:-10000}
+      - READ_TIMEOUT=${COMPREFACE_READ_TIMEOUT:-60000}
+    depends_on:
+      compreface-postgres-db:
+        condition: service_started
+      compreface-core:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+
+  compreface-admin:
+    image: exadel/compreface-admin:1.2.0
+    container_name: compreface-admin
+    environment:
+      - POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_URL=jdbc:postgresql://compreface-postgres-db:5432/${COMPREFACE_POSTGRES_DB:-frs}
+      - SPRING_PROFILES_ACTIVE=dev
+      - ENABLE_EMAIL_SERVER=${COMPREFACE_ENABLE_EMAIL_SERVER:-false}
+      - EMAIL_HOST=${COMPREFACE_EMAIL_HOST:-smtp.gmail.com}
+      - EMAIL_USERNAME=${COMPREFACE_EMAIL_USERNAME:-}
+      - EMAIL_FROM=${COMPREFACE_EMAIL_FROM:-}
+      - EMAIL_PASSWORD=${COMPREFACE_EMAIL_PASSWORD:-}
+      - ADMIN_JAVA_OPTS=${COMPREFACE_ADMIN_JAVA_OPTS:--Xmx1g}
+      - MAX_FILE_SIZE=${COMPREFACE_MAX_FILE_SIZE:-5MB}
+      - MAX_REQUEST_SIZE=${COMPREFACE_MAX_REQUEST_SIZE:-10M}B
+    depends_on:
+      compreface-postgres-db:
+        condition: service_started
+      compreface-api:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+
+  compreface-ui:
+    image: exadel/compreface-fe:1.2.0
+    container_name: compreface-ui
+    ports:
+      - "8000:80"
+    environment:
+      - CLIENT_MAX_BODY_SIZE=${COMPREFACE_MAX_REQUEST_SIZE:-10M}
+      - PROXY_READ_TIMEOUT=${COMPREFACE_READ_TIMEOUT:-60000}ms
+      - PROXY_CONNECT_TIMEOUT=${COMPREFACE_CONNECTION_TIMEOUT:-10000}ms
+    depends_on:
+      compreface-api:
+        condition: service_started
+      compreface-admin:
+        condition: service_started
+    restart: unless-stopped
+    networks:
+      - digiurban_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost/ >/dev/null || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
   ultrazend-face:
     build:
       context: ./ultrazend-face-server
@@ -163,6 +266,16 @@ services:
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
       - FACE_PLATFORM_STORAGE_PATH=/app/uploads/face-platform
+      - COMPREFACE_API_URL=http://compreface-ui:80
+      - COMPREFACE_API_KEY=${COMPREFACE_API_KEY:-}
+      - COMPREFACE_TIMEOUT_MS=${COMPREFACE_TIMEOUT_MS:-15000}
+      - COMPREFACE_PREDICTION_COUNT=${COMPREFACE_PREDICTION_COUNT:-5}
+      - COMPREFACE_DETECTION_THRESHOLD=${COMPREFACE_DETECTION_THRESHOLD:-0.8}
+      - FACE_LIVENESS_PROVIDER=${FACE_LIVENESS_PROVIDER:-guided-live-session}
+      - SILENT_FACE_LIVENESS_API_URL=${SILENT_FACE_LIVENESS_API_URL:-}
+      - SILENT_FACE_LIVENESS_API_TOKEN=${SILENT_FACE_LIVENESS_API_TOKEN:-}
+      - FACE_REQUIRE_SERVER_LIVENESS=${FACE_REQUIRE_SERVER_LIVENESS:-false}
+      - FACE_LIVENESS_TIMEOUT_MS=${FACE_LIVENESS_TIMEOUT_MS:-12000}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
       - UPLOAD_DIR=/app/uploads
       - RATE_LIMIT_WINDOW_MS=60000
@@ -174,6 +287,10 @@ services:
     restart: unless-stopped
     depends_on:
       postgres:
+        condition: service_healthy
+      compreface-core:
+        condition: service_healthy
+      compreface-ui:
         condition: service_healthy
     networks:
       - digiurban_network
@@ -545,6 +662,8 @@ volumes:
   messages_uploads:
     driver: local
   messages_logs:
+    driver: local
+  compreface_postgres_data:
     driver: local
   face_uploads:
     driver: local

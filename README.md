@@ -78,6 +78,16 @@ O sistema é composto por **4 serviços** orquestrados via Docker Compose:
 - **Database:** Prisma 6.19 (PostgreSQL compartilhado)
 - **Função:** reconhecimento facial centralizado para o ecossistema Digiurban
 - **Integração:** Digiurban Admin consome a API HTTP e mantém a operação do módulo escolar
+- **Motor de reconhecimento:** CompreFace self-hosted
+- **Prova de vida:** score guiado da sessão ao vivo ou provedor externo via `SILENT_FACE_LIVENESS_API_URL`
+
+#### Stack facial em produção
+- `compreface-postgres-db`
+- `compreface-core`
+- `compreface-api`
+- `compreface-admin`
+- `compreface-ui`
+- `ultrazend-face`
 
 ## Pré-requisitos
 
@@ -172,6 +182,11 @@ OLLAMA_MODEL=digibot-qwen2.5
 # Push Notifications (opcional)
 VAPID_PUBLIC_KEY=
 VAPID_PRIVATE_KEY=
+
+# Face Platform
+COMPREFACE_API_KEY=
+FACE_LIVENESS_PROVIDER=guided-live-session
+SILENT_FACE_LIVENESS_API_URL=
 ```
 
 ## Estrutura do Projeto
