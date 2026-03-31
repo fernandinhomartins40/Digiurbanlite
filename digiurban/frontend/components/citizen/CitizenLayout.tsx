@@ -17,6 +17,7 @@ import {
   MapPin,
   FileCheck,
   MessageCircle,
+  ScanFace,
   Users
 } from 'lucide-react';
 import { useCitizenAuth, useCitizenProtectedRoute } from '@/contexts/CitizenAuthContext';
@@ -75,6 +76,11 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
       name: 'Perfil',
       href: '/cidadao/perfil',
       icon: User
+    },
+    {
+      name: 'Leitura Facial',
+      href: '/cidadao/biometria-facial/leitura',
+      icon: ScanFace
     },
     {
       name: 'Mais',

@@ -72,6 +72,17 @@ interface CreateEnrollmentInput {
   modelVersion?: string | null;
 }
 
+interface ReadBiometryInput {
+  imageBase64?: string | null;
+  embedding?: number[] | null;
+  qualityScore?: number | null;
+  livenessScore?: number | null;
+  metadata?: Prisma.InputJsonValue;
+  expectedCitizenId?: string | null;
+  sourceType?: string;
+  sourceLabel?: string | null;
+}
+
 interface IngestRecognitionInput {
   deviceId: string;
   zoneId?: string | null;
@@ -133,6 +144,14 @@ function formatDateTime(date: Date) {
     dateStyle: 'short',
     timeStyle: 'short',
   }).format(date);
+}
+
+function getAutoApproveQualityThreshold() {
+  return Number(process.env.FACE_AUTO_APPROVE_QUALITY_THRESHOLD || 0.78);
+}
+
+function getAutoApproveLivenessThreshold() {
+  return Number(process.env.FACE_AUTO_APPROVE_LIVENESS_THRESHOLD || 0.82);
 }
 
 export class FacePlatformService {
@@ -513,7 +532,18 @@ export class FacePlatformService {
       vector = await faceDescriptorService.createDescriptorFromBase64(input.imageBase64);
     }
 
-    const status = input.approvedById ? FaceEnrollmentStatus.APPROVED : FaceEnrollmentStatus.PENDING;
+    const autoApproved = this.shouldAutoApproveEnrollment({
+      approvedById: input.approvedById,
+      qualityScore: input.qualityScore,
+      livenessScore: input.livenessScore,
+      hasVector: Boolean(vector?.length),
+    });
+    const status =
+      input.approvedById || autoApproved ? FaceEnrollmentStatus.APPROVED : FaceEnrollmentStatus.PENDING;
+    const metadata =
+      input.metadata && typeof input.metadata === 'object'
+        ? { ...(input.metadata as Record<string, unknown>) }
+        : {};
 
     const enrollment = await prisma.faceEnrollment.create({
       data: {
@@ -524,9 +554,16 @@ export class FacePlatformService {
         qualityScore: input.qualityScore ?? null,
         livenessScore: input.livenessScore ?? null,
         status,
-        metadata: (input.metadata || {}) as Prisma.InputJsonValue,
+        metadata: {
+          ...metadata,
+          autoApproved,
+          autoApprovalThresholds: {
+            quality: getAutoApproveQualityThreshold(),
+            liveness: getAutoApproveLivenessThreshold(),
+          },
+        } as Prisma.InputJsonValue,
         approvedById: input.approvedById || null,
-        approvedAt: input.approvedById ? new Date() : null,
+        approvedAt: input.approvedById || autoApproved ? new Date() : null,
       },
     });
 
@@ -568,6 +605,61 @@ export class FacePlatformService {
         },
       },
     });
+  }
+
+  public async readBiometry(input: ReadBiometryInput) {
+    let vector: number[] | null = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
+
+    if (!vector?.length && input.imageBase64) {
+      vector = await faceDescriptorService.createDescriptorFromBase64(input.imageBase64);
+    }
+
+    if (!vector?.length) {
+      throw new Error('A leitura biométrica ao vivo precisa de imagem ou embedding válido');
+    }
+
+    const bestMatch = await this.findBestMatch(vector);
+    const matchedIdentity = bestMatch.identity;
+    const expectedCitizenId = input.expectedCitizenId || null;
+    const belongsToExpectedCitizen =
+      expectedCitizenId && matchedIdentity?.citizenId
+        ? matchedIdentity.citizenId === expectedCitizenId
+        : null;
+
+    return {
+      recognized: Boolean(matchedIdentity) && bestMatch.matchStatus !== FaceMatchStatus.UNMATCHED,
+      matchStatus: bestMatch.matchStatus,
+      confidence: bestMatch.score,
+      reviewReason: bestMatch.reviewReason,
+      belongsToExpectedCitizen,
+      expectedCitizenId,
+      qualityScore: input.qualityScore ?? null,
+      livenessScore: input.livenessScore ?? null,
+      sourceType: input.sourceType || 'LIVE_READ',
+      sourceLabel: input.sourceLabel || null,
+      identity: matchedIdentity
+        ? {
+            id: matchedIdentity.id,
+            status: matchedIdentity.status,
+            citizenId: matchedIdentity.citizenId || null,
+            citizen: matchedIdentity.citizen
+              ? {
+                  id: matchedIdentity.citizen.id,
+                  name: matchedIdentity.citizen.name,
+                  cpf: matchedIdentity.citizen.cpf,
+                }
+              : null,
+            person: matchedIdentity.person
+              ? {
+                  id: matchedIdentity.person.id,
+                  name: matchedIdentity.person.name,
+                  cpf: matchedIdentity.person.cpf,
+                }
+              : null,
+          }
+        : null,
+      readAt: new Date().toISOString(),
+    };
   }
 
   public async listEvents(params: {
@@ -888,6 +980,29 @@ export class FacePlatformService {
     }
 
     return bestMatch;
+  }
+
+  private shouldAutoApproveEnrollment(input: {
+    approvedById?: string | null;
+    qualityScore?: number | null;
+    livenessScore?: number | null;
+    hasVector: boolean;
+  }) {
+    if (input.approvedById) {
+      return true;
+    }
+
+    if (!input.hasVector) {
+      return false;
+    }
+
+    const qualityScore = input.qualityScore ?? 0;
+    const livenessScore = input.livenessScore ?? 0;
+
+    return (
+      qualityScore >= getAutoApproveQualityThreshold() &&
+      livenessScore >= getAutoApproveLivenessThreshold()
+    );
   }
 
   private resolveEventType(

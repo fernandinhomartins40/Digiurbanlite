@@ -18,7 +18,7 @@ import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import facePlatformClientService from '../services/face-platform-client.service';
-import { getCitizenAccessLevelSummary } from '../services/citizen-verification.service';
+import { autoPromoteToGold, getCitizenAccessLevelSummary } from '../services/citizen-verification.service';
 
 const router = Router();
 
@@ -583,18 +583,85 @@ router.post(
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
     });
 
-    const accessLevel = await getCitizenAccessLevelSummary(citizenId);
+    const citizen = await prisma.citizen.findUnique({
+      where: { id: citizenId },
+      select: {
+        verificationStatus: true,
+        verifiedBy: true,
+      },
+    });
+
+    let accessLevel = await getCitizenAccessLevelSummary(citizenId);
+    let promotedToGold = false;
+    let promotionMessage: string | null = null;
+
+    if (
+      citizen?.verificationStatus === 'VERIFIED' &&
+      citizen.verifiedBy &&
+      accessLevel.goldCriteria.eligible
+    ) {
+      const promotion = await autoPromoteToGold(citizenId, citizen.verifiedBy);
+      promotedToGold = promotion.success;
+      promotionMessage = promotion.message;
+      accessLevel = await getCitizenAccessLevelSummary(citizenId);
+    }
 
     return res.status(201).json({
       success: true,
       message:
-        accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-          ? 'Biometria facial enviada para confirmação do servidor'
-          : 'Biometria facial cadastrada com sucesso',
+        promotedToGold
+          ? 'Biometria facial validada automaticamente e nível Ouro liberado'
+          : accessLevel.goldCriteria.biometricConfirmed
+            ? 'Biometria facial validada automaticamente com sucesso'
+            : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
+            ? 'Biometria facial enviada. Como a sessão não atingiu o limiar automático, ela ficou em revisão.'
+            : 'Biometria facial cadastrada com sucesso',
       data: {
         enrollment,
+        promotedToGold,
+        promotionMessage,
         accessLevel,
       },
+    });
+  })
+);
+
+router.post(
+  '/face-biometry/read',
+  citizenAuthMiddleware,
+  asyncHandler(async (req: Request, res: Response) => {
+    const citizenId = (req as any).citizenId as string | undefined;
+    const { imageBase64, qualityScore, livenessScore, metadata } = req.body as {
+      imageBase64?: string;
+      qualityScore?: number;
+      livenessScore?: number;
+      metadata?: Record<string, unknown>;
+    };
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
+
+    if (!imageBase64 || typeof imageBase64 !== 'string') {
+      return res.status(400).json({ error: 'A leitura facial ao vivo é obrigatória' });
+    }
+
+    const result = await facePlatformClientService.readBiometry({
+      imageBase64,
+      expectedCitizenId: citizenId,
+      sourceType: 'SELF_SERVICE_LIVE_READ',
+      sourceLabel: 'Leitura biométrica ao vivo pelo painel do cidadão',
+      qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
+      livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
+      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
+    });
+
+    return res.json({
+      success: true,
+      message: result.recognized
+        ? 'Biometria lida com sucesso'
+        : 'Nenhuma biometria compatível foi encontrada nesta leitura ao vivo',
+      data: result,
     });
   })
 );

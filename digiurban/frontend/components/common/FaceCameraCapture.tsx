@@ -696,13 +696,13 @@ export function FaceCameraCapture({
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_27%,rgba(2,6,23,0.72)_28%)]" />
                 <div
                   className={cn(
-                    'absolute left-1/2 top-1/2 h-[70%] w-[54%] -translate-x-1/2 -translate-y-1/2 rounded-[46%] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.32)] transition-transform duration-300',
+                    'absolute left-1/2 top-1/2 h-[72%] w-[50%] -translate-x-1/2 -translate-y-1/2 rounded-[999px] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.32)] transition-transform duration-300',
                     guideScaleClass,
                     feedbackTone === 'success' ? 'border-emerald-300' : '',
                     feedbackTone === 'warning' ? 'border-amber-300' : ''
                   )}
                 >
-                  <div className="absolute inset-[12%] rounded-[42%] border border-white/20" />
+                  <div className="absolute inset-[11%] rounded-[999px] border border-white/20" />
                   <div className="absolute inset-x-[20%] top-[18%] h-[2px] rounded-full bg-cyan-200/80 blur-sm animate-pulse" />
                   <div className="absolute inset-x-[20%] bottom-[18%] h-[2px] rounded-full bg-cyan-200/45 blur-sm animate-pulse" />
                 </div>

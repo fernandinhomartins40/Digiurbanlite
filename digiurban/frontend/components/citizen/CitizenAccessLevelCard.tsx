@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import {
   CheckCircle2,
@@ -9,6 +10,7 @@ import {
   Shield,
   ShieldCheck,
   Trophy,
+  UserRoundSearch,
 } from 'lucide-react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
@@ -62,6 +64,7 @@ export function CitizenAccessLevelCard() {
   const [capturedImage, setCapturedImage] = useState('');
   const [captureMetadata, setCaptureMetadata] = useState<FaceCaptureSessionMetadata | null>(null);
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
+  const [lastAutoSubmittedSessionId, setLastAutoSubmittedSessionId] = useState<string | null>(null);
 
   const citizenProfileSignature = useMemo(
     () =>
@@ -94,31 +97,30 @@ export function CitizenAccessLevelCard() {
   };
 
   useEffect(() => {
-    loadAccessLevel();
+    void loadAccessLevel();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [citizenProfileSignature]);
 
   const handleSubmitBiometry = async () => {
-    if (!capturedImage) {
-      setMessage({
-        type: 'error',
-        text: 'Conclua a validação facial ao vivo antes de enviar a biometria.',
-      });
+    if (!capturedImage || !captureMetadata) {
       return;
     }
 
     try {
       setSubmitting(true);
-      setMessage(null);
+      setMessage({
+        type: 'success',
+        text: 'Sessão ao vivo concluída. Enviando e validando a biometria automaticamente...',
+      });
 
       const response = await apiRequest('/citizen/auth/face-biometry', {
         method: 'POST',
         body: JSON.stringify({
           imageBase64: capturedImage,
           sourceLabel: 'Biometria facial por vídeo ao vivo no painel do cidadão',
-          qualityScore: captureMetadata?.qualityScore,
-          livenessScore: captureMetadata?.livenessScore,
-          metadata: captureMetadata || undefined,
+          qualityScore: captureMetadata.qualityScore,
+          livenessScore: captureMetadata.livenessScore,
+          metadata: captureMetadata,
         }),
       });
 
@@ -141,6 +143,21 @@ export function CitizenAccessLevelCard() {
       setSubmitting(false);
     }
   };
+
+  useEffect(() => {
+    const sessionId = captureMetadata?.sessionId;
+    if (!sessionId || !capturedImage || submitting) {
+      return;
+    }
+
+    if (lastAutoSubmittedSessionId === sessionId) {
+      return;
+    }
+
+    setLastAutoSubmittedSessionId(sessionId);
+    void handleSubmitBiometry();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [captureMetadata?.sessionId, capturedImage, submitting]);
 
   if (loading) {
     return (
@@ -170,7 +187,7 @@ export function CitizenAccessLevelCard() {
   const biometricCriteria = getCriteriaState(
     accessLevel.goldCriteria.biometricConfirmed,
     accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-      ? 'Biometria enviada aguardando confirmação'
+      ? 'Biometria em revisão manual'
       : 'Biometria facial ainda não confirmada',
     'Biometria facial confirmada'
   );
@@ -187,7 +204,7 @@ export function CitizenAccessLevelCard() {
               Nível de cadastro e biometria facial
             </CardTitle>
             <p className="mt-1 text-sm text-slate-600">
-              O nível Ouro agora depende de perfil completo, documentos válidos e biometria facial confirmada.
+              O nível Ouro depende de perfil completo, documentos válidos e biometria facial confirmada.
             </p>
           </div>
           <Badge className={levelStyles[accessLevel.currentLevel]}>
@@ -243,9 +260,7 @@ export function CitizenAccessLevelCard() {
                 {accessLevel.goldCriteria.profileComplete ? (
                   <p className="mt-1 text-emerald-700">Seus dados obrigatórios estão completos.</p>
                 ) : (
-                  <p className="mt-1">
-                    Pendências: {accessLevel.goldCriteria.missingProfileFields.join(', ')}.
-                  </p>
+                  <p className="mt-1">Pendências: {accessLevel.goldCriteria.missingProfileFields.join(', ')}.</p>
                 )}
               </div>
 
@@ -266,11 +281,12 @@ export function CitizenAccessLevelCard() {
                 <p className="font-medium text-slate-900">Biometria facial</p>
                 {accessLevel.goldCriteria.biometricConfirmed ? (
                   <p className="mt-1 text-emerald-700">
-                    Biometria confirmada pelo servidor e pronta para uso no ecossistema.
+                    Biometria confirmada e pronta para uso nas funcionalidades do ecossistema.
                   </p>
                 ) : accessLevel.goldCriteria.biometric.pendingEnrollments > 0 ? (
                   <p className="mt-1 text-amber-700">
-                    Você já enviou uma biometria facial. Agora ela aguarda confirmação administrativa.
+                    A biometria foi enviada automaticamente, mas ficou em revisão manual porque a sessão não atingiu o
+                    limiar de aprovação automática.
                   </p>
                 ) : (
                   <p className="mt-1">Você ainda não possui biometria facial confirmada.</p>
@@ -280,10 +296,18 @@ export function CitizenAccessLevelCard() {
           </div>
 
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <h3 className="text-sm font-semibold text-slate-900">Cadastrar biometria facial</h3>
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-sm font-semibold text-slate-900">Cadastrar biometria facial</h3>
+              <Button asChild type="button" variant="outline" size="sm">
+                <Link href="/cidadao/biometria-facial/leitura">
+                  <UserRoundSearch className="mr-2 h-4 w-4" />
+                  Testar leitura
+                </Link>
+              </Button>
+            </div>
             <p className="mt-1 text-sm text-slate-600">
-              Faça a validação por vídeo ao vivo. Depois do envio, um servidor poderá confirmar a biometria para
-              liberar o nível Ouro.
+              Faça a validação por vídeo ao vivo. Ao final da sessão, a biometria é enviada automaticamente e, se os
+              scores forem suficientes, ela já fica validada sem intervenção manual.
             </p>
 
             <FaceCameraCapture
@@ -296,20 +320,19 @@ export function CitizenAccessLevelCard() {
 
             {captureMetadata && (
               <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                Sessão ao vivo concluída com qualidade de {Math.round(captureMetadata.qualityScore * 100)}% e prova
-                de presença de {Math.round(captureMetadata.livenessScore * 100)}%.
+                Sessão concluída com qualidade de {Math.round(captureMetadata.qualityScore * 100)}% e prova de
+                presença de {Math.round(captureMetadata.livenessScore * 100)}%.
               </div>
             )}
 
-            <Button
-              type="button"
-              className="mt-4 w-full"
-              onClick={handleSubmitBiometry}
-              disabled={submitting || !capturedImage}
-            >
-              {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ScanFace className="mr-2 h-4 w-4" />}
-              Enviar biometria facial
-            </Button>
+            {submitting && (
+              <div className="mt-4 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+                <span className="inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Enviando e validando a biometria automaticamente...
+                </span>
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

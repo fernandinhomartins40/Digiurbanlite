@@ -127,9 +127,15 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           permissions: ['citizens:read'],
         },
         {
-          title: 'Biometria Facial',
+          title: 'Cadastro Biométrico',
           href: '/admin/cidadaos/biometria-facial',
           icon: ScanFace,
+          permissions: ['citizens:verify'],
+        },
+        {
+          title: 'Leitura Biométrica',
+          href: '/admin/cidadaos/biometria-facial/leitura',
+          icon: Search,
           permissions: ['citizens:verify'],
         },
       ],

@@ -11,6 +11,7 @@ import {
   Info,
   LogOut,
   ChevronRight,
+  ScanFace,
   User,
   Shield,
   MessageSquare
@@ -53,6 +54,13 @@ export default function MaisPage() {
       icon: Bell,
       badge: 3,
       href: '/cidadao/notificacoes',
+    },
+    {
+      id: 'face-read',
+      label: 'Leitura Facial',
+      description: 'Testar se a biometria facial está reconhecendo corretamente',
+      icon: ScanFace,
+      href: '/cidadao/biometria-facial/leitura',
     },
     {
       id: 'settings',

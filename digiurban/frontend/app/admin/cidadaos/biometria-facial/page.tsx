@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
@@ -7,8 +8,10 @@ import {
   ScanFace,
   Search,
   Shield,
+  ShieldAlert,
   ShieldCheck,
   Trophy,
+  UserRoundSearch,
 } from 'lucide-react';
 import { CitizenSelector } from '@/components/admin/CitizenSelector';
 import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
@@ -55,6 +58,7 @@ export default function AdminCitizenFaceBiometryPage() {
   const [sourceLabel, setSourceLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
+  const [lastAutoSubmittedSessionId, setLastAutoSubmittedSessionId] = useState<string | null>(null);
 
   const canVerify = hasPermission('citizens:verify');
 
@@ -78,18 +82,19 @@ export default function AdminCitizenFaceBiometryPage() {
 
   useEffect(() => {
     if (selectedCitizen?.id) {
-      loadAccessLevel(selectedCitizen.id);
+      void loadAccessLevel(selectedCitizen.id);
     } else {
       setAccessLevel(null);
       setCapturedImage('');
       setCaptureMetadata(null);
       setSourceLabel('');
+      setLastAutoSubmittedSessionId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCitizen?.id]);
 
   const handleRegisterBiometry = async () => {
-    if (!selectedCitizen?.id || !capturedImage) {
+    if (!selectedCitizen?.id || !capturedImage || !captureMetadata) {
       return;
     }
 
@@ -100,9 +105,9 @@ export default function AdminCitizenFaceBiometryPage() {
         body: JSON.stringify({
           imageBase64: capturedImage,
           sourceLabel: sourceLabel.trim() || `Biometria ao vivo capturada por servidor para ${selectedCitizen.name}`,
-          qualityScore: captureMetadata?.qualityScore,
-          livenessScore: captureMetadata?.livenessScore,
-          metadata: captureMetadata || undefined,
+          qualityScore: captureMetadata.qualityScore,
+          livenessScore: captureMetadata.livenessScore,
+          metadata: captureMetadata,
         }),
       });
 
@@ -126,6 +131,21 @@ export default function AdminCitizenFaceBiometryPage() {
       setSubmitting(null);
     }
   };
+
+  useEffect(() => {
+    const sessionId = captureMetadata?.sessionId;
+    if (!selectedCitizen?.id || !sessionId || !capturedImage || submitting) {
+      return;
+    }
+
+    if (lastAutoSubmittedSessionId === sessionId) {
+      return;
+    }
+
+    setLastAutoSubmittedSessionId(sessionId);
+    void handleRegisterBiometry();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCitizen?.id, captureMetadata?.sessionId, capturedImage, submitting]);
 
   const handleApprovePending = async () => {
     if (!selectedCitizen?.id) {
@@ -189,16 +209,17 @@ export default function AdminCitizenFaceBiometryPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">Biometria Facial de Cidadãos</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Cadastro Biométrico de Cidadãos</h1>
         <p className="text-sm text-slate-600">
-          Selecione um cidadão, faça a validação por vídeo ao vivo na webcam do dispositivo e confirme os critérios
-          do nível Ouro.
+          Selecione um cidadão e faça a validação ao vivo pela webcam. O envio ocorre automaticamente ao final da
+          sessão, com aprovação imediata quando os scores atingirem o limiar configurado.
         </p>
       </div>
 
       {!canVerify && (
         <Card className="border-amber-200 bg-amber-50">
-          <CardContent className="p-6 text-sm text-amber-800">
+          <CardContent className="flex items-center gap-3 p-6 text-sm text-amber-800">
+            <ShieldAlert className="h-5 w-5" />
             Seu usuário não possui permissão para cadastrar ou confirmar biometria facial de cidadãos.
           </CardContent>
         </Card>
@@ -225,10 +246,18 @@ export default function AdminCitizenFaceBiometryPage() {
 
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-lg">
-                <ScanFace className="h-5 w-5 text-blue-600" />
-                Validação ao vivo pela câmera
-              </CardTitle>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <ScanFace className="h-5 w-5 text-blue-600" />
+                  Validação ao vivo pela câmera
+                </CardTitle>
+                <Button asChild variant="outline" size="sm">
+                  <Link href="/admin/cidadaos/biometria-facial/leitura">
+                    <UserRoundSearch className="mr-2 h-4 w-4" />
+                    Leitura biométrica
+                  </Link>
+                </Button>
+              </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
@@ -258,20 +287,16 @@ export default function AdminCitizenFaceBiometryPage() {
                 </div>
               )}
 
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  onClick={handleRegisterBiometry}
-                  disabled={!selectedCitizen || !capturedImage || !canVerify || Boolean(submitting)}
-                >
-                  {submitting === 'capture' ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <ScanFace className="mr-2 h-4 w-4" />
-                  )}
-                  Cadastrar biometria pela webcam
-                </Button>
+              {submitting === 'capture' && (
+                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+                  <span className="inline-flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Enviando a biometria automaticamente para o cidadão selecionado...
+                  </span>
+                </div>
+              )}
 
+              <div className="flex flex-wrap gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -289,7 +314,7 @@ export default function AdminCitizenFaceBiometryPage() {
                   ) : (
                     <CheckCircle2 className="mr-2 h-4 w-4" />
                   )}
-                  Confirmar última biometria pendente
+                  Confirmar biometria pendente
                 </Button>
               </div>
             </CardContent>
@@ -353,7 +378,7 @@ export default function AdminCitizenFaceBiometryPage() {
                       {accessLevel.goldCriteria.biometricConfirmed
                         ? 'Confirmada'
                         : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-                          ? 'Pendente de confirmação'
+                          ? 'Em revisão manual'
                           : 'Ainda não cadastrada'}
                     </p>
                   </div>
@@ -368,9 +393,7 @@ export default function AdminCitizenFaceBiometryPage() {
                       {accessLevel.goldCriteria.profileComplete ? (
                         <p className="mt-1 text-emerald-700">Perfil obrigatório completo.</p>
                       ) : (
-                        <p className="mt-1">
-                          Faltam: {accessLevel.goldCriteria.missingProfileFields.join(', ')}.
-                        </p>
+                        <p className="mt-1">Faltam: {accessLevel.goldCriteria.missingProfileFields.join(', ')}.</p>
                       )}
                     </div>
 
@@ -391,7 +414,7 @@ export default function AdminCitizenFaceBiometryPage() {
                         {accessLevel.goldCriteria.biometricConfirmed
                           ? 'A biometria facial já foi confirmada e está ativa.'
                           : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-                            ? 'Existe biometria enviada aguardando confirmação do servidor.'
+                            ? 'Existe uma sessão enviada que ficou fora do limiar automático e aguarda revisão manual.'
                             : 'Ainda não existe biometria facial válida para o cidadão.'}
                       </p>
                     </div>
@@ -418,9 +441,7 @@ export default function AdminCitizenFaceBiometryPage() {
                     Promover para Ouro
                   </Button>
 
-                  <p className="text-sm text-slate-600">
-                    {accessLevel.goldCriteria.reason || 'Sem observações.'}
-                  </p>
+                  <p className="text-sm text-slate-600">{accessLevel.goldCriteria.reason || 'Sem observações.'}</p>
                 </div>
               </div>
             ) : null}

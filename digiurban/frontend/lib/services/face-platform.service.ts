@@ -66,6 +66,11 @@ export const facePlatformService = {
     return response.data;
   },
 
+  readBiometry: async (payload: any) => {
+    const response = await api.post('/admin/face-platform/recognition/read', payload);
+    return response.data;
+  },
+
   listEvents: async (params?: Record<string, string | number | undefined>) => {
     const response = await api.get('/admin/face-platform/events', { params });
     return response.data;

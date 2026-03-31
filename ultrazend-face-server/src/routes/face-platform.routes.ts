@@ -165,6 +165,16 @@ router.post('/identities/enrollments', async (req: any, res: Response) => {
   }
 });
 
+router.post('/recognition/read', async (req: Request, res: Response) => {
+  try {
+    const result = await facePlatformService.readBiometry(req.body);
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Erro ao ler biometria facial ao vivo:', error);
+    return res.status(400).json({ error: error.message });
+  }
+});
+
 router.get('/events', async (req: Request, res: Response) => {
   try {
     const events = await facePlatformService.listEvents({

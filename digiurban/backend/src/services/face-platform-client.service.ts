@@ -101,6 +101,11 @@ class FacePlatformClientService {
     return response.data;
   }
 
+  async readBiometry(payload: Record<string, unknown>) {
+    const response = await this.api.post('/recognition/read', payload);
+    return response.data;
+  }
+
   async listEvents(params: Record<string, unknown>) {
     const response = await this.api.get('/events', { params });
     return response.data;
