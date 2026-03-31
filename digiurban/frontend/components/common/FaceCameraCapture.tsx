@@ -86,6 +86,12 @@ interface FaceCameraCaptureProps {
 }
 
 let faceLandmarkerPromise: Promise<FaceLandmarkerInstance> | null = null;
+const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = [
+  'align',
+  'move_closer',
+  'move_away',
+  'hold_still',
+];
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -264,6 +270,7 @@ export function FaceCameraCapture({
   const [feedbackTone, setFeedbackTone] = useState<FeedbackTone>('neutral');
   const [liveMetrics, setLiveMetrics] = useState<FaceMetrics | null>(null);
   const [captureSummary, setCaptureSummary] = useState<FaceCaptureSessionMetadata | null>(null);
+  const [isMobileViewport, setIsMobileViewport] = useState(false);
 
   const syncFeedback = (message: string, tone: FeedbackTone) => {
     if (feedbackRef.current !== message) {
@@ -321,6 +328,33 @@ export function FaceCameraCapture({
   useEffect(() => {
     return () => {
       stopCamera();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      return;
+    }
+
+    const mediaQuery = window.matchMedia('(max-width: 768px)');
+    const syncViewport = () => {
+      setIsMobileViewport(mediaQuery.matches);
+    };
+
+    syncViewport();
+
+    if (typeof mediaQuery.addEventListener === 'function') {
+      mediaQuery.addEventListener('change', syncViewport);
+
+      return () => {
+        mediaQuery.removeEventListener('change', syncViewport);
+      };
+    }
+
+    mediaQuery.addListener(syncViewport);
+
+    return () => {
+      mediaQuery.removeListener(syncViewport);
     };
   }, []);
 
@@ -649,11 +683,47 @@ export function FaceCameraCapture({
   const completedCloser = isStepCompleted(sessionStep, 'move_closer');
   const completedAway = isStepCompleted(sessionStep, 'move_away');
   const completedHold = sessionStep === 'completed';
+  const isMobileFullScreen = isMobileViewport && (cameraActive || cameraLoading || faceEngineLoading);
+  const stepItems = GUIDE_STEPS.map((stepKey) => {
+    const done =
+      stepKey === 'align'
+        ? completedAlign
+        : stepKey === 'move_closer'
+          ? completedCloser
+          : stepKey === 'move_away'
+            ? completedAway
+            : completedHold;
+
+    return {
+      stepKey,
+      done,
+      active: sessionStep === stepKey,
+      label: getStepLabel(stepKey),
+    };
+  });
+
+  useEffect(() => {
+    if (!isMobileFullScreen || typeof document === 'undefined') {
+      return;
+    }
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isMobileFullScreen]);
 
   return (
-    <div className={cn('space-y-4', className)}>
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950">
-        {value && !cameraActive ? (
+    <div className={cn('space-y-4', className, isMobileFullScreen && 'relative z-[80]')}>
+      <div
+        className={cn(
+          'overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950',
+          isMobileFullScreen && 'fixed inset-0 z-[80] rounded-none border-0'
+        )}
+      >
+        {value && !cameraActive && !cameraLoading && !faceEngineLoading ? (
           <div className="relative">
             <img
               src={value}
@@ -680,7 +750,12 @@ export function FaceCameraCapture({
             </div>
           </div>
         ) : (
-          <div className="relative h-80 w-full">
+          <div
+            className={cn(
+              'relative w-full overflow-hidden bg-slate-950',
+              isMobileFullScreen ? 'h-[100dvh]' : 'h-80'
+            )}
+          >
             <video
               ref={videoRef}
               muted
@@ -693,10 +768,13 @@ export function FaceCameraCapture({
 
             {cameraActive ? (
               <>
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_27%,rgba(2,6,23,0.72)_28%)]" />
+                <div className="absolute inset-0 bg-slate-950/42" />
                 <div
                   className={cn(
-                    'absolute left-1/2 top-1/2 h-[72%] w-[50%] -translate-x-1/2 -translate-y-1/2 rounded-[999px] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.32)] transition-transform duration-300',
+                    'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[999px] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.45)] transition-transform duration-300',
+                    isMobileFullScreen
+                      ? 'h-[60dvh] w-[74vw] max-w-[28rem]'
+                      : 'h-[72%] w-[62%] max-w-[24rem] sm:w-[56%] md:w-[48%] lg:w-[44%]',
                     guideScaleClass,
                     feedbackTone === 'success' ? 'border-emerald-300' : '',
                     feedbackTone === 'warning' ? 'border-amber-300' : ''
@@ -706,28 +784,112 @@ export function FaceCameraCapture({
                   <div className="absolute inset-x-[20%] top-[18%] h-[2px] rounded-full bg-cyan-200/80 blur-sm animate-pulse" />
                   <div className="absolute inset-x-[20%] bottom-[18%] h-[2px] rounded-full bg-cyan-200/45 blur-sm animate-pulse" />
                 </div>
-                <div className="absolute left-4 top-4 flex flex-wrap gap-2">
-                  <Badge className="border-white/15 bg-slate-950/75 text-white">
-                    <ScanFace className="mr-1 h-3.5 w-3.5" />
-                    Vídeo ao vivo
-                  </Badge>
-                  <Badge className="border-white/15 bg-slate-950/75 text-white">
-                    Etapa: {getStepLabel(sessionStep)}
-                  </Badge>
+                <div className="absolute inset-x-0 top-0 z-10 bg-gradient-to-b from-slate-950 via-slate-950/80 to-transparent px-4 pb-16 pt-[max(1rem,env(safe-area-inset-top))] text-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-3">
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="border-white/15 bg-slate-950/75 text-white">
+                          <ScanFace className="mr-1 h-3.5 w-3.5" />
+                          Vídeo ao vivo
+                        </Badge>
+                        <Badge className="border-white/15 bg-slate-950/75 text-white">
+                          Etapa: {getStepLabel(sessionStep)}
+                        </Badge>
+                      </div>
+                      {isMobileFullScreen && (
+                        <p className="max-w-lg text-sm leading-6 text-slate-100/92">
+                          Centralize o rosto na moldura oval, aproxime quando o sistema pedir,
+                          depois afaste um pouco e fique imóvel até a validação terminar.
+                        </p>
+                      )}
+                    </div>
+
+                    {isMobileFullScreen && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={stopCamera}
+                        disabled={disabled}
+                        className="border-white/20 bg-slate-950/70 text-white hover:bg-slate-900 hover:text-white"
+                      >
+                        <CameraOff className="mr-2 h-4 w-4" />
+                        Fechar
+                      </Button>
+                    )}
+                  </div>
                 </div>
+                {isMobileFullScreen && (
+                  <div className="absolute inset-x-0 bottom-0 z-10 bg-gradient-to-t from-slate-950 via-slate-950/90 to-transparent px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-24 text-white">
+                    <div className="mx-auto flex w-full max-w-xl flex-col gap-3">
+                      <div
+                        className={cn(
+                          'rounded-[28px] border px-4 py-4 text-sm shadow-lg backdrop-blur',
+                          feedbackTone === 'success'
+                            ? 'border-emerald-300/45 bg-emerald-500/15 text-emerald-50'
+                            : feedbackTone === 'warning'
+                              ? 'border-amber-300/45 bg-amber-500/15 text-amber-50'
+                              : 'border-sky-300/45 bg-sky-500/15 text-sky-50'
+                        )}
+                      >
+                        {faceEngineLoading ? (
+                          <span className="inline-flex items-center gap-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            Carregando o motor de validação facial ao vivo...
+                          </span>
+                        ) : (
+                          liveFeedback
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                        {stepItems.map(({ stepKey, done, active, label }, index) => (
+                          <div
+                            key={stepKey}
+                            className={cn(
+                              'rounded-2xl border px-3 py-3 text-sm shadow-sm backdrop-blur transition-colors',
+                              done
+                                ? 'border-emerald-300/45 bg-emerald-500/12 text-emerald-50'
+                                : active
+                                  ? 'border-sky-300/45 bg-sky-500/12 text-sky-50'
+                                  : 'border-white/15 bg-white/8 text-slate-200'
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              {done ? (
+                                <BadgeCheck className="h-4 w-4" />
+                              ) : (
+                                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
+                                  {index + 1}
+                                </span>
+                              )}
+                              <span className="font-medium">{label}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center text-slate-100">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10">
-                  <ShieldCheck className="h-8 w-8" />
+                  {cameraLoading || faceEngineLoading ? (
+                    <Loader2 className="h-8 w-8 animate-spin" />
+                  ) : (
+                    <ShieldCheck className="h-8 w-8" />
+                  )}
                 </div>
                 <div className="space-y-2">
                   <p className="text-sm font-medium">
-                    Validação facial por vídeo ao vivo com orientação de aproximação e afastamento.
+                    {cameraLoading || faceEngineLoading
+                      ? 'Preparando a câmera ao vivo...'
+                      : 'Validação facial por vídeo ao vivo com orientação de aproximação e afastamento.'}
                   </p>
                   <p className="text-xs text-slate-300">
-                    O quadro é selecionado automaticamente depois que o rosto estiver centralizado,
-                    na distância correta e estável.
+                    {cameraLoading || faceEngineLoading
+                      ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela para centralizar, aproximar e afastar o rosto.'
+                      : 'O quadro é selecionado automaticamente depois que o rosto estiver centralizado, na distância correta e estável.'}
                   </p>
                 </div>
               </div>
@@ -736,31 +898,22 @@ export function FaceCameraCapture({
         )}
       </div>
 
-      <div className={cn('rounded-2xl border px-4 py-3 text-sm', feedbackToneClass)}>
-        {faceEngineLoading ? (
-          <span className="inline-flex items-center gap-2">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            Carregando o motor de validação facial ao vivo...
-          </span>
-        ) : (
-          liveFeedback
-        )}
-      </div>
+      {!isMobileFullScreen && (
+        <div className={cn('rounded-2xl border px-4 py-3 text-sm', feedbackToneClass)}>
+          {faceEngineLoading ? (
+            <span className="inline-flex items-center gap-2">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Carregando o motor de validação facial ao vivo...
+            </span>
+          ) : (
+            liveFeedback
+          )}
+        </div>
+      )}
 
-      <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-4">
-        {(['align', 'move_closer', 'move_away', 'hold_still'] as const).map((stepKey) => {
-          const done =
-            stepKey === 'align'
-              ? completedAlign
-              : stepKey === 'move_closer'
-                ? completedCloser
-                : stepKey === 'move_away'
-                  ? completedAway
-                  : completedHold;
-
-          const active = sessionStep === stepKey;
-
-          return (
+      {!isMobileFullScreen && (
+        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-4">
+          {stepItems.map(({ stepKey, done, active, label }, index) => (
             <div
               key={stepKey}
               className={cn(
@@ -777,17 +930,17 @@ export function FaceCameraCapture({
                   <BadgeCheck className="h-4 w-4" />
                 ) : (
                   <span className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
-                    {stepKey === 'align' ? '1' : stepKey === 'move_closer' ? '2' : stepKey === 'move_away' ? '3' : '4'}
+                    {index + 1}
                   </span>
                 )}
-                <span className="font-medium">{getStepLabel(stepKey)}</span>
+                <span className="font-medium">{label}</span>
               </div>
             </div>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      )}
 
-      {cameraActive && liveMetrics && (
+      {!isMobileFullScreen && cameraActive && liveMetrics && (
         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Centralização</p>
@@ -817,7 +970,7 @@ export function FaceCameraCapture({
         </div>
       )}
 
-      <div className="flex flex-wrap gap-3">
+      <div className={cn('flex flex-wrap gap-3', isMobileFullScreen && 'hidden')}>
         {!cameraActive && (
           <Button type="button" variant="outline" onClick={startCamera} disabled={disabled || cameraLoading}>
             {cameraLoading ? (
