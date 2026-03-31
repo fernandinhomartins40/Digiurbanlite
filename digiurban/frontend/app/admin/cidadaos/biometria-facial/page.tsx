@@ -4,22 +4,22 @@ import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Loader2,
-  Search,
   ScanFace,
-  ShieldCheck,
+  Search,
   Shield,
+  ShieldCheck,
   Trophy,
 } from 'lucide-react';
-import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
-import type { Citizen } from '@/hooks/useSearchCitizen';
-import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
-import { useToast } from '@/hooks/use-toast';
 import { CitizenSelector } from '@/components/admin/CitizenSelector';
-import FaceCameraCapture from '@/components/common/FaceCameraCapture';
+import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
+import type { Citizen } from '@/hooks/useSearchCitizen';
+import { useToast } from '@/hooks/use-toast';
+import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
 
 const levelStyles: Record<RegistrationLevel, string> = {
   BRONZE: 'border-amber-200 bg-amber-50 text-amber-800',
@@ -51,6 +51,7 @@ export default function AdminCitizenFaceBiometryPage() {
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
   const [capturedImage, setCapturedImage] = useState('');
+  const [captureMetadata, setCaptureMetadata] = useState<FaceCaptureSessionMetadata | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export default function AdminCitizenFaceBiometryPage() {
     } else {
       setAccessLevel(null);
       setCapturedImage('');
+      setCaptureMetadata(null);
       setSourceLabel('');
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -97,12 +99,16 @@ export default function AdminCitizenFaceBiometryPage() {
         method: 'POST',
         body: JSON.stringify({
           imageBase64: capturedImage,
-          sourceLabel: sourceLabel.trim() || `Captura administrativa de ${selectedCitizen.name}`,
+          sourceLabel: sourceLabel.trim() || `Biometria ao vivo capturada por servidor para ${selectedCitizen.name}`,
+          qualityScore: captureMetadata?.qualityScore,
+          livenessScore: captureMetadata?.livenessScore,
+          metadata: captureMetadata || undefined,
         }),
       });
 
       setAccessLevel(response.data?.accessLevel || null);
       setCapturedImage('');
+      setCaptureMetadata(null);
       setSourceLabel('');
 
       toast({
@@ -185,7 +191,8 @@ export default function AdminCitizenFaceBiometryPage() {
       <div className="space-y-1">
         <h1 className="text-2xl font-bold text-slate-900">Biometria Facial de Cidadãos</h1>
         <p className="text-sm text-slate-600">
-          Selecione um cidadão, capture a biometria pela câmera do dispositivo e confirme os critérios do nível Ouro.
+          Selecione um cidadão, faça a validação por vídeo ao vivo na webcam do dispositivo e confirme os critérios
+          do nível Ouro.
         </p>
       </div>
 
@@ -220,7 +227,7 @@ export default function AdminCitizenFaceBiometryPage() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-lg">
                 <ScanFace className="h-5 w-5 text-blue-600" />
-                Captura pela câmera
+                Validação ao vivo pela câmera
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -240,8 +247,16 @@ export default function AdminCitizenFaceBiometryPage() {
               <FaceCameraCapture
                 value={capturedImage}
                 onChange={setCapturedImage}
+                onMetadataChange={setCaptureMetadata}
                 disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
               />
+
+              {captureMetadata && (
+                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                  Sessão concluída com qualidade de {Math.round(captureMetadata.qualityScore * 100)}% e prova de
+                  presença de {Math.round(captureMetadata.livenessScore * 100)}%.
+                </div>
+              )}
 
               <div className="flex flex-wrap gap-3">
                 <Button
@@ -254,7 +269,7 @@ export default function AdminCitizenFaceBiometryPage() {
                   ) : (
                     <ScanFace className="mr-2 h-4 w-4" />
                   )}
-                  Cadastrar biometria pela câmera
+                  Cadastrar biometria pela webcam
                 </Button>
 
                 <Button

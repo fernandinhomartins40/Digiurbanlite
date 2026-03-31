@@ -492,15 +492,18 @@ router.post(
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
-    const { imageBase64, sourceLabel } = authReq.body as {
+    const { imageBase64, sourceLabel, qualityScore, livenessScore, metadata } = authReq.body as {
       imageBase64?: string;
       sourceLabel?: string;
+      qualityScore?: number;
+      livenessScore?: number;
+      metadata?: Record<string, unknown>;
     };
 
     if (!imageBase64 || typeof imageBase64 !== 'string') {
       res.status(400).json({
         success: false,
-        error: 'A captura facial é obrigatória',
+        error: 'A validação facial ao vivo é obrigatória',
       });
       return;
     }
@@ -528,6 +531,9 @@ router.post(
       sourceLabel: sourceLabel?.trim() || `Cadastro administrativo de ${citizen.name}`,
       imageBase64,
       approvedById: authReq.user.id,
+      qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
+      livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
+      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
     });
 
     let accessLevel = await getCitizenAccessLevelSummary(id);

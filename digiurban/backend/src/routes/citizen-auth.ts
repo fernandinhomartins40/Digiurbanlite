@@ -557,9 +557,12 @@ router.post(
   citizenAuthMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const citizenId = (req as any).citizenId as string | undefined;
-    const { imageBase64, sourceLabel } = req.body as {
+    const { imageBase64, sourceLabel, qualityScore, livenessScore, metadata } = req.body as {
       imageBase64?: string;
       sourceLabel?: string;
+      qualityScore?: number;
+      livenessScore?: number;
+      metadata?: Record<string, unknown>;
     };
 
     if (!citizenId) {
@@ -567,14 +570,17 @@ router.post(
     }
 
     if (!imageBase64 || typeof imageBase64 !== 'string') {
-      return res.status(400).json({ error: 'A captura facial é obrigatória' });
+      return res.status(400).json({ error: 'A validação facial ao vivo é obrigatória' });
     }
 
     const enrollment = await facePlatformClientService.createEnrollment({
       citizenId,
       sourceType: 'SELF_SERVICE',
-      sourceLabel: sourceLabel?.trim() || 'Autoatendimento do cidadão',
+      sourceLabel: sourceLabel?.trim() || 'Autoatendimento do cidadão por vídeo ao vivo',
       imageBase64,
+      qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
+      livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
+      metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
     });
 
     const accessLevel = await getCitizenAccessLevelSummary(citizenId);

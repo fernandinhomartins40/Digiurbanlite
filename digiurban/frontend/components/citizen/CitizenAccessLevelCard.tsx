@@ -6,16 +6,16 @@ import {
   Clock3,
   Loader2,
   ScanFace,
-  ShieldCheck,
   Shield,
+  ShieldCheck,
   Trophy,
 } from 'lucide-react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
-import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
-import FaceCameraCapture from '@/components/common/FaceCameraCapture';
+import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
 
 const levelStyles: Record<RegistrationLevel, string> = {
   BRONZE: 'border-amber-200 bg-amber-50 text-amber-800',
@@ -45,12 +45,12 @@ function getCriteriaState(completed: boolean, pendingLabel: string, completedLab
     ? {
         label: completedLabel,
         icon: CheckCircle2,
-        className: 'text-emerald-700 bg-emerald-50 border-emerald-200',
+        className: 'border-emerald-200 bg-emerald-50 text-emerald-700',
       }
     : {
         label: pendingLabel,
         icon: Clock3,
-        className: 'text-amber-700 bg-amber-50 border-amber-200',
+        className: 'border-amber-200 bg-amber-50 text-amber-700',
       };
 }
 
@@ -60,6 +60,7 @@ export function CitizenAccessLevelCard() {
   const [submitting, setSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [capturedImage, setCapturedImage] = useState('');
+  const [captureMetadata, setCaptureMetadata] = useState<FaceCaptureSessionMetadata | null>(null);
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
 
   const citizenProfileSignature = useMemo(
@@ -101,7 +102,7 @@ export function CitizenAccessLevelCard() {
     if (!capturedImage) {
       setMessage({
         type: 'error',
-        text: 'Capture uma imagem do rosto antes de enviar a biometria.',
+        text: 'Conclua a validação facial ao vivo antes de enviar a biometria.',
       });
       return;
     }
@@ -114,12 +115,16 @@ export function CitizenAccessLevelCard() {
         method: 'POST',
         body: JSON.stringify({
           imageBase64: capturedImage,
-          sourceLabel: 'Biometria facial pelo painel do cidadão',
+          sourceLabel: 'Biometria facial por vídeo ao vivo no painel do cidadão',
+          qualityScore: captureMetadata?.qualityScore,
+          livenessScore: captureMetadata?.livenessScore,
+          metadata: captureMetadata || undefined,
         }),
       });
 
       setAccessLevel(response.data?.accessLevel || null);
       setCapturedImage('');
+      setCaptureMetadata(null);
       await refreshCitizenData();
 
       setMessage({
@@ -209,10 +214,7 @@ export function CitizenAccessLevelCard() {
             const Icon = item.icon;
 
             return (
-              <div
-                key={item.label}
-                className={`rounded-2xl border px-4 py-4 ${item.className}`}
-              >
+              <div key={item.label} className={`rounded-2xl border px-4 py-4 ${item.className}`}>
                 <div className="flex items-center gap-3">
                   <Icon className="h-5 w-5" />
                   <p className="text-sm font-medium">{item.label}</p>
@@ -225,13 +227,13 @@ export function CitizenAccessLevelCard() {
         <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
           <div className="rounded-2xl border border-slate-200 bg-white p-4">
             <div className="flex items-center gap-2">
-                      {accessLevel.currentLevel === 'GOLD' ? (
-                        <Trophy className="h-5 w-5 text-yellow-600" />
-                      ) : accessLevel.currentLevel === 'SILVER' ? (
-                        <ShieldCheck className="h-5 w-5 text-slate-700" />
-                      ) : (
-                        <Shield className="h-5 w-5 text-amber-700" />
-                      )}
+              {accessLevel.currentLevel === 'GOLD' ? (
+                <Trophy className="h-5 w-5 text-yellow-600" />
+              ) : accessLevel.currentLevel === 'SILVER' ? (
+                <ShieldCheck className="h-5 w-5 text-slate-700" />
+              ) : (
+                <Shield className="h-5 w-5 text-amber-700" />
+              )}
               <h3 className="text-sm font-semibold text-slate-900">Checklist para o nível Ouro</h3>
             </div>
 
@@ -250,8 +252,8 @@ export function CitizenAccessLevelCard() {
               <div>
                 <p className="font-medium text-slate-900">Documentos pessoais</p>
                 <p className="mt-1">
-                  {accessLevel.goldCriteria.approvedDocsCount} de {accessLevel.goldCriteria.requiredDocCount} documentos
-                  aprovados.
+                  {accessLevel.goldCriteria.approvedDocsCount} de {accessLevel.goldCriteria.requiredDocCount}{' '}
+                  documentos aprovados.
                 </p>
                 {accessLevel.goldCriteria.missingDocumentTypes.length > 0 && (
                   <p className="mt-1">
@@ -280,15 +282,24 @@ export function CitizenAccessLevelCard() {
           <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
             <h3 className="text-sm font-semibold text-slate-900">Cadastrar biometria facial</h3>
             <p className="mt-1 text-sm text-slate-600">
-              Faça uma captura frontal do rosto. Depois do envio, um servidor poderá confirmar a biometria para liberar o nível Ouro.
+              Faça a validação por vídeo ao vivo. Depois do envio, um servidor poderá confirmar a biometria para
+              liberar o nível Ouro.
             </p>
 
             <FaceCameraCapture
               className="mt-4"
               value={capturedImage}
               onChange={setCapturedImage}
+              onMetadataChange={setCaptureMetadata}
               disabled={submitting}
             />
+
+            {captureMetadata && (
+              <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                Sessão ao vivo concluída com qualidade de {Math.round(captureMetadata.qualityScore * 100)}% e prova
+                de presença de {Math.round(captureMetadata.livenessScore * 100)}%.
+              </div>
+            )}
 
             <Button
               type="button"
