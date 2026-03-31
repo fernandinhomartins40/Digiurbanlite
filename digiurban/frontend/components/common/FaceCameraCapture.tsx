@@ -19,13 +19,12 @@ const MEDIAPIPE_WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision
 const FACE_MODEL_ASSET_URL =
   'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 
-const ALIGN_DURATION_MS = 900;
-const MOVE_DURATION_MS = 650;
-const HOLD_DURATION_MS = 1400;
+const ALIGN_DURATION_MS = 550;
+const HOLD_DURATION_MS = 1100;
 const TARGET_CENTER_X = 0.5;
 const TARGET_CENTER_Y = 0.47;
 
-type SessionStep = 'align' | 'move_closer' | 'move_away' | 'hold_still' | 'completed';
+type SessionStep = 'align' | 'hold_still' | 'completed';
 type FeedbackTone = 'neutral' | 'warning' | 'success';
 
 interface FacePoint {
@@ -54,9 +53,12 @@ interface FaceLandmarkerInstance {
 
 interface ChallengeState {
   completedSteps: SessionStep[];
-  maxSizeRatio: number;
   stableMs: number;
   faceDetections: number;
+  minYawScore: number;
+  maxYawScore: number;
+  minSizeRatio: number;
+  maxSizeRatio: number;
 }
 
 export interface FaceCaptureSessionMetadata {
@@ -83,15 +85,14 @@ interface FaceCameraCaptureProps {
   onMetadataChange?: (metadata: FaceCaptureSessionMetadata | null) => void;
   disabled?: boolean;
   className?: string;
+  startLabel?: string;
+  retryLabel?: string;
+  cancelLabel?: string;
+  showDetailedStatus?: boolean;
 }
 
 let faceLandmarkerPromise: Promise<FaceLandmarkerInstance> | null = null;
-const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = [
-  'align',
-  'move_closer',
-  'move_away',
-  'hold_still',
-];
+const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = ['align', 'hold_still'];
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
@@ -214,23 +215,26 @@ function buildQualityScore(metrics: FaceMetrics, stabilityScore: number) {
 }
 
 function buildLivenessScore(challengeState: ChallengeState, stabilityScore: number) {
-  const sawCloser = challengeState.completedSteps.includes('move_closer') ? 0.35 : 0;
-  const sawAway = challengeState.completedSteps.includes('move_away') ? 0.35 : 0;
-  const seenFramesScore = clamp(challengeState.faceDetections / 30, 0, 1) * 0.1;
+  const seenFramesScore = clamp(challengeState.faceDetections / 26, 0, 1) * 0.35;
+  const yawVariation = Math.abs(challengeState.maxYawScore - challengeState.minYawScore);
+  const sizeVariation = Math.abs(challengeState.maxSizeRatio - challengeState.minSizeRatio);
+  const subtleMotionScore = clamp(yawVariation * 2.4 + sizeVariation * 1.8, 0, 1) * 0.25;
+  const stabilityContribution = stabilityScore * 0.25;
+  const sustainedSessionScore = clamp(challengeState.stableMs / HOLD_DURATION_MS, 0, 1) * 0.15;
 
-  return roundScore(sawCloser + sawAway + stabilityScore * 0.2 + seenFramesScore);
+  return roundScore(
+    clamp(seenFramesScore + subtleMotionScore + stabilityContribution + sustainedSessionScore, 0, 1)
+  );
 }
 
 function getStepLabel(step: SessionStep) {
-  if (step === 'align') return 'Alinhar';
-  if (step === 'move_closer') return 'Aproximar';
-  if (step === 'move_away') return 'Afastar';
-  if (step === 'hold_still') return 'Estabilizar';
+  if (step === 'align') return 'Enquadrar';
+  if (step === 'hold_still') return 'Confirmar';
   return 'Concluído';
 }
 
 function isStepCompleted(currentStep: SessionStep, targetStep: SessionStep) {
-  const order: SessionStep[] = ['align', 'move_closer', 'move_away', 'hold_still', 'completed'];
+  const order: SessionStep[] = ['align', 'hold_still', 'completed'];
   return order.indexOf(currentStep) > order.indexOf(targetStep);
 }
 
@@ -240,6 +244,10 @@ export function FaceCameraCapture({
   onMetadataChange,
   disabled = false,
   className = '',
+  startLabel = 'Iniciar validação ao vivo',
+  retryLabel = 'Refazer validação ao vivo',
+  cancelLabel = 'Interromper sessão',
+  showDetailedStatus = true,
 }: FaceCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -256,9 +264,12 @@ export function FaceCameraCapture({
   const sessionStepRef = useRef<SessionStep>('align');
   const challengeStateRef = useRef<ChallengeState>({
     completedSteps: [],
-    maxSizeRatio: 0,
     stableMs: 0,
     faceDetections: 0,
+    minYawScore: 1,
+    maxYawScore: -1,
+    minSizeRatio: 1,
+    maxSizeRatio: 0,
   });
 
   const [cameraActive, setCameraActive] = useState(false);
@@ -292,9 +303,12 @@ export function FaceCameraCapture({
     sessionIdRef.current = createSessionId();
     challengeStateRef.current = {
       completedSteps: [],
-      maxSizeRatio: 0,
       stableMs: 0,
       faceDetections: 0,
+      minYawScore: 1,
+      maxYawScore: -1,
+      minSizeRatio: 1,
+      maxSizeRatio: 0,
     };
     sessionStepRef.current = 'align';
     setSessionStep('align');
@@ -432,7 +446,7 @@ export function FaceCameraCapture({
         yawScore: roundScore(metrics.yawScore),
         stabilityScore: roundScore(stabilityScore),
       },
-      hints: ['video-ao-vivo', 'aproximacao-guiada', 'afastamento-guiado', 'captura-automatica'],
+      hints: ['video-ao-vivo', 'moldura-oval', 'captura-automatica', 'validacao-estavel'],
     };
 
     captureDoneRef.current = true;
@@ -441,7 +455,7 @@ export function FaceCameraCapture({
     setCaptureSummary(metadata);
     markStepCompleted('hold_still');
     updateSessionStep('completed');
-    syncFeedback('Sessão ao vivo concluída. O melhor quadro facial foi selecionado automaticamente.', 'success');
+    syncFeedback('Sessão concluída. O melhor quadro facial foi selecionado automaticamente.', 'success');
     stopCamera();
   };
 
@@ -451,120 +465,88 @@ export function FaceCameraCapture({
     const stable = isStable(metrics, previousMetricsRef.current);
 
     challengeState.faceDetections += 1;
+    challengeState.minYawScore = Math.min(challengeState.minYawScore, metrics.yawScore);
+    challengeState.maxYawScore = Math.max(challengeState.maxYawScore, metrics.yawScore);
+    challengeState.minSizeRatio = Math.min(challengeState.minSizeRatio, metrics.sizeRatio);
     challengeState.maxSizeRatio = Math.max(challengeState.maxSizeRatio, metrics.sizeRatio);
     setLiveMetrics(metrics);
 
     if (!centered) {
       holdSinceRef.current = null;
+      challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
-      syncFeedback('Centralize o rosto dentro da moldura animada.', 'warning');
+      syncFeedback('Centralize o rosto dentro da moldura oval.', 'warning');
+      return;
+    }
+
+    const tooFar = metrics.sizeRatio < 0.24;
+    const tooClose = metrics.sizeRatio > 0.4;
+    const lookingAway = Math.abs(metrics.yawScore) > 0.18;
+
+    if (tooFar) {
+      holdSinceRef.current = null;
+      challengeState.stableMs = 0;
+      previousMetricsRef.current = metrics;
+      syncFeedback('Aproxime um pouco o rosto até preencher melhor a moldura.', 'warning');
+      return;
+    }
+
+    if (tooClose) {
+      holdSinceRef.current = null;
+      challengeState.stableMs = 0;
+      previousMetricsRef.current = metrics;
+      syncFeedback('Afaste um pouco o rosto para caber melhor na moldura.', 'warning');
+      return;
+    }
+
+    if (lookingAway) {
+      holdSinceRef.current = null;
+      challengeState.stableMs = 0;
+      previousMetricsRef.current = metrics;
+      syncFeedback('Olhe de frente para a câmera por um instante.', 'warning');
       return;
     }
 
     if (sessionStepRef.current === 'align') {
-      if (metrics.sizeRatio < 0.24) {
-        holdSinceRef.current = null;
-        syncFeedback('Aproxime o rosto até preencher melhor a área destacada.', 'warning');
-      } else if (metrics.sizeRatio > 0.42) {
-        holdSinceRef.current = null;
-        syncFeedback('Afaste o rosto um pouco para caber melhor na moldura.', 'warning');
-      } else {
-        if (holdSinceRef.current === null) {
-          holdSinceRef.current = timestamp;
-        }
+      if (holdSinceRef.current === null) {
+        holdSinceRef.current = timestamp;
+      }
 
-        const elapsed = timestamp - holdSinceRef.current;
-        syncFeedback(
-          elapsed >= ALIGN_DURATION_MS
-            ? 'Alinhamento confirmado. Agora aproxime o rosto.'
-            : 'Ótimo. Mantenha o rosto centralizado por um instante.',
-          'neutral'
-        );
+      const elapsed = timestamp - holdSinceRef.current;
+      syncFeedback(
+        elapsed >= ALIGN_DURATION_MS
+          ? 'Enquadramento confirmado. Fique imóvel por um instante.'
+          : 'Ótimo. Mantenha o rosto centralizado por um instante.',
+        'neutral'
+      );
 
-        if (elapsed >= ALIGN_DURATION_MS) {
-          markStepCompleted('align');
-          updateSessionStep('move_closer');
-        }
+      if (elapsed >= ALIGN_DURATION_MS) {
+        markStepCompleted('align');
+        updateSessionStep('hold_still');
       }
 
       previousMetricsRef.current = metrics;
       return;
     }
 
-    if (sessionStepRef.current === 'move_closer') {
-      if (metrics.sizeRatio < 0.38) {
-        holdSinceRef.current = null;
-        syncFeedback('Aproxime o rosto até quase tocar a moldura interna.', 'warning');
-      } else {
-        if (holdSinceRef.current === null) {
-          holdSinceRef.current = timestamp;
-        }
-
-        syncFeedback('Perfeito. Segure mais um instante e em seguida afaste o rosto.', 'neutral');
-
-        if (timestamp - holdSinceRef.current >= MOVE_DURATION_MS) {
-          markStepCompleted('move_closer');
-          updateSessionStep('move_away');
-          syncFeedback('Agora afaste o rosto até ele voltar a caber confortavelmente na área.', 'warning');
-        }
-      }
-
+    if (!stable) {
+      holdSinceRef.current = null;
+      challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
+      syncFeedback('Fique imóvel por um instante para concluir a validação.', 'warning');
       return;
     }
 
-    if (sessionStepRef.current === 'move_away') {
-      const movedAwayEnough = challengeState.maxSizeRatio - metrics.sizeRatio >= 0.08;
-
-      if (!movedAwayEnough || metrics.sizeRatio > 0.34) {
-        holdSinceRef.current = null;
-        syncFeedback('Afaste o rosto um pouco mais para concluir a prova de presença.', 'warning');
-      } else if (metrics.sizeRatio < 0.21) {
-        holdSinceRef.current = null;
-        syncFeedback('Aproxime levemente o rosto para voltar à área ideal.', 'warning');
-      } else {
-        if (holdSinceRef.current === null) {
-          holdSinceRef.current = timestamp;
-        }
-
-        syncFeedback('Movimento confirmado. Agora fique estável para concluir.', 'neutral');
-
-        if (timestamp - holdSinceRef.current >= MOVE_DURATION_MS) {
-          markStepCompleted('move_away');
-          updateSessionStep('hold_still');
-        }
-      }
-
-      previousMetricsRef.current = metrics;
-      return;
+    if (holdSinceRef.current === null) {
+      holdSinceRef.current = timestamp;
     }
 
-    if (sessionStepRef.current === 'hold_still') {
-      if (metrics.sizeRatio < 0.22) {
-        holdSinceRef.current = null;
-        challengeState.stableMs = 0;
-        syncFeedback('Aproxime um pouco o rosto para finalizar a validação ao vivo.', 'warning');
-      } else if (metrics.sizeRatio > 0.36) {
-        holdSinceRef.current = null;
-        challengeState.stableMs = 0;
-        syncFeedback('Afaste levemente o rosto e mantenha-se imóvel.', 'warning');
-      } else if (!stable) {
-        holdSinceRef.current = null;
-        challengeState.stableMs = 0;
-        syncFeedback('Mantenha o rosto parado por um instante para capturarmos o melhor quadro.', 'warning');
-      } else {
-        if (holdSinceRef.current === null) {
-          holdSinceRef.current = timestamp;
-        }
+    challengeState.stableMs = timestamp - holdSinceRef.current;
+    syncFeedback('Validando a biometria e selecionando o melhor quadro facial...', 'success');
 
-        challengeState.stableMs = timestamp - holdSinceRef.current;
-        syncFeedback('Excelente. Validando presença e selecionando o melhor quadro facial...', 'success');
-
-        if (challengeState.stableMs >= HOLD_DURATION_MS) {
-          finalizeCapture(metrics);
-          return;
-        }
-      }
+    if (challengeState.stableMs >= HOLD_DURATION_MS) {
+      finalizeCapture(metrics);
+      return;
     }
 
     previousMetricsRef.current = metrics;
@@ -672,31 +654,13 @@ export function FaceCameraCapture({
         ? 'border-amber-200 bg-amber-50 text-amber-700'
         : 'border-sky-200 bg-sky-50 text-sky-700';
 
-  const guideScaleClass =
-    sessionStep === 'move_closer'
-      ? 'scale-[0.92]'
-      : sessionStep === 'move_away'
-        ? 'scale-[1.05]'
-        : 'scale-100';
-
   const completedAlign = isStepCompleted(sessionStep, 'align');
-  const completedCloser = isStepCompleted(sessionStep, 'move_closer');
-  const completedAway = isStepCompleted(sessionStep, 'move_away');
   const completedHold = sessionStep === 'completed';
   const isMobileFullScreen = isMobileViewport && (cameraActive || cameraLoading || faceEngineLoading);
   const stepItems = GUIDE_STEPS.map((stepKey) => {
-    const done =
-      stepKey === 'align'
-        ? completedAlign
-        : stepKey === 'move_closer'
-          ? completedCloser
-          : stepKey === 'move_away'
-            ? completedAway
-            : completedHold;
-
     return {
       stepKey,
-      done,
+      done: stepKey === 'align' ? completedAlign : completedHold,
       active: sessionStep === stepKey,
       label: getStepLabel(stepKey),
     };
@@ -773,9 +737,8 @@ export function FaceCameraCapture({
                   className={cn(
                     'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[999px] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.45)] transition-transform duration-300',
                     isMobileFullScreen
-                      ? 'h-[60dvh] w-[74vw] max-w-[28rem]'
-                      : 'h-[72%] w-[62%] max-w-[24rem] sm:w-[56%] md:w-[48%] lg:w-[44%]',
-                    guideScaleClass,
+                      ? 'h-[72dvh] w-[86vw] max-w-[34rem]'
+                      : 'h-[78%] w-[72%] max-w-[30rem] sm:w-[64%] md:w-[56%] lg:w-[50%]',
                     feedbackTone === 'success' ? 'border-emerald-300' : '',
                     feedbackTone === 'warning' ? 'border-amber-300' : ''
                   )}
@@ -798,8 +761,8 @@ export function FaceCameraCapture({
                       </div>
                       {isMobileFullScreen && (
                         <p className="max-w-lg text-sm leading-6 text-slate-100/92">
-                          Centralize o rosto na moldura oval, aproxime quando o sistema pedir,
-                          depois afaste um pouco e fique imóvel até a validação terminar.
+                          Centralize o rosto na moldura oval, olhe de frente e fique imóvel por um
+                          instante para concluir a biometria automaticamente.
                         </p>
                       )}
                     </div>
@@ -813,7 +776,7 @@ export function FaceCameraCapture({
                         className="border-white/20 bg-slate-950/70 text-white hover:bg-slate-900 hover:text-white"
                       >
                         <CameraOff className="mr-2 h-4 w-4" />
-                        Fechar
+                        {cancelLabel}
                       </Button>
                     )}
                   </div>
@@ -841,32 +804,34 @@ export function FaceCameraCapture({
                         )}
                       </div>
 
-                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                        {stepItems.map(({ stepKey, done, active, label }, index) => (
-                          <div
-                            key={stepKey}
-                            className={cn(
-                              'rounded-2xl border px-3 py-3 text-sm shadow-sm backdrop-blur transition-colors',
-                              done
-                                ? 'border-emerald-300/45 bg-emerald-500/12 text-emerald-50'
-                                : active
-                                  ? 'border-sky-300/45 bg-sky-500/12 text-sky-50'
-                                  : 'border-white/15 bg-white/8 text-slate-200'
-                            )}
-                          >
-                            <div className="flex items-center gap-2">
-                              {done ? (
-                                <BadgeCheck className="h-4 w-4" />
-                              ) : (
-                                <span className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
-                                  {index + 1}
-                                </span>
+                      {showDetailedStatus && (
+                        <div className="grid grid-cols-2 gap-2">
+                          {stepItems.map(({ stepKey, done, active, label }, index) => (
+                            <div
+                              key={stepKey}
+                              className={cn(
+                                'rounded-2xl border px-3 py-3 text-sm shadow-sm backdrop-blur transition-colors',
+                                done
+                                  ? 'border-emerald-300/45 bg-emerald-500/12 text-emerald-50'
+                                  : active
+                                    ? 'border-sky-300/45 bg-sky-500/12 text-sky-50'
+                                    : 'border-white/15 bg-white/8 text-slate-200'
                               )}
-                              <span className="font-medium">{label}</span>
+                            >
+                              <div className="flex items-center gap-2">
+                                {done ? (
+                                  <BadgeCheck className="h-4 w-4" />
+                                ) : (
+                                  <span className="flex h-4 w-4 items-center justify-center rounded-full border border-current text-[10px]">
+                                    {index + 1}
+                                  </span>
+                                )}
+                                <span className="font-medium">{label}</span>
+                              </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -884,12 +849,12 @@ export function FaceCameraCapture({
                   <p className="text-sm font-medium">
                     {cameraLoading || faceEngineLoading
                       ? 'Preparando a câmera ao vivo...'
-                      : 'Validação facial por vídeo ao vivo com orientação de aproximação e afastamento.'}
+                      : 'Validação facial por vídeo ao vivo com captura automática.'}
                   </p>
                   <p className="text-xs text-slate-300">
                     {cameraLoading || faceEngineLoading
-                      ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela para centralizar, aproximar e afastar o rosto.'
-                      : 'O quadro é selecionado automaticamente depois que o rosto estiver centralizado, na distância correta e estável.'}
+                      ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela para centralizar o rosto.'
+                      : 'O melhor quadro é selecionado automaticamente depois que o rosto estiver centralizado, na distância correta e estável.'}
                   </p>
                 </div>
               </div>
@@ -898,7 +863,7 @@ export function FaceCameraCapture({
         )}
       </div>
 
-      {!isMobileFullScreen && (
+      {!isMobileFullScreen && (showDetailedStatus || cameraActive || cameraLoading || faceEngineLoading || value) && (
         <div className={cn('rounded-2xl border px-4 py-3 text-sm', feedbackToneClass)}>
           {faceEngineLoading ? (
             <span className="inline-flex items-center gap-2">
@@ -911,8 +876,8 @@ export function FaceCameraCapture({
         </div>
       )}
 
-      {!isMobileFullScreen && (
-        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-4">
+      {showDetailedStatus && !isMobileFullScreen && (
+        <div className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-4 md:grid-cols-2">
           {stepItems.map(({ stepKey, done, active, label }, index) => (
             <div
               key={stepKey}
@@ -940,7 +905,7 @@ export function FaceCameraCapture({
         </div>
       )}
 
-      {!isMobileFullScreen && cameraActive && liveMetrics && (
+      {showDetailedStatus && !isMobileFullScreen && cameraActive && liveMetrics && (
         <div className="grid gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 md:grid-cols-3">
           <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
             <p className="text-xs font-medium uppercase tracking-[0.18em] text-slate-500">Centralização</p>
@@ -978,14 +943,14 @@ export function FaceCameraCapture({
             ) : (
               <Camera className="mr-2 h-4 w-4" />
             )}
-            Iniciar validação ao vivo
+            {startLabel}
           </Button>
         )}
 
         {cameraActive && (
           <Button type="button" variant="outline" onClick={stopCamera} disabled={disabled}>
             <CameraOff className="mr-2 h-4 w-4" />
-            Interromper sessão
+            {cancelLabel}
           </Button>
         )}
 
@@ -993,7 +958,7 @@ export function FaceCameraCapture({
           <>
             <Button type="button" variant="outline" onClick={startCamera} disabled={disabled || cameraLoading}>
               <RefreshCcw className="mr-2 h-4 w-4" />
-              Refazer validação ao vivo
+              {retryLabel}
             </Button>
             <Button type="button" variant="ghost" onClick={clearCapture} disabled={disabled}>
               Limpar biometria

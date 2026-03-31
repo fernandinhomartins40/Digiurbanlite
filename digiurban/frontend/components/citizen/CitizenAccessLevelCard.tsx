@@ -193,6 +193,21 @@ export function CitizenAccessLevelCard() {
   );
 
   const criteriaCards = [profileCriteria, documentsCriteria, biometricCriteria];
+  const profileSummary = accessLevel.goldCriteria.profileComplete
+    ? 'Dados obrigatórios completos.'
+    : `Pendências: ${accessLevel.goldCriteria.missingProfileFields.join(', ')}.`;
+  const documentsSummary =
+    accessLevel.goldCriteria.missingDocumentTypes.length > 0
+      ? `Faltam: ${accessLevel.goldCriteria.missingDocumentTypes.map(getDocumentLabel).join(', ')}.`
+      : `${accessLevel.goldCriteria.approvedDocsCount} de ${accessLevel.goldCriteria.requiredDocCount} documentos aprovados.`;
+  const biometricSummary = accessLevel.goldCriteria.biometricConfirmed
+    ? 'Biometria confirmada e pronta para uso no ecossistema.'
+    : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
+      ? 'Sua última sessão foi enviada e está em revisão manual.'
+      : 'Você ainda não possui biometria facial confirmada.';
+  const biometricActionTitle = accessLevel.goldCriteria.biometricConfirmed
+    ? 'Atualizar biometria facial'
+    : 'Cadastrar biometria facial';
 
   return (
     <Card className="border-blue-100">
@@ -241,8 +256,8 @@ export function CitizenAccessLevelCard() {
           })}
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+        <div className="grid gap-4 lg:grid-cols-[0.92fr_1.08fr]">
+          <div className="rounded-3xl border border-slate-200 bg-white p-5">
             <div className="flex items-center gap-2">
               {accessLevel.currentLevel === 'GOLD' ? (
                 <Trophy className="h-5 w-5 text-yellow-600" />
@@ -251,64 +266,48 @@ export function CitizenAccessLevelCard() {
               ) : (
                 <Shield className="h-5 w-5 text-amber-700" />
               )}
-              <h3 className="text-sm font-semibold text-slate-900">Checklist para o nível Ouro</h3>
+              <h3 className="text-sm font-semibold text-slate-900">Resumo do nível Ouro</h3>
             </div>
 
-            <div className="mt-4 space-y-4 text-sm text-slate-700">
-              <div>
-                <p className="font-medium text-slate-900">Perfil</p>
-                {accessLevel.goldCriteria.profileComplete ? (
-                  <p className="mt-1 text-emerald-700">Seus dados obrigatórios estão completos.</p>
-                ) : (
-                  <p className="mt-1">Pendências: {accessLevel.goldCriteria.missingProfileFields.join(', ')}.</p>
-                )}
-              </div>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              {accessLevel.currentLevel === 'GOLD'
+                ? 'Seu cadastro já está no nível Ouro. Você pode testar ou atualizar a biometria sempre que precisar.'
+                : 'Para chegar ao nível Ouro, finalize os itens abaixo e conclua a biometria facial ao vivo.'}
+            </p>
 
-              <div>
-                <p className="font-medium text-slate-900">Documentos pessoais</p>
-                <p className="mt-1">
-                  {accessLevel.goldCriteria.approvedDocsCount} de {accessLevel.goldCriteria.requiredDocCount}{' '}
-                  documentos aprovados.
-                </p>
-                {accessLevel.goldCriteria.missingDocumentTypes.length > 0 && (
-                  <p className="mt-1">
-                    Faltam: {accessLevel.goldCriteria.missingDocumentTypes.map(getDocumentLabel).join(', ')}.
-                  </p>
-                )}
+            <div className="mt-5 space-y-3">
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-sm font-medium text-slate-900">Perfil</p>
+                <p className="mt-1 text-sm text-slate-600">{profileSummary}</p>
               </div>
-
-              <div>
-                <p className="font-medium text-slate-900">Biometria facial</p>
-                {accessLevel.goldCriteria.biometricConfirmed ? (
-                  <p className="mt-1 text-emerald-700">
-                    Biometria confirmada e pronta para uso nas funcionalidades do ecossistema.
-                  </p>
-                ) : accessLevel.goldCriteria.biometric.pendingEnrollments > 0 ? (
-                  <p className="mt-1 text-amber-700">
-                    A biometria foi enviada automaticamente, mas ficou em revisão manual porque a sessão não atingiu o
-                    limiar de aprovação automática.
-                  </p>
-                ) : (
-                  <p className="mt-1">Você ainda não possui biometria facial confirmada.</p>
-                )}
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-sm font-medium text-slate-900">Documentos</p>
+                <p className="mt-1 text-sm text-slate-600">{documentsSummary}</p>
+              </div>
+              <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                <p className="text-sm font-medium text-slate-900">Biometria facial</p>
+                <p className="mt-1 text-sm text-slate-600">{biometricSummary}</p>
               </div>
             </div>
+
+            <Button asChild type="button" variant="outline" className="mt-5 w-full sm:w-auto">
+              <Link href="/cidadao/biometria-facial/leitura">
+                <UserRoundSearch className="mr-2 h-4 w-4" />
+                Testar leitura da biometria
+              </Link>
+            </Button>
           </div>
 
-          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <h3 className="text-sm font-semibold text-slate-900">Cadastrar biometria facial</h3>
-              <Button asChild type="button" variant="outline" size="sm">
-                <Link href="/cidadao/biometria-facial/leitura">
-                  <UserRoundSearch className="mr-2 h-4 w-4" />
-                  Testar leitura
-                </Link>
-              </Button>
+          <div className="rounded-3xl border border-blue-100 bg-gradient-to-b from-sky-50 to-white p-5">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h3 className="text-base font-semibold text-slate-900">{biometricActionTitle}</h3>
+                <p className="mt-1 text-sm leading-6 text-slate-600">
+                  Abra a câmera em tela cheia, enquadre o rosto na moldura oval e aguarde a validação automática.
+                </p>
+              </div>
+              <Badge className="border-sky-200 bg-sky-100 text-sky-700">Envio automático</Badge>
             </div>
-            <p className="mt-1 text-sm text-slate-600">
-              Faça a validação por vídeo ao vivo. Ao final da sessão, a biometria é enviada automaticamente e, se os
-              scores forem suficientes, ela já fica validada sem intervenção manual.
-            </p>
 
             <FaceCameraCapture
               className="mt-4"
@@ -316,6 +315,10 @@ export function CitizenAccessLevelCard() {
               onChange={setCapturedImage}
               onMetadataChange={setCaptureMetadata}
               disabled={submitting}
+              startLabel="Abrir câmera para biometria"
+              retryLabel="Refazer biometria"
+              cancelLabel="Fechar câmera"
+              showDetailedStatus={false}
             />
 
             {captureMetadata && (

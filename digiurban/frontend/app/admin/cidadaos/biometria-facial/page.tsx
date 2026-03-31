@@ -207,14 +207,14 @@ export default function AdminCitizenFaceBiometryPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">Cadastro Biométrico de Cidadãos</h1>
+      <div className="space-y-6">
+        <div className="space-y-1">
+        <h1 className="text-2xl font-bold text-slate-900">Atendimento Presencial: Biometria do Cidadão</h1>
         <p className="text-sm text-slate-600">
-          Selecione um cidadão e faça a validação ao vivo pela webcam. O envio ocorre automaticamente ao final da
-          sessão, com aprovação imediata quando os scores atingirem o limiar configurado.
+          Use esta central em balcões e setores públicos para cadastrar, confirmar e gerenciar a biometria facial do
+          cidadão durante o atendimento presencial.
         </p>
-      </div>
+        </div>
 
       {!canVerify && (
         <Card className="border-amber-200 bg-amber-50">
@@ -252,9 +252,9 @@ export default function AdminCitizenFaceBiometryPage() {
                   Validação ao vivo pela câmera
                 </CardTitle>
                 <Button asChild variant="outline" size="sm">
-                  <Link href="/admin/cidadaos/biometria-facial/leitura">
+                  <Link href="/admin/atendimento-presencial/biometria-facial/leitura">
                     <UserRoundSearch className="mr-2 h-4 w-4" />
-                    Leitura biométrica
+                    Leitura presencial
                   </Link>
                 </Button>
               </div>
@@ -278,6 +278,10 @@ export default function AdminCitizenFaceBiometryPage() {
                 onChange={setCapturedImage}
                 onMetadataChange={setCaptureMetadata}
                 disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
+                startLabel="Abrir câmera do atendimento"
+                retryLabel="Refazer captura presencial"
+                cancelLabel="Fechar câmera"
+                showDetailedStatus={false}
               />
 
               {captureMetadata && (
