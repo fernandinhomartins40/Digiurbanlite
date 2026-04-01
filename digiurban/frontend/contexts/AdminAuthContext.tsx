@@ -375,11 +375,20 @@ export function useAdminPermissions() {
   const { permissions, user } = useAdminAuth()
 
   const hasPermission = (permission: string) => {
-    return permissions.includes(permission)
+    if (permissions.includes('*')) {
+      return true
+    }
+
+    if (permissions.includes(permission)) {
+      return true
+    }
+
+    const [resource] = permission.split(':')
+    return permissions.includes(`${resource}:*`)
   }
 
   const hasAnyPermission = (permissionList: string[]) => {
-    return permissionList.some(permission => permissions.includes(permission))
+    return permissionList.some((permission) => hasPermission(permission))
   }
 
   // ✅ Usando ROLE_HIERARCHY centralizado

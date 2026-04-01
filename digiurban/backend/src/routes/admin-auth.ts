@@ -616,6 +616,9 @@ function getRolePermissions(role: string): string[] {
       'team:read',
       'team:manage',
       'citizens:read',
+      'citizens:create',
+      'citizens:verify',
+      'citizens:update',
       'citizens:manage',
       'chamados:create',
       'reports:full',
@@ -625,6 +628,9 @@ function getRolePermissions(role: string): string[] {
       'messages:write',
       'messages:moderate',
       'messages:admin'
+    ],
+    SUPER_ADMIN: [
+      '*'
     ]
         };
 

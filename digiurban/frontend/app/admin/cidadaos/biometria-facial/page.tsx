@@ -48,7 +48,7 @@ function getDocumentLabel(type: string) {
 }
 
 export default function AdminCitizenFaceBiometryPage() {
-  const { apiRequest } = useAdminAuth();
+  const { apiRequest, loading: authLoading } = useAdminAuth();
   const { hasPermission } = useAdminPermissions();
   const { toast } = useToast();
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
@@ -60,7 +60,7 @@ export default function AdminCitizenFaceBiometryPage() {
   const [submitting, setSubmitting] = useState<string | null>(null);
   const [lastAutoSubmittedSessionId, setLastAutoSubmittedSessionId] = useState<string | null>(null);
 
-  const canVerify = hasPermission('citizens:verify');
+  const canVerify = !authLoading && hasPermission('citizens:verify');
 
   const loadAccessLevel = async (citizenId: string) => {
     try {
@@ -216,7 +216,7 @@ export default function AdminCitizenFaceBiometryPage() {
         </p>
         </div>
 
-      {!canVerify && (
+      {!authLoading && !canVerify && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="flex items-center gap-3 p-6 text-sm text-amber-800">
             <ShieldAlert className="h-5 w-5" />

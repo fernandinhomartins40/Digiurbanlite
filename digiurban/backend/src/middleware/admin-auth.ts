@@ -114,7 +114,7 @@ export const requirePermission = (permission: string) => {
 
     const userPermissions = getRolePermissions(user.role);
 
-    if (!userPermissions.includes(permission)) {
+    if (!hasPermissionToken(userPermissions, permission)) {
       res.status(403).json({
         error: 'Acesso negado',
         required: permission,
@@ -141,7 +141,7 @@ export const requireAnyPermission = (permissions: string[]) => {
     }
 
     const userPermissions = getRolePermissions(user.role);
-    const hasPermission = permissions.some(permission => userPermissions.includes(permission));
+    const hasPermission = permissions.some(permission => hasPermissionToken(userPermissions, permission));
 
     if (!hasPermission) {
       res.status(403).json({
@@ -370,6 +370,19 @@ function getRolePermissions(role: UserRole): string[] {
         };
 
   return rolePermissions[role] || [];
+}
+
+function hasPermissionToken(userPermissions: string[], permission: string): boolean {
+  if (userPermissions.includes('*')) {
+    return true;
+  }
+
+  if (userPermissions.includes(permission)) {
+    return true;
+  }
+
+  const [resource] = permission.split(':');
+  return userPermissions.includes(`${resource}:*`);
 }
 
 /**

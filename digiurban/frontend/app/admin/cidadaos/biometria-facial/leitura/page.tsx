@@ -3,12 +3,13 @@
 import { ShieldAlert } from 'lucide-react';
 import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
 import { Card, CardContent } from '@/components/ui/card';
-import { useAdminPermissions } from '@/contexts/AdminAuthContext';
+import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
 import facePlatformService from '@/lib/services/face-platform.service';
 
 export default function AdminCitizenFaceReadPage() {
+  const { loading: authLoading } = useAdminAuth();
   const { hasPermission } = useAdminPermissions();
-  const canVerify = hasPermission('citizens:verify');
+  const canVerify = !authLoading && hasPermission('citizens:verify');
 
   return (
     <div className="space-y-6">
@@ -19,7 +20,7 @@ export default function AdminCitizenFaceReadPage() {
         </p>
       </div>
 
-      {!canVerify && (
+      {!authLoading && !canVerify && (
         <Card className="border-amber-200 bg-amber-50">
           <CardContent className="flex items-center gap-3 p-6 text-sm text-amber-800">
             <ShieldAlert className="h-5 w-5" />
