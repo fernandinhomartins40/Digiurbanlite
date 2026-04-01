@@ -266,7 +266,7 @@ services:
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
       - FACE_PLATFORM_STORAGE_PATH=/app/uploads/face-platform
-      - COMPREFACE_API_URL=http://compreface-ui:80
+      - COMPREFACE_API_URL=${COMPREFACE_API_URL:-http://compreface-ui:80}
       - COMPREFACE_API_KEY=${COMPREFACE_API_KEY:-}
       - COMPREFACE_TIMEOUT_MS=${COMPREFACE_TIMEOUT_MS:-15000}
       - COMPREFACE_PREDICTION_COUNT=${COMPREFACE_PREDICTION_COUNT:-5}
@@ -574,7 +574,7 @@ services:
 
       # Service Token (para Messages Server)
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
-      - FACE_PLATFORM_API_URL=http://ultrazend-face:9006
+      - FACE_PLATFORM_API_URL=${FACE_PLATFORM_API_URL:-http://ultrazend-face:9006}
       - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
 
       # Logs

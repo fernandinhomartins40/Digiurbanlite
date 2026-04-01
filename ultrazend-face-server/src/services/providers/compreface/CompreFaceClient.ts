@@ -36,6 +36,22 @@ function stripTrailingSlash(value: string) {
   return value.replace(/\/$/, '');
 }
 
+function getConfigurationMessage(baseUrl: string, apiKey: string) {
+  if (!baseUrl && !apiKey) {
+    return 'CompreFace não está configurado. Defina COMPREFACE_API_URL e COMPREFACE_API_KEY.';
+  }
+
+  if (!baseUrl) {
+    return 'CompreFace não está configurado. Defina COMPREFACE_API_URL.';
+  }
+
+  if (!apiKey) {
+    return 'CompreFace não está configurado. Defina COMPREFACE_API_KEY.';
+  }
+
+  return 'CompreFace não está configurado.';
+}
+
 function buildTimeoutSignal(timeoutMs: number) {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
@@ -70,7 +86,7 @@ export class CompreFaceClient {
   private readonly detectionThreshold: number;
 
   constructor() {
-    this.baseUrl = stripTrailingSlash(process.env.COMPREFACE_API_URL || 'http://compreface-api:8000');
+    this.baseUrl = stripTrailingSlash(process.env.COMPREFACE_API_URL || 'http://compreface-ui:80');
     this.apiKey = process.env.COMPREFACE_API_KEY || '';
     this.timeoutMs = Number(process.env.COMPREFACE_TIMEOUT_MS || 15000);
     this.predictionCount = Number(process.env.COMPREFACE_PREDICTION_COUNT || 5);
@@ -87,7 +103,7 @@ export class CompreFaceClient {
         configured: false,
         available: false,
         baseUrl: this.baseUrl || null,
-        message: 'CompreFace não está configurado. Defina COMPREFACE_API_URL e COMPREFACE_API_KEY.',
+        message: getConfigurationMessage(this.baseUrl, this.apiKey),
       };
     }
 
@@ -178,7 +194,7 @@ export class CompreFaceClient {
 
   private ensureConfigured() {
     if (!this.isConfigured()) {
-      throw new Error('CompreFace não está configurado. Defina COMPREFACE_API_URL e COMPREFACE_API_KEY.');
+      throw new Error(getConfigurationMessage(this.baseUrl, this.apiKey));
     }
   }
 
