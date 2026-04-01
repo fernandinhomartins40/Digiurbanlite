@@ -63,6 +63,13 @@ export default function MaisPage() {
       href: '/cidadao/biometria-facial/leitura',
     },
     {
+      id: 'face-enroll',
+      label: 'Biometria Facial',
+      description: 'Cadastrar ou atualizar a biometria facial ao vivo',
+      icon: Shield,
+      href: '/cidadao/biometria-facial',
+    },
+    {
       id: 'settings',
       label: 'Configurações',
       description: 'Preferências e ajustes do app',

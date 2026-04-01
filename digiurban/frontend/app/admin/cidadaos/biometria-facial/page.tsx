@@ -14,7 +14,7 @@ import {
   UserRoundSearch,
 } from 'lucide-react';
 import { CitizenSelector } from '@/components/admin/CitizenSelector';
-import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
+import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,11 @@ import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
 import type { Citizen } from '@/hooks/useSearchCitizen';
 import { useToast } from '@/hooks/use-toast';
 import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
+
+interface FaceBiometryLiveMetadata {
+  qualityScore: number;
+  livenessScore: number;
+}
 
 const levelStyles: Record<RegistrationLevel, string> = {
   BRONZE: 'border-amber-200 bg-amber-50 text-amber-800',
@@ -53,12 +58,9 @@ export default function AdminCitizenFaceBiometryPage() {
   const { toast } = useToast();
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
-  const [capturedImage, setCapturedImage] = useState('');
-  const [captureMetadata, setCaptureMetadata] = useState<FaceCaptureSessionMetadata | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
-  const [lastAutoSubmittedSessionId, setLastAutoSubmittedSessionId] = useState<string | null>(null);
 
   const canVerify = !authLoading && hasPermission('citizens:verify');
 
@@ -85,16 +87,19 @@ export default function AdminCitizenFaceBiometryPage() {
       void loadAccessLevel(selectedCitizen.id);
     } else {
       setAccessLevel(null);
-      setCapturedImage('');
-      setCaptureMetadata(null);
       setSourceLabel('');
-      setLastAutoSubmittedSessionId(null);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCitizen?.id]);
 
-  const handleRegisterBiometry = async () => {
-    if (!selectedCitizen?.id || !capturedImage || !captureMetadata) {
+  const handleRegisterBiometry = async ({
+    imageBase64,
+    metadata,
+  }: {
+    imageBase64: string;
+    metadata: FaceBiometryLiveMetadata;
+  }) => {
+    if (!selectedCitizen?.id) {
       return;
     }
 
@@ -103,17 +108,15 @@ export default function AdminCitizenFaceBiometryPage() {
       const response = await apiRequest(`/admin/citizens/${selectedCitizen.id}/face-biometry`, {
         method: 'POST',
         body: JSON.stringify({
-          imageBase64: capturedImage,
+          imageBase64,
           sourceLabel: sourceLabel.trim() || `Biometria ao vivo capturada por servidor para ${selectedCitizen.name}`,
-          qualityScore: captureMetadata.qualityScore,
-          livenessScore: captureMetadata.livenessScore,
-          metadata: captureMetadata,
+          qualityScore: metadata.qualityScore,
+          livenessScore: metadata.livenessScore,
+          metadata,
         }),
       });
 
       setAccessLevel(response.data?.accessLevel || null);
-      setCapturedImage('');
-      setCaptureMetadata(null);
       setSourceLabel('');
 
       toast({
@@ -131,21 +134,6 @@ export default function AdminCitizenFaceBiometryPage() {
       setSubmitting(null);
     }
   };
-
-  useEffect(() => {
-    const sessionId = captureMetadata?.sessionId;
-    if (!selectedCitizen?.id || !sessionId || !capturedImage || submitting) {
-      return;
-    }
-
-    if (lastAutoSubmittedSessionId === sessionId) {
-      return;
-    }
-
-    setLastAutoSubmittedSessionId(sessionId);
-    void handleRegisterBiometry();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedCitizen?.id, captureMetadata?.sessionId, capturedImage, submitting]);
 
   const handleApprovePending = async () => {
     if (!selectedCitizen?.id) {
@@ -249,12 +237,12 @@ export default function AdminCitizenFaceBiometryPage() {
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <ScanFace className="h-5 w-5 text-blue-600" />
-                  Validação ao vivo pela câmera
+                  Cadastro biométrico presencial
                 </CardTitle>
                 <Button asChild variant="outline" size="sm">
                   <Link href="/admin/atendimento-presencial/biometria-facial/leitura">
                     <UserRoundSearch className="mr-2 h-4 w-4" />
-                    Leitura presencial
+                    Leitura biométrica
                   </Link>
                 </Button>
               </div>
@@ -273,32 +261,16 @@ export default function AdminCitizenFaceBiometryPage() {
                 />
               </div>
 
-              <FaceCameraCapture
-                value={capturedImage}
-                onChange={setCapturedImage}
-                onMetadataChange={setCaptureMetadata}
-                disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
+              <FaceBiometryEnrollmentPanel
+                title="Cadastro biométrico do cidadão"
+                description="A câmera do atendimento grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
+                helperText="Centralize o rosto no oval, mantenha o enquadramento e aguarde o envio automático."
                 startLabel="Abrir câmera do atendimento"
                 retryLabel="Refazer captura presencial"
                 cancelLabel="Fechar câmera"
-                showDetailedStatus={false}
+                disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
+                onEnroll={handleRegisterBiometry}
               />
-
-              {captureMetadata && (
-                <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                  Sessão concluída com qualidade de {Math.round(captureMetadata.qualityScore * 100)}% e prova de
-                  presença de {Math.round(captureMetadata.livenessScore * 100)}%.
-                </div>
-              )}
-
-              {submitting === 'capture' && (
-                <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-                  <span className="inline-flex items-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Enviando a biometria automaticamente para o cidadão selecionado...
-                  </span>
-                </div>
-              )}
 
               <div className="flex flex-wrap gap-3">
                 <Button

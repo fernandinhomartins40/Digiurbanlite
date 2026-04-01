@@ -11,7 +11,8 @@ import {
   Siren,
   UserRoundSearch,
 } from 'lucide-react';
-import FaceCameraCapture, { type FaceCaptureSessionMetadata } from '@/components/common/FaceCameraCapture';
+import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
+import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
 import { SchoolSecurityHeader } from '@/components/apps/seguranca-escolar/SchoolSecurityHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -132,14 +133,8 @@ export default function SegurancaEscolarPage() {
     eventType: 'ENTRY' as 'ENTRY' | 'EXIT' | 'DETECTION',
   });
   const [configForm, setConfigForm] = useState(defaultConfig);
-  const [enrollmentCaptureImage, setEnrollmentCaptureImage] = useState('');
-  const [enrollmentCaptureMetadata, setEnrollmentCaptureMetadata] = useState<FaceCaptureSessionMetadata | null>(null);
-  const [eventCaptureImage, setEventCaptureImage] = useState('');
-  const [eventCaptureMetadata, setEventCaptureMetadata] = useState<FaceCaptureSessionMetadata | null>(null);
   const [liveEventResult, setLiveEventResult] = useState<FaceReadResult | null>(null);
   const [liveEventMessage, setLiveEventMessage] = useState<string | null>(null);
-  const [lastEnrollmentSessionId, setLastEnrollmentSessionId] = useState<string | null>(null);
-  const [lastEventSessionId, setLastEventSessionId] = useState<string | null>(null);
 
   const selectedSchool = useMemo(
     () => schools.find((item) => item.id === selectedSchoolId) || null,
@@ -199,48 +194,6 @@ export default function SegurancaEscolarPage() {
         : defaultConfig
     );
   }, [configs, selectedSchoolId]);
-
-  useEffect(() => {
-    const sessionId = enrollmentCaptureMetadata?.sessionId;
-    if (!sessionId || !enrollmentCaptureImage || !selectedSchoolId || !enrollmentForm.citizenId || submitting) {
-      return;
-    }
-
-    if (lastEnrollmentSessionId === sessionId) {
-      return;
-    }
-
-    setLastEnrollmentSessionId(sessionId);
-    void handleCreateEnrollment();
-  }, [
-    enrollmentCaptureImage,
-    enrollmentCaptureMetadata?.sessionId,
-    enrollmentForm.citizenId,
-    lastEnrollmentSessionId,
-    selectedSchoolId,
-    submitting,
-  ]);
-
-  useEffect(() => {
-    const sessionId = eventCaptureMetadata?.sessionId;
-    if (!sessionId || !eventCaptureImage || !selectedSchoolId || !eventForm.deviceId || submitting) {
-      return;
-    }
-
-    if (lastEventSessionId === sessionId) {
-      return;
-    }
-
-    setLastEventSessionId(sessionId);
-    void handleIngestLiveEvent();
-  }, [
-    eventCaptureImage,
-    eventCaptureMetadata?.sessionId,
-    eventForm.deviceId,
-    lastEventSessionId,
-    selectedSchoolId,
-    submitting,
-  ]);
 
   async function loadAll() {
     try {
@@ -348,8 +301,14 @@ export default function SegurancaEscolarPage() {
     }
   }
 
-  async function handleCreateEnrollment() {
-    if (!enrollmentForm.citizenId || !enrollmentCaptureImage || !enrollmentCaptureMetadata) {
+  async function handleCreateEnrollment({
+    imageBase64,
+    metadata,
+  }: {
+    imageBase64: string;
+    metadata: { qualityScore: number; livenessScore: number };
+  }) {
+    if (!enrollmentForm.citizenId) {
       return;
     }
 
@@ -361,67 +320,16 @@ export default function SegurancaEscolarPage() {
         sourceLabel:
           enrollmentForm.sourceLabel ||
           `Cadastro presencial da biometria escolar${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
-        imageBase64: enrollmentCaptureImage,
-        qualityScore: enrollmentCaptureMetadata.qualityScore,
-        livenessScore: enrollmentCaptureMetadata.livenessScore,
-        metadata: enrollmentCaptureMetadata,
+        imageBase64,
+        qualityScore: metadata.qualityScore,
+        livenessScore: metadata.livenessScore,
+        metadata,
       });
       setEnrollmentForm({ citizenId: '', sourceLabel: '' });
-      setEnrollmentCaptureImage('');
-      setEnrollmentCaptureMetadata(null);
       await loadAll();
       await loadStudents(selectedSchoolId);
     } catch (error: any) {
       alert(error?.response?.data?.error || 'Erro ao cadastrar biometria do aluno.');
-    } finally {
-      setSubmitting(null);
-    }
-  }
-
-  async function handleIngestLiveEvent() {
-    if (!selectedSchoolId || !eventForm.deviceId || !eventCaptureImage || !eventCaptureMetadata) {
-      return;
-    }
-
-    try {
-      setSubmitting('event-live');
-      setLiveEventMessage('Reconhecendo a biometria ao vivo e registrando o evento escolar...');
-
-      const readResult = (await facePlatformService.readBiometry({
-        imageBase64: eventCaptureImage,
-        sourceType: 'SCHOOL_SECURITY_LIVE_READ',
-        sourceLabel: `Leitura ao vivo${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
-        expectedCitizenId: eventForm.expectedCitizenId || undefined,
-        qualityScore: eventCaptureMetadata.qualityScore,
-        livenessScore: eventCaptureMetadata.livenessScore,
-        metadata: eventCaptureMetadata,
-      })) as FaceReadResult;
-
-      setLiveEventResult(readResult);
-
-      await facePlatformService.ingestEvent({
-        deviceId: eventForm.deviceId,
-        zoneId: eventForm.zoneId || undefined,
-        unidadeEducacaoId: selectedSchoolId,
-        identityId: readResult.identity?.id || undefined,
-        studentCitizenId: readResult.identity?.citizenId || undefined,
-        eventType: resolveEventType(eventForm.eventType, readResult.matchStatus),
-        confidence: readResult.confidence || undefined,
-        imageBase64: eventCaptureImage,
-        metadata: {
-          liveSession: eventCaptureMetadata,
-          liveRead: readResult,
-          expectedCitizenId: eventForm.expectedCitizenId || null,
-        },
-      });
-
-      setEventCaptureImage('');
-      setEventCaptureMetadata(null);
-      setLiveEventMessage('Evento ao vivo registrado com sucesso na fila operacional.');
-      await loadAll();
-    } catch (error: any) {
-      setLiveEventMessage(null);
-      alert(error?.response?.data?.error || 'Erro ao registrar o evento ao vivo.');
     } finally {
       setSubmitting(null);
     }
@@ -683,32 +591,16 @@ export default function SegurancaEscolarPage() {
                     onChange={(event) => setEnrollmentForm({ ...enrollmentForm, sourceLabel: event.target.value })}
                   />
 
-                  <FaceCameraCapture
-                    value={enrollmentCaptureImage}
-                    onChange={setEnrollmentCaptureImage}
-                    onMetadataChange={setEnrollmentCaptureMetadata}
-                    disabled={!selectedSchoolId || !enrollmentForm.citizenId || Boolean(submitting)}
+                  <FaceBiometryEnrollmentPanel
+                    title="Cadastro biométrico do aluno"
+                    description="A câmera do setor grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
+                    helperText="Centralize o rosto no oval, mantenha o enquadramento estável e aguarde o envio automático."
                     startLabel="Abrir câmera para cadastrar aluno"
                     retryLabel="Refazer biometria do aluno"
                     cancelLabel="Fechar câmera"
-                    showDetailedStatus={false}
+                    disabled={!selectedSchoolId || !enrollmentForm.citizenId || Boolean(submitting)}
+                    onEnroll={handleCreateEnrollment}
                   />
-
-                  {enrollmentCaptureMetadata && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                      Sessão concluída com qualidade de {Math.round(enrollmentCaptureMetadata.qualityScore * 100)}% e
-                      prova de presença de {Math.round(enrollmentCaptureMetadata.livenessScore * 100)}%.
-                    </div>
-                  )}
-
-                  {submitting === 'enrollment' && (
-                    <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
-                      <span className="inline-flex items-center gap-2">
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Enviando a biometria do aluno automaticamente...
-                      </span>
-                    </div>
-                  )}
                 </CardContent>
               </Card>
 
@@ -821,29 +713,61 @@ export default function SegurancaEscolarPage() {
                     </SelectContent>
                   </Select>
 
-                  <FaceCameraCapture
-                    value={eventCaptureImage}
-                    onChange={(value) => {
-                      setEventCaptureImage(value);
-                      if (!value) {
-                        setLiveEventResult(null);
+                  <FaceBiometryReadCard
+                    title="Leitura ao vivo para evento escolar"
+                    description="A câmera grava o rosto em vídeo ao vivo, reconhece a biometria cadastrada e registra o evento operacional."
+                    disabled={!selectedSchoolId || !eventForm.deviceId || Boolean(submitting)}
+                    expectedOwnerLabel={
+                      eventForm.expectedCitizenId
+                        ? students.find((item: any) => item.aluno.id === eventForm.expectedCitizenId)?.aluno?.name ||
+                          'Aluno esperado'
+                        : undefined
+                    }
+                    onRead={async ({ imageBase64, metadata }) => {
+                      try {
+                        setSubmitting('event-live');
+                        setLiveEventMessage('Leitura ao vivo concluída. Registrando o evento escolar...');
+
+                        const readResult = (await facePlatformService.readBiometry({
+                          imageBase64,
+                          sourceType: 'SCHOOL_SECURITY_LIVE_READ',
+                          sourceLabel: `Leitura ao vivo${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
+                          expectedCitizenId: eventForm.expectedCitizenId || undefined,
+                          qualityScore: metadata.qualityScore,
+                          livenessScore: metadata.livenessScore,
+                          metadata,
+                        })) as FaceReadResult;
+
+                        setLiveEventResult(readResult);
+
+                        await facePlatformService.ingestEvent({
+                          deviceId: eventForm.deviceId,
+                          zoneId: eventForm.zoneId || undefined,
+                          unidadeEducacaoId: selectedSchoolId,
+                          identityId: readResult.identity?.id || undefined,
+                          studentCitizenId: readResult.identity?.citizenId || undefined,
+                          eventType: resolveEventType(eventForm.eventType, readResult.matchStatus),
+                          confidence: readResult.confidence || undefined,
+                          imageBase64,
+                          metadata: {
+                            liveSession: metadata,
+                            liveRead: readResult,
+                            expectedCitizenId: eventForm.expectedCitizenId || null,
+                          },
+                        });
+
+                        setLiveEventMessage('Evento ao vivo registrado com sucesso na fila operacional.');
+                        await loadAll();
+                        return readResult;
+                      } catch (error: any) {
                         setLiveEventMessage(null);
+                        alert(error?.response?.data?.error || 'Erro ao registrar o evento ao vivo.');
+                        throw error;
+                      } finally {
+                        setSubmitting(null);
                       }
                     }}
-                    onMetadataChange={setEventCaptureMetadata}
-                    disabled={!selectedSchoolId || !eventForm.deviceId || Boolean(submitting)}
-                    startLabel="Abrir câmera para leitura escolar"
-                    retryLabel="Refazer leitura escolar"
-                    cancelLabel="Fechar câmera"
-                    showDetailedStatus={false}
                   />
-
-                  {eventCaptureMetadata && (
-                    <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                      Captura ao vivo concluída com qualidade de {Math.round(eventCaptureMetadata.qualityScore * 100)}%
-                      {' '}e prova de presença de {Math.round(eventCaptureMetadata.livenessScore * 100)}%.
-                    </div>
-                  )}
 
                   {liveEventMessage && (
                     <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">

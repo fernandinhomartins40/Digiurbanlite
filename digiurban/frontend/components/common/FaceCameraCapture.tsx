@@ -19,8 +19,8 @@ const MEDIAPIPE_WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision
 const FACE_MODEL_ASSET_URL =
   'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 
-const ALIGN_DURATION_MS = 550;
-const HOLD_DURATION_MS = 1100;
+const ALIGN_DURATION_MS = 300;
+const HOLD_DURATION_MS = 650;
 const TARGET_CENTER_X = 0.5;
 const TARGET_CENTER_Y = 0.47;
 
@@ -277,7 +277,7 @@ export function FaceCameraCapture({
   const [faceEngineLoading, setFaceEngineLoading] = useState(false);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [sessionStep, setSessionStep] = useState<SessionStep>('align');
-  const [liveFeedback, setLiveFeedback] = useState('Posicione o rosto dentro da área destacada.');
+  const [liveFeedback, setLiveFeedback] = useState('Centralize o rosto no oval.');
   const [feedbackTone, setFeedbackTone] = useState<FeedbackTone>('neutral');
   const [liveMetrics, setLiveMetrics] = useState<FaceMetrics | null>(null);
   const [captureSummary, setCaptureSummary] = useState<FaceCaptureSessionMetadata | null>(null);
@@ -314,7 +314,7 @@ export function FaceCameraCapture({
     setSessionStep('align');
     setLiveMetrics(null);
     setCaptureSummary(null);
-    syncFeedback('Posicione o rosto dentro da área destacada.', 'neutral');
+    syncFeedback('Centralize o rosto no oval.', 'neutral');
   };
 
   const stopAnalysisLoop = () => {
@@ -475,27 +475,18 @@ export function FaceCameraCapture({
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
-      syncFeedback('Centralize o rosto dentro da moldura oval.', 'warning');
+      syncFeedback('Centralize o rosto no oval.', 'warning');
       return;
     }
 
-    const tooFar = metrics.sizeRatio < 0.24;
-    const tooClose = metrics.sizeRatio > 0.4;
+    const outsideOptimalFrame = metrics.sizeRatio < 0.24 || metrics.sizeRatio > 0.4;
     const lookingAway = Math.abs(metrics.yawScore) > 0.18;
 
-    if (tooFar) {
+    if (outsideOptimalFrame) {
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
-      syncFeedback('Aproxime um pouco o rosto até preencher melhor a moldura.', 'warning');
-      return;
-    }
-
-    if (tooClose) {
-      holdSinceRef.current = null;
-      challengeState.stableMs = 0;
-      previousMetricsRef.current = metrics;
-      syncFeedback('Afaste um pouco o rosto para caber melhor na moldura.', 'warning');
+      syncFeedback('Ajuste o rosto para ocupar melhor o oval central.', 'warning');
       return;
     }
 
@@ -503,7 +494,7 @@ export function FaceCameraCapture({
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
-      syncFeedback('Olhe de frente para a câmera por um instante.', 'warning');
+      syncFeedback('Olhe de frente para a câmera.', 'warning');
       return;
     }
 
@@ -515,8 +506,8 @@ export function FaceCameraCapture({
       const elapsed = timestamp - holdSinceRef.current;
       syncFeedback(
         elapsed >= ALIGN_DURATION_MS
-          ? 'Enquadramento confirmado. Fique imóvel por um instante.'
-          : 'Ótimo. Mantenha o rosto centralizado por um instante.',
+          ? 'Enquadramento confirmado. Capturando automaticamente...'
+          : 'Ótimo. Mantenha o rosto centralizado.',
         'neutral'
       );
 
@@ -533,7 +524,7 @@ export function FaceCameraCapture({
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
-      syncFeedback('Fique imóvel por um instante para concluir a validação.', 'warning');
+      syncFeedback('Mantenha o rosto estável por um instante.', 'warning');
       return;
     }
 
@@ -542,7 +533,7 @@ export function FaceCameraCapture({
     }
 
     challengeState.stableMs = timestamp - holdSinceRef.current;
-    syncFeedback('Validando a biometria e selecionando o melhor quadro facial...', 'success');
+    syncFeedback('Capturando automaticamente o melhor quadro facial...', 'success');
 
     if (challengeState.stableMs >= HOLD_DURATION_MS) {
       finalizeCapture(metrics);
@@ -592,7 +583,7 @@ export function FaceCameraCapture({
       }
 
       setCameraActive(true);
-      syncFeedback('Centralize o rosto dentro da área destacada para iniciar.', 'neutral');
+      syncFeedback('Centralize o rosto no oval para iniciar.', 'neutral');
     } catch (error) {
       console.error('Erro ao iniciar a validação facial ao vivo:', error);
       setCameraError('Não foi possível iniciar a câmera ao vivo. Verifique a permissão do navegador.');
@@ -628,7 +619,7 @@ export function FaceCameraCapture({
           previousMetricsRef.current = null;
           challengeStateRef.current.stableMs = 0;
           setLiveMetrics(null);
-          syncFeedback('Posicione o rosto dentro da área destacada para continuar.', 'warning');
+          syncFeedback('Ajuste o rosto para continuar a captura.', 'warning');
         } else {
           const metrics = getFaceMetrics(landmarks);
           if (metrics) {
@@ -756,13 +747,12 @@ export function FaceCameraCapture({
                           Vídeo ao vivo
                         </Badge>
                         <Badge className="border-white/15 bg-slate-950/75 text-white">
-                          Etapa: {getStepLabel(sessionStep)}
+                          Sessão ativa
                         </Badge>
                       </div>
                       {isMobileFullScreen && (
                         <p className="max-w-lg text-sm leading-6 text-slate-100/92">
-                          Centralize o rosto na moldura oval, olhe de frente e fique imóvel por um
-                          instante para concluir a biometria automaticamente.
+                          Centralize o rosto no oval e aguarde a captura automática.
                         </p>
                       )}
                     </div>
@@ -853,8 +843,8 @@ export function FaceCameraCapture({
                   </p>
                   <p className="text-xs text-slate-300">
                     {cameraLoading || faceEngineLoading
-                      ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela para centralizar o rosto.'
-                      : 'O melhor quadro é selecionado automaticamente depois que o rosto estiver centralizado, na distância correta e estável.'}
+                      ? 'Quando a câmera abrir em tela cheia, siga os avisos na tela.'
+                      : 'O melhor quadro é selecionado automaticamente depois que o rosto estiver centralizado e estável.'}
                   </p>
                 </div>
               </div>

@@ -1,8 +1,10 @@
 'use client';
 
-import { ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
+import { ShieldAlert, ScanFace } from 'lucide-react';
 import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
 import facePlatformService from '@/lib/services/face-platform.service';
 
@@ -13,11 +15,24 @@ export default function AdminCitizenFaceReadPage() {
 
   return (
     <div className="space-y-6">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">Leitura Biométrica de Cidadãos</h1>
-        <p className="text-sm text-slate-600">
-          Faça uma leitura facial ao vivo para verificar se a biometria cadastrada está reconhecendo o cidadão correto.
-        </p>
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-sky-700">
+            <ScanFace className="h-3.5 w-3.5" />
+            Leitura biométrica
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900">Leitura biométrica de cidadãos</h1>
+          <p className="max-w-3xl text-sm leading-6 text-slate-600">
+            Faça uma leitura facial ao vivo para verificar se a biometria cadastrada está reconhecendo o cidadão
+            correto.
+          </p>
+        </div>
+
+        <Button asChild variant="outline">
+          <Link href="/admin/atendimento-presencial/biometria-facial">
+            Voltar ao cadastro presencial
+          </Link>
+        </Button>
       </div>
 
       {!authLoading && !canVerify && (
