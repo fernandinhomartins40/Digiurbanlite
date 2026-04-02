@@ -22,7 +22,10 @@ export const errorHandler = (
 ) => {
   // Determinar status code
   const statusCode = (err as any).statusCode || (err as any).status || 500;
-  const shouldExposeMessage = process.env.NODE_ENV === 'development' || (statusCode >= 400 && statusCode < 500);
+  const shouldExposeMessage =
+    process.env.NODE_ENV === 'development' ||
+    (statusCode >= 400 && statusCode < 500) ||
+    (statusCode === 503 && (err as any).details !== undefined);
 
   // ✅ LOG ESTRUTURADO com Winston (persistido em arquivo)
   logError(err, req, {
