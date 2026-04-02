@@ -15,6 +15,7 @@ interface FaceBiometryEnrollmentPanelProps {
   title: string;
   description: string;
   helperText?: string;
+  purposeLabel?: string;
   startLabel: string;
   retryLabel: string;
   cancelLabel: string;
@@ -23,6 +24,10 @@ interface FaceBiometryEnrollmentPanelProps {
   onEnroll: (payload: {
     imageBase64: string;
     metadata: FaceCaptureSessionMetadata;
+    embedding?: number[] | null;
+    modelName?: string;
+    modelVersion?: string;
+    detectedFacesCount?: number;
   }) => Promise<{ message?: string } | void>;
   onSuccess?: (response: { message?: string } | void) => void;
   className?: string;
@@ -31,7 +36,8 @@ interface FaceBiometryEnrollmentPanelProps {
 export function FaceBiometryEnrollmentPanel({
   title,
   description,
-  helperText = 'A captura é enviada automaticamente assim que o vídeo ao vivo é concluído.',
+  helperText = 'Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático.',
+  purposeLabel = 'Cadastro facial ao vivo',
   startLabel,
   retryLabel,
   cancelLabel,
@@ -68,6 +74,10 @@ export function FaceBiometryEnrollmentPanel({
         const response = await onEnroll({
           imageBase64: capturedImage,
           metadata: captureMetadata,
+          embedding: captureMetadata.embedding || null,
+          modelName: captureMetadata.modelProvider,
+          modelVersion: captureMetadata.modelVersion,
+          detectedFacesCount: captureMetadata.detectedFacesCount,
         });
 
         setMessage({
@@ -109,7 +119,7 @@ export function FaceBiometryEnrollmentPanel({
           </div>
           <Badge className="border-sky-200 bg-sky-100 text-sky-700">
             <ShieldCheck className="mr-1 h-3.5 w-3.5" />
-            Envio automático
+            {purposeLabel}
           </Badge>
         </div>
       </CardHeader>
@@ -119,6 +129,21 @@ export function FaceBiometryEnrollmentPanel({
           {helperText}
         </p>
 
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">1. Abrir câmera</p>
+            <p className="mt-1">Inicie a sessão ao vivo no dispositivo atual.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">2. Centralizar rosto</p>
+            <p className="mt-1">Mantenha apenas uma pessoa na moldura oval.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">3. Aguardar envio</p>
+            <p className="mt-1">O melhor quadro é selecionado automaticamente.</p>
+          </div>
+        </div>
+
         <FaceCameraCapture
           value={capturedImage}
           onChange={(value) => {
@@ -127,6 +152,7 @@ export function FaceBiometryEnrollmentPanel({
           }}
           onMetadataChange={setCaptureMetadata}
           disabled={disabled || submitting}
+          purposeLabel={purposeLabel}
           startLabel={startLabel}
           retryLabel={retryLabel}
           cancelLabel={cancelLabel}
@@ -136,7 +162,8 @@ export function FaceBiometryEnrollmentPanel({
         {captureMetadata && (
           <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
             Sessão concluída com qualidade de {Math.round(captureMetadata.qualityScore * 100)}% e prova de presença de{' '}
-            {Math.round(captureMetadata.livenessScore * 100)}%.
+            {Math.round(captureMetadata.livenessScore * 100)}% usando {captureMetadata.modelProvider}. Rostos detectados: {' '}
+            {captureMetadata.detectedFacesCount}.
           </div>
         )}
 

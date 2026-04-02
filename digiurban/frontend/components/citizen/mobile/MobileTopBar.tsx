@@ -19,6 +19,7 @@ export function MobileTopBar() {
     '/cidadao/documentos',
     '/cidadao/perfil',
     '/cidadao/biometria-facial',
+    '/cidadao/biometria-facial/leitura',
     '/cidadao/mais'
   ];
 

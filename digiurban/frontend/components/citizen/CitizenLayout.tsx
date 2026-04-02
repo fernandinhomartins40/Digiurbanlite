@@ -78,12 +78,12 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
       icon: User
     },
     {
-      name: 'Biometria Facial',
+      name: 'Biometria',
       href: '/cidadao/biometria-facial',
       icon: ScanFace
     },
     {
-      name: 'Leitura Facial',
+      name: 'Leitura',
       href: '/cidadao/biometria-facial/leitura',
       icon: ScanFace
     },

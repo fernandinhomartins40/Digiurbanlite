@@ -83,6 +83,8 @@ interface ReadBiometryInput {
   expectedCitizenId?: string | null;
   sourceType?: string;
   sourceLabel?: string | null;
+  modelName?: string | null;
+  modelVersion?: string | null;
 }
 
 interface IngestRecognitionInput {
@@ -606,6 +608,17 @@ export class FacePlatformService {
 
     if (input.imageBase64) {
       imagePath = await faceStorageService.persistBase64Image('enrollments', input.imageBase64);
+    }
+
+    if (vector?.length) {
+      recognitionProviderMetadata = {
+        provider: input.modelName || 'face-api.js',
+        modelName: input.modelName || 'face-api.js',
+        modelVersion: input.modelVersion || null,
+        vectorLength: vector.length,
+        source: 'face-api.js',
+      };
+    } else if (input.imageBase64) {
       const subjectKey = buildComprefaceSubjectKey(identity.id);
       const comprefaceResult = await comprefaceClient.enrollSubject(subjectKey, input.imageBase64);
 
@@ -716,9 +729,15 @@ export class FacePlatformService {
       throw createFacePlatformError('A leitura biométrica ao vivo precisa de imagem ou embedding válido', 400);
     }
 
-    const bestMatch = input.imageBase64
-      ? await this.findBestImageMatch(input.imageBase64)
-      : await this.findBestExternalVectorMatch(vector as number[]);
+    const bestMatch = vector?.length
+      ? await this.findBestExternalVectorMatch(vector)
+      : input.imageBase64
+        ? await this.findBestImageMatch(input.imageBase64)
+        : null;
+
+    if (!bestMatch) {
+      throw createFacePlatformError('A leitura biométrica ao vivo precisa de imagem ou embedding válido', 400);
+    }
 
     const livenessAssessment = await faceLivenessService.assess({
       imageBase64: input.imageBase64,
@@ -752,8 +771,9 @@ export class FacePlatformService {
       livenessScore: livenessAssessment.score,
       sourceType: input.sourceType || 'LIVE_READ',
       sourceLabel: input.sourceLabel || null,
-      provider: bestMatch.provider,
-      modelName: bestMatch.modelName,
+      provider: input.embedding?.length ? input.modelName || 'face-api.js' : bestMatch.provider,
+      modelName: input.embedding?.length ? input.modelName || 'face-api.js' : bestMatch.modelName,
+      modelVersion: input.modelVersion || null,
       liveness: {
         provider: livenessAssessment.provider,
         score: livenessAssessment.score,
@@ -876,17 +896,17 @@ export class FacePlatformService {
       identity = await this.ensureIdentityForCitizen(studentCitizenId);
       matchStatus = FaceMatchStatus.MATCHED;
       confidence = confidence ?? 1;
-    } else if (input.imageBase64) {
-      const bestMatch = await this.findBestImageMatch(input.imageBase64);
+    } else if (vector?.length) {
+      const bestMatch = await this.findBestExternalVectorMatch(vector);
       identity = bestMatch.identity;
       confidence = confidence ?? bestMatch.score;
       matchStatus = bestMatch.matchStatus;
       reviewReason = bestMatch.reviewReason;
       studentCitizenId = bestMatch.identity?.citizenId || null;
-      providerUsed = providerUsed || bestMatch.provider;
-      modelNameUsed = modelNameUsed || bestMatch.modelName;
-    } else if (vector?.length) {
-      const bestMatch = await this.findBestExternalVectorMatch(vector);
+      providerUsed = providerUsed || input.modelName || 'face-api.js';
+      modelNameUsed = modelNameUsed || input.modelName || 'face-api.js';
+    } else if (input.imageBase64) {
+      const bestMatch = await this.findBestImageMatch(input.imageBase64);
       identity = bestMatch.identity;
       confidence = confidence ?? bestMatch.score;
       matchStatus = bestMatch.matchStatus;
@@ -956,7 +976,7 @@ export class FacePlatformService {
         type: eventType,
         matchStatus,
         confidence,
-        provider: providerUsed || (input.imageBase64 ? 'compreface' : 'external-vector'),
+        provider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : input.imageBase64 ? 'compreface' : 'external-vector'),
         modelName: modelNameUsed || null,
         modelVersion: input.modelVersion || null,
         previewPath,
@@ -964,8 +984,9 @@ export class FacePlatformService {
         metadata: {
           ...(input.metadata && typeof input.metadata === 'object' ? input.metadata : {}),
           storagePreviewPath: previewPath,
-          recognitionProvider: providerUsed || (input.imageBase64 ? 'compreface' : 'external-vector'),
+          recognitionProvider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : input.imageBase64 ? 'compreface' : 'external-vector'),
           recognitionModelName: modelNameUsed || null,
+          recognitionModelVersion: input.modelVersion || null,
         } as Prisma.InputJsonValue,
         dedupeKey,
         reviewReason,

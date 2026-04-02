@@ -57,14 +57,14 @@ export default function MaisPage() {
     },
     {
       id: 'face-read',
-      label: 'Leitura Facial',
+      label: 'Leitura biométrica',
       description: 'Testar se a biometria facial está reconhecendo corretamente',
       icon: ScanFace,
       href: '/cidadao/biometria-facial/leitura',
     },
     {
       id: 'face-enroll',
-      label: 'Biometria Facial',
+      label: 'Biometria facial',
       description: 'Cadastrar ou atualizar a biometria facial ao vivo',
       icon: Shield,
       href: '/cidadao/biometria-facial',

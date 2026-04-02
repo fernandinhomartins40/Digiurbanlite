@@ -557,8 +557,11 @@ router.post(
   citizenAuthMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const citizenId = (req as any).citizenId as string | undefined;
-    const { imageBase64, sourceLabel, qualityScore, livenessScore, metadata } = req.body as {
+    const { imageBase64, embedding, modelName, modelVersion, sourceLabel, qualityScore, livenessScore, metadata } = req.body as {
       imageBase64?: string;
+      embedding?: number[];
+      modelName?: string;
+      modelVersion?: string;
       sourceLabel?: string;
       qualityScore?: number;
       livenessScore?: number;
@@ -578,9 +581,12 @@ router.post(
       sourceType: 'SELF_SERVICE',
       sourceLabel: sourceLabel?.trim() || 'Autoatendimento do cidadão por vídeo ao vivo',
       imageBase64,
+      embedding: Array.isArray(embedding) ? embedding : undefined,
       qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
       livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
+      modelName: modelName?.trim() || undefined,
+      modelVersion: modelVersion?.trim() || undefined,
     });
 
     const citizen = await prisma.citizen.findUnique({
@@ -631,8 +637,11 @@ router.post(
   citizenAuthMiddleware,
   asyncHandler(async (req: Request, res: Response) => {
     const citizenId = (req as any).citizenId as string | undefined;
-    const { imageBase64, qualityScore, livenessScore, metadata } = req.body as {
+    const { imageBase64, embedding, modelName, modelVersion, qualityScore, livenessScore, metadata } = req.body as {
       imageBase64?: string;
+      embedding?: number[];
+      modelName?: string;
+      modelVersion?: string;
       qualityScore?: number;
       livenessScore?: number;
       metadata?: Record<string, unknown>;
@@ -651,9 +660,12 @@ router.post(
       expectedCitizenId: citizenId,
       sourceType: 'SELF_SERVICE_LIVE_READ',
       sourceLabel: 'Leitura biométrica ao vivo pelo painel do cidadão',
+      embedding: Array.isArray(embedding) ? embedding : undefined,
       qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
       livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
+      modelName: modelName?.trim() || undefined,
+      modelVersion: modelVersion?.trim() || undefined,
     });
 
     return res.json({

@@ -44,6 +44,9 @@ interface FaceReadResult {
   matchStatus: 'MATCHED' | 'REVIEW_REQUIRED' | 'UNMATCHED';
   confidence: number;
   reviewReason?: string | null;
+  provider?: string | null;
+  modelName?: string | null;
+  modelVersion?: string | null;
   identity?: {
     id: string;
     citizenId?: string | null;
@@ -304,9 +307,15 @@ export default function SegurancaEscolarPage() {
   async function handleCreateEnrollment({
     imageBase64,
     metadata,
+    embedding,
+    modelName,
+    modelVersion,
   }: {
     imageBase64: string;
     metadata: { qualityScore: number; livenessScore: number };
+    embedding?: number[] | null;
+    modelName?: string;
+    modelVersion?: string;
   }) {
     if (!enrollmentForm.citizenId) {
       return;
@@ -321,6 +330,9 @@ export default function SegurancaEscolarPage() {
           enrollmentForm.sourceLabel ||
           `Cadastro presencial da biometria escolar${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
         imageBase64,
+        embedding,
+        modelName,
+        modelVersion,
         qualityScore: metadata.qualityScore,
         livenessScore: metadata.livenessScore,
         metadata,
@@ -414,7 +426,7 @@ export default function SegurancaEscolarPage() {
             <TabsList className="h-auto flex-wrap gap-2 rounded-2xl border border-amber-100 bg-white/80 p-2 shadow-sm">
               <TabsTrigger value="painel">Painel</TabsTrigger>
               <TabsTrigger value="cameras">Câmeras</TabsTrigger>
-              <TabsTrigger value="biometrias">Biometrias</TabsTrigger>
+              <TabsTrigger value="biometrias">Biometria</TabsTrigger>
               <TabsTrigger value="eventos">Eventos</TabsTrigger>
               <TabsTrigger value="configuracao">Configuração</TabsTrigger>
             </TabsList>
@@ -594,9 +606,10 @@ export default function SegurancaEscolarPage() {
                   <FaceBiometryEnrollmentPanel
                     title="Cadastro biométrico do aluno"
                     description="A câmera do setor grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
-                    helperText="Centralize o rosto no oval, mantenha o enquadramento estável e aguarde o envio automático."
-                    startLabel="Abrir câmera para cadastrar aluno"
-                    retryLabel="Refazer biometria do aluno"
+                    helperText="Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático."
+                    purposeLabel="Cadastro escolar"
+                    startLabel="Abrir câmera"
+                    retryLabel="Refazer biometria"
                     cancelLabel="Fechar câmera"
                     disabled={!selectedSchoolId || !enrollmentForm.citizenId || Boolean(submitting)}
                     onEnroll={handleCreateEnrollment}
@@ -716,6 +729,7 @@ export default function SegurancaEscolarPage() {
                   <FaceBiometryReadCard
                     title="Leitura ao vivo para evento escolar"
                     description="A câmera grava o rosto em vídeo ao vivo, reconhece a biometria cadastrada e registra o evento operacional."
+                    purposeLabel="Leitura escolar"
                     disabled={!selectedSchoolId || !eventForm.deviceId || Boolean(submitting)}
                     expectedOwnerLabel={
                       eventForm.expectedCitizenId
@@ -723,13 +737,16 @@ export default function SegurancaEscolarPage() {
                           'Aluno esperado'
                         : undefined
                     }
-                    onRead={async ({ imageBase64, metadata }) => {
+                    onRead={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) => {
                       try {
                         setSubmitting('event-live');
                         setLiveEventMessage('Leitura ao vivo concluída. Registrando o evento escolar...');
 
                         const readResult = (await facePlatformService.readBiometry({
                           imageBase64,
+                          embedding,
+                          modelName,
+                          modelVersion,
                           sourceType: 'SCHOOL_SECURITY_LIVE_READ',
                           sourceLabel: `Leitura ao vivo${selectedSchool ? ` - ${selectedSchool.nome}` : ''}`,
                           expectedCitizenId: eventForm.expectedCitizenId || undefined,
@@ -748,10 +765,16 @@ export default function SegurancaEscolarPage() {
                           studentCitizenId: readResult.identity?.citizenId || undefined,
                           eventType: resolveEventType(eventForm.eventType, readResult.matchStatus),
                           confidence: readResult.confidence || undefined,
+                          provider: readResult.provider || modelName || undefined,
+                          modelName: readResult.modelName || modelName || undefined,
+                          modelVersion: readResult.modelVersion || modelVersion || undefined,
                           imageBase64,
                           metadata: {
                             liveSession: metadata,
                             liveRead: readResult,
+                            recognitionEmbedding: embedding || null,
+                            recognitionModelName: modelName || null,
+                            recognitionModelVersion: modelVersion || null,
                             expectedCitizenId: eventForm.expectedCitizenId || null,
                           },
                         });

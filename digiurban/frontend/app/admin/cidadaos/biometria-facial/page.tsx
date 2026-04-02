@@ -95,9 +95,15 @@ export default function AdminCitizenFaceBiometryPage() {
   const handleRegisterBiometry = async ({
     imageBase64,
     metadata,
+    embedding,
+    modelName,
+    modelVersion,
   }: {
     imageBase64: string;
     metadata: FaceBiometryLiveMetadata;
+    embedding?: number[] | null;
+    modelName?: string;
+    modelVersion?: string;
   }) => {
     if (!selectedCitizen?.id) {
       return;
@@ -109,6 +115,9 @@ export default function AdminCitizenFaceBiometryPage() {
         method: 'POST',
         body: JSON.stringify({
           imageBase64,
+          embedding,
+          modelName,
+          modelVersion,
           sourceLabel: sourceLabel.trim() || `Biometria ao vivo capturada por servidor para ${selectedCitizen.name}`,
           qualityScore: metadata.qualityScore,
           livenessScore: metadata.livenessScore,
@@ -197,10 +206,10 @@ export default function AdminCitizenFaceBiometryPage() {
   return (
       <div className="space-y-6">
         <div className="space-y-1">
-        <h1 className="text-2xl font-bold text-slate-900">Atendimento Presencial: Biometria do Cidadão</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Biometria presencial do cidadão</h1>
         <p className="text-sm text-slate-600">
-          Use esta central em balcões e setores públicos para cadastrar, confirmar e gerenciar a biometria facial do
-          cidadão durante o atendimento presencial.
+          Use esta central para selecionar o cidadão, cadastrar a biometria e confirmar sessões pendentes durante o
+          atendimento presencial.
         </p>
         </div>
 
@@ -226,7 +235,7 @@ export default function AdminCitizenFaceBiometryPage() {
               <CitizenSelector
                 selectedCitizen={selectedCitizen}
                 onCitizenSelect={setSelectedCitizen}
-                label="Cidadão"
+                label="Cidadão vinculado"
                 disabled={!canVerify}
               />
             </CardContent>
@@ -264,9 +273,10 @@ export default function AdminCitizenFaceBiometryPage() {
               <FaceBiometryEnrollmentPanel
                 title="Cadastro biométrico do cidadão"
                 description="A câmera do atendimento grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
-                helperText="Centralize o rosto no oval, mantenha o enquadramento e aguarde o envio automático."
-                startLabel="Abrir câmera do atendimento"
-                retryLabel="Refazer captura presencial"
+                helperText="Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático."
+                purposeLabel="Cadastro presencial"
+                startLabel="Abrir câmera"
+                retryLabel="Refazer biometria"
                 cancelLabel="Fechar câmera"
                 disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
                 onEnroll={handleRegisterBiometry}

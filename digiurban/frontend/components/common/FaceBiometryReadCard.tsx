@@ -25,6 +25,9 @@ interface FaceReadResult {
   confidence: number;
   reviewReason?: string | null;
   belongsToExpectedCitizen?: boolean | null;
+  provider?: string | null;
+  modelName?: string | null;
+  modelVersion?: string | null;
   identity?: {
     id: string;
     citizenId?: string | null;
@@ -36,9 +39,14 @@ interface FaceReadResult {
 interface FaceBiometryReadCardProps {
   title: string;
   description: string;
+  purposeLabel?: string;
   onRead: (payload: {
     imageBase64: string;
     metadata: FaceCaptureSessionMetadata;
+    embedding?: number[] | null;
+    modelName?: string;
+    modelVersion?: string;
+    detectedFacesCount?: number;
   }) => Promise<FaceReadResult>;
   disabled?: boolean;
   expectedOwnerLabel?: string;
@@ -64,6 +72,7 @@ function getOwner(result: FaceReadResult) {
 export function FaceBiometryReadCard({
   title,
   description,
+  purposeLabel = 'Leitura biométrica ao vivo',
   onRead,
   disabled = false,
   expectedOwnerLabel,
@@ -93,6 +102,10 @@ export function FaceBiometryReadCard({
         const response = await onRead({
           imageBase64: capturedImage,
           metadata: captureMetadata,
+          embedding: captureMetadata.embedding || null,
+          modelName: captureMetadata.modelProvider,
+          modelVersion: captureMetadata.modelVersion,
+          detectedFacesCount: captureMetadata.detectedFacesCount,
         });
         setResult(response);
       } catch (readError: any) {
@@ -124,6 +137,9 @@ export function FaceBiometryReadCard({
           {title}
         </CardTitle>
         <p className="text-sm text-slate-600">{description}</p>
+        <Badge className="w-fit border-sky-200 bg-sky-100 text-sky-700">
+          {purposeLabel}
+        </Badge>
       </CardHeader>
 
       <CardContent className="space-y-4">
@@ -141,12 +157,28 @@ export function FaceBiometryReadCard({
             }
           }}
           disabled={disabled || reading}
+          purposeLabel={purposeLabel}
           showDetailedStatus={false}
         />
 
         <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
           A leitura é enviada automaticamente assim que a sessão ao vivo termina.
           {expectedOwnerLabel ? ` Comparação esperada: ${expectedOwnerLabel}.` : ''}
+        </div>
+
+        <div className="grid gap-3 md:grid-cols-3">
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">1. Abrir câmera</p>
+            <p className="mt-1">Inicie a leitura no dispositivo atual.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">2. Centralizar rosto</p>
+            <p className="mt-1">Deixe apenas um rosto na moldura oval.</p>
+          </div>
+          <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+            <p className="font-medium text-slate-900">3. Ver resultado</p>
+            <p className="mt-1">O sistema mostra quem foi reconhecido.</p>
+          </div>
         </div>
 
         {reading && (
@@ -248,7 +280,8 @@ export function FaceBiometryReadCard({
                   </div>
                   <p className="mt-1 text-slate-600">
                     Qualidade {Math.round(captureMetadata.qualityScore * 100)}%, presença{' '}
-                    {Math.round(captureMetadata.livenessScore * 100)}% e desafio concluído em vídeo ao vivo.
+                    {Math.round(captureMetadata.livenessScore * 100)}% e desafio concluído em vídeo ao vivo com{' '}
+                    {captureMetadata.modelProvider}. Rostos detectados: {captureMetadata.detectedFacesCount}.
                   </p>
                 </div>
               )}

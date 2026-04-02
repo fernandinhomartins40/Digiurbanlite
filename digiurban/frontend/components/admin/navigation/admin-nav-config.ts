@@ -127,13 +127,13 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           permissions: ['citizens:read'],
         },
         {
-          title: 'Cadastro Biométrico',
+          title: 'Biometria presencial',
           href: '/admin/atendimento-presencial/biometria-facial',
           icon: ScanFace,
           badge: 'NOVO',
         },
         {
-          title: 'Leitura Biométrica',
+          title: 'Leitura presencial',
           href: '/admin/atendimento-presencial/biometria-facial/leitura',
           icon: Search,
         },

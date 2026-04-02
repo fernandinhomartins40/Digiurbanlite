@@ -492,8 +492,11 @@ router.post(
   asyncHandler(async (req, res: Response): Promise<void> => {
     const authReq = req as AuthenticatedRequest;
     const { id } = authReq.params;
-    const { imageBase64, sourceLabel, qualityScore, livenessScore, metadata } = authReq.body as {
+    const { imageBase64, embedding, modelName, modelVersion, sourceLabel, qualityScore, livenessScore, metadata } = authReq.body as {
       imageBase64?: string;
+      embedding?: number[];
+      modelName?: string;
+      modelVersion?: string;
       sourceLabel?: string;
       qualityScore?: number;
       livenessScore?: number;
@@ -530,10 +533,13 @@ router.post(
       sourceType: 'ADMIN_WEBCAM',
       sourceLabel: sourceLabel?.trim() || `Cadastro administrativo de ${citizen.name}`,
       imageBase64,
+      embedding: Array.isArray(embedding) ? embedding : undefined,
       approvedById: authReq.user.id,
       qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
       livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined,
+      modelName: modelName?.trim() || undefined,
+      modelVersion: modelVersion?.trim() || undefined,
     });
 
     let accessLevel = await getCitizenAccessLevelSummary(id);

@@ -34,12 +34,16 @@ export default function CitizenFaceReadPage() {
         <FaceBiometryReadCard
           title="Teste de reconhecimento ao vivo"
           description="A sessão compara sua leitura atual com a biometria facial cadastrada na base do Digiurban e exibe a quem ela pertence."
+          purposeLabel="Leitura facial do cidadão"
           expectedOwnerLabel={citizen?.name || 'Cidadão autenticado'}
-          onRead={async ({ imageBase64, metadata }) => {
+          onRead={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) => {
             const response = await apiRequest('/citizen/auth/face-biometry/read', {
               method: 'POST',
               body: JSON.stringify({
                 imageBase64,
+                embedding,
+                modelName,
+                modelVersion,
                 qualityScore: metadata.qualityScore,
                 livenessScore: metadata.livenessScore,
                 metadata,

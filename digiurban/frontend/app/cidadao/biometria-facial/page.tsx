@@ -17,11 +17,11 @@ export default function CitizenFaceBiometryPage() {
       <div className="space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
           <div className="space-y-2">
-            <Badge className="border-sky-200 bg-sky-100 text-sky-700">Cadastro biométrico</Badge>
-            <h1 className="text-2xl font-bold text-slate-900">Biometria facial ao vivo</h1>
+            <Badge className="border-sky-200 bg-sky-100 text-sky-700">Biometria ao vivo</Badge>
+            <h1 className="text-2xl font-bold text-slate-900">Cadastro facial do cidadão</h1>
             <p className="max-w-3xl text-sm leading-6 text-slate-600">
-              Cadastre ou atualize sua biometria facial com a câmera do dispositivo. O envio é automático e a validação
-              do nível Ouro acontece logo após a sessão terminar.
+              Use a câmera do dispositivo para cadastrar ou atualizar sua biometria facial. O envio é automático e o
+              resumo da sessão fica disponível logo ao final.
             </p>
           </div>
 
@@ -49,20 +49,20 @@ export default function CitizenFaceBiometryPage() {
                   <ScanFace className="h-6 w-6" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold text-slate-900">Fluxo dedicado ao cidadão</p>
-                  <p className="text-sm text-slate-600">Cadastro ao vivo com envio e validação automáticos.</p>
+                  <p className="text-sm font-semibold text-slate-900">Fluxo do cidadão</p>
+                  <p className="text-sm text-slate-600">Cadastro ao vivo, com envio automático e leitura opcional.</p>
                 </div>
               </div>
 
-              <div className="space-y-3 text-sm leading-6 text-slate-700">
-                <p>
-                  Se você já possui biometria confirmada, esta página permite atualizar a captura sem depender do
-                  atendimento presencial.
-                </p>
-                <p>
-                  Se ainda não possui cadastro facial, siga apenas a moldura oval na câmera e aguarde a confirmação
-                  automática.
-                </p>
+              <div className="grid gap-3 text-sm leading-6 text-slate-700 sm:grid-cols-2">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="font-medium text-slate-900">Antes de começar</p>
+                  <p className="mt-1">Mantenha apenas o rosto no quadro e fique parado por alguns segundos.</p>
+                </div>
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                  <p className="font-medium text-slate-900">Depois do envio</p>
+                  <p className="mt-1">Você verá o resumo da sessão e poderá testar a leitura quando quiser.</p>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
@@ -73,16 +73,20 @@ export default function CitizenFaceBiometryPage() {
 
           <FaceBiometryEnrollmentPanel
             title="Cadastro facial ao vivo"
-            description="A câmera do dispositivo captura o rosto em vídeo ao vivo, e o sistema envia e valida a biometria automaticamente."
-            helperText="Centralize o rosto na moldura oval, mantenha o enquadramento estável e aguarde a captura automática."
-            startLabel="Abrir câmera para cadastro"
-            retryLabel="Refazer cadastro facial"
+            description="A câmera do dispositivo captura o rosto em vídeo ao vivo e envia a biometria automaticamente."
+            helperText="Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático."
+            purposeLabel="Cadastro facial do cidadão"
+            startLabel="Abrir câmera"
+            retryLabel="Refazer biometria"
             cancelLabel="Fechar câmera"
-            onEnroll={async ({ imageBase64, metadata }) => {
+            onEnroll={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) => {
               const response = await apiRequest('/citizen/auth/face-biometry', {
                 method: 'POST',
                 body: JSON.stringify({
                   imageBase64,
+                  embedding,
+                  modelName,
+                  modelVersion,
                   sourceLabel: 'Biometria facial por vídeo ao vivo no painel do cidadão',
                   qualityScore: metadata.qualityScore,
                   livenessScore: metadata.livenessScore,
