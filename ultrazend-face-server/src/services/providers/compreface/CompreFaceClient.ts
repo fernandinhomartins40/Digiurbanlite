@@ -62,6 +62,13 @@ function buildTimeoutSignal(timeoutMs: number) {
   };
 }
 
+function createCompreFaceError(message: string, status = 500, details?: unknown) {
+  const error = new Error(message) as Error & { status?: number; details?: unknown };
+  error.status = status;
+  error.details = details;
+  return error;
+}
+
 async function parseJsonResponse(response: Response) {
   const text = await response.text();
 
@@ -133,7 +140,7 @@ export class CompreFaceClient {
 
     const formData = this.buildFormData(imageBase64);
 
-    return this.request(`/api/v1/recognition/subjects/${encodeURIComponent(subject)}`, {
+    return this.request(`/api/v1/recognition/faces/?subject=${encodeURIComponent(subject)}`, {
       method: 'POST',
       body: formData,
     });
@@ -194,7 +201,7 @@ export class CompreFaceClient {
 
   private ensureConfigured() {
     if (!this.isConfigured()) {
-      throw new Error(getConfigurationMessage(this.baseUrl, this.apiKey));
+      throw createCompreFaceError(getConfigurationMessage(this.baseUrl, this.apiKey), 503);
     }
   }
 
@@ -214,15 +221,17 @@ export class CompreFaceClient {
       const payload = await parseJsonResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          String(payload.message || payload.error || `CompreFace respondeu com status ${response.status}`)
+        throw createCompreFaceError(
+          String(payload.message || payload.error || `CompreFace respondeu com status ${response.status}`),
+          response.status,
+          payload
         );
       }
 
       return payload as CompreFaceResponse;
     } catch (error: any) {
       if (error?.name === 'AbortError') {
-        throw new Error('Tempo esgotado ao consultar o CompreFace.');
+        throw createCompreFaceError('Tempo esgotado ao consultar o CompreFace.', 504);
       }
 
       throw error;

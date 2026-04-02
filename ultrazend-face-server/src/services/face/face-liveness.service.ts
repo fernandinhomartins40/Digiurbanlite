@@ -49,6 +49,13 @@ function getMinimumLivenessThreshold() {
   return Number(process.env.FACE_AUTO_APPROVE_LIVENESS_THRESHOLD || 0.82);
 }
 
+function createFaceLivenessError(message: string, status = 500, details?: unknown) {
+  const error = new Error(message) as Error & { status?: number; details?: unknown };
+  error.status = status;
+  error.details = details;
+  return error;
+}
+
 export class FaceLivenessService {
   private readonly provider: string;
   private readonly apiUrl: string;
@@ -106,7 +113,7 @@ export class FaceLivenessService {
       });
 
       if (!response.ok) {
-        throw new Error(`Status ${response.status}`);
+        throw createFaceLivenessError(`Status ${response.status}`, response.status);
       }
 
       return {
@@ -167,7 +174,7 @@ export class FaceLivenessService {
 
   private async assessByHttp(input: FaceLivenessInput): Promise<FaceLivenessResult> {
     if (!input.imageBase64) {
-      throw new Error('A análise de prova de vida exige imagem ao vivo.');
+      throw createFaceLivenessError('A análise de prova de vida exige imagem ao vivo.', 400);
     }
 
     const timeout = buildTimeoutSignal(this.timeoutMs);
@@ -194,8 +201,10 @@ export class FaceLivenessService {
       const payload = await parseJsonResponse(response);
 
       if (!response.ok) {
-        throw new Error(
-          String(payload.message || payload.error || `Serviço de prova de vida respondeu ${response.status}`)
+        throw createFaceLivenessError(
+          String(payload.message || payload.error || `Serviço de prova de vida respondeu ${response.status}`),
+          response.status,
+          payload
         );
       }
 
@@ -217,7 +226,7 @@ export class FaceLivenessService {
       };
     } catch (error: any) {
       if (error?.name === 'AbortError') {
-        throw new Error('Tempo esgotado ao consultar o serviço de prova de vida.');
+        throw createFaceLivenessError('Tempo esgotado ao consultar o serviço de prova de vida.', 504);
       }
 
       throw error;

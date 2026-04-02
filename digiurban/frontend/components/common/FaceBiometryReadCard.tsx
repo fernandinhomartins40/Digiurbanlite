@@ -96,8 +96,14 @@ export function FaceBiometryReadCard({
         });
         setResult(response);
       } catch (readError: any) {
-        console.error('Erro ao executar leitura biométrica:', readError);
-        setError(readError?.message || 'Não foi possível concluir a leitura biométrica ao vivo.');
+        const readableMessage =
+          readError?.response?.data?.message ||
+          readError?.response?.data?.error ||
+          readError?.message ||
+          'Não foi possível concluir a leitura biométrica ao vivo.';
+
+        console.error('Erro ao executar leitura biométrica:', readableMessage, readError?.response?.data || readError);
+        setError(readableMessage);
       } finally {
         setReading(false);
       }

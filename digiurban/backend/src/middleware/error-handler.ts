@@ -22,6 +22,7 @@ export const errorHandler = (
 ) => {
   // Determinar status code
   const statusCode = (err as any).statusCode || (err as any).status || 500;
+  const shouldExposeMessage = process.env.NODE_ENV === 'development' || (statusCode >= 400 && statusCode < 500);
 
   // ✅ LOG ESTRUTURADO com Winston (persistido em arquivo)
   logError(err, req, {
@@ -40,7 +41,7 @@ export const errorHandler = (
   res.status(statusCode).json({
     success: false,
     error: 'Erro interno do servidor',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Ocorreu um erro inesperado',
+    message: shouldExposeMessage ? err.message : 'Ocorreu um erro inesperado',
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
       details: {

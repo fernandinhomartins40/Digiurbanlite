@@ -3,12 +3,26 @@ import facePlatformService from '../services/FacePlatformService';
 
 const router = Router();
 
+function respondWithFaceError(res: Response, error: any, fallbackStatus = 500) {
+  const status = Number(error?.status || error?.statusCode || error?.response?.status || fallbackStatus);
+  const safeStatus = Number.isFinite(status) ? status : fallbackStatus;
+  const message = error?.message || 'Erro interno do servidor';
+
+  return res.status(safeStatus).json({
+    success: false,
+    error: message,
+    message,
+    ...(error?.details !== undefined ? { details: error.details } : {}),
+    ...(error?.code ? { code: error.code } : {}),
+  });
+}
+
 router.get('/status', async (_req: Request, res: Response) => {
   try {
     return res.json(await facePlatformService.getStatus());
   } catch (error: any) {
     console.error('Erro ao carregar status do serviço facial:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -18,7 +32,7 @@ router.get('/dashboard', async (_req: Request, res: Response) => {
     return res.json(data);
   } catch (error: any) {
     console.error('Erro ao carregar dashboard facial:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -28,7 +42,7 @@ router.get('/schools', async (_req: Request, res: Response) => {
     return res.json(schools);
   } catch (error: any) {
     console.error('Erro ao listar escolas para segurança escolar:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -38,7 +52,7 @@ router.get('/schools/:schoolId/students', async (req: Request, res: Response) =>
     return res.json(data);
   } catch (error: any) {
     console.error('Erro ao listar alunos da unidade escolar:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -48,7 +62,7 @@ router.get('/devices', async (_req: Request, res: Response) => {
     return res.json(devices);
   } catch (error: any) {
     console.error('Erro ao listar dispositivos faciais:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -58,7 +72,7 @@ router.post('/devices', async (req: Request, res: Response) => {
     return res.status(201).json(device);
   } catch (error: any) {
     console.error('Erro ao criar dispositivo facial:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -68,7 +82,7 @@ router.put('/devices/:id', async (req: Request, res: Response) => {
     return res.json(device);
   } catch (error: any) {
     console.error('Erro ao atualizar dispositivo facial:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -78,7 +92,7 @@ router.get('/zones', async (_req: Request, res: Response) => {
     return res.json(zones);
   } catch (error: any) {
     console.error('Erro ao listar zonas faciais:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -88,7 +102,7 @@ router.post('/zones', async (req: Request, res: Response) => {
     return res.status(201).json(zone);
   } catch (error: any) {
     console.error('Erro ao criar zona facial:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -98,7 +112,7 @@ router.get('/configurations', async (_req: Request, res: Response) => {
     return res.json(configurations);
   } catch (error: any) {
     console.error('Erro ao listar configurações escolares:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -111,7 +125,7 @@ router.put('/configurations/:schoolId', async (req: Request, res: Response) => {
     return res.json(configuration);
   } catch (error: any) {
     console.error('Erro ao salvar configuração escolar:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -121,7 +135,7 @@ router.get('/identities', async (_req: Request, res: Response) => {
     return res.json(identities);
   } catch (error: any) {
     console.error('Erro ao listar identidades faciais:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -134,7 +148,7 @@ router.post('/identities/enrollments', async (req: any, res: Response) => {
     return res.status(201).json(identity);
   } catch (error: any) {
     console.error('Erro ao registrar enrollment facial:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -144,7 +158,7 @@ router.post('/recognition/read', async (req: Request, res: Response) => {
     return res.json(result);
   } catch (error: any) {
     console.error('Erro ao ler biometria facial ao vivo:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -159,7 +173,7 @@ router.get('/events', async (req: Request, res: Response) => {
     return res.json(events);
   } catch (error: any) {
     console.error('Erro ao listar eventos faciais:', error);
-    return res.status(500).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -169,7 +183,7 @@ router.post('/events/ingest', async (req: Request, res: Response) => {
     return res.status(201).json(event);
   } catch (error: any) {
     console.error('Erro ao ingerir evento facial:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 
@@ -183,7 +197,7 @@ router.post('/events/:id/review', async (req: Request, res: Response) => {
     return res.json(event);
   } catch (error: any) {
     console.error('Erro ao revisar evento facial:', error);
-    return res.status(400).json({ error: error.message });
+    return respondWithFaceError(res, error, 500);
   }
 });
 

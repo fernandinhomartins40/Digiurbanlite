@@ -172,6 +172,13 @@ function parseComprefaceSubjectKey(subject: string) {
   return subject.startsWith('identity_') ? subject.slice('identity_'.length) : null;
 }
 
+function createFacePlatformError(message: string, status = 500, details?: unknown) {
+  const error = new Error(message) as Error & { status?: number; details?: unknown };
+  error.status = status;
+  error.details = details;
+  return error;
+}
+
 export class FacePlatformService {
   public async getStatus() {
     try {
@@ -610,7 +617,7 @@ export class FacePlatformService {
     }
 
     if (!recognitionProviderMetadata && !vector?.length) {
-      throw new Error('O cadastro facial exige imagem ao vivo ou embedding externo válido.');
+      throw createFacePlatformError('O cadastro facial exige imagem ao vivo ou embedding externo válido.', 400);
     }
 
     const livenessAssessment = await faceLivenessService.assess({
@@ -706,7 +713,7 @@ export class FacePlatformService {
     const vector = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
 
     if (!input.imageBase64 && !vector?.length) {
-      throw new Error('A leitura biométrica ao vivo precisa de imagem ou embedding válido');
+      throw createFacePlatformError('A leitura biométrica ao vivo precisa de imagem ou embedding válido', 400);
     }
 
     const bestMatch = input.imageBase64
@@ -836,7 +843,7 @@ export class FacePlatformService {
     ]);
 
     if (!device) {
-      throw new Error('Dispositivo facial não encontrado');
+      throw createFacePlatformError('Dispositivo facial não encontrado', 404);
     }
 
     let previewPath: string | null = null;
@@ -1011,7 +1018,7 @@ export class FacePlatformService {
     });
 
     if (!event) {
-      throw new Error('Evento não encontrado');
+      throw createFacePlatformError('Evento não encontrado', 404);
     }
 
     const nextMatchStatus =
@@ -1411,7 +1418,7 @@ export class FacePlatformService {
     });
 
     if (!citizen) {
-      throw new Error('Cidadão não encontrado');
+      throw createFacePlatformError('Cidadão não encontrado', 404);
     }
 
     let personId = citizen.personId;

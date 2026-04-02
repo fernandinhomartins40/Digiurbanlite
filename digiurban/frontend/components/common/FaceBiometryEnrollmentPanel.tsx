@@ -79,9 +79,14 @@ export function FaceBiometryEnrollmentPanel({
         onSuccess?.(response);
       } catch (error: any) {
         lastSubmittedSessionRef.current = null;
+        const readableMessage =
+          error?.response?.data?.message ||
+          error?.response?.data?.error ||
+          error?.message ||
+          'Não foi possível concluir o cadastro biométrico.';
         setMessage({
           type: 'error',
-          text: error?.message || 'Não foi possível concluir o cadastro biométrico.',
+          text: readableMessage,
         });
       } finally {
         setSubmitting(false);

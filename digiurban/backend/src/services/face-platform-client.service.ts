@@ -2,6 +2,29 @@ import axios, { type AxiosInstance } from 'axios';
 
 const DEFAULT_FACE_PLATFORM_SERVICE_TOKEN = 'ultrazend-face-service-token';
 
+function normalizeUpstreamError(error: any, fallbackMessage: string) {
+  const upstreamMessage =
+    error?.response?.data?.message ||
+    error?.response?.data?.error ||
+    error?.message ||
+    fallbackMessage;
+  const normalized = new Error(String(upstreamMessage));
+
+  if (error?.response?.status) {
+    (normalized as any).status = error.response.status;
+  }
+
+  if (error?.code) {
+    (normalized as any).code = error.code;
+  }
+
+  if (error?.response?.data) {
+    (normalized as any).details = error.response.data;
+  }
+
+  return normalized;
+}
+
 class FacePlatformClientService {
   private api: AxiosInstance;
 
@@ -97,13 +120,21 @@ class FacePlatformClientService {
   }
 
   async createEnrollment(payload: Record<string, unknown>) {
-    const response = await this.api.post('/identities/enrollments', payload);
-    return response.data;
+    try {
+      const response = await this.api.post('/identities/enrollments', payload);
+      return response.data;
+    } catch (error: any) {
+      throw normalizeUpstreamError(error, 'Falha ao cadastrar biometria facial.');
+    }
   }
 
   async readBiometry(payload: Record<string, unknown>) {
-    const response = await this.api.post('/recognition/read', payload);
-    return response.data;
+    try {
+      const response = await this.api.post('/recognition/read', payload);
+      return response.data;
+    } catch (error: any) {
+      throw normalizeUpstreamError(error, 'Falha ao ler biometria facial.');
+    }
   }
 
   async listEvents(params: Record<string, unknown>) {
