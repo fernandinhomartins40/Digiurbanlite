@@ -1,6 +1,6 @@
 'use client';
 
-type FaceApiModule = typeof import('face-api.js');
+export type FaceApiModule = typeof import('face-api.js');
 
 export interface FaceApiPoint {
   x: number;
@@ -38,9 +38,9 @@ interface FaceApiEngine {
   faceapi: FaceApiModule;
 }
 
-const DEFAULT_FACE_API_MODELS_URL =
+const DEFAULT_FACE_API_MODEL_BASE_URL =
   process.env.NEXT_PUBLIC_FACE_API_MODELS_URL ||
-  'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+  'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master';
 const FACE_API_MODEL_NAME = 'face-api.js';
 const FACE_API_MODEL_VERSION = '0.22.2';
 
@@ -112,9 +112,9 @@ async function loadFaceApiEngine(): Promise<FaceApiEngine | null> {
     await ensureBackend(tf);
 
     await Promise.all([
-      faceapi.nets.tinyFaceDetector.loadFromUri(DEFAULT_FACE_API_MODELS_URL),
-      faceapi.nets.faceLandmark68Net.loadFromUri(DEFAULT_FACE_API_MODELS_URL),
-      faceapi.nets.faceRecognitionNet.loadFromUri(DEFAULT_FACE_API_MODELS_URL),
+      faceapi.nets.tinyFaceDetector.loadFromUri(`${DEFAULT_FACE_API_MODEL_BASE_URL}/tiny_face_detector`),
+      faceapi.nets.faceLandmark68Net.loadFromUri(`${DEFAULT_FACE_API_MODEL_BASE_URL}/face_landmark_68`),
+      faceapi.nets.faceRecognitionNet.loadFromUri(`${DEFAULT_FACE_API_MODEL_BASE_URL}/face_recognition`),
     ]);
 
     return { faceapi };
@@ -149,7 +149,7 @@ export async function analyzeFaceApiFrame(
   const detections = await engine.faceapi
     .detectAllFaces(
       video,
-    new engine.faceapi.TinyFaceDetectorOptions({
+      new engine.faceapi.TinyFaceDetectorOptions({
         inputSize: options.inputSize || 320,
         scoreThreshold: options.scoreThreshold ?? 0.5,
       })

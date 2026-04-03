@@ -11,7 +11,7 @@ import {
   ShieldAlert,
   Users,
 } from 'lucide-react';
-import { analyzeFaceApiFrame, type FaceApiFaceAnalysis } from '@/components/common/face-api-engine';
+import { getFaceApiEngine, type FaceApiModule } from '@/components/common/face-api-engine';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,8 +25,6 @@ interface RecognizedFaceSnapshot {
   confidence: number;
   matchStatus: 'MATCHED' | 'REVIEW_REQUIRED' | 'UNMATCHED';
   reviewReason?: string | null;
-  box: FaceApiFaceAnalysis['box'];
-  landmarks: FaceApiFaceAnalysis['landmarks'];
 }
 
 interface FaceMultiFaceTestPanelProps {
@@ -34,11 +32,26 @@ interface FaceMultiFaceTestPanelProps {
   className?: string;
 }
 
-const ANALYSIS_INTERVAL_MS = 700;
-const MAX_FACES = 4;
+interface FaceEmbeddingReference {
+  vector?: number[] | null;
+  isActive?: boolean | null;
+}
+
+interface FaceIdentityReference {
+  id: string;
+  label?: string | null;
+  citizen?: { name?: string | null } | null;
+  person?: { name?: string | null } | null;
+  embeddings?: FaceEmbeddingReference[];
+}
+
+const DETECTION_INTERVAL_MS = 180;
+const MAX_FACES = 8;
+const FACE_MATCHER_THRESHOLD = 0.58;
+const REVIEW_DISTANCE_THRESHOLD = 0.72;
 const FACE_API_ANALYSIS_OPTIONS = {
   inputSize: 512 as const,
-  scoreThreshold: 0.35,
+  scoreThreshold: 0.3,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -72,74 +85,28 @@ function getStatusTone(matchStatus: RecognizedFaceSnapshot['matchStatus']) {
   };
 }
 
-function drawLandmarks(
-  context: CanvasRenderingContext2D,
-  landmarks: FaceApiFaceAnalysis['landmarks'],
-  scale: number,
-  offsetX: number,
-  offsetY: number,
-  videoWidth: number,
-  videoHeight: number
-) {
-  if (!landmarks.length) {
-    return;
-  }
-
-  landmarks.forEach((point) => {
-    const x = offsetX + point.x * videoWidth * scale;
-    const y = offsetY + point.y * videoHeight * scale;
-
-    context.beginPath();
-    context.fillStyle = '#ec4899';
-    context.arc(x, y, 1.9, 0, Math.PI * 2);
-    context.fill();
-
-    context.beginPath();
-    context.lineWidth = 0.7;
-    context.strokeStyle = 'rgba(255, 255, 255, 0.9)';
-    context.arc(x, y, 1.9, 0, Math.PI * 2);
-    context.stroke();
-  });
-}
-
-function cropFaceSnapshot(video: HTMLVideoElement, box: FaceApiFaceAnalysis['box']) {
-  const paddingRatio = 0.18;
-  const padX = box.width * paddingRatio;
-  const padY = box.height * paddingRatio;
-
-  const sourceX = clamp(box.x - padX, 0, Math.max(video.videoWidth - 1, 0));
-  const sourceY = clamp(box.y - padY, 0, Math.max(video.videoHeight - 1, 0));
-  const sourceWidth = clamp(box.width + padX * 2, 1, Math.max(video.videoWidth - sourceX, 1));
-  const sourceHeight = clamp(box.height + padY * 2, 1, Math.max(video.videoHeight - sourceY, 1));
-
-  const canvas = document.createElement('canvas');
-  canvas.width = Math.max(Math.round(sourceWidth), 1);
-  canvas.height = Math.max(Math.round(sourceHeight), 1);
-
-  const context = canvas.getContext('2d');
-  if (!context) {
-    return null;
-  }
-
-  context.drawImage(video, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, canvas.width, canvas.height);
-
-  return canvas.toDataURL('image/jpeg', 0.92);
-}
-
 export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMultiFaceTestPanelProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const intervalRef = useRef<number | null>(null);
+  const animationFrameRef = useRef<number | null>(null);
   const inFlightRef = useRef(false);
+  const lastAnalysisAtRef = useRef(0);
+  const cameraActiveRef = useRef(false);
+  const faceApiRef = useRef<FaceApiModule | null>(null);
+  const faceMatcherRef = useRef<any | null>(null);
+  const recognitionLoadPromiseRef = useRef<Promise<FaceApiModule | null> | null>(null);
+
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
   const [analyzing, setAnalyzing] = useState(false);
-  const [statusMessage, setStatusMessage] = useState('Abra a câmera para testar múltiplos rostos.');
+  const [statusMessage, setStatusMessage] = useState('Abra a câmera para testar múltiplos rostos em tempo real.');
   const [error, setError] = useState<string | null>(null);
   const [faces, setFaces] = useState<RecognizedFaceSnapshot[]>([]);
   const [lastModelName, setLastModelName] = useState<string>('face-api.js');
   const [lastDetectedCount, setLastDetectedCount] = useState(0);
+  const [referenceMessage, setReferenceMessage] = useState('Carregando biometrias cadastradas...');
+  const [referenceCount, setReferenceCount] = useState(0);
 
   const clearOverlay = () => {
     const canvas = canvasRef.current;
@@ -160,12 +127,16 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
     context.clearRect(0, 0, width, height);
   };
 
-  const drawOverlay = (items: RecognizedFaceSnapshot[]) => {
+  const drawNativeOverlay = (
+    faceapi: FaceApiModule,
+    detections: Array<any>,
+    snapshots: RecognizedFaceSnapshot[]
+  ) => {
     const canvas = canvasRef.current;
     const video = videoRef.current;
     const context = canvas?.getContext('2d');
 
-    if (!canvas || !video || !context || !video.videoWidth || !video.videoHeight) {
+    if (!canvas || !context || !video || !video.videoWidth || !video.videoHeight) {
       return;
     }
 
@@ -176,8 +147,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
     canvas.width = Math.max(Math.round(width * dpr), 1);
     canvas.height = Math.max(Math.round(height * dpr), 1);
 
-    context.setTransform(dpr, 0, 0, dpr, 0, 0);
-    context.clearRect(0, 0, width, height);
+    context.clearRect(0, 0, canvas.width, canvas.height);
 
     const scale = Math.min(width / video.videoWidth, height / video.videoHeight);
     const renderWidth = video.videoWidth * scale;
@@ -185,49 +155,148 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
     const offsetX = (width - renderWidth) / 2;
     const offsetY = (height - renderHeight) / 2;
 
-    items.forEach((item) => {
-      const tone = getStatusTone(item.matchStatus);
-      const x = offsetX + item.box.x * scale;
-      const y = offsetY + item.box.y * scale;
-      const w = item.box.width * scale;
-      const h = item.box.height * scale;
-      const label = `${item.label} · ${Math.round(item.confidence * 100)}%`;
+    context.save();
+    context.setTransform(dpr * scale, 0, 0, dpr * scale, dpr * offsetX, dpr * offsetY);
 
-      context.strokeStyle = item.matchStatus === 'MATCHED' ? '#34d399' : item.matchStatus === 'REVIEW_REQUIRED' ? '#f59e0b' : '#fb7185';
-      context.lineWidth = 3;
-      context.strokeRect(x, y, w, h);
-      drawLandmarks(context, item.landmarks, scale, offsetX, offsetY, video.videoWidth, video.videoHeight);
+    detections.forEach((detection, index) => {
+      const snapshot = snapshots[index];
+      const tone = getStatusTone(snapshot?.matchStatus || 'UNMATCHED');
+      const label =
+        snapshot?.identityName?.trim() ||
+        (snapshot?.matchStatus === 'MATCHED' ? snapshot?.label : `Desconhecido ${index + 1}`);
+      const boxColor =
+        snapshot?.matchStatus === 'MATCHED'
+          ? '#10b981'
+          : snapshot?.matchStatus === 'REVIEW_REQUIRED'
+            ? '#f59e0b'
+            : '#f43f5e';
 
-      context.font = '600 13px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
-      context.textBaseline = 'middle';
-      const textWidth = Math.min(context.measureText(label).width + 24, width - x - 12);
-      const labelHeight = 28;
-      const labelX = x;
-      const labelY = Math.max(8, y - labelHeight - 6);
+      new faceapi.draw.DrawBox(detection.detection.box, {
+        label,
+        boxColor,
+        lineWidth: 3,
+        drawLabelOptions: {
+          backgroundColor: 'rgba(15, 23, 42, 0.92)',
+          fontColor: '#ffffff',
+          padding: 6,
+        },
+      }).draw(context);
 
-      context.fillStyle = 'rgba(15, 23, 42, 0.88)';
-      context.fillRect(labelX, labelY, Math.max(textWidth, 96), labelHeight);
+      new faceapi.draw.DrawFaceLandmarks(detection.landmarks).draw(context);
 
-      context.fillStyle = '#fff';
-      context.fillText(label, labelX + 12, labelY + labelHeight / 2 + 1);
+      if (snapshot?.reviewReason) {
+        const reason = snapshot.reviewReason;
+        const box = detection.detection.box;
+        const y = box.y + box.height + 10;
 
-      if (item.reviewReason) {
-        context.font = '500 11px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+        context.font = '600 11px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
         context.fillStyle = tone.fill;
-        context.fillRect(labelX, y + h + 6, Math.max(textWidth, 96), 22);
+        const textWidth = Math.min(context.measureText(reason).width + 20, width - box.x);
+        context.fillRect(box.x, y, Math.max(textWidth, 96), 22);
         context.fillStyle = '#fff';
-        context.fillText(item.reviewReason, labelX + 12, y + h + 17);
+        context.fillText(reason, box.x + 10, y + 14);
       }
     });
+
+    context.restore();
+  };
+
+  const loadRecognitionReferences = async () => {
+    if (recognitionLoadPromiseRef.current) {
+      return recognitionLoadPromiseRef.current;
+    }
+
+    recognitionLoadPromiseRef.current = (async () => {
+      try {
+        setReferenceMessage('Carregando biometrias cadastradas...');
+
+        const engine = await getFaceApiEngine();
+        if (!engine) {
+          faceApiRef.current = null;
+          faceMatcherRef.current = null;
+          setReferenceCount(0);
+          setReferenceMessage('Motor face-api.js indisponível.');
+          return null;
+        }
+
+        faceApiRef.current = engine.faceapi;
+
+        try {
+          const identities = (await facePlatformService.listIdentities()) as FaceIdentityReference[];
+          const labeledDescriptors: Array<any> = [];
+          let totalTemplates = 0;
+
+          for (const identity of identities || []) {
+            const embeddings = Array.isArray(identity.embeddings) ? identity.embeddings : [];
+            const vectors = embeddings
+              .filter(
+                (embedding) =>
+                  embedding?.isActive !== false &&
+                  Array.isArray(embedding.vector) &&
+                  embedding.vector.length === 128
+              )
+              .map((embedding) => new Float32Array(embedding.vector as number[]));
+
+            if (!vectors.length) {
+              continue;
+            }
+
+            const displayName =
+              identity.citizen?.name?.trim() ||
+              identity.person?.name?.trim() ||
+              identity.label?.trim() ||
+              identity.id;
+
+            labeledDescriptors.push(new engine.faceapi.LabeledFaceDescriptors(displayName, vectors));
+            totalTemplates += vectors.length;
+          }
+
+          faceMatcherRef.current = labeledDescriptors.length
+            ? new engine.faceapi.FaceMatcher(labeledDescriptors, FACE_MATCHER_THRESHOLD)
+            : null;
+
+          setReferenceCount(labeledDescriptors.length);
+
+          if (labeledDescriptors.length) {
+            setReferenceMessage(
+              `${labeledDescriptors.length} identidade(s) pronta(s) para reconhecimento nativo (${totalTemplates} template(s)).`
+            );
+          } else {
+            setReferenceMessage('Nenhuma biometria cadastrada. As faces sem cadastro aparecerão como "Desconhecido".');
+          }
+        } catch (identityError: any) {
+          console.error('Erro ao carregar referências faciais:', identityError);
+          faceMatcherRef.current = null;
+          setReferenceCount(0);
+          setReferenceMessage(
+            identityError?.response?.data?.message ||
+              identityError?.response?.data?.error ||
+              identityError?.message ||
+              'Não foi possível carregar as biometrias cadastradas. O teste seguirá apenas com detecção.'
+          );
+        }
+
+        return engine.faceapi;
+      } finally {
+        recognitionLoadPromiseRef.current = null;
+      }
+    })();
+
+    return recognitionLoadPromiseRef.current;
+  };
+
+  const stopAnimationLoop = () => {
+    if (animationFrameRef.current !== null) {
+      window.cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = null;
+    }
   };
 
   const stopCamera = () => {
-    if (intervalRef.current !== null) {
-      window.clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-
+    stopAnimationLoop();
     inFlightRef.current = false;
+    lastAnalysisAtRef.current = 0;
+    cameraActiveRef.current = false;
 
     if (streamRef.current) {
       streamRef.current.getTracks().forEach((track) => track.stop());
@@ -246,12 +315,14 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
   };
 
   const analyzeFrame = async () => {
-    if (inFlightRef.current || !cameraActive) {
+    if (inFlightRef.current) {
       return;
     }
 
     const video = videoRef.current;
-    if (!video || video.readyState < 2) {
+    const faceapi = faceApiRef.current;
+
+    if (!video || !faceapi || video.readyState < 2) {
       return;
     }
 
@@ -259,110 +330,61 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
     setAnalyzing(true);
 
     try {
-      const analysis = await analyzeFaceApiFrame(video, FACE_API_ANALYSIS_OPTIONS);
+      const detections = await faceapi
+        .detectAllFaces(video, new faceapi.TinyFaceDetectorOptions(FACE_API_ANALYSIS_OPTIONS))
+        .withFaceLandmarks()
+        .withFaceDescriptors();
 
-      if (!analysis || !analysis.faces.length) {
+      const orderedDetections = [...detections]
+        .sort((left, right) => left.detection.box.x - right.detection.box.x)
+        .slice(0, MAX_FACES);
+
+      if (!orderedDetections.length) {
         setFaces([]);
         setLastDetectedCount(0);
         setLastModelName('face-api.js');
-        setStatusMessage('Nenhum rosto detectado. Posicione mais pessoas no enquadramento para testar.');
+        setStatusMessage('Nenhum rosto detectado. Posicione pessoas no enquadramento para iniciar a leitura.');
         clearOverlay();
         return;
       }
 
-      const sortedFaces = [...analysis.faces].sort((left, right) => left.box.x - right.box.x).slice(0, MAX_FACES);
+      const matcher = faceMatcherRef.current;
 
-      const provisionalFaces = sortedFaces.map((face, index) => ({
-        faceIndex: index + 1,
-        label: `Rosto ${index + 1}`,
-        identityName: null,
-        confidence: face.score || 0,
-        matchStatus: 'UNMATCHED' as const,
-        reviewReason: null,
-        box: face.box,
-        landmarks: face.landmarks,
-      }));
+      const snapshots = orderedDetections.map((detection, index) => {
+        const bestMatch = matcher ? matcher.findBestMatch(detection.descriptor) : null;
+        const distance = bestMatch?.distance ?? 1;
+        const confidence = clamp(1 - distance, 0, 1);
+        const hasKnownIdentity = Boolean(bestMatch && bestMatch.label !== 'unknown');
+        const matchStatus: RecognizedFaceSnapshot['matchStatus'] = hasKnownIdentity
+          ? 'MATCHED'
+          : distance <= REVIEW_DISTANCE_THRESHOLD
+            ? 'REVIEW_REQUIRED'
+            : 'UNMATCHED';
 
-      setFaces(provisionalFaces);
-      setLastDetectedCount(analysis.detectedFacesCount);
-      setLastModelName(analysis.modelName);
-      setStatusMessage(
-        provisionalFaces.length > 0
-          ? `${provisionalFaces.length} rosto(s) detectados em tempo real com caixas e pontos faciais.`
-          : 'Nenhum rosto detectado nesta leitura.'
-      );
-      drawOverlay(provisionalFaces);
-
-      const settledFaces = await Promise.allSettled(
-        sortedFaces.map(async (face, index) => {
-          const imageBase64 = cropFaceSnapshot(video, face.box);
-
-          if (!imageBase64) {
-            throw new Error('Não foi possível recortar o rosto para reconhecimento.');
-          }
-
-          const response = await facePlatformService.readBiometry({
-            imageBase64,
-            embedding: face.descriptor,
-            modelName: analysis.modelName,
-            modelVersion: analysis.modelVersion,
-            sourceType: 'SCHOOL_SECURITY_MULTI_FACE_TEST',
-            sourceLabel: `Teste multi-rosto${schoolName ? ` - ${schoolName}` : ''}`,
-            qualityScore: 0.8,
-            livenessScore: 0.8,
-            metadata: {
-              testMode: true,
-              faceIndex: index + 1,
-              detectedFacesCount: analysis.detectedFacesCount,
-              origin: 'seguranca-escolar',
-            },
-          });
-
-          const identityName =
-            response.identity?.citizen?.name || response.identity?.person?.name || null;
-          const hasIdentity = Boolean(identityName);
-
-          return {
-            faceIndex: index + 1,
-            label: hasIdentity
-              ? identityName + (response.matchStatus === 'REVIEW_REQUIRED' ? ' (revisão)' : '')
-              : `Rosto ${index + 1}`,
-            identityName,
-            confidence: response.confidence || 0,
-            matchStatus: response.matchStatus,
-            reviewReason: response.reviewReason || null,
-            box: face.box,
-            landmarks: face.landmarks,
-          } satisfies RecognizedFaceSnapshot;
-        })
-      );
-
-      const nextFaces = settledFaces.map((entry, index) => {
-        if (entry.status === 'fulfilled') {
-          return entry.value;
-        }
+        const reviewReason =
+          matchStatus === 'REVIEW_REQUIRED'
+            ? `Distância de comparação ${distance.toFixed(2)}.`
+            : null;
 
         return {
           faceIndex: index + 1,
-          label: `Rosto ${index + 1}`,
-          identityName: null,
-          confidence: sortedFaces[index]?.score || 0,
-          matchStatus: 'UNMATCHED' as const,
-          reviewReason: entry.reason?.message || 'Rosto detectado, mas sem reconhecimento completo.',
-          box: sortedFaces[index].box,
-          landmarks: sortedFaces[index].landmarks,
-        };
+          label: hasKnownIdentity && bestMatch ? bestMatch.toString() : `Desconhecido ${index + 1}`,
+          identityName: hasKnownIdentity && bestMatch ? bestMatch.label : null,
+          confidence,
+          matchStatus,
+          reviewReason,
+        } satisfies RecognizedFaceSnapshot;
       });
 
-      setFaces(nextFaces);
-      setLastDetectedCount(analysis.detectedFacesCount);
-      setLastModelName(analysis.modelName);
+      setFaces(snapshots);
+      setLastDetectedCount(orderedDetections.length);
+      setLastModelName('face-api.js');
       setStatusMessage(
-        nextFaces.length > 0
-          ? `${nextFaces.length} rosto(s) avaliados em tempo real com caixas, pontos faciais e rótulos visuais.`
-          : 'Nenhum rosto reconhecido nesta leitura.'
+        matcher
+          ? `${orderedDetections.length} rosto(s) detectados com identificação nativa do face-api.js. Rostos sem cadastro aparecem como "Desconhecido".`
+          : `${orderedDetections.length} rosto(s) detectados. Carregue biometrias para habilitar a identificação automática; os demais aparecerão como "Desconhecido".`
       );
-      drawOverlay(nextFaces);
+      drawNativeOverlay(faceapi, orderedDetections, snapshots);
     } catch (analysisError: any) {
       console.error('Erro ao analisar múltiplos rostos:', analysisError);
       setError(
@@ -378,6 +400,24 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
       setAnalyzing(false);
       inFlightRef.current = false;
     }
+  };
+
+  const startAnimationLoop = () => {
+    const tick = (timestamp: number) => {
+      if (!cameraActiveRef.current) {
+        return;
+      }
+
+      if (timestamp - lastAnalysisAtRef.current >= DETECTION_INTERVAL_MS) {
+        lastAnalysisAtRef.current = timestamp;
+        void analyzeFrame();
+      }
+
+      animationFrameRef.current = window.requestAnimationFrame(tick);
+    };
+
+    stopAnimationLoop();
+    animationFrameRef.current = window.requestAnimationFrame(tick);
   };
 
   const startCamera = async () => {
@@ -407,11 +447,17 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
         await videoRef.current.play().catch(() => undefined);
       }
 
+      const engine = await loadRecognitionReferences();
+      if (!engine) {
+        setError('Não foi possível carregar o motor face-api.js.');
+        stopCamera();
+        return;
+      }
+
+      cameraActiveRef.current = true;
       setCameraActive(true);
-      setStatusMessage('Câmera iniciada. O sistema vai desenhar caixas e rótulos sobre cada rosto.');
-      intervalRef.current = window.setInterval(() => {
-        void analyzeFrame();
-      }, ANALYSIS_INTERVAL_MS);
+      setStatusMessage('Câmera iniciada. O overlay nativo mostrará caixas, landmarks e nomes reconhecidos.');
+      startAnimationLoop();
       void analyzeFrame();
     } catch (startError: any) {
       console.error('Erro ao iniciar o teste multi-rosto:', startError);
@@ -428,6 +474,8 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
   };
 
   useEffect(() => {
+    void loadRecognitionReferences();
+
     return () => {
       stopCamera();
     };
@@ -451,8 +499,8 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
               Teste multi-rosto em tempo real
             </CardTitle>
             <p className="mt-1 text-sm text-slate-600">
-              O vídeo ao vivo usa `face-api.js` para detectar vários rostos e desenhar rótulos visuais sobre cada
-              pessoa em cena.
+              O vídeo ao vivo usa `face-api.js` para detectar vários rostos, desenhar landmarks e identificar cada
+              pessoa com rótulos nativos no próprio quadro.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -484,8 +532,13 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
           </div>
           <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
             <p className="font-medium text-slate-900">3. Ver os rótulos</p>
-            <p className="mt-1">Cada rosto recebe um identificador visual e, quando possível, um nome.</p>
+            <p className="mt-1">Cada rosto recebe um identificador visual diretamente sobre a imagem ao vivo.</p>
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
+          Rostos sem cadastro continuam com caixa e landmark nativos do `face-api.js` e são marcados como
+          "Desconhecido".
         </div>
 
         <div className="overflow-hidden rounded-3xl border border-slate-200 bg-slate-950">
@@ -519,7 +572,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
                       : 'Abra a câmera para detectar e rotular vários rostos ao mesmo tempo.'}
                   </p>
                   <p className="text-xs text-slate-300">
-                    O overlay mostra caixas visuais, nomes reconhecidos e status de correspondência.
+                    O overlay nativo mostra caixas, landmarks e nomes reconhecidos no próprio vídeo.
                   </p>
                 </div>
               </div>
@@ -566,9 +619,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
         </div>
 
         {error && (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-            {error}
-          </div>
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">{error}</div>
         )}
 
         <div className="grid gap-3 md:grid-cols-3">
@@ -577,17 +628,19 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
             <p className="mt-1 font-medium text-slate-900">{lastModelName}</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Reconhecidos</p>
-            <p className="mt-1 font-medium text-slate-900">
-              {faces.filter((face) => face.matchStatus === 'MATCHED').length} rosto(s)
-            </p>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Referências</p>
+            <p className="mt-1 font-medium text-slate-900">{referenceCount} identidade(s)</p>
           </div>
           <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Revisão</p>
+            <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Em revisão</p>
             <p className="mt-1 font-medium text-slate-900">
               {faces.filter((face) => face.matchStatus === 'REVIEW_REQUIRED').length} rosto(s)
             </p>
           </div>
+        </div>
+
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+          {referenceMessage}
         </div>
 
         <div className="space-y-3">
@@ -596,7 +649,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
               const tone = getStatusTone(face.matchStatus);
 
               return (
-                <div key={`${face.faceIndex}-${face.box.x}-${face.box.y}`} className="rounded-2xl border border-slate-200 bg-white p-4">
+                <div key={face.faceIndex} className="rounded-2xl border border-slate-200 bg-white p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                     <div className="flex items-start gap-3">
                       <div className={cn('rounded-2xl border px-3 py-3', tone.border, tone.fill, tone.text)}>
@@ -614,9 +667,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
                       </div>
                     </div>
 
-                    <Badge className={tone.chip}>
-                      Confiança {Math.round(face.confidence * 100)}%
-                    </Badge>
+                    <Badge className={tone.chip}>Confiança {Math.round(face.confidence * 100)}%</Badge>
                   </div>
 
                   {face.reviewReason && (
