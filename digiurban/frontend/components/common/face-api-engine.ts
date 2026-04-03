@@ -29,6 +29,11 @@ export interface FaceApiFrameAnalysis {
   detectedFacesCount: number;
 }
 
+export interface FaceApiFrameAnalysisOptions {
+  inputSize?: 160 | 224 | 320 | 416 | 512;
+  scoreThreshold?: number;
+}
+
 interface FaceApiEngine {
   faceapi: FaceApiModule;
 }
@@ -127,7 +132,10 @@ export async function getFaceApiEngine() {
   return enginePromise;
 }
 
-export async function analyzeFaceApiFrame(video: HTMLVideoElement): Promise<FaceApiFrameAnalysis | null> {
+export async function analyzeFaceApiFrame(
+  video: HTMLVideoElement,
+  options: FaceApiFrameAnalysisOptions = {}
+): Promise<FaceApiFrameAnalysis | null> {
   const engine = await getFaceApiEngine();
 
   if (!engine) {
@@ -141,9 +149,9 @@ export async function analyzeFaceApiFrame(video: HTMLVideoElement): Promise<Face
   const detections = await engine.faceapi
     .detectAllFaces(
       video,
-      new engine.faceapi.TinyFaceDetectorOptions({
-        inputSize: 320,
-        scoreThreshold: 0.5,
+    new engine.faceapi.TinyFaceDetectorOptions({
+        inputSize: options.inputSize || 320,
+        scoreThreshold: options.scoreThreshold ?? 0.5,
       })
     )
     .withFaceLandmarks()

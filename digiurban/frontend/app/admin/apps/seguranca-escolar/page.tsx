@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
 import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
+import FaceMultiFaceTestPanel from '@/components/apps/seguranca-escolar/FaceMultiFaceTestPanel';
 import { SchoolSecurityHeader } from '@/components/apps/seguranca-escolar/SchoolSecurityHeader';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -415,9 +416,19 @@ export default function SegurancaEscolarPage() {
           description="Câmeras, zonas, biometria e notificação ao responsável em uma central única."
           icon={Shield}
           actions={
-            <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
-              Escola: {selectedSchool?.nome || 'Selecione'}
-            </Badge>
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                className="border-amber-200 bg-white text-amber-800 hover:bg-amber-50"
+                onClick={() => setTab('teste-multi-rosto')}
+              >
+                Teste multi-rosto
+              </Button>
+              <Badge className="bg-amber-100 text-amber-800 hover:bg-amber-100">
+                Escola: {selectedSchool?.nome || 'Selecione'}
+              </Badge>
+            </>
           }
         />
 
@@ -428,6 +439,7 @@ export default function SegurancaEscolarPage() {
               <TabsTrigger value="cameras">Câmeras</TabsTrigger>
               <TabsTrigger value="biometrias">Biometria</TabsTrigger>
               <TabsTrigger value="eventos">Eventos</TabsTrigger>
+              <TabsTrigger value="teste-multi-rosto">Teste multi-rosto</TabsTrigger>
               <TabsTrigger value="configuracao">Configuração</TabsTrigger>
             </TabsList>
 
@@ -866,6 +878,10 @@ export default function SegurancaEscolarPage() {
                   ))}
                 </CardContent>
               </Card>
+            </TabsContent>
+
+            <TabsContent value="teste-multi-rosto" className="space-y-4">
+              <FaceMultiFaceTestPanel schoolName={selectedSchool?.nome || undefined} />
             </TabsContent>
 
             <TabsContent value="configuracao" className="grid gap-4 lg:grid-cols-2">
