@@ -26,6 +26,7 @@ interface RecognizedFaceSnapshot {
   matchStatus: 'MATCHED' | 'REVIEW_REQUIRED' | 'UNMATCHED';
   reviewReason?: string | null;
   box: FaceApiFaceAnalysis['box'];
+  landmarks: FaceApiFaceAnalysis['landmarks'];
 }
 
 interface FaceMultiFaceTestPanelProps {
@@ -36,8 +37,8 @@ interface FaceMultiFaceTestPanelProps {
 const ANALYSIS_INTERVAL_MS = 700;
 const MAX_FACES = 4;
 const FACE_API_ANALYSIS_OPTIONS = {
-  inputSize: 416 as const,
-  scoreThreshold: 0.42,
+  inputSize: 512 as const,
+  scoreThreshold: 0.35,
 };
 
 function clamp(value: number, min: number, max: number) {
@@ -69,6 +70,36 @@ function getStatusTone(matchStatus: RecognizedFaceSnapshot['matchStatus']) {
     text: 'text-rose-50',
     chip: 'border-rose-200 bg-rose-100 text-rose-800',
   };
+}
+
+function drawLandmarks(
+  context: CanvasRenderingContext2D,
+  landmarks: FaceApiFaceAnalysis['landmarks'],
+  scale: number,
+  offsetX: number,
+  offsetY: number,
+  videoWidth: number,
+  videoHeight: number
+) {
+  if (!landmarks.length) {
+    return;
+  }
+
+  landmarks.forEach((point) => {
+    const x = offsetX + point.x * videoWidth * scale;
+    const y = offsetY + point.y * videoHeight * scale;
+
+    context.beginPath();
+    context.fillStyle = '#ec4899';
+    context.arc(x, y, 1.9, 0, Math.PI * 2);
+    context.fill();
+
+    context.beginPath();
+    context.lineWidth = 0.7;
+    context.strokeStyle = 'rgba(255, 255, 255, 0.9)';
+    context.arc(x, y, 1.9, 0, Math.PI * 2);
+    context.stroke();
+  });
 }
 
 function cropFaceSnapshot(video: HTMLVideoElement, box: FaceApiFaceAnalysis['box']) {
@@ -165,6 +196,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
       context.strokeStyle = item.matchStatus === 'MATCHED' ? '#34d399' : item.matchStatus === 'REVIEW_REQUIRED' ? '#f59e0b' : '#fb7185';
       context.lineWidth = 3;
       context.strokeRect(x, y, w, h);
+      drawLandmarks(context, item.landmarks, scale, offsetX, offsetY, video.videoWidth, video.videoHeight);
 
       context.font = '600 13px ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
       context.textBaseline = 'middle';
@@ -240,6 +272,27 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
 
       const sortedFaces = [...analysis.faces].sort((left, right) => left.box.x - right.box.x).slice(0, MAX_FACES);
 
+      const provisionalFaces = sortedFaces.map((face, index) => ({
+        faceIndex: index + 1,
+        label: `Rosto ${index + 1}`,
+        identityName: null,
+        confidence: face.score || 0,
+        matchStatus: 'UNMATCHED' as const,
+        reviewReason: null,
+        box: face.box,
+        landmarks: face.landmarks,
+      }));
+
+      setFaces(provisionalFaces);
+      setLastDetectedCount(analysis.detectedFacesCount);
+      setLastModelName(analysis.modelName);
+      setStatusMessage(
+        provisionalFaces.length > 0
+          ? `${provisionalFaces.length} rosto(s) detectados em tempo real com caixas e pontos faciais.`
+          : 'Nenhum rosto detectado nesta leitura.'
+      );
+      drawOverlay(provisionalFaces);
+
       const settledFaces = await Promise.allSettled(
         sortedFaces.map(async (face, index) => {
           const imageBase64 = cropFaceSnapshot(video, face.box);
@@ -279,6 +332,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
             matchStatus: response.matchStatus,
             reviewReason: response.reviewReason || null,
             box: face.box,
+            landmarks: face.landmarks,
           } satisfies RecognizedFaceSnapshot;
         })
       );
@@ -296,6 +350,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
           matchStatus: 'UNMATCHED' as const,
           reviewReason: entry.reason?.message || 'Rosto detectado, mas sem reconhecimento completo.',
           box: sortedFaces[index].box,
+          landmarks: sortedFaces[index].landmarks,
         };
       });
 
@@ -304,7 +359,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
       setLastModelName(analysis.modelName);
       setStatusMessage(
         nextFaces.length > 0
-          ? `${nextFaces.length} rosto(s) avaliados em tempo real com caixas e rótulos visuais.`
+          ? `${nextFaces.length} rosto(s) avaliados em tempo real com caixas, pontos faciais e rótulos visuais.`
           : 'Nenhum rosto reconhecido nesta leitura.'
       );
       drawOverlay(nextFaces);
