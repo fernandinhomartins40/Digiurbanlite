@@ -74,8 +74,8 @@ class FacePlatformClientService {
     return response.data;
   }
 
-  async listSchoolStudents(schoolId: string) {
-    const response = await this.api.get(`/schools/${schoolId}/students`);
+  async listSchoolCitizens(schoolId: string) {
+    const response = await this.api.get(`/schools/${schoolId}/citizens`);
     return response.data;
   }
 

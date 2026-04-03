@@ -107,7 +107,7 @@ export default function SegurancaEscolarPage() {
   const [dashboard, setDashboard] = useState<any>(null);
   const [schools, setSchools] = useState<any[]>([]);
   const [selectedSchoolId, setSelectedSchoolId] = useState('');
-  const [students, setStudents] = useState<any[]>([]);
+  const [citizens, setCitizens] = useState<any[]>([]);
   const [devices, setDevices] = useState<any[]>([]);
   const [zones, setZones] = useState<any[]>([]);
   const [configs, setConfigs] = useState<any[]>([]);
@@ -166,9 +166,9 @@ export default function SegurancaEscolarPage() {
     [events, selectedSchoolId]
   );
 
-  const schoolStudentsWithBiometry = useMemo(
-    () => students.filter((item) => item.faceIdentity),
-    [students]
+  const schoolCitizensWithBiometry = useMemo(
+    () => citizens.filter((item) => item.faceIdentity),
+    [citizens]
   );
 
   useEffect(() => {
@@ -177,12 +177,12 @@ export default function SegurancaEscolarPage() {
 
   useEffect(() => {
     if (!selectedSchoolId) {
-      setStudents([]);
+      setCitizens([]);
       setConfigForm(defaultConfig);
       return;
     }
 
-    void loadStudents(selectedSchoolId);
+    void loadCitizens(selectedSchoolId);
 
     const config = configs.find((item) => item.unidadeEducacaoId === selectedSchoolId);
     setConfigForm(
@@ -209,7 +209,7 @@ export default function SegurancaEscolarPage() {
         setDashboard(null);
         setSchools([]);
         setSelectedSchoolId('');
-        setStudents([]);
+        setCitizens([]);
         setDevices([]);
         setZones([]);
         setConfigs([]);
@@ -251,13 +251,13 @@ export default function SegurancaEscolarPage() {
     }
   }
 
-  async function loadStudents(schoolId: string) {
+  async function loadCitizens(schoolId: string) {
     try {
-      const response = await facePlatformService.listSchoolStudents(schoolId);
-      setStudents(response.students || []);
+      const response = await facePlatformService.listSchoolCitizens(schoolId);
+      setCitizens(response.citizens || []);
     } catch (error) {
       console.error(error);
-      setStudents([]);
+      setCitizens([]);
     }
   }
 
@@ -340,9 +340,9 @@ export default function SegurancaEscolarPage() {
       });
       setEnrollmentForm({ citizenId: '', sourceLabel: '' });
       await loadAll();
-      await loadStudents(selectedSchoolId);
+      await loadCitizens(selectedSchoolId);
     } catch (error: any) {
-      alert(error?.response?.data?.error || 'Erro ao cadastrar biometria do aluno.');
+      alert(error?.response?.data?.error || 'Erro ao cadastrar biometria do cidadão.');
     } finally {
       setSubmitting(null);
     }
@@ -475,7 +475,7 @@ export default function SegurancaEscolarPage() {
                   {(dashboard?.recentEvents || []).slice(0, 8).map((event: any) => (
                     <div key={event.id} className="rounded-xl border border-slate-200 p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium">{event.studentCitizen?.name || 'Não identificado'}</span>
+                        <span className="font-medium">{event.citizen?.name || 'Não identificado'}</span>
                         <Badge>{event.notificationStatus}</Badge>
                       </div>
                       <p className="text-slate-600">
@@ -590,7 +590,7 @@ export default function SegurancaEscolarPage() {
             <TabsContent value="biometrias" className="grid gap-4 lg:grid-cols-2">
               <Card className="border-amber-100 bg-white/85">
                 <CardHeader>
-                  <CardTitle>Cadastro ao vivo do aluno</CardTitle>
+                  <CardTitle>Cadastro ao vivo do cidadão</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Select
@@ -598,12 +598,12 @@ export default function SegurancaEscolarPage() {
                     onValueChange={(value) => setEnrollmentForm({ ...enrollmentForm, citizenId: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Aluno" />
+                      <SelectValue placeholder="Cidadão" />
                     </SelectTrigger>
                     <SelectContent>
-                      {students.map((item: any) => (
-                        <SelectItem key={item.aluno.id} value={item.aluno.id}>
-                          {item.aluno.name}
+                      {citizens.map((item: any) => (
+                        <SelectItem key={item.citizen.id} value={item.citizen.id}>
+                          {item.citizen.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -616,7 +616,7 @@ export default function SegurancaEscolarPage() {
                   />
 
                   <FaceBiometryEnrollmentPanel
-                    title="Cadastro biométrico do aluno"
+                    title="Cadastro biométrico do cidadão"
                     description="A câmera do setor grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
                     helperText="Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático."
                     purposeLabel="Cadastro escolar"
@@ -635,18 +635,18 @@ export default function SegurancaEscolarPage() {
                 </CardHeader>
                 <CardContent className="space-y-3">
                   <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                    {schoolStudentsWithBiometry.length} aluno(s) com biometria vinculada nesta unidade.
+                    {schoolCitizensWithBiometry.length} cidadão(s) com biometria vinculada nesta unidade.
                   </div>
 
-                  {students.slice(0, 12).map((item: any) => (
+                  {citizens.slice(0, 12).map((item: any) => (
                     <div key={item.matriculaId} className="rounded-xl border border-slate-200 p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium">{item.aluno.name}</span>
+                        <span className="font-medium">{item.citizen.name}</span>
                         <Badge variant={item.faceIdentity ? 'default' : 'secondary'}>
                           {item.faceIdentity ? item.faceIdentity.status : 'Sem biometria'}
                         </Badge>
                       </div>
-                      <p className="text-slate-600">Responsável: {item.responsavel?.name || 'Não informado'}</p>
+                      <p className="text-slate-600">Responsável: {item.guardian?.name || item.responsavel?.name || 'Não informado'}</p>
                     </div>
                   ))}
                 </CardContent>
@@ -707,13 +707,13 @@ export default function SegurancaEscolarPage() {
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Aluno esperado (opcional)" />
+                      <SelectValue placeholder="Cidadão esperado (opcional)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Sem aluno esperado</SelectItem>
-                      {students.map((item: any) => (
-                        <SelectItem key={item.aluno.id} value={item.aluno.id}>
-                          {item.aluno.name}
+                      <SelectItem value="none">Sem cidadão esperado</SelectItem>
+                      {citizens.map((item: any) => (
+                        <SelectItem key={item.citizen.id} value={item.citizen.id}>
+                          {item.citizen.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -745,8 +745,8 @@ export default function SegurancaEscolarPage() {
                     disabled={!selectedSchoolId || !eventForm.deviceId || Boolean(submitting)}
                     expectedOwnerLabel={
                       eventForm.expectedCitizenId
-                        ? students.find((item: any) => item.aluno.id === eventForm.expectedCitizenId)?.aluno?.name ||
-                          'Aluno esperado'
+                        ? citizens.find((item: any) => item.citizen.id === eventForm.expectedCitizenId)?.citizen?.name ||
+                          'Cidadão esperado'
                         : undefined
                     }
                     onRead={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) => {
@@ -774,7 +774,7 @@ export default function SegurancaEscolarPage() {
                           zoneId: eventForm.zoneId || undefined,
                           unidadeEducacaoId: selectedSchoolId,
                           identityId: readResult.identity?.id || undefined,
-                          studentCitizenId: readResult.identity?.citizenId || undefined,
+                          citizenId: readResult.identity?.citizenId || undefined,
                           eventType: resolveEventType(eventForm.eventType, readResult.matchStatus),
                           confidence: readResult.confidence || undefined,
                           provider: readResult.provider || modelName || undefined,
@@ -848,7 +848,7 @@ export default function SegurancaEscolarPage() {
                   {schoolEvents.map((event: any) => (
                     <div key={event.id} className="rounded-xl border border-slate-200 p-3 text-sm">
                       <div className="flex items-center justify-between gap-3">
-                        <span className="font-medium">{event.studentCitizen?.name || 'Não identificado'}</span>
+                        <span className="font-medium">{event.citizen?.name || 'Não identificado'}</span>
                         <Badge>{event.notificationStatus}</Badge>
                       </div>
                       <p className="text-slate-600">
@@ -1022,7 +1022,7 @@ export default function SegurancaEscolarPage() {
               <div className="rounded-2xl border border-amber-100 bg-amber-50/60 p-4 text-sm text-slate-700">
                 <p className="font-medium text-slate-900">Operação atual</p>
                 <p className="mt-2">
-                  Esta central agora usa captura facial ao vivo para cadastro de alunos e leitura de eventos, no mesmo
+                  Esta central agora usa captura facial ao vivo para cadastro de cidadãos e leitura de eventos, no mesmo
                   serviço facial central do ecossistema Digiurban.
                 </p>
               </div>

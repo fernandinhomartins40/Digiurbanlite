@@ -45,12 +45,12 @@ router.get('/schools', async (_req: Request, res: Response) => {
   }
 });
 
-router.get('/schools/:schoolId/students', async (req: Request, res: Response) => {
+router.get('/schools/:schoolId/citizens', async (req: Request, res: Response) => {
   try {
-    const data = await facePlatformService.listSchoolStudents(req.params.schoolId);
+    const data = await facePlatformService.listSchoolCitizens(req.params.schoolId);
     return res.json(data);
   } catch (error: any) {
-    console.error('Erro ao listar alunos da unidade escolar:', error);
+    console.error('Erro ao listar cidadãos da unidade escolar:', error);
     return respondWithFaceError(res, error, 500);
   }
 });

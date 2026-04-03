@@ -91,6 +91,7 @@ interface IngestRecognitionInput {
   deviceId: string;
   zoneId?: string | null;
   unidadeEducacaoId?: string | null;
+  citizenId?: string | null;
   studentCitizenId?: string | null;
   identityId?: string | null;
   eventType?: 'DETECTION' | 'ENTRY' | 'EXIT' | 'UNMATCHED' | 'REVIEW';
@@ -329,7 +330,7 @@ export class FacePlatformService {
     }));
   }
 
-  public async listSchoolStudents(unidadeEducacaoId: string) {
+  public async listSchoolCitizens(unidadeEducacaoId: string) {
     const matriculas = await prisma.matricula.findMany({
       where: {
         unidadeEducacaoId,
@@ -338,12 +339,12 @@ export class FacePlatformService {
       orderBy: { updatedAt: 'desc' },
     });
 
-    const studentIds = unique(matriculas.map((item) => item.alunoId));
+    const citizenIds = unique(matriculas.map((item) => item.alunoId));
     const guardianIds = unique(matriculas.map((item) => item.responsavelId));
 
-    const [students, guardians, identities, school] = await Promise.all([
+    const [citizens, guardians, identities, school] = await Promise.all([
       prisma.citizen.findMany({
-        where: { id: { in: studentIds } },
+        where: { id: { in: citizenIds } },
         select: { id: true, name: true, cpf: true, phone: true, personId: true },
       }),
       prisma.citizen.findMany({
@@ -352,7 +353,7 @@ export class FacePlatformService {
       }),
       prisma.faceRecognitionIdentity.findMany({
         where: {
-          citizenId: { in: studentIds },
+          citizenId: { in: citizenIds },
         },
         include: {
           enrollments: {
@@ -370,26 +371,28 @@ export class FacePlatformService {
       }),
     ]);
 
-    const studentMap = new Map(students.map((student) => [student.id, student]));
+    const citizenMap = new Map(citizens.map((citizen) => [citizen.id, citizen]));
     const guardianMap = new Map(guardians.map((guardian) => [guardian.id, guardian]));
     const identityMap = new Map(identities.map((identity) => [identity.citizenId, identity]));
 
     return {
       school,
-      students: matriculas
+      citizens: matriculas
         .map((matricula) => {
-          const student = studentMap.get(matricula.alunoId);
+          const citizen = citizenMap.get(matricula.alunoId);
           const guardian = guardianMap.get(matricula.responsavelId);
           const identity = identityMap.get(matricula.alunoId);
 
-          if (!student) {
+          if (!citizen) {
             return null;
           }
 
           return {
             matriculaId: matricula.id,
             numeroMatricula: matricula.numeroMatricula,
-            aluno: student,
+            citizen,
+            aluno: citizen,
+            guardian: guardian || null,
             responsavel: guardian || null,
             faceIdentity: identity
               ? {
@@ -399,7 +402,7 @@ export class FacePlatformService {
                   latestEnrollment: identity.enrollments[0] || null,
                 }
               : null,
-          };
+            };
         })
         .filter(Boolean),
     };
@@ -874,7 +877,7 @@ export class FacePlatformService {
     let confidence = input.confidence ?? null;
     let matchStatus: FaceMatchStatus = FaceMatchStatus.UNMATCHED;
     let reviewReason: string | null = null;
-    let studentCitizenId = input.studentCitizenId || null;
+    let citizenId = input.citizenId || input.studentCitizenId || null;
     let providerUsed = input.provider || null;
     let modelNameUsed = input.modelName || null;
 
@@ -890,10 +893,10 @@ export class FacePlatformService {
           person: true,
         },
       });
-      studentCitizenId = studentCitizenId || identity?.citizenId || null;
+      citizenId = citizenId || identity?.citizenId || null;
       matchStatus = identity ? FaceMatchStatus.MATCHED : FaceMatchStatus.UNMATCHED;
-    } else if (studentCitizenId) {
-      identity = await this.ensureIdentityForCitizen(studentCitizenId);
+    } else if (citizenId) {
+      identity = await this.ensureIdentityForCitizen(citizenId);
       matchStatus = FaceMatchStatus.MATCHED;
       confidence = confidence ?? 1;
     } else if (vector?.length) {
@@ -902,7 +905,7 @@ export class FacePlatformService {
       confidence = confidence ?? bestMatch.score;
       matchStatus = bestMatch.matchStatus;
       reviewReason = bestMatch.reviewReason;
-      studentCitizenId = bestMatch.identity?.citizenId || null;
+      citizenId = bestMatch.identity?.citizenId || null;
       providerUsed = providerUsed || input.modelName || 'face-api.js';
       modelNameUsed = modelNameUsed || input.modelName || 'face-api.js';
     } else if (input.imageBase64) {
@@ -911,13 +914,13 @@ export class FacePlatformService {
       confidence = confidence ?? bestMatch.score;
       matchStatus = bestMatch.matchStatus;
       reviewReason = bestMatch.reviewReason;
-      studentCitizenId = bestMatch.identity?.citizenId || null;
+      citizenId = bestMatch.identity?.citizenId || null;
       providerUsed = providerUsed || bestMatch.provider;
       modelNameUsed = modelNameUsed || bestMatch.modelName;
     }
 
     const schoolContext = await this.resolveSchoolContext(
-      studentCitizenId,
+      citizenId,
       input.unidadeEducacaoId || zone?.unidadeEducacaoId || device.unidadeEducacaoId || null
     );
     const eventType = this.resolveEventType(input.eventType, zone?.direction || null, matchStatus);
@@ -926,8 +929,8 @@ export class FacePlatformService {
       schoolContext.configuration?.dedupeWindowSecs ||
       180;
     const dedupeKey =
-      studentCitizenId && eventType !== FaceEventType.UNMATCHED
-        ? `${studentCitizenId}:${zone?.id || device.id}:${eventType}`
+      citizenId && eventType !== FaceEventType.UNMATCHED
+        ? `${citizenId}:${zone?.id || device.id}:${eventType}`
         : null;
 
     if (dedupeKey) {
@@ -971,7 +974,7 @@ export class FacePlatformService {
         deviceId: device.id,
         zoneId: zone?.id || null,
         unidadeEducacaoId: schoolContext.unidadeEducacaoId,
-        studentCitizenId,
+        studentCitizenId: citizenId,
         guardianCitizenId: schoolContext.guardianCitizenId,
         type: eventType,
         matchStatus,
@@ -1259,11 +1262,11 @@ export class FacePlatformService {
     return FaceEventType.DETECTION;
   }
 
-  private async resolveSchoolContext(studentCitizenId: string | null, unidadeEducacaoId: string | null) {
-    const matricula = studentCitizenId
+  private async resolveSchoolContext(citizenId: string | null, unidadeEducacaoId: string | null) {
+    const matricula = citizenId
       ? await prisma.matricula.findFirst({
           where: {
-            alunoId: studentCitizenId,
+            alunoId: citizenId,
             situacao: SituacaoMatricula.ATIVA,
             ...(unidadeEducacaoId ? { unidadeEducacaoId } : {}),
           },
@@ -1390,6 +1393,7 @@ export class FacePlatformService {
         priority: 'high',
         data: {
           eventId: event.id,
+          citizenId: event.studentCitizenId,
           studentCitizenId: event.studentCitizenId,
           guardianCitizenId: event.guardianCitizenId,
           schoolId: event.unidadeEducacaoId,
@@ -1567,6 +1571,8 @@ export class FacePlatformService {
   private serializeEvent(event: any) {
     return {
       ...event,
+      citizenId: event.studentCitizenId,
+      citizen: event.studentCitizen || event.identity?.citizen || null,
       previewUrl: faceStorageService.buildPublicPath(event.previewPath),
     };
   }

@@ -16,8 +16,8 @@ export const facePlatformService = {
     return response.data;
   },
 
-  listSchoolStudents: async (schoolId: string) => {
-    const response = await api.get(`/admin/face-platform/schools/${schoolId}/students`);
+  listSchoolCitizens: async (schoolId: string) => {
+    const response = await api.get(`/admin/face-platform/schools/${schoolId}/citizens`);
     return response.data;
   },
 
