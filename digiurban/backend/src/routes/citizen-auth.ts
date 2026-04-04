@@ -655,12 +655,16 @@ router.post(
       return res.status(400).json({ error: 'A leitura facial ao vivo é obrigatória' });
     }
 
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      return res.status(400).json({ error: 'A leitura biométrica ao vivo exige embedding válido do face-api.js.' });
+    }
+
     const result = await facePlatformClientService.readBiometry({
       imageBase64,
       expectedCitizenId: citizenId,
       sourceType: 'SELF_SERVICE_LIVE_READ',
       sourceLabel: 'Leitura biométrica ao vivo pelo painel do cidadão',
-      embedding: Array.isArray(embedding) ? embedding : undefined,
+      embedding,
       qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
       livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined,

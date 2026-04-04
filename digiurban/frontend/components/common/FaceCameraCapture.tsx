@@ -296,7 +296,7 @@ export function FaceCameraCapture({
   const feedbackRef = useRef('');
   const feedbackToneRef = useRef<FeedbackTone>('neutral');
   const sessionStepRef = useRef<SessionStep>('align');
-  const analysisModeRef = useRef<'face-api.js' | 'mediapipe'>('mediapipe');
+  const analysisModeRef = useRef<'face-api.js' | 'mediapipe'>('face-api.js');
   const challengeStateRef = useRef<ChallengeState>({
     completedSteps: [],
     stableMs: 0,
@@ -349,7 +349,7 @@ export function FaceCameraCapture({
       minSizeRatio: 1,
       maxSizeRatio: 0,
     };
-    analysisModeRef.current = 'mediapipe';
+    analysisModeRef.current = 'face-api.js';
     sessionStepRef.current = 'align';
     setSessionStep('align');
     setLiveMetrics(null);
@@ -376,7 +376,7 @@ export function FaceCameraCapture({
       videoRef.current.srcObject = null;
     }
 
-    analysisModeRef.current = 'mediapipe';
+    analysisModeRef.current = 'face-api.js';
     setCameraActive(false);
   };
 
@@ -656,17 +656,14 @@ export function FaceCameraCapture({
       lastAnalysisAtRef.current = 0;
       lastVideoTimeRef.current = -1;
 
-      if (faceApiEngine) {
-        analysisModeRef.current = 'face-api.js';
-        landmarkerRef.current = null;
-      } else if (requireFaceApi) {
-        setCameraError('O cadastro biométrico exige o motor face-api.js, mas ele não pôde ser carregado.');
+      if (!faceApiEngine) {
+        setCameraError('O motor face-api.js não pôde ser carregado. A sessão foi interrompida.');
         stopCamera();
         return;
-      } else {
-        analysisModeRef.current = 'mediapipe';
-        landmarkerRef.current = await getFaceLandmarker();
       }
+
+      analysisModeRef.current = 'face-api.js';
+      landmarkerRef.current = null;
 
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
@@ -773,21 +770,10 @@ export function FaceCameraCapture({
             }
           }
         } catch (error) {
-          if (requireFaceApi) {
-            console.error('Falha durante a análise facial ao vivo com face-api.js.', error);
-            setCameraError('Falha ao processar a biometria facial com face-api.js. O cadastro foi interrompido.');
-            stopCamera();
-            return;
-          }
-
-          console.warn('Falha durante a análise facial ao vivo. Alternando para o fallback.', error);
-          analysisModeRef.current = 'mediapipe';
-
-          if (!landmarkerRef.current) {
-            landmarkerRef.current = await getFaceLandmarker().catch(() => null);
-          }
-
-          syncFeedback('O motor facial principal falhou. Alternando para o modo de fallback.', 'warning');
+          console.error('Falha durante a análise facial ao vivo com face-api.js.', error);
+          setCameraError('Falha ao processar a biometria facial com face-api.js. A sessão foi interrompida.');
+          stopCamera();
+          return;
         }
       }
 

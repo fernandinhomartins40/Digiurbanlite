@@ -43,7 +43,7 @@ interface FaceBiometryReadCardProps {
   onRead: (payload: {
     imageBase64: string;
     metadata: FaceCaptureSessionMetadata;
-    embedding?: number[] | null;
+    embedding: number[];
     modelName?: string;
     modelVersion?: string;
     detectedFacesCount?: number;
@@ -97,18 +97,24 @@ export function FaceBiometryReadCard({
 
     const executeRead = async () => {
       try {
+        const embedding = captureMetadata.embedding;
+        if (!Array.isArray(embedding) || embedding.length === 0) {
+          throw new Error('Não foi possível extrair um embedding facial válido. A leitura foi interrompida.');
+        }
+
         setReading(true);
         setError(null);
         const response = await onRead({
           imageBase64: capturedImage,
           metadata: captureMetadata,
-          embedding: captureMetadata.embedding || null,
+          embedding,
           modelName: captureMetadata.modelProvider,
           modelVersion: captureMetadata.modelVersion,
           detectedFacesCount: captureMetadata.detectedFacesCount,
         });
         setResult(response);
       } catch (readError: any) {
+        lastProcessedSessionRef.current = null;
         const readableMessage =
           readError?.response?.data?.message ||
           readError?.response?.data?.error ||

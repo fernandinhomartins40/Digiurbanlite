@@ -511,6 +511,14 @@ router.post(
       return;
     }
 
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      res.status(400).json({
+        success: false,
+        error: 'O cadastro facial exige embedding válido do face-api.js.',
+      });
+      return;
+    }
+
     const citizen = await prisma.citizen.findUnique({
       where: { id },
       select: {
@@ -533,7 +541,7 @@ router.post(
       sourceType: 'ADMIN_WEBCAM',
       sourceLabel: sourceLabel?.trim() || `Cadastro administrativo de ${citizen.name}`,
       imageBase64,
-      embedding: Array.isArray(embedding) ? embedding : undefined,
+      embedding,
       approvedById: authReq.user.id,
       qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
       livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,

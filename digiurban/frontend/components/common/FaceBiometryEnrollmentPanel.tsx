@@ -25,7 +25,7 @@ interface FaceBiometryEnrollmentPanelProps {
   onEnroll: (payload: {
     imageBase64: string;
     metadata: FaceCaptureSessionMetadata;
-    embedding?: number[] | null;
+    embedding: number[];
     modelName?: string;
     modelVersion?: string;
     detectedFacesCount?: number;
@@ -70,13 +70,18 @@ export function FaceBiometryEnrollmentPanel({
 
     const submit = async () => {
       try {
+        const embedding = captureMetadata.embedding;
+        if (!Array.isArray(embedding) || embedding.length === 0) {
+          throw new Error('Não foi possível extrair um embedding facial válido. A biometria foi interrompida.');
+        }
+
         setSubmitting(true);
         setMessage(null);
 
         const response = await onEnroll({
           imageBase64: capturedImage,
           metadata: captureMetadata,
-          embedding: captureMetadata.embedding || null,
+          embedding,
           modelName: captureMetadata.modelProvider,
           modelVersion: captureMetadata.modelVersion,
           detectedFacesCount: captureMetadata.detectedFacesCount,

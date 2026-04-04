@@ -167,10 +167,6 @@ function getReviewMatchThreshold() {
   return Number(process.env.FACE_REVIEW_MATCH_THRESHOLD || 0.82);
 }
 
-function parseComprefaceSubjectKey(subject: string) {
-  return subject.startsWith('identity_') ? subject.slice('identity_'.length) : null;
-}
-
 function createFacePlatformError(message: string, status = 500, details?: unknown) {
   const error = new Error(message) as Error & { status?: number; details?: unknown };
   error.status = status;
@@ -712,19 +708,11 @@ export class FacePlatformService {
   public async readBiometry(input: ReadBiometryInput) {
     const vector = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
 
-    if (!input.imageBase64 && !vector?.length) {
-      throw createFacePlatformError('A leitura biométrica ao vivo precisa de imagem ou embedding válido', 400);
+    if (!vector?.length) {
+      throw createFacePlatformError('A leitura biométrica ao vivo exige embedding válido do face-api.js.', 400);
     }
 
-    const bestMatch = vector?.length
-      ? await this.findBestExternalVectorMatch(vector)
-      : input.imageBase64
-        ? await this.findBestImageMatch(input.imageBase64)
-        : null;
-
-    if (!bestMatch) {
-      throw createFacePlatformError('A leitura biométrica ao vivo precisa de imagem ou embedding válido', 400);
-    }
+    const bestMatch = await this.findBestExternalVectorMatch(vector);
 
     const livenessAssessment = await faceLivenessService.assess({
       imageBase64: input.imageBase64,
@@ -758,8 +746,8 @@ export class FacePlatformService {
       livenessScore: livenessAssessment.score,
       sourceType: input.sourceType || 'LIVE_READ',
       sourceLabel: input.sourceLabel || null,
-      provider: input.embedding?.length ? input.modelName || 'face-api.js' : bestMatch.provider,
-      modelName: input.embedding?.length ? input.modelName || 'face-api.js' : bestMatch.modelName,
+      provider: input.modelName || 'face-api.js',
+      modelName: input.modelName || 'face-api.js',
       modelVersion: input.modelVersion || null,
       liveness: {
         provider: livenessAssessment.provider,
@@ -893,14 +881,7 @@ export class FacePlatformService {
       providerUsed = providerUsed || input.modelName || 'face-api.js';
       modelNameUsed = modelNameUsed || input.modelName || 'face-api.js';
     } else if (input.imageBase64) {
-      const bestMatch = await this.findBestImageMatch(input.imageBase64);
-      identity = bestMatch.identity;
-      confidence = confidence ?? bestMatch.score;
-      matchStatus = bestMatch.matchStatus;
-      reviewReason = bestMatch.reviewReason;
-      citizenId = bestMatch.identity?.citizenId || null;
-      providerUsed = providerUsed || bestMatch.provider;
-      modelNameUsed = modelNameUsed || bestMatch.modelName;
+      throw createFacePlatformError('A ingestão de evento facial exige embedding válido do face-api.js.', 400);
     }
 
     const schoolContext = await this.resolveSchoolContext(
@@ -963,7 +944,7 @@ export class FacePlatformService {
         type: eventType,
         matchStatus,
         confidence,
-        provider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : input.imageBase64 ? 'compreface' : 'external-vector'),
+        provider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : 'external-vector'),
         modelName: modelNameUsed || null,
         modelVersion: input.modelVersion || null,
         previewPath,
@@ -971,7 +952,7 @@ export class FacePlatformService {
         metadata: {
           ...(input.metadata && typeof input.metadata === 'object' ? input.metadata : {}),
           storagePreviewPath: previewPath,
-          recognitionProvider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : input.imageBase64 ? 'compreface' : 'external-vector'),
+          recognitionProvider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : 'external-vector'),
           recognitionModelName: modelNameUsed || null,
           recognitionModelVersion: input.modelVersion || null,
         } as Prisma.InputJsonValue,
@@ -1070,35 +1051,6 @@ export class FacePlatformService {
     }
 
     return this.serializeEvent(updated);
-  }
-
-  private async findBestImageMatch(imageBase64: string) {
-    const recognition = await comprefaceClient.recognize(imageBase64);
-    const candidate = recognition.candidates[0];
-
-    if (!candidate) {
-      return {
-        identity: null,
-        score: 0,
-        provider: 'compreface',
-        modelName: 'compreface-recognition',
-        matchStatus: FaceMatchStatus.UNMATCHED,
-        reviewReason: 'Nenhum rosto reconhecido acima do limiar mínimo',
-      };
-    }
-
-    const identityId = parseComprefaceSubjectKey(candidate.subject);
-    const identity = identityId ? await this.loadIdentityForMatching(identityId) : null;
-    const decision = this.buildMatchDecision(candidate.similarity);
-
-    return {
-      identity,
-      score: candidate.similarity,
-      provider: 'compreface',
-      modelName: 'compreface-recognition',
-      matchStatus: identity ? decision.matchStatus : FaceMatchStatus.UNMATCHED,
-      reviewReason: identity ? decision.reviewReason : 'O sujeito retornado pelo provedor não está vinculado no Digiurban',
-    };
   }
 
   private async findBestExternalVectorMatch(vector: number[]) {

@@ -1,6 +1,4 @@
 import { Pool, type PoolClient } from 'pg';
-import { parseBase64Image } from '../../face/base64-image';
-
 interface CompreFaceSubjectEntry {
   subject?: string;
   similarity?: number;
@@ -131,8 +129,6 @@ export class CompreFaceClient {
   private readonly baseUrl: string;
   private apiKey: string;
   private readonly timeoutMs: number;
-  private readonly predictionCount: number;
-  private readonly detectionThreshold: number;
   private readonly appName: string;
   private readonly modelName: string;
   private readonly databasePool: Pool | null;
@@ -142,8 +138,6 @@ export class CompreFaceClient {
     this.baseUrl = stripTrailingSlash(process.env.COMPREFACE_API_URL || 'http://compreface-ui:80');
     this.apiKey = process.env.COMPREFACE_API_KEY || '';
     this.timeoutMs = Number(process.env.COMPREFACE_TIMEOUT_MS || 15000);
-    this.predictionCount = Number(process.env.COMPREFACE_PREDICTION_COUNT || 5);
-    this.detectionThreshold = Number(process.env.COMPREFACE_DETECTION_THRESHOLD || 0.8);
     this.appName = process.env.COMPREFACE_APP_NAME || DEFAULT_COMPRE_FACE_APP_NAME;
     this.modelName = process.env.COMPREFACE_MODEL_NAME || DEFAULT_COMPRE_FACE_MODEL_NAME;
     this.databasePool = createDatabasePool();
@@ -184,70 +178,6 @@ export class CompreFaceClient {
         message: error?.message || 'CompreFace indisponível.',
       };
     }
-  }
-
-  public async enrollSubject(subject: string, imageBase64: string) {
-    await this.ensureConfigured();
-
-    const formData = this.buildFormData(imageBase64);
-
-    return this.request(`/api/v1/recognition/faces/?subject=${encodeURIComponent(subject)}`, {
-      method: 'POST',
-      body: formData,
-    });
-  }
-
-  public async recognize(imageBase64: string) {
-    await this.ensureConfigured();
-
-    const formData = this.buildFormData(imageBase64, this.predictionCount);
-    const payload = await this.request('/api/v1/recognition/faces', {
-      method: 'POST',
-      body: formData,
-    });
-
-    const faces = Array.isArray(payload.result) ? payload.result : [];
-    const candidates: CompreFaceRecognitionCandidate[] = [];
-
-    faces.forEach((face, faceIndex) => {
-      const faceEntry = face as CompreFaceFaceEntry;
-      const subjects = Array.isArray(faceEntry.subjects) ? faceEntry.subjects : [];
-
-      subjects.forEach((subjectEntry) => {
-        const subject = typeof subjectEntry.subject === 'string' ? subjectEntry.subject : '';
-        const similarity = Number(subjectEntry.similarity ?? 0);
-
-        if (!subject || !Number.isFinite(similarity)) {
-          return;
-        }
-
-        candidates.push({
-          subject,
-          similarity,
-          faceIndex,
-          box: faceEntry.box || null,
-          raw: subjectEntry as Record<string, unknown>,
-        });
-      });
-    });
-
-    candidates.sort((left, right) => right.similarity - left.similarity);
-
-    return {
-      candidates,
-      raw: payload,
-    };
-  }
-
-  private buildFormData(imageBase64: string, predictionCount = 1) {
-    const { buffer, mimeType, extension } = parseBase64Image(imageBase64);
-    const formData = new FormData();
-
-    formData.append('file', new Blob([buffer], { type: mimeType }), `capture.${extension}`);
-    formData.append('prediction_count', String(predictionCount));
-    formData.append('det_prob_threshold', String(this.detectionThreshold));
-
-    return formData;
   }
 
   private async ensureConfigured() {

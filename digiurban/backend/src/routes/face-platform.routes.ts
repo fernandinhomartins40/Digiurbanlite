@@ -20,6 +20,10 @@ function respondWithFaceError(res: Response, error: any, fallbackStatus = 500) {
   });
 }
 
+function hasEmbedding(payload: any) {
+  return Array.isArray(payload?.embedding) && payload.embedding.length > 0;
+}
+
 router.get('/status', async (_req: Request, res: Response) => {
   const status = await facePlatformService.getStatus();
   return res.json(status);
@@ -137,6 +141,14 @@ router.get('/identities', async (_req: Request, res: Response) => {
 
 router.post('/identities/enrollments', async (req: any, res: Response) => {
   try {
+    if (!hasEmbedding(req.body)) {
+      return res.status(400).json({
+        success: false,
+        error: 'O cadastro facial exige embedding válido do face-api.js.',
+        message: 'O cadastro facial exige embedding válido do face-api.js.',
+      });
+    }
+
     const identity = await facePlatformService.createEnrollment({
       ...req.body,
       approvedById: req.userId || null,
@@ -150,6 +162,14 @@ router.post('/identities/enrollments', async (req: any, res: Response) => {
 
 router.post('/recognition/read', async (req: Request, res: Response) => {
   try {
+    if (!hasEmbedding(req.body)) {
+      return res.status(400).json({
+        success: false,
+        error: 'A leitura biométrica ao vivo exige embedding válido do face-api.js.',
+        message: 'A leitura biométrica ao vivo exige embedding válido do face-api.js.',
+      });
+    }
+
     const result = await facePlatformService.readBiometry(req.body);
     return res.json(result);
   } catch (error: any) {
@@ -175,6 +195,14 @@ router.get('/events', async (req: Request, res: Response) => {
 
 router.post('/events/ingest', async (req: Request, res: Response) => {
   try {
+    if (!hasEmbedding(req.body)) {
+      return res.status(400).json({
+        success: false,
+        error: 'A ingestão de evento facial exige embedding válido do face-api.js.',
+        message: 'A ingestão de evento facial exige embedding válido do face-api.js.',
+      });
+    }
+
     const event = await facePlatformService.ingestRecognition(req.body);
     return res.status(201).json(event);
   } catch (error: any) {
