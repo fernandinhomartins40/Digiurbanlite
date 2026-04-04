@@ -49,6 +49,8 @@ const DETECTION_INTERVAL_MS = 180;
 const MAX_FACES = 8;
 const FACE_MATCHER_THRESHOLD = 0.58;
 const REVIEW_DISTANCE_THRESHOLD = 0.72;
+const BACKEND_RECOGNITION_CACHE_MS = 15000;
+const FACE_CROP_PADDING = 0.22;
 const FACE_API_ANALYSIS_OPTIONS = {
   inputSize: 512 as const,
   scoreThreshold: 0.3,
@@ -56,6 +58,13 @@ const FACE_API_ANALYSIS_OPTIONS = {
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function getDescriptorCacheKey(descriptor: Float32Array | number[]) {
+  return Array.from(descriptor)
+    .slice(0, 32)
+    .map((value) => Number(value).toFixed(3))
+    .join(':');
 }
 
 function getStatusTone(matchStatus: RecognizedFaceSnapshot['matchStatus']) {
@@ -96,6 +105,15 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
   const faceApiRef = useRef<FaceApiModule | null>(null);
   const faceMatcherRef = useRef<any | null>(null);
   const recognitionLoadPromiseRef = useRef<Promise<FaceApiModule | null> | null>(null);
+  const backendRecognitionCacheRef = useRef<
+    Map<
+      string,
+      {
+        snapshot: RecognizedFaceSnapshot;
+        expiresAt: number;
+      }
+    >
+  >(new Map());
 
   const [cameraLoading, setCameraLoading] = useState(false);
   const [cameraActive, setCameraActive] = useState(false);
@@ -125,6 +143,92 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
 
     context.setTransform(dpr, 0, 0, dpr, 0, 0);
     context.clearRect(0, 0, width, height);
+  };
+
+  const captureFaceCrop = (
+    video: HTMLVideoElement,
+    box: { x: number; y: number; width: number; height: number }
+  ) => {
+    if (!video.videoWidth || !video.videoHeight) {
+      return null;
+    }
+
+    const paddingX = Math.round(box.width * FACE_CROP_PADDING);
+    const paddingY = Math.round(box.height * FACE_CROP_PADDING);
+    const startX = clamp(Math.floor(box.x - paddingX), 0, video.videoWidth - 1);
+    const startY = clamp(Math.floor(box.y - paddingY), 0, video.videoHeight - 1);
+    const endX = clamp(Math.ceil(box.x + box.width + paddingX), startX + 1, video.videoWidth);
+    const endY = clamp(Math.ceil(box.y + box.height + paddingY), startY + 1, video.videoHeight);
+    const width = Math.max(endX - startX, 1);
+    const height = Math.max(endY - startY, 1);
+
+    const offscreenCanvas = document.createElement('canvas');
+    offscreenCanvas.width = width;
+    offscreenCanvas.height = height;
+
+    const context = offscreenCanvas.getContext('2d');
+    if (!context) {
+      return null;
+    }
+
+    context.drawImage(video, startX, startY, width, height, 0, 0, width, height);
+
+    return offscreenCanvas.toDataURL('image/jpeg', 0.92);
+  };
+
+  const recognizeWithBackend = async (detection: any, index: number): Promise<RecognizedFaceSnapshot | null> => {
+    const video = videoRef.current;
+    if (!video) {
+      return null;
+    }
+
+    const cacheKey = getDescriptorCacheKey(detection.descriptor);
+    const cached = backendRecognitionCacheRef.current.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.snapshot;
+    }
+
+    const faceImage = captureFaceCrop(video, detection.detection.box);
+    if (!faceImage) {
+      return null;
+    }
+
+    try {
+      const result = (await facePlatformService.readBiometry({
+        imageBase64: faceImage,
+        sourceType: 'SCHOOL_SECURITY_MULTI_FACE_TEST',
+        sourceLabel: `Teste multi-rosto${schoolName ? ` - ${schoolName}` : ''}`,
+        modelName: 'face-api.js',
+      })) as {
+        matchStatus: RecognizedFaceSnapshot['matchStatus'];
+        confidence?: number | null;
+        reviewReason?: string | null;
+        identity?: {
+          citizen?: { name?: string | null } | null;
+          person?: { name?: string | null } | null;
+        } | null;
+      };
+
+      const identityName = result.identity?.citizen?.name?.trim() || result.identity?.person?.name?.trim() || null;
+      const snapshot: RecognizedFaceSnapshot = {
+        faceIndex: index + 1,
+        label: identityName || `Desconhecido ${index + 1}`,
+        identityName,
+        confidence: clamp(Number(result.confidence || 0), 0, 1),
+        matchStatus: result.matchStatus === 'MATCHED' || result.identity ? result.matchStatus : 'UNMATCHED',
+        reviewReason: result.reviewReason || null,
+      };
+
+      backendRecognitionCacheRef.current.set(cacheKey, {
+        snapshot,
+        expiresAt: Date.now() + BACKEND_RECOGNITION_CACHE_MS,
+      });
+
+      return snapshot;
+    } catch (backendError) {
+      console.error('Fallback backend recognition failed:', backendError);
+      return null;
+    }
   };
 
   const drawNativeOverlay = (
@@ -311,6 +415,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
     setAnalyzing(false);
     setFaces([]);
     setLastDetectedCount(0);
+    backendRecognitionCacheRef.current.clear();
     clearOverlay();
   };
 
@@ -350,31 +455,47 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
 
       const matcher = faceMatcherRef.current;
 
-      const snapshots = orderedDetections.map((detection, index) => {
-        const bestMatch = matcher ? matcher.findBestMatch(detection.descriptor) : null;
-        const distance = bestMatch?.distance ?? 1;
-        const confidence = clamp(1 - distance, 0, 1);
-        const hasKnownIdentity = Boolean(bestMatch && bestMatch.label !== 'unknown');
-        const matchStatus: RecognizedFaceSnapshot['matchStatus'] = hasKnownIdentity
-          ? 'MATCHED'
-          : distance <= REVIEW_DISTANCE_THRESHOLD
-            ? 'REVIEW_REQUIRED'
-            : 'UNMATCHED';
+      const snapshots = await Promise.all(
+        orderedDetections.map(async (detection, index) => {
+          const bestMatch = matcher ? matcher.findBestMatch(detection.descriptor) : null;
+          const distance = bestMatch?.distance ?? 1;
+          const confidence = clamp(1 - distance, 0, 1);
+          const hasKnownIdentity = Boolean(bestMatch && bestMatch.label !== 'unknown');
+          const localMatchStatus: RecognizedFaceSnapshot['matchStatus'] = hasKnownIdentity
+            ? 'MATCHED'
+            : distance <= REVIEW_DISTANCE_THRESHOLD
+              ? 'REVIEW_REQUIRED'
+              : 'UNMATCHED';
 
-        const reviewReason =
-          matchStatus === 'REVIEW_REQUIRED'
-            ? `Distância de comparação ${distance.toFixed(2)}.`
-            : null;
+          if (hasKnownIdentity && bestMatch) {
+            return {
+              faceIndex: index + 1,
+              label: bestMatch.toString(),
+              identityName: bestMatch.label,
+              confidence,
+              matchStatus: localMatchStatus,
+              reviewReason: localMatchStatus === 'REVIEW_REQUIRED' ? `Distância de comparação ${distance.toFixed(2)}.` : null,
+            } satisfies RecognizedFaceSnapshot;
+          }
 
-        return {
-          faceIndex: index + 1,
-          label: hasKnownIdentity && bestMatch ? bestMatch.toString() : `Desconhecido ${index + 1}`,
-          identityName: hasKnownIdentity && bestMatch ? bestMatch.label : null,
-          confidence,
-          matchStatus,
-          reviewReason,
-        } satisfies RecognizedFaceSnapshot;
-      });
+          const backendSnapshot = await recognizeWithBackend(detection, index);
+          if (backendSnapshot) {
+            return backendSnapshot;
+          }
+
+          return {
+            faceIndex: index + 1,
+            label: `Desconhecido ${index + 1}`,
+            identityName: null,
+            confidence,
+            matchStatus: localMatchStatus,
+            reviewReason:
+              localMatchStatus === 'REVIEW_REQUIRED'
+                ? `Distância de comparação ${distance.toFixed(2)}.`
+                : null,
+          } satisfies RecognizedFaceSnapshot;
+        })
+      );
 
       setFaces(snapshots);
       setLastDetectedCount(orderedDetections.length);
