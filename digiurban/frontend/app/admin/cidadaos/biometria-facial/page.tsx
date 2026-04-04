@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import {
   CheckCircle2,
@@ -15,19 +14,24 @@ import {
 } from 'lucide-react';
 import { CitizenSelector } from '@/components/admin/CitizenSelector';
 import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
+import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
 import type { Citizen } from '@/hooks/useSearchCitizen';
 import { useToast } from '@/hooks/use-toast';
+import facePlatformService from '@/lib/services/face-platform.service';
 import type { CitizenAccessLevelSummary, RegistrationLevel } from '@/types/citizen-access';
 
 interface FaceBiometryLiveMetadata {
   qualityScore: number;
   livenessScore: number;
 }
+
+type AttendanceTab = 'register' | 'read';
 
 const levelStyles: Record<RegistrationLevel, string> = {
   BRONZE: 'border-amber-200 bg-amber-50 text-amber-800',
@@ -52,17 +56,90 @@ function getDocumentLabel(type: string) {
   return labels[type] || type;
 }
 
+function maskCpf(value?: string | null) {
+  if (!value) {
+    return 'CPF não informado';
+  }
+
+  const digits = value.replace(/\D/g, '');
+  if (digits.length !== 11) {
+    return value;
+  }
+
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+}
+
+function getBiometricSummary(accessLevel: CitizenAccessLevelSummary | null) {
+  if (!accessLevel) {
+    return {
+      label: 'Sem dados',
+      tone: 'border-slate-200 bg-slate-50 text-slate-700',
+    };
+  }
+
+  if (accessLevel.goldCriteria.biometricConfirmed) {
+    return {
+      label: 'Biometria confirmada',
+      tone: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    };
+  }
+
+  if (accessLevel.goldCriteria.biometric.pendingEnrollments > 0) {
+    return {
+      label: 'Biometria em revisão manual',
+      tone: 'border-amber-200 bg-amber-50 text-amber-700',
+    };
+  }
+
+  return {
+    label: 'Biometria ainda não cadastrada',
+    tone: 'border-rose-200 bg-rose-50 text-rose-700',
+  };
+}
+
+function buildPendingItems(accessLevel: CitizenAccessLevelSummary | null) {
+  if (!accessLevel) {
+    return [];
+  }
+
+  const items: string[] = [];
+
+  if (!accessLevel.goldCriteria.profileComplete) {
+    items.push(`Completar perfil: ${accessLevel.goldCriteria.missingProfileFields.join(', ')}.`);
+  }
+
+  if (accessLevel.goldCriteria.missingDocumentTypes.length > 0) {
+    items.push(
+      `Validar documentos: ${accessLevel.goldCriteria.missingDocumentTypes.map(getDocumentLabel).join(', ')}.`
+    );
+  }
+
+  if (!accessLevel.goldCriteria.biometricConfirmed) {
+    items.push(
+      accessLevel.goldCriteria.biometric.pendingEnrollments > 0
+        ? 'Confirmar a biometria facial pendente.'
+        : 'Cadastrar biometria facial ao vivo.'
+    );
+  }
+
+  return items;
+}
+
 export default function AdminCitizenFaceBiometryPage() {
   const { apiRequest, loading: authLoading } = useAdminAuth();
   const { hasPermission } = useAdminPermissions();
   const { toast } = useToast();
+
   const [selectedCitizen, setSelectedCitizen] = useState<Citizen | null>(null);
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
+  const [activeTab, setActiveTab] = useState<AttendanceTab>('register');
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
 
   const canVerify = !authLoading && hasPermission('citizens:verify');
+  const biometricSummary = getBiometricSummary(accessLevel);
+  const pendingItems = buildPendingItems(accessLevel);
 
   const loadAccessLevel = async (citizenId: string) => {
     try {
@@ -85,6 +162,7 @@ export default function AdminCitizenFaceBiometryPage() {
   useEffect(() => {
     if (selectedCitizen?.id) {
       void loadAccessLevel(selectedCitizen.id);
+      setActiveTab('register');
     } else {
       setAccessLevel(null);
       setSourceLabel('');
@@ -118,7 +196,7 @@ export default function AdminCitizenFaceBiometryPage() {
           embedding,
           modelName,
           modelVersion,
-          sourceLabel: sourceLabel.trim() || `Biometria ao vivo capturada por servidor para ${selectedCitizen.name}`,
+          sourceLabel: sourceLabel.trim() || `Biometria presencial capturada para ${selectedCitizen.name}`,
           qualityScore: metadata.qualityScore,
           livenessScore: metadata.livenessScore,
           metadata,
@@ -127,6 +205,7 @@ export default function AdminCitizenFaceBiometryPage() {
 
       setAccessLevel(response.data?.accessLevel || null);
       setSourceLabel('');
+      setActiveTab('read');
 
       toast({
         title: 'Biometria cadastrada',
@@ -204,14 +283,14 @@ export default function AdminCitizenFaceBiometryPage() {
   };
 
   return (
-      <div className="space-y-6">
-        <div className="space-y-1">
+    <div className="space-y-6">
+      <div className="space-y-1">
         <h1 className="text-2xl font-bold text-slate-900">Biometria presencial do cidadão</h1>
         <p className="text-sm text-slate-600">
-          Use esta central para selecionar o cidadão, cadastrar a biometria e confirmar sessões pendentes durante o
-          atendimento presencial.
+          Faça todo o atendimento biométrico em um único lugar: selecione o cidadão, cadastre a biometria ao vivo e
+          valide a leitura sem trocar de página.
         </p>
-        </div>
+      </div>
 
       {!authLoading && !canVerify && (
         <Card className="border-amber-200 bg-amber-50">
@@ -222,217 +301,280 @@ export default function AdminCitizenFaceBiometryPage() {
         </Card>
       )}
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-6">
           <Card>
-            <CardHeader>
+            <CardHeader className="space-y-3">
               <CardTitle className="flex items-center gap-2 text-lg">
                 <Search className="h-5 w-5 text-blue-600" />
-                Seleção do cidadão
+                Atendimento presencial
               </CardTitle>
+              <p className="text-sm text-slate-600">
+                Escolha o cidadão que está sendo atendido. O cadastro e a leitura biométrica usam essa mesma seleção.
+              </p>
             </CardHeader>
-            <CardContent>
+            <CardContent className="space-y-4">
               <CitizenSelector
                 selectedCitizen={selectedCitizen}
                 onCitizenSelect={setSelectedCitizen}
-                label="Cidadão vinculado"
+                label="Cidadão em atendimento"
                 disabled={!canVerify}
               />
+
+              {selectedCitizen ? (
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-slate-900">{selectedCitizen.name}</p>
+                    <Badge className={accessLevel ? levelStyles[accessLevel.currentLevel] : 'border-slate-200 bg-white text-slate-700'}>
+                      {accessLevel ? getLevelLabel(accessLevel.currentLevel) : 'Carregando nível'}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm text-slate-600">
+                    {maskCpf(selectedCitizen.cpf)}
+                    {selectedCitizen.phone ? ` • ${selectedCitizen.phone}` : ''}
+                    {selectedCitizen.email ? ` • ${selectedCitizen.email}` : ''}
+                  </p>
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-600">
+                  Selecione um cidadão para habilitar o cadastro e a leitura biométrica presencial.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AttendanceTab)} className="space-y-4">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="register" disabled={!selectedCitizen || !canVerify}>
+                <ScanFace className="mr-2 h-4 w-4" />
+                Cadastrar biometria
+              </TabsTrigger>
+              <TabsTrigger value="read" disabled={!selectedCitizen || !canVerify}>
+                <UserRoundSearch className="mr-2 h-4 w-4" />
+                Ler e validar
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="register" className="space-y-4">
+              {!selectedCitizen ? (
+                <Card>
+                  <CardContent className="px-6 py-12 text-center text-sm text-slate-600">
+                    Selecione um cidadão para iniciar o cadastro biométrico presencial.
+                  </CardContent>
+                </Card>
+              ) : (
+                <Card>
+                  <CardHeader className="space-y-2">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <ScanFace className="h-5 w-5 text-blue-600" />
+                      Cadastro biométrico presencial
+                    </CardTitle>
+                    <p className="text-sm text-slate-600">
+                      Capture a biometria ao vivo no balcão de atendimento. Ao concluir, a tela muda para leitura e
+                      validação.
+                    </p>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <label htmlFor="sourceLabel" className="text-sm font-medium text-slate-900">
+                        Local ou contexto da captura
+                      </label>
+                      <Input
+                        id="sourceLabel"
+                        value={sourceLabel}
+                        onChange={(event) => setSourceLabel(event.target.value)}
+                        placeholder="Ex.: Balcão central de atendimento"
+                        disabled={!canVerify || Boolean(submitting)}
+                      />
+                    </div>
+
+                    <FaceBiometryEnrollmentPanel
+                      title="Captura biométrica do cidadão"
+                      description={`A webcam do atendimento registra ${selectedCitizen.name} ao vivo e envia a biometria automaticamente.`}
+                      helperText="Mantenha apenas o cidadão em atendimento na moldura e aguarde a conclusão automática da sessão."
+                      purposeLabel="Cadastro presencial"
+                      startLabel="Abrir câmera"
+                      retryLabel="Refazer biometria"
+                      cancelLabel="Fechar câmera"
+                      disabled={!canVerify || Boolean(submitting)}
+                      successMessage="Biometria cadastrada. Agora faça a leitura para validar o reconhecimento."
+                      onEnroll={handleRegisterBiometry}
+                      onSuccess={() => setActiveTab('read')}
+                    />
+                  </CardContent>
+                </Card>
+              )}
+            </TabsContent>
+
+            <TabsContent value="read" className="space-y-4">
+              {!selectedCitizen ? (
+                <Card>
+                  <CardContent className="px-6 py-12 text-center text-sm text-slate-600">
+                    Selecione um cidadão para validar a biometria presencial.
+                  </CardContent>
+                </Card>
+              ) : (
+                <FaceBiometryReadCard
+                  title="Leitura biométrica ao vivo"
+                  description="Use a mesma câmera do atendimento para confirmar se a biometria cadastrada reconhece corretamente o cidadão selecionado."
+                  purposeLabel="Leitura presencial"
+                  disabled={!canVerify}
+                  expectedOwnerLabel={`${selectedCitizen.name} • ${maskCpf(selectedCitizen.cpf)}`}
+                  onRead={async ({ imageBase64, metadata, embedding, modelName, modelVersion }) =>
+                    facePlatformService.readBiometry({
+                      imageBase64,
+                      embedding,
+                      modelName,
+                      modelVersion,
+                      expectedCitizenId: selectedCitizen.id,
+                      sourceType: 'ADMIN_LIVE_READ',
+                      sourceLabel: `Leitura biométrica presencial para ${selectedCitizen.name}`,
+                      qualityScore: metadata.qualityScore,
+                      livenessScore: metadata.livenessScore,
+                      metadata,
+                    })
+                  }
+                />
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-lg">Resumo do atendimento</CardTitle>
+              <p className="text-sm text-slate-600">
+                Status do nível, da biometria e das pendências para fechar o atendimento sem navegar para outras telas.
+              </p>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="flex min-h-[220px] items-center justify-center">
+                  <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                </div>
+              ) : !selectedCitizen ? (
+                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-5 py-10 text-center text-sm text-slate-600">
+                  Selecione um cidadão para ver o resumo biométrico e o nível cadastral.
+                </div>
+              ) : accessLevel ? (
+                <div className="space-y-4">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Nível atual</p>
+                      <div className="mt-2 flex items-center gap-2">
+                        {accessLevel.currentLevel === 'GOLD' ? (
+                          <Trophy className="h-5 w-5 text-yellow-600" />
+                        ) : accessLevel.currentLevel === 'SILVER' ? (
+                          <ShieldCheck className="h-5 w-5 text-slate-700" />
+                        ) : (
+                          <Shield className="h-5 w-5 text-amber-700" />
+                        )}
+                        <Badge className={levelStyles[accessLevel.currentLevel]}>
+                          {getLevelLabel(accessLevel.currentLevel)}
+                        </Badge>
+                      </div>
+                    </div>
+
+                    <div className={`rounded-2xl border p-4 ${biometricSummary.tone}`}>
+                      <p className="text-xs uppercase tracking-[0.18em] opacity-80">Biometria facial</p>
+                      <p className="mt-2 text-sm font-medium">{biometricSummary.label}</p>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Documentos aprovados</p>
+                      <p className="mt-2 text-sm font-medium text-slate-900">
+                        {accessLevel.goldCriteria.approvedDocsCount} de {accessLevel.goldCriteria.requiredDocCount}
+                      </p>
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                      <p className="text-xs uppercase tracking-[0.18em] text-slate-500">Pendências biométricas</p>
+                      <p className="mt-2 text-sm font-medium text-slate-900">
+                        {accessLevel.goldCriteria.biometric.pendingEnrollments}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                    <p className="text-sm font-semibold text-slate-900">Próximos passos</p>
+                    {pendingItems.length > 0 ? (
+                      <div className="mt-3 space-y-2 text-sm text-slate-600">
+                        {pendingItems.map((item) => (
+                          <p key={item}>{item}</p>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="mt-3 text-sm text-emerald-700">Nenhuma pendência crítica para o nível Ouro.</p>
+                    )}
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
+                    {accessLevel.goldCriteria.reason || 'Sem observações adicionais para este atendimento.'}
+                  </div>
+                </div>
+              ) : null}
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <ScanFace className="h-5 w-5 text-blue-600" />
-                  Cadastro biométrico presencial
-                </CardTitle>
-                <Button asChild variant="outline" size="sm">
-                  <Link href="/admin/atendimento-presencial/biometria-facial/leitura">
-                    <UserRoundSearch className="mr-2 h-4 w-4" />
-                    Leitura biométrica
-                  </Link>
-                </Button>
-              </div>
+            <CardHeader className="space-y-2">
+              <CardTitle className="text-lg">Ações rápidas</CardTitle>
+              <p className="text-sm text-slate-600">
+                Use estas ações quando o atendimento exigir confirmação manual ou promoção para Ouro.
+              </p>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <label htmlFor="sourceLabel" className="text-sm font-medium text-slate-900">
-                  Rótulo da captura
-                </label>
-                <Input
-                  id="sourceLabel"
-                  value={sourceLabel}
-                  onChange={(event) => setSourceLabel(event.target.value)}
-                  placeholder="Ex.: Balcão de atendimento central"
-                  disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
-                />
-              </div>
+            <CardContent className="space-y-3">
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full justify-start"
+                onClick={handleApprovePending}
+                disabled={
+                  !selectedCitizen ||
+                  !canVerify ||
+                  Boolean(submitting) ||
+                  !accessLevel ||
+                  accessLevel.goldCriteria.biometric.pendingEnrollments === 0
+                }
+              >
+                {submitting === 'approve' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                )}
+                Confirmar biometria pendente
+              </Button>
 
-              <FaceBiometryEnrollmentPanel
-                title="Cadastro biométrico do cidadão"
-                description="A câmera do atendimento grava o rosto em vídeo ao vivo e envia a biometria automaticamente."
-                helperText="Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático."
-                purposeLabel="Cadastro presencial"
-                startLabel="Abrir câmera"
-                retryLabel="Refazer biometria"
-                cancelLabel="Fechar câmera"
-                disabled={!selectedCitizen || !canVerify || Boolean(submitting)}
-                onEnroll={handleRegisterBiometry}
-              />
+              <Button
+                type="button"
+                className="w-full justify-start"
+                onClick={handlePromoteToGold}
+                disabled={
+                  !selectedCitizen ||
+                  !canVerify ||
+                  Boolean(submitting) ||
+                  !accessLevel ||
+                  !accessLevel.goldCriteria.eligible ||
+                  accessLevel.currentLevel === 'GOLD'
+                }
+              >
+                {submitting === 'promote' ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Trophy className="mr-2 h-4 w-4" />
+                )}
+                Promover para Ouro
+              </Button>
 
-              <div className="flex flex-wrap gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleApprovePending}
-                  disabled={
-                    !selectedCitizen ||
-                    !canVerify ||
-                    Boolean(submitting) ||
-                    !accessLevel ||
-                    accessLevel.goldCriteria.biometric.pendingEnrollments === 0
-                  }
-                >
-                  {submitting === 'approve' ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <CheckCircle2 className="mr-2 h-4 w-4" />
-                  )}
-                  Confirmar biometria pendente
-                </Button>
+              <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
+                Fluxo recomendado: cadastrar biometria, validar pela leitura ao vivo e só então aplicar ações manuais.
               </div>
             </CardContent>
           </Card>
         </div>
-
-        <Card>
-          <CardHeader>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <CardTitle className="text-lg">Critérios do nível do cidadão</CardTitle>
-                <p className="mt-1 text-sm text-slate-600">
-                  O nível Ouro exige perfil completo, documentos válidos e biometria facial confirmada.
-                </p>
-              </div>
-
-              {accessLevel && (
-                <Badge className={levelStyles[accessLevel.currentLevel]}>
-                  {getLevelLabel(accessLevel.currentLevel)}
-                </Badge>
-              )}
-            </div>
-          </CardHeader>
-
-          <CardContent>
-            {loading ? (
-              <div className="flex min-h-[260px] items-center justify-center">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-              </div>
-            ) : !selectedCitizen ? (
-              <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-6 py-12 text-center text-sm text-slate-600">
-                Selecione um cidadão para visualizar o status do cadastro e da biometria facial.
-              </div>
-            ) : accessLevel ? (
-              <div className="space-y-6">
-                <div className="grid gap-3 md:grid-cols-3">
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <div className="flex items-center gap-2">
-                      {accessLevel.currentLevel === 'GOLD' ? (
-                        <Trophy className="h-5 w-5 text-yellow-600" />
-                      ) : accessLevel.currentLevel === 'SILVER' ? (
-                        <ShieldCheck className="h-5 w-5 text-slate-700" />
-                      ) : (
-                        <Shield className="h-5 w-5 text-amber-700" />
-                      )}
-                      <p className="text-sm font-semibold text-slate-900">Nível atual</p>
-                    </div>
-                    <p className="mt-2 text-sm text-slate-700">{getLevelLabel(accessLevel.currentLevel)}</p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-900">Documentos aprovados</p>
-                    <p className="mt-2 text-sm text-slate-700">
-                      {accessLevel.goldCriteria.approvedDocsCount} de {accessLevel.goldCriteria.requiredDocCount}
-                    </p>
-                  </div>
-
-                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                    <p className="text-sm font-semibold text-slate-900">Biometria facial</p>
-                    <p className="mt-2 text-sm text-slate-700">
-                      {accessLevel.goldCriteria.biometricConfirmed
-                        ? 'Confirmada'
-                        : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-                          ? 'Em revisão manual'
-                          : 'Ainda não cadastrada'}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                  <h2 className="text-sm font-semibold text-slate-900">Pendências para o nível Ouro</h2>
-
-                  <div className="mt-4 space-y-4 text-sm text-slate-700">
-                    <div>
-                      <p className="font-medium text-slate-900">Perfil</p>
-                      {accessLevel.goldCriteria.profileComplete ? (
-                        <p className="mt-1 text-emerald-700">Perfil obrigatório completo.</p>
-                      ) : (
-                        <p className="mt-1">Faltam: {accessLevel.goldCriteria.missingProfileFields.join(', ')}.</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <p className="font-medium text-slate-900">Documentos</p>
-                      {accessLevel.goldCriteria.missingDocumentTypes.length === 0 ? (
-                        <p className="mt-1 text-emerald-700">Todos os documentos obrigatórios foram validados.</p>
-                      ) : (
-                        <p className="mt-1">
-                          Faltam: {accessLevel.goldCriteria.missingDocumentTypes.map(getDocumentLabel).join(', ')}.
-                        </p>
-                      )}
-                    </div>
-
-                    <div>
-                      <p className="font-medium text-slate-900">Biometria facial</p>
-                      <p className="mt-1">
-                        {accessLevel.goldCriteria.biometricConfirmed
-                          ? 'A biometria facial já foi confirmada e está ativa.'
-                          : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
-                            ? 'Existe uma sessão enviada que ficou fora do limiar automático e aguarda revisão manual.'
-                            : 'Ainda não existe biometria facial válida para o cidadão.'}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-wrap gap-3">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={handlePromoteToGold}
-                    disabled={
-                      !canVerify ||
-                      Boolean(submitting) ||
-                      !accessLevel.goldCriteria.eligible ||
-                      accessLevel.currentLevel === 'GOLD'
-                    }
-                  >
-                    {submitting === 'promote' ? (
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                      <Trophy className="mr-2 h-4 w-4" />
-                    )}
-                    Promover para Ouro
-                  </Button>
-
-                  <p className="text-sm text-slate-600">{accessLevel.goldCriteria.reason || 'Sem observações.'}</p>
-                </div>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
       </div>
     </div>
   );

@@ -132,11 +132,6 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           icon: ScanFace,
           badge: 'NOVO',
         },
-        {
-          title: 'Leitura presencial',
-          href: '/admin/atendimento-presencial/biometria-facial/leitura',
-          icon: Search,
-        },
       ],
     },
     {

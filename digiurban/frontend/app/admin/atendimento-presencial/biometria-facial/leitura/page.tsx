@@ -1,1 +1,5 @@
-export { default } from '@/app/admin/cidadaos/biometria-facial/leitura/page';
+import { redirect } from 'next/navigation';
+
+export default function AdminAttendanceFaceReadRedirectPage() {
+  redirect('/admin/atendimento-presencial/biometria-facial');
+}
