@@ -118,6 +118,7 @@ interface FaceCameraCaptureProps {
   retryLabel?: string;
   cancelLabel?: string;
   showDetailedStatus?: boolean;
+  requireFaceApi?: boolean;
 }
 
 let faceLandmarkerPromise: Promise<FaceLandmarkerInstance> | null = null;
@@ -279,6 +280,7 @@ export function FaceCameraCapture({
   retryLabel = 'Refazer validação ao vivo',
   cancelLabel = 'Interromper sessão',
   showDetailedStatus = false,
+  requireFaceApi = true,
 }: FaceCameraCaptureProps) {
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -657,6 +659,10 @@ export function FaceCameraCapture({
       if (faceApiEngine) {
         analysisModeRef.current = 'face-api.js';
         landmarkerRef.current = null;
+      } else if (requireFaceApi) {
+        setCameraError('O cadastro biométrico exige o motor face-api.js, mas ele não pôde ser carregado.');
+        stopCamera();
+        return;
       } else {
         analysisModeRef.current = 'mediapipe';
         landmarkerRef.current = await getFaceLandmarker();
@@ -767,6 +773,13 @@ export function FaceCameraCapture({
             }
           }
         } catch (error) {
+          if (requireFaceApi) {
+            console.error('Falha durante a análise facial ao vivo com face-api.js.', error);
+            setCameraError('Falha ao processar a biometria facial com face-api.js. O cadastro foi interrompido.');
+            stopCamera();
+            return;
+          }
+
           console.warn('Falha durante a análise facial ao vivo. Alternando para o fallback.', error);
           analysisModeRef.current = 'mediapipe';
 

@@ -16,6 +16,7 @@ interface FaceBiometryEnrollmentPanelProps {
   description: string;
   helperText?: string;
   purposeLabel?: string;
+  requireFaceApi?: boolean;
   startLabel: string;
   retryLabel: string;
   cancelLabel: string;
@@ -38,6 +39,7 @@ export function FaceBiometryEnrollmentPanel({
   description,
   helperText = 'Abra a câmera, mantenha apenas uma pessoa no quadro e aguarde o envio automático.',
   purposeLabel = 'Cadastro facial ao vivo',
+  requireFaceApi = true,
   startLabel,
   retryLabel,
   cancelLabel,
@@ -157,6 +159,7 @@ export function FaceBiometryEnrollmentPanel({
           retryLabel={retryLabel}
           cancelLabel={cancelLabel}
           showDetailedStatus={false}
+          requireFaceApi={requireFaceApi}
         />
 
         {captureMetadata && (

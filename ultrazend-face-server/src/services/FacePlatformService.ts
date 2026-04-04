@@ -167,10 +167,6 @@ function getReviewMatchThreshold() {
   return Number(process.env.FACE_REVIEW_MATCH_THRESHOLD || 0.82);
 }
 
-function buildComprefaceSubjectKey(identityId: string) {
-  return `identity_${identityId}`;
-}
-
 function parseComprefaceSubjectKey(subject: string) {
   return subject.startsWith('identity_') ? subject.slice('identity_'.length) : null;
 }
@@ -607,34 +603,22 @@ export class FacePlatformService {
     const identity = await this.ensureIdentityForCitizen(input.citizenId);
     let imagePath: string | null = null;
     let vector: number[] | null = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
-    let recognitionProviderMetadata: Record<string, unknown> | null = null;
 
     if (input.imageBase64) {
       imagePath = await faceStorageService.persistBase64Image('enrollments', input.imageBase64);
     }
 
-    if (vector?.length) {
-      recognitionProviderMetadata = {
-        provider: input.modelName || 'face-api.js',
-        modelName: input.modelName || 'face-api.js',
-        modelVersion: input.modelVersion || null,
-        vectorLength: vector.length,
-        source: 'face-api.js',
-      };
-    } else if (input.imageBase64) {
-      const subjectKey = buildComprefaceSubjectKey(identity.id);
-      const comprefaceResult = await comprefaceClient.enrollSubject(subjectKey, input.imageBase64);
-
-      recognitionProviderMetadata = {
-        provider: 'compreface',
-        subjectKey,
-        response: comprefaceResult,
-      };
+    if (!vector?.length) {
+      throw createFacePlatformError('O cadastro facial exige embedding válido do face-api.js.', 400);
     }
 
-    if (!recognitionProviderMetadata && !vector?.length) {
-      throw createFacePlatformError('O cadastro facial exige imagem ao vivo ou embedding externo válido.', 400);
-    }
+    const recognitionProviderMetadata = {
+      provider: input.modelName || 'face-api.js',
+      modelName: input.modelName || 'face-api.js',
+      modelVersion: input.modelVersion || null,
+      vectorLength: vector.length,
+      source: 'face-api.js',
+    };
 
     const livenessAssessment = await faceLivenessService.assess({
       imageBase64: input.imageBase64,
