@@ -13,7 +13,6 @@ import { syncCitizenPersonIdentity } from './person-identity.service';
 import digiUrbanIntegration from '../integrations/DigiUrbanIntegration';
 import faceStorageService from './face/face-storage.service';
 import { cosineSimilarity, normalizeVector } from './face/vector-utils';
-import comprefaceClient from './providers/compreface/CompreFaceClient';
 import faceLivenessService from './face/face-liveness.service';
 
 const FACE_ENCRYPTION_KEY =
@@ -199,25 +198,31 @@ export class FacePlatformService {
           ? 'As tabelas do reconhecimento facial ainda não foram aplicadas no banco.'
           : 'O serviço facial está ativo, mas a base ainda não está pronta.',
         providers: {
-          recognition: await comprefaceClient.getStatus(),
+          recognition: {
+            configured: true,
+            available: true,
+            engine: 'face-api.js-vector-store',
+            message: 'Motor vetorial face-api.js aguardando schema do serviço facial.',
+          },
           liveness: await faceLivenessService.getStatus(),
         },
         timestamp: new Date().toISOString(),
       };
     }
 
-    const [recognitionStatus, livenessStatus] = await Promise.all([
-      comprefaceClient.getStatus(),
-      faceLivenessService.getStatus(),
-    ]);
+    const livenessStatus = await faceLivenessService.getStatus();
+    const recognitionStatus = {
+      configured: true,
+      available: true,
+      engine: 'face-api.js-vector-store',
+      message: 'Reconhecimento vetorial face-api.js ativo.',
+    };
 
     return {
-      available: recognitionStatus.available,
+      available: true,
       schemaReady: true,
       service: 'ultrazend-face-server',
-      message: recognitionStatus.available
-        ? 'Serviço facial disponível.'
-        : recognitionStatus.message,
+      message: 'Serviço facial disponível.',
       providers: {
         recognition: recognitionStatus,
         liveness: livenessStatus,
@@ -589,6 +594,15 @@ export class FacePlatformService {
       label: identity.label,
       person: identity.person,
       citizen: identity.citizen,
+      embeddings: identity.embeddings.map((embedding) => ({
+        id: embedding.id,
+        modelName: embedding.modelName,
+        modelVersion: embedding.modelVersion,
+        vector: embedding.vector,
+        qualityScore: embedding.qualityScore,
+        isActive: embedding.isActive,
+        createdAt: embedding.createdAt,
+      })),
       totalEmbeddings: this.countRegisteredTemplates(identity),
       latestEnrollment: identity.enrollments[0] || null,
       enrollments: identity.enrollments,
@@ -670,7 +684,7 @@ export class FacePlatformService {
         data: {
           identityId: identity.id,
           enrollmentId: enrollment.id,
-          modelName: input.modelName || 'external-vector',
+          modelName: input.modelName || 'face-api.js',
           modelVersion: input.modelVersion || null,
           vector,
           qualityScore: input.qualityScore ?? null,
@@ -712,7 +726,7 @@ export class FacePlatformService {
       throw createFacePlatformError('A leitura biométrica ao vivo exige embedding válido do face-api.js.', 400);
     }
 
-    const bestMatch = await this.findBestExternalVectorMatch(vector);
+    const bestMatch = await this.findBestFaceApiVectorMatch(vector);
 
     const livenessAssessment = await faceLivenessService.assess({
       imageBase64: input.imageBase64,
@@ -872,7 +886,7 @@ export class FacePlatformService {
       matchStatus = FaceMatchStatus.MATCHED;
       confidence = confidence ?? 1;
     } else if (vector?.length) {
-      const bestMatch = await this.findBestExternalVectorMatch(vector);
+      const bestMatch = await this.findBestFaceApiVectorMatch(vector);
       identity = bestMatch.identity;
       confidence = confidence ?? bestMatch.score;
       matchStatus = bestMatch.matchStatus;
@@ -944,7 +958,7 @@ export class FacePlatformService {
         type: eventType,
         matchStatus,
         confidence,
-        provider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : 'external-vector'),
+        provider: providerUsed || input.modelName || 'face-api.js',
         modelName: modelNameUsed || null,
         modelVersion: input.modelVersion || null,
         previewPath,
@@ -952,7 +966,7 @@ export class FacePlatformService {
         metadata: {
           ...(input.metadata && typeof input.metadata === 'object' ? input.metadata : {}),
           storagePreviewPath: previewPath,
-          recognitionProvider: providerUsed || (vector?.length ? input.modelName || 'face-api.js' : 'external-vector'),
+          recognitionProvider: providerUsed || input.modelName || 'face-api.js',
           recognitionModelName: modelNameUsed || null,
           recognitionModelVersion: input.modelVersion || null,
         } as Prisma.InputJsonValue,
@@ -1053,7 +1067,7 @@ export class FacePlatformService {
     return this.serializeEvent(updated);
   }
 
-  private async findBestExternalVectorMatch(vector: number[]) {
+  private async findBestFaceApiVectorMatch(vector: number[]) {
     const embeddings = await prisma.faceEmbedding.findMany({
       where: {
         isActive: true,
@@ -1082,8 +1096,8 @@ export class FacePlatformService {
     } = {
       identity: null,
       score: 0,
-      provider: 'external-vector',
-      modelName: 'external-vector',
+      provider: 'face-api.js',
+      modelName: 'face-api.js',
       matchStatus: FaceMatchStatus.UNMATCHED,
       reviewReason: null,
     };
@@ -1101,8 +1115,8 @@ export class FacePlatformService {
         bestMatch = {
           identity: embedding.identity,
           score,
-          provider: 'external-vector',
-          modelName: embedding.modelName || 'external-vector',
+          provider: 'face-api.js',
+          modelName: embedding.modelName || 'face-api.js',
           matchStatus: decision.matchStatus,
           reviewReason: decision.reviewReason,
         };
@@ -1444,32 +1458,9 @@ export class FacePlatformService {
     embeddings?: Array<{ isActive?: boolean; vector?: number[] | null }>;
     enrollments?: Array<{ status?: FaceEnrollmentStatus; metadata?: Prisma.JsonValue | null }>;
   }) {
-    const externalVectorTemplates =
-      identity.embeddings?.filter((embedding) => embedding.isActive && Boolean(embedding.vector?.length)).length || 0;
-    const remoteSubjectKeys = new Set<string>();
-
-    identity.enrollments?.forEach((enrollment) => {
-      if (enrollment.status !== FaceEnrollmentStatus.APPROVED) {
-        return;
-      }
-
-      const metadata =
-        enrollment.metadata && typeof enrollment.metadata === 'object'
-          ? (enrollment.metadata as Record<string, unknown>)
-          : null;
-      const recognitionProvider =
-        metadata?.recognitionProvider && typeof metadata.recognitionProvider === 'object'
-          ? (metadata.recognitionProvider as Record<string, unknown>)
-          : null;
-      const subjectKey =
-        typeof recognitionProvider?.subjectKey === 'string' ? recognitionProvider.subjectKey : null;
-
-      if (subjectKey) {
-        remoteSubjectKeys.add(subjectKey);
-      }
-    });
-
-    return externalVectorTemplates + remoteSubjectKeys.size;
+    return (
+      identity.embeddings?.filter((embedding) => embedding.isActive && Boolean(embedding.vector?.length)).length || 0
+    );
   }
 
   private serializeDevice(device: any) {

@@ -576,12 +576,16 @@ router.post(
       return res.status(400).json({ error: 'A validação facial ao vivo é obrigatória' });
     }
 
+    if (!Array.isArray(embedding) || embedding.length === 0) {
+      return res.status(400).json({ error: 'O cadastro facial exige embedding válido do face-api.js.' });
+    }
+
     const enrollment = await facePlatformClientService.createEnrollment({
       citizenId,
       sourceType: 'SELF_SERVICE',
       sourceLabel: sourceLabel?.trim() || 'Autoatendimento do cidadão por vídeo ao vivo',
       imageBase64,
-      embedding: Array.isArray(embedding) ? embedding : undefined,
+      embedding,
       qualityScore: typeof qualityScore === 'number' ? qualityScore : undefined,
       livenessScore: typeof livenessScore === 'number' ? livenessScore : undefined,
       metadata: metadata && typeof metadata === 'object' ? metadata : undefined,

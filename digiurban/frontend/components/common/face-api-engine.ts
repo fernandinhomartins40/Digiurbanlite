@@ -43,11 +43,28 @@ const DEFAULT_FACE_API_MODEL_BASE_URL =
   'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js-models@master';
 const FACE_API_MODEL_NAME = 'face-api.js';
 const FACE_API_MODEL_VERSION = '0.22.2';
+const DEFAULT_ANALYSIS_INPUT_SIZE = 416;
+const DEFAULT_ANALYSIS_SCORE_THRESHOLD = 0.35;
 
 let enginePromise: Promise<FaceApiEngine | null> | null = null;
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
+}
+
+function normalizeDescriptorVector(vector: ArrayLike<number> | null | undefined) {
+  if (!vector || typeof vector.length !== 'number' || vector.length === 0) {
+    return [] as number[];
+  }
+
+  const values = Array.from(vector, (value) => Number(value) || 0);
+  const magnitude = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0));
+
+  if (!Number.isFinite(magnitude) || magnitude <= 0) {
+    return values;
+  }
+
+  return values.map((value) => value / magnitude);
 }
 
 async function ensureBackend(tf: typeof import('@tensorflow/tfjs')) {
@@ -119,7 +136,7 @@ async function loadFaceApiEngine(): Promise<FaceApiEngine | null> {
 
     return { faceapi };
   } catch (error) {
-    console.warn('Falha ao carregar o motor face-api.js; o sistema usará o fallback.', error);
+    console.warn('Falha ao carregar o motor face-api.js.', error);
     return null;
   }
 }
@@ -150,8 +167,8 @@ export async function analyzeFaceApiFrame(
     .detectAllFaces(
       video,
       new engine.faceapi.TinyFaceDetectorOptions({
-        inputSize: options.inputSize || 320,
-        scoreThreshold: options.scoreThreshold ?? 0.5,
+        inputSize: options.inputSize || DEFAULT_ANALYSIS_INPUT_SIZE,
+        scoreThreshold: options.scoreThreshold ?? DEFAULT_ANALYSIS_SCORE_THRESHOLD,
       })
     )
     .withFaceLandmarks()
@@ -166,7 +183,7 @@ export async function analyzeFaceApiFrame(
     },
     score: detection.detection.score,
     landmarks: extractLandmarks(detection.landmarks, video.videoWidth, video.videoHeight),
-    descriptor: Array.from(detection.descriptor || []),
+    descriptor: normalizeDescriptorVector(detection.descriptor || []),
   }));
 
   if (!faces.length) {

@@ -15,10 +15,6 @@ import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { analyzeFaceApiFrame, getFaceApiEngine } from '@/components/common/face-api-engine';
 
-const MEDIAPIPE_VERSION = '0.10.34';
-const MEDIAPIPE_WASM_URL = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MEDIAPIPE_VERSION}/wasm`;
-const FACE_MODEL_ASSET_URL =
-  'https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task';
 const ANALYSIS_THROTTLE_MS = 180;
 
 const ALIGN_DURATION_MS = 300;
@@ -42,15 +38,6 @@ interface FaceMetrics {
   widthRatio: number;
   heightRatio: number;
   yawScore: number;
-}
-
-interface FaceLandmarkerInstance {
-  detectForVideo: (
-    video: HTMLVideoElement,
-    timestamp: number
-  ) => {
-    faceLandmarks?: FacePoint[][];
-  };
 }
 
 function averagePoint(points: FacePoint[]) {
@@ -96,7 +83,7 @@ export interface FaceCaptureSessionMetadata {
   modelVersion: string;
   embedding: number[] | null;
   detectedFacesCount: number;
-  analysisMode: 'face-api.js' | 'mediapipe';
+  analysisMode: 'face-api.js';
   metrics: {
     centerOffsetX: number;
     centerOffsetY: number;
@@ -120,8 +107,6 @@ interface FaceCameraCaptureProps {
   showDetailedStatus?: boolean;
   requireFaceApi?: boolean;
 }
-
-let faceLandmarkerPromise: Promise<FaceLandmarkerInstance> | null = null;
 const GUIDE_STEPS: Exclude<SessionStep, 'completed'>[] = ['align', 'hold_still'];
 
 function clamp(value: number, min: number, max: number) {
@@ -140,46 +125,14 @@ function createSessionId() {
   return `face-session-${Date.now()}`;
 }
 
-async function createFaceLandmarker(delegate: 'GPU' | 'CPU'): Promise<FaceLandmarkerInstance> {
-  const { FaceLandmarker, FilesetResolver } = await import('@mediapipe/tasks-vision');
-  const vision = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
-
-  return FaceLandmarker.createFromOptions(vision, {
-    baseOptions: {
-      modelAssetPath: FACE_MODEL_ASSET_URL,
-      delegate,
-    },
-    runningMode: 'VIDEO',
-    numFaces: 1,
-    outputFaceBlendshapes: false,
-    outputFacialTransformationMatrixes: true,
-  }) as Promise<FaceLandmarkerInstance>;
-}
-
-async function getFaceLandmarker() {
-  if (!faceLandmarkerPromise) {
-    faceLandmarkerPromise = (async () => {
-      try {
-        return await createFaceLandmarker('GPU');
-      } catch (error) {
-        console.warn('Falha ao iniciar MediaPipe com GPU; usando CPU.', error);
-        return createFaceLandmarker('CPU');
-      }
-    })();
-  }
-
-  return faceLandmarkerPromise;
-}
-
 function getFaceMetrics(landmarks: FacePoint[]): FaceMetrics | null {
   if (!landmarks.length) {
     return null;
   }
 
-  const usesMediaPipeLayout = landmarks.length > 100;
-  const leftEyeOuter = usesMediaPipeLayout ? landmarks[33] : averagePoint(landmarks.slice(36, 42));
-  const rightEyeOuter = usesMediaPipeLayout ? landmarks[263] : averagePoint(landmarks.slice(42, 48));
-  const noseTip = usesMediaPipeLayout ? landmarks[1] : landmarks[30] || averagePoint(landmarks.slice(27, 36));
+  const leftEyeOuter = averagePoint(landmarks.slice(36, 42));
+  const rightEyeOuter = averagePoint(landmarks.slice(42, 48));
+  const noseTip = landmarks[30] || averagePoint(landmarks.slice(27, 36));
 
   if (!leftEyeOuter || !rightEyeOuter || !noseTip) {
     return null;
@@ -285,7 +238,6 @@ export function FaceCameraCapture({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
-  const landmarkerRef = useRef<FaceLandmarkerInstance | null>(null);
   const analysisFrameRef = useRef<number | null>(null);
   const lastVideoTimeRef = useRef(-1);
   const lastAnalysisAtRef = useRef(0);
@@ -296,7 +248,6 @@ export function FaceCameraCapture({
   const feedbackRef = useRef('');
   const feedbackToneRef = useRef<FeedbackTone>('neutral');
   const sessionStepRef = useRef<SessionStep>('align');
-  const analysisModeRef = useRef<'face-api.js' | 'mediapipe'>('face-api.js');
   const challengeStateRef = useRef<ChallengeState>({
     completedSteps: [],
     stableMs: 0,
@@ -349,7 +300,6 @@ export function FaceCameraCapture({
       minSizeRatio: 1,
       maxSizeRatio: 0,
     };
-    analysisModeRef.current = 'face-api.js';
     sessionStepRef.current = 'align';
     setSessionStep('align');
     setLiveMetrics(null);
@@ -376,7 +326,6 @@ export function FaceCameraCapture({
       videoRef.current.srcObject = null;
     }
 
-    analysisModeRef.current = 'face-api.js';
     setCameraActive(false);
   };
 
@@ -450,7 +399,6 @@ export function FaceCameraCapture({
     detectedFacesCount: number;
     modelProvider: string;
     modelVersion: string;
-    analysisMode: 'face-api.js' | 'mediapipe';
   }) => {
     if (captureDoneRef.current) {
       return;
@@ -490,7 +438,7 @@ export function FaceCameraCapture({
       modelVersion: input.modelVersion,
       embedding: input.embedding,
       detectedFacesCount: input.detectedFacesCount,
-      analysisMode: input.analysisMode,
+      analysisMode: 'face-api.js',
       metrics: {
         centerOffsetX: roundScore(input.metrics.centerOffsetX),
         centerOffsetY: roundScore(input.metrics.centerOffsetY),
@@ -524,7 +472,6 @@ export function FaceCameraCapture({
       detectedFacesCount: number;
       modelProvider: string;
       modelVersion: string;
-      analysisMode: 'face-api.js' | 'mediapipe';
     },
     timestamp: number
   ) => {
@@ -662,9 +609,6 @@ export function FaceCameraCapture({
         return;
       }
 
-      analysisModeRef.current = 'face-api.js';
-      landmarkerRef.current = null;
-
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => undefined);
@@ -709,64 +653,31 @@ export function FaceCameraCapture({
         lastVideoTimeRef.current = video.currentTime;
 
         try {
-          if (analysisModeRef.current === 'face-api.js') {
-            const analysis = await analyzeFaceApiFrame(video);
+          const analysis = await analyzeFaceApiFrame(video);
 
-            if (!analysis?.selectedFace) {
-              holdSinceRef.current = null;
-              previousMetricsRef.current = null;
-              challengeStateRef.current.stableMs = 0;
-              challengeStateRef.current.maxFacesDetected = Math.max(
-                challengeStateRef.current.maxFacesDetected,
-                analysis?.detectedFacesCount || 0
-              );
-              setLiveMetrics(null);
-              syncFeedback('Ajuste o rosto para continuar a captura.', 'warning');
-            } else {
-              const metrics = getFaceMetrics(analysis.selectedFace.landmarks);
-              if (metrics) {
-                evaluateFaceSession(
-                  {
-                    metrics,
-                    embedding: analysis.selectedFace.descriptor,
-                    detectedFacesCount: analysis.detectedFacesCount,
-                    modelProvider: analysis.provider,
-                    modelVersion: analysis.modelVersion,
-                    analysisMode: 'face-api.js',
-                  },
-                  performance.now()
-                );
-              }
-            }
+          if (!analysis?.selectedFace) {
+            holdSinceRef.current = null;
+            previousMetricsRef.current = null;
+            challengeStateRef.current.stableMs = 0;
+            challengeStateRef.current.maxFacesDetected = Math.max(
+              challengeStateRef.current.maxFacesDetected,
+              analysis?.detectedFacesCount || 0
+            );
+            setLiveMetrics(null);
+            syncFeedback('Ajuste o rosto para continuar a captura.', 'warning');
           } else {
-            const landmarker = landmarkerRef.current;
-
-            if (landmarker) {
-              const result = landmarker.detectForVideo(video, performance.now());
-              const landmarks = result.faceLandmarks?.[0];
-
-              if (!landmarks?.length) {
-                holdSinceRef.current = null;
-                previousMetricsRef.current = null;
-                challengeStateRef.current.stableMs = 0;
-                setLiveMetrics(null);
-                syncFeedback('Ajuste o rosto para continuar a captura.', 'warning');
-              } else {
-                const metrics = getFaceMetrics(landmarks);
-                if (metrics) {
-                  evaluateFaceSession(
-                    {
-                      metrics,
-                      embedding: null,
-                      detectedFacesCount: 1,
-                      modelProvider: 'mediapipe-face-landmarker',
-                      modelVersion: MEDIAPIPE_VERSION,
-                      analysisMode: 'mediapipe',
-                    },
-                    performance.now()
-                  );
-                }
-              }
+            const metrics = getFaceMetrics(analysis.selectedFace.landmarks);
+            if (metrics) {
+              evaluateFaceSession(
+                {
+                  metrics,
+                  embedding: analysis.selectedFace.descriptor,
+                  detectedFacesCount: analysis.detectedFacesCount,
+                  modelProvider: analysis.provider,
+                  modelVersion: analysis.modelVersion,
+                },
+                performance.now()
+              );
             }
           }
         } catch (error) {

@@ -58,6 +58,21 @@ function clamp(value: number, min: number, max: number) {
   return Math.min(Math.max(value, min), max);
 }
 
+function normalizeDescriptor(vector: ArrayLike<number> | null | undefined) {
+  if (!vector || typeof vector.length !== 'number' || vector.length === 0) {
+    return new Float32Array();
+  }
+
+  const values = Array.from(vector, (value) => Number(value) || 0);
+  const magnitude = Math.sqrt(values.reduce((sum, value) => sum + value * value, 0));
+
+  if (!Number.isFinite(magnitude) || magnitude <= 0) {
+    return new Float32Array(values);
+  }
+
+  return new Float32Array(values.map((value) => value / magnitude));
+}
+
 function getStatusTone(matchStatus: RecognizedFaceSnapshot['matchStatus']) {
   if (matchStatus === 'MATCHED') {
     return {
@@ -235,7 +250,8 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
                   Array.isArray(embedding.vector) &&
                   embedding.vector.length === 128
               )
-              .map((embedding) => new Float32Array(embedding.vector as number[]));
+              .map((embedding) => normalizeDescriptor(embedding.vector as number[]))
+              .filter((vector) => vector.length === 128);
 
             if (!vectors.length) {
               continue;
@@ -352,7 +368,8 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
 
       const snapshots = await Promise.all(
         orderedDetections.map(async (detection, index) => {
-          const bestMatch = matcher ? matcher.findBestMatch(detection.descriptor) : null;
+          const normalizedDescriptor = normalizeDescriptor(detection.descriptor);
+          const bestMatch = matcher ? matcher.findBestMatch(normalizedDescriptor) : null;
           const distance = bestMatch?.distance ?? 1;
           const confidence = clamp(1 - distance, 0, 1);
           const hasKnownIdentity = Boolean(bestMatch && bestMatch.label !== 'unknown');
