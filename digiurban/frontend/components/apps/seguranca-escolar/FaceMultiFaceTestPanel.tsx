@@ -22,9 +22,11 @@ interface RecognizedFaceSnapshot {
   faceIndex: number;
   label: string;
   identityName: string | null;
+  identityKey: string | null;
   confidence: number;
   matchStatus: 'MATCHED' | 'REVIEW_REQUIRED' | 'UNMATCHED';
   reviewReason?: string | null;
+  distance?: number | null;
 }
 
 interface FaceMultiFaceTestPanelProps {
@@ -45,10 +47,17 @@ interface FaceIdentityReference {
   embeddings?: FaceEmbeddingReference[];
 }
 
+interface LoadedRecognitionReference {
+  identityId: string;
+  displayName: string;
+  descriptors: Float32Array[];
+}
+
 const DETECTION_INTERVAL_MS = 180;
 const MAX_FACES = 8;
-const FACE_MATCHER_THRESHOLD = 0.58;
-const REVIEW_DISTANCE_THRESHOLD = 0.72;
+const MATCH_DISTANCE_THRESHOLD = 0.4;
+const REVIEW_DISTANCE_THRESHOLD = 0.6;
+const MIN_DISTANCE_GAP = 0.05;
 const FACE_API_ANALYSIS_OPTIONS = {
   inputSize: 512 as const,
   scoreThreshold: 0.3,
@@ -71,6 +80,21 @@ function normalizeDescriptor(vector: ArrayLike<number> | null | undefined) {
   }
 
   return new Float32Array(values.map((value) => value / magnitude));
+}
+
+function euclideanDistance(left: ArrayLike<number>, right: ArrayLike<number>) {
+  const size = Math.min(left.length || 0, right.length || 0);
+  if (!size) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  let sum = 0;
+  for (let index = 0; index < size; index += 1) {
+    const delta = (Number(left[index]) || 0) - (Number(right[index]) || 0);
+    sum += delta * delta;
+  }
+
+  return Math.sqrt(sum);
 }
 
 function getStatusTone(matchStatus: RecognizedFaceSnapshot['matchStatus']) {
@@ -110,6 +134,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
   const cameraActiveRef = useRef(false);
   const faceApiRef = useRef<FaceApiModule | null>(null);
   const faceMatcherRef = useRef<any | null>(null);
+  const recognitionReferencesRef = useRef<LoadedRecognitionReference[]>([]);
   const recognitionLoadPromiseRef = useRef<Promise<FaceApiModule | null> | null>(null);
 
   const [cameraLoading, setCameraLoading] = useState(false);
@@ -229,6 +254,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
         if (!engine) {
           faceApiRef.current = null;
           faceMatcherRef.current = null;
+          recognitionReferencesRef.current = [];
           setReferenceCount(0);
           setReferenceMessage('Motor face-api.js indisponível.');
           return null;
@@ -239,6 +265,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
         try {
           const identities = (await facePlatformService.listIdentities()) as FaceIdentityReference[];
           const labeledDescriptors: Array<any> = [];
+          const loadedReferences: LoadedRecognitionReference[] = [];
           let totalTemplates = 0;
 
           for (const identity of identities || []) {
@@ -264,11 +291,17 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
               identity.id;
 
             labeledDescriptors.push(new engine.faceapi.LabeledFaceDescriptors(displayName, vectors));
+            loadedReferences.push({
+              identityId: identity.id,
+              displayName,
+              descriptors: vectors,
+            });
             totalTemplates += vectors.length;
           }
 
+          recognitionReferencesRef.current = loadedReferences;
           faceMatcherRef.current = labeledDescriptors.length
-            ? new engine.faceapi.FaceMatcher(labeledDescriptors, FACE_MATCHER_THRESHOLD)
+            ? new engine.faceapi.FaceMatcher(labeledDescriptors, MATCH_DISTANCE_THRESHOLD)
             : null;
 
           setReferenceCount(labeledDescriptors.length);
@@ -283,6 +316,7 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
         } catch (identityError: any) {
           console.error('Erro ao carregar referências faciais:', identityError);
           faceMatcherRef.current = null;
+          recognitionReferencesRef.current = [];
           setReferenceCount(0);
           setReferenceMessage(
             identityError?.response?.data?.message ||
@@ -299,6 +333,131 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
     })();
 
     return recognitionLoadPromiseRef.current;
+  };
+
+  const scoreDescriptorAgainstReferences = (descriptor: Float32Array) => {
+    const references = recognitionReferencesRef.current;
+
+    if (!references.length || !descriptor.length) {
+      return {
+        identityKey: null,
+        identityName: null,
+        distance: Number.POSITIVE_INFINITY,
+        secondBestDistance: Number.POSITIVE_INFINITY,
+        confidence: 0,
+        matchStatus: 'UNMATCHED' as const,
+        reviewReason: null as string | null,
+      };
+    }
+
+    const rankedCandidates = references
+      .map((reference) => {
+        const distance = reference.descriptors.reduce((bestDistance, template) => {
+          const currentDistance = euclideanDistance(descriptor, template);
+          return currentDistance < bestDistance ? currentDistance : bestDistance;
+        }, Number.POSITIVE_INFINITY);
+
+        return {
+          identityKey: reference.identityId,
+          identityName: reference.displayName,
+          distance,
+        };
+      })
+      .filter((candidate) => Number.isFinite(candidate.distance))
+      .sort((left, right) => left.distance - right.distance);
+
+    const bestCandidate = rankedCandidates[0];
+    const secondCandidate = rankedCandidates[1];
+
+    if (!bestCandidate) {
+      return {
+        identityKey: null,
+        identityName: null,
+        distance: Number.POSITIVE_INFINITY,
+        secondBestDistance: Number.POSITIVE_INFINITY,
+        confidence: 0,
+        matchStatus: 'UNMATCHED' as const,
+        reviewReason: null as string | null,
+      };
+    }
+
+    const secondBestDistance = secondCandidate?.distance ?? Number.POSITIVE_INFINITY;
+    const distanceGap = secondBestDistance - bestCandidate.distance;
+    const confidence = clamp(1 - bestCandidate.distance, 0, 1);
+
+    if (bestCandidate.distance <= MATCH_DISTANCE_THRESHOLD && distanceGap >= MIN_DISTANCE_GAP) {
+      return {
+        identityKey: bestCandidate.identityKey,
+        identityName: bestCandidate.identityName,
+        distance: bestCandidate.distance,
+        secondBestDistance,
+        confidence,
+        matchStatus: 'MATCHED' as const,
+        reviewReason: null as string | null,
+      };
+    }
+
+    if (bestCandidate.distance <= REVIEW_DISTANCE_THRESHOLD) {
+      return {
+        identityKey: bestCandidate.identityKey,
+        identityName: bestCandidate.identityName,
+        distance: bestCandidate.distance,
+        secondBestDistance,
+        confidence,
+        matchStatus: 'REVIEW_REQUIRED' as const,
+        reviewReason:
+          distanceGap < MIN_DISTANCE_GAP
+            ? 'Correspondência ambígua entre biometrias próximas.'
+            : `Distância de comparação ${bestCandidate.distance.toFixed(2)}.`,
+      };
+    }
+
+    return {
+      identityKey: null,
+      identityName: null,
+      distance: bestCandidate.distance,
+      secondBestDistance,
+      confidence,
+      matchStatus: 'UNMATCHED' as const,
+      reviewReason: null as string | null,
+    };
+  };
+
+  const dedupeFrameMatches = (snapshots: RecognizedFaceSnapshot[]) => {
+    const strongestMatchByIdentity = new Map<string, { index: number; distance: number }>();
+
+    snapshots.forEach((snapshot, index) => {
+      if (snapshot.matchStatus !== 'MATCHED' || !snapshot.identityKey) {
+        return;
+      }
+
+      const distance = snapshot.distance ?? Number.POSITIVE_INFINITY;
+      const currentStrongest = strongestMatchByIdentity.get(snapshot.identityKey);
+
+      if (!currentStrongest || distance < currentStrongest.distance) {
+        strongestMatchByIdentity.set(snapshot.identityKey, { index, distance });
+      }
+    });
+
+    return snapshots.map((snapshot, index) => {
+      if (snapshot.matchStatus !== 'MATCHED' || !snapshot.identityKey) {
+        return snapshot;
+      }
+
+      const strongest = strongestMatchByIdentity.get(snapshot.identityKey);
+      if (!strongest || strongest.index === index) {
+        return snapshot;
+      }
+
+      return {
+        ...snapshot,
+        label: `Desconhecido ${snapshot.faceIndex}`,
+        identityName: null,
+        identityKey: null,
+        matchStatus: 'UNMATCHED' as const,
+        reviewReason: 'Outra face no quadro teve correspondência melhor para esta identidade.',
+      };
+    });
   };
 
   const stopAnimationLoop = () => {
@@ -364,9 +523,10 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
         return;
       }
 
+      const hasLoadedReferences = recognitionReferencesRef.current.length > 0;
       const matcher = faceMatcherRef.current;
 
-      const snapshots = await Promise.all(
+      const snapshots = dedupeFrameMatches(await Promise.all(
         orderedDetections.map(async (detection, index) => {
           const normalizedDescriptor = normalizeDescriptor(detection.descriptor);
           const bestMatch = matcher ? matcher.findBestMatch(normalizedDescriptor) : null;
@@ -384,8 +544,10 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
               faceIndex: index + 1,
               label: bestMatch.toString(),
               identityName: bestMatch.label,
+              identityKey: bestMatch.label,
               confidence,
               matchStatus: localMatchStatus,
+              distance,
               reviewReason: localMatchStatus === 'REVIEW_REQUIRED' ? `Distância de comparação ${distance.toFixed(2)}.` : null,
             } satisfies RecognizedFaceSnapshot;
           }
@@ -394,21 +556,23 @@ export function FaceMultiFaceTestPanel({ schoolName, className = '' }: FaceMulti
             faceIndex: index + 1,
             label: `Desconhecido ${index + 1}`,
             identityName: null,
+            identityKey: null,
             confidence,
             matchStatus: localMatchStatus,
+            distance,
             reviewReason:
               localMatchStatus === 'REVIEW_REQUIRED'
                 ? `Distância de comparação ${distance.toFixed(2)}.`
                 : null,
           } satisfies RecognizedFaceSnapshot;
         })
-      );
+      ));
 
       setFaces(snapshots);
       setLastDetectedCount(orderedDetections.length);
       setLastModelName('face-api.js');
       setStatusMessage(
-        matcher
+        hasLoadedReferences
           ? `${orderedDetections.length} rosto(s) detectados com identificação nativa do face-api.js. Rostos sem cadastro aparecem como "Desconhecido".`
           : `${orderedDetections.length} rosto(s) detectados. Carregue biometrias para habilitar a identificação automática; os demais aparecerão como "Desconhecido".`
       );

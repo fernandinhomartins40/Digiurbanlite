@@ -21,6 +21,9 @@ const ALIGN_DURATION_MS = 300;
 const HOLD_DURATION_MS = 650;
 const TARGET_CENTER_X = 0.5;
 const TARGET_CENTER_Y = 0.47;
+const FACE_SIZE_MIN_RATIO = 0.16;
+const FACE_SIZE_TARGET_RATIO = 0.38;
+const FACE_SIZE_MAX_RATIO = 0.54;
 
 type SessionStep = 'align' | 'hold_still' | 'completed';
 type FeedbackTone = 'neutral' | 'warning' | 'success';
@@ -193,7 +196,7 @@ function buildQualityScore(metrics: FaceMetrics, stabilityScore: number) {
     metrics.centerOffsetX * metrics.centerOffsetX + metrics.centerOffsetY * metrics.centerOffsetY
   );
   const centeredScore = 1 - clamp(centerDistance / 0.18, 0, 1);
-  const sizeScore = 1 - clamp(Math.abs(metrics.sizeRatio - 0.3) / 0.16, 0, 1);
+  const sizeScore = 1 - clamp(Math.abs(metrics.sizeRatio - FACE_SIZE_TARGET_RATIO) / 0.24, 0, 1);
 
   return roundScore(centeredScore * 0.45 + sizeScore * 0.35 + stabilityScore * 0.2);
 }
@@ -504,14 +507,21 @@ export function FaceCameraCapture({
       return;
     }
 
-    const outsideOptimalFrame = metrics.sizeRatio < 0.24 || metrics.sizeRatio > 0.4;
+    const faceTooFar = metrics.sizeRatio < FACE_SIZE_MIN_RATIO;
+    const faceTooClose = metrics.sizeRatio > FACE_SIZE_MAX_RATIO;
+    const outsideOptimalFrame = faceTooFar || faceTooClose;
     const lookingAway = Math.abs(metrics.yawScore) > 0.18;
 
     if (outsideOptimalFrame) {
       holdSinceRef.current = null;
       challengeState.stableMs = 0;
       previousMetricsRef.current = metrics;
-      syncFeedback('Reajuste o enquadramento para preencher melhor a moldura.', 'warning');
+      syncFeedback(
+        faceTooFar
+          ? 'Aproxime um pouco mais o rosto da câmera.'
+          : 'Afaste só um pouco o rosto para caber melhor na moldura.',
+        'warning'
+      );
       return;
     }
 
@@ -592,8 +602,9 @@ export function FaceCameraCapture({
         navigator.mediaDevices.getUserMedia({
           video: {
             facingMode: { ideal: 'user' },
-            width: { ideal: 1280 },
-            height: { ideal: 720 },
+            width: { ideal: 720 },
+            height: { ideal: 1280 },
+            aspectRatio: { ideal: 9 / 16 },
           },
           audio: false,
         }),
@@ -739,15 +750,16 @@ export function FaceCameraCapture({
       <div
         className={cn(
           'overflow-hidden rounded-[28px] border border-slate-200 bg-slate-950',
+          !isMobileFullScreen && 'mx-auto w-full max-w-[22rem]',
           isMobileFullScreen && 'fixed inset-0 z-[80] rounded-none border-0'
         )}
       >
         {value && !cameraActive && !cameraLoading && !faceEngineLoading ? (
-          <div className="relative">
+          <div className="relative aspect-[9/16]">
             <img
               src={value}
               alt="Quadro facial validado"
-              className="h-80 w-full object-cover"
+              className="h-full w-full object-cover"
             />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950 via-slate-950/75 to-transparent p-4 text-white">
               <div className="flex flex-wrap items-center gap-2">
@@ -772,7 +784,7 @@ export function FaceCameraCapture({
           <div
             className={cn(
               'relative w-full overflow-hidden bg-slate-950',
-              isMobileFullScreen ? 'h-[100dvh]' : 'h-80'
+              isMobileFullScreen ? 'h-[100dvh]' : 'aspect-[9/16]'
             )}
           >
             <video
@@ -793,7 +805,7 @@ export function FaceCameraCapture({
                     'pointer-events-none absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-[999px] border-2 border-cyan-300/90 shadow-[0_0_0_9999px_rgba(2,6,23,0.45)] transition-transform duration-300',
                     isMobileFullScreen
                       ? 'h-[72dvh] w-[86vw] max-w-[34rem]'
-                      : 'h-[78%] w-[72%] max-w-[30rem] sm:w-[64%] md:w-[56%] lg:w-[50%]',
+                      : 'h-[74%] w-[74%] max-w-[18rem]',
                     feedbackTone === 'success' ? 'border-emerald-300' : '',
                     feedbackTone === 'warning' ? 'border-amber-300' : ''
                   )}
