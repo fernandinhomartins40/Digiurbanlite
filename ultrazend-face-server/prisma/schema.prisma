@@ -28,6 +28,8 @@ model Person {
   rg           String?
   birthDate    DateTime?
   isActive     Boolean                   @default(true)
+  createdAt    DateTime                  @default(now())
+  updatedAt    DateTime                  @updatedAt
   user         User?
   citizen      Citizen?
   faceIdentity FaceRecognitionIdentity?

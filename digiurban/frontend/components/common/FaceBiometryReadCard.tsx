@@ -134,6 +134,9 @@ export function FaceBiometryReadCard({
   const owner = result ? getOwner(result) : null;
   const isMatched = result?.matchStatus === 'MATCHED';
   const isReview = result?.matchStatus === 'REVIEW_REQUIRED';
+  const matchesExpectedOwner = result?.belongsToExpectedCitizen !== false;
+  const canShowOwner = Boolean(owner && matchesExpectedOwner);
+  const displayedOwner = canShowOwner ? owner : null;
 
   return (
     <Card className="border-slate-200">
@@ -236,7 +239,7 @@ export function FaceBiometryReadCard({
             </div>
 
             <div className="mt-4 space-y-3 text-sm text-slate-700">
-              {owner ? (
+              {displayedOwner ? (
                 <>
                   <div className="flex items-start gap-3">
                     {isMatched ? (
@@ -247,8 +250,8 @@ export function FaceBiometryReadCard({
                       <ShieldAlert className="mt-0.5 h-5 w-5 text-rose-600" />
                     )}
                     <div>
-                      <p className="font-semibold text-slate-900">{owner.name}</p>
-                      <p>CPF: {maskCpf(owner.cpf)}</p>
+                      <p className="font-semibold text-slate-900">{displayedOwner.name}</p>
+                      <p>CPF: {maskCpf(displayedOwner.cpf)}</p>
                     </div>
                   </div>
 
@@ -266,6 +269,11 @@ export function FaceBiometryReadCard({
                     </div>
                   )}
                 </>
+              ) : result?.belongsToExpectedCitizen === false ? (
+                <div className="flex items-start gap-3">
+                  <ShieldAlert className="mt-0.5 h-5 w-5 text-rose-600" />
+                  <p>A biometria lida não pertence ao cidadão em atendimento.</p>
+                </div>
               ) : (
                 <div className="flex items-start gap-3">
                   <ShieldAlert className="mt-0.5 h-5 w-5 text-rose-600" />

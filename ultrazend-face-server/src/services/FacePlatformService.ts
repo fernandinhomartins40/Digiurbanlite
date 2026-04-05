@@ -737,22 +737,27 @@ export class FacePlatformService {
     });
     const matchedIdentity = bestMatch.identity;
     const expectedCitizenId = input.expectedCitizenId || null;
+    const hasExpectedCitizen = Boolean(expectedCitizenId);
     const belongsToExpectedCitizen =
-      expectedCitizenId && matchedIdentity?.citizenId
-        ? matchedIdentity.citizenId === expectedCitizenId
-        : null;
+      hasExpectedCitizen && matchedIdentity ? matchedIdentity.citizenId === expectedCitizenId : null;
+    const mismatchedExpectedCitizen = hasExpectedCitizen && matchedIdentity && belongsToExpectedCitizen === false;
     const failedLiveness = livenessAssessment.passed === false;
-    const gatedMatchStatus = failedLiveness
-      ? matchedIdentity
-        ? FaceMatchStatus.REVIEW_REQUIRED
-        : FaceMatchStatus.UNMATCHED
-      : bestMatch.matchStatus;
-    const reviewReason = failedLiveness
-      ? 'Prova de vida abaixo do limiar mínimo'
-      : bestMatch.reviewReason;
+    const gatedMatchStatus = mismatchedExpectedCitizen
+      ? FaceMatchStatus.UNMATCHED
+      : failedLiveness
+        ? matchedIdentity
+          ? FaceMatchStatus.REVIEW_REQUIRED
+          : FaceMatchStatus.UNMATCHED
+        : bestMatch.matchStatus;
+    const reviewReason = mismatchedExpectedCitizen
+      ? 'A biometria lida não pertence ao cidadão em atendimento.'
+      : failedLiveness
+        ? 'Prova de vida abaixo do limiar mínimo'
+        : bestMatch.reviewReason;
+    const exposedIdentity = mismatchedExpectedCitizen ? null : matchedIdentity;
 
     return {
-      recognized: Boolean(matchedIdentity) && gatedMatchStatus === FaceMatchStatus.MATCHED,
+      recognized: Boolean(exposedIdentity) && gatedMatchStatus === FaceMatchStatus.MATCHED,
       matchStatus: gatedMatchStatus,
       confidence: bestMatch.score,
       reviewReason,
@@ -771,23 +776,23 @@ export class FacePlatformService {
         passed: livenessAssessment.passed,
         mode: livenessAssessment.mode,
       },
-      identity: matchedIdentity
+      identity: exposedIdentity
         ? {
-            id: matchedIdentity.id,
-            status: matchedIdentity.status,
-            citizenId: matchedIdentity.citizenId || null,
-            citizen: matchedIdentity.citizen
+            id: exposedIdentity.id,
+            status: exposedIdentity.status,
+            citizenId: exposedIdentity.citizenId || null,
+            citizen: exposedIdentity.citizen
               ? {
-                  id: matchedIdentity.citizen.id,
-                  name: matchedIdentity.citizen.name,
-                  cpf: matchedIdentity.citizen.cpf,
+                  id: exposedIdentity.citizen.id,
+                  name: exposedIdentity.citizen.name,
+                  cpf: exposedIdentity.citizen.cpf,
                 }
               : null,
-            person: matchedIdentity.person
+            person: exposedIdentity.person
               ? {
-                  id: matchedIdentity.person.id,
-                  name: matchedIdentity.person.name,
-                  cpf: matchedIdentity.person.cpf,
+                  id: exposedIdentity.person.id,
+                  name: exposedIdentity.person.name,
+                  cpf: exposedIdentity.person.cpf,
                 }
               : null,
           }

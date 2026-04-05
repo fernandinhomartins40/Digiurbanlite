@@ -77,14 +77,23 @@ async function ensurePersonRecord(db: IdentityDbClient, input: PersonIdentityInp
   const targetPerson = personByCpf || currentPerson;
 
   if (!targetPerson) {
+    const now = new Date();
+
     return db.person.create({
-      data: buildPersonPayload(input),
+      data: {
+        ...buildPersonPayload(input),
+        createdAt: now,
+        updatedAt: now,
+      },
     });
   }
 
   return db.person.update({
     where: { id: targetPerson.id },
-    data: mergePersonPayload(targetPerson, input),
+    data: {
+      ...mergePersonPayload(targetPerson, input),
+      updatedAt: new Date(),
+    },
   });
 }
 
