@@ -29,6 +29,17 @@ async function ensureDirectory(dirPath: string) {
   await fs.mkdir(dirPath, { recursive: true });
 }
 
+function resolveStoragePath(storageRoot: string, relativePath: string) {
+  const absolutePath = path.resolve(storageRoot, relativePath);
+  const normalizedRoot = path.resolve(storageRoot);
+
+  if (!absolutePath.startsWith(normalizedRoot)) {
+    throw new Error('Caminho de storage facial fora da raiz configurada.');
+  }
+
+  return absolutePath;
+}
+
 export class FaceStorageService {
   private readonly storageRoot: string;
   private readonly publicBaseUrl: string;
@@ -58,6 +69,15 @@ export class FaceStorageService {
 
     const pathSuffix = `/uploads/face-platform/${relativePath}`.replace(/\\/g, '/');
     return this.publicBaseUrl ? `${this.publicBaseUrl}${pathSuffix}` : pathSuffix;
+  }
+
+  public async deleteRelativePath(relativePath: string | null | undefined): Promise<void> {
+    if (!relativePath) {
+      return;
+    }
+
+    const absolutePath = resolveStoragePath(this.storageRoot, relativePath);
+    await fs.rm(absolutePath, { force: true });
   }
 }
 

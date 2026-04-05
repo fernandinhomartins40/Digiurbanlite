@@ -128,6 +128,17 @@ class FacePlatformClientService {
     }
   }
 
+  async deleteCitizenBiometry(citizenId: string, payload: Record<string, unknown> = {}) {
+    try {
+      const response = await this.api.delete(`/identities/citizens/${citizenId}/biometry`, {
+        data: payload,
+      });
+      return response.data;
+    } catch (error: any) {
+      throw normalizeUpstreamError(error, 'Falha ao excluir biometria facial.');
+    }
+  }
+
   async readBiometry(payload: Record<string, unknown>) {
     try {
       const response = await this.api.post('/recognition/read', payload);

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import {
+  AlertTriangle,
   CheckCircle2,
   Loader2,
   ScanFace,
@@ -10,11 +11,22 @@ import {
   ShieldAlert,
   ShieldCheck,
   Trophy,
+  Trash2,
   UserRoundSearch,
 } from 'lucide-react';
 import { CitizenSelector } from '@/components/admin/CitizenSelector';
 import { FaceBiometryEnrollmentPanel } from '@/components/common/FaceBiometryEnrollmentPanel';
 import FaceBiometryReadCard from '@/components/common/FaceBiometryReadCard';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -203,7 +215,7 @@ function buildPendingItems(accessLevel: CitizenAccessLevelSummary | null) {
 }
 
 export default function AdminCitizenFaceBiometryPage() {
-  const { apiRequest, loading: authLoading } = useAdminAuth();
+  const { apiRequest, loading: authLoading, user } = useAdminAuth();
   const { hasPermission } = useAdminPermissions();
   const { toast } = useToast();
 
@@ -211,10 +223,12 @@ export default function AdminCitizenFaceBiometryPage() {
   const [accessLevel, setAccessLevel] = useState<CitizenAccessLevelSummary | null>(null);
   const [sourceLabel, setSourceLabel] = useState('');
   const [activeTab, setActiveTab] = useState<AttendanceTab>('register');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState<string | null>(null);
 
   const canVerify = !authLoading && hasPermission('citizens:verify');
+  const canDeleteBiometry = canVerify && (user?.role === 'ADMIN' || user?.role === 'MANAGER');
   const biometricSummary = getUnifiedBiometricSummary(accessLevel);
   const pendingItems = buildUnifiedPendingItems(accessLevel);
   const biometricLocked = hasRegisteredBiometry(accessLevel);
@@ -241,9 +255,11 @@ export default function AdminCitizenFaceBiometryPage() {
     if (selectedCitizen?.id) {
       void loadAccessLevel(selectedCitizen.id);
       setActiveTab('register');
+      setDeleteDialogOpen(false);
     } else {
       setAccessLevel(null);
       setSourceLabel('');
+      setDeleteDialogOpen(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCitizen?.id]);
@@ -366,6 +382,39 @@ export default function AdminCitizenFaceBiometryPage() {
     }
   };
 
+  const handleDeleteBiometry = async () => {
+    if (!selectedCitizen?.id || !canDeleteBiometry) {
+      return;
+    }
+
+    try {
+      setSubmitting('delete');
+      const response = await apiRequest(`/admin/citizens/${selectedCitizen.id}/face-biometry`, {
+        method: 'DELETE',
+      });
+
+      setAccessLevel(response.data?.accessLevel || null);
+      setSourceLabel('');
+      setActiveTab('register');
+      setDeleteDialogOpen(false);
+
+      toast({
+        title: 'Biometria excluída',
+        description:
+          response.message || 'A biometria facial foi removida e o cidadão pode cadastrar novamente.',
+      });
+    } catch (error: any) {
+      console.error('Erro ao excluir biometria facial:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Erro ao excluir biometria',
+        description: error?.message || 'Não foi possível excluir a biometria facial do cidadão.',
+      });
+    } finally {
+      setSubmitting(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="space-y-1">
@@ -464,6 +513,33 @@ export default function AdminCitizenFaceBiometryPage() {
                       Use a aba <span className="font-medium">Ler e validar</span> para testar o reconhecimento ao vivo
                       da biometria já existente.
                     </div>
+
+                    {canDeleteBiometry ? (
+                      <div className="rounded-2xl border border-rose-200 bg-white px-4 py-4">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="mt-0.5 h-5 w-5 text-rose-600" />
+                          <div className="space-y-3">
+                            <p className="text-sm text-slate-700">
+                              Se a biometria foi cadastrada de forma errada, você pode excluí-la para permitir um novo
+                              cadastro. Esta ação é restrita a prefeito(a) e secretário(a).
+                            </p>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              onClick={() => setDeleteDialogOpen(true)}
+                              disabled={Boolean(submitting)}
+                            >
+                              {submitting === 'delete' ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="mr-2 h-4 w-4" />
+                              )}
+                              Excluir biometria para novo cadastro
+                            </Button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : null}
                   </CardContent>
                 </Card>
               ) : (
@@ -674,6 +750,23 @@ export default function AdminCitizenFaceBiometryPage() {
                 Promover para Ouro
               </Button>
 
+              {canDeleteBiometry ? (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  className="w-full justify-start"
+                  onClick={() => setDeleteDialogOpen(true)}
+                  disabled={!selectedCitizen || !biometricLocked || Boolean(submitting)}
+                >
+                  {submitting === 'delete' ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Trash2 className="mr-2 h-4 w-4" />
+                  )}
+                  Excluir biometria cadastrada
+                </Button>
+              ) : null}
+
               <div className="rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-700">
                 Fluxo recomendado: cadastrar biometria, validar pela leitura ao vivo e só então aplicar ações manuais.
               </div>
@@ -681,6 +774,38 @@ export default function AdminCitizenFaceBiometryPage() {
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir biometria facial</AlertDialogTitle>
+            <AlertDialogDescription>
+              {selectedCitizen
+                ? `A biometria de ${selectedCitizen.name} será apagada para permitir um novo cadastro facial. Se o cidadão estiver no nível Ouro, ele retornará para Prata até concluir o recadastro.`
+                : 'A biometria cadastrada será apagada para permitir um novo cadastro facial.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={submitting === 'delete'}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(event) => {
+                event.preventDefault();
+                void handleDeleteBiometry();
+              }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {submitting === 'delete' ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Excluindo biometria...
+                </>
+              ) : (
+                'Confirmar exclusão'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

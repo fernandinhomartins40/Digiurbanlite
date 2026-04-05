@@ -164,6 +164,20 @@ router.post('/identities/enrollments', async (req: any, res: Response) => {
   }
 });
 
+router.delete('/identities/citizens/:citizenId/biometry', async (req: any, res: Response) => {
+  try {
+    const result = await facePlatformService.deleteCitizenBiometry({
+      citizenId: String(req.params.citizenId),
+      deletedById: req.body?.deletedById || null,
+      reason: req.body?.reason || null,
+    });
+    return res.json(result);
+  } catch (error: any) {
+    console.error('Erro ao excluir biometria facial do cidadão:', error);
+    return respondWithFaceError(res, error, 500);
+  }
+});
+
 router.post('/recognition/read', async (req: Request, res: Response) => {
   try {
     if (!hasEmbedding(req.body)) {

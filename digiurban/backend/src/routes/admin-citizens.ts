@@ -13,6 +13,7 @@ import {
   autoPromoteToGold,
   getCitizenAccessLevelSummary,
 } from '../services/citizen-verification.service';
+import { UserRole } from '@prisma/client';
 
 const router = Router();
 
@@ -33,6 +34,10 @@ const PERSONAL_DOCUMENT_WHERE = {
     },
   ],
 };
+
+function canDeleteFaceBiometry(role: UserRole) {
+  return role === UserRole.ADMIN || role === UserRole.MANAGER;
+}
 
 // POST /api/admin/citizens - Criar cidadão administrativamente (Prata/Verificado)
 router.post(
@@ -570,6 +575,74 @@ router.post(
         enrollment,
         promotedToGold,
         promotionMessage,
+        accessLevel,
+      },
+    });
+  })
+);
+
+// DELETE /api/admin/citizens/:id/face-biometry - Excluir biometria facial para novo cadastro
+router.delete(
+  '/:id/face-biometry',
+  requirePermission('citizens:verify'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const authReq = req as AuthenticatedRequest;
+    const { id } = authReq.params;
+
+    if (!canDeleteFaceBiometry(authReq.user.role)) {
+      res.status(403).json({
+        success: false,
+        error: 'A exclusão da biometria facial é permitida apenas para prefeito(a) e secretário(a).',
+      });
+      return;
+    }
+
+    const citizen = await prisma.citizen.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        name: true,
+        verificationStatus: true,
+      },
+    });
+
+    if (!citizen) {
+      res.status(404).json({
+        success: false,
+        error: 'Cidadão não encontrado',
+      });
+      return;
+    }
+
+    const deletion = await facePlatformClientService.deleteCitizenBiometry(id, {
+      deletedById: authReq.user.id,
+      reason: `Biometria facial excluída administrativamente por ${authReq.user.name} para permitir novo cadastro.`,
+    });
+
+    let downgradedFromGold = false;
+
+    if (citizen.verificationStatus === 'GOLD') {
+      await prisma.citizen.update({
+        where: { id },
+        data: {
+          verificationStatus: 'VERIFIED',
+          verificationNotes:
+            'Biometria facial removida administrativamente para correção de cadastro. O cidadão retornou ao nível Prata até novo cadastro biométrico.',
+        },
+      });
+      downgradedFromGold = true;
+    }
+
+    const accessLevel = await getCitizenAccessLevelSummary(id);
+
+    res.json({
+      success: true,
+      message: downgradedFromGold
+        ? 'Biometria facial excluída e cidadão retornado ao nível Prata para novo cadastro.'
+        : 'Biometria facial excluída com sucesso. O cidadão já pode cadastrar novamente.',
+      data: {
+        deletion,
+        downgradedFromGold,
         accessLevel,
       },
     });

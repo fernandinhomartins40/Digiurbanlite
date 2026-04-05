@@ -86,6 +86,12 @@ interface ReadBiometryInput {
   modelVersion?: string | null;
 }
 
+interface DeleteCitizenBiometryInput {
+  citizenId: string;
+  deletedById?: string | null;
+  reason?: string | null;
+}
+
 interface IngestRecognitionInput {
   deviceId: string;
   zoneId?: string | null;
@@ -798,6 +804,72 @@ export class FacePlatformService {
           }
         : null,
       readAt: new Date().toISOString(),
+    };
+  }
+
+  public async deleteCitizenBiometry(input: DeleteCitizenBiometryInput) {
+    const identity = await prisma.faceRecognitionIdentity.findFirst({
+      where: { citizenId: input.citizenId },
+      include: {
+        citizen: {
+          select: { id: true, name: true, cpf: true },
+        },
+        enrollments: {
+          orderBy: { createdAt: 'desc' },
+        },
+        embeddings: true,
+      },
+    });
+
+    if (!identity) {
+      throw createFacePlatformError('Nenhuma identidade facial foi encontrada para este cidadão.', 404);
+    }
+
+    const enrollmentCount = identity.enrollments.length;
+    const embeddingCount = identity.embeddings.length;
+    const imagePaths = unique(
+      identity.enrollments
+        .map((enrollment) => enrollment.imagePath)
+        .filter((imagePath): imagePath is string => Boolean(imagePath))
+    );
+
+    if (enrollmentCount === 0 && embeddingCount === 0) {
+      throw createFacePlatformError('Este cidadão não possui biometria facial cadastrada para exclusão.', 404);
+    }
+
+    const resetReason =
+      input.reason?.trim() || 'Biometria facial excluída administrativamente para permitir novo cadastro.';
+
+    await prisma.$transaction(async (tx) => {
+      await tx.faceEmbedding.deleteMany({
+        where: { identityId: identity.id },
+      });
+
+      await tx.faceEnrollment.deleteMany({
+        where: { identityId: identity.id },
+      });
+
+      await tx.faceRecognitionIdentity.update({
+        where: { id: identity.id },
+        data: {
+          status: FaceRecognitionIdentityStatus.PENDING,
+          notes: resetReason,
+        },
+      });
+    });
+
+    await Promise.allSettled(imagePaths.map((imagePath) => faceStorageService.deleteRelativePath(imagePath)));
+
+    return {
+      identityId: identity.id,
+      citizenId: input.citizenId,
+      citizen: identity.citizen,
+      deletedById: input.deletedById || null,
+      deletedEnrollments: enrollmentCount,
+      deletedEmbeddings: embeddingCount,
+      deletedImages: imagePaths.length,
+      resetAt: new Date().toISOString(),
+      reason: resetReason,
     };
   }
 
