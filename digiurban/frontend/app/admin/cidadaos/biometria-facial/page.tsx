@@ -97,6 +97,83 @@ function getBiometricSummary(accessLevel: CitizenAccessLevelSummary | null) {
   };
 }
 
+function hasRegisteredBiometry(accessLevel: CitizenAccessLevelSummary | null) {
+  const biometric = accessLevel?.goldCriteria.biometric;
+
+  return Boolean(
+    biometric &&
+      (biometric.approvedEnrollments > 0 ||
+        biometric.pendingEnrollments > 0 ||
+        biometric.rejectedEnrollments > 0 ||
+        biometric.totalEmbeddings > 0)
+  );
+}
+
+function getUnifiedBiometricSummary(accessLevel: CitizenAccessLevelSummary | null) {
+  if (!accessLevel) {
+    return {
+      label: 'Sem dados',
+      tone: 'border-slate-200 bg-slate-50 text-slate-700',
+    };
+  }
+
+  if (accessLevel.goldCriteria.biometricConfirmed) {
+    return {
+      label: 'Biometria confirmada',
+      tone: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    };
+  }
+
+  if (accessLevel.goldCriteria.biometric.pendingEnrollments > 0) {
+    return {
+      label: 'Biometria em revisão manual',
+      tone: 'border-amber-200 bg-amber-50 text-amber-700',
+    };
+  }
+
+  if (hasRegisteredBiometry(accessLevel)) {
+    return {
+      label: 'Cadastro biométrico já registrado',
+      tone: 'border-blue-200 bg-blue-50 text-blue-700',
+    };
+  }
+
+  return {
+    label: 'Biometria ainda não cadastrada',
+    tone: 'border-rose-200 bg-rose-50 text-rose-700',
+  };
+}
+
+function buildUnifiedPendingItems(accessLevel: CitizenAccessLevelSummary | null) {
+  if (!accessLevel) {
+    return [];
+  }
+
+  const items: string[] = [];
+
+  if (!accessLevel.goldCriteria.profileComplete) {
+    items.push(`Completar perfil: ${accessLevel.goldCriteria.missingProfileFields.join(', ')}.`);
+  }
+
+  if (accessLevel.goldCriteria.missingDocumentTypes.length > 0) {
+    items.push(
+      `Validar documentos: ${accessLevel.goldCriteria.missingDocumentTypes.map(getDocumentLabel).join(', ')}.`
+    );
+  }
+
+  if (!accessLevel.goldCriteria.biometricConfirmed) {
+    items.push(
+      accessLevel.goldCriteria.biometric.pendingEnrollments > 0
+        ? 'Confirmar a biometria facial pendente.'
+        : hasRegisteredBiometry(accessLevel)
+          ? 'Não há recadastro biométrico. Use a leitura ao vivo para validar a biometria existente.'
+          : 'Cadastrar biometria facial ao vivo.'
+    );
+  }
+
+  return items;
+}
+
 function buildPendingItems(accessLevel: CitizenAccessLevelSummary | null) {
   if (!accessLevel) {
     return [];
@@ -138,8 +215,9 @@ export default function AdminCitizenFaceBiometryPage() {
   const [submitting, setSubmitting] = useState<string | null>(null);
 
   const canVerify = !authLoading && hasPermission('citizens:verify');
-  const biometricSummary = getBiometricSummary(accessLevel);
-  const pendingItems = buildPendingItems(accessLevel);
+  const biometricSummary = getUnifiedBiometricSummary(accessLevel);
+  const pendingItems = buildUnifiedPendingItems(accessLevel);
+  const biometricLocked = hasRegisteredBiometry(accessLevel);
 
   const loadAccessLevel = async (citizenId: string) => {
     try {
@@ -169,6 +247,12 @@ export default function AdminCitizenFaceBiometryPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCitizen?.id]);
+
+  useEffect(() => {
+    if (biometricLocked && activeTab === 'register') {
+      setActiveTab('read');
+    }
+  }, [activeTab, biometricLocked]);
 
   const handleRegisterBiometry = async ({
     imageBase64,
@@ -345,7 +429,7 @@ export default function AdminCitizenFaceBiometryPage() {
 
           <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as AttendanceTab)} className="space-y-4">
             <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="register" disabled={!selectedCitizen || !canVerify}>
+              <TabsTrigger value="register" disabled={!selectedCitizen || !canVerify || biometricLocked}>
                 <ScanFace className="mr-2 h-4 w-4" />
                 Cadastrar biometria
               </TabsTrigger>
@@ -360,6 +444,26 @@ export default function AdminCitizenFaceBiometryPage() {
                 <Card>
                   <CardContent className="px-6 py-12 text-center text-sm text-slate-600">
                     Selecione um cidadão para iniciar o cadastro biométrico presencial.
+                  </CardContent>
+                </Card>
+              ) : biometricLocked ? (
+                <Card className="border-amber-200 bg-amber-50">
+                  <CardContent className="space-y-4 p-6">
+                    <div className="flex items-start gap-3 text-amber-800">
+                      <ShieldAlert className="mt-0.5 h-5 w-5" />
+                      <div className="space-y-1">
+                        <p className="font-semibold text-slate-900">Biometria já cadastrada</p>
+                        <p className="text-sm">
+                          Este cidadão já possui biometria registrada. Novos cadastros foram bloqueados para evitar
+                          duplicidade entre atendimento presencial e autoatendimento.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-amber-200 bg-white px-4 py-3 text-sm text-slate-700">
+                      Use a aba <span className="font-medium">Ler e validar</span> para testar o reconhecimento ao vivo
+                      da biometria já existente.
+                    </div>
                   </CardContent>
                 </Card>
               ) : (
@@ -390,14 +494,15 @@ export default function AdminCitizenFaceBiometryPage() {
 
                     <FaceBiometryEnrollmentPanel
                       title="Captura biométrica do cidadão"
-                      description={`A webcam do atendimento registra ${selectedCitizen.name} ao vivo e envia a biometria automaticamente.`}
+                      description={`A webcam do atendimento usa face-api.js para registrar ${selectedCitizen.name} ao vivo e enviar a biometria automaticamente.`}
                       helperText="Mantenha apenas o cidadão em atendimento na moldura e aguarde a conclusão automática da sessão."
                       purposeLabel="Cadastro presencial"
                       startLabel="Abrir câmera"
-                      retryLabel="Refazer biometria"
+                      retryLabel="Refazer captura"
                       cancelLabel="Fechar câmera"
                       disabled={!canVerify || Boolean(submitting)}
                       successMessage="Biometria cadastrada. Agora faça a leitura para validar o reconhecimento."
+                      requireFaceApi
                       onEnroll={handleRegisterBiometry}
                       onSuccess={() => setActiveTab('read')}
                     />

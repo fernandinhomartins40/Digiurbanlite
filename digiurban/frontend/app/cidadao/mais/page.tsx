@@ -65,7 +65,7 @@ export default function MaisPage() {
     {
       id: 'face-enroll',
       label: 'Biometria facial',
-      description: 'Cadastrar ou atualizar a biometria facial ao vivo',
+      description: 'Cadastrar a biometria facial ao vivo pela primeira vez',
       icon: Shield,
       href: '/cidadao/biometria-facial',
     },

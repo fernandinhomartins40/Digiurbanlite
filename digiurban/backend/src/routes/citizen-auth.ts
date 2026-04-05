@@ -605,12 +605,8 @@ router.post(
     let promotedToGold = false;
     let promotionMessage: string | null = null;
 
-    if (
-      citizen?.verificationStatus === 'VERIFIED' &&
-      citizen.verifiedBy &&
-      accessLevel.goldCriteria.eligible
-    ) {
-      const promotion = await autoPromoteToGold(citizenId, citizen.verifiedBy);
+    if (citizen?.verificationStatus === 'VERIFIED' && accessLevel.goldCriteria.eligible) {
+      const promotion = await autoPromoteToGold(citizenId, citizen.verifiedBy || null);
       promotedToGold = promotion.success;
       promotionMessage = promotion.message;
       accessLevel = await getCitizenAccessLevelSummary(citizenId);

@@ -46,6 +46,18 @@ function getCriteriaState(completed: boolean, pendingLabel: string, completedLab
       };
 }
 
+function hasRegisteredBiometry(accessLevel: CitizenAccessLevelSummary | null) {
+  const biometric = accessLevel?.goldCriteria.biometric;
+
+  return Boolean(
+    biometric &&
+      (biometric.approvedEnrollments > 0 ||
+        biometric.pendingEnrollments > 0 ||
+        biometric.rejectedEnrollments > 0 ||
+        biometric.totalEmbeddings > 0)
+  );
+}
+
 export function CitizenAccessLevelCard() {
   const { citizen, apiRequest } = useCitizenAuth();
   const [loading, setLoading] = useState(true);
@@ -152,6 +164,7 @@ export function CitizenAccessLevelCard() {
     : accessLevel.goldCriteria.biometric.pendingEnrollments > 0
       ? 'Sua última sessão foi enviada e está em revisão manual.'
       : 'Você ainda não possui biometria facial confirmada.';
+  const biometricLocked = hasRegisteredBiometry(accessLevel);
 
   return (
     <Card className="border-blue-100">
@@ -201,7 +214,7 @@ export function CitizenAccessLevelCard() {
 
             <p className="mt-3 text-sm leading-6 text-slate-600">
               {accessLevel.currentLevel === 'GOLD'
-                ? 'Seu cadastro já está no nível Ouro. Você pode testar a leitura ou atualizar a biometria quando precisar.'
+                ? 'Seu cadastro já está no nível Ouro. Você pode testar a leitura da biometria já cadastrada quando precisar.'
                 : 'Para chegar ao nível Ouro, finalize os itens abaixo e conclua a biometria facial ao vivo.'}
             </p>
 
@@ -233,12 +246,14 @@ export function CitizenAccessLevelCard() {
             </div>
 
             <div className="mt-5 flex flex-wrap gap-3">
-              <Button asChild>
-                <Link href="/cidadao/biometria-facial">
-                  <ScanFace className="mr-2 h-4 w-4" />
-                  Cadastrar biometria facial
-                </Link>
-              </Button>
+              {!biometricLocked && (
+                <Button asChild>
+                  <Link href="/cidadao/biometria-facial">
+                    <ScanFace className="mr-2 h-4 w-4" />
+                    Cadastrar biometria facial
+                  </Link>
+                </Button>
+              )}
               <Button asChild variant="outline">
                 <Link href="/cidadao/biometria-facial/leitura">
                   <UserRoundSearch className="mr-2 h-4 w-4" />
@@ -246,6 +261,12 @@ export function CitizenAccessLevelCard() {
                 </Link>
               </Button>
             </div>
+
+            {biometricLocked && (
+              <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                A biometria facial já foi cadastrada e novos envios foram bloqueados para evitar duplicidade.
+              </div>
+            )}
           </div>
         </div>
       </CardContent>

@@ -382,7 +382,10 @@ export async function getCitizenAccessLevelSummary(citizenId: string): Promise<C
   };
 }
 
-export async function autoPromoteToGold(citizenId: string, approvedBy: string): Promise<PromotionResult> {
+export async function autoPromoteToGold(
+  citizenId: string,
+  approvedBy?: string | null
+): Promise<PromotionResult> {
   const eligibility = await checkGoldEligibility(citizenId);
 
   if (!eligibility.eligible) {
@@ -405,7 +408,7 @@ export async function autoPromoteToGold(citizenId: string, approvedBy: string): 
       data: {
         verificationStatus: 'GOLD',
         verifiedAt: new Date(),
-        verifiedBy: approvedBy,
+        verifiedBy: approvedBy || null,
         verificationNotes:
           'Promovido para o nível ouro após validação do perfil, documentos obrigatórios e biometria facial confirmada',
       },
@@ -424,7 +427,7 @@ export async function autoPromoteToGold(citizenId: string, approvedBy: string): 
 
     await tx.auditLog.create({
       data: {
-        userId: approvedBy,
+        userId: approvedBy || null,
         citizenId,
         action: 'CITIZEN_PROMOTED_TO_GOLD',
         resource: 'CITIZEN',

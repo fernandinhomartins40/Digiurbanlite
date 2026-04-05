@@ -564,8 +564,8 @@ router.post(
     res.status(201).json({
       success: true,
       message: promotedToGold
-        ? 'Biometria facial confirmada e cidadão promovido para ouro'
-        : 'Biometria facial cadastrada com sucesso',
+        ? 'Biometria facial validada automaticamente e cidadão promovido para ouro'
+        : 'Biometria facial validada automaticamente com sucesso',
       data: {
         enrollment,
         promotedToGold,

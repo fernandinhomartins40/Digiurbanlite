@@ -614,6 +614,8 @@ export class FacePlatformService {
     let imagePath: string | null = null;
     let vector: number[] | null = input.embedding?.length ? normalizeEmbedding(input.embedding) : null;
 
+    await this.assertIdentityCanEnroll(identity.id);
+
     if (input.imageBase64) {
       imagePath = await faceStorageService.persistBase64Image('enrollments', input.imageBase64);
     }
@@ -1124,6 +1126,49 @@ export class FacePlatformService {
     }
 
     return bestMatch;
+  }
+
+  private async assertIdentityCanEnroll(identityId: string) {
+    const existingIdentity = await prisma.faceRecognitionIdentity.findUnique({
+      where: { id: identityId },
+      include: {
+        enrollments: {
+          orderBy: { createdAt: 'desc' },
+        },
+        embeddings: {
+          where: { isActive: true },
+        },
+      },
+    });
+
+    if (!existingIdentity) {
+      throw createFacePlatformError('Identidade facial não encontrada.', 404);
+    }
+
+    if (existingIdentity.embeddings.length > 0) {
+      throw createFacePlatformError('Este cidadão já possui biometria facial cadastrada e ativa.', 409);
+    }
+
+    const latestEnrollment = existingIdentity.enrollments[0];
+    if (!latestEnrollment) {
+      return;
+    }
+
+    if (latestEnrollment.status === FaceEnrollmentStatus.PENDING) {
+      throw createFacePlatformError(
+        'Este cidadão já possui biometria facial em análise e não pode cadastrar novamente.',
+        409
+      );
+    }
+
+    if (latestEnrollment.status === FaceEnrollmentStatus.APPROVED) {
+      throw createFacePlatformError('Este cidadão já possui biometria facial cadastrada e ativa.', 409);
+    }
+
+    throw createFacePlatformError(
+      'Este cidadão já possui um cadastro biométrico registrado e não pode cadastrar novamente.',
+      409
+    );
   }
 
   private buildMatchDecision(score: number) {
