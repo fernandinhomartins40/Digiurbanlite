@@ -19,6 +19,13 @@ import {
 import { generateCompleteWorkflowBySubtype } from '../services/workflow-template.service';
 import { createServiceWorkflow } from '../services/service-workflow.service';
 import {
+  buildNoDataWorkflowTemplate,
+  type NoDataServiceSubtype,
+  resolveServiceSubtype,
+  resolveServiceType,
+  shouldAutoCreateWorkflow,
+} from '../services/service-creation-policy.service';
+import {
   buildUserDepartmentScopeWhere,
   extractDepartmentIdsFromOrganization,
   extractPrimaryDepartmentIdFromOrganization,
@@ -420,16 +427,23 @@ const auditLog = (_action: string): RequestHandler => {
 
 const createServiceSchema = z.object({
   name: z.string().min(3, 'Nome deve ter pelo menos 3 caracteres'),
-  description: z.string().optional(),
-  category: z.string().optional(),
+  description: z.string().nullish(),
+  category: z.string().nullish(),
+  serviceType: z.enum(['COM_DADOS', 'SEM_DADOS']).optional(),
+  serviceSubtype: z.string().nullish(),
   requiresDocuments: z.boolean().default(false),
-  requiredDocuments: z.array(z.string()).optional(),
-  estimatedDays: z.number().int().positive().optional(),
+  requiredDocuments: z.array(z.string()).nullish(),
+  estimatedDays: z.number().int().positive().nullish(),
   priority: z.number().int().min(1).max(10).default(1),
-  requirements: z.array(z.string()).optional(),
-  icon: z.string().optional(),
-  color: z.string().optional(),
-  departmentId: z.string().optional()
+  requirements: z.array(z.string()).nullish(),
+  icon: z.string().nullish(),
+  color: z.string().nullish(),
+  departmentId: z.string().nullish(),
+  moduleType: z.string().nullish(),
+  formSchema: z.any().nullish(),
+  allowMultipleActiveProtocols: z.boolean().nullish(),
+  uniquenessScope: z.string().nullish(),
+  uniquenessRules: z.any().nullish(),
         });
 
 const updateServiceSchema = createServiceSchema.partial();
@@ -734,6 +748,22 @@ router.post(
   handleAsyncRoute(async (req, res) => {
     const data = createServiceSchema.parse(req.body);
     const { user } = req;
+    const resolvedServiceType = resolveServiceType({
+      serviceType: data.serviceType,
+      formSchema: data.formSchema,
+      moduleType: data.moduleType,
+    });
+    const resolvedServiceSubtype = resolveServiceSubtype({
+      serviceType: resolvedServiceType,
+      serviceSubtype: data.serviceSubtype,
+      name: data.name,
+      description: data.description,
+      category: data.category,
+      requiresDocuments: data.requiresDocuments,
+      requiredDocuments: data.requiredDocuments,
+      formSchema: data.formSchema,
+      moduleType: data.moduleType,
+    });
 
     // Verificar se o usuário pode criar serviços no departamento
     let departmentId = data.departmentId || user.departmentId;
@@ -753,6 +783,15 @@ router.post(
     if (!departmentId) {
       return res.status(400).json(
         createErrorResponse('VALIDATION_ERROR', 'Departamento é obrigatório')
+      );
+    }
+
+    if (resolvedServiceType === 'COM_DADOS' && (!data.moduleType || !data.formSchema)) {
+      return res.status(400).json(
+        createErrorResponse(
+          'VALIDATION_ERROR',
+          'Serviços COM_DADOS exigem moduleType e formSchema'
+        )
       );
     }
 
@@ -777,13 +816,23 @@ router.post(
         name: data.name,
         description: data.description || null,
         category: data.category || null,
-        serviceType: 'COM_DADOS', // Campo obrigatório adicionado
+        serviceType: resolvedServiceType,
+        serviceSubtype: resolvedServiceSubtype,
         requiresDocuments: data.requiresDocuments,
         requiredDocuments: data.requiredDocuments ? data.requiredDocuments as Prisma.InputJsonValue : undefined,
         estimatedDays: data.estimatedDays || null,
         priority: data.priority,
         icon: data.icon || null,
         color: data.color || null,
+        moduleType: resolvedServiceType === 'COM_DADOS' ? data.moduleType || null : null,
+        formSchema: resolvedServiceType === 'COM_DADOS' ? data.formSchema || null : null,
+        allowMultipleActiveProtocols: data.allowMultipleActiveProtocols ?? true,
+        uniquenessScope:
+          data.allowMultipleActiveProtocols === false ? data.uniquenessScope || null : null,
+        uniquenessRules:
+          data.allowMultipleActiveProtocols === false && data.uniquenessRules
+            ? data.uniquenessRules
+            : null,
         isActive: true
         },
       include: {
@@ -799,12 +848,32 @@ router.post(
 
     // ✅ AUTO-GERAÇÃO DE WORKFLOW: Gerar workflow automaticamente
     try {
-      const workflowData = generateCompleteWorkflowBySubtype(service as any);
-      await createServiceWorkflow({
-        serviceId: service.id,
-        ...workflowData
-      });
-      console.log(`✅ Workflow gerado automaticamente para serviço: ${service.name}`);
+      const shouldCreateWorkflow = shouldAutoCreateWorkflow(
+        service.serviceType,
+        service.serviceSubtype
+      );
+
+      if (shouldCreateWorkflow) {
+        const workflowData =
+          service.serviceType === 'SEM_DADOS'
+            ? buildNoDataWorkflowTemplate({
+                serviceName: service.name,
+                serviceDescription: service.description,
+                estimatedDays: service.estimatedDays,
+                subtype: service.serviceSubtype as NoDataServiceSubtype,
+              })
+            : generateCompleteWorkflowBySubtype(service as any);
+
+        if (workflowData) {
+          await createServiceWorkflow({
+            serviceId: service.id,
+            ...workflowData
+          });
+          console.log(`✅ Workflow gerado automaticamente para serviço: ${service.name}`);
+        }
+      } else {
+        console.log(`ℹ️ Serviço ${service.name} criado sem workflow por ser ${service.serviceSubtype}`);
+      }
     } catch (workflowError) {
       console.error(`⚠️  Erro ao gerar workflow para serviço ${service.name}:`, workflowError);
       // Não falhar a criação do serviço se workflow falhar

@@ -9,10 +9,15 @@ import {
   ErrorResponse
         } from '../types';
 import {
-  generateDefaultWorkflow,
-  generateMinimalWorkflowForSemDados,
   generateSpecializedWorkflow
 } from '../services/workflow-template.service';
+import {
+  buildNoDataWorkflowTemplate,
+  type NoDataServiceSubtype,
+  resolveServiceSubtype,
+  resolveServiceType,
+  shouldAutoCreateWorkflow,
+} from '../services/service-creation-policy.service';
 
 // ====================== TIPOS LOCAIS ISOLADOS ======================
 
@@ -167,6 +172,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       departmentId,
       category,
       serviceType, // COM_DADOS | SEM_DADOS
+      serviceSubtype,
       requiresDocuments,
       requiredDocuments,
       estimatedDays,
@@ -183,6 +189,23 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       uniquenessScope,
       uniquenessRules,
     } = authReq.body;
+
+    const resolvedServiceType = resolveServiceType({
+      serviceType,
+      formSchema,
+      moduleType,
+    });
+    const resolvedServiceSubtype = resolveServiceSubtype({
+      serviceType: resolvedServiceType,
+      serviceSubtype,
+      name,
+      description,
+      category,
+      requiresDocuments,
+      requiredDocuments,
+      formSchema,
+      moduleType,
+    });
 
     // ========== VALIDAÇÃO BÁSICA ==========
     if (!name || !departmentId) {
@@ -268,7 +291,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
     }
 
     // Validar campos obrigatórios para COM_DADOS
-    if (serviceType === 'COM_DADOS') {
+    if (resolvedServiceType === 'COM_DADOS') {
       if (!moduleType) {
         return res.status(400).json({
           error: 'Bad request',
@@ -286,7 +309,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
     // ========== VALIDAÇÕES CRÍTICAS DE UNICIDADE ==========
 
     // VALIDAÇÃO 1: moduleType único em serviços
-    if (serviceType === 'COM_DADOS' && moduleType) {
+    if (resolvedServiceType === 'COM_DADOS' && moduleType) {
       const existingService = await prisma.serviceSimplified.findFirst({
         where: {
           moduleType,
@@ -330,14 +353,15 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Criar serviço
-      const service = await tx.serviceSimplified.create({
+      let service = await tx.serviceSimplified.create({
         data: {
           // Básico
           name,
           description: description || null,
           category: category || null,
           departmentId,
-          serviceType: serviceType || 'SEM_DADOS',
+          serviceType: resolvedServiceType,
+          serviceSubtype: resolvedServiceSubtype,
           requiresDocuments: requiresDocuments || false,
           requiredDocuments: requiredDocuments || null,
           estimatedDays: estimatedDays || null,
@@ -347,8 +371,8 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           isActive: true,
 
           // Campos para COM_DADOS
-          moduleType: serviceType === 'COM_DADOS' ? moduleType : null,
-          formSchema: serviceType === 'COM_DADOS' ? formSchema : null,
+          moduleType: resolvedServiceType === 'COM_DADOS' ? moduleType : null,
+          formSchema: resolvedServiceType === 'COM_DADOS' ? formSchema : null,
 
           // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
           allowMultipleActiveProtocols: allowMultipleActiveProtocols,
@@ -375,7 +399,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       let workflowCreated = false;
       let workflowType = 'NONE';
 
-      if (serviceType === 'COM_DADOS' && moduleType) {
+      if (resolvedServiceType === 'COM_DADOS' && moduleType) {
         // ====== PILAR 2: WORKFLOW ESPECIALIZADO PARA COM_DADOS ======
         console.log(`[WORKFLOW] Gerando workflow inteligente para ${name} (COM_DADOS)`);
 
@@ -443,40 +467,56 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
         workflowType = 'SPECIALIZED';
         console.log(`✅ [INTELLIGENT] Workflow especializado criado para ${moduleType} com ${workflowTemplate.stages.length} etapas`);
 
-      } else if (serviceType === 'SEM_DADOS') {
-        // ====== PILAR 1: WORKFLOW MINIMALISTA PARA SEM_DADOS ======
-        console.log(`[WORKFLOW] Gerando workflow minimalista para ${name} (SEM_DADOS)`);
-
-        const workflowTemplate = generateMinimalWorkflowForSemDados(
-          name,
-          description,
-          estimatedDays
+      } else if (resolvedServiceType === 'SEM_DADOS') {
+        const shouldCreateWorkflow = shouldAutoCreateWorkflow(
+          resolvedServiceType,
+          resolvedServiceSubtype
         );
 
-        // Gerar moduleType único para SEM_DADOS
-        const uniqueModuleType = `SEM_DADOS_${service.id}`;
+        if (shouldCreateWorkflow) {
+          const workflowTemplate = buildNoDataWorkflowTemplate({
+            serviceName: name,
+            serviceDescription: description,
+            estimatedDays,
+            subtype: resolvedServiceSubtype as NoDataServiceSubtype,
+          });
 
-        // Criar workflow
-        workflow = await tx.moduleWorkflow.create({
-          data: {
-            moduleType: uniqueModuleType,
-            name: workflowTemplate.name,
-            description: workflowTemplate.description,
-            defaultSLA: workflowTemplate.defaultSLA,
-            stages: workflowTemplate.stages as any,
-            rules: workflowTemplate.rules as any
+          if (workflowTemplate) {
+            const uniqueModuleType = `SEM_DADOS_${resolvedServiceSubtype}_${service.id}`;
+
+            workflow = await tx.moduleWorkflow.create({
+              data: {
+                moduleType: uniqueModuleType,
+                name: workflowTemplate.name,
+                description: workflowTemplate.description,
+                defaultSLA: workflowTemplate.defaultSLA,
+                stages: workflowTemplate.stages as any,
+                rules: workflowTemplate.rules as any
+              }
+            });
+
+            service = await tx.serviceSimplified.update({
+              where: { id: service.id },
+              data: { moduleType: uniqueModuleType },
+              include: {
+                department: {
+                  select: {
+                    id: true,
+                    name: true,
+                    code: true
+                  }
+                }
+              }
+            });
+
+            workflowCreated = true;
+            workflowType = `NO_DATA_${resolvedServiceSubtype}`;
+            console.log(`✅ [NO_DATA] Workflow criado para ${name}: ${uniqueModuleType}`);
           }
-        });
-
-        // Vincular workflow ao serviço
-        await tx.serviceSimplified.update({
-          where: { id: service.id },
-          data: { moduleType: uniqueModuleType }
-        });
-
-        workflowCreated = true;
-        workflowType = 'MINIMAL';
-        console.log(`✅ [MINIMAL] Workflow minimalista criado para SEM_DADOS: ${uniqueModuleType}`);
+        } else {
+          workflowType = `DIRECT_${resolvedServiceSubtype}`;
+          console.log(`ℹ️ [NO_DATA] Serviço ${name} criado sem workflow para ${resolvedServiceSubtype}`);
+        }
       }
 
       return { service, workflow, workflowCreated, workflowType };
@@ -492,9 +532,11 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
     if (result.workflowCreated) {
       if (result.workflowType === 'SPECIALIZED') {
         message = `Serviço COM_DADOS criado com workflow especializado inteligente (${stagesCount} etapas). O workflow foi otimizado com base na complexidade do serviço e pode ser ajustado em /admin/workflows`;
-      } else if (result.workflowType === 'MINIMAL') {
-        message = `Serviço SEM_DADOS criado com workflow minimalista (3 etapas). Agora todos os protocolos terão tramitação estruturada.`;
+      } else if (result.workflowType.startsWith('NO_DATA_')) {
+        message = `Serviço SEM_DADOS criado com workflow alinhado ao modo ${result.service.serviceSubtype}.`;
       }
+    } else if (resolvedServiceType === 'SEM_DADOS' && result.workflowType.startsWith('DIRECT_')) {
+      message = `Serviço SEM_DADOS criado como atendimento direto (${result.service.serviceSubtype}), sem workflow protocolável.`;
     }
 
     return res.status(201).json({
@@ -506,6 +548,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       workflowType: result.workflowType,
       workflowStages: stagesCount,
       serviceType: result.service.serviceType,
+      serviceSubtype: result.service.serviceSubtype,
       hasDataCapture: result.service.serviceType === 'COM_DADOS',
       moduleType: result.service.moduleType,
       intelligentWorkflow: result.workflowType === 'SPECIALIZED'

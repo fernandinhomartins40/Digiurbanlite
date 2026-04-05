@@ -6,5 +6,7 @@ export {
   SUGGESTIONS_POOL,
   getSuggestionsForDepartment,
   type ServiceSuggestion,
-  type FormFieldSuggestion
+  type FormFieldSuggestion,
+  ServiceSubtype,
+  ServiceType,
 } from './suggestions/index';

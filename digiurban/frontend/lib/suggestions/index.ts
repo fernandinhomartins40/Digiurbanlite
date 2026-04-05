@@ -1,5 +1,6 @@
 // Arquivo central que reúne todas as sugestões de serviços
-import { ServiceSuggestion } from './types';
+import type { ServiceSuggestion } from './types';
+export { ServiceSubtype, ServiceType, type FormFieldSuggestion, type ServiceSuggestion } from './types';
 import { administracaoSuggestions } from './administracao';
 import { agriculturaSuggestions } from './agricultura';
 import { assistenciasocialSuggestions } from './assistencia-social';

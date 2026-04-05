@@ -2,6 +2,8 @@
 // Sincroniza automaticamente entre sistema local (frontend) e centralizado (backend)
 
 import { geradorServicos, ServicoAutomatico } from './servicos-automaticos'
+import { ServiceSubtype, ServiceType } from './service-suggestions'
+import { inferNoDataServiceSubtype } from '@/utils/no-data-service-classification'
 
 export interface ServicoBackend {
   id: string
@@ -15,11 +17,14 @@ export interface ServicoBackend {
     description?: string
   }
   requiresDocuments: boolean
+  serviceType?: ServiceType
+  serviceSubtype?: ServiceSubtype | string
   estimatedDays: number | null
   priority: number
   isActive: boolean
   requirements?: string[]
   requiredDocuments?: string[]
+  allowMultipleActiveProtocols?: boolean
   createdAt: string
   updatedAt: string
 }
@@ -146,16 +151,28 @@ export class SincronizadorServicos {
 
   // Mapear serviço automático para formato do backend
   private mapearServicoParaBackend(servicoLocal: ServicoAutomatico, departmentId: string): Partial<ServicoBackend> {
+    const requiredDocuments = servicoLocal.documentos
+    const serviceType = ServiceType.SEM_DADOS
+
     return {
       name: servicoLocal.nome,
       description: servicoLocal.descricao,
       category: servicoLocal.categoria,
       departmentId,
-      requiresDocuments: servicoLocal.documentos.length > 0,
+      requiresDocuments: requiredDocuments.length > 0,
+      requiredDocuments,
+      serviceType,
+      serviceSubtype: inferNoDataServiceSubtype({
+        name: servicoLocal.nome,
+        description: servicoLocal.descricao,
+        category: servicoLocal.categoria,
+        requiresDocuments: requiredDocuments.length > 0,
+        requiredDocuments,
+      }),
       estimatedDays: this.extrairDiasDoTexto(servicoLocal.prazo),
       priority: this.calcularPrioridade(servicoLocal),
       requirements: [servicoLocal.descricao],
-      requiredDocuments: servicoLocal.documentos
+      allowMultipleActiveProtocols: true,
     }
   }
 

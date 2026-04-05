@@ -3,6 +3,8 @@
 
 import { ServicoAutomatico } from './servicos-automaticos'
 import { sincronizadorServicos } from './sincronizacao-servicos'
+import { ServiceType } from './service-suggestions'
+import { inferNoDataServiceSubtype } from '@/utils/no-data-service-classification'
 
 export interface PadraoServico {
   categoria: string
@@ -395,8 +397,16 @@ export class GeradorAutomaticoInteligente {
         category: sugestao.categoria,
         departmentId: await this.obterDepartmentId(sugestao.secretaria),
         requiresDocuments: sugestao.implementacao.recursosNecessarios.includes('Documentos'),
+        serviceType: ServiceType.SEM_DADOS,
+        serviceSubtype: inferNoDataServiceSubtype({
+          name: sugestao.nome,
+          description: sugestao.descricao,
+          category: sugestao.categoria,
+          requiresDocuments: sugestao.implementacao.recursosNecessarios.includes('Documentos'),
+        }),
         estimatedDays: this.extrairDias(sugestao.implementacao.tempoEstimado),
-        priority: sugestao.prioridade === 'alta' ? 5 : sugestao.prioridade === 'media' ? 3 : 1
+        priority: sugestao.prioridade === 'alta' ? 5 : sugestao.prioridade === 'media' ? 3 : 1,
+        allowMultipleActiveProtocols: true,
       }
 
       const servicoCriado = await sincronizadorServicos.criarServicoBackend(novoServico)

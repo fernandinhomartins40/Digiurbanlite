@@ -8,6 +8,14 @@ import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { invalidateServiceCache } from './dynamic-services';
 import { emitServiceUpdate } from '../socket';
+import { generateSpecializedWorkflow } from '../services/workflow-template.service';
+import {
+  buildNoDataWorkflowTemplate,
+  type NoDataServiceSubtype,
+  resolveServiceSubtype,
+  resolveServiceType,
+  shouldAutoCreateWorkflow,
+} from '../services/service-creation-policy.service';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -268,24 +276,46 @@ router.post(
   authenticateToken,
   requireAdmin,
   async (req: Request, res: Response) => {
-    const serviceData = req.body;
+    const serviceData = req.body as Record<string, any>;
 
     try {
-      // Validação básica
-      if (!serviceData.name || !serviceData.departmentId || !serviceData.moduleType) {
+      const resolvedServiceType = resolveServiceType({
+        serviceType: serviceData.serviceType,
+        formSchema: serviceData.formSchema,
+        moduleType: serviceData.moduleType,
+      });
+      const resolvedServiceSubtype = resolveServiceSubtype({
+        serviceType: resolvedServiceType,
+        serviceSubtype: serviceData.serviceSubtype,
+        name: serviceData.name,
+        description: serviceData.description,
+        category: serviceData.category,
+        requiresDocuments: serviceData.requiresDocuments,
+        requiredDocuments: serviceData.requiredDocuments,
+        formSchema: serviceData.formSchema,
+        moduleType: serviceData.moduleType,
+      });
+
+      if (!serviceData.name || !serviceData.departmentId) {
         return res.status(400).json({
           success: false,
-          error: 'Campos obrigatórios: name, departmentId, moduleType'
+          error: 'Campos obrigatórios: name e departmentId'
         });
       }
 
-      // Verifica se já existe serviço com mesmo moduleType no departamento
-      const existing = await prisma.serviceSimplified.findFirst({
+      if (resolvedServiceType === 'COM_DADOS' && (!serviceData.moduleType || !serviceData.formSchema)) {
+        return res.status(400).json({
+          success: false,
+          error: 'Serviços COM_DADOS exigem moduleType e formSchema'
+        });
+      }
+
+      const existing = serviceData.moduleType ? await prisma.serviceSimplified.findFirst({
         where: {
           departmentId: serviceData.departmentId,
           moduleType: serviceData.moduleType
         }
-      });
+      }) : null;
 
       if (existing) {
         return res.status(409).json({
@@ -294,26 +324,154 @@ router.post(
         });
       }
 
-      // Cria novo serviço
-      const newService = await prisma.serviceSimplified.create({
-        data: serviceData,
-        include: {
-          department: {
-            select: {
-              id: true,
-              name: true,
-              code: true
+      const result = await prisma.$transaction(async (tx) => {
+        const department = await tx.department.findUnique({
+          where: { id: serviceData.departmentId },
+          select: { id: true, name: true, code: true }
+        });
+
+        if (!department) {
+          throw new Error('Departamento não encontrado');
+        }
+
+        let service = await tx.serviceSimplified.create({
+          data: {
+            name: serviceData.name,
+            description: serviceData.description || null,
+            category: serviceData.category || null,
+            departmentId: serviceData.departmentId,
+            serviceType: resolvedServiceType,
+            serviceSubtype: resolvedServiceSubtype,
+            requiresDocuments: Boolean(serviceData.requiresDocuments),
+            requiredDocuments: serviceData.requiredDocuments || null,
+            estimatedDays: serviceData.estimatedDays || null,
+            priority: serviceData.priority || 1,
+            icon: serviceData.icon || null,
+            color: serviceData.color || null,
+            moduleType: resolvedServiceType === 'COM_DADOS' ? serviceData.moduleType : null,
+            formSchema: resolvedServiceType === 'COM_DADOS' ? serviceData.formSchema || null : null,
+            allowMultipleActiveProtocols: serviceData.allowMultipleActiveProtocols ?? true,
+            uniquenessScope:
+              serviceData.allowMultipleActiveProtocols === false ? serviceData.uniquenessScope || null : null,
+            uniquenessRules:
+              serviceData.allowMultipleActiveProtocols === false && serviceData.uniquenessRules
+                ? serviceData.uniquenessRules
+                : null,
+            isActive: true
+          },
+          include: {
+            department: {
+              select: {
+                id: true,
+                name: true,
+                code: true
+              }
             }
           }
+        });
+
+        let workflow = null;
+
+        if (resolvedServiceType === 'COM_DADOS') {
+          const requiredDocs = Array.isArray(serviceData.requiredDocuments)
+            ? serviceData.requiredDocuments.map((doc: any) => ({
+                type: typeof doc === 'string' ? doc : doc.type,
+                name: typeof doc === 'string' ? doc : (doc.name || doc.type)
+              }))
+            : [];
+
+          const formFields: Array<{ id: string; label: string; required: boolean }> = [];
+          if (serviceData.formSchema?.properties) {
+            const required = serviceData.formSchema.required || [];
+            Object.keys(serviceData.formSchema.properties).forEach((fieldId) => {
+              const field = serviceData.formSchema.properties[fieldId];
+              formFields.push({
+                id: fieldId,
+                label: field.title || fieldId,
+                required: required.includes(fieldId)
+              });
+            });
+          } else if (Array.isArray(serviceData.formSchema?.fields)) {
+            serviceData.formSchema.fields.forEach((field: any) => {
+              formFields.push({
+                id: field.id || field.name,
+                label: field.label || field.name,
+                required: Boolean(field.required)
+              });
+            });
+          }
+
+          const workflowTemplate = generateSpecializedWorkflow({
+            moduleType: serviceData.moduleType,
+            serviceName: serviceData.name,
+            serviceDescription: serviceData.description,
+            estimatedDays: serviceData.estimatedDays,
+            departmentCode: department.code || undefined,
+            departmentName: department.name,
+            priority: serviceData.priority || 1,
+            requiredDocuments: requiredDocs,
+            formFields,
+          });
+
+          workflow = await tx.moduleWorkflow.create({
+            data: {
+              moduleType: workflowTemplate.moduleType,
+              name: workflowTemplate.name,
+              description: workflowTemplate.description,
+              defaultSLA: workflowTemplate.defaultSLA,
+              stages: workflowTemplate.stages as any,
+              rules: workflowTemplate.rules as any,
+            }
+          });
+        } else if (shouldAutoCreateWorkflow(resolvedServiceType, resolvedServiceSubtype)) {
+          const workflowTemplate = buildNoDataWorkflowTemplate({
+            serviceName: serviceData.name,
+            serviceDescription: serviceData.description,
+            estimatedDays: serviceData.estimatedDays,
+            subtype: resolvedServiceSubtype as NoDataServiceSubtype,
+          });
+
+          if (workflowTemplate) {
+            const uniqueModuleType = `SEM_DADOS_${resolvedServiceSubtype}_${service.id}`;
+            workflow = await tx.moduleWorkflow.create({
+              data: {
+                moduleType: uniqueModuleType,
+                name: workflowTemplate.name,
+                description: workflowTemplate.description,
+                defaultSLA: workflowTemplate.defaultSLA,
+                stages: workflowTemplate.stages as any,
+                rules: workflowTemplate.rules as any,
+              }
+            });
+
+            service = await tx.serviceSimplified.update({
+              where: { id: service.id },
+              data: { moduleType: uniqueModuleType },
+              include: {
+                department: {
+                  select: {
+                    id: true,
+                    name: true,
+                    code: true
+                  }
+                }
+              }
+            });
+          }
         }
+
+        return { service, workflow };
       });
 
-      const departmentSlug = departmentNameToSlug(newService.department.name);
-      console.log(`✅ Novo service criado: ${departmentSlug}/${newService.moduleType}`);
+      const departmentSlug = departmentNameToSlug(result.service.department.name);
+      console.log(`✅ Novo service criado: ${departmentSlug}/${result.service.moduleType}`);
 
       return res.status(201).json({
         success: true,
-        service: newService,
+        service: result.service,
+        workflow: result.workflow,
+        serviceType: result.service.serviceType,
+        serviceSubtype: result.service.serviceSubtype,
         message: 'Serviço criado com sucesso'
       });
 

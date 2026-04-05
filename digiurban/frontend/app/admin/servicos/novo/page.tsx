@@ -5,6 +5,10 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
 import { readPrefillParams, hasPrefillData } from '@/utils/service-prefill'
+import {
+  inferNoDataServiceSubtype,
+  isCurrentNoDataSubtype,
+} from '@/utils/no-data-service-classification'
 import { ServiceFormWizard, WizardStep } from '@/components/admin/services/ServiceFormWizard'
 import { BasicInfoStep } from '@/components/admin/services/steps/BasicInfoStep'
 import { ServiceTypeStep } from '@/components/admin/services/steps/ServiceTypeStep'
@@ -41,6 +45,7 @@ interface ServiceFormData {
 
   // NOVO: Tipo simplificado (alinhado com backend)
   serviceType: 'SEM_DADOS' | 'COM_DADOS'
+  serviceSubtype: string
 
   // Documentos
   requiresDocuments: boolean
@@ -77,6 +82,7 @@ export default function NewServicePage() {
     icon: '',
     color: '#3b82f6',
     serviceType: 'SEM_DADOS', // Padrão: serviço sem dados
+    serviceSubtype: '',
     requiresDocuments: false,
     requiredDocuments: [],
     moduleType: '', // Gerado automaticamente
@@ -115,10 +121,14 @@ export default function NewServicePage() {
     {
       id: 'serviceType',
       title: 'Tipo de Serviço',
-      description: 'Informativo ou com dados',
+      description: 'Modelo operacional e workflow',
       icon: <Layers className="h-5 w-5" />,
       isValid: () => {
-        return formData.serviceType === 'SEM_DADOS' || formData.serviceType === 'COM_DADOS'
+        if (formData.serviceType === 'COM_DADOS') {
+          return true
+        }
+
+        return isCurrentNoDataSubtype(formData.serviceSubtype)
       },
     },
     {
@@ -198,7 +208,23 @@ export default function NewServicePage() {
       if (prefillData.estimatedDays) updated.estimatedDays = prefillData.estimatedDays.toString()
       if (prefillData.requiresDocuments !== undefined) updated.requiresDocuments = prefillData.requiresDocuments
       if (prefillData.icon) updated.icon = prefillData.icon
+      if (Array.isArray(prefillData.requiredDocuments)) updated.requiredDocuments = prefillData.requiredDocuments
       if (prefillData.formSchema) updated.formSchema = prefillData.formSchema
+      if (prefillData.serviceSubtype) updated.serviceSubtype = prefillData.serviceSubtype
+
+      const nextServiceType =
+        searchParams.get('serviceType') === 'COM_DADOS' ? 'COM_DADOS' : 'SEM_DADOS'
+      updated.serviceType = nextServiceType
+
+      if (nextServiceType === 'SEM_DADOS' && !updated.serviceSubtype) {
+        updated.serviceSubtype = inferNoDataServiceSubtype({
+          name: updated.name,
+          description: updated.description,
+          category: updated.category,
+          requiresDocuments: updated.requiresDocuments,
+          requiredDocuments: updated.requiredDocuments,
+        })
+      }
 
       return updated
     })
@@ -224,9 +250,26 @@ export default function NewServicePage() {
       }
     }
 
-    if (serviceType === 'COM_DADOS') {
-      setFormData((prev) => ({ ...prev, serviceType: 'COM_DADOS' }))
-    }
+    setFormData((prev) => {
+      const nextServiceType: ServiceFormData['serviceType'] =
+        serviceType === 'COM_DADOS' ? 'COM_DADOS' : 'SEM_DADOS'
+      const nextData = {
+        ...prev,
+        serviceType: nextServiceType,
+      }
+
+      if (nextServiceType === 'SEM_DADOS' && !nextData.serviceSubtype) {
+        nextData.serviceSubtype = inferNoDataServiceSubtype({
+          name: nextData.name,
+          description: nextData.description,
+          category: nextData.category,
+          requiresDocuments: nextData.requiresDocuments,
+          requiredDocuments: nextData.requiredDocuments,
+        })
+      }
+
+      return nextData
+    })
   }, [departments, searchParams])
 
   const handleFieldChange = (field: string, value: any) => {
@@ -270,6 +313,16 @@ export default function NewServicePage() {
       return
     }
 
+    if (formData.serviceType === 'SEM_DADOS' && !isCurrentNoDataSubtype(formData.serviceSubtype)) {
+      toast({
+        title: 'Classificação obrigatória',
+        description: 'Selecione o tipo operacional do serviço sem dados antes de continuar.',
+        variant: 'destructive',
+      })
+      setCurrentStep(1)
+      return
+    }
+
     // Validar configuração de unicidade (obrigatória)
     if (formData.allowMultipleActiveProtocols === null) {
       toast({
@@ -301,6 +354,7 @@ export default function NewServicePage() {
         category: formData.category || null,
         departmentId: formData.departmentId,
         serviceType: formData.serviceType,
+        serviceSubtype: formData.serviceSubtype || null,
         requiresDocuments: formData.requiresDocuments,
         requiredDocuments: formData.requiredDocuments.length > 0 ? formData.requiredDocuments : null,
         estimatedDays: formData.estimatedDays ? parseInt(formData.estimatedDays) : null,

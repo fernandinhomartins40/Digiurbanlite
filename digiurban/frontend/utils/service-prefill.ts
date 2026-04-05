@@ -1,12 +1,6 @@
-import { ServiceSuggestion } from '@/lib/service-suggestions';
+import { ServiceSuggestion, ServiceSubtype, ServiceType } from '@/lib/service-suggestions';
+import { inferNoDataServiceSubtype } from './no-data-service-classification';
 
-/**
- * Constrói URL para página de criação de serviço com dados pré-preenchidos
- */
-/**
- * Converte código de departamento de formato de URL para formato do banco
- * Exemplo: 'assistencia-social' -> 'ASSISTENCIA_SOCIAL'
- */
 function urlCodeToDbCode(urlCode: string): string {
   return urlCode
     .toUpperCase()
@@ -17,17 +11,15 @@ export function buildServiceCreationUrl(
   departmentCode: string,
   suggestion: ServiceSuggestion
 ): string {
-  // Converter suggestedFields para o formato esperado pelo formSchema
   const formSchema = {
-    fields: suggestion.suggestedFields.map((field, index) => ({
-      id: field.name, // ✅ IMPORTANTE: Usar field.name como ID para permitir pré-preenchimento automático
+    fields: suggestion.suggestedFields.map((field) => ({
+      id: field.name,
       name: field.name,
       label: field.label,
       type: field.type,
       required: field.required,
       placeholder: field.label,
     })),
-    // ✅ CRÍTICO: Adicionar citizenFields para habilitar auto-preenchimento de dados do cidadão
     citizenFields: [
       'citizen_name',
       'citizen_cpf',
@@ -42,64 +34,85 @@ export function buildServiceCreationUrl(
       'citizen_city',
       'citizen_state',
       'citizen_zipcode',
-    ]
+    ],
   };
 
-  // Converter código de URL para formato do banco (ex: 'saude' -> 'SAUDE')
   const dbCode = urlCodeToDbCode(departmentCode);
-
   const params = new URLSearchParams({
     departmentCode: dbCode,
-    serviceType: 'COM_DADOS',
-    // Dados básicos do serviço
+    serviceType: suggestion.serviceType,
     prefill_name: suggestion.name,
     prefill_description: suggestion.description,
     prefill_category: suggestion.category,
     prefill_estimatedDays: suggestion.estimatedDays.toString(),
     prefill_requiresDocuments: suggestion.requiresDocuments.toString(),
     prefill_icon: suggestion.icon,
-    // Schema de formulário sugerido (JSON stringificado)
-    prefill_formSchema: JSON.stringify(formSchema),
   });
+
+  const resolvedSubtype =
+    suggestion.serviceType === ServiceType.SEM_DADOS
+      ? suggestion.serviceSubtype !== ServiceSubtype.CONSULTIVO
+        ? suggestion.serviceSubtype
+        : inferNoDataServiceSubtype({
+            name: suggestion.name,
+            description: suggestion.description,
+            category: suggestion.category,
+            requiresDocuments: suggestion.requiresDocuments,
+            requiredDocuments: suggestion.requiredDocuments,
+          })
+      : suggestion.serviceSubtype;
+
+  if (resolvedSubtype) {
+    params.set('prefill_serviceSubtype', resolvedSubtype);
+  }
+
+  if (suggestion.requiredDocuments?.length) {
+    params.set('prefill_requiredDocuments', JSON.stringify(suggestion.requiredDocuments));
+  }
+
+  if (suggestion.serviceType === ServiceType.COM_DADOS) {
+    params.set('prefill_formSchema', JSON.stringify(formSchema));
+  }
 
   return `/admin/servicos/novo?${params.toString()}`;
 }
 
-/**
- * Lê parâmetros de pré-preenchimento da URL
- */
 export function readPrefillParams(searchParams: URLSearchParams) {
   const prefillData: Record<string, any> = {};
 
-  // Extrair todos os parâmetros que começam com 'prefill_'
   for (const [key, value] of searchParams.entries()) {
-    if (key.startsWith('prefill_')) {
-      const fieldName = key.replace('prefill_', '');
-
-      // Parsear valores especiais
-      if (fieldName === 'formSchema') {
-        try {
-          prefillData[fieldName] = JSON.parse(value);
-        } catch (e) {
-          console.error('Erro ao parsear formSchema:', e);
-          prefillData[fieldName] = null;
-        }
-      } else if (fieldName === 'estimatedDays') {
-        prefillData[fieldName] = parseInt(value, 10);
-      } else if (fieldName === 'requiresDocuments') {
-        prefillData[fieldName] = value === 'true';
-      } else {
-        prefillData[fieldName] = value;
-      }
+    if (!key.startsWith('prefill_')) {
+      continue;
     }
+
+    const fieldName = key.replace('prefill_', '');
+
+    if (fieldName === 'formSchema' || fieldName === 'requiredDocuments') {
+      try {
+        prefillData[fieldName] = JSON.parse(value);
+      } catch (error) {
+        console.error(`Erro ao parsear ${fieldName}:`, error);
+        prefillData[fieldName] = null;
+      }
+      continue;
+    }
+
+    if (fieldName === 'estimatedDays') {
+      prefillData[fieldName] = parseInt(value, 10);
+      continue;
+    }
+
+    if (fieldName === 'requiresDocuments') {
+      prefillData[fieldName] = value === 'true';
+      continue;
+    }
+
+    prefillData[fieldName] = value;
   }
 
   return prefillData;
 }
 
-/**
- * Verifica se há dados de pré-preenchimento disponíveis
- */
 export function hasPrefillData(searchParams: URLSearchParams): boolean {
   for (const key of searchParams.keys()) {
     if (key.startsWith('prefill_')) {
