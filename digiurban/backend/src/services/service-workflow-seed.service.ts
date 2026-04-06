@@ -12,6 +12,10 @@ import { prisma } from '../lib/prisma';
 import * as serviceWorkflowService from './service-workflow.service';
 import { getTemplateForModuleType } from './workflow-templates';
 import { generateCompleteWorkflowBySubtype } from './workflow-template.service';
+import {
+  resolveServiceSubtype,
+  shouldAutoCreateWorkflow,
+} from './service-creation-policy.service';
 
 /**
  * Lista de todos os moduleTypes do sistema antigo
@@ -706,8 +710,32 @@ export async function seedAllServiceWorkflows() {
         continue;
       }
 
+      const resolvedSubtype =
+        service.serviceType === 'SEM_DADOS'
+          ? resolveServiceSubtype({
+              serviceType: service.serviceType,
+              serviceSubtype: service.serviceSubtype,
+              name: service.name,
+              description: service.description,
+              category: (service as any).category,
+              requiresDocuments: (service as any).requiresDocuments,
+              requiredDocuments: service.requiredDocuments,
+              formSchema: service.formSchema,
+              moduleType: service.moduleType,
+            })
+          : service.serviceSubtype || 'SOLICITACAO_SIMPLES';
+
+      if (!shouldAutoCreateWorkflow(service.serviceType, resolvedSubtype)) {
+        console.log(`   ⏭️  ${service.name} - modo ${resolvedSubtype} não requer workflow`);
+        skipped++;
+        continue;
+      }
+
       // ✅ SISTEMA UNIFICADO: Gerar workflow baseado no subtipo
-      const workflowData = generateCompleteWorkflowBySubtype(service as any);
+      const workflowData = generateCompleteWorkflowBySubtype({
+        ...service,
+        serviceSubtype: resolvedSubtype,
+      } as any);
 
       // Adicionar serviceId ao workflowData
       const completeWorkflowData = {
@@ -718,12 +746,16 @@ export async function seedAllServiceWorkflows() {
       // Criar o workflow usando o service
       await serviceWorkflowService.createServiceWorkflow(completeWorkflowData);
 
-      const subtype = service.serviceSubtype || 'CONSULTIVO';
+      const subtype = resolvedSubtype;
       const subtypeIcon = {
         'CAPTURA_COMPLETA': '🔵',
         'SOLICITACAO_SIMPLES': '🟢',
         'PAGAMENTO': '🔴',
-        'CONSULTIVO': '🟡'
+        'CONSULTIVO': '🟡',
+        'CONSULTA_PUBLICA': '⚪',
+        'CONSULTA_AUTENTICADA': '🟣',
+        'EMISSAO_AUTOMATICA': '🟠',
+        'EMISSAO_ASSISTIDA': '🟤',
       }[subtype] || '⚪';
 
       console.log(`   ✅ ${service.name} - workflow ${subtypeIcon} ${subtype} (${workflowData.stages.length} etapas)`);

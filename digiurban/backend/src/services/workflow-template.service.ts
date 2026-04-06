@@ -11,6 +11,10 @@
 
 import type { CreateWorkflowData, WorkflowStage } from '../types/workflow.types';
 import type { ServiceSimplified } from '@prisma/client';
+import {
+  buildNoDataWorkflowTemplate,
+  resolveServiceSubtype,
+} from './service-creation-policy.service';
 
 export interface GenerateWorkflowFromServiceInput {
   moduleType: string;
@@ -853,6 +857,38 @@ function extractFieldsFromSchema(formSchema: any): Array<{ id: string; label: st
  * @returns Workflow com metadata completa e estrutura validada
  */
 export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): CreateWorkflowData {
+  if (service.serviceType === 'SEM_DADOS') {
+    const resolvedSubtype = resolveServiceSubtype({
+      serviceType: service.serviceType,
+      serviceSubtype: service.serviceSubtype,
+      name: service.name,
+      description: service.description,
+      category: (service as any).category,
+      requiresDocuments: (service as any).requiresDocuments,
+      requiredDocuments: service.requiredDocuments,
+      formSchema: service.formSchema,
+      moduleType: service.moduleType,
+    });
+
+    const alignedWorkflow =
+      buildNoDataWorkflowTemplate({
+        serviceName: service.name,
+        serviceDescription: service.description,
+        estimatedDays: service.estimatedDays,
+        subtype: resolvedSubtype,
+      }) ||
+      buildNoDataWorkflowTemplate({
+        serviceName: service.name,
+        serviceDescription: service.description,
+        estimatedDays: service.estimatedDays,
+        subtype: 'SOLICITACAO_SIMPLES',
+      });
+
+    if (alignedWorkflow) {
+      return alignedWorkflow;
+    }
+  }
+
   const subtype = service.serviceSubtype || 'CONSULTIVO';
   const totalSLA = service.estimatedDays || 10;
 
@@ -1120,7 +1156,6 @@ export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): C
     }
   };
 }
-
 
 
 
