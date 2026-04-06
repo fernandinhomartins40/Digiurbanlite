@@ -13,6 +13,7 @@ import type { CreateWorkflowData, WorkflowStage } from '../types/workflow.types'
 import type { ServiceSimplified } from '@prisma/client';
 import {
   buildNoDataWorkflowTemplate,
+  isKnownNoDataSubtype,
   resolveServiceSubtype,
 } from './service-creation-policy.service';
 
@@ -869,13 +870,16 @@ export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): C
       formSchema: service.formSchema,
       moduleType: service.moduleType,
     });
+    const noDataSubtype = isKnownNoDataSubtype(resolvedSubtype)
+      ? resolvedSubtype
+      : 'SOLICITACAO_SIMPLES';
 
     const alignedWorkflow =
       buildNoDataWorkflowTemplate({
         serviceName: service.name,
         serviceDescription: service.description,
         estimatedDays: service.estimatedDays,
-        subtype: resolvedSubtype,
+        subtype: noDataSubtype,
       }) ||
       buildNoDataWorkflowTemplate({
         serviceName: service.name,
@@ -1156,7 +1160,6 @@ export function generateCompleteWorkflowBySubtype(service: ServiceSimplified): C
     }
   };
 }
-
 
 
 
