@@ -39,7 +39,7 @@ wait_for_container_health digiurban-postgres 30 5
 wait_for_container_health digiurban-redis 30 5
 wait_for_container_health ultrazend-smtp 30 5
 wait_for_container_health digiurban-llamacpp 60 10
-wait_for_http_ready http://127.0.0.1:8080/health 60 10
+wait_for_http_ready http://127.0.0.1:18080/health 60 10
 wait_for_container_health ultrazend-messages 30 5
 wait_for_container_health digiurban-flow 30 5
 wait_for_container_health digiurban-ai 30 5
