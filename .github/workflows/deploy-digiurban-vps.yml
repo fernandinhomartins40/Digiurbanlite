@@ -65,7 +65,7 @@ jobs:
             REPO_URL="https://github.com/fernandinhomartins40/Digiurbanlite.git"
             if [ -n "${GIT_TOKEN}" ]; then
               echo "Y Token Git detectado, configurando autenticaAAo para repo privado..."
-              git remote set-url origin "https://${GIT_TOKEN}@github.com/fernandinhomartins40/Digiurbanlite.git"
+              git remote set-url origin "https://x-access-token:${GIT_TOKEN}@github.com/fernandinhomartins40/Digiurbanlite.git"
             else
               echo "a1i  Sem token Git, usando acesso pAoblico..."
               git remote set-url origin "${REPO_URL}"
