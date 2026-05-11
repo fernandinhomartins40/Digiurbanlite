@@ -19,30 +19,6 @@ function parseOptionalFloat(value?: string): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
-function normalizeOllamaKeepAlive(value?: string): string | undefined {
-  if (typeof value !== 'string' || value.trim().length === 0) {
-    return undefined;
-  }
-
-  const normalized = value.trim();
-
-  // Legacy sentinel previously used in this project. Avoid sending invalid duration to Ollama.
-  if (normalized === '-1') {
-    return undefined;
-  }
-
-  // Convert plain positive integer to seconds to keep backward compatibility.
-  if (/^\d+$/.test(normalized)) {
-    const seconds = Number.parseInt(normalized, 10);
-    if (Number.isFinite(seconds) && seconds > 0) {
-      return `${seconds}s`;
-    }
-    return undefined;
-  }
-
-  return normalized;
-}
-
 function parseCsvList(value?: string): string[] {
   if (typeof value !== 'string' || value.trim().length === 0) {
     return [];
@@ -72,71 +48,20 @@ export const config = {
     process.env.DATABASE_URL ||
     'digiurban-ai-provider-key',
 
-  ollamaBaseUrl: process.env.AI_OLLAMA_BASE_URL || process.env.OLLAMA_BASE_URL || 'http://ollama:11434',
-  ollamaModel:
-    process.env.AI_OLLAMA_MODEL ||
-    process.env.AI_OLLAMA_FAST_MODEL ||
-    'qwen3.5:2b',
-  ollamaQualityModel:
-    process.env.AI_OLLAMA_QUALITY_MODEL ||
-    process.env.AI_OLLAMA_FALLBACK_MODEL ||
-    'qwen3.5:4b',
-  ollamaFallbackModel:
-    process.env.AI_OLLAMA_FALLBACK_MODEL ||
-    process.env.AI_OLLAMA_QUALITY_MODEL ||
-    'qwen3.5:4b',
-  ollamaTimeoutMs: parseInt(process.env.AI_OLLAMA_TIMEOUT_MS || '60000', 10),
-  ollamaFastTimeoutMs: parseInt(process.env.AI_OLLAMA_FAST_TIMEOUT_MS || '45000', 10),
-  ollamaRetryTimeoutMs: parseInt(process.env.AI_OLLAMA_RETRY_TIMEOUT_MS || '18000', 10),
-  ollamaFallbackFastTimeoutMs: parseInt(
-    process.env.AI_OLLAMA_FALLBACK_FAST_TIMEOUT_MS || '60000',
-    10,
-  ),
-  ollamaTemperature: parseFloat(process.env.AI_OLLAMA_TEMPERATURE || '0.2'),
-  ollamaTopP: parseFloat(process.env.AI_OLLAMA_TOP_P || '0.9'),
-  ollamaTopK: parseOptionalInt(process.env.AI_OLLAMA_TOP_K),
-  ollamaMinP: parseOptionalFloat(process.env.AI_OLLAMA_MIN_P),
-  ollamaRepeatPenalty: parseOptionalFloat(process.env.AI_OLLAMA_REPEAT_PENALTY),
-  ollamaNumCtx: parseInt(process.env.AI_OLLAMA_NUM_CTX || '3072', 10),
-  ollamaRagNumCtx: parseInt(process.env.AI_OLLAMA_RAG_NUM_CTX || '2304', 10),
-  ollamaNumThread: parseOptionalInt(process.env.AI_OLLAMA_NUM_THREAD),
-  ollamaNumBatch: parseOptionalInt(process.env.AI_OLLAMA_NUM_BATCH),
-  ollamaNumGpu: parseOptionalInt(process.env.AI_OLLAMA_NUM_GPU),
-  ollamaMainGpu: parseOptionalInt(process.env.AI_OLLAMA_MAIN_GPU),
-  ollamaMaxTokens: parseInt(process.env.AI_OLLAMA_MAX_TOKENS || '220', 10),
-  ollamaRagMaxTokens: parseInt(process.env.AI_OLLAMA_RAG_MAX_TOKENS || '140', 10),
-  ollamaDraftMaxTokens: parseInt(process.env.AI_OLLAMA_DRAFT_MAX_TOKENS || '220', 10),
-  ollamaFastMaxTokens: parseInt(process.env.AI_OLLAMA_FAST_MAX_TOKENS || '96', 10),
-  ollamaFastNumCtx: parseInt(process.env.AI_OLLAMA_FAST_NUM_CTX || '1536', 10),
-  ollamaKeepAlive: normalizeOllamaKeepAlive(
-    process.env.AI_OLLAMA_KEEP_ALIVE || process.env.OLLAMA_KEEP_ALIVE,
-  ),
-  ollamaFallbackKeepAlive: normalizeOllamaKeepAlive(
-    process.env.AI_OLLAMA_FALLBACK_KEEP_ALIVE || '10m',
-  ),
-  ollamaThinking: (process.env.AI_OLLAMA_THINKING || 'false').toLowerCase() === 'true',
-  ollamaWarmupEnabled: (process.env.AI_OLLAMA_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
-  ollamaWarmupModels: parseCsvList(
-    process.env.AI_OLLAMA_WARMUP_MODELS ||
-      [
-        process.env.AI_OLLAMA_MODEL || process.env.AI_OLLAMA_FAST_MODEL || 'qwen3.5:2b',
-        process.env.AI_OLLAMA_QUALITY_MODEL ||
-          process.env.AI_OLLAMA_FALLBACK_MODEL ||
-          'qwen3.5:4b',
-      ].join(','),
-  ),
-  ollamaWarmupPrompt: process.env.AI_OLLAMA_WARMUP_PROMPT || 'Responda apenas: ok',
-  ollamaWarmupTimeoutMs: parseInt(process.env.AI_OLLAMA_WARMUP_TIMEOUT_MS || '90000', 10),
-  ollamaWarmupThink: (process.env.AI_OLLAMA_WARMUP_THINK || 'false').toLowerCase() === 'true',
-  ollamaCircuitBreakerFailures: parseInt(
-    process.env.AI_OLLAMA_CIRCUIT_BREAKER_FAILURES || '2',
-    10,
-  ),
-  ollamaCircuitBreakerCooldownMs: parseInt(
-    process.env.AI_OLLAMA_CIRCUIT_BREAKER_COOLDOWN_MS || '180000',
-    10,
-  ),
-  ollamaToolLoopMaxSteps: parseInt(process.env.AI_OLLAMA_TOOL_LOOP_MAX_STEPS || '4', 10),
+  llamaCppBaseUrl: process.env.AI_LLAMACPP_BASE_URL || 'http://llamacpp:8080',
+  llamaCppModel: process.env.AI_LLAMACPP_MODEL || 'qwen3-1.7b-instruct-q4_k_m',
+  llamaCppTimeoutMs: parseInt(process.env.AI_LLAMACPP_TIMEOUT_MS || '60000', 10),
+  llamaCppFastTimeoutMs: parseInt(process.env.AI_LLAMACPP_FAST_TIMEOUT_MS || '30000', 10),
+  llamaCppTemperature: parseFloat(process.env.AI_LLAMACPP_TEMPERATURE || '0.2'),
+  llamaCppTopP: parseFloat(process.env.AI_LLAMACPP_TOP_P || '0.9'),
+  llamaCppNumCtx: parseInt(process.env.AI_LLAMACPP_NUM_CTX || '3072', 10),
+  llamaCppRagNumCtx: parseInt(process.env.AI_LLAMACPP_RAG_NUM_CTX || '2304', 10),
+  llamaCppMaxTokens: parseInt(process.env.AI_LLAMACPP_MAX_TOKENS || '220', 10),
+  llamaCppRagMaxTokens: parseInt(process.env.AI_LLAMACPP_RAG_MAX_TOKENS || '140', 10),
+  llamaCppFastMaxTokens: parseInt(process.env.AI_LLAMACPP_FAST_MAX_TOKENS || '96', 10),
+  llamaCppToolLoopMaxSteps: parseInt(process.env.AI_LLAMACPP_TOOL_LOOP_MAX_STEPS || '3', 10),
+  llamaCppWarmupEnabled: (process.env.AI_LLAMACPP_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
+  llamaCppWarmupPrompt: process.env.AI_LLAMACPP_WARMUP_PROMPT || 'Responda apenas: ok',
   webSearchEnabled: (process.env.AI_WEB_SEARCH_ENABLED || 'false').toLowerCase() === 'true',
   webSearchDefault: (process.env.AI_WEB_SEARCH_DEFAULT || 'false').toLowerCase() === 'true',
   webSearchProvider:
@@ -166,25 +91,15 @@ export const config = {
   ),
   maxContextCharsInPrompt: parseInt(process.env.AI_MAX_CONTEXT_CHARS_IN_PROMPT || '1200', 10),
   maxModelMessageChars: parseInt(process.env.AI_MAX_MODEL_MESSAGE_CHARS || '900', 10),
-  embeddingsEnabled: (process.env.AI_EMBEDDINGS_ENABLED || 'true').toLowerCase() === 'true',
-  embeddingsModel: process.env.AI_EMBEDDINGS_MODEL || 'qwen3-embedding:0.6b',
+  embeddingsEnabled: (process.env.AI_EMBEDDINGS_ENABLED || 'false').toLowerCase() === 'true',
+  embeddingsModel: process.env.AI_EMBEDDINGS_MODEL || process.env.AI_LLAMACPP_MODEL || 'qwen3-1.7b-instruct-q4_k_m',
   embeddingsTimeoutMs: parseInt(process.env.AI_EMBEDDINGS_TIMEOUT_MS || '15000', 10),
-  embeddingsKeepAlive: normalizeOllamaKeepAlive(process.env.AI_EMBEDDINGS_KEEP_ALIVE),
+  embeddingsKeepAlive: undefined,
   embeddingsBatchSize: parseInt(process.env.AI_EMBEDDINGS_BATCH_SIZE || '12', 10),
   embeddingsQueryCacheTtlMs: parseInt(
     process.env.AI_EMBEDDINGS_QUERY_CACHE_TTL_MS || '300000',
     10,
   ),
-  openRouterBaseUrl: process.env.AI_OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1',
-  openRouterFastModel: process.env.AI_OPENROUTER_FAST_MODEL || 'qwen/qwen3-4b:free',
-  openRouterContextualModel:
-    process.env.AI_OPENROUTER_CONTEXTUAL_MODEL || process.env.AI_OPENROUTER_FAST_MODEL || 'qwen/qwen3-4b:free',
-  openRouterQualityModel:
-    process.env.AI_OPENROUTER_QUALITY_MODEL || 'qwen/qwen3-next-80b-a3b-instruct:free',
-  openRouterTimeoutMs: parseInt(process.env.AI_OPENROUTER_TIMEOUT_MS || '60000', 10),
-  openRouterAppName: process.env.AI_OPENROUTER_APP_NAME || 'DigiUrban AI',
-  openRouterSiteUrl: process.env.AI_OPENROUTER_SITE_URL || 'https://www.digiurban.com.br',
-
   corsOrigin: process.env.CORS_ORIGIN || '*',
   rateLimitWindowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '60000', 10),
   rateLimitMax: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || '120', 10),

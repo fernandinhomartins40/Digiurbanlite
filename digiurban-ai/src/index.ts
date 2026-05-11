@@ -16,7 +16,7 @@ import providerRoutes from './routes/provider.routes';
 import prisma from './utils/prisma';
 import logger from './utils/logger';
 import { AiPlanType } from '@prisma/client';
-import { ollamaService } from './services/ollama.service';
+import { llamaCppService } from './services/llamacpp.service';
 
 class DigiUrbanAIServer {
   private app!: express.Express;
@@ -32,26 +32,17 @@ class DigiUrbanAIServer {
         logger.info('DigiUrban AI server started', {
           host: config.host,
           port: config.port,
-          fastModel: config.ollamaModel,
-          qualityModel: config.ollamaQualityModel,
-          fallbackModel: config.ollamaFallbackModel,
-          ollamaBaseUrl: config.ollamaBaseUrl,
-          ollamaTimeoutMs: config.ollamaTimeoutMs,
-          ollamaFastTimeoutMs: config.ollamaFastTimeoutMs,
-          ollamaRetryTimeoutMs: config.ollamaRetryTimeoutMs,
-          ollamaKeepAlive: config.ollamaKeepAlive,
-          ollamaFallbackKeepAlive: config.ollamaFallbackKeepAlive,
-          ollamaNumCtx: config.ollamaNumCtx,
-          ollamaRagNumCtx: config.ollamaRagNumCtx,
-          ollamaFastNumCtx: config.ollamaFastNumCtx,
-          ollamaMaxTokens: config.ollamaMaxTokens,
-          ollamaRagMaxTokens: config.ollamaRagMaxTokens,
-          ollamaDraftMaxTokens: config.ollamaDraftMaxTokens,
-          ollamaFastMaxTokens: config.ollamaFastMaxTokens,
-          ollamaWarmupModels: config.ollamaWarmupModels,
-          ollamaCircuitBreakerFailures: config.ollamaCircuitBreakerFailures,
-          ollamaCircuitBreakerCooldownMs: config.ollamaCircuitBreakerCooldownMs,
-          ollamaWarmupEnabled: config.ollamaWarmupEnabled,
+          provider: 'LLAMACPP',
+          model: config.llamaCppModel,
+          llamaCppBaseUrl: config.llamaCppBaseUrl,
+          llamaCppTimeoutMs: config.llamaCppTimeoutMs,
+          llamaCppFastTimeoutMs: config.llamaCppFastTimeoutMs,
+          llamaCppNumCtx: config.llamaCppNumCtx,
+          llamaCppRagNumCtx: config.llamaCppRagNumCtx,
+          llamaCppMaxTokens: config.llamaCppMaxTokens,
+          llamaCppRagMaxTokens: config.llamaCppRagMaxTokens,
+          llamaCppFastMaxTokens: config.llamaCppFastMaxTokens,
+          llamaCppWarmupEnabled: config.llamaCppWarmupEnabled,
           webSearchEnabled: config.webSearchEnabled,
           webSearchProvider: config.webSearchProvider,
           embeddingsEnabled: config.embeddingsEnabled,
@@ -60,7 +51,7 @@ class DigiUrbanAIServer {
       });
 
       this.setupGracefulShutdown();
-      this.warmupOllamaInBackground();
+      this.warmupLlamaCppInBackground();
     } catch (error) {
       logger.error('Failed to start DigiUrban AI server', {
         error: error instanceof Error ? error.message : String(error),
@@ -148,9 +139,9 @@ class DigiUrbanAIServer {
     });
   }
 
-  private warmupOllamaInBackground(): void {
-    void ollamaService.warmup().catch((error) => {
-      logger.warn('Failed during Ollama warmup sequence', {
+  private warmupLlamaCppInBackground(): void {
+    void llamaCppService.warmup().catch((error) => {
+      logger.warn('Failed during llama.cpp warmup sequence', {
         error: error instanceof Error ? error.message : String(error),
       });
     });

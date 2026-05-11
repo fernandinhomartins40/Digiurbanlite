@@ -77,7 +77,7 @@ Isso irá:
 - ✅ Atualizar código (`git pull`)
 - ✅ Reconstruir containers
 - ✅ Executar seeds consolidados (incluindo Saúde)
-- ✅ Configurar Ollama
+- ✅ Validar llama.cpp
 - ✅ Verificar status
 
 ### **Opção 2: Seeds Completos Localmente**

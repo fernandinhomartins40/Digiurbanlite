@@ -24,10 +24,8 @@ function formatDate(value?: string | null): string {
 }
 
 type ProviderFormState = {
-  provider: 'OLLAMA' | 'OPENROUTER';
-  fallbackProvider: 'OLLAMA' | 'OPENROUTER' | 'NONE';
-  openRouterBaseUrl: string;
-  openRouterApiKey: string;
+  provider: 'LLAMACPP';
+  fallbackProvider: 'LLAMACPP' | 'NONE';
   fastModel: string;
   contextualModel: string;
   qualityModel: string;
@@ -41,8 +39,6 @@ function toProviderForm(settings: AiProviderSettings): ProviderFormState {
   return {
     provider: settings.provider,
     fallbackProvider: settings.fallbackProvider || 'NONE',
-    openRouterBaseUrl: settings.openRouterBaseUrl || 'https://openrouter.ai/api/v1',
-    openRouterApiKey: '',
     fastModel: settings.fastModel || '',
     contextualModel: settings.contextualModel || '',
     qualityModel: settings.qualityModel || '',
@@ -82,10 +78,8 @@ export default function SuperAdminAiPage() {
   const [modelSearch, setModelSearch] = useState('');
   const [showAdvancedProviderConfig, setShowAdvancedProviderConfig] = useState(false);
   const [providerForm, setProviderForm] = useState<ProviderFormState>({
-    provider: 'OLLAMA',
+    provider: 'LLAMACPP',
     fallbackProvider: 'NONE',
-    openRouterBaseUrl: 'https://openrouter.ai/api/v1',
-    openRouterApiKey: '',
     fastModel: '',
     contextualModel: '',
     qualityModel: '',
@@ -94,13 +88,6 @@ export default function SuperAdminAiPage() {
     fallbackQualityModel: '',
     isEnabled: true,
   });
-
-  const isOpenRouterInUse =
-    providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER';
-  const hasTypedOpenRouterApiKey = providerForm.openRouterApiKey.trim().length > 0;
-  const hasValidSavedOpenRouterApiKey = providerSettings?.openRouterApiKeyStatus === 'valid';
-  const hasBrokenSavedOpenRouterApiKey = providerSettings?.openRouterApiKeyStatus === 'broken';
-  const hasUsableOpenRouterApiKey = hasTypedOpenRouterApiKey || hasValidSavedOpenRouterApiKey;
 
   const loadKnowledge = async (): Promise<void> => {
     setLoadingKnowledge(true);
@@ -224,8 +211,6 @@ export default function SuperAdminAiPage() {
       const saved = await aiPlatformService.updateProviderSettings({
         provider: providerForm.provider,
         fallbackProvider: providerForm.fallbackProvider === 'NONE' ? null : providerForm.fallbackProvider,
-        openRouterApiKey: providerForm.openRouterApiKey.trim() || undefined,
-        openRouterBaseUrl: providerForm.openRouterBaseUrl.trim(),
         fastModel: providerForm.fastModel.trim() || null,
         contextualModel: providerForm.contextualModel.trim() || null,
         qualityModel: providerForm.qualityModel.trim() || null,
@@ -235,7 +220,7 @@ export default function SuperAdminAiPage() {
         isEnabled: providerForm.isEnabled,
       });
       setProviderSettings(saved);
-      setProviderForm({ ...toProviderForm(saved), openRouterApiKey: '' });
+      setProviderForm(toProviderForm(saved));
       toast({ title: 'Provider salvo', description: 'Configuracao de IA atualizada.' });
     } catch (error) {
       toast({ title: 'Erro ao salvar provider', description: error instanceof Error ? error.message : 'Falha ao salvar configuracao.', variant: 'destructive' });
@@ -249,8 +234,6 @@ export default function SuperAdminAiPage() {
     try {
       const result = await aiPlatformService.testProvider({
         provider: providerForm.provider,
-        openRouterApiKey: providerForm.openRouterApiKey.trim() || undefined,
-        openRouterBaseUrl: providerForm.openRouterBaseUrl.trim() || undefined,
       });
       toast({ title: 'Conexao validada', description: result.modelsChecked ? `${result.message}. ${result.modelsChecked} modelos detectados.` : result.message });
     } catch (error) {
@@ -265,9 +248,6 @@ export default function SuperAdminAiPage() {
     try {
       setProviderModels(await aiPlatformService.listProviderModels({
         provider: providerForm.provider,
-        openRouterApiKey: providerForm.openRouterApiKey.trim() || undefined,
-        openRouterBaseUrl: providerForm.openRouterBaseUrl.trim() || undefined,
-        openSourceOnly: providerForm.provider === 'OPENROUTER',
       }));
     } catch (error) {
       toast({ title: 'Erro ao listar modelos', description: error instanceof Error ? error.message : 'Falha ao carregar modelos.', variant: 'destructive' });
@@ -277,13 +257,8 @@ export default function SuperAdminAiPage() {
   };
 
   useEffect(() => {
-    if (providerForm.provider === 'OPENROUTER' && !hasUsableOpenRouterApiKey) {
-      setProviderModels([]);
-      return;
-    }
-
     void listModels();
-  }, [providerForm.provider, hasUsableOpenRouterApiKey]);
+  }, [providerForm.provider]);
 
   const applyModelToField = (
     field:
@@ -308,9 +283,7 @@ export default function SuperAdminAiPage() {
     );
   });
 
-  const availableModelOptions = providerForm.provider === 'OPENROUTER'
-    ? providerModels
-    : providerModels.length > 0
+  const availableModelOptions = providerModels.length > 0
       ? providerModels
       : [
           { id: providerForm.fastModel, name: providerForm.fastModel },
@@ -328,7 +301,7 @@ export default function SuperAdminAiPage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base"><PlugZap className="mr-2 inline h-4 w-4" />Provider de inferencia</CardTitle>
-          <CardDescription>Configure Ollama local ou OpenRouter com fallback entre providers.</CardDescription>
+          <CardDescription>Configure o runtime local llama.cpp com Qwen3 1.7B Instruct.</CardDescription>
         </CardHeader>
         <CardContent>
           {loadingProvider ? (
@@ -347,50 +320,16 @@ export default function SuperAdminAiPage() {
 
               <div className="grid gap-4 lg:grid-cols-3">
                 <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.provider} onChange={(event) => setProviderForm((current) => ({ ...current, provider: event.target.value as ProviderFormState['provider'] }))}>
-                  <option value="OLLAMA">Ollama</option>
-                  <option value="OPENROUTER">OpenRouter</option>
+                  <option value="LLAMACPP">llama.cpp local</option>
                 </select>
                 <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.fallbackProvider} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackProvider: event.target.value as ProviderFormState['fallbackProvider'] }))}>
                   <option value="NONE">Sem fallback</option>
-                  <option value="OLLAMA">Ollama</option>
-                  <option value="OPENROUTER">OpenRouter</option>
                 </select>
                 <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.isEnabled ? 'enabled' : 'disabled'} onChange={(event) => setProviderForm((current) => ({ ...current, isEnabled: event.target.value === 'enabled' }))}>
                   <option value="enabled">Ativo</option>
                   <option value="disabled">Desativado</option>
                 </select>
               </div>
-
-              {providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER' ? (
-                <div className="space-y-3">
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <Input type="password" value={providerForm.openRouterApiKey} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterApiKey: event.target.value }))} placeholder={hasValidSavedOpenRouterApiKey ? `Chave salva termina com ${providerSettings?.openRouterApiKeyLast4 || '****'}` : 'Cole uma chave da OpenRouter'} />
-                    <div className="flex items-center rounded-md border border-slate-200 bg-slate-50 px-3 text-sm text-slate-600">
-                      {loadingModels ? (
-                        <span className="flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" />Carregando catalogo...</span>
-                      ) : (
-                        <span>
-                          {availableModelOptions.length > 0
-                            ? `${availableModelOptions.length} modelos disponiveis no catalogo`
-                            : hasUsableOpenRouterApiKey
-                              ? 'Carregue o catalogo para selecionar os modelos disponiveis'
-                              : 'Informe ou recadastre uma chave valida para carregar os modelos'}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  {hasBrokenSavedOpenRouterApiKey && !hasTypedOpenRouterApiKey ? (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
-                      A chave da OpenRouter salva nao pode ser lida com o segredo atual. Cole uma nova chave e salve novamente para liberar o catalogo remoto.
-                    </div>
-                  ) : null}
-                  {!hasValidSavedOpenRouterApiKey && !hasTypedOpenRouterApiKey ? (
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600">
-                      Nenhuma chave valida da OpenRouter esta disponivel. Sem ela, o sistema nao consegue listar modelos free nem testar a conexao.
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
 
               <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
                 <div className="mb-3 flex flex-col gap-1">
@@ -449,7 +388,7 @@ export default function SuperAdminAiPage() {
                   type="button"
                   variant="outline"
                   onClick={testProvider}
-                  disabled={testingProvider || (providerForm.provider === 'OPENROUTER' && !hasUsableOpenRouterApiKey)}
+                  disabled={testingProvider}
                 >
                   {testingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testando...</> : 'Testar conexao'}
                 </Button>
@@ -457,7 +396,7 @@ export default function SuperAdminAiPage() {
                   type="button"
                   variant="outline"
                   onClick={listModels}
-                  disabled={loadingModels || (providerForm.provider === 'OPENROUTER' && !hasUsableOpenRouterApiKey)}
+                  disabled={loadingModels}
                 >
                   {loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Atualizar catalogo'}
                 </Button>
@@ -469,13 +408,6 @@ export default function SuperAdminAiPage() {
 
               {showAdvancedProviderConfig ? (
                 <div className="space-y-4 rounded-lg border border-dashed border-slate-300 p-4">
-                  {(providerForm.provider === 'OPENROUTER' || providerForm.fallbackProvider === 'OPENROUTER') ? (
-                    <div className="space-y-1.5">
-                      <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Base URL da OpenRouter</label>
-                      <Input value={providerForm.openRouterBaseUrl} onChange={(event) => setProviderForm((current) => ({ ...current, openRouterBaseUrl: event.target.value }))} placeholder="https://openrouter.ai/api/v1" />
-                    </div>
-                  ) : null}
-
                   {providerForm.fallbackProvider !== 'NONE' ? (
                     <div className="space-y-3">
                       <div>
@@ -495,7 +427,7 @@ export default function SuperAdminAiPage() {
                   <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
                     <div>
                       <p className="text-sm font-medium text-slate-900">
-                        Catalogo {providerForm.provider === 'OPENROUTER' ? 'OpenRouter open source' : 'Ollama local'}
+                        Catalogo llama.cpp local
                       </p>
                       <p className="text-xs text-slate-500">
                         Use esta lista para consultar slugs, contexto e aplicar um modelo rapidamente aos perfis.

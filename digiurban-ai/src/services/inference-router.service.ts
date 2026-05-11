@@ -208,7 +208,7 @@ export class InferenceRouterService {
     const requestedModel = params.requestedModel?.trim();
     const forcedQuality =
       params.requestedExperience === 'quality' ||
-      requestedModel === config.ollamaQualityModel;
+      requestedModel === config.llamaCppModel;
     const forcedContextual =
       params.requestedExperience === 'contextual' || params.requestedMode === 'rag';
     const autoQuality =

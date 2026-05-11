@@ -1,7 +1,7 @@
 {
   "name": "@digiurban/ai",
   "version": "1.0.0",
-  "description": "DigiUrban AI Platform - Servico centralizado de IA com DigiUrban Fast e Qwen 3.5 4B",
+  "description": "DigiUrban AI Platform - Servico centralizado de IA com llama.cpp e Qwen3 1.7B",
   "main": "dist/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -15,13 +15,12 @@
     "generate:app-context": "node ../scripts/generate-ai-admin-routes.mjs",
     "type-check": "tsc --noEmit",
     "benchmark:vps": "node scripts/benchmark-vps.js",
-    "generate:lora-dataset": "node ../scripts/generate-digiurban-lora-dataset.mjs",
-    "prepare:ollama-fast": "bash ../ai-training/scripts/prepare_ollama_model.sh"
+    "generate:lora-dataset": "node ../scripts/generate-digiurban-lora-dataset.mjs"
   },
   "keywords": [
     "ai",
     "qwen",
-    "ollama",
+    "llama.cpp",
     "rag",
     "digiurban"
   ],

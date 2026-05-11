@@ -100,7 +100,7 @@ O DigiUrban é uma plataforma completa de governo digital composta por **4 servi
 ├──────────┴──────────────┴───────────────────────────────────┤
 │               PostgreSQL :5432                              │
 │               Redis :6379                                   │
-│               Ollama :11434 (IA Local)                      │
+│               llama.cpp :8080 (IA Local)                      │
 └─────────────────────────────────────────────────────────────┘
 │               SMTP Server                                   │
 │               :25 (MX) + :587 (Submission)                  │
@@ -114,7 +114,7 @@ O DigiUrban é uma plataforma completa de governo digital composta por **4 servi
 | **ultrazend-smtp** | smtp-server + Nodemailer | 25, 587 | Servidor SMTP com entrega MX direta + DKIM |
 | **postgres** | PostgreSQL 15 | 5432 | Banco de dados principal |
 | **redis** | Redis 7 | 6379 | Cache + WebSocket adapter |
-| **ollama** | Ollama | 11434 | IA local (LLM) para DigiBot |
+| **llamacpp** | llama.cpp + Qwen3 1.7B GGUF | 8080 | IA local (LLM) para DigiBot |
 
 **Fluxo de comunicação:**
 
@@ -123,7 +123,7 @@ O DigiUrban é uma plataforma completa de governo digital composta por **4 servi
 3. Backend comunica com Messages Server via **rotas internas** (`/api/internal/`)
 4. Messages Server comunica com Backend via **DigiUrbanIntegration** (HTTP com token de serviço)
 5. Backend envia emails via **SMTP Server** (porta 587)
-6. Backend consulta **Ollama** para respostas de IA (porta 11434)
+6. Backend consulta **digiurban-ai/llama.cpp** para respostas de IA (porta 9004/8080)
 
 ---
 
@@ -1379,11 +1379,11 @@ Servidor de email independente com entrega MX direta:
 | postgres | postgres:15-alpine | 5432 | - |
 | redis | redis:7-alpine | 6379 | - |
 | ultrazend-smtp | build local | 25, 587 | postgres |
-| ollama | ollama/ollama | 11434 | - |
+| llamacpp | ghcr.io/ggml-org/llama.cpp:server | 8080 | - |
 | ultrazend-messages | build local | 9001 | postgres, redis |
-| digiurban | build local | 3060→80 | postgres, redis, smtp, messages, ollama |
+| digiurban | build local | 3060→80 | postgres, redis, smtp, messages, digiurban-ai, llamacpp |
 
-**Volumes persistentes:** postgres_data, redis_data, ollama_data, digiurban_uploads, digiurban_logs, digiurban_backups, smtp_data, smtp_logs, messages_uploads, messages_logs.
+**Volumes persistentes:** postgres_data, redis_data, llamacpp_models, digiurban_uploads, digiurban_logs, digiurban_backups, smtp_data, smtp_logs, messages_uploads, messages_logs.
 
 ### 11.3 Nginx (Reverse Proxy)
 
@@ -1441,13 +1441,13 @@ Executado antes do Supervisord (`docker/startup.sh`):
 **Fases do deploy:**
 
 1. **Git sync:** SSH para VPS, git reset --hard origin/main, limpeza seletiva
-2. **Geração .env:** DATABASE_URL, JWT_SECRET, CORS, Ollama config
+2. **Geração .env:** DATABASE_URL, JWT_SECRET, CORS, config llama.cpp
 3. **Limpeza nuclear de cache Docker:** Remove imagens, builder cache, prune
 4. **Validação pré-build:** Verifica arquivos críticos, Dockerfile correto
 5. **Build:** `docker-compose build --no-cache --pull --progress=plain`
 6. **Inicialização:** `docker-compose up -d`, sleep 30
 7. **Seeds:** `npm run db:seed`, `node seed-flows.js`
-8. **Ollama:** Pull modelo qwen2.5:3b (fallback: smollm2:1.7b), cria modelo customizado DigiBot
+8. **llama.cpp:** carrega Qwen3 1.7B GGUF via llama-server
 9. **Validação pós-build:** Verifica compilação, rotas acessíveis
 10. **Health check:** 15 tentativas × 10s → `/health` e `/api/citizen/services`
 
@@ -1481,11 +1481,11 @@ REDIS_URL=redis://redis:6379
 # Tenant
 DEFAULT_TENANT=demo
 
-# IA (Ollama)
-USE_OLLAMA=true
-OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_MODEL=digibot-qwen2.5
-OLLAMA_TIMEOUT=15000
+# IA local (llama.cpp)
+AI_API_URL=http://digiurban-ai:9004/api/v1
+AI_LLAMACPP_BASE_URL=http://llamacpp:8080
+AI_LLAMACPP_MODEL=qwen3-1.7b-instruct-q4_k_m
+AI_LLAMACPP_TIMEOUT_MS=90000
 
 # Messages Server
 MESSAGES_SERVICE_TOKEN=ultrazend-messages-service-token
@@ -1685,7 +1685,7 @@ docker compose -f docker-compose.vps.yml logs -f digiurban
 5. startup.sh: PostgreSQL → enums → migrations → seed
 6. Supervisord: backend → frontend → nginx
 7. Seeds: micro sistemas + fluxos bot
-8. Ollama: pull modelo LLM + criar DigiBot customizado
+8. llama.cpp: carregar Qwen3 1.7B GGUF local
 9. Health check: /health + /api/citizen/services
 10. ✅ Deploy concluído
 ```

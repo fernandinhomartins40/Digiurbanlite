@@ -1173,7 +1173,7 @@ export class CitizenAiOrchestrator {
   private withStage(session: CitizenAiSessionState, stage: CitizenAiStage): CitizenAiSessionState { return { ...session, stage }; }
 
   private meta(execution: FlowExecution, session: CitizenAiSessionState, waitingForInput: boolean, extra: Record<string, unknown> = {}): BotResponse['metadata'] {
-    return { flowId: execution.flowId, executionId: execution.id, nodeId: session.stage, waitingForInput, aiEngine: 'qwen3.5-2b-routing', aiStage: session.stage, ...extra };
+    return { flowId: execution.flowId, executionId: execution.id, nodeId: session.stage, waitingForInput, aiEngine: 'llamacpp-qwen3-1.7b-routing', aiStage: session.stage, ...extra };
   }
 
   private async runAction(actionName: keyof typeof actionHandlers, params: Record<string, unknown>, execution: FlowExecution, session: CitizenAiSessionState): Promise<Record<string, any>> {

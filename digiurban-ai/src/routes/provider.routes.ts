@@ -5,13 +5,11 @@ import { AuthenticatedProxyRequest } from '../types';
 
 const router = Router();
 
-const providerSchema = z.enum(['OLLAMA', 'OPENROUTER']);
+const providerSchema = z.literal('LLAMACPP');
 
 const providerSettingsSchema = z.object({
   provider: providerSchema,
-  fallbackProvider: providerSchema.nullable().optional(),
-  openRouterApiKey: z.string().trim().min(10).max(512).optional(),
-  openRouterBaseUrl: z.string().trim().url().max(255).optional(),
+  fallbackProvider: z.null().optional(),
   fastModel: z.string().trim().max(160).nullable().optional(),
   contextualModel: z.string().trim().max(160).nullable().optional(),
   qualityModel: z.string().trim().max(160).nullable().optional(),
@@ -23,8 +21,6 @@ const providerSettingsSchema = z.object({
 
 const providerProbeSchema = z.object({
   provider: providerSchema,
-  openRouterApiKey: z.string().trim().min(10).max(512).optional(),
-  openRouterBaseUrl: z.string().trim().url().max(255).optional(),
   openSourceOnly: z.boolean().optional(),
 });
 
@@ -74,8 +70,6 @@ router.post('/provider/test', async (req, res) => {
     const data = await aiProviderService.testConnection({
       tenantId: getTenantId(auth),
       provider: payload.provider,
-      openRouterApiKey: payload.openRouterApiKey,
-      openRouterBaseUrl: payload.openRouterBaseUrl,
     });
     res.json({ data });
   } catch (error) {
@@ -102,9 +96,6 @@ router.post('/provider/models', async (req, res) => {
     const data = await aiProviderService.listModels({
       tenantId: getTenantId(auth),
       provider: payload.provider,
-      openRouterApiKey: payload.openRouterApiKey,
-      openRouterBaseUrl: payload.openRouterBaseUrl,
-      openSourceOnly: payload.openSourceOnly,
     });
     res.json({ data });
   } catch (error) {

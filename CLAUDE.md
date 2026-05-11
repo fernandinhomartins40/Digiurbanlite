@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot), SMTP Server. Tudo orquestrado via Docker Compose com PostgreSQL, Redis e Ollama.
+Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot), SMTP Server. Tudo orquestrado via Docker Compose com PostgreSQL, Redis e llama.cpp.
 
 ## Estrutura do Monorepo
 
@@ -291,7 +291,7 @@ BUILD_TIMESTAMP=$(date +%s) docker compose -f docker-compose.vps.yml up -d --bui
 | ultrazend-smtp | 25, 587 | 25, 587 |
 | digiurban-postgres | 5432 | 5432 |
 | digiurban-redis | 6379 | 6379 |
-| digiurban-ollama | 11434 | 11434 |
+| digiurban-llamacpp | 8080 | 8080 |
 
 ### Variáveis de Ambiente Obrigatórias
 ```env

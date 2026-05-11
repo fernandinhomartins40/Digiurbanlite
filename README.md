@@ -17,7 +17,7 @@ O sistema é composto por **4 serviços** orquestrados via Docker Compose:
 ├──────────┴──────────────┴───────────────────────────────┤
 │               PostgreSQL :5432                          │
 │               Redis :6379                               │
-│               Ollama :11434 (IA Local)                  │
+│               llama.cpp :8080 (IA Local)                  │
 └─────────────────────────────────────────────────────────┘
 │               SMTP Server                               │
 │               :25 (MX) + :587 (Submission)              │
@@ -31,7 +31,7 @@ O sistema é composto por **4 serviços** orquestrados via Docker Compose:
 | **ultrazend-smtp** | smtp-server + Nodemailer | 25, 587 | Servidor SMTP com entrega MX direta + DKIM |
 | **postgres** | PostgreSQL 15 | 5432 | Banco de dados principal |
 | **redis** | Redis 7 | 6379 | Cache + WebSocket adapter |
-| **ollama** | Ollama | 11434 | IA local (LLM) para DigiBot |
+| **llamacpp** | llama.cpp + Qwen3 1.7B GGUF | 8080 | IA local (LLM) para DigiBot |
 
 ## Stack Tecnológica
 
@@ -43,7 +43,7 @@ O sistema é composto por **4 serviços** orquestrados via Docker Compose:
 - **WebSocket:** Socket.IO 4.8
 - **Filas:** BullMQ + Redis
 - **Email:** Nodemailer 7
-- **IA:** OpenAI API + Ollama (local)
+- **IA:** digiurban-ai + llama.cpp (Qwen3 1.7B local)
 - **PDF:** PDF-lib + Playwright (Chromium) para geração
 - **Validação:** Zod 4 + Joi
 - **Logs:** Winston com rotação diária
@@ -174,10 +174,10 @@ JWT_SECRET=sua-chave-secreta-muito-longa
 FRONTEND_URL=https://seudominio.com.br
 CORS_ORIGIN=https://seudominio.com.br
 
-# IA (opcional)
-USE_OLLAMA=true
-OLLAMA_BASE_URL=http://ollama:11434
-OLLAMA_MODEL=digibot-qwen2.5
+# IA local
+AI_API_URL=http://digiurban-ai:9004/api/v1
+AI_LLAMACPP_BASE_URL=http://llamacpp:8080
+AI_LLAMACPP_MODEL=qwen3-1.7b-instruct-q4_k_m
 
 # Push Notifications (opcional)
 VAPID_PUBLIC_KEY=

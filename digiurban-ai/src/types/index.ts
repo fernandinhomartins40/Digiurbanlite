@@ -37,7 +37,7 @@ export type ChatThinkingMode = boolean | 'low' | 'medium' | 'high';
 export type ChatResponseFormat = 'json' | StructuredOutputSchema;
 
 export type AiExperience = 'fast' | 'contextual' | 'quality';
-export type AiProviderId = 'OLLAMA' | 'OPENROUTER';
+export type AiProviderId = 'LLAMACPP';
 
 export type InferenceRouteKind =
   | 'free_short'

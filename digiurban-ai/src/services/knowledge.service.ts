@@ -4,7 +4,7 @@ import { createHash } from 'crypto';
 import { config } from '../config/config';
 import prisma from '../utils/prisma';
 import logger from '../utils/logger';
-import { ollamaService } from './ollama.service';
+import { llamaCppService } from './llamacpp.service';
 
 type SourceConfig = {
   table?: string;
@@ -886,7 +886,7 @@ export class KnowledgeService {
     for (let index = 0; index < chunks.length; index += batchSize) {
       const batch = chunks.slice(index, index + batchSize);
       try {
-        const embeddings = await ollamaService.embed(
+        const embeddings = await llamaCppService.embed(
           batch.map((item) => item.content),
           config.embeddingsModel,
         );
@@ -930,7 +930,7 @@ export class KnowledgeService {
     this.runtimeStats.queryEmbeddingCacheMisses += 1;
 
     try {
-      const [vector] = await ollamaService.embed(query, config.embeddingsModel);
+      const [vector] = await llamaCppService.embed(query, config.embeddingsModel);
       if (!vector?.length) {
         return undefined;
       }

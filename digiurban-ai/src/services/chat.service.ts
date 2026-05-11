@@ -2298,7 +2298,7 @@ export class ChatService {
       };
     }
 
-    const toolLoopLimit = Math.max(1, Math.min(params.toolLoopLimit || config.ollamaToolLoopMaxSteps, 8));
+    const toolLoopLimit = Math.max(1, Math.min(params.toolLoopLimit || config.llamaCppToolLoopMaxSteps, 8));
     const messages = appendToolUsageInstruction(params.modelMessages);
     let workingMessages = [...messages];
 

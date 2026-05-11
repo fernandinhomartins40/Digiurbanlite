@@ -280,7 +280,7 @@ jobs:
               postgres \
               redis \
               ultrazend-smtp \
-              ollama \
+              llamacpp \
               ultrazend-messages \
               digiurban-flow \
               digiurban-ai \
@@ -289,7 +289,8 @@ jobs:
             wait_for_container_health digiurban-postgres 30 5
             wait_for_container_health digiurban-redis 30 5
             wait_for_container_health ultrazend-smtp 30 5
-            wait_for_container_health digiurban-ollama 40 10
+            wait_for_container_health digiurban-llamacpp 60 10
+            wait_for_http_ready http://127.0.0.1:8080/health 60 10
             wait_for_container_health ultrazend-messages 30 5
             wait_for_container_health digiurban-flow 30 5
             wait_for_container_health digiurban-ai 30 5
@@ -316,88 +317,19 @@ jobs:
             docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "as i  Seed de fluxos falhou mas continuando deploy"
             echo "a... Fluxos do bot populados"
 
-            # ===== CONFIGURAR OLLAMA (DIGIURBAN FAST + QWEN 3.5 4B) =====
-            echo "=== Configurando Ollama com DigiUrban Fast + Qwen3.5:4b ==="
+            # ===== VALIDAR LLAMA.CPP =====
+            echo "=== Validando llama.cpp com Qwen3 1.7B ==="
+            docker logs digiurban-llamacpp --tail=80 || true
+            curl -fsS http://127.0.0.1:8080/health >/dev/null || curl -fsS http://127.0.0.1:8080/v1/models >/dev/null
 
-            # Aguardar Ollama ficar disponAvel
-            echo "Aguardando Ollama iniciar..."
-            for i in {1..30}; do
-              if docker exec digiurban-ollama ollama list 2>/dev/null; then
-                echo "a... Ollama estA disponAvel!"
-                break
-              fi
-              echo "Tentativa $i/30, aguardando 5s..."
-              sleep 5
-            done
-            FAST_BASE_MODEL="qwen3.5:2b"
-            FAST_MODEL="digiurban-fast:latest"
-            QUALITY_MODEL="qwen3.5:4b"
-            EMBEDDINGS_MODEL="qwen3-embedding:0.6b"
-
-            ensure_ollama_model() {
-              local model_name="$1"
-
-              if docker exec digiurban-ollama ollama list | grep -q "${model_name}"; then
-                echo "a... Modelo ${model_name} jA instalado"
-                return 0
-              fi
-
-              echo "Y Baixando modelo ${model_name}..."
-              docker exec digiurban-ollama ollama pull "${model_name}"
-            }
-
-            ensure_ollama_model "${FAST_BASE_MODEL}"
-            ensure_ollama_model "${QUALITY_MODEL}"
-            ensure_ollama_model "${EMBEDDINGS_MODEL}"
-
-            echo "Y  Criando alias ${FAST_MODEL}..."
-            cat "$APP_DIR/digiurban-ai/models/ollama/digiurban-fast.Modelfile" | docker exec -i digiurban-ollama sh -lc 'cat > /tmp/digiurban-fast.Modelfile'
-            docker exec digiurban-ollama ollama create "${FAST_MODEL}" -f /tmp/digiurban-fast.Modelfile
-
-            sed -i "s/^OLLAMA_MODEL=.*/OLLAMA_MODEL=${FAST_MODEL}/" .env
-            sed -i "s/^AI_OLLAMA_MODEL=.*/AI_OLLAMA_MODEL=${FAST_MODEL}/" .env
-            if grep -q '^AI_OLLAMA_QUALITY_MODEL=' .env; then
-              sed -i "s/^AI_OLLAMA_QUALITY_MODEL=.*/AI_OLLAMA_QUALITY_MODEL=${QUALITY_MODEL}/" .env
-            else
-              echo "AI_OLLAMA_QUALITY_MODEL=${QUALITY_MODEL}" >> .env
-            fi
-            if grep -q '^AI_OLLAMA_FALLBACK_MODEL=' .env; then
-              sed -i "s/^AI_OLLAMA_FALLBACK_MODEL=.*/AI_OLLAMA_FALLBACK_MODEL=${QUALITY_MODEL}/" .env
-            else
-              echo "AI_OLLAMA_FALLBACK_MODEL=${QUALITY_MODEL}" >> .env
-            fi
-            if grep -q '^AI_OLLAMA_WARMUP_MODELS=' .env; then
-              sed -i "s/^AI_OLLAMA_WARMUP_MODELS=.*/AI_OLLAMA_WARMUP_MODELS=${FAST_MODEL},${QUALITY_MODEL}/" .env
-            else
-              echo "AI_OLLAMA_WARMUP_MODELS=${FAST_MODEL},${QUALITY_MODEL}" >> .env
-            fi
-            if grep -q '^AI_EMBEDDINGS_ENABLED=' .env; then
-              sed -i "s/^AI_EMBEDDINGS_ENABLED=.*/AI_EMBEDDINGS_ENABLED=true/" .env
-            else
-              echo "AI_EMBEDDINGS_ENABLED=true" >> .env
-            fi
-            if grep -q '^AI_EMBEDDINGS_MODEL=' .env; then
-              sed -i "s|^AI_EMBEDDINGS_MODEL=.*|AI_EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL}|" .env
-            else
-              echo "AI_EMBEDDINGS_MODEL=${EMBEDDINGS_MODEL}" >> .env
-            fi
-
-            # Verificar se os modelos provisionados estAo visAveis no Ollama
-            echo "Ya Validando disponibilidade dos modelos no Ollama..."
-            docker exec digiurban-ollama ollama show "${FAST_MODEL}" >/dev/null
-            docker exec digiurban-ollama ollama show "${QUALITY_MODEL}" >/dev/null
-            docker exec digiurban-ollama ollama show "${EMBEDDINGS_MODEL}" >/dev/null
-            docker exec digiurban-ollama ollama ps || true
-
-            # Reiniciar AI e backend para reaplicar warmup com os modelos jA provisionados
             echo "Y Reiniciando digiurban-ai para reaplicar warmup..."
             docker-compose -f docker-compose.vps.yml restart digiurban-ai
             wait_for_container_health digiurban-ai 30 5
-            echo "Y Reiniciando backend para aplicar configuraAAes Ollama..."
+            echo "Y Reiniciando backend para aplicar configuraAAes de IA..."
             docker-compose -f docker-compose.vps.yml restart digiurban
             wait_for_container_health digiurban-vps 36 10
 
-            echo "a... Ollama configurado com sucesso!"
+            echo "a... llama.cpp configurado com sucesso!"
 
             # ===== VERIFICAR MIGRATIONS DO ULTRAZEND MESSAGES =====
             echo "=== Verificando migrations do UltraZend Messages ==="

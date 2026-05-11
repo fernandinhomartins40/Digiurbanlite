@@ -1,11 +1,8 @@
 CREATE TABLE "ai_provider_settings" (
     "id" TEXT NOT NULL,
     "tenantId" TEXT NOT NULL DEFAULT 'default',
-    "provider" TEXT NOT NULL DEFAULT 'OLLAMA',
+    "provider" TEXT NOT NULL DEFAULT 'LLAMACPP',
     "fallbackProvider" TEXT,
-    "openrouter_api_key_encrypted" TEXT,
-    "openrouter_api_key_last4" TEXT,
-    "openrouter_base_url" TEXT,
     "fast_model" TEXT,
     "contextual_model" TEXT,
     "quality_model" TEXT,

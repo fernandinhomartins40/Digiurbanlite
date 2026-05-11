@@ -108,12 +108,8 @@ export interface AiUsageSummary {
 }
 
 export interface AiProviderSettings {
-  provider: 'OLLAMA' | 'OPENROUTER';
-  fallbackProvider: 'OLLAMA' | 'OPENROUTER' | null;
-  openRouterBaseUrl: string;
-  hasOpenRouterApiKey: boolean;
-  openRouterApiKeyStatus: 'missing' | 'valid' | 'broken';
-  openRouterApiKeyLast4?: string | null;
+  provider: 'LLAMACPP';
+  fallbackProvider: 'LLAMACPP' | null;
   fastModel?: string | null;
   contextualModel?: string | null;
   qualityModel?: string | null;
@@ -269,10 +265,8 @@ export const aiPlatformService = {
   },
 
   async updateProviderSettings(input: {
-    provider: 'OLLAMA' | 'OPENROUTER';
-    fallbackProvider?: 'OLLAMA' | 'OPENROUTER' | null;
-    openRouterApiKey?: string;
-    openRouterBaseUrl?: string;
+    provider: 'LLAMACPP';
+    fallbackProvider?: 'LLAMACPP' | null;
     fastModel?: string | null;
     contextualModel?: string | null;
     qualityModel?: string | null;
@@ -289,11 +283,9 @@ export const aiPlatformService = {
   },
 
   async testProvider(input: {
-    provider: 'OLLAMA' | 'OPENROUTER';
-    openRouterApiKey?: string;
-    openRouterBaseUrl?: string;
+    provider: 'LLAMACPP';
   }): Promise<{
-    provider: 'OLLAMA' | 'OPENROUTER';
+    provider: 'LLAMACPP';
     ok: boolean;
     message: string;
     modelsChecked?: number;
@@ -306,9 +298,7 @@ export const aiPlatformService = {
   },
 
   async listProviderModels(input: {
-    provider: 'OLLAMA' | 'OPENROUTER';
-    openRouterApiKey?: string;
-    openRouterBaseUrl?: string;
+    provider: 'LLAMACPP';
     openSourceOnly?: boolean;
   }): Promise<AiProviderModel[]> {
     const payload = await request<{ data: AiProviderModel[] }>('/provider/models', {
