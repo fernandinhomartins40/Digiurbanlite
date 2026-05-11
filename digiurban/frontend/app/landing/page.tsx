@@ -63,6 +63,10 @@ export default function LandingPage() {
                 <Presentation className="w-4 h-4" />
                 Apresentação
               </Link>
+              <Link href="/apresentacao-pitch" className="inline-flex items-center gap-1.5 text-sm font-medium text-[#0f6fbe] hover:text-[#0fffbf] transition-colors">
+                <Play className="w-4 h-4" />
+                Pitch
+              </Link>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-3">
@@ -689,6 +693,7 @@ export default function LandingPage() {
                 <li><Link href="/cidadao/login" className="text-white/60 hover:text-[#0fffbf] transition-colors">Portal do Cidadão</Link></li>
                 <li><Link href="/admin/login" className="text-white/60 hover:text-[#0fffbf] transition-colors">Portal Administrativo</Link></li>
                 <li><Link href="/apresentacao" className="text-white/60 hover:text-[#0fffbf] transition-colors">Apresentação</Link></li>
+                <li><Link href="/apresentacao-pitch" className="text-white/60 hover:text-[#0fffbf] transition-colors">Pitch</Link></li>
                 <li><a href="#" className="text-white/60 hover:text-[#0fffbf] transition-colors">Privacidade</a></li>
                 <li><a href="#" className="text-white/60 hover:text-[#0fffbf] transition-colors">Termos de Uso</a></li>
               </ul>

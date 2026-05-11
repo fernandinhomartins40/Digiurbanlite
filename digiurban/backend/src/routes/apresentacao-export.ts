@@ -15,19 +15,26 @@ router.get('/export-pdf', async (req: any, res: any) => {
     browser = await chromium.launch({ headless: true });
     const context = await browser.newContext({
       viewport: { width: 1280, height: 720 },
+      deviceScaleFactor: 2,
     });
     const page = await context.newPage();
 
+    const deck = req.query?.deck === 'pitch' ? 'pitch' : 'comercial';
+
     // Determinar URL do frontend
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const presentationUrl = `${frontendUrl}/apresentacao`;
+    const presentationUrl = `${frontendUrl}/${deck === 'pitch' ? 'apresentacao-pitch' : 'apresentacao'}?export=1`;
 
     // Navegar até a apresentação e esperar renderizar
     await page.goto(presentationUrl, { waitUntil: 'networkidle', timeout: 30000 });
+    await page.waitForSelector('[data-slide-frame="true"]', { timeout: 30000 });
     await page.waitForTimeout(2000);
 
     // Contar slides via dots de navegação (usa $$ que retorna locators)
-    const slideCount: number = await page.locator('button.rounded-full.bg-white\\/20, button.rounded-full.bg-\\[\\#0fffbf\\]').count();
+    const slideCountFromFrame = await page.locator('[data-slide-frame="true"]').first().getAttribute('data-slide-count');
+    const parsedSlideCount = Number(slideCountFromFrame);
+    const dotCount: number = await page.locator('button.rounded-full.bg-white\\/20, button.rounded-full.bg-\\[\\#0fffbf\\]').count();
+    const slideCount = Number.isFinite(parsedSlideCount) && parsedSlideCount > 0 ? parsedSlideCount : dotCount;
     const totalSlides = slideCount > 0 ? slideCount : 1;
 
     // Capturar cada slide como screenshot
@@ -41,9 +48,9 @@ router.get('/export-pdf', async (req: any, res: any) => {
       }
 
       // Capturar o viewport do slide
-      const slideElement = await page.$('.relative.bg-white.overflow-hidden.shadow-2xl');
+      const slideElement = await page.$('[data-slide-frame="true"]');
       if (slideElement) {
-        const buffer = await slideElement.screenshot({ type: 'png' });
+        const buffer = await slideElement.screenshot({ type: 'png', animations: 'disabled' });
         slideBuffers.push(buffer);
       }
     }
@@ -59,7 +66,7 @@ router.get('/export-pdf', async (req: any, res: any) => {
     const slidesHtml = slideBuffers.map((buf: Buffer, idx: number) => {
       const base64 = buf.toString('base64');
       const pageBreak = idx < slideBuffers.length - 1 ? 'always' : 'auto';
-      return `<div style="page-break-after:${pageBreak};width:1280px;height:720px;margin:0;padding:0;"><img src="data:image/png;base64,${base64}" style="width:1280px;height:720px;display:block;" /></div>`;
+      return `<div style="page-break-after:${pageBreak};width:1280px;height:720px;margin:0;padding:0;background:white;display:flex;align-items:center;justify-content:center;overflow:hidden;"><img src="data:image/png;base64,${base64}" style="width:1280px;height:720px;display:block;object-fit:contain;" /></div>`;
     }).join('');
 
     const pdfHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{margin:0;padding:0;box-sizing:border-box;}body{margin:0;padding:0;background:white;}@page{size:1280px 720px;margin:0;}</style></head><body>${slidesHtml}</body></html>`;
@@ -79,7 +86,8 @@ router.get('/export-pdf', async (req: any, res: any) => {
     await browser2.close();
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename="DigiUrban_Apresentacao_Comercial_${Date.now()}.pdf"`);
+    const filename = deck === 'pitch' ? 'DigiUrban_Pitch_Incubadora' : 'DigiUrban_Apresentacao_Comercial';
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}_${Date.now()}.pdf"`);
     return res.send(pdfBuffer);
 
   } catch (error: any) {

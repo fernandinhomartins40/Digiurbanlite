@@ -1570,9 +1570,14 @@ export default function ApresentacaoPage() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [exportMode, setExportMode] = useState(false);
 
   const goNext = useCallback(() => {
     setCurrentSlide((prev) => Math.min(prev + 1, SLIDES.length - 1));
+  }, []);
+
+  useEffect(() => {
+    setExportMode(new URLSearchParams(window.location.search).get('export') === '1');
   }, []);
 
   const goPrev = useCallback(() => {
@@ -1641,6 +1646,20 @@ export default function ApresentacaoPage() {
 
   const SlideComponent = SLIDES[currentSlide].component;
 
+  if (exportMode) {
+    return (
+      <div className="h-screen w-screen overflow-hidden bg-white">
+        <div
+          className="relative h-screen w-screen overflow-hidden bg-white shadow-2xl"
+          data-slide-frame="true"
+          data-slide-count={SLIDES.length}
+        >
+          <SlideComponent />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`min-h-screen bg-[#0f1117] flex flex-col items-center justify-center ${isFullscreen ? 'p-0' : 'p-4 md:p-8'}`}>
       {/* Top bar (hidden in fullscreen) */}
@@ -1683,6 +1702,8 @@ export default function ApresentacaoPage() {
             ? 'w-screen h-screen'
             : 'w-full max-w-[1280px] aspect-video rounded-xl'
         }`}
+        data-slide-frame="true"
+        data-slide-count={SLIDES.length}
       >
         <SlideComponent />
       </div>
