@@ -118,7 +118,7 @@ jobs:
 
             # Validar variAveis crAticas para interpolaAAo do docker-compose
             echo "Validando variAveis crAticas do .env..."
-            for required_var in FLOW_SERVICE_TOKEN MESSAGES_SERVICE_TOKEN AI_SERVICE_TOKEN; do
+            for required_var in MESSAGES_SERVICE_TOKEN AI_SERVICE_TOKEN; do
               if ! grep -q "^${required_var}=.\\+" .env; then
                 echo "a ERRO: ${required_var} ausente no .env"
                 exit 1
@@ -282,9 +282,7 @@ jobs:
               ultrazend-smtp \
               llamacpp \
               ultrazend-messages \
-              digiurban-flow \
-              digiurban-ai \
-              digiurban-opensearch
+              digiurban-ai
 
             wait_for_container_health digiurban-postgres 30 5
             wait_for_container_health digiurban-redis 30 5
@@ -292,13 +290,7 @@ jobs:
             wait_for_container_health digiurban-llamacpp 60 10
             wait_for_http_ready http://127.0.0.1:18080/health 60 10
             wait_for_container_health ultrazend-messages 30 5
-            wait_for_container_health digiurban-flow 30 5
             wait_for_container_health digiurban-ai 30 5
-            wait_for_container_health digiurban-opensearch 36 10
-
-            echo "Iniciando modulo de precos..."
-            docker-compose -f docker-compose.vps.yml up -d digiurban-prices
-            wait_for_container_health digiurban-prices 36 10
 
             echo "Iniciando aplicacao principal..."
             docker-compose -f docker-compose.vps.yml up -d digiurban
