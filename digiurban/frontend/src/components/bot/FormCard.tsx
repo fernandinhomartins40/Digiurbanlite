@@ -20,12 +20,8 @@ interface FormFieldOption {
   label: string;
 }
 
-/** Normaliza option para sempre ter 'value' */
 function normalizeOption(opt: FormFieldOption): { value: string; label: string } {
-  return {
-    value: opt.value || opt.id || opt.label,
-    label: opt.label,
-  };
+  return { value: opt.value || opt.id || opt.label, label: opt.label };
 }
 
 interface FormField {
@@ -47,12 +43,7 @@ interface FormCardProps {
 
 const normalizeField = (field: FormField) => {
   const id = field.id || field.name || '';
-  return {
-    ...field,
-    id,
-    label: field.label || id,
-    type: field.type || 'text',
-  } as Required<FormField>;
+  return { ...field, id, label: field.label || id, type: field.type || 'text' } as Required<FormField>;
 };
 
 export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardProps) {
@@ -65,20 +56,11 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
 
   const handleSubmit = () => {
     const nextErrors: Record<string, string> = {};
-
     fields.map(normalizeField).forEach((field) => {
-      if (field.required && !formData[field.id]) {
-        nextErrors[field.id] = 'Campo obrigatorio';
-      }
+      if (field.required && !formData[field.id]) nextErrors[field.id] = 'Campo obrigatorio';
     });
-
     setErrors(nextErrors);
-
-    if (Object.keys(nextErrors).length > 0) {
-      return;
-    }
-
-    onSubmit(formData);
+    if (Object.keys(nextErrors).length === 0) onSubmit(formData);
   };
 
   const renderField = (field: Required<FormField>) => {
@@ -88,26 +70,22 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
           <Textarea
             id={field.id}
             value={formData[field.id] || ''}
-            onChange={(event) => handleChange(field.id, event.target.value)}
+            onChange={(e) => handleChange(field.id, e.target.value)}
             placeholder={field.placeholder || field.label}
+            className="resize-none"
           />
         );
 
       case 'select': {
-        const selectOptions = (field.options || []).map(normalizeOption);
+        const opts = (field.options || []).map(normalizeOption);
         return (
-          <Select
-            value={formData[field.id] ?? ''}
-            onValueChange={(value) => handleChange(field.id, value)}
-          >
+          <Select value={formData[field.id] ?? ''} onValueChange={(v) => handleChange(field.id, v)}>
             <SelectTrigger>
               <SelectValue placeholder={field.placeholder || 'Selecione'} />
             </SelectTrigger>
             <SelectContent>
-              {selectOptions.map((option) => (
-                <SelectItem key={option.value} value={option.value}>
-                  {option.label}
-                </SelectItem>
+              {opts.map((o) => (
+                <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -115,31 +93,23 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
       }
 
       case 'multiselect': {
-        const multiOptions = (field.options || []).map(normalizeOption);
+        const opts = (field.options || []).map(normalizeOption);
         return (
           <div className="space-y-2">
-            {multiOptions.map((option) => {
-              const currentValues = Array.isArray(formData[field.id])
-                ? formData[field.id]
-                : [];
-              const checked = currentValues.includes(option.value);
+            {opts.map((opt) => {
+              const current = Array.isArray(formData[field.id]) ? formData[field.id] : [];
               return (
-                <div key={option.value} className="flex items-center space-x-2">
+                <div key={opt.value} className="flex items-center space-x-2">
                   <Checkbox
-                    id={`${field.id}-${option.value}`}
-                    checked={checked}
+                    id={`${field.id}-${opt.value}`}
+                    checked={current.includes(opt.value)}
                     onCheckedChange={(val) => {
-                      const nextValues = val
-                        ? [...currentValues, option.value]
-                        : currentValues.filter((item: string) => item !== option.value);
-                      handleChange(field.id, nextValues);
+                      const next = val ? [...current, opt.value] : current.filter((i: string) => i !== opt.value);
+                      handleChange(field.id, next);
                     }}
                   />
-                  <label
-                    htmlFor={`${field.id}-${option.value}`}
-                    className="text-sm text-gray-700"
-                  >
-                    {option.label}
+                  <label htmlFor={`${field.id}-${opt.value}`} className="text-sm text-gray-700 break-words">
+                    {opt.label}
                   </label>
                 </div>
               );
@@ -150,14 +120,12 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
 
       case 'checkbox':
       case 'boolean': {
-        const boolOptions = (field.options || []).map(normalizeOption);
-        // Se tem opções (Sim/Não vindas do backend), renderiza botões selecionáveis
-        if (boolOptions.length >= 2) {
-          const currentVal = formData[field.id];
+        const opts = (field.options || []).map(normalizeOption);
+        if (opts.length >= 2) {
           return (
             <div className="grid grid-cols-2 gap-2">
-              {boolOptions.map((opt) => {
-                const isSelected = currentVal === opt.value;
+              {opts.map((opt) => {
+                const isSelected = formData[field.id] === opt.value;
                 return (
                   <Button
                     key={opt.value}
@@ -179,7 +147,6 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             </div>
           );
         }
-        // Fallback: checkbox simples
         return (
           <div className="flex items-center space-x-2">
             <Checkbox
@@ -187,9 +154,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
               checked={Boolean(formData[field.id])}
               onCheckedChange={(val) => handleChange(field.id, val)}
             />
-            <label htmlFor={field.id} className="text-sm text-gray-700">
-              {field.label}
-            </label>
+            <label htmlFor={field.id} className="text-sm text-gray-700 break-words">{field.label}</label>
           </div>
         );
       }
@@ -200,7 +165,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             id={field.id}
             type="number"
             value={formData[field.id] || ''}
-            onChange={(event) => handleChange(field.id, event.target.value)}
+            onChange={(e) => handleChange(field.id, e.target.value)}
             placeholder={field.placeholder || field.label}
           />
         );
@@ -211,7 +176,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             id={field.id}
             type="email"
             value={formData[field.id] || ''}
-            onChange={(event) => handleChange(field.id, event.target.value)}
+            onChange={(e) => handleChange(field.id, e.target.value)}
             placeholder={field.placeholder || field.label}
           />
         );
@@ -222,7 +187,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             id={field.id}
             type="date"
             value={formData[field.id] || ''}
-            onChange={(event) => handleChange(field.id, event.target.value)}
+            onChange={(e) => handleChange(field.id, e.target.value)}
           />
         );
 
@@ -232,7 +197,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
             id={field.id}
             type="text"
             value={formData[field.id] || ''}
-            onChange={(event) => handleChange(field.id, event.target.value)}
+            onChange={(e) => handleChange(field.id, e.target.value)}
             placeholder={field.placeholder || field.label}
           />
         );
@@ -240,22 +205,21 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
   };
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-lg p-4 space-y-4">
+    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-4 overflow-hidden">
       {fields.map((field) => {
         const normalized = normalizeField(field);
         if (!normalized.id) return null;
-
         return (
-          <div key={normalized.id} className="space-y-2">
+          <div key={normalized.id} className="space-y-1.5">
             {normalized.type !== 'checkbox' && normalized.type !== 'boolean' && (
-              <Label htmlFor={normalized.id}>
+              <Label htmlFor={normalized.id} className="text-sm break-words">
                 {normalized.label}
                 {normalized.required && <span className="text-red-500 ml-1">*</span>}
               </Label>
             )}
             {renderField(normalized)}
             {normalized.description && (
-              <p className="text-xs text-muted-foreground">{normalized.description}</p>
+              <p className="text-xs text-muted-foreground break-words">{normalized.description}</p>
             )}
             {errors[normalized.id] && (
               <p className="text-xs text-red-500">{errors[normalized.id]}</p>
@@ -263,10 +227,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
           </div>
         );
       })}
-
-      <Button className="w-full" onClick={handleSubmit}>
-        {submitLabel}
-      </Button>
+      <Button className="w-full" onClick={handleSubmit}>{submitLabel}</Button>
     </div>
   );
 }

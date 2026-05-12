@@ -42,9 +42,7 @@ export function BotDocumentUpload({
   const docConfigs: { docId: string; config: DocumentConfig }[] = requiredDocuments.map(
     (doc, index) => {
       const docId =
-        typeof doc === 'string'
-          ? `doc-${index}`
-          : doc.id || doc.name || `doc-${index}`;
+        typeof doc === 'string' ? `doc-${index}` : doc.id || doc.name || `doc-${index}`;
       const config = normalizeDocumentConfig(doc);
       return { docId, config };
     }
@@ -59,68 +57,51 @@ export function BotDocumentUpload({
       .map(({ docId, config }) => {
         const file = uploadedFiles[docId];
         if (!file) return null;
-        return {
-          docId,
-          documentType: config.name || docId,
-          required: config.required !== false,
-          file,
-        };
+        return { docId, documentType: config.name || docId, required: config.required !== false, file };
       })
-      .filter(Boolean) as Array<{
-      docId: string;
-      documentType: string;
-      required: boolean;
-      file: File;
-    }>;
-    if (files.length > 0) {
-      onSubmit(files);
-    }
+      .filter(Boolean) as Array<{ docId: string; documentType: string; required: boolean; file: File }>;
+    if (files.length > 0) onSubmit(files);
   };
 
   const handleSkip = () => {
-    if (onSkip) {
-      onSkip();
-    } else {
-      onSubmit([]);
-    }
+    if (onSkip) onSkip();
+    else onSubmit([]);
   };
 
   const uploadedCount = Object.values(uploadedFiles).filter(Boolean).length;
   const requiredCount = docConfigs.filter((d) => d.config.required).length;
-  const requiredUploaded = docConfigs
-    .filter((d) => d.config.required)
-    .filter((d) => uploadedFiles[d.docId]).length;
+  const requiredUploaded = docConfigs.filter((d) => d.config.required).filter((d) => uploadedFiles[d.docId]).length;
   const allRequiredDone = requiredUploaded >= requiredCount;
 
   return (
-    <div className="w-full max-w-5xl rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 md:flex-row md:items-center md:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="rounded-2xl bg-blue-50 p-3 text-blue-600">
-            <FileText className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-slate-900">Documentos necessarios</h3>
-            <p className="text-sm text-slate-500">
-              Envie os anexos solicitados para concluir a abertura do protocolo.
-            </p>
-          </div>
+    <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-hidden">
+      {/* Header */}
+      <div className="flex items-start gap-3 border-b border-slate-100 pb-4 mb-4">
+        <div className="shrink-0 rounded-xl bg-blue-50 p-2.5 text-blue-600">
+          <FileText className="h-5 w-5" />
         </div>
-        <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500">
-          <div className="rounded-full bg-slate-100 px-3 py-1 font-medium">
-            {uploadedCount} arquivo(s) pronto(s)
+        <div className="min-w-0 flex-1">
+          <h3 className="text-sm font-semibold text-slate-900">Documentos necessarios</h3>
+          <p className="text-xs text-slate-500 mt-0.5 break-words">
+            Envie os anexos solicitados para concluir a abertura do protocolo.
+          </p>
+          <div className="flex flex-wrap gap-2 mt-2">
+            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+              {uploadedCount} arquivo(s) pronto(s)
+            </span>
+            {requiredCount > 0 && (
+              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+                {requiredUploaded}/{requiredCount} obrigatorios
+              </span>
+            )}
           </div>
-          {requiredCount > 0 && (
-            <div className="rounded-full bg-amber-50 px-3 py-1 font-medium text-amber-700">
-              {requiredUploaded}/{requiredCount} obrigatorios
-            </div>
-          )}
         </div>
       </div>
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+      {/* Document list — 1 coluna sempre para não transbordar no mobile */}
+      <div className="space-y-3">
         {docConfigs.map(({ docId, config }) => (
-          <div key={docId} className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3">
+          <div key={docId} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 overflow-hidden">
             <DocumentUpload
               documentConfig={config}
               value={uploadedFiles[docId] || null}
@@ -130,40 +111,36 @@ export function BotDocumentUpload({
         ))}
       </div>
 
-      <div className="mt-5 flex flex-col gap-3 border-t border-slate-100 pt-4 md:flex-row md:items-center md:justify-between">
+      {/* Footer */}
+      <div className="mt-4 pt-4 border-t border-slate-100 space-y-3">
         <div className="flex items-center gap-2 text-xs text-slate-500">
-          <ShieldCheck className="h-4 w-4 text-emerald-600" />
-          <span>Os arquivos serao enviados junto com a solicitacao.</span>
+          <ShieldCheck className="h-4 w-4 text-emerald-600 shrink-0" />
+          <span className="break-words">Os arquivos serao enviados junto com a solicitacao.</span>
         </div>
 
-        <div className="flex gap-2 md:justify-end">
+        <div className="flex gap-2">
           {allowSkip && (
-            <Button
-              variant="outline"
-              onClick={handleSkip}
-              className="flex-1 md:flex-none"
-            >
-              <SkipForward className="h-4 w-4 mr-2" />
+            <Button variant="outline" onClick={handleSkip} className="flex-1">
+              <SkipForward className="h-4 w-4 mr-2 shrink-0" />
               Pular
             </Button>
           )}
-
           <Button
             onClick={handleSubmit}
             disabled={uploadedCount === 0 || (!allRequiredDone && requiredCount > 0)}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700 md:flex-none"
+            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
           >
-            <Send className="h-4 w-4 mr-2" />
+            <Send className="h-4 w-4 mr-2 shrink-0" />
             Enviar {uploadedCount > 0 && `(${uploadedCount})`}
           </Button>
         </div>
-      </div>
 
-      {!allRequiredDone && requiredCount > 0 && uploadedCount > 0 && (
-        <p className="mt-3 text-center text-xs text-amber-600">
-          Envie todos os documentos obrigatorios para continuar
-        </p>
-      )}
+        {!allRequiredDone && requiredCount > 0 && uploadedCount > 0 && (
+          <p className="text-center text-xs text-amber-600">
+            Envie todos os documentos obrigatorios para continuar
+          </p>
+        )}
+      </div>
     </div>
   );
 }

@@ -14,17 +14,17 @@ export function QuickReplies({ replies, onSelect, className = '' }: QuickReplies
   if (!replies || replies.length === 0) return null;
 
   return (
-    <div className={`flex flex-wrap gap-2 my-3 ${className}`}>
+    <div className={`flex flex-col gap-2 my-2 ${className}`}>
       {replies.map((reply, index) => (
         <Button
           key={index}
           variant="outline"
           size="sm"
           onClick={() => onSelect(reply)}
-          className="h-auto py-1.5 text-xs bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200 text-blue-700 hover:text-blue-800 hover:border-blue-300 transition-all max-w-full whitespace-normal text-left"
+          className="w-full h-auto py-2 px-3 justify-start bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200 text-blue-700 hover:text-blue-800 hover:border-blue-300 transition-all text-left overflow-hidden"
         >
-          <Sparkles className="w-3 h-3 mr-1.5 shrink-0" />
-          <span className="break-words">{reply}</span>
+          <Sparkles className="w-3 h-3 mr-2 shrink-0" />
+          <span className="break-words text-xs leading-relaxed">{reply}</span>
         </Button>
       ))}
     </div>

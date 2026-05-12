@@ -26,15 +26,16 @@ interface BotMessageRendererProps {
 }
 
 const markdownComponents = {
-  p: ({ children }: any) => <p className="mb-3 last:mb-0">{children}</p>,
+  p: ({ children }: any) => <p className="mb-3 last:mb-0 break-words">{children}</p>,
   strong: ({ children }: any) => <strong className="font-semibold text-slate-900">{children}</strong>,
   ul: ({ children }: any) => <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
   ol: ({ children }: any) => <ol className="mb-3 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
-  li: ({ children }: any) => <li className="marker:text-slate-400">{children}</li>,
+  li: ({ children }: any) => <li className="marker:text-slate-400 break-words">{children}</li>,
   hr: () => <hr className="my-4 border-slate-200" />,
-  h1: ({ children }: any) => <h1 className="mb-3 text-lg font-semibold text-slate-900">{children}</h1>,
-  h2: ({ children }: any) => <h2 className="mb-3 text-base font-semibold text-slate-900">{children}</h2>,
-  h3: ({ children }: any) => <h3 className="mb-2 text-sm font-semibold text-slate-900">{children}</h3>,
+  h1: ({ children }: any) => <h1 className="mb-3 text-lg font-semibold text-slate-900 break-words">{children}</h1>,
+  h2: ({ children }: any) => <h2 className="mb-3 text-base font-semibold text-slate-900 break-words">{children}</h2>,
+  h3: ({ children }: any) => <h3 className="mb-2 text-sm font-semibold text-slate-900 break-words">{children}</h3>,
+  code: ({ children }: any) => <code className="text-xs bg-slate-100 px-1 rounded break-all">{children}</code>,
 };
 
 export function BotMessageRenderer({ message, onInteraction }: BotMessageRendererProps) {
@@ -68,7 +69,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             maxDate={metadata.maxDate}
           />
         );
-
       case 'time':
         return (
           <TimePicker
@@ -76,7 +76,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             availableTimes={metadata.availableTimes}
           />
         );
-
       case 'location':
         return (
           <LocationPicker
@@ -85,7 +84,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             allowManualAddress={metadata.allowManualAddress}
           />
         );
-
       case 'file_upload':
         return (
           <DocumentUploadCard
@@ -95,7 +93,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             maxSize={metadata.maxSize}
           />
         );
-
       case 'searchable_select':
         return (
           <SearchableSelect
@@ -104,7 +101,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             placeholder={metadata.placeholder}
           />
         );
-
       case 'selection':
       case 'multiple_choice':
         return (
@@ -115,7 +111,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             onSelect={(selected) => onInteraction(selected)}
           />
         );
-
       case 'confirmation':
         return (
           <ConfirmationCard
@@ -124,7 +119,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             onCancel={() => onInteraction('cancelled')}
           />
         );
-
       case 'rating':
         return (
           <RatingCard
@@ -133,7 +127,6 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
             subtitle={metadata.subtitle}
           />
         );
-
       default:
         return null;
     }
@@ -164,23 +157,23 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       }
 
       return (
-        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {options.map((option: any) => (
             <button
               key={option.id}
               onClick={() => onInteraction(option)}
-              className="group rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md active:scale-[0.98]"
+              className="group rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md active:scale-[0.98] overflow-hidden"
             >
-              <div className="flex h-full items-start justify-between gap-2">
+              <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-slate-900 text-sm leading-snug">{option.label}</div>
+                  <div className="font-semibold text-slate-900 text-sm leading-snug break-words">{option.label}</div>
                   {option.description && (
-                    <div className="mt-0.5 text-xs leading-relaxed text-slate-500 line-clamp-2">
+                    <div className="mt-0.5 text-xs leading-relaxed text-slate-500 line-clamp-2 break-words">
                       {option.description}
                     </div>
                   )}
                 </div>
-                <div className="shrink-0 mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100">
+                <div className="shrink-0 mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100 whitespace-nowrap">
                   Selecionar
                 </div>
               </div>
@@ -192,7 +185,7 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
 
     if (messageType === 'card' && cards.length > 0) {
       return (
-        <div className={`grid gap-3 ${cards.length > 1 ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'}`}>
+        <div className="grid gap-3 grid-cols-1">
           {cards.map((card: any) => (
             <MessageCard
               key={card.id}
@@ -260,12 +253,12 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
   const structuredInput = renderStructuredInput() || (messageType === 'interactive' && renderLegacyInteractive());
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3 w-full overflow-hidden">
       {renderProgress()}
 
       {message?.content && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm shadow-slate-200/70">
-          <div className="text-[15px] leading-7 text-slate-800">
+        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm overflow-hidden">
+          <div className="text-[15px] leading-7 text-slate-800 break-words overflow-wrap-anywhere">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {message.content}
             </ReactMarkdown>

@@ -18,24 +18,18 @@ export function RatingCard({
   const [hover, setHover] = useState(0);
   const [comment, setComment] = useState('');
 
-  const handleSubmit = () => {
-    if (rating > 0) {
-      onSubmit(rating, comment || undefined);
-    }
-  };
-
   const labels = ['Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
 
   return (
-    <div className="w-full bg-white rounded-lg shadow-lg p-4">
+    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-hidden">
       <div className="text-center mb-4">
-        <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>
-        <p className="text-sm text-gray-600">{subtitle}</p>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1 break-words">{title}</h3>
+        <p className="text-xs text-gray-600 break-words">{subtitle}</p>
       </div>
 
-      {/* Stars */}
-      <div className="flex justify-center gap-1.5 mb-4">
-        {[1, 2, 3, 4, 5].map(star => (
+      {/* Stars — tamanho fixo para não transbordar */}
+      <div className="flex justify-center gap-2 mb-4">
+        {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}
             onClick={() => setRating(star)}
@@ -44,47 +38,40 @@ export function RatingCard({
             className="transition-transform hover:scale-110 focus:outline-none"
           >
             <Star
-              className={`w-8 h-8 sm:w-10 sm:h-10 ${
-                star <= (hover || rating)
-                  ? 'fill-yellow-400 text-yellow-400'
-                  : 'fill-gray-200 text-gray-300'
+              className={`w-9 h-9 ${
+                star <= (hover || rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-300'
               }`}
             />
           </button>
         ))}
       </div>
 
-      {/* Label */}
       {(rating > 0 || hover > 0) && (
         <div className="text-center mb-4">
-          <span className="text-lg font-medium text-gray-700">
+          <span className="text-base font-medium text-gray-700">
             {labels[(hover || rating) - 1]}
           </span>
         </div>
       )}
 
-      {/* Comment */}
       {rating > 0 && (
         <div className="mb-4">
           <textarea
             value={comment}
-            onChange={e => setComment(e.target.value)}
+            onChange={(e) => setComment(e.target.value)}
             placeholder="Quer deixar um comentário? (opcional)"
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-sm"
             rows={3}
             maxLength={200}
           />
-          <div className="text-right text-xs text-gray-400 mt-1">
-            {comment.length}/200
-          </div>
+          <div className="text-right text-[11px] text-gray-400 mt-1">{comment.length}/200</div>
         </div>
       )}
 
-      {/* Submit */}
       <button
-        onClick={handleSubmit}
+        onClick={() => rating > 0 && onSubmit(rating, comment || undefined)}
         disabled={rating === 0}
-        className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Enviar avaliação
       </button>
