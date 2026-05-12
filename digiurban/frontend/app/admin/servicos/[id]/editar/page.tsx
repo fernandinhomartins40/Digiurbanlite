@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { FEATURE_FLAGS } from '@/lib/feature-flags'
 import { useRouter, useParams } from 'next/navigation'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { useToast } from '@/hooks/use-toast'
@@ -335,7 +336,7 @@ export default function EditServicePage() {
     { value: 'documents', label: 'Documentos', icon: FileText },
     { value: 'form-config', label: 'Formulário', icon: FormInput },
     { value: 'features', label: 'Recursos', icon: Sparkles },
-    { value: 'workflow', label: 'Workflow', icon: GitBranch },
+    ...(FEATURE_FLAGS.WORKFLOWS ? [{ value: 'workflow', label: 'Workflow', icon: GitBranch }] : []),
   ]
 
   const featureTabs = []
@@ -596,7 +597,7 @@ export default function EditServicePage() {
         )}
 
         {/* Aba: Workflow */}
-        <TabsContent value="workflow" className="mt-6">
+        {FEATURE_FLAGS.WORKFLOWS && <TabsContent value="workflow" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -667,7 +668,7 @@ export default function EditServicePage() {
                 )}
               </CardContent>
             </Card>
-          </TabsContent>
+          </TabsContent>}
 
         {/* Aba: Documentos Inteligentes */}
         {formData.hasAdvancedDocs && (

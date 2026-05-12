@@ -150,14 +150,10 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           icon: TrendingUp,
           permissions: ['services:read'],
         },
-        { title: 'Workflows', href: '/admin/workflows', icon: GitBranch, minRole: 'ADMIN' },
-        {
-          title: 'Processos Internos',
-          href: '/admin/processos-internos',
-          icon: Workflow,
-          minRole: 'COORDINATOR',
-          badge: 'NOVO',
-        },
+        // WORKFLOWS: disabled via FEATURE_FLAGS.WORKFLOWS
+        // { title: 'Workflows', href: '/admin/workflows', icon: GitBranch, minRole: 'ADMIN' },
+        // PROCESSOS_INTERNOS: disabled via FEATURE_FLAGS.PROCESSOS_INTERNOS
+        // { title: 'Processos Internos', href: '/admin/processos-internos', icon: Workflow, minRole: 'COORDINATOR', badge: 'NOVO' },
         {
           title: 'Fluxos do Bot',
           href: '/admin/bot-flows',
@@ -223,18 +219,10 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           icon: FileText,
           permissions: ['reports:department', 'reports:full'],
         },
-        {
-          title: 'Pesquisa de Preços',
-          href: '/admin/pesquisa-precos',
-          icon: Search,
-          minRole: 'COORDINATOR',
-        },
-        {
-          title: 'Seg. Escolar',
-          href: '/admin/apps/seguranca-escolar',
-          icon: Shield,
-          badge: 'NOVO',
-        },
+        // PESQUISA_PRECOS: disabled via FEATURE_FLAGS.PESQUISA_PRECOS
+        // { title: 'Pesquisa de Preços', href: '/admin/pesquisa-precos', icon: Search, minRole: 'COORDINATOR' },
+        // SEGURANCA_ESCOLAR: disabled via FEATURE_FLAGS.SEGURANCA_ESCOLAR
+        // { title: 'Seg. Escolar', href: '/admin/apps/seguranca-escolar', icon: Shield, badge: 'NOVO' },
       ],
     },
     {

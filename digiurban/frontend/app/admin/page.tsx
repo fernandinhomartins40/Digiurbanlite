@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { FEATURE_FLAGS } from '@/lib/feature-flags'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { DashboardCard, StatCard } from '@/components/admin/DashboardCard'
 import { AppCard, CompactAppCard } from '@/components/admin/AppCard'
@@ -64,7 +65,8 @@ const getSearchItems = () => [
   // Gestão Municipal
   { title: 'Protocolos', description: 'Gestão de protocolos', href: '/admin/protocolos', category: 'Gestão', keywords: ['protocolo', 'solicitação', 'atendimento'] },
   { title: 'Serviços', description: 'Catálogo de serviços', href: '/admin/servicos', category: 'Gestão', keywords: ['serviço', 'catálogo', 'configuração'] },
-  { title: 'Workflows', description: 'Fluxos de trabalho', href: '/admin/workflows', category: 'Gestão', keywords: ['workflow', 'fluxo', 'processo'] },
+  // FEATURE_FLAGS.WORKFLOWS: item omitido quando desabilitado
+  ...(FEATURE_FLAGS.WORKFLOWS ? [{ title: 'Workflows', description: 'Fluxos de trabalho', href: '/admin/workflows', category: 'Gestão', keywords: ['workflow', 'fluxo', 'processo'] }] : []),
   { title: 'Cidadãos', description: 'Gestão de cidadãos', href: '/admin/cidadaos', category: 'Gestão', keywords: ['cidadão', 'munícipe', 'população'] },
   { title: 'Equipe', description: 'Gerenciar equipes', href: '/admin/servidores/equipe', category: 'Gestão', keywords: ['equipe', 'funcionário', 'servidor'] },
   { title: 'Relatórios', description: 'Business Intelligence', href: '/admin/relatorios', category: 'Gestão', keywords: ['relatório', 'bi', 'analytics'] },
@@ -311,7 +313,7 @@ export default function AdminPage() {
             />
           )}
 
-          {hasMinRole('ADMIN') && (
+          {FEATURE_FLAGS.WORKFLOWS && hasMinRole('ADMIN') && (
             <DashboardCard
               title="Workflows"
               description="Fluxos de trabalho automatizados"
