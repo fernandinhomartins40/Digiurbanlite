@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { Building2, ChevronDown, LogOut } from 'lucide-react';
+import { Building2, ChevronRight, LogOut } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
@@ -27,16 +27,38 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const { user, stats, logout } = useAdminAuth();
   const { hasPermission, hasMinRole } = useAdminPermissions();
 
-  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>(() =>
-    secretariaNavigation.defaultCollapsed ? { [secretariaNavigation.title]: true } : {}
-  );
+  const buildInitialCollapsed = () => {
+    const state: Record<string, boolean> = {};
+    getAdminMainNavigation().forEach((s) => {
+      if (s.collapsible && s.defaultCollapsed) state[s.title] = true;
+    });
+    if (secretariaNavigation.defaultCollapsed) state[secretariaNavigation.title] = true;
+    return state;
+  };
+
+  const [collapsed, setCollapsed] = useState<Record<string, boolean>>(buildInitialCollapsed);
 
   useEffect(() => {
-    const secretariaActive = secretariaNavigation.items.some((item) =>
-      isNavItemActive(pathname, item.href)
-    );
-    if (secretariaActive) {
-      setCollapsedSections((prev) => ({ ...prev, [secretariaNavigation.title]: false }));
+    const nav = getAdminMainNavigation();
+    const toExpand: string[] = [];
+
+    nav.forEach((section) => {
+      if (!section.collapsible) return;
+      if (section.items.some((item) => isNavItemActive(pathname, item.href))) {
+        toExpand.push(section.title);
+      }
+    });
+
+    if (secretariaNavigation.items.some((item) => isNavItemActive(pathname, item.href))) {
+      toExpand.push(secretariaNavigation.title);
+    }
+
+    if (toExpand.length > 0) {
+      setCollapsed((prev) => {
+        const next = { ...prev };
+        toExpand.forEach((t) => { next[t] = false; });
+        return next;
+      });
     }
   }, [pathname]);
 
@@ -48,85 +70,60 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
     unreadMessages: stats?.unreadMessages,
   });
 
-  const toggleSection = (title: string) =>
-    setCollapsedSections((prev) => ({ ...prev, [title]: !prev[title] }));
+  const toggle = (title: string) =>
+    setCollapsed((prev) => ({ ...prev, [title]: !prev[title] }));
 
-  const renderNavSection = (section: AdminNavSection) => {
+  const renderSection = (section: AdminNavSection) => {
     const visibleItems = section.items.filter((item) =>
       shouldShowNavItem(item, hasPermission, hasMinRole)
     );
     if (visibleItems.length === 0) return null;
 
-    const isCollapsed = section.collapsible && collapsedSections[section.title];
+    const isCollapsed = section.collapsible ? (collapsed[section.title] ?? false) : false;
     const hasActiveItem = visibleItems.some((item) => isNavItemActive(pathname, item.href));
 
+    if (!section.title) {
+      return (
+        <div key="__top__" className="space-y-0.5 mb-1">
+          {visibleItems.map((item) => (
+            <MobileNavItem key={item.href} item={item} pathname={pathname} onClose={() => onOpenChange(false)} />
+          ))}
+        </div>
+      );
+    }
+
     return (
-      <div key={section.title} className="mb-1">
+      <div key={section.title} className="mb-0.5">
         {section.collapsible ? (
           <button
-            onClick={() => toggleSection(section.title)}
+            onClick={() => toggle(section.title)}
             className={cn(
-              'group flex w-full items-center justify-between px-3 py-2 mb-0.5 rounded-md text-xs font-semibold uppercase tracking-wider transition-colors',
-              hasActiveItem
+              'flex w-full items-center justify-between gap-2 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider transition-all duration-150',
+              hasActiveItem && isCollapsed
                 ? 'text-primary bg-primary/8'
-                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/60'
             )}
           >
             <span>{section.title}</span>
-            <ChevronDown
+            <ChevronRight
               className={cn(
-                'h-3.5 w-3.5 transition-transform duration-200',
-                isCollapsed ? '-rotate-90' : 'rotate-0'
+                'h-3 w-3 shrink-0 transition-transform duration-200',
+                !isCollapsed && 'rotate-90'
               )}
             />
           </button>
         ) : (
-          <h3 className="px-3 mb-1.5 mt-4 first:mt-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          <p className="px-3 pt-4 pb-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 first:pt-1">
             {section.title}
-          </h3>
+          </p>
         )}
 
         {!isCollapsed && (
-          <nav className="space-y-0.5">
-            {visibleItems.map((item) => {
-              const isActive = isNavItemActive(pathname, item.href);
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => onOpenChange(false)}
-                  className={cn(
-                    'group flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                    isActive
-                      ? 'bg-primary text-primary-foreground shadow-sm'
-                      : 'text-foreground/70 hover:bg-accent hover:text-foreground'
-                  )}
-                >
-                  <item.icon
-                    className={cn(
-                      'shrink-0 h-4 w-4',
-                      isActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground'
-                    )}
-                  />
-                  <span className="flex-1 truncate">{item.title}</span>
-                  {item.badge && (
-                    <span
-                      className={cn(
-                        'ml-auto inline-flex items-center px-1.5 py-0.5 text-[10px] font-bold rounded-full leading-none',
-                        isActive
-                          ? 'bg-primary-foreground/20 text-primary-foreground'
-                          : item.badge === 'NOVO'
-                          ? 'bg-blue-500 text-white'
-                          : 'bg-destructive/15 text-destructive'
-                      )}
-                    >
-                      {item.badge}
-                    </span>
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
+          <div className="space-y-0.5 mt-0.5">
+            {visibleItems.map((item) => (
+              <MobileNavItem key={item.href} item={item} pathname={pathname} onClose={() => onOpenChange(false)} />
+            ))}
+          </div>
         )}
       </div>
     );
@@ -135,61 +132,58 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
   const roleLabel =
     ROLE_DISPLAY_NAMES[user.role as keyof typeof ROLE_DISPLAY_NAMES] ?? user.role;
 
-  const primaryDept =
-    user.primaryDepartment?.name ??
-    (user.departments && user.departments.length > 0 ? user.departments[0].name : null) ??
-    user.department?.name ??
-    null;
+  const initials = (user.name ?? user.email ?? '?')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase();
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent side="left" className="w-[92vw] max-w-[22rem] p-0 flex flex-col bg-background">
-        <SheetHeader className="shrink-0 px-4 py-3.5 border-b border-border">
+        <SheetHeader className="shrink-0 px-4 py-3.5 border-b border-border/60">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary shadow-sm">
               <Building2 className="h-4 w-4 text-primary-foreground" />
             </div>
             <div>
-              <SheetTitle className="text-sm font-bold text-foreground leading-none">DigiUrban</SheetTitle>
-              <p className="text-[11px] text-muted-foreground mt-0.5 leading-none">Portal Administrativo</p>
+              <SheetTitle className="text-sm font-bold text-foreground leading-tight">DigiUrban</SheetTitle>
+              <p className="text-[10px] text-muted-foreground leading-tight">Portal Administrativo</p>
             </div>
           </div>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto py-3 px-2">
-          {mainNavigation.map(renderNavSection)}
-          <div className="border-t border-border my-2" />
-          {renderNavSection(secretariaNavigation)}
+        <div className="flex-1 overflow-y-auto py-2 px-2 space-y-0">
+          {mainNavigation.map(renderSection)}
+          <div className="border-t border-border/60 my-2" />
+          {renderSection(secretariaNavigation)}
           {hasMinRole('SUPER_ADMIN') && (
             <>
-              <div className="border-t border-border my-2" />
-              {renderNavSection(superAdminNavigation)}
+              <div className="border-t border-border/60 my-2" />
+              {renderSection(superAdminNavigation)}
             </>
           )}
         </div>
 
-        <div className="shrink-0 border-t border-border p-3">
+        <div className="shrink-0 border-t border-border/60 p-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-xs font-bold uppercase select-none">
-              {(user.name ?? user.email ?? '?').slice(0, 2)}
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary text-[11px] font-bold select-none">
+              {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-foreground truncate leading-none">
+              <p className="text-[13px] font-semibold text-foreground truncate leading-tight">
                 {user.name ?? user.email ?? 'Usuário'}
               </p>
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center px-1.5 py-px text-[10px] font-semibold rounded bg-primary/10 text-primary leading-none">
-                  {roleLabel}
-                </span>
-                {primaryDept && (
-                  <span className="text-[11px] text-muted-foreground truncate">{primaryDept}</span>
-                )}
-              </div>
+              <span className="inline-flex items-center px-1.5 py-0.5 mt-0.5 text-[10px] font-semibold rounded-md bg-primary/10 text-primary leading-none">
+                {roleLabel}
+              </span>
             </div>
             <button
               onClick={() => { logout(); onOpenChange(false); }}
               title="Sair"
-              className="shrink-0 p-1.5 rounded-md text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              className="shrink-0 p-1.5 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
               aria-label="Sair"
             >
               <LogOut className="h-4 w-4" />
@@ -198,5 +192,57 @@ export function MobileSidebar({ open, onOpenChange }: MobileSidebarProps) {
         </div>
       </SheetContent>
     </Sheet>
+  );
+}
+
+function MobileNavItem({
+  item,
+  pathname,
+  onClose,
+}: {
+  item: { title: string; href: string; icon: React.ElementType; badge?: string };
+  pathname: string;
+  onClose: () => void;
+}) {
+  const isActive = isNavItemActive(pathname, item.href);
+  const isNumericBadge = item.badge && item.badge !== 'NOVO';
+
+  return (
+    <Link
+      href={item.href}
+      onClick={onClose}
+      className={cn(
+        'group flex items-center gap-2.5 px-3 py-2 text-sm font-medium rounded-lg transition-all duration-150',
+        isActive
+          ? 'bg-primary text-primary-foreground shadow-sm'
+          : 'text-foreground/75 hover:bg-accent hover:text-foreground'
+      )}
+    >
+      <item.icon
+        className={cn(
+          'shrink-0 h-4 w-4',
+          isActive ? 'text-primary-foreground' : 'text-muted-foreground group-hover:text-foreground'
+        )}
+      />
+      <span className="flex-1 truncate leading-none">{item.title}</span>
+      {item.badge && (
+        <span
+          className={cn(
+            'shrink-0 inline-flex items-center justify-center leading-none font-bold',
+            isNumericBadge
+              ? cn(
+                  'min-w-[20px] h-5 px-1.5 rounded-full text-[11px]',
+                  isActive ? 'bg-white/20 text-white' : 'bg-destructive text-white'
+                )
+              : cn(
+                  'px-1.5 py-0.5 rounded text-[9px] uppercase tracking-wide',
+                  isActive ? 'bg-white/20 text-white' : 'bg-primary/15 text-primary'
+                )
+          )}
+        >
+          {item.badge}
+        </span>
+      )}
+    </Link>
   );
 }

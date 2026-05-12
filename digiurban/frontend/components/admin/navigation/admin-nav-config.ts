@@ -81,24 +81,20 @@ function numberBadge(value?: number): string | undefined {
 
 export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[] {
   return [
+    // ── Início (sem label, sempre visível) ─────────────────────────────────
     {
-      title: 'Visão Geral',
+      title: '',
       items: [
         { title: 'Início', href: '/admin', icon: House },
         { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
-        { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'ADMIN' },
-        {
-          title: 'Painel do Prefeito',
-          href: '/admin/gabinete/painel-prefeito',
-          icon: Building2,
-          minRole: 'ADMIN',
-          badge: 'NOVO',
-        },
-        { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' },
       ],
     },
+
+    // ── Atendimento ────────────────────────────────────────────────────────
     {
       title: 'Atendimento',
+      collapsible: true,
+      defaultCollapsed: false,
       items: [
         {
           title: 'Protocolos',
@@ -135,8 +131,12 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         },
       ],
     },
+
+    // ── Serviços ───────────────────────────────────────────────────────────
     {
-      title: 'Serviços e Fluxos',
+      title: 'Serviços',
+      collapsible: true,
+      defaultCollapsed: false,
       items: [
         {
           title: 'Catálogo de Serviços',
@@ -163,8 +163,30 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         },
       ],
     },
+
+    // ── Comunicação ────────────────────────────────────────────────────────
+    {
+      title: 'Comunicação',
+      collapsible: true,
+      defaultCollapsed: false,
+      items: [
+        {
+          title: 'Mensagens',
+          href: '/admin/mensagens',
+          icon: MessageCircle,
+          permissions: ['messages:read'],
+          badge: numberBadge(stats?.unreadMessages),
+        },
+        { title: 'Email', href: '/admin/email', icon: Mail, minRole: 'COORDINATOR' },
+        { title: 'Contas de Email', href: '/admin/email-accounts', icon: UserCircle, minRole: 'ADMIN' },
+      ],
+    },
+
+    // ── Documentos ─────────────────────────────────────────────────────────
     {
       title: 'Documentos',
+      collapsible: true,
+      defaultCollapsed: true,
       items: [
         { title: 'Meus Documentos', href: '/admin/meus-documentos', icon: FileText, minRole: 'USER' },
         {
@@ -188,28 +210,18 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         },
       ],
     },
-    {
-      title: 'Comunicação',
-      items: [
-        {
-          title: 'Mensagens',
-          href: '/admin/mensagens',
-          icon: MessageCircle,
-          permissions: ['messages:read'],
-          badge: numberBadge(stats?.unreadMessages),
-        },
-        { title: 'Email', href: '/admin/email', icon: Mail, minRole: 'COORDINATOR' },
-        { title: 'Contas de Email', href: '/admin/email-accounts', icon: UserCircle, minRole: 'ADMIN' },
-      ],
-    },
+
+    // ── Análises ───────────────────────────────────────────────────────────
     {
       title: 'Análises',
+      collapsible: true,
+      defaultCollapsed: true,
       items: [
         { title: 'Analytics', href: '/admin/analytics', icon: BarChart3, minRole: 'COORDINATOR' },
         {
           title: 'IA Centralizada',
           href: '/admin/ia',
-          icon: Bot,
+          icon: Cpu,
           minRole: 'ADMIN',
           badge: 'NOVO',
         },
@@ -225,14 +237,36 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         // { title: 'Seg. Escolar', href: '/admin/apps/seguranca-escolar', icon: Shield, badge: 'NOVO' },
       ],
     },
+
+    // ── Gabinete (ADMIN+) ──────────────────────────────────────────────────
+    {
+      title: 'Gabinete',
+      collapsible: true,
+      defaultCollapsed: true,
+      items: [
+        {
+          title: 'Painel do Prefeito',
+          href: '/admin/gabinete/painel-prefeito',
+          icon: Building2,
+          minRole: 'ADMIN',
+          badge: 'NOVO',
+        },
+        { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' },
+        { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'ADMIN' },
+      ],
+    },
+
+    // ── Equipe e Sistema ───────────────────────────────────────────────────
     {
       title: 'Equipe e Sistema',
+      collapsible: true,
+      defaultCollapsed: true,
       items: [
         { title: 'Equipe', href: '/admin/servidores/equipe', icon: Users, minRole: 'COORDINATOR' },
         { title: 'Organograma', href: '/admin/organograma', icon: Network, minRole: 'COORDINATOR' },
         { title: 'Perfil', href: '/admin/perfil', icon: UserCircle, minRole: 'USER' },
         { title: 'Configurações', href: '/admin/configuracoes', icon: Settings, minRole: 'ADMIN' },
-        { title: 'Integrações', href: '/admin/integracoes', icon: Cpu, minRole: 'ADMIN' },
+        { title: 'Integrações', href: '/admin/integracoes', icon: Zap, minRole: 'ADMIN' },
       ],
     },
   ];
