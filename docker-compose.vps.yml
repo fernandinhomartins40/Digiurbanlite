@@ -300,9 +300,9 @@ services:
       postgres:
         condition: service_healthy
       compreface-core:
-        condition: service_healthy
+        condition: service_started
       compreface-ui:
-        condition: service_healthy
+        condition: service_started
     networks:
       - digiurban_network
     healthcheck:
@@ -477,7 +477,7 @@ services:
       ultrazend-messages:
         condition: service_healthy
       ultrazend-face:
-        condition: service_healthy
+        condition: service_started
       digiurban-ai:
         condition: service_started
     healthcheck:
