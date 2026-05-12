@@ -137,17 +137,17 @@ export function DocumentUpload({
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2 w-full overflow-hidden">
       {/* Label */}
-      <div className="flex items-center justify-between">
-        <Label className="text-sm font-medium">
+      <div className="flex flex-col gap-0.5 min-w-0">
+        <Label className="text-sm font-medium break-words">
           {documentConfig.name}
           {documentConfig.required && (
             <span className="text-red-500 ml-1">*</span>
           )}
         </Label>
         {documentConfig.description && (
-          <span className="text-xs text-gray-500">
+          <span className="text-xs text-gray-500 break-words">
             {documentConfig.description}
           </span>
         )}
@@ -155,36 +155,36 @@ export function DocumentUpload({
 
       {/* Área de upload */}
       {!value ? (
-        <Card className={`border-2 border-dashed ${error ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-amber-400'} transition-colors`}>
-          <div className="p-6 text-center">
-            <FileText className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+        <Card className={`border-2 border-dashed overflow-hidden ${error ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-amber-400'} transition-colors`}>
+          <div className="p-4 text-center">
+            <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
 
-            <div className="mb-4">
+            <div className="mb-3">
               <p className="text-sm text-gray-600 mb-1">
                 {allowCamera ? 'Tire uma foto ou selecione um arquivo' : 'Selecione um arquivo'}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 break-words">
                 {formatAcceptedFormats(documentConfig.acceptedFormats)} até {documentConfig.maxSizeMB}MB
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700 flex items-center justify-center gap-2">
-                <AlertCircle className="h-4 w-4" />
-                {error}
+              <div className="mb-3 p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700 flex items-start gap-2 text-left break-words">
+                <AlertCircle className="h-4 w-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
               </div>
             )}
 
-            <div className="flex flex-col sm:flex-row gap-2 justify-center">
+            <div className="flex flex-col gap-2">
               {allowCamera && (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={openScanner}
                   disabled={disabled || uploading}
-                  className="w-full sm:w-auto"
+                  className="w-full"
                 >
-                  <Camera className="h-4 w-4 mr-2" />
+                  <Camera className="h-4 w-4 mr-2 shrink-0" />
                   Digitalizar
                 </Button>
               )}
@@ -194,14 +194,13 @@ export function DocumentUpload({
                 variant="outline"
                 onClick={openFileDialog}
                 disabled={disabled || uploading}
-                className="w-full sm:w-auto"
+                className="w-full"
               >
-                <Upload className="h-4 w-4 mr-2" />
+                <Upload className="h-4 w-4 mr-2 shrink-0" />
                 Selecionar Arquivo
               </Button>
             </div>
 
-            {/* Input file oculto */}
             <input
               ref={fileInputRef}
               type="file"
@@ -213,80 +212,69 @@ export function DocumentUpload({
           </div>
         </Card>
       ) : (
-        /* Preview do arquivo */
-        <Card className="border-2 border-green-300 bg-green-50">
-          <div className="p-4">
-            <div className="flex items-start gap-4">
-              {/* Preview de imagem ou ícone */}
-              <div className="flex-shrink-0">
+        <Card className="border-2 border-green-300 bg-green-50 overflow-hidden">
+          <div className="p-3">
+            <div className="flex items-start gap-3">
+              {/* Thumbnail */}
+              <div className="shrink-0">
                 {preview ? (
-                  <div className="relative w-20 h-20 rounded-lg overflow-hidden border-2 border-green-400">
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
+                  <div className="relative w-14 h-14 rounded-lg overflow-hidden border-2 border-green-400">
+                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="w-20 h-20 rounded-lg bg-green-100 border-2 border-green-400 flex items-center justify-center">
-                    <FileText className="h-8 w-8 text-green-600" />
+                  <div className="w-14 h-14 rounded-lg bg-green-100 border-2 border-green-400 flex items-center justify-center">
+                    <FileText className="h-6 w-6 text-green-600" />
                   </div>
                 )}
               </div>
 
-              {/* Informações do arquivo */}
+              {/* Info */}
               <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between mb-2">
+                <div className="flex items-start gap-1">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {value.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {formatFileSize(value.size)}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900 truncate">{value.name}</p>
+                    <p className="text-xs text-gray-500">{formatFileSize(value.size)}</p>
                   </div>
-
-                  <div className="flex gap-1 ml-2">
+                  <div className="flex gap-0.5 shrink-0">
                     {preview && (
                       <Button
                         type="button"
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0"
+                        className="h-7 w-7 p-0"
                         onClick={() => setShowPreviewModal(true)}
                         title="Visualizar imagem"
                       >
-                        <Eye className="h-4 w-4" />
+                        <Eye className="h-3.5 w-3.5" />
                       </Button>
                     )}
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                       onClick={removeFile}
                       disabled={disabled}
                       title="Remover arquivo"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-3.5 w-3.5" />
                     </Button>
                   </div>
                 </div>
 
-                {/* Barra de progresso (se uploading) */}
                 {uploading && (
-                  <div className="space-y-1">
+                  <div className="space-y-1 mt-1.5">
                     <Progress value={100} className="h-1" />
                     <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin" />
+                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
                       Processando...
                     </p>
                   </div>
                 )}
 
                 {!uploading && (
-                  <div className="flex items-center gap-1 text-xs text-green-600">
-                    <Check className="h-3 w-3" />
+                  <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+                    <Check className="h-3 w-3 shrink-0" />
                     Arquivo pronto para envio
                   </div>
                 )}
