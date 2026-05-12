@@ -47,32 +47,32 @@ export function InteractiveCard({
   if (type === 'boolean') {
     return (
       <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-base">{question}</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base leading-snug">{question}</CardTitle>
           {description && (
-            <CardDescription className="text-sm">{description}</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
           )}
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-2 gap-2">
             <Button
               onClick={() => handleBooleanSelect(true)}
               variant="outline"
-              className="h-auto py-4 bg-white hover:bg-green-50 hover:border-green-600 transition-all"
+              className="h-auto py-3 bg-white hover:bg-green-50 hover:border-green-600 transition-all"
             >
-              <div className="flex flex-col items-center gap-2">
-                <Check className="w-6 h-6 text-green-600" />
-                <span className="font-medium">Sim</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <Check className="w-5 h-5 text-green-600" />
+                <span className="font-medium text-sm">Sim</span>
               </div>
             </Button>
             <Button
               onClick={() => handleBooleanSelect(false)}
               variant="outline"
-              className="h-auto py-4 bg-white hover:bg-red-50 hover:border-red-600 transition-all"
+              className="h-auto py-3 bg-white hover:bg-red-50 hover:border-red-600 transition-all"
             >
-              <div className="flex flex-col items-center gap-2">
-                <X className="w-6 h-6 text-red-600" />
-                <span className="font-medium">Não</span>
+              <div className="flex flex-col items-center gap-1.5">
+                <X className="w-5 h-5 text-red-600" />
+                <span className="font-medium text-sm">Não</span>
               </div>
             </Button>
           </div>
@@ -85,10 +85,10 @@ export function InteractiveCard({
   if (type === 'single-choice') {
     return (
       <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <CardTitle className="text-base">{question}</CardTitle>
+        <CardHeader className="pb-3">
+          <CardTitle className="text-sm sm:text-base leading-snug">{question}</CardTitle>
           {description && (
-            <CardDescription className="text-sm">{description}</CardDescription>
+            <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
           )}
         </CardHeader>
         <CardContent>
@@ -98,14 +98,14 @@ export function InteractiveCard({
                 key={option.id}
                 onClick={() => handleSingleChoiceSelect(option.id)}
                 variant="outline"
-                className="w-full h-auto py-3 px-4 justify-start bg-white hover:bg-blue-50 hover:border-blue-600 transition-all"
+                className="w-full h-auto py-2.5 px-3 justify-start bg-white hover:bg-blue-50 hover:border-blue-600 transition-all"
               >
-                <div className="flex items-center gap-3 w-full">
-                  {option.icon || <Circle className="w-5 h-5 text-blue-600" />}
-                  <div className="flex-1 text-left">
-                    <p className="font-medium">{option.label}</p>
+                <div className="flex items-center gap-2.5 w-full min-w-0">
+                  <span className="shrink-0">{option.icon || <Circle className="w-4 h-4 text-blue-600" />}</span>
+                  <div className="flex-1 text-left min-w-0">
+                    <p className="font-medium text-sm leading-snug">{option.label}</p>
                     {option.description && (
-                      <p className="text-xs text-gray-500 mt-0.5">
+                      <p className="text-xs text-gray-500 mt-0.5 leading-tight">
                         {option.description}
                       </p>
                     )}
@@ -123,16 +123,16 @@ export function InteractiveCard({
   if (type === 'multiple-choice') {
     return (
       <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200">
-        <CardHeader>
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <CardTitle className="text-base">{question}</CardTitle>
+        <CardHeader className="pb-3">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-sm sm:text-base leading-snug">{question}</CardTitle>
               {description && (
-                <CardDescription className="text-sm">{description}</CardDescription>
+                <CardDescription className="text-xs sm:text-sm">{description}</CardDescription>
               )}
             </div>
             {selectedValues.length > 0 && (
-              <Badge className="bg-blue-600 text-white">
+              <Badge className="bg-blue-600 text-white shrink-0 text-xs">
                 {selectedValues.length} selecionado{selectedValues.length > 1 ? 's' : ''}
               </Badge>
             )}
@@ -147,26 +147,26 @@ export function InteractiveCard({
                   key={option.id}
                   onClick={() => handleMultipleChoiceToggle(option.id)}
                   variant="outline"
-                  className={`w-full h-auto py-3 px-4 justify-start transition-all ${
+                  className={`w-full h-auto py-2.5 px-3 justify-start transition-all ${
                     isSelected
                       ? 'bg-blue-100 border-blue-600 hover:bg-blue-200'
                       : 'bg-white hover:bg-blue-50 hover:border-blue-600'
                   }`}
                 >
-                  <div className="flex items-center gap-3 w-full">
+                  <div className="flex items-center gap-2.5 w-full min-w-0">
                     <div
-                      className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-all ${
+                      className={`w-4 h-4 shrink-0 rounded border-2 flex items-center justify-center transition-all ${
                         isSelected
                           ? 'bg-blue-600 border-blue-600'
                           : 'border-gray-300'
                       }`}
                     >
-                      {isSelected && <Check className="w-3 h-3 text-white" />}
+                      {isSelected && <Check className="w-2.5 h-2.5 text-white" />}
                     </div>
-                    <div className="flex-1 text-left">
-                      <p className="font-medium">{option.label}</p>
+                    <div className="flex-1 text-left min-w-0">
+                      <p className="font-medium text-sm leading-snug">{option.label}</p>
                       {option.description && (
-                        <p className="text-xs text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-500 mt-0.5 leading-tight">
                           {option.description}
                         </p>
                       )}
@@ -179,7 +179,7 @@ export function InteractiveCard({
           {selectedValues.length > 0 && (
             <Button
               onClick={() => onSelect(selectedValues)}
-              className="w-full mt-4 bg-blue-600 hover:bg-blue-700"
+              className="w-full mt-3 bg-blue-600 hover:bg-blue-700"
             >
               <Check className="w-4 h-4 mr-2" />
               Confirmar Seleção

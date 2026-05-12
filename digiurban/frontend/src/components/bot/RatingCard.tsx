@@ -27,14 +27,14 @@ export function RatingCard({
   const labels = ['Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-      <div className="text-center mb-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">{title}</h3>
+    <div className="w-full bg-white rounded-lg shadow-lg p-4">
+      <div className="text-center mb-4">
+        <h3 className="text-base font-semibold text-gray-900 mb-1">{title}</h3>
         <p className="text-sm text-gray-600">{subtitle}</p>
       </div>
 
       {/* Stars */}
-      <div className="flex justify-center gap-2 mb-4">
+      <div className="flex justify-center gap-1.5 mb-4">
         {[1, 2, 3, 4, 5].map(star => (
           <button
             key={star}
@@ -44,7 +44,7 @@ export function RatingCard({
             className="transition-transform hover:scale-110 focus:outline-none"
           >
             <Star
-              className={`w-10 h-10 ${
+              className={`w-8 h-8 sm:w-10 sm:h-10 ${
                 star <= (hover || rating)
                   ? 'fill-yellow-400 text-yellow-400'
                   : 'fill-gray-200 text-gray-300'

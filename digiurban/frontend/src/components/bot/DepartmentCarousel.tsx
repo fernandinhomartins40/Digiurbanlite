@@ -60,7 +60,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
   };
 
   return (
-    <div className="w-full space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm">
+    <div className="w-full min-w-0 space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm overflow-hidden">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-sm font-semibold text-slate-900">Secretarias</p>

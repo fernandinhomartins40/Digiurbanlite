@@ -240,7 +240,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-6 space-y-4">
+    <div className="w-full bg-white rounded-lg shadow-lg p-4 space-y-4">
       {fields.map((field) => {
         const normalized = normalizeField(field);
         if (!normalized.id) return null;

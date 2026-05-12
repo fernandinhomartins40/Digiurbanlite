@@ -93,8 +93,8 @@ export function DocumentUploadCard({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
-      <h3 className="text-lg font-semibold mb-4">{title}</h3>
+    <div className="w-full bg-white rounded-lg shadow-lg p-4">
+      <h3 className="text-base font-semibold mb-3">{title}</h3>
 
       {/* Upload Area */}
       <div
@@ -104,7 +104,7 @@ export function DocumentUploadCard({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={`
-          relative border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all
+          relative border-2 border-dashed rounded-lg p-5 text-center cursor-pointer transition-all
           ${
             dragActive
               ? 'border-blue-500 bg-blue-50'
@@ -121,7 +121,7 @@ export function DocumentUploadCard({
           className="hidden"
         />
 
-        <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+        <Upload className="w-8 h-8 mx-auto mb-2 text-gray-400" />
         <p className="text-gray-700 font-medium mb-1">
           Arraste arquivos ou clique para selecionar
         </p>

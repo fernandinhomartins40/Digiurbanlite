@@ -164,23 +164,23 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
       }
 
       return (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
           {options.map((option: any) => (
             <button
               key={option.id}
               onClick={() => onInteraction(option)}
-              className="group rounded-2xl border border-slate-200 bg-white p-4 text-left shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md"
+              className="group rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md active:scale-[0.98]"
             >
-              <div className="flex h-full items-start justify-between gap-3">
+              <div className="flex h-full items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-slate-900">{option.label}</div>
+                  <div className="font-semibold text-slate-900 text-sm leading-snug">{option.label}</div>
                   {option.description && (
-                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                    <div className="mt-0.5 text-xs leading-relaxed text-slate-500 line-clamp-2">
                       {option.description}
                     </div>
                   )}
                 </div>
-                <div className="mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100">
+                <div className="shrink-0 mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100">
                   Selecionar
                 </div>
               </div>
