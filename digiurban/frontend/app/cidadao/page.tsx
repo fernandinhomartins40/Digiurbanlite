@@ -993,13 +993,13 @@ export default function CitizenDashboard() {
             </div>
 
             {/* Mensagens */}
-            <ScrollArea className="flex-1 p-4 bg-gray-50">
+            <ScrollArea className="flex-1 p-4 bg-gray-50 overflow-x-hidden">
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
-                <div className="space-y-4 max-w-4xl mx-auto">
+                <div className="space-y-4 max-w-4xl mx-auto min-w-0 overflow-hidden">
                   {/* ✅ NOVO: Alert de status do bot */}
                   {selectedConversation.isBotConversation && selectedConversation.metadata?.botStatus === 'HUMAN_TAKEOVER' && (
                     <Alert className="bg-orange-50 border-orange-200">
@@ -1034,7 +1034,7 @@ export default function CitizenDashboard() {
 
                         <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                           {isBot ? (
-                            <div className="w-full max-w-[92%] space-y-2 md:max-w-[88%] lg:max-w-[980px]">
+                            <div className="w-full min-w-0 overflow-hidden space-y-2">
                               <div className="flex items-center gap-2 text-blue-700">
                                 <Sparkles className="w-4 h-4 text-blue-600" />
                                 <span className="text-xs font-semibold">DigiBot</span>
@@ -1082,7 +1082,7 @@ export default function CitizenDashboard() {
                   {/* Typing indicator */}
                   {isBotTyping && (
                     <div className="flex justify-start">
-                      <div className="w-full max-w-[92%] space-y-2 md:max-w-[88%] lg:max-w-[980px]">
+                      <div className="w-full min-w-0 overflow-hidden space-y-2">
                         <div className="flex items-center gap-2 text-blue-700">
                           <Sparkles className="w-4 h-4 text-blue-600" />
                           <span className="text-xs font-semibold">DigiBot</span>
