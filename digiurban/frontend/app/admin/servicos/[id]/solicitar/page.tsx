@@ -124,7 +124,7 @@ export default function AdminSolicitarServicoPage() {
     } catch (error) {
       console.error('Erro ao carregar serviço:', error);
       toast.error('Erro ao carregar serviço');
-      router.push('/admin/dashboard');
+      router.push('/admin');
     } finally {
       setLoading(false);
     }
@@ -346,7 +346,7 @@ export default function AdminSolicitarServicoPage() {
       <div className="container mx-auto p-6">
         <div className="text-center py-12">
           <p className="text-gray-600">Serviço não encontrado</p>
-          <Button className="mt-4" onClick={() => router.push('/admin/dashboard')}>
+          <Button className="mt-4" onClick={() => router.push('/admin')}>
             Voltar para Dashboard
           </Button>
         </div>

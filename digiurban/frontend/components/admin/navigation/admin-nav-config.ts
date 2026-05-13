@@ -19,7 +19,6 @@ import {
   Heart,
   Home,
   House,
-  LayoutDashboard,
   LogOut,
   Mail,
   Map,
@@ -60,6 +59,7 @@ export interface AdminNavItem {
 export interface AdminNavSection {
   title: string;
   icon?: LucideIcon;
+  color?: 'slate' | 'blue' | 'emerald' | 'amber' | 'violet' | 'rose' | 'cyan' | 'indigo' | 'orange';
   items: AdminNavItem[];
   collapsible?: boolean;
   defaultCollapsed?: boolean;
@@ -84,15 +84,16 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Início (sem label, sempre visível) ─────────────────────────────────
     {
       title: '',
+      color: 'slate',
       items: [
         { title: 'Início', href: '/admin', icon: House },
-        { title: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard },
       ],
     },
 
     // ── Atendimento ────────────────────────────────────────────────────────
     {
       title: 'Atendimento',
+      color: 'blue',
       collapsible: true,
       defaultCollapsed: false,
       items: [
@@ -135,6 +136,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Serviços ───────────────────────────────────────────────────────────
     {
       title: 'Serviços',
+      color: 'emerald',
       collapsible: true,
       defaultCollapsed: false,
       items: [
@@ -167,6 +169,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Comunicação ────────────────────────────────────────────────────────
     {
       title: 'Comunicação',
+      color: 'cyan',
       collapsible: true,
       defaultCollapsed: false,
       items: [
@@ -185,6 +188,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Documentos ─────────────────────────────────────────────────────────
     {
       title: 'Documentos',
+      color: 'amber',
       collapsible: true,
       defaultCollapsed: true,
       items: [
@@ -214,6 +218,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Análises ───────────────────────────────────────────────────────────
     {
       title: 'Análises',
+      color: 'violet',
       collapsible: true,
       defaultCollapsed: true,
       items: [
@@ -241,6 +246,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Gabinete (ADMIN+) ──────────────────────────────────────────────────
     {
       title: 'Gabinete',
+      color: 'rose',
       collapsible: true,
       defaultCollapsed: true,
       items: [
@@ -259,6 +265,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     // ── Equipe e Sistema ───────────────────────────────────────────────────
     {
       title: 'Equipe e Sistema',
+      color: 'slate',
       collapsible: true,
       defaultCollapsed: true,
       items: [
@@ -274,6 +281,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
 
 export const secretariaNavigation: AdminNavSection = {
   title: 'Secretarias',
+  color: 'orange',
   collapsible: true,
   defaultCollapsed: true,
   items: [
@@ -303,6 +311,7 @@ export const secretariaNavigation: AdminNavSection = {
 
 export const superAdminNavigation: AdminNavSection = {
   title: 'Super Admin',
+  color: 'indigo',
   items: [
     { title: 'Tenants', href: '/super-admin/tenants', icon: Building2, minRole: 'SUPER_ADMIN' },
     { title: 'Analytics Global', href: '/super-admin/analytics', icon: BarChart3, minRole: 'SUPER_ADMIN' },
