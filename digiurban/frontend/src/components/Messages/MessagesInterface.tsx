@@ -803,7 +803,7 @@ export function MessagesInterface({
             </div>
 
             {/* Mensagens */}
-            <ScrollArea className="flex-1 p-4">
+            <ScrollArea className="flex-1 p-4 overflow-x-hidden">
               {loadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="w-8 h-8 animate-spin text-gray-400" />
@@ -817,7 +817,7 @@ export function MessagesInterface({
                   </p>
                 </div>
               ) : (
-                <div className="space-y-4">
+                <div className="space-y-4 min-w-0 overflow-hidden">
                   {messages.map((message, index) => {
                     const isOwn = message.senderId === userId;
                     const isBot = message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';
@@ -825,7 +825,7 @@ export function MessagesInterface({
                     return (
                       <div
                         key={message.id || index}
-                        className={cn('flex gap-2', isOwn && 'flex-row-reverse')}
+                        className={cn('flex gap-2 min-w-0', isOwn && 'flex-row-reverse')}
                       >
                         <Avatar className="w-8 h-8">
                           <AvatarFallback
@@ -844,9 +844,9 @@ export function MessagesInterface({
                           </AvatarFallback>
                         </Avatar>
 
-                        <div className="flex flex-col gap-2 max-w-[70%]">
+                        <div className={cn('flex flex-col gap-2', isBot ? 'w-full min-w-0 overflow-hidden' : 'max-w-[70%]')}>
                           {isBot ? (
-                            <div className="space-y-2">
+                            <div className="space-y-2 w-full min-w-0 overflow-hidden">
                               <BotMessageRenderer
                                 message={message}
                                 onInteraction={handleBotInteraction}
