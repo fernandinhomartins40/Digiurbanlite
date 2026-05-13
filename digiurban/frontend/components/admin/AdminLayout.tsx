@@ -75,7 +75,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <AdminSidebar />
 
       {/* Conteúdo principal com margem responsiva para compensar sidebar */}
-      <div className="md:ml-64 min-h-screen flex flex-col transition-all duration-300">
+      <div className="md:ml-72 min-h-screen flex flex-col transition-all duration-300">
         {/* Header */}
         <AdminHeader />
 
