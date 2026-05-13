@@ -23,6 +23,7 @@ export class ExpressServer {
   private app: Application;
   private flowEngineService: FlowEngineService;
   private wsServer: any;
+  private botFlowRequestLocks: Map<string, number> = new Map();
 
   constructor() {
     this.app = express();
@@ -35,6 +36,25 @@ export class ExpressServer {
   setWebSocketServer(wsServer: any) {
     this.wsServer = wsServer;
     this.flowEngineService.setWebSocketServer(wsServer);
+  }
+
+  private acquireBotFlowLock(citizenId: string, conversationId: string | undefined, action: string): string | null {
+    const key = `${citizenId}:${conversationId || 'default'}:${action}`;
+    const now = Date.now();
+    const existing = this.botFlowRequestLocks.get(key);
+
+    if (existing && now - existing < 30000) {
+      return null;
+    }
+
+    this.botFlowRequestLocks.set(key, now);
+    return key;
+  }
+
+  private releaseBotFlowLock(key: string | null) {
+    if (key) {
+      this.botFlowRequestLocks.delete(key);
+    }
   }
 
   private setupMiddlewares() {
@@ -1047,9 +1067,19 @@ export class ExpressServer {
 
     // POST /api/bot-flow/start - Inicia novo fluxo
     router.post('/start', async (req: AuthRequest, res: Response) => {
+      let lockKey: string | null = null;
       try {
         const { flowName, conversationId } = req.body;
         const citizenId = req.user!.userId;
+        lockKey = this.acquireBotFlowLock(citizenId, conversationId, 'start');
+
+        if (!lockKey) {
+          res.status(409).json({
+            error: 'bot_flow_request_in_progress',
+            message: 'Aguarde a resposta do DigiBot antes de tentar novamente.',
+          });
+          return;
+        }
 
         const result = await this.flowEngineService.startFlow(
           citizenId,
@@ -1060,20 +1090,34 @@ export class ExpressServer {
       } catch (error) {
         logger.error('Error in POST /bot-flow/start', { error });
         res.status(500).json({ error: 'Internal server error' });
+      } finally {
+        this.releaseBotFlowLock(lockKey);
       }
     });
 
     // POST /api/bot-flow/message - Processa mensagem do usuário
     router.post('/message', async (req: AuthRequest, res: Response) => {
+      let lockKey: string | null = null;
       try {
         const { message, conversationId } = req.body;
         const citizenId = req.user!.userId;
+        lockKey = this.acquireBotFlowLock(citizenId, conversationId, 'message');
+
+        if (!lockKey) {
+          res.status(409).json({
+            error: 'bot_flow_request_in_progress',
+            message: 'Aguarde a resposta do DigiBot antes de tentar novamente.',
+          });
+          return;
+        }
 
         const result = await this.flowEngineService.processMessage(citizenId, message, conversationId);
         res.json(result);
       } catch (error) {
         logger.error('Error in POST /bot-flow/message', { error });
         res.status(500).json({ error: 'Internal server error' });
+      } finally {
+        this.releaseBotFlowLock(lockKey);
       }
     });
 
@@ -1091,17 +1135,30 @@ export class ExpressServer {
 
     // POST /api/bot-flow/upload - Upload de arquivos
     router.post('/upload', upload.array('files', 5), async (req: AuthRequest, res: Response) => {
+      let lockKey: string | null = null;
       try {
         const citizenId = req.user!.userId;
         const files = req.files as Express.Multer.File[];
 
         const conversationId = req.body?.conversationId as string | undefined;
+        lockKey = this.acquireBotFlowLock(citizenId, conversationId, 'message');
+
+        if (!lockKey) {
+          res.status(409).json({
+            error: 'bot_flow_request_in_progress',
+            message: 'Aguarde a resposta do DigiBot antes de tentar novamente.',
+          });
+          return;
+        }
+
         const uploadMetadata = req.body?.fileMetadata as string | undefined;
         const result = await this.flowEngineService.handleUpload(citizenId, files, conversationId, uploadMetadata);
         res.json(result);
       } catch (error) {
         logger.error('Error in POST /bot-flow/upload', { error });
         res.status(500).json({ error: 'Internal server error' });
+      } finally {
+        this.releaseBotFlowLock(lockKey);
       }
     });
 

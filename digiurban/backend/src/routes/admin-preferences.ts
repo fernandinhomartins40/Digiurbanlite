@@ -94,6 +94,62 @@ const PasswordChangeSchema = z.object({
   path: ['confirmPassword'],
 });
 
+const ShortcutTrackSchema = z.object({
+  title: z.string().min(1).max(80),
+  href: z.string().min(1).max(255).refine((href) => href.startsWith('/admin/'), {
+    message: 'Atalho invalido',
+  }),
+  category: z.string().min(1).max(80).default('Atalhos'),
+  section: z.string().min(1).max(80).default('Atalhos'),
+});
+
+const ShortcutQuerySchema = z.object({
+  section: z.string().min(1).max(80).optional(),
+});
+
+type QuickAccessUsageItem = {
+  title: string;
+  href: string;
+  category: string;
+  section: string;
+  count: number;
+  firstAccessedAt: string;
+  lastAccessedAt: string;
+};
+
+function normalizeDashboardLayout(value: unknown): Record<string, any> {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return {};
+  return value as Record<string, any>;
+}
+
+function normalizeQuickAccessUsage(value: unknown): QuickAccessUsageItem[] {
+  if (!Array.isArray(value)) return [];
+
+  return value
+    .filter((item): item is QuickAccessUsageItem =>
+      item &&
+      typeof item === 'object' &&
+      typeof (item as QuickAccessUsageItem).href === 'string' &&
+      typeof (item as QuickAccessUsageItem).title === 'string'
+    )
+    .map((item) => ({
+      title: item.title,
+      href: item.href,
+      category: item.category || 'Atalhos',
+      section: item.section || (item.category === 'Secretarias' ? 'Secretarias' : 'Atalhos'),
+      count: Number.isFinite(Number(item.count)) ? Number(item.count) : 0,
+      firstAccessedAt: item.firstAccessedAt || new Date().toISOString(),
+      lastAccessedAt: item.lastAccessedAt || item.firstAccessedAt || new Date().toISOString(),
+    }));
+}
+
+function sortQuickAccessUsage(items: QuickAccessUsageItem[]) {
+  return [...items].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count;
+    return new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime();
+  });
+}
+
 // ============================================================================
 // CONFIGURAÇÃO DE UPLOAD DE AVATAR
 // ============================================================================
@@ -209,6 +265,120 @@ router.delete('/', adminAuthMiddleware, async (req, res) => {
     res.json({ success: true, data: preferences });
   } catch (error: any) {
     console.error('[PREFERENCES] Erro ao resetar:', error);
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * GET /api/admin/preferences/shortcuts
+ * Buscar atalhos mais utilizados do usuário autenticado
+ */
+router.get('/shortcuts', adminAuthMiddleware, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const query = ShortcutQuerySchema.parse(req.query);
+
+    let preferences = await prisma.userPreferences.findUnique({
+      where: { userId }
+    });
+
+    if (!preferences) {
+      preferences = await prisma.userPreferences.create({
+        data: { userId }
+      });
+    }
+
+    const dashboardLayout = normalizeDashboardLayout(preferences.dashboardLayout);
+    const normalizedUsage = normalizeQuickAccessUsage(dashboardLayout.quickAccessUsage);
+    const usage = sortQuickAccessUsage(
+      query.section
+        ? normalizedUsage.filter((item) => item.section === query.section)
+        : normalizedUsage
+    ).slice(0, 6);
+
+    res.json({ success: true, data: usage });
+  } catch (error: any) {
+    console.error('[PREFERENCES] Erro ao buscar atalhos:', error);
+
+    if (error.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Dados invalidos',
+        details: error.errors
+      });
+    }
+
+    res.status(500).json({ success: false, error: error.message });
+  }
+});
+
+/**
+ * POST /api/admin/preferences/shortcuts/track
+ * Registrar uso de um atalho da página inicial
+ */
+router.post('/shortcuts/track', adminAuthMiddleware, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const shortcut = ShortcutTrackSchema.parse(req.body);
+    const now = new Date().toISOString();
+
+    const preferences = await prisma.userPreferences.findUnique({
+      where: { userId }
+    });
+
+    const dashboardLayout = normalizeDashboardLayout(preferences?.dashboardLayout);
+    const usage = normalizeQuickAccessUsage(dashboardLayout.quickAccessUsage);
+    const existing = usage.find((item) => item.href === shortcut.href);
+
+    if (existing) {
+      existing.title = shortcut.title;
+      existing.category = shortcut.category;
+      existing.section = shortcut.section;
+      existing.count += 1;
+      existing.lastAccessedAt = now;
+    } else {
+      usage.push({
+        ...shortcut,
+        count: 1,
+        firstAccessedAt: now,
+        lastAccessedAt: now,
+      });
+    }
+
+    const quickAccessUsage = sortQuickAccessUsage(usage).slice(0, 30);
+    const nextDashboardLayout = {
+      ...dashboardLayout,
+      quickAccessUsage,
+    };
+
+    await prisma.userPreferences.upsert({
+      where: { userId },
+      create: {
+        userId,
+        dashboardLayout: nextDashboardLayout,
+      },
+      update: {
+        dashboardLayout: nextDashboardLayout,
+      },
+    });
+
+    res.json({
+      success: true,
+      data: quickAccessUsage
+        .filter((item) => item.section === shortcut.section)
+        .slice(0, 6)
+    });
+  } catch (error: any) {
+    console.error('[PREFERENCES] Erro ao registrar atalho:', error);
+
+    if (error.name === 'ZodError') {
+      return res.status(400).json({
+        success: false,
+        error: 'Dados invalidos',
+        details: error.errors
+      });
+    }
+
     res.status(500).json({ success: false, error: error.message });
   }
 });

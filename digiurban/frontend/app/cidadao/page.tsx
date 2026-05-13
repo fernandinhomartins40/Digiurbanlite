@@ -96,6 +96,7 @@ export default function CitizenDashboard() {
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const botRequestInFlightRef = useRef(false);
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
   type BotUploadItem = {
@@ -246,7 +247,9 @@ export default function CitizenDashboard() {
 
   const handleBotMessage = async (payload: any) => {
     if (!selectedConversation) return;
+    if (botRequestInFlightRef.current) return;
 
+    botRequestInFlightRef.current = true;
     setIsBotTyping(true);
 
     try {
@@ -303,13 +306,16 @@ export default function CitizenDashboard() {
           : 'Nao foi possivel enviar a mensagem. Tente novamente.',
       });
     } finally {
+      botRequestInFlightRef.current = false;
       setIsBotTyping(false);
     }
   };
 
   const handleBotUpload = async (filesOrItems: File[] | BotUploadItem[]) => {
     if (!selectedConversation) return;
+    if (botRequestInFlightRef.current) return;
 
+    botRequestInFlightRef.current = true;
     setIsBotTyping(true);
 
     try {
@@ -393,11 +399,14 @@ export default function CitizenDashboard() {
         description: 'Nao foi possivel enviar os arquivos. Tente novamente.',
       });
     } finally {
+      botRequestInFlightRef.current = false;
       setIsBotTyping(false);
     }
   };
 
   const handleBotInteraction = async (interaction: any) => {
+    if (isBotTyping || botRequestInFlightRef.current) return;
+
     try {
       // Caso 1: Upload de arquivos (array de File ou payload estruturado do BotDocumentUpload)
       if (
@@ -1042,6 +1051,7 @@ export default function CitizenDashboard() {
                               <BotMessageRenderer
                                 message={message}
                                 onInteraction={handleBotInteraction}
+                                disabled={isBotTyping}
                               />
                               <div className="flex items-center justify-end gap-1 mt-1 text-gray-500">
                                 <span className="text-xs">{formatTime(message.sentAt)}</span>
@@ -1117,7 +1127,7 @@ export default function CitizenDashboard() {
                   variant="ghost"
                   size="icon"
                   className="text-gray-500"
-                  disabled={!isConnected || botStructuredInput}
+                  disabled={!isConnected || botStructuredInput || isBotTyping}
                 >
                   <Smile className="w-5 h-5" />
                 </Button>
@@ -1145,7 +1155,7 @@ export default function CitizenDashboard() {
                     type="submit"
                     size="icon"
                     className="bg-blue-600 hover:bg-blue-700"
-                    disabled={!isConnected || botStructuredInput}
+                    disabled={!isConnected || botStructuredInput || isBotTyping}
                   >
                     <Send className="w-5 h-5" />
                   </Button>

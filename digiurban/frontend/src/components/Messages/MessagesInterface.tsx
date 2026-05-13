@@ -91,6 +91,9 @@ export function MessagesInterface({
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const botRequestInFlightRef = useRef(false);
+  const botStartInFlightRef = useRef<Set<string>>(new Set());
+  const [isBotProcessing, setIsBotProcessing] = useState(false);
 
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
@@ -158,12 +161,19 @@ export function MessagesInterface({
       let data = await response.json();
 
       if (conversation.isBotConversation && mode === 'citizen' && data.length === 0) {
-        await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
-          method: 'POST',
-          credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ flowName: 'menu_principal', conversationId: conversation.id }),
-        });
+        if (!botStartInFlightRef.current.has(conversation.id)) {
+          botStartInFlightRef.current.add(conversation.id);
+          try {
+            await fetch(`${MESSAGES_API_URL}/bot-flow/start`, {
+              method: 'POST',
+              credentials: 'include',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ flowName: 'menu_principal', conversationId: conversation.id }),
+            });
+          } finally {
+            botStartInFlightRef.current.delete(conversation.id);
+          }
+        }
 
         const refreshResponse = await fetch(
           `${MESSAGES_API_URL}/conversations/${conversation.id}/messages`,
@@ -232,7 +242,10 @@ export function MessagesInterface({
   // Enviar mensagem para o bot
   const handleBotMessage = async (payload: any) => {
     if (!selectedConversation) return;
+    if (botRequestInFlightRef.current) return;
 
+    botRequestInFlightRef.current = true;
+    setIsBotProcessing(true);
     try {
       const response = await fetch(`${MESSAGES_API_URL}/bot-flow/message`, {
         method: 'POST',
@@ -264,38 +277,52 @@ export function MessagesInterface({
         description: 'Não foi possível enviar mensagem para o bot',
         variant: 'destructive',
       });
+    } finally {
+      botRequestInFlightRef.current = false;
+      setIsBotProcessing(false);
     }
   };
 
   const handleBotUpload = async (files: File[]) => {
     if (!selectedConversation) return;
+    if (botRequestInFlightRef.current) return;
 
-    const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
-    formData.append('conversationId', selectedConversation.id);
+    botRequestInFlightRef.current = true;
+    setIsBotProcessing(true);
 
-    const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {
-      method: 'POST',
-      body: formData,
-      credentials: 'include',
-    });
+    try {
+      const formData = new FormData();
+      files.forEach((file) => formData.append('files', file));
+      formData.append('conversationId', selectedConversation.id);
 
-    if (!response.ok) {
-      throw new Error('Erro ao enviar arquivos');
-    }
+      const response = await fetch(`${MESSAGES_API_URL}/bot-flow/upload`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
 
-    const data = await response.json();
+      if (!response.ok) {
+        throw new Error('Erro ao enviar arquivos');
+      }
 
-    if (data.userMessage) {
-      setMessages((prev) => (prev.some(item => item.id === data.userMessage.id) ? prev : [...prev, data.userMessage]));
-    }
+      const data = await response.json();
 
-    if (data.botMessage) {
-      setMessages((prev) => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
+      if (data.userMessage) {
+        setMessages((prev) => (prev.some(item => item.id === data.userMessage.id) ? prev : [...prev, data.userMessage]));
+      }
+
+      if (data.botMessage) {
+        setMessages((prev) => (prev.some(item => item.id === data.botMessage.id) ? prev : [...prev, data.botMessage]));
+      }
+    } finally {
+      botRequestInFlightRef.current = false;
+      setIsBotProcessing(false);
     }
   };
 
   const handleBotInteraction = async (interaction: any) => {
+    if (botRequestInFlightRef.current) return;
+
     try {
       if (Array.isArray(interaction) && interaction.length > 0 && interaction[0] instanceof File) {
         await handleBotUpload(interaction);
@@ -850,6 +877,7 @@ export function MessagesInterface({
                               <BotMessageRenderer
                                 message={message}
                                 onInteraction={handleBotInteraction}
+                                disabled={isBotProcessing}
                               />
                               <span className="text-xs text-gray-500">
                                 {formatTime(message.sentAt)}
@@ -917,7 +945,7 @@ export function MessagesInterface({
                       value={newMessage}
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                      disabled={!isConnected || botStructuredInput}
+                      disabled={!isConnected || botStructuredInput || isBotProcessing}
                       className="flex-1"
                     />
                     <Button
@@ -925,7 +953,8 @@ export function MessagesInterface({
                       disabled={
                         !newMessage.trim() ||
                         !isConnected ||
-                        botStructuredInput
+                        botStructuredInput ||
+                        isBotProcessing
                       }
                     >
                       <Send className="w-4 h-4" />

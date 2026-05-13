@@ -80,6 +80,73 @@ interface PendingProtocol {
   assignedUser?: { name?: string }
 }
 
+interface ShortcutUsage {
+  title: string
+  href: string
+  category: string
+  section: string
+  count: number
+  firstAccessedAt: string
+  lastAccessedAt: string
+}
+
+interface TrackableShortcut {
+  title: string
+  href: string
+  category: string
+  section: string
+}
+
+interface QuickAction extends TrackableShortcut {
+  description: string
+  icon: typeof FileText
+  color: string
+  bg: string
+}
+
+interface SecretaryShortcut extends TrackableShortcut {
+  icon: typeof FileText
+}
+
+function sortShortcutUsage(items: ShortcutUsage[]) {
+  return [...items].sort((a, b) => {
+    if (b.count !== a.count) return b.count - a.count
+    return new Date(b.lastAccessedAt).getTime() - new Date(a.lastAccessedAt).getTime()
+  })
+}
+
+function applyShortcutUsage(prev: ShortcutUsage[], action: TrackableShortcut) {
+  const now = new Date().toISOString()
+  const existing = prev.find((item) => item.href === action.href)
+  const next = existing
+    ? prev.map((item) =>
+        item.href === action.href
+          ? {
+              ...item,
+              title: action.title,
+              category: action.category,
+              section: action.section,
+              count: item.count + 1,
+              lastAccessedAt: now,
+            }
+          : item
+      )
+    : [
+        ...prev,
+        {
+          title: action.title,
+          href: action.href,
+          category: action.category,
+          section: action.section,
+          count: 1,
+          firstAccessedAt: now,
+          lastAccessedAt: now,
+        },
+      ]
+
+  return sortShortcutUsage(next).slice(0, 30)
+}
+
 const getSearchItems = () => [
   { title: 'Inicio', description: 'Metricas, atalhos e pendencias', href: '/admin', category: 'Principal', keywords: ['inicio', 'dashboard', 'painel'] },
   { title: 'Protocolos', description: 'Gestao de protocolos', href: '/admin/protocolos', category: 'Atendimento', keywords: ['protocolo', 'solicitacao', 'atendimento'] },
@@ -113,6 +180,10 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
   const [pendingProtocols, setPendingProtocols] = useState<PendingProtocol[]>([])
   const [loadingProtocols, setLoadingProtocols] = useState(false)
+  const [shortcutUsage, setShortcutUsage] = useState<ShortcutUsage[]>([])
+  const [loadingShortcuts, setLoadingShortcuts] = useState(false)
+  const [secretaryUsage, setSecretaryUsage] = useState<ShortcutUsage[]>([])
+  const [loadingSecretaries, setLoadingSecretaries] = useState(false)
 
   usePageTracking('Admin Inicio')
 
@@ -155,6 +226,72 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [loading, user?.role])
 
+  useEffect(() => {
+    if (loading || !user) return
+
+    let active = true
+
+    async function loadShortcutUsage() {
+      try {
+        setLoadingShortcuts(true)
+        const response = await apiRequest('/admin/preferences/shortcuts?section=Atalhos')
+        const usage = response?.data || []
+
+        if (active && Array.isArray(usage)) {
+          setShortcutUsage(usage)
+        }
+      } catch (error: any) {
+        if (!error?.message?.includes('autenticado')) {
+          console.error('Erro ao carregar atalhos dinamicos:', error)
+        }
+        if (active) setShortcutUsage([])
+      } finally {
+        if (active) setLoadingShortcuts(false)
+      }
+    }
+
+    loadShortcutUsage()
+
+    return () => {
+      active = false
+    }
+    // apiRequest is intentionally omitted because the auth context exposes it as a new function each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?.id])
+
+  useEffect(() => {
+    if (loading || !user || !hasMinRole('COORDINATOR')) return
+
+    let active = true
+
+    async function loadSecretaryUsage() {
+      try {
+        setLoadingSecretaries(true)
+        const response = await apiRequest('/admin/preferences/shortcuts?section=Secretarias')
+        const usage = response?.data || []
+
+        if (active && Array.isArray(usage)) {
+          setSecretaryUsage(usage)
+        }
+      } catch (error: any) {
+        if (!error?.message?.includes('autenticado')) {
+          console.error('Erro ao carregar secretarias dinamicas:', error)
+        }
+        if (active) setSecretaryUsage([])
+      } finally {
+        if (active) setLoadingSecretaries(false)
+      }
+    }
+
+    loadSecretaryUsage()
+
+    return () => {
+      active = false
+    }
+    // apiRequest is intentionally omitted because the auth context exposes it as a new function each render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?.id, user?.role])
+
   const safeStats = stats || {
     totalProtocols: 0,
     pendingProtocols: 0,
@@ -170,7 +307,7 @@ export default function AdminPage() {
 
   const statusRows = safeStats.protocolsByStatus || []
 
-  const quickActions = useMemo(() => {
+  const availableQuickActions = useMemo(() => {
     const actions = [
       hasPermission('protocols:read') && {
         title: 'Protocolos',
@@ -179,6 +316,8 @@ export default function AdminPage() {
         icon: FileText,
         color: 'text-blue-600',
         bg: 'bg-blue-50',
+        category: 'Atendimento',
+        section: 'Atalhos',
       },
       hasPermission('citizens:read') && {
         title: 'Cidadaos',
@@ -187,6 +326,8 @@ export default function AdminPage() {
         icon: UserPlus,
         color: 'text-green-600',
         bg: 'bg-green-50',
+        category: 'Atendimento',
+        section: 'Atalhos',
       },
       (hasPermission('services:create') || hasPermission('services:update')) && {
         title: 'Servicos',
@@ -195,6 +336,8 @@ export default function AdminPage() {
         icon: Settings,
         color: 'text-purple-600',
         bg: 'bg-purple-50',
+        category: 'Servicos',
+        section: 'Atalhos',
       },
       hasPermission('messages:read') && {
         title: 'Mensagens',
@@ -203,6 +346,8 @@ export default function AdminPage() {
         icon: MessageCircle,
         color: 'text-sky-600',
         bg: 'bg-sky-50',
+        category: 'Comunicacao',
+        section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
         title: 'Criar Chamado',
@@ -211,6 +356,8 @@ export default function AdminPage() {
         icon: AlertCircle,
         color: 'text-red-600',
         bg: 'bg-red-50',
+        category: 'Gabinete',
+        section: 'Atalhos',
       },
       (hasPermission('reports:department') || hasPermission('reports:full')) && {
         title: 'Relatorios',
@@ -219,21 +366,219 @@ export default function AdminPage() {
         icon: BarChart3,
         color: 'text-pink-600',
         bg: 'bg-pink-50',
+        category: 'Analise',
+        section: 'Atalhos',
+      },
+      hasMinRole('COORDINATOR') && {
+        title: 'Analytics',
+        description: 'Leitura avancada',
+        href: '/admin/analytics',
+        icon: TrendingUp,
+        color: 'text-indigo-600',
+        bg: 'bg-indigo-50',
+        category: 'Analise',
+        section: 'Atalhos',
+      },
+      hasMinRole('COORDINATOR') && {
+        title: 'Email',
+        description: 'Caixa institucional',
+        href: '/admin/email',
+        icon: Mail,
+        color: 'text-cyan-600',
+        bg: 'bg-cyan-50',
+        category: 'Comunicacao',
+        section: 'Atalhos',
+      },
+      {
+        title: 'Meus Documentos',
+        description: 'Arquivos e assinaturas',
+        href: '/admin/meus-documentos',
+        icon: FileText,
+        color: 'text-amber-600',
+        bg: 'bg-amber-50',
+        category: 'Documentos',
+        section: 'Atalhos',
+      },
+      hasMinRole('COORDINATOR') && {
+        title: 'Assinaturas',
+        description: 'Assinatura digital',
+        href: '/admin/assinaturas-digitais',
+        icon: FileSignature,
+        color: 'text-violet-600',
+        bg: 'bg-violet-50',
+        category: 'Documentos',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Agenda',
+        description: 'Compromissos',
+        href: '/admin/agenda',
+        icon: Calendar,
+        color: 'text-blue-600',
+        bg: 'bg-blue-50',
+        category: 'Gabinete',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Painel do Prefeito',
+        description: 'KPIs executivos',
+        href: '/admin/gabinete/painel-prefeito',
+        icon: Building2,
+        color: 'text-yellow-600',
+        bg: 'bg-yellow-50',
+        category: 'Gabinete',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Mapa de Demandas',
+        description: 'Visao territorial',
+        href: '/admin/gabinete/mapa-demandas',
+        icon: Map,
+        color: 'text-emerald-600',
+        bg: 'bg-emerald-50',
+        category: 'Gabinete',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'IA Centralizada',
+        description: 'Chat operacional',
+        href: '/admin/ia',
+        icon: Bot,
+        color: 'text-fuchsia-600',
+        bg: 'bg-fuchsia-50',
+        category: 'Automacao',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Fluxos do Bot',
+        description: 'Automacao',
+        href: '/admin/bot-flows',
+        icon: Cpu,
+        color: 'text-cyan-600',
+        bg: 'bg-cyan-50',
+        category: 'Automacao',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Templates',
+        description: 'Modelos oficiais',
+        href: '/admin/templates-documentos',
+        icon: ScrollText,
+        color: 'text-orange-600',
+        bg: 'bg-orange-50',
+        category: 'Documentos',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Configuracoes',
+        description: 'Preferencias do sistema',
+        href: '/admin/configuracoes',
+        icon: Settings,
+        color: 'text-slate-600',
+        bg: 'bg-slate-50',
+        category: 'Sistema',
+        section: 'Atalhos',
+      },
+      hasMinRole('ADMIN') && {
+        title: 'Integracoes',
+        description: 'APIs e canais',
+        href: '/admin/integracoes',
+        icon: Zap,
+        color: 'text-lime-700',
+        bg: 'bg-lime-50',
+        category: 'Sistema',
+        section: 'Atalhos',
       },
     ]
 
-    return actions.filter(Boolean) as Array<{
-      title: string
-      description: string
-      href: string
-      icon: typeof FileText
-      color: string
-      bg: string
-    }>
+    return actions.filter(Boolean) as QuickAction[]
   }, [hasMinRole, hasPermission, safeStats.pendingCitizens, safeStats.pendingProtocols, safeStats.unreadMessages])
 
-  const handleCardClick = (title: string, href: string, category: string) => {
-    trackCardClick(title, href, category)
+  const quickActionMap = useMemo(() => {
+    return new globalThis.Map(availableQuickActions.map((action) => [action.href, action]))
+  }, [availableQuickActions])
+
+  const quickActions = useMemo(() => {
+    const usedActions = shortcutUsage
+      .map((item) => quickActionMap.get(item.href))
+      .filter(Boolean) as QuickAction[]
+    const usedHrefs = new Set(usedActions.map((action) => action.href))
+    const fallbackActions = availableQuickActions.filter((action) => !usedHrefs.has(action.href))
+
+    return [...usedActions, ...fallbackActions].slice(0, 6)
+  }, [availableQuickActions, quickActionMap, shortcutUsage])
+
+  const availableSecretaries = useMemo<SecretaryShortcut[]>(() => [
+    { title: 'Saude', href: '/admin/secretarias/saude', icon: Heart, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Educacao', href: '/admin/secretarias/educacao', icon: GraduationCap, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Assistencia Social', href: '/admin/secretarias/assistencia-social', icon: HandHeart, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Agricultura', href: '/admin/secretarias/agricultura', icon: Sprout, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Administracao', href: '/admin/secretarias/administracao', icon: Building2, category: 'Secretarias', section: 'Secretarias' },
+    { title: 'Tecnologia', href: '/admin/secretarias/tecnologia-inovacao', icon: Cpu, category: 'Secretarias', section: 'Secretarias' },
+  ], [])
+
+  const secretaryMap = useMemo(() => {
+    return new globalThis.Map(availableSecretaries.map((secretary) => [secretary.href, secretary]))
+  }, [availableSecretaries])
+
+  const secretaries = useMemo(() => {
+    const usedSecretaries = secretaryUsage
+      .map((item) => secretaryMap.get(item.href))
+      .filter(Boolean) as SecretaryShortcut[]
+    const usedHrefs = new Set(usedSecretaries.map((secretary) => secretary.href))
+    const fallbackSecretaries = availableSecretaries.filter((secretary) => !usedHrefs.has(secretary.href))
+
+    return [...usedSecretaries, ...fallbackSecretaries].slice(0, 6)
+  }, [availableSecretaries, secretaryMap, secretaryUsage])
+
+  const handleShortcutClick = (action: QuickAction) => {
+    trackCardClick(action.title, action.href, action.category)
+    setShortcutUsage((prev) => applyShortcutUsage(prev, action))
+
+    apiRequest('/admin/preferences/shortcuts/track', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: action.title,
+        href: action.href,
+        category: action.category,
+        section: action.section,
+      }),
+    })
+      .then((response) => {
+        if (Array.isArray(response?.data)) {
+          setShortcutUsage(response.data)
+        }
+      })
+      .catch((error: any) => {
+        if (!error?.message?.includes('autenticado')) {
+          console.error('Erro ao registrar atalho dinamico:', error)
+        }
+      })
+  }
+
+  const handleSecretaryClick = (secretary: SecretaryShortcut) => {
+    trackCardClick(secretary.title, secretary.href, secretary.category)
+    setSecretaryUsage((prev) => applyShortcutUsage(prev, secretary))
+
+    apiRequest('/admin/preferences/shortcuts/track', {
+      method: 'POST',
+      body: JSON.stringify({
+        title: secretary.title,
+        href: secretary.href,
+        category: secretary.category,
+        section: secretary.section,
+      }),
+    })
+      .then((response) => {
+        if (Array.isArray(response?.data)) {
+          setSecretaryUsage(response.data)
+        }
+      })
+      .catch((error: any) => {
+        if (!error?.message?.includes('autenticado')) {
+          console.error('Erro ao registrar secretaria dinamica:', error)
+        }
+      })
   }
 
   if (loading || !user) {
@@ -327,14 +672,18 @@ export default function AdminPage() {
               <Sparkles className="h-5 w-5 text-primary" />
               Atalhos do dia
             </CardTitle>
-            <CardDescription>Acesso rapido aos fluxos mais comuns do painel.</CardDescription>
+            <CardDescription>
+              {loadingShortcuts && shortcutUsage.length === 0
+                ? 'Carregando atalhos personalizados...'
+                : 'Acesso rapido adaptado aos atalhos mais usados por voce.'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {quickActions.map((action) => (
               <ActionCard
                 key={action.href}
                 {...action}
-                onClick={() => handleCardClick(action.title, action.href, 'Atalhos')}
+                onClick={() => handleShortcutClick(action)}
               />
             ))}
           </CardContent>
@@ -490,15 +839,22 @@ export default function AdminPage() {
               <Building2 className="h-5 w-5 text-primary" />
               Secretarias
             </CardTitle>
-            <CardDescription>Acesso rapido aos modulos setoriais.</CardDescription>
+            <CardDescription>
+              {loadingSecretaries && secretaryUsage.length === 0
+                ? 'Carregando secretarias personalizadas...'
+                : 'Modulos setoriais ordenados pelo seu uso mais frequente.'}
+            </CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            <MiniLink title="Saude" href="/admin/secretarias/saude" icon={Heart} />
-            <MiniLink title="Educacao" href="/admin/secretarias/educacao" icon={GraduationCap} />
-            <MiniLink title="Assistencia Social" href="/admin/secretarias/assistencia-social" icon={HandHeart} />
-            <MiniLink title="Agricultura" href="/admin/secretarias/agricultura" icon={Sprout} />
-            <MiniLink title="Administracao" href="/admin/secretarias/administracao" icon={Building2} />
-            <MiniLink title="Tecnologia" href="/admin/secretarias/tecnologia-inovacao" icon={Cpu} />
+            {secretaries.map((secretary) => (
+              <MiniLink
+                key={secretary.href}
+                title={secretary.title}
+                href={secretary.href}
+                icon={secretary.icon}
+                onClick={() => handleSecretaryClick(secretary)}
+              />
+            ))}
           </CardContent>
         </Card>
       )}
@@ -617,14 +973,17 @@ function MiniLink({
   title,
   href,
   icon: Icon,
+  onClick,
 }: {
   title: string
   href: string
   icon: typeof FileText
+  onClick?: () => void
 }) {
   return (
     <Link
       href={href}
+      onClick={onClick}
       className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-md border p-3 text-center text-sm font-medium transition-colors hover:border-primary/50 hover:bg-muted/40"
     >
       <Icon className="h-5 w-5 text-primary" />

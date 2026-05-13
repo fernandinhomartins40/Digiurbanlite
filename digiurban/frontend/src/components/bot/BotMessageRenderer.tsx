@@ -23,6 +23,7 @@ import { BotDocumentUpload } from './BotDocumentUpload';
 interface BotMessageRendererProps {
   message: any;
   onInteraction: (data: any) => void;
+  disabled?: boolean;
 }
 
 const markdownComponents = {
@@ -38,7 +39,7 @@ const markdownComponents = {
   code: ({ children }: any) => <code className="text-xs bg-slate-100 px-1 rounded break-all">{children}</code>,
 };
 
-export function BotMessageRenderer({ message, onInteraction }: BotMessageRendererProps) {
+export function BotMessageRenderer({ message, onInteraction, disabled = false }: BotMessageRendererProps) {
   const metadata = message?.metadata || {};
   const messageType = message?.messageType || metadata.messageType || 'text';
   const options = Array.isArray(metadata.options) ? metadata.options : [];
@@ -270,12 +271,19 @@ export function BotMessageRenderer({ message, onInteraction }: BotMessageRendere
         <ProtocolDetailCard data={metadata.protocolDetailCard} />
       )}
 
-      {structuredInput}
+      {structuredInput && (
+        <div className={disabled ? 'pointer-events-none opacity-60' : undefined} aria-disabled={disabled}>
+          {structuredInput}
+        </div>
+      )}
 
       {metadata?.quickReplies && (
         <QuickReplies
           replies={metadata.quickReplies}
-          onSelect={(reply) => onInteraction(reply)}
+          onSelect={(reply) => {
+            if (!disabled) onInteraction(reply)
+          }}
+          className={disabled ? 'pointer-events-none opacity-60' : undefined}
         />
       )}
     </div>

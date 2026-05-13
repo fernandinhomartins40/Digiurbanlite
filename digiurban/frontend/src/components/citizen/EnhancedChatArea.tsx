@@ -9,6 +9,7 @@ import { TypingIndicator } from '@/src/components/bot/TypingIndicator';
 export function EnhancedChatArea() {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const interactionInFlightRef = useRef(false);
   const {
     messages,
     loading,
@@ -37,14 +38,17 @@ export function EnhancedChatArea() {
   };
 
   const handleInteraction = async (data: any) => {
+    if (loading || interactionInFlightRef.current) return;
+    interactionInFlightRef.current = true;
+
     let message = '';
 
-    if (typeof data === 'string') {
-      message = data;
-    } else if (data instanceof Date) {
-      message = data.toLocaleDateString('pt-BR');
-    } else if (Array.isArray(data) && data.length > 0 && data[0] instanceof File) {
-      try {
+    try {
+      if (typeof data === 'string') {
+        message = data;
+      } else if (data instanceof Date) {
+        message = data.toLocaleDateString('pt-BR');
+      } else if (Array.isArray(data) && data.length > 0 && data[0] instanceof File) {
         const uploadPayload = data.map((file: File, index: number) => ({
           docId: `upload-${index}`,
           documentType: file.name,
@@ -53,32 +57,28 @@ export function EnhancedChatArea() {
         }));
         await uploadFiles(uploadPayload);
         return;
-      } catch (error) {
-        console.error('Erro no upload:', error);
-        return;
-      }
-    } else if (
-      Array.isArray(data) &&
-      data.length > 0 &&
-      data[0] &&
-      typeof data[0] === 'object' &&
-      data[0].file instanceof File
-    ) {
-      try {
+      } else if (
+        Array.isArray(data) &&
+        data.length > 0 &&
+        data[0] &&
+        typeof data[0] === 'object' &&
+        data[0].file instanceof File
+      ) {
         await uploadFiles(data);
         return;
-      } catch (error) {
-        console.error('Erro no upload:', error);
-        return;
+      } else if (data.formattedAddress) {
+        message = data.formattedAddress;
+      } else {
+        message = JSON.stringify(data);
       }
-    } else if (data.formattedAddress) {
-      message = data.formattedAddress;
-    } else {
-      message = JSON.stringify(data);
-    }
 
-    if (message) {
-      await sendMessage(message);
+      if (message) {
+        await sendMessage(message);
+      }
+    } catch (error) {
+      console.error('Erro na interacao do bot:', error);
+    } finally {
+      interactionInFlightRef.current = false;
     }
   };
 
@@ -130,6 +130,7 @@ export function EnhancedChatArea() {
                 <BotMessageRenderer
                   message={message}
                   onInteraction={handleInteraction}
+                  disabled={loading}
                 />
               </div>
             ) : (

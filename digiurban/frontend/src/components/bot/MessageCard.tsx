@@ -48,6 +48,10 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function MessageCard({ card, onAction }: MessageCardProps) {
   const handleAction = () => onAction?.(card);
+  const handleButtonAction = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.stopPropagation();
+    onAction?.(card);
+  };
 
   return (
     <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden" onClick={handleAction}>
@@ -98,7 +102,7 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
 
         {card.action && (
           <Button
-            onClick={handleAction}
+            onClick={handleButtonAction}
             variant="outline"
             size="sm"
             className="w-full text-xs group hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600"
