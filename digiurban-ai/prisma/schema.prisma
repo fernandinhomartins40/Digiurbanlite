@@ -226,3 +226,26 @@ model AiInferenceEvent {
   @@index([model, createdAt])
   @@map("ai_inference_events")
 }
+
+model AiSemanticCache {
+  id              String   @id @default(cuid())
+  tenantId        String   @default("default")
+  queryHash       String
+  normalizedQuery String   @db.Text
+  response        String   @db.Text
+  model           String
+  routeKind       String
+  source          String
+  embedding       Json?
+  hitCount        Int      @default(0)
+  lastHitAt       DateTime?
+  expiresAt       DateTime?
+  metadata        Json?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, queryHash, routeKind, source])
+  @@index([tenantId, routeKind, source, updatedAt])
+  @@index([tenantId, expiresAt])
+  @@map("ai_semantic_cache")
+}

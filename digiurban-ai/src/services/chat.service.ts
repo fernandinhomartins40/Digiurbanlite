@@ -15,6 +15,7 @@ import {
 import { aiObservabilityService } from './ai-observability.service';
 import { aiProviderService, AiProviderServiceError } from './ai-provider.service';
 import { inferenceRouterService } from './inference-router.service';
+import { semanticCacheService, SemanticCacheHit } from './semantic-cache.service';
 import { toolRunnerService } from './tool-runner.service';
 import { webSearchService, WebSearchResult } from './web-search.service';
 import logger from '../utils/logger';
@@ -1050,6 +1051,114 @@ function buildDeterministicShortCompletion(query: string, latencyMs: number): Ch
   };
 }
 
+function buildSemanticCacheCompletion(hit: SemanticCacheHit): ChatCompletionResult {
+  return {
+    content: hit.content,
+    model: hit.model,
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    latencyMs: hit.latencyMs,
+    finishReason: `semantic_cache_${hit.hitKind}`,
+    profile: 'cache',
+    attemptedModels: [],
+    usedFallback: false,
+    circuitBreakerOpen: false,
+    routeKind: 'semantic_cache',
+    deterministicResponse: true,
+  };
+}
+
+function formatMetricLabel(key: string): string {
+  const labels: Record<string, string> = {
+    total: 'Total',
+    active: 'Ativos',
+    inProgress: 'Em andamento',
+    pending: 'Pendentes',
+    needsUpdate: 'Precisam de atualizacao',
+    completed: 'Concluidos',
+    cancelled: 'Cancelados',
+    accepted: 'Aceitos',
+    protocolCreated: 'Com protocolo criado',
+    rejected: 'Rejeitados',
+  };
+
+  return labels[key] || key;
+}
+
+function formatMetricBlock(title: string, totals: unknown): string[] {
+  if (!totals || typeof totals !== 'object' || Array.isArray(totals)) {
+    return [];
+  }
+
+  const lines = Object.entries(totals as Record<string, unknown>)
+    .filter(([, value]) => typeof value === 'number')
+    .map(([key, value]) => `- ${formatMetricLabel(key)}: ${value}`);
+
+  return lines.length ? [`${title}:`, ...lines] : [];
+}
+
+function buildApplicationDataContent(data: Record<string, unknown>): string | null {
+  if (data.ok !== true) {
+    return null;
+  }
+
+  const measuredAt =
+    typeof data.measuredAt === 'string'
+      ? new Intl.DateTimeFormat('pt-BR', {
+          dateStyle: 'short',
+          timeStyle: 'short',
+          timeZone: 'America/Sao_Paulo',
+        }).format(new Date(data.measuredAt))
+      : undefined;
+
+  const entity = typeof data.entity === 'string' ? data.entity : '';
+  const lines: string[] = ['Consulta feita diretamente no banco de dados.'];
+
+  if (entity === 'protocols') {
+    lines.push(...formatMetricBlock('Protocolos', data.totals));
+  } else if (entity === 'admin_tickets') {
+    lines.push(...formatMetricBlock('Chamados', data.totals));
+  } else {
+    lines.push(...formatMetricBlock('Protocolos', data.protocols));
+    lines.push(...formatMetricBlock('Chamados', data.adminTickets));
+  }
+
+  if (measuredAt) {
+    lines.push(`Atualizado em: ${measuredAt}.`);
+  }
+
+  return lines.length > 1 ? lines.join('\n') : null;
+}
+
+async function buildDeterministicApplicationDataCompletion(params: {
+  query: string;
+  latencyStartedAt: number;
+}): Promise<ChatCompletionResult | null> {
+  const data = await applicationDataService.query(params.query);
+  const content = buildApplicationDataContent(data);
+  if (!content) {
+    return null;
+  }
+
+  const latencyMs = Date.now() - params.latencyStartedAt;
+  return {
+    content,
+    model: 'application-data-deterministic',
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    latencyMs,
+    finishReason: 'deterministic_application_data',
+    profile: 'database',
+    attemptedModels: [],
+    usedFallback: false,
+    circuitBreakerOpen: false,
+    routeKind: 'context_metrics',
+    deterministicResponse: true,
+  };
+}
+
 function toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
   if (value === undefined) {
     return undefined;
@@ -1406,6 +1515,169 @@ export class ChatService {
       };
     }
 
+    if (inferencePlan.deterministicApplicationData) {
+      try {
+        const completion = await buildDeterministicApplicationDataCompletion({
+          query: normalized,
+          latencyStartedAt: requestStartedAt,
+        });
+
+        if (completion) {
+          aiObservabilityService.recordInference({
+            routeKind: 'context_metrics',
+            experience: inferencePlan.experience,
+            model: completion.model,
+            latencyMs: completion.latencyMs,
+            deterministicResponse: true,
+            toolFirst: true,
+            webSearch: false,
+            tenantId: params.tenantId,
+            userId: params.userId,
+            source: 'ADMIN_CHAT',
+          });
+
+          const assistantMessage = await prisma.aiMessage.create({
+            data: {
+              conversationId: conversation.id,
+              role: AiMessageRole.ASSISTANT,
+              content: completion.content,
+              model: completion.model,
+              promptTokens: 0,
+              completionTokens: 0,
+              totalTokens: 0,
+              latencyMs: completion.latencyMs,
+              metadata: {
+                finishReason: completion.finishReason,
+                thinkEnabled: false,
+                performance: buildPerformanceMetadata(completion),
+                chatMode,
+                experience: inferencePlan.experience,
+                profile: completion.profile,
+                routeKind: completion.routeKind,
+                attemptedModels: [],
+                usedFallback: false,
+                circuitBreakerOpen: false,
+                deterministicResponse: true,
+                responseFormat: toJsonValue(params.responseFormat),
+                builtinToolsEnabled: false,
+                contextSources: ['data:live_metrics_tools'],
+              },
+            },
+          });
+
+          await prisma.aiConversation.update({
+            where: { id: conversation.id },
+            data: {
+              lastMessageAt: new Date(),
+              title:
+                conversation.title === 'Nova conversa'
+                  ? normalizeConversationTitle(userMessage.content)
+                  : undefined,
+            },
+          });
+
+          return {
+            conversationId: conversation.id,
+            assistantMessage,
+            contextSources: 1,
+          };
+        }
+      } catch (error) {
+        logger.warn('Deterministic application data response failed', {
+          tenantId: params.tenantId,
+          conversationId: conversation.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const semanticCacheEligible = semanticCacheService.shouldUseCache({
+      query: normalized,
+      routeKind: inferencePlan.routeKind,
+      source: 'ADMIN_CHAT',
+      hasAttachments: attachments.length > 0,
+      responseFormat: params.responseFormat,
+      webSearch: params.webSearch,
+      useBuiltInTools,
+    });
+
+    if (semanticCacheEligible) {
+      const cacheHit = await semanticCacheService.find({
+        tenantId: params.tenantId,
+        query: normalized,
+        routeKind: inferencePlan.routeKind,
+        source: 'ADMIN_CHAT',
+      });
+
+      if (cacheHit) {
+        const completion = buildSemanticCacheCompletion(cacheHit);
+        aiObservabilityService.recordInference({
+          routeKind: 'semantic_cache',
+          experience: inferencePlan.experience,
+          model: completion.model,
+          latencyMs: completion.latencyMs,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: false,
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: 'ADMIN_CHAT',
+        });
+
+        const assistantMessage = await prisma.aiMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: AiMessageRole.ASSISTANT,
+            content: completion.content,
+            model: completion.model,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            latencyMs: completion.latencyMs,
+            metadata: {
+              finishReason: completion.finishReason,
+              thinkEnabled: false,
+              performance: buildPerformanceMetadata(completion),
+              chatMode,
+              experience: inferencePlan.experience,
+              profile: completion.profile,
+              routeKind: completion.routeKind,
+              originalRouteKind: inferencePlan.routeKind,
+              semanticCache: {
+                id: cacheHit.id,
+                score: cacheHit.score,
+                hitKind: cacheHit.hitKind,
+              },
+              attemptedModels: [],
+              usedFallback: false,
+              circuitBreakerOpen: false,
+              deterministicResponse: true,
+              responseFormat: toJsonValue(params.responseFormat),
+              builtinToolsEnabled: false,
+              contextSources: [],
+            },
+          },
+        });
+
+        await prisma.aiConversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessageAt: new Date(),
+            title:
+              conversation.title === 'Nova conversa'
+                ? normalizeConversationTitle(userMessage.content)
+                : undefined,
+          },
+        });
+
+        return {
+          conversationId: conversation.id,
+          assistantMessage,
+          contextSources: 0,
+        };
+      }
+    }
+
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
@@ -1547,6 +1819,17 @@ export class ChatService {
       userId: params.userId,
       source: 'ADMIN_CHAT',
     });
+
+    if (semanticCacheEligible) {
+      void semanticCacheService.store({
+        tenantId: params.tenantId,
+        query: normalized,
+        source: 'ADMIN_CHAT',
+        completion,
+        routeKind: inferencePlan.routeKind,
+        contextSources: prepared.contextSourceIds,
+      });
+    }
 
     const assistantMessage = await prisma.aiMessage.create({
       data: {
@@ -1764,6 +2047,173 @@ export class ChatService {
       };
     }
 
+    if (inferencePlan.deterministicApplicationData) {
+      try {
+        const completion = await buildDeterministicApplicationDataCompletion({
+          query: normalized,
+          latencyStartedAt: requestStartedAt,
+        });
+
+        if (completion) {
+          params.onContentDelta?.(completion.content);
+
+          aiObservabilityService.recordInference({
+            routeKind: 'context_metrics',
+            experience: inferencePlan.experience,
+            model: completion.model,
+            latencyMs: completion.latencyMs,
+            deterministicResponse: true,
+            toolFirst: true,
+            webSearch: false,
+            tenantId: params.tenantId,
+            userId: params.userId,
+            source: 'ADMIN_CHAT',
+          });
+
+          const assistantMessage = await prisma.aiMessage.create({
+            data: {
+              conversationId: conversation.id,
+              role: AiMessageRole.ASSISTANT,
+              content: completion.content,
+              model: completion.model,
+              promptTokens: 0,
+              completionTokens: 0,
+              totalTokens: 0,
+              latencyMs: completion.latencyMs,
+              metadata: {
+                finishReason: completion.finishReason,
+                thinkEnabled: false,
+                performance: buildPerformanceMetadata(completion),
+                chatMode,
+                experience: inferencePlan.experience,
+                profile: completion.profile,
+                routeKind: completion.routeKind,
+                attemptedModels: [],
+                usedFallback: false,
+                circuitBreakerOpen: false,
+                deterministicResponse: true,
+                responseFormat: toJsonValue(params.responseFormat),
+                builtinToolsEnabled: false,
+                contextSources: ['data:live_metrics_tools'],
+              },
+            },
+          });
+
+          await prisma.aiConversation.update({
+            where: { id: conversation.id },
+            data: {
+              lastMessageAt: new Date(),
+              title:
+                conversation.title === 'Nova conversa'
+                  ? normalizeConversationTitle(userMessage.content)
+                  : undefined,
+            },
+          });
+
+          return {
+            conversationId: conversation.id,
+            assistantMessage,
+            contextSources: 1,
+          };
+        }
+      } catch (error) {
+        logger.warn('Deterministic streamed application data response failed', {
+          tenantId: params.tenantId,
+          conversationId: conversation.id,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const semanticCacheEligible = semanticCacheService.shouldUseCache({
+      query: normalized,
+      routeKind: inferencePlan.routeKind,
+      source: 'ADMIN_CHAT',
+      hasAttachments: attachments.length > 0,
+      responseFormat: params.responseFormat,
+      webSearch: params.webSearch,
+      useBuiltInTools,
+    });
+
+    if (semanticCacheEligible) {
+      const cacheHit = await semanticCacheService.find({
+        tenantId: params.tenantId,
+        query: normalized,
+        routeKind: inferencePlan.routeKind,
+        source: 'ADMIN_CHAT',
+      });
+
+      if (cacheHit) {
+        const completion = buildSemanticCacheCompletion(cacheHit);
+        params.onContentDelta?.(completion.content);
+
+        aiObservabilityService.recordInference({
+          routeKind: 'semantic_cache',
+          experience: inferencePlan.experience,
+          model: completion.model,
+          latencyMs: completion.latencyMs,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: false,
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: 'ADMIN_CHAT',
+        });
+
+        const assistantMessage = await prisma.aiMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: AiMessageRole.ASSISTANT,
+            content: completion.content,
+            model: completion.model,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            latencyMs: completion.latencyMs,
+            metadata: {
+              finishReason: completion.finishReason,
+              thinkEnabled: false,
+              performance: buildPerformanceMetadata(completion),
+              chatMode,
+              experience: inferencePlan.experience,
+              profile: completion.profile,
+              routeKind: completion.routeKind,
+              originalRouteKind: inferencePlan.routeKind,
+              semanticCache: {
+                id: cacheHit.id,
+                score: cacheHit.score,
+                hitKind: cacheHit.hitKind,
+              },
+              attemptedModels: [],
+              usedFallback: false,
+              circuitBreakerOpen: false,
+              deterministicResponse: true,
+              responseFormat: toJsonValue(params.responseFormat),
+              builtinToolsEnabled: false,
+              contextSources: [],
+            },
+          },
+        });
+
+        await prisma.aiConversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessageAt: new Date(),
+            title:
+              conversation.title === 'Nova conversa'
+                ? normalizeConversationTitle(userMessage.content)
+                : undefined,
+          },
+        });
+
+        return {
+          conversationId: conversation.id,
+          assistantMessage,
+          contextSources: 0,
+        };
+      }
+    }
+
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
@@ -1909,6 +2359,17 @@ export class ChatService {
       userId: params.userId,
       source: 'ADMIN_CHAT',
     });
+
+    if (semanticCacheEligible) {
+      void semanticCacheService.store({
+        tenantId: params.tenantId,
+        query: normalized,
+        source: 'ADMIN_CHAT',
+        completion,
+        routeKind: inferencePlan.routeKind,
+        contextSources: prepared.contextSourceIds,
+      });
+    }
 
     const assistantMessage = await prisma.aiMessage.create({
       data: {
@@ -2089,6 +2550,117 @@ export class ChatService {
       };
     }
 
+    if (inferencePlan.deterministicApplicationData) {
+      try {
+        const completion = await buildDeterministicApplicationDataCompletion({
+          query: prompt,
+          latencyStartedAt: requestStartedAt,
+        });
+
+        if (completion) {
+          aiObservabilityService.recordInference({
+            routeKind: 'context_metrics',
+            experience: inferencePlan.experience,
+            model: completion.model,
+            latencyMs: completion.latencyMs,
+            deterministicResponse: true,
+            toolFirst: true,
+            webSearch: false,
+            tenantId: params.tenantId,
+            userId: params.userId,
+            source: params.source,
+          });
+
+          return {
+            content: completion.content,
+            model: completion.model,
+            inputTokens: 0,
+            outputTokens: 0,
+            totalTokens: 0,
+            thinking: undefined,
+            firstTokenLatencyMs: 0,
+            totalDurationMs: completion.latencyMs,
+            loadDurationMs: 0,
+            promptEvalDurationMs: 0,
+            evalDurationMs: 0,
+            tokensPerSecond: undefined,
+            contextSources: 1,
+            profile: completion.profile,
+            routeKind: completion.routeKind,
+            attemptedModels: [],
+            usedFallback: false,
+            circuitBreakerOpen: false,
+            deterministicResponse: true,
+            webSearch: buildWebSearchMetadata([], false),
+          };
+        }
+      } catch (error) {
+        logger.warn('Deterministic stateless application data response failed', {
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: params.source,
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    const semanticCacheEligible = semanticCacheService.shouldUseCache({
+      query: prompt,
+      routeKind: inferencePlan.routeKind,
+      source: params.source,
+      responseFormat: params.responseFormat,
+      webSearch: params.webSearch,
+      useBuiltInTools,
+    });
+
+    if (semanticCacheEligible) {
+      const cacheHit = await semanticCacheService.find({
+        tenantId: params.tenantId,
+        query: prompt,
+        routeKind: inferencePlan.routeKind,
+        source: params.source,
+      });
+
+      if (cacheHit) {
+        const completion = buildSemanticCacheCompletion(cacheHit);
+        aiObservabilityService.recordInference({
+          routeKind: 'semantic_cache',
+          experience: inferencePlan.experience,
+          model: completion.model,
+          latencyMs: completion.latencyMs,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: false,
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: params.source,
+        });
+
+        return {
+          content: completion.content,
+          model: completion.model,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          thinking: undefined,
+          firstTokenLatencyMs: 0,
+          totalDurationMs: completion.latencyMs,
+          loadDurationMs: 0,
+          promptEvalDurationMs: 0,
+          evalDurationMs: 0,
+          tokensPerSecond: undefined,
+          contextSources: 0,
+          profile: completion.profile,
+          routeKind: completion.routeKind,
+          attemptedModels: [],
+          usedFallback: false,
+          circuitBreakerOpen: false,
+          deterministicResponse: true,
+          webSearch: buildWebSearchMetadata([], false),
+        };
+      }
+    }
+
     const prepared = await this.prepareModelMessages({
       tenantId: params.tenantId,
       userName: params.userName,
@@ -2185,6 +2757,17 @@ export class ChatService {
       userId: params.userId,
       source: params.source,
     });
+
+    if (semanticCacheEligible) {
+      void semanticCacheService.store({
+        tenantId: params.tenantId,
+        query: prompt,
+        source: params.source,
+        completion,
+        routeKind: inferencePlan.routeKind,
+        contextSources: prepared.contextSourceIds,
+      });
+    }
 
     try {
       await apiKeyService.recordUsage({

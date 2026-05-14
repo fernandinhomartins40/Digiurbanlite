@@ -46,6 +46,7 @@ export type InferenceRouteKind =
   | 'context_metrics'
   | 'context_documents'
   | 'web_lookup'
+  | 'semantic_cache'
   | 'quality';
 
 export interface ModelToolCall {

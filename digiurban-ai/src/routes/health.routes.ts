@@ -4,6 +4,7 @@ import { knowledgeService } from '../services/knowledge.service';
 import { aiObservabilityService } from '../services/ai-observability.service';
 import { llamaCppService } from '../services/llamacpp.service';
 import { aiProviderService } from '../services/ai-provider.service';
+import { semanticCacheService } from '../services/semantic-cache.service';
 
 const router = Router();
 
@@ -26,6 +27,7 @@ router.get('/health', async (_req, res) => {
     llamacpp: llamaCppService.getRuntimeStatus(),
     providers: aiProviderService.getRuntimeStatus(),
     knowledge: knowledgeService.getRuntimeStats(),
+    semanticCache: semanticCacheService.getRuntimeStats(),
     observability: {
       memory: aiObservabilityService.getSnapshot(),
       persisted: persistedObservability,
