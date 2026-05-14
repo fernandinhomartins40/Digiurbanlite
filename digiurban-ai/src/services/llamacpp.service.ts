@@ -107,6 +107,49 @@ function extractErrorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
 
+function resolveThinkingEnabled(think?: ChatThinkingMode): boolean {
+  if (think === true || think === 'medium' || think === 'high') {
+    return true;
+  }
+
+  if (think === false || think === 'low') {
+    return false;
+  }
+
+  return config.llamaCppThinkingDefault;
+}
+
+function applyQwenThinkingSwitch(
+  messages: ChatMessageInput[],
+  thinkingEnabled: boolean,
+): ChatMessageInput[] {
+  if (thinkingEnabled || !config.llamaCppNoThinkPromptSwitch) {
+    return messages;
+  }
+
+  let lastUserIndex = -1;
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    if (messages[index].role === 'user') {
+      lastUserIndex = index;
+      break;
+    }
+  }
+  if (lastUserIndex < 0) {
+    return messages;
+  }
+
+  return messages.map((message, index) => {
+    if (index !== lastUserIndex || message.content.includes('/no_think')) {
+      return message;
+    }
+
+    return {
+      ...message,
+      content: `${message.content}\n\n/no_think`,
+    };
+  });
+}
+
 export class LlamaCppServiceError extends Error {
   constructor(message: string, public statusCode = 502) {
     super(message);
@@ -310,6 +353,8 @@ export class LlamaCppService {
     stream: boolean,
   ): Record<string, unknown> {
     const profile = requestOptions?.profile || 'draft';
+    const thinkingEnabled = resolveThinkingEnabled(requestOptions?.think);
+    const preparedMessages = applyQwenThinkingSwitch(messages, thinkingEnabled);
     const maxTokens =
       requestOptions?.maxTokens ??
       (profile === 'interactive'
@@ -323,7 +368,7 @@ export class LlamaCppService {
     const payload: Record<string, unknown> = {
       model,
       stream,
-      messages: messages.map((message) => ({
+      messages: preparedMessages.map((message) => ({
         role: message.role,
         content: message.content,
         ...(message.toolName ? { tool_name: message.toolName } : {}),
@@ -333,6 +378,9 @@ export class LlamaCppService {
       temperature: config.llamaCppTemperature,
       top_p: config.llamaCppTopP,
       max_tokens: Math.max(16, Math.min(maxTokens, config.llamaCppMaxTokens)),
+      chat_template_kwargs: {
+        enable_thinking: thinkingEnabled,
+      },
     };
 
     if (requestOptions?.format === 'json') {

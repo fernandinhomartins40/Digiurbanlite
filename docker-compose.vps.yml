@@ -88,11 +88,11 @@ services:
       - -n
       - "220"
       - --parallel
-      - "2"
+      - "${LLAMACPP_PARALLEL:-1}"
       - --batch-size
-      - "512"
+      - "${LLAMACPP_BATCH_SIZE:-512}"
       - --ubatch-size
-      - "128"
+      - "${LLAMACPP_UBATCH_SIZE:-128}"
       - --threads
       - "${LLAMACPP_THREADS:-4}"
     networks:
@@ -354,6 +354,8 @@ services:
       - AI_LLAMACPP_TOOL_LOOP_MAX_STEPS=3
       - AI_LLAMACPP_WARMUP_ENABLED=true
       - "AI_LLAMACPP_WARMUP_PROMPT=Responda apenas: ok"
+      - AI_LLAMACPP_THINKING_DEFAULT=${AI_LLAMACPP_THINKING_DEFAULT:-false}
+      - AI_LLAMACPP_NO_THINK_PROMPT_SWITCH=${AI_LLAMACPP_NO_THINK_PROMPT_SWITCH:-true}
       - AI_WEB_SEARCH_ENABLED=true
       - AI_WEB_SEARCH_DEFAULT=false
       - AI_WEB_SEARCH_PROVIDER=duckduckgo

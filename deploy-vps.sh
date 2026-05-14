@@ -203,6 +203,7 @@ fi
 
 . "$APP_DIR/scripts/vps-deploy-lib.sh"
 ensure_vm_max_map_count 262144
+cleanup_legacy_ai_runtimes
 
 # ============================================================================
 # ETAPA 3: CRIAR ARQUIVO .ENV

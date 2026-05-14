@@ -20,6 +20,7 @@ fi
 
 . "scripts/vps-deploy-lib.sh"
 ensure_vm_max_map_count 262144
+cleanup_legacy_ai_runtimes
 
 echo "Rebuilding digiurban image..."
 docker compose -f docker-compose.vps.yml build digiurban

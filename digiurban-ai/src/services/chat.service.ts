@@ -1098,6 +1098,72 @@ function formatMetricBlock(title: string, totals: unknown): string[] {
   return lines.length ? [`${title}:`, ...lines] : [];
 }
 
+function formatOperationalStatus(value: unknown): string {
+  const status = typeof value === 'string' ? value : '';
+  const labels: Record<string, string> = {
+    VINCULADO: 'Vinculado',
+    PROGRESSO: 'Em progresso',
+    PENDENCIA: 'Pendencia',
+    ATUALIZACAO: 'Aguardando atualizacao',
+    CONCLUIDO: 'Concluido',
+    CANCELADO: 'Cancelado',
+    PENDING: 'Pendente',
+    ACCEPTED: 'Aceito',
+    PROTOCOL_CREATED: 'Protocolo criado',
+    REJECTED: 'Rejeitado',
+    CANCELLED: 'Cancelado',
+  };
+
+  return labels[status] || status || 'Sem status';
+}
+
+function formatDateTimePtBr(value: unknown): string | undefined {
+  if (typeof value !== 'string') {
+    return undefined;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+
+  return new Intl.DateTimeFormat('pt-BR', {
+    dateStyle: 'short',
+    timeStyle: 'short',
+    timeZone: 'America/Sao_Paulo',
+  }).format(date);
+}
+
+function formatOperationalList(title: string, items: unknown): string[] {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  if (!items.length) {
+    return [`${title}: nenhum registro encontrado para esse filtro.`];
+  }
+
+  const lines = items.slice(0, 12).map((item, index) => {
+    const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    const number = typeof row.number === 'string' ? row.number : `#${index + 1}`;
+    const itemTitle = typeof row.title === 'string' ? row.title : 'Sem titulo';
+    const status = formatOperationalStatus(row.status);
+    const department = typeof row.departmentName === 'string' ? row.departmentName : undefined;
+    const service = typeof row.serviceName === 'string' ? row.serviceName : undefined;
+    const createdAt = formatDateTimePtBr(row.createdAt);
+    const details = [
+      status,
+      department ? `Secretaria: ${department}` : undefined,
+      service ? `Servico: ${service}` : undefined,
+      createdAt ? `Criado em: ${createdAt}` : undefined,
+    ].filter(Boolean);
+
+    return `${index + 1}. ${number} - ${itemTitle}${details.length ? ` (${details.join(' | ')})` : ''}`;
+  });
+
+  return [title, ...lines];
+}
+
 function buildApplicationDataContent(data: Record<string, unknown>): string | null {
   if (data.ok !== true) {
     return null;
@@ -1119,6 +1185,10 @@ function buildApplicationDataContent(data: Record<string, unknown>): string | nu
     lines.push(...formatMetricBlock('Protocolos', data.totals));
   } else if (entity === 'admin_tickets') {
     lines.push(...formatMetricBlock('Chamados', data.totals));
+  } else if (entity === 'protocol_list') {
+    lines.push(...formatOperationalList('Protocolos encontrados:', data.items));
+  } else if (entity === 'ticket_list') {
+    lines.push(...formatOperationalList('Chamados encontrados:', data.items));
   } else {
     lines.push(...formatMetricBlock('Protocolos', data.protocols));
     lines.push(...formatMetricBlock('Chamados', data.adminTickets));

@@ -80,6 +80,39 @@ wait_for_http_ready() {
   return 1
 }
 
+cleanup_legacy_ai_runtimes() {
+  echo "Limpando runtimes antigos de IA que nao fazem mais parte do Digiurban..."
+
+  local containers
+  containers="$(docker ps -aq \
+    --filter "name=^/digiurban-ollama$" \
+    --filter "name=^/ollama$" 2>/dev/null || true)"
+  if [ -n "${containers}" ]; then
+    echo "Removendo containers Ollama antigos..."
+    docker rm -f ${containers} 2>/dev/null || true
+  fi
+
+  containers="$(docker ps -aq --filter "ancestor=ollama/ollama:latest" 2>/dev/null || true)"
+  if [ -n "${containers}" ]; then
+    echo "Removendo containers baseados em ollama/ollama..."
+    docker rm -f ${containers} 2>/dev/null || true
+  fi
+
+  for volume in ollama ollama_data digiurban_ollama digiurban_ollama_data digiurbanlite_ollama digiurbanlite_ollama_data; do
+    if docker volume inspect "${volume}" >/dev/null 2>&1; then
+      echo "Removendo volume legado ${volume}..."
+      docker volume rm "${volume}" >/dev/null 2>&1 || true
+    fi
+  done
+
+  if docker image inspect ollama/ollama:latest >/dev/null 2>&1; then
+    echo "Removendo imagem ollama/ollama:latest..."
+    docker image rm -f ollama/ollama:latest >/dev/null 2>&1 || true
+  fi
+
+  echo "Limpeza de IA legada concluida."
+}
+
 read_env_value() {
   local key="${1:?key required}"
   local env_file="${2:-.env.backup}"
@@ -199,8 +232,11 @@ AI_LLAMACPP_RAG_NUM_CTX=2304
 AI_LLAMACPP_MAX_TOKENS=220
 AI_LLAMACPP_RAG_MAX_TOKENS=140
 AI_LLAMACPP_FAST_MAX_TOKENS=96
+AI_LLAMACPP_THINKING_DEFAULT=false
+AI_LLAMACPP_NO_THINK_PROMPT_SWITCH=true
 AI_EMBEDDINGS_ENABLED=false
-AI_EMBEDDINGS_MODEL=qwen3-1.7b-instruct-q4_k_m
+AI_EMBEDDINGS_BASE_URL=http://llamacpp:8080
+AI_EMBEDDINGS_MODEL=nomic-embed-text-v1.5
 AI_WEB_SEARCH_ENABLED=true
 AI_WEB_SEARCH_DEFAULT=false
 AI_WEB_SEARCH_PROVIDER=duckduckgo

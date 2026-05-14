@@ -62,6 +62,9 @@ export const config = {
   llamaCppToolLoopMaxSteps: parseInt(process.env.AI_LLAMACPP_TOOL_LOOP_MAX_STEPS || '3', 10),
   llamaCppWarmupEnabled: (process.env.AI_LLAMACPP_WARMUP_ENABLED || 'true').toLowerCase() === 'true',
   llamaCppWarmupPrompt: process.env.AI_LLAMACPP_WARMUP_PROMPT || 'Responda apenas: ok',
+  llamaCppThinkingDefault: (process.env.AI_LLAMACPP_THINKING_DEFAULT || 'false').toLowerCase() === 'true',
+  llamaCppNoThinkPromptSwitch:
+    (process.env.AI_LLAMACPP_NO_THINK_PROMPT_SWITCH || 'true').toLowerCase() === 'true',
   webSearchEnabled: (process.env.AI_WEB_SEARCH_ENABLED || 'false').toLowerCase() === 'true',
   webSearchDefault: (process.env.AI_WEB_SEARCH_DEFAULT || 'false').toLowerCase() === 'true',
   webSearchProvider:
