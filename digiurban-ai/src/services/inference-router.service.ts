@@ -1,5 +1,6 @@
 import { config } from '../config/config';
 import { AiExperience, InferenceRouteKind } from '../types';
+import { normalizeOperationalText } from '../utils/operational-text';
 
 export type ChatMode = 'free' | 'rag';
 
@@ -27,13 +28,7 @@ export interface InferencePlan {
 }
 
 function normalizeText(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeOperationalText(input);
 }
 
 function includesAny(value: string, signals: string[]): boolean {
@@ -113,6 +108,8 @@ function isApplicationQuery(normalized: string): boolean {
     'servico',
     'protocolo',
     'protocolos',
+    'solicitacao',
+    'solicitacoes',
     'chamado',
     'chamados',
     'ticket',
@@ -140,7 +137,15 @@ function isNavigationQuery(normalized: string): boolean {
 }
 
 function isMetricsQuery(normalized: string): boolean {
-  const entitySignals = ['protocolo', 'protocolos', 'chamado', 'chamados', 'ticket'];
+  const entitySignals = [
+    'protocolo',
+    'protocolos',
+    'solicitacao',
+    'solicitacoes',
+    'chamado',
+    'chamados',
+    'ticket',
+  ];
   const metricSignals = [
     'quantos',
     'quantas',

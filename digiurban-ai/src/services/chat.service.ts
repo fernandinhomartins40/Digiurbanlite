@@ -19,6 +19,7 @@ import { semanticCacheService, SemanticCacheHit } from './semantic-cache.service
 import { toolRunnerService } from './tool-runner.service';
 import { webSearchService, WebSearchResult } from './web-search.service';
 import logger from '../utils/logger';
+import { normalizeOperationalText } from '../utils/operational-text';
 
 export type ChatMode = 'free' | 'rag';
 
@@ -329,6 +330,8 @@ function buildFreeModeSystemPrompt(params: { extraInstruction?: string }): strin
         'em redacao ou revisao, entregue o texto pronto sem introducao',
         'nao finja acesso a dados internos ou protocolos',
         'se pedirem dados internos, diga que este modo nao tem contexto conectado',
+        'nunca crie exemplos de protocolos, chamados, ids, status, secretarias ou quantidades como se fossem dados reais',
+        'se a pergunta parece pedir dados operacionais reais, responda que esses dados precisam vir de consulta interna',
         'nao mencione limitacoes, suporte, portal, sistema interno ou canais oficiais sem que o usuario tenha pedido isso',
       ]),
     ),
@@ -352,6 +355,7 @@ function buildQualityModeSystemPrompt(params: { extraInstruction?: string }): st
         'em redacao, entregue o texto pronto e bem estruturado',
         'evite introducoes desnecessarias e prolixidade',
         'nao finja acesso a dados internos ou fatos atuais sem contexto',
+        'nunca invente numeros, ids, protocolos, chamados, status ou nomes de secretarias',
       ]),
     ),
     renderPromptSection('extra_instruction', params.extraInstruction?.trim()),
@@ -513,13 +517,7 @@ function buildDeterministicWebLookupContent(query: string, results: WebSearchRes
 }
 
 function normalizeIntentText(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeOperationalText(input);
 }
 
 function shouldUseLowLatencyProfile(query: string): boolean {
@@ -671,6 +669,8 @@ function shouldAutoUseBuiltInTools(params: {
     'servico',
     'protocolo',
     'protocolos',
+    'solicitacao',
+    'solicitacoes',
     'chamado',
     'chamados',
     'ticket',
@@ -717,7 +717,15 @@ function shouldPrefetchApplicationData(query: string): boolean {
     return false;
   }
 
-  const entitySignals = ['protocolo', 'protocolos', 'chamado', 'chamados', 'ticket'];
+  const entitySignals = [
+    'protocolo',
+    'protocolos',
+    'solicitacao',
+    'solicitacoes',
+    'chamado',
+    'chamados',
+    'ticket',
+  ];
   const metricSignals = [
     'quantos',
     'quantas',

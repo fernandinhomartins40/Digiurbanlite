@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import prisma from '../utils/prisma';
+import { normalizeOperationalText } from '../utils/operational-text';
 
 type CountRow = {
   total: bigint | number;
@@ -26,13 +27,7 @@ type TicketListRow = {
 };
 
 function normalizeText(input: string): string {
-  return input
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/[^\w\s]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
+  return normalizeOperationalText(input);
 }
 
 function toNumber(value: bigint | number | null | undefined): number {
@@ -85,7 +80,10 @@ export class ApplicationDataService {
   async query(query: string): Promise<Record<string, unknown>> {
     const normalized = normalizeText(query);
     const asksForProtocols =
-      normalized.includes('protocolo') || normalized.includes('protocolos');
+      normalized.includes('protocolo') ||
+      normalized.includes('protocolos') ||
+      normalized.includes('solicitacao') ||
+      normalized.includes('solicitacoes');
     const asksForTickets =
       normalized.includes('chamado') || normalized.includes('chamados') || normalized.includes('ticket');
 
