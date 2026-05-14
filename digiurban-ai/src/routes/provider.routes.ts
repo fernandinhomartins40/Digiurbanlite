@@ -9,7 +9,7 @@ const providerSchema = z.literal('LLAMACPP');
 
 const providerSettingsSchema = z.object({
   provider: providerSchema,
-  fallbackProvider: z.null().optional(),
+  fallbackProvider: z.union([providerSchema, z.null()]).optional(),
   fastModel: z.string().trim().max(160).nullable().optional(),
   contextualModel: z.string().trim().max(160).nullable().optional(),
   qualityModel: z.string().trim().max(160).nullable().optional(),

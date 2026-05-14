@@ -47,6 +47,25 @@ function normalizeProviderError(error: unknown): AiProviderServiceError {
   );
 }
 
+function resolveProfileModel(
+  settings: Awaited<ReturnType<typeof aiProviderConfigService.getResolvedSettings>>,
+  experience?: AiExperience,
+): string {
+  if (experience === 'contextual') return settings.contextualModel || config.llamaCppModel;
+  if (experience === 'quality') return settings.qualityModel || config.llamaCppModel;
+  return settings.fastModel || config.llamaCppModel;
+}
+
+function resolveFallbackModel(
+  settings: Awaited<ReturnType<typeof aiProviderConfigService.getResolvedSettings>>,
+  experience?: AiExperience,
+): string | undefined {
+  if (settings.fallbackProvider !== 'LLAMACPP') return undefined;
+  if (experience === 'contextual') return settings.fallbackContextualModel || undefined;
+  if (experience === 'quality') return settings.fallbackQualityModel || undefined;
+  return settings.fallbackFastModel || undefined;
+}
+
 export class AiProviderService {
   async getSettings(tenantId: string) {
     return aiProviderConfigService.getSettings(tenantId);
@@ -56,7 +75,7 @@ export class AiProviderService {
     return aiProviderConfigService.updateSettings(tenantId, {
       ...input,
       provider: 'LLAMACPP',
-      fallbackProvider: null,
+      fallbackProvider: input.fallbackProvider === 'LLAMACPP' ? 'LLAMACPP' : null,
     });
   }
 
@@ -103,14 +122,36 @@ export class AiProviderService {
   ): Promise<ChatCompletionResult> {
     try {
       const settings = await aiProviderConfigService.getResolvedSettings(options.tenantId);
-      const model = options.model || settings.fastModel || config.llamaCppModel;
-      return llamaCppService.chat(messages, model, {
-        think: options.think,
-        profile: options.profile,
-        format: options.format,
-        tools: options.tools,
-        allowFallback: false,
-      });
+      if (!settings.isEnabled) {
+        throw new AiProviderServiceError('Provider de IA desativado', 503);
+      }
+
+      const model = options.model || resolveProfileModel(settings, options.experience);
+      try {
+        return await llamaCppService.chat(messages, model, {
+          think: options.think,
+          profile: options.profile,
+          format: options.format,
+          tools: options.tools,
+          allowFallback: Boolean(options.allowFallback),
+        });
+      } catch (error) {
+        const fallbackModel = options.allowFallback ? resolveFallbackModel(settings, options.experience) : undefined;
+        if (!fallbackModel || fallbackModel === model) throw error;
+
+        const fallback = await llamaCppService.chat(messages, fallbackModel, {
+          think: options.think,
+          profile: options.profile,
+          format: options.format,
+          tools: options.tools,
+          allowFallback: false,
+        });
+        return {
+          ...fallback,
+          attemptedModels: [model, fallbackModel],
+          usedFallback: true,
+        };
+      }
     } catch (error) {
       throw normalizeProviderError(error);
     }
@@ -123,19 +164,46 @@ export class AiProviderService {
   ): Promise<ChatCompletionResult> {
     try {
       const settings = await aiProviderConfigService.getResolvedSettings(options.tenantId);
-      const model = options.model || settings.fastModel || config.llamaCppModel;
-      return llamaCppService.chatStream(
-        messages,
-        model,
-        {
-          think: options.think,
-          profile: options.profile,
-          format: options.format,
-          tools: options.tools,
-          allowFallback: false,
-        },
-        callbacks,
-      );
+      if (!settings.isEnabled) {
+        throw new AiProviderServiceError('Provider de IA desativado', 503);
+      }
+
+      const model = options.model || resolveProfileModel(settings, options.experience);
+      try {
+        return await llamaCppService.chatStream(
+          messages,
+          model,
+          {
+            think: options.think,
+            profile: options.profile,
+            format: options.format,
+            tools: options.tools,
+            allowFallback: Boolean(options.allowFallback),
+          },
+          callbacks,
+        );
+      } catch (error) {
+        const fallbackModel = options.allowFallback ? resolveFallbackModel(settings, options.experience) : undefined;
+        if (!fallbackModel || fallbackModel === model) throw error;
+
+        const fallback = await llamaCppService.chatStream(
+          messages,
+          fallbackModel,
+          {
+            think: options.think,
+            profile: options.profile,
+            format: options.format,
+            tools: options.tools,
+            allowFallback: false,
+          },
+          callbacks,
+        );
+        return {
+          ...fallback,
+          attemptedModels: [model, fallbackModel],
+          usedFallback: true,
+        };
+      }
     } catch (error) {
       throw normalizeProviderError(error);
     }

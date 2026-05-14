@@ -50,11 +50,9 @@ export function AdminSidebar() {
       >
         <div className="flex shrink-0 items-center justify-between border-b border-border/60 px-4 py-3.5">
           <Link href="/admin" className="flex min-w-0 items-center gap-2.5">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-primary shadow-sm">
-              <Building2 className="h-4 w-4 text-primary-foreground" />
-            </div>
+            <Building2 className="h-5 w-5 shrink-0 text-primary" />
             <div className="min-w-0">
-              <p className="truncate text-sm font-bold leading-tight text-foreground">DigiUrban</p>
+              <p className="truncate text-sm font-bold leading-tight text-foreground">Digiurban</p>
               <p className="truncate text-[11px] leading-tight text-muted-foreground">
                 Portal Administrativo
               </p>

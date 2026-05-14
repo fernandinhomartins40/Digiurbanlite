@@ -1,4 +1,6 @@
 import { AiExperience, InferenceRouteKind } from '../types';
+import prisma from '../utils/prisma';
+import logger from '../utils/logger';
 
 type RouteStats = {
   requests: number;
@@ -50,6 +52,9 @@ export class AiObservabilityService {
     deterministicResponse: boolean;
     toolFirst: boolean;
     webSearch: boolean;
+    tenantId?: string;
+    userId?: string;
+    source?: string;
   }): void {
     this.totalRequests += 1;
     this.experienceStats[params.experience] += 1;
@@ -101,6 +106,29 @@ export class AiObservabilityService {
       currentModel.requests,
     );
     this.modelStats.set(params.model, currentModel);
+
+    void prisma.aiInferenceEvent.create({
+      data: {
+        tenantId: params.tenantId || 'default',
+        userId: params.userId,
+        source: params.source,
+        routeKind: params.routeKind,
+        experience: params.experience,
+        model: params.model,
+        latencyMs: Math.max(0, Math.trunc(params.latencyMs || 0)),
+        firstTokenLatencyMs:
+          typeof params.firstTokenLatencyMs === 'number'
+            ? Math.max(0, Math.trunc(params.firstTokenLatencyMs))
+            : undefined,
+        deterministicResponse: params.deterministicResponse,
+        toolFirst: params.toolFirst,
+        webSearch: params.webSearch,
+      },
+    }).catch((error) => {
+      logger.warn('Failed to persist AI inference event', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    });
   }
 
   getSnapshot(): Record<string, unknown> {
@@ -112,6 +140,69 @@ export class AiObservabilityService {
       experiences: this.experienceStats,
       routes: Object.fromEntries(this.routeStats.entries()),
       models: Object.fromEntries(this.modelStats.entries()),
+    };
+  }
+
+  async getPersistentSnapshot(tenantId = 'default'): Promise<Record<string, unknown>> {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [total, byRoute, byModel, recentSlow] = await Promise.all([
+      prisma.aiInferenceEvent.count({
+        where: { tenantId, createdAt: { gte: since } },
+      }),
+      prisma.aiInferenceEvent.groupBy({
+        by: ['routeKind'],
+        where: { tenantId, createdAt: { gte: since } },
+        _count: { _all: true },
+        _avg: { latencyMs: true, firstTokenLatencyMs: true },
+      }),
+      prisma.aiInferenceEvent.groupBy({
+        by: ['model'],
+        where: { tenantId, createdAt: { gte: since } },
+        _count: { _all: true },
+        _avg: { latencyMs: true, firstTokenLatencyMs: true },
+      }),
+      prisma.aiInferenceEvent.findMany({
+        where: { tenantId, createdAt: { gte: since } },
+        orderBy: { latencyMs: 'desc' },
+        take: 10,
+        select: {
+          routeKind: true,
+          experience: true,
+          model: true,
+          latencyMs: true,
+          firstTokenLatencyMs: true,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+
+    return {
+      window: '24h',
+      totalRequests: total,
+      routes: byRoute
+        .sort((a, b) => b._count._all - a._count._all)
+        .map((item) => ({
+          routeKind: item.routeKind,
+          requests: item._count._all,
+          avgLatencyMs: Math.round(item._avg.latencyMs || 0),
+          avgFirstTokenLatencyMs: Math.round(item._avg.firstTokenLatencyMs || 0),
+        })),
+      models: byModel
+        .sort((a, b) => b._count._all - a._count._all)
+        .slice(0, 10)
+        .map((item) => ({
+          model: item.model,
+          requests: item._count._all,
+          avgLatencyMs: Math.round(item._avg.latencyMs || 0),
+          avgFirstTokenLatencyMs: Math.round(item._avg.firstTokenLatencyMs || 0),
+        })),
+      recentSlow: recentSlow.map((item) => ({
+        ...item,
+        createdAt: item.createdAt.toISOString(),
+      })),
     };
   }
 }

@@ -41,10 +41,8 @@ fi
 
 echo "Applying database migrations..."
 $PRISMA_BIN migrate deploy 2>&1 || {
-  echo "WARNING: migrate deploy failed, trying db push as fallback..."
-  $PRISMA_BIN db push --skip-generate --accept-data-loss 2>&1 || {
-    echo "ERROR: db push also failed. Continuing startup to avoid blocking deploy."
-  }
+  echo "ERROR: migrate deploy failed. Refusing to run db push in production."
+  exit 1
 }
 echo "Database migrations step complete."
 

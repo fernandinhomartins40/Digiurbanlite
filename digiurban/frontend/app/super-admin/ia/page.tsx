@@ -324,6 +324,7 @@ export default function SuperAdminAiPage() {
                 </select>
                 <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.fallbackProvider} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackProvider: event.target.value as ProviderFormState['fallbackProvider'] }))}>
                   <option value="NONE">Sem fallback</option>
+                  <option value="LLAMACPP">llama.cpp local</option>
                 </select>
                 <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.isEnabled ? 'enabled' : 'disabled'} onChange={(event) => setProviderForm((current) => ({ ...current, isEnabled: event.target.value === 'enabled' }))}>
                   <option value="enabled">Ativo</option>

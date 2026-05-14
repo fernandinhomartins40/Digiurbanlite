@@ -1009,6 +1009,47 @@ function buildDeterministicWebLookupCompletion(params: {
   };
 }
 
+function buildDeterministicShortCompletion(query: string, latencyMs: number): ChatCompletionResult | null {
+  const normalized = normalizeIntentText(query);
+  const responses: Record<string, string> = {
+    oi: 'Ola! Como posso ajudar?',
+    ola: 'Ola! Como posso ajudar?',
+    'ola tudo bem': 'Ola! Tudo bem. Como posso ajudar?',
+    'bom dia': 'Bom dia! Como posso ajudar?',
+    'boa tarde': 'Boa tarde! Como posso ajudar?',
+    'boa noite': 'Boa noite! Como posso ajudar?',
+    'tudo bem': 'Tudo bem. Como posso ajudar?',
+    ok: 'Certo. Como posso ajudar?',
+    obrigado: 'Disponha. Precisa de mais alguma coisa?',
+    valeu: 'Disponha. Precisa de mais alguma coisa?',
+    hi: 'Ola! Como posso ajudar?',
+    hello: 'Ola! Como posso ajudar?',
+    ajuda: 'Posso ajudar com redacao, revisao de textos, orientacoes sobre telas do sistema e consultas contextuais quando o modo Contextual estiver ativo.',
+    menu: 'Posso ajudar com redacao, revisao de textos, orientacoes sobre telas do sistema e consultas contextuais quando o modo Contextual estiver ativo.',
+    'o que voce faz': 'Sou o assistente interno para apoiar redacao, revisao de textos e consultas sobre o sistema.',
+    'quem e voce': 'Sou o assistente interno da plataforma, preparado para apoiar tarefas administrativas e consultas do sistema.',
+  };
+
+  const content = responses[normalized];
+  if (!content) return null;
+
+  return {
+    content,
+    model: 'short-message-deterministic',
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    latencyMs,
+    finishReason: 'deterministic_short_message',
+    profile: 'interactive',
+    attemptedModels: [],
+    usedFallback: false,
+    circuitBreakerOpen: false,
+    routeKind: 'free_short',
+    deterministicResponse: true,
+  };
+}
+
 function toJsonValue(value: unknown): Prisma.InputJsonValue | undefined {
   if (value === undefined) {
     return undefined;
@@ -1299,6 +1340,72 @@ export class ChatService {
       },
     });
 
+    const deterministicShortCompletion =
+      inferencePlan.routeKind === 'free_short'
+        ? buildDeterministicShortCompletion(normalized, Date.now() - requestStartedAt)
+        : null;
+
+    if (deterministicShortCompletion) {
+      aiObservabilityService.recordInference({
+        routeKind: 'free_short',
+        experience: inferencePlan.experience,
+        model: deterministicShortCompletion.model,
+        latencyMs: deterministicShortCompletion.latencyMs,
+        deterministicResponse: true,
+        toolFirst: false,
+        webSearch: false,
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: 'ADMIN_CHAT',
+      });
+
+      const assistantMessage = await prisma.aiMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: AiMessageRole.ASSISTANT,
+          content: deterministicShortCompletion.content,
+          model: deterministicShortCompletion.model,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          latencyMs: deterministicShortCompletion.latencyMs,
+          metadata: {
+            finishReason: deterministicShortCompletion.finishReason,
+            thinkEnabled: false,
+            performance: buildPerformanceMetadata(deterministicShortCompletion),
+            chatMode,
+            experience: inferencePlan.experience,
+            profile: deterministicShortCompletion.profile,
+            routeKind: deterministicShortCompletion.routeKind,
+            attemptedModels: [],
+            usedFallback: false,
+            circuitBreakerOpen: false,
+            deterministicResponse: true,
+            responseFormat: toJsonValue(params.responseFormat),
+            builtinToolsEnabled: false,
+            contextSources: [],
+          },
+        },
+      });
+
+      await prisma.aiConversation.update({
+        where: { id: conversation.id },
+        data: {
+          lastMessageAt: new Date(),
+          title:
+            conversation.title === 'Nova conversa'
+              ? normalizeConversationTitle(userMessage.content)
+              : undefined,
+        },
+      });
+
+      return {
+        conversationId: conversation.id,
+        assistantMessage,
+        contextSources: 0,
+      };
+    }
+
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
@@ -1353,6 +1460,9 @@ export class ChatService {
         deterministicResponse: true,
         toolFirst: false,
         webSearch: prepared.webSearch.enabled,
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: 'ADMIN_CHAT',
       });
 
       const assistantMessage = await prisma.aiMessage.create({
@@ -1433,6 +1543,9 @@ export class ChatService {
         inferencePlan.deterministicApplicationData ||
         useBuiltInTools,
       webSearch: prepared.webSearch.enabled,
+      tenantId: params.tenantId,
+      userId: params.userId,
+      source: 'ADMIN_CHAT',
     });
 
     const assistantMessage = await prisma.aiMessage.create({
@@ -1583,6 +1696,74 @@ export class ChatService {
       },
     });
 
+    const deterministicShortCompletion =
+      inferencePlan.routeKind === 'free_short'
+        ? buildDeterministicShortCompletion(normalized, Date.now() - requestStartedAt)
+        : null;
+
+    if (deterministicShortCompletion) {
+      params.onContentDelta?.(deterministicShortCompletion.content);
+
+      aiObservabilityService.recordInference({
+        routeKind: 'free_short',
+        experience: inferencePlan.experience,
+        model: deterministicShortCompletion.model,
+        latencyMs: deterministicShortCompletion.latencyMs,
+        deterministicResponse: true,
+        toolFirst: false,
+        webSearch: false,
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: 'ADMIN_CHAT',
+      });
+
+      const assistantMessage = await prisma.aiMessage.create({
+        data: {
+          conversationId: conversation.id,
+          role: AiMessageRole.ASSISTANT,
+          content: deterministicShortCompletion.content,
+          model: deterministicShortCompletion.model,
+          promptTokens: 0,
+          completionTokens: 0,
+          totalTokens: 0,
+          latencyMs: deterministicShortCompletion.latencyMs,
+          metadata: {
+            finishReason: deterministicShortCompletion.finishReason,
+            thinkEnabled: false,
+            performance: buildPerformanceMetadata(deterministicShortCompletion),
+            chatMode,
+            experience: inferencePlan.experience,
+            profile: deterministicShortCompletion.profile,
+            routeKind: deterministicShortCompletion.routeKind,
+            attemptedModels: [],
+            usedFallback: false,
+            circuitBreakerOpen: false,
+            deterministicResponse: true,
+            responseFormat: toJsonValue(params.responseFormat),
+            builtinToolsEnabled: false,
+            contextSources: [],
+          },
+        },
+      });
+
+      await prisma.aiConversation.update({
+        where: { id: conversation.id },
+        data: {
+          lastMessageAt: new Date(),
+          title:
+            conversation.title === 'Nova conversa'
+              ? normalizeConversationTitle(userMessage.content)
+              : undefined,
+        },
+      });
+
+      return {
+        conversationId: conversation.id,
+        assistantMessage,
+        contextSources: 0,
+      };
+    }
+
     const recentMessages = await prisma.aiMessage.findMany({
       where: { conversationId: conversation.id },
       orderBy: { createdAt: 'desc' },
@@ -1639,6 +1820,9 @@ export class ChatService {
         deterministicResponse: true,
         toolFirst: false,
         webSearch: prepared.webSearch.enabled,
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: 'ADMIN_CHAT',
       });
 
       const assistantMessage = await prisma.aiMessage.create({
@@ -1721,6 +1905,9 @@ export class ChatService {
         inferencePlan.deterministicApplicationData ||
         useBuiltInTools,
       webSearch: prepared.webSearch.enabled,
+      tenantId: params.tenantId,
+      userId: params.userId,
+      source: 'ADMIN_CHAT',
     });
 
     const assistantMessage = await prisma.aiMessage.create({
@@ -1859,6 +2046,49 @@ export class ChatService {
         : inferencePlan.useBuiltInTools;
     const resolvedModel = inferencePlan.resolvedModel;
 
+    const deterministicShortCompletion =
+      inferencePlan.routeKind === 'free_short'
+        ? buildDeterministicShortCompletion(prompt, Date.now() - requestStartedAt)
+        : null;
+
+    if (deterministicShortCompletion) {
+      aiObservabilityService.recordInference({
+        routeKind: 'free_short',
+        experience: inferencePlan.experience,
+        model: deterministicShortCompletion.model,
+        latencyMs: deterministicShortCompletion.latencyMs,
+        deterministicResponse: true,
+        toolFirst: false,
+        webSearch: false,
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: params.source,
+      });
+
+      return {
+        content: deterministicShortCompletion.content,
+        model: deterministicShortCompletion.model,
+        inputTokens: 0,
+        outputTokens: 0,
+        totalTokens: 0,
+        thinking: undefined,
+        firstTokenLatencyMs: 0,
+        totalDurationMs: deterministicShortCompletion.latencyMs,
+        loadDurationMs: 0,
+        promptEvalDurationMs: 0,
+        evalDurationMs: 0,
+        tokensPerSecond: undefined,
+        contextSources: 0,
+        profile: deterministicShortCompletion.profile,
+        routeKind: deterministicShortCompletion.routeKind,
+        attemptedModels: [],
+        usedFallback: false,
+        circuitBreakerOpen: false,
+        deterministicResponse: true,
+        webSearch: buildWebSearchMetadata([], false),
+      };
+    }
+
     const prepared = await this.prepareModelMessages({
       tenantId: params.tenantId,
       userName: params.userName,
@@ -1892,6 +2122,9 @@ export class ChatService {
         deterministicResponse: true,
         toolFirst: false,
         webSearch: prepared.webSearch.enabled,
+        tenantId: params.tenantId,
+        userId: params.userId,
+        source: params.source,
       });
 
       return {
@@ -1948,6 +2181,9 @@ export class ChatService {
         inferencePlan.deterministicApplicationData ||
         useBuiltInTools,
       webSearch: prepared.webSearch.enabled,
+      tenantId: params.tenantId,
+      userId: params.userId,
+      source: params.source,
     });
 
     try {

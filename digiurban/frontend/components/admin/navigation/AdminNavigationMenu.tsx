@@ -10,6 +10,7 @@ import { cn } from '@/lib/utils';
 import {
   getAdminMainNavigation,
   isNavItemActive,
+  mayorPortalNavigation,
   secretariaNavigation,
   shouldShowNavItem,
   superAdminNavigation,
@@ -164,7 +165,7 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
   );
 
   const allSections = useMemo(() => {
-    const sections = [...mainNavigation, secretariaNavigation];
+    const sections = [mayorPortalNavigation, ...mainNavigation, secretariaNavigation];
     if (user?.role === 'SUPER_ADMIN') sections.push(superAdminNavigation);
     return sections;
   }, [mainNavigation, user?.role]);
@@ -203,8 +204,17 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
           ...section,
           items: section.items.filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole)),
         }))
+        .filter((section) => section.title !== mayorPortalNavigation.title)
         .filter((section) => section.items.length > 0),
     [allSections, hasMinRole, hasPermission]
+  );
+
+  const visibleMayorPortalItems = useMemo(
+    () =>
+      mayorPortalNavigation.items.filter((item) =>
+        shouldShowNavItem(item, hasPermission, hasMinRole)
+      ),
+    [hasMinRole, hasPermission]
   );
 
   const normalizedQuery = normalizeText(query.trim());
@@ -351,14 +361,95 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
             )}
           </div>
         ) : (
-          visibleSections.map((section, index) => (
-            <div key={section.title || '__top__'} className="space-y-2">
-              {index > 0 && <SectionDivider color={section.color} />}
-              {renderSection(section)}
-            </div>
-          ))
+          <>
+            {visibleMayorPortalItems.length > 0 && (
+              <MayorPortalButton
+                items={visibleMayorPortalItems}
+                pathname={pathname}
+                onNavigate={onNavigate}
+              />
+            )}
+
+            {visibleSections.map((section, index) => (
+              <div key={section.title || '__top__'} className="space-y-2">
+                {(index > 0 || visibleMayorPortalItems.length > 0) && (
+                  <SectionDivider color={section.color} />
+                )}
+                {renderSection(section)}
+              </div>
+            ))}
+          </>
         )}
       </nav>
+    </div>
+  );
+}
+
+function MayorPortalButton({
+  items,
+  pathname,
+  onNavigate,
+}: {
+  items: AdminNavItem[];
+  pathname: string;
+  onNavigate?: () => void;
+}) {
+  const primary = items[0];
+  const secondaryItems = items.slice(1);
+  const isActive = items.some((item) => isNavItemActive(pathname, item.href));
+
+  if (!primary) return null;
+
+  return (
+    <div
+      className={cn(
+        'rounded-lg border p-2.5 shadow-sm transition-colors',
+        isActive
+          ? 'border-rose-300 bg-rose-50'
+          : 'border-rose-200 bg-white hover:border-rose-300 hover:bg-rose-50/70'
+      )}
+    >
+      <Link
+        href={primary.href}
+        onClick={onNavigate}
+        className="group flex items-center gap-2.5 rounded-md bg-rose-600 px-3 py-2.5 text-white shadow-sm transition-colors hover:bg-rose-700"
+      >
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-white/20">
+          <primary.icon className="h-4 w-4 text-white" />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="block truncate text-sm font-bold leading-5">Portal do Prefeito</span>
+          <span className="block truncate text-[11px] font-medium leading-4 text-rose-100">
+            Mapa, agenda e chamados
+          </span>
+        </span>
+        <ChevronRight className="h-4 w-4 shrink-0 text-rose-100 transition-transform group-hover:translate-x-0.5" />
+      </Link>
+
+      {secondaryItems.length > 0 && (
+        <div className="mt-2 grid grid-cols-3 gap-1.5">
+          {secondaryItems.map((item) => {
+            const itemActive = isNavItemActive(pathname, item.href);
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onNavigate}
+                title={item.title}
+                className={cn(
+                  'flex min-h-10 flex-col items-center justify-center gap-1 rounded-md border px-1.5 py-2 text-center text-[10px] font-semibold leading-tight transition-colors',
+                  itemActive
+                    ? 'border-rose-600 bg-rose-600 text-white'
+                    : 'border-rose-200 bg-white text-rose-900 hover:border-rose-300 hover:bg-rose-50'
+                )}
+              >
+                <item.icon className={cn('h-3.5 w-3.5', itemActive ? 'text-white' : 'text-rose-600')} />
+                <span className="line-clamp-2">{item.title}</span>
+              </Link>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }

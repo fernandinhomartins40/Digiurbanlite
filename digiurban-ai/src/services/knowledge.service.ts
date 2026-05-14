@@ -225,7 +225,7 @@ export class KnowledgeService {
     config: Prisma.InputJsonValue;
     createdBy?: string;
   }): Promise<AiKnowledgeSource> {
-    return prisma.aiKnowledgeSource.create({
+    const source = await prisma.aiKnowledgeSource.create({
       data: {
         tenantId: params.tenantId,
         name: params.name,
@@ -234,6 +234,8 @@ export class KnowledgeService {
         createdBy: params.createdBy,
       },
     });
+    this.clearQueryCaches();
+    return source;
   }
 
   async updateSource(params: {
@@ -253,7 +255,7 @@ export class KnowledgeService {
       throw new Error('Knowledge source not found');
     }
 
-    return prisma.aiKnowledgeSource.update({
+    const source = await prisma.aiKnowledgeSource.update({
       where: { id: params.sourceId },
       data: {
         ...(params.payload.name !== undefined ? { name: params.payload.name } : {}),
@@ -261,6 +263,8 @@ export class KnowledgeService {
         ...(params.payload.config !== undefined ? { config: params.payload.config } : {}),
       },
     });
+    this.clearQueryCaches();
+    return source;
   }
 
   async ingestSource(
@@ -312,7 +316,7 @@ export class KnowledgeService {
     this.runtimeStats.ingestions += 1;
     this.runtimeStats.ingestedChunks += chunks.length;
     this.runtimeStats.lastIngestedAt = new Date().toISOString();
-    this.searchCache.clear();
+    this.clearQueryCaches();
 
     logger.info('Knowledge source ingested', {
       tenantId,
@@ -343,7 +347,11 @@ export class KnowledgeService {
     this.pruneCaches();
 
     const limit = clamp(params.limit ?? config.maxContextChunks, 1, 20);
-    const cacheKey = `${params.tenantId}:${limit}:${normalizedQuery.toLowerCase()}`;
+    const requestedScopes = Array.isArray(params.scopes)
+      ? Array.from(new Set(params.scopes)).filter(Boolean)
+      : [];
+    const scopeKey = requestedScopes.length ? requestedScopes.sort().join(',') : 'all';
+    const cacheKey = `${params.tenantId}:${limit}:${scopeKey}:${normalizedQuery.toLowerCase()}`;
     const cached = this.searchCache.get(cacheKey);
     if (cached && cached.expiresAt > Date.now()) {
       this.runtimeStats.queryCacheHits += 1;
@@ -353,9 +361,6 @@ export class KnowledgeService {
     this.runtimeStats.queryCacheMisses += 1;
     const terms = normalizeTerms(normalizedQuery);
     let scopedSourceIds: string[] | undefined;
-    const requestedScopes = Array.isArray(params.scopes)
-      ? Array.from(new Set(params.scopes)).filter(Boolean)
-      : [];
 
     if (requestedScopes.length > 0) {
       const scopedSources = await prisma.aiKnowledgeSource.findMany({
@@ -965,6 +970,11 @@ export class KnowledgeService {
         this.queryEmbeddingCache.delete(key);
       }
     }
+  }
+
+  private clearQueryCaches(): void {
+    this.searchCache.clear();
+    this.queryEmbeddingCache.clear();
   }
 }
 

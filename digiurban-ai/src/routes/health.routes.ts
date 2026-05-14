@@ -7,7 +7,13 @@ import { aiProviderService } from '../services/ai-provider.service';
 
 const router = Router();
 
-router.get('/health', (_req, res) => {
+router.get('/health', async (_req, res) => {
+  const persistedObservability = await aiObservabilityService
+    .getPersistentSnapshot(config.defaultTenantId)
+    .catch((error) => ({
+      error: error instanceof Error ? error.message : 'failed_to_load_persistent_observability',
+    }));
+
   res.json({
     status: 'ok',
     service: 'digiurban-ai',
@@ -20,7 +26,10 @@ router.get('/health', (_req, res) => {
     llamacpp: llamaCppService.getRuntimeStatus(),
     providers: aiProviderService.getRuntimeStatus(),
     knowledge: knowledgeService.getRuntimeStats(),
-    observability: aiObservabilityService.getSnapshot(),
+    observability: {
+      memory: aiObservabilityService.getSnapshot(),
+      persisted: persistedObservability,
+    },
     timestamp: new Date().toISOString(),
   });
 });

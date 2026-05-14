@@ -205,3 +205,24 @@ model AiTokenUsage {
   @@index([conversationId, createdAt])
   @@map("ai_token_usage")
 }
+
+model AiInferenceEvent {
+  id                    String   @id @default(cuid())
+  tenantId              String   @default("default")
+  userId                String?
+  source                String?
+  routeKind             String
+  experience            String
+  model                 String
+  latencyMs             Int      @default(0)
+  firstTokenLatencyMs   Int?
+  deterministicResponse Boolean  @default(false)
+  toolFirst             Boolean  @default(false)
+  webSearch             Boolean  @default(false)
+  createdAt             DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([routeKind, createdAt])
+  @@index([model, createdAt])
+  @@map("ai_inference_events")
+}

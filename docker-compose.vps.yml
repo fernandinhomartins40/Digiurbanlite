@@ -87,8 +87,14 @@ services:
       - "3072"
       - -n
       - "220"
+      - --parallel
+      - "2"
+      - --batch-size
+      - "512"
+      - --ubatch-size
+      - "128"
       - --threads
-      - "4"
+      - "${LLAMACPP_THREADS:-4}"
     networks:
       - digiurban_network
     deploy:
@@ -364,9 +370,11 @@ services:
       - AI_RAG_SEMANTIC_WEIGHT=0.65
       - AI_RAG_LEXICAL_WEIGHT=0.35
       - AI_RAG_QUERY_CACHE_TTL_MS=120000
-      - AI_EMBEDDINGS_ENABLED=false
-      - AI_EMBEDDINGS_MODEL=${AI_LLAMACPP_MODEL:-qwen3-1.7b-instruct-q4_k_m}
+      - AI_EMBEDDINGS_ENABLED=${AI_EMBEDDINGS_ENABLED:-false}
+      - AI_EMBEDDINGS_BASE_URL=${AI_EMBEDDINGS_BASE_URL:-http://llamacpp:8080}
+      - AI_EMBEDDINGS_MODEL=${AI_EMBEDDINGS_MODEL:-nomic-embed-text-v1.5}
       - AI_EMBEDDINGS_TIMEOUT_MS=15000
+      - AI_EMBEDDINGS_BATCH_SIZE=12
       - AI_EMBEDDINGS_QUERY_CACHE_TTL_MS=300000
       - RATE_LIMIT_WINDOW_MS=60000
       - RATE_LIMIT_MAX_REQUESTS=150

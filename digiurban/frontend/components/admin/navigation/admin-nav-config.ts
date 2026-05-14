@@ -104,7 +104,6 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           permissions: ['protocols:read'],
           badge: numberBadge(stats?.pendingProtocols),
         },
-        { title: 'Criar Chamado', href: '/admin/chamados', icon: AlertCircle, minRole: 'ADMIN' },
         {
           title: 'Cidadãos',
           href: '/admin/cidadaos',
@@ -243,25 +242,6 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
       ],
     },
 
-    // ── Gabinete (ADMIN+) ──────────────────────────────────────────────────
-    {
-      title: 'Gabinete',
-      color: 'rose',
-      collapsible: true,
-      defaultCollapsed: true,
-      items: [
-        {
-          title: 'Painel do Prefeito',
-          href: '/admin/gabinete/painel-prefeito',
-          icon: Building2,
-          minRole: 'ADMIN',
-          badge: 'NOVO',
-        },
-        { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' },
-        { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'ADMIN' },
-      ],
-    },
-
     // ── Equipe e Sistema ───────────────────────────────────────────────────
     {
       title: 'Equipe e Sistema',
@@ -278,6 +258,22 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
     },
   ];
 }
+
+export const mayorPortalNavigation: AdminNavSection = {
+  title: 'Portal do Prefeito',
+  color: 'rose',
+  items: [
+    {
+      title: 'Painel do Prefeito',
+      href: '/admin/gabinete/painel-prefeito',
+      icon: Building2,
+      minRole: 'ADMIN',
+    },
+    { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' },
+    { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'ADMIN' },
+    { title: 'Criar Chamado', href: '/admin/chamados', icon: AlertCircle, minRole: 'ADMIN' },
+  ],
+};
 
 export const secretariaNavigation: AdminNavSection = {
   title: 'Secretarias',

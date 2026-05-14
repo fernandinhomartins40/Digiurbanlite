@@ -4,7 +4,7 @@ import { AiProviderId } from '../types';
 
 export interface AiProviderSettingsView {
   provider: AiProviderId;
-  fallbackProvider: null;
+  fallbackProvider: AiProviderId | null;
   fastModel?: string | null;
   contextualModel?: string | null;
   qualityModel?: string | null;
@@ -19,7 +19,7 @@ export interface AiProviderSettingsResolved extends AiProviderSettingsView {}
 
 export interface UpdateAiProviderSettingsInput {
   provider: AiProviderId;
-  fallbackProvider?: null;
+  fallbackProvider?: AiProviderId | null;
   fastModel?: string | null;
   contextualModel?: string | null;
   qualityModel?: string | null;
@@ -43,13 +43,13 @@ export class AiProviderConfigService {
 
     return {
       provider: 'LLAMACPP',
-      fallbackProvider: null,
+      fallbackProvider: record?.fallbackProvider === 'LLAMACPP' ? 'LLAMACPP' : null,
       fastModel: record?.fastModel || config.llamaCppModel,
       contextualModel: record?.contextualModel || config.llamaCppModel,
       qualityModel: record?.qualityModel || config.llamaCppModel,
-      fallbackFastModel: null,
-      fallbackContextualModel: null,
-      fallbackQualityModel: null,
+      fallbackFastModel: record?.fallbackFastModel || null,
+      fallbackContextualModel: record?.fallbackContextualModel || null,
+      fallbackQualityModel: record?.fallbackQualityModel || null,
       isEnabled: record?.isEnabled ?? true,
       updatedAt: record?.updatedAt?.toISOString() || null,
     };
@@ -67,25 +67,25 @@ export class AiProviderConfigService {
       where: { tenantId },
       update: {
         provider: 'LLAMACPP',
-        fallbackProvider: null,
+        fallbackProvider: input.fallbackProvider === 'LLAMACPP' ? 'LLAMACPP' : null,
         fastModel: normalizeOptionalModel(input.fastModel) || config.llamaCppModel,
         contextualModel: normalizeOptionalModel(input.contextualModel) || config.llamaCppModel,
         qualityModel: normalizeOptionalModel(input.qualityModel) || config.llamaCppModel,
-        fallbackFastModel: null,
-        fallbackContextualModel: null,
-        fallbackQualityModel: null,
+        fallbackFastModel: normalizeOptionalModel(input.fallbackFastModel) || null,
+        fallbackContextualModel: normalizeOptionalModel(input.fallbackContextualModel) || null,
+        fallbackQualityModel: normalizeOptionalModel(input.fallbackQualityModel) || null,
         isEnabled: input.isEnabled ?? true,
       },
       create: {
         tenantId,
         provider: 'LLAMACPP',
-        fallbackProvider: null,
+        fallbackProvider: input.fallbackProvider === 'LLAMACPP' ? 'LLAMACPP' : null,
         fastModel: normalizeOptionalModel(input.fastModel) || config.llamaCppModel,
         contextualModel: normalizeOptionalModel(input.contextualModel) || config.llamaCppModel,
         qualityModel: normalizeOptionalModel(input.qualityModel) || config.llamaCppModel,
-        fallbackFastModel: null,
-        fallbackContextualModel: null,
-        fallbackQualityModel: null,
+        fallbackFastModel: normalizeOptionalModel(input.fallbackFastModel) || null,
+        fallbackContextualModel: normalizeOptionalModel(input.fallbackContextualModel) || null,
+        fallbackQualityModel: normalizeOptionalModel(input.fallbackQualityModel) || null,
         isEnabled: input.isEnabled ?? true,
       },
     });

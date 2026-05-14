@@ -116,11 +116,17 @@ export class LlamaCppServiceError extends Error {
 
 export class LlamaCppService {
   private readonly client: AxiosInstance;
+  private readonly embeddingsClient: AxiosInstance;
 
   constructor() {
     this.client = axios.create({
       baseURL: config.llamaCppBaseUrl,
       timeout: config.llamaCppTimeoutMs,
+      headers: { 'Content-Type': 'application/json' },
+    });
+    this.embeddingsClient = axios.create({
+      baseURL: config.embeddingsBaseUrl,
+      timeout: config.embeddingsTimeoutMs,
       headers: { 'Content-Type': 'application/json' },
     });
   }
@@ -261,7 +267,7 @@ export class LlamaCppService {
     if (!inputs.length) return [];
 
     try {
-      const response = await this.client.post<LlamaCppEmbeddingResponse>('/v1/embeddings', {
+      const response = await this.embeddingsClient.post<LlamaCppEmbeddingResponse>('/v1/embeddings', {
         model,
         input: inputs,
       }, { timeout: config.embeddingsTimeoutMs });
@@ -292,6 +298,7 @@ export class LlamaCppService {
       numCtx: config.llamaCppNumCtx,
       maxTokens: config.llamaCppMaxTokens,
       embeddingsEnabled: config.embeddingsEnabled,
+      embeddingsBaseUrl: config.embeddingsBaseUrl,
       embeddingsModel: config.embeddingsModel,
     };
   }
