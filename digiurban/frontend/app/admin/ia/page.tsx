@@ -3,11 +3,14 @@
 import { ChangeEvent, FormEvent, KeyboardEvent, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Archive,
+  BarChart3,
   Bot,
   Brain,
   ChevronLeft,
   ChevronRight,
   Edit3,
+  ExternalLink,
+  ListChecks,
   Loader2,
   Menu,
   MoreHorizontal,
@@ -36,6 +39,7 @@ import { useToast } from '@/hooks/use-toast';
 import {
   aiPlatformService,
   AiConversation,
+  AiInteractiveCard,
   AiMessage,
   AiMessageAttachment,
   AiMessageMetadata,
@@ -161,6 +165,119 @@ function AssistantPendingState() {
         <div className="h-2.5 w-11/12 animate-pulse rounded-full bg-slate-200" style={{ animationDelay: '120ms' }} />
         <div className="h-2.5 w-8/12 animate-pulse rounded-full bg-slate-200" style={{ animationDelay: '240ms' }} />
       </div>
+    </div>
+  );
+}
+
+function InteractiveCards({
+  cards,
+  onPrompt,
+}: {
+  cards: AiInteractiveCard[];
+  onPrompt: (prompt: string) => void;
+}) {
+  if (!cards.length) return null;
+
+  const toneClasses: Record<string, string> = {
+    cyan: 'border-cyan-200 bg-cyan-50/80 text-cyan-800',
+    emerald: 'border-emerald-200 bg-emerald-50/80 text-emerald-800',
+    amber: 'border-amber-200 bg-amber-50/80 text-amber-800',
+    slate: 'border-slate-200 bg-slate-50 text-slate-800',
+  };
+
+  return (
+    <div className="mt-3 space-y-3">
+      {cards.slice(0, 3).map((card, cardIndex) => {
+        const isMetric = card.type === 'metric_grid';
+        const tone = toneClasses[card.tone || 'slate'] || toneClasses.slate;
+        return (
+          <div key={`${card.title}-${cardIndex}`} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className={`flex items-start gap-2 rounded-t-xl border-b px-3 py-3 ${tone}`}>
+              {isMetric ? <BarChart3 className="mt-0.5 h-4 w-4 shrink-0" /> : <ListChecks className="mt-0.5 h-4 w-4 shrink-0" />}
+              <div className="min-w-0">
+                <p className="text-sm font-semibold">{card.title}</p>
+                {card.subtitle ? <p className="text-xs opacity-80">{card.subtitle}</p> : null}
+              </div>
+            </div>
+
+            {isMetric ? (
+              <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-3">
+                {card.items.slice(0, 9).map((item, index) => (
+                  <a
+                    key={`${item.label}-${index}`}
+                    href={item.href || undefined}
+                    className={`rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 ${item.href ? 'transition hover:border-cyan-300 hover:bg-cyan-50' : ''}`}
+                  >
+                    <p className="text-[11px] font-medium uppercase tracking-wide text-slate-500">{item.label}</p>
+                    <p className="mt-1 text-xl font-semibold text-slate-900">{item.value}</p>
+                    {item.description ? <p className="mt-1 truncate text-xs text-slate-500">{item.description}</p> : null}
+                  </a>
+                ))}
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-100">
+                {card.items.slice(0, 8).map((item, index) => {
+                  const body = (
+                    <div className="flex min-w-0 flex-1 items-start justify-between gap-3 px-3 py-2.5">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-slate-900">{item.label}</p>
+                        <p className="truncate text-xs text-slate-600">{item.value}</p>
+                        {item.description ? <p className="mt-0.5 truncate text-[11px] text-slate-500">{item.description}</p> : null}
+                      </div>
+                      <div className="flex shrink-0 items-center gap-2">
+                        {item.status ? (
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] text-slate-600">
+                            {item.status}
+                          </span>
+                        ) : null}
+                        {item.href ? <ExternalLink className="h-3.5 w-3.5 text-slate-400" /> : null}
+                      </div>
+                    </div>
+                  );
+
+                  return item.href ? (
+                    <a key={`${item.label}-${index}`} href={item.href} className="block transition hover:bg-cyan-50/60">
+                      {body}
+                    </a>
+                  ) : (
+                    <div key={`${item.label}-${index}`}>{body}</div>
+                  );
+                })}
+              </div>
+            )}
+
+            {card.actions?.length ? (
+              <div className="flex flex-wrap gap-2 border-t border-slate-100 px-3 py-3">
+                {card.actions.slice(0, 4).map((action, index) =>
+                  action.href ? (
+                    <a
+                      key={`${action.label}-${index}`}
+                      href={action.href}
+                      className={`inline-flex h-8 items-center gap-1 rounded-full px-3 text-xs font-medium ${
+                        action.variant === 'primary'
+                          ? 'bg-cyan-600 text-white hover:bg-cyan-700'
+                          : 'border border-slate-200 bg-white text-slate-700 hover:border-cyan-300 hover:text-cyan-700'
+                      }`}
+                    >
+                      {action.label}
+                      <ExternalLink className="h-3 w-3" />
+                    </a>
+                  ) : action.prompt ? (
+                    <button
+                      key={`${action.label}-${index}`}
+                      type="button"
+                      onClick={() => onPrompt(action.prompt || '')}
+                      className="inline-flex h-8 items-center rounded-full border border-slate-200 bg-white px-3 text-xs font-medium text-slate-700 hover:border-cyan-300 hover:text-cyan-700"
+                    >
+                      {action.label}
+                    </button>
+                  ) : null,
+                )}
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -855,6 +972,9 @@ export default function AdminAiPage() {
                   const messageAttachments = getMessageAttachments(message);
                   const webSearch = metadata.webSearch;
                   const webSources = Array.isArray(webSearch?.sources) ? webSearch.sources : [];
+                  const interactiveCards = Array.isArray(metadata.interactiveCards)
+                    ? metadata.interactiveCards
+                    : [];
                   const internalSources = Array.isArray(metadata.contextSources)
                     ? metadata.contextSources.filter(
                         (source) =>
@@ -931,6 +1051,10 @@ export default function AdminAiPage() {
                               </div>
                             ))}
                           </div>
+                        ) : null}
+
+                        {!isUser && interactiveCards.length > 0 ? (
+                          <InteractiveCards cards={interactiveCards} onPrompt={applyPromptSuggestion} />
                         ) : null}
 
                         {!isUser && webSources.length > 0 ? (

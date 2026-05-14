@@ -40,6 +40,27 @@ export interface AiMessageMetadata {
   deterministicResponse?: boolean;
   performance?: AiPerformanceMetrics;
   webSearch?: AiWebSearchMetadata;
+  interactiveCards?: AiInteractiveCard[];
+}
+
+export interface AiInteractiveCard {
+  type: 'metric_grid' | 'record_list' | 'action_grid';
+  title: string;
+  subtitle?: string;
+  tone?: 'cyan' | 'emerald' | 'amber' | 'slate';
+  items: Array<{
+    label: string;
+    value: string | number;
+    description?: string;
+    href?: string;
+    status?: string;
+  }>;
+  actions?: Array<{
+    label: string;
+    href?: string;
+    prompt?: string;
+    variant?: 'primary' | 'secondary';
+  }>;
 }
 
 export interface AiPerformanceMetrics {

@@ -89,4 +89,5 @@ export interface ChatCompletionResult {
   circuitBreakerOpen?: boolean;
   routeKind?: InferenceRouteKind;
   deterministicResponse?: boolean;
+  interactiveCards?: unknown;
 }

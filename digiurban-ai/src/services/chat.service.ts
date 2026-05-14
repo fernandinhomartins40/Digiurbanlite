@@ -36,6 +36,137 @@ type WebSearchMetadata = {
   }>;
 };
 
+type InteractiveAction = {
+  label: string;
+  href?: string;
+  prompt?: string;
+  variant?: 'primary' | 'secondary';
+};
+
+type InteractiveCard = {
+  type: 'metric_grid' | 'record_list' | 'action_grid';
+  title: string;
+  subtitle?: string;
+  tone?: 'cyan' | 'emerald' | 'amber' | 'slate';
+  items: Array<{
+    label: string;
+    value: string | number;
+    description?: string;
+    href?: string;
+    status?: string;
+  }>;
+  actions?: InteractiveAction[];
+};
+
+function isConcreteAdminPath(path?: string): path is string {
+  return Boolean(path && path.startsWith('/admin') && !path.includes('[') && !path.includes(']'));
+}
+
+function buildApplicationContextCards(results: Array<{
+  id: string;
+  title: string;
+  summary: string;
+  path?: string;
+  kind?: string;
+  minRole?: string;
+  permissions?: string[];
+}>): InteractiveCard[] {
+  const concreteResults = results.filter((result) => isConcreteAdminPath(result.path)).slice(0, 8);
+  if (!concreteResults.length) {
+    return [];
+  }
+
+  const primary = concreteResults[0];
+  const actions: InteractiveAction[] = [
+    ...(primary?.path
+      ? [{
+          label: `Abrir ${primary.title}`,
+          href: primary.path,
+          variant: 'primary' as const,
+        }]
+      : []),
+    {
+      label: 'Ver inicio',
+      href: '/admin',
+      variant: 'secondary',
+    },
+    {
+      label: 'Perguntar passo a passo',
+      prompt: `Explique o passo a passo para usar ${primary?.title || 'essa funcionalidade'}`,
+      variant: 'secondary',
+    },
+  ];
+
+  return [
+    {
+      type: 'action_grid',
+      title: 'Atalhos encontrados',
+      subtitle: 'Funcionalidades mapeadas no portal administrativo',
+      tone: 'slate',
+      items: concreteResults.map((result) => ({
+        label: result.title,
+        value: result.path || result.summary,
+        description: result.summary,
+        href: result.path,
+        status: result.kind === 'workflow'
+          ? 'Fluxo'
+          : result.minRole
+            ? `Perfil: ${result.minRole}`
+            : result.permissions?.length
+              ? 'Permissao requerida'
+              : 'Tela',
+      })),
+      actions,
+    },
+  ];
+}
+
+function buildApplicationContextContent(results: Array<{
+  title: string;
+  summary: string;
+  path?: string;
+}>): string | null {
+  const concreteResults = results.filter((result) => isConcreteAdminPath(result.path)).slice(0, 5);
+  if (!concreteResults.length) {
+    return null;
+  }
+
+  return [
+    'Encontrei estes atalhos no portal administrativo:',
+    ...concreteResults.map((result, index) =>
+      `${index + 1}. ${result.title} - ${result.path}\n   ${truncateForModel(result.summary, 180)}`,
+    ),
+  ].join('\n');
+}
+
+function buildDeterministicApplicationContextCompletion(params: {
+  query: string;
+  latencyStartedAt: number;
+}): ChatCompletionResult | null {
+  const results = applicationContextService.search({ query: params.query, limit: 8 });
+  const content = buildApplicationContextContent(results);
+  if (!content) {
+    return null;
+  }
+
+  return {
+    content,
+    model: 'application-context-deterministic',
+    inputTokens: 0,
+    outputTokens: 0,
+    totalTokens: 0,
+    latencyMs: Date.now() - params.latencyStartedAt,
+    finishReason: 'deterministic_application_context',
+    profile: 'navigation',
+    attemptedModels: [],
+    usedFallback: false,
+    circuitBreakerOpen: false,
+    routeKind: 'context_navigation',
+    deterministicResponse: true,
+    interactiveCards: buildApplicationContextCards(results),
+  };
+}
+
 interface MessageAttachmentInput {
   name: string;
   mimeType?: string;
@@ -1209,6 +1340,90 @@ function buildApplicationDataContent(data: Record<string, unknown>): string | nu
   return lines.length > 1 ? lines.join('\n') : null;
 }
 
+function buildApplicationDataCards(data: Record<string, unknown>): InteractiveCard[] {
+  if (data.ok !== true) {
+    return [];
+  }
+
+  const entity = typeof data.entity === 'string' ? data.entity : '';
+
+  if (entity === 'protocols' || entity === 'admin_tickets') {
+    const totals = data.totals && typeof data.totals === 'object' && !Array.isArray(data.totals)
+      ? data.totals as Record<string, unknown>
+      : {};
+    const isProtocols = entity === 'protocols';
+    return [
+      {
+        type: 'metric_grid',
+        title: isProtocols ? 'Protocolos' : 'Chamados',
+        subtitle: 'Dados consultados diretamente no banco',
+        tone: isProtocols ? 'cyan' : 'emerald',
+        items: Object.entries(totals)
+          .filter(([, value]) => typeof value === 'number')
+          .map(([key, value]) => ({
+            label: formatMetricLabel(key),
+            value: value as number,
+          })),
+        actions: [
+          {
+            label: isProtocols ? 'Abrir protocolos' : 'Abrir chamados',
+            href: isProtocols ? '/admin/protocolos' : '/admin/chamados/lista',
+            variant: 'primary',
+          },
+          {
+            label: isProtocols ? 'Listar abertos' : 'Listar pendentes',
+            prompt: isProtocols ? 'Liste os protocolos abertos' : 'Liste os chamados pendentes',
+            variant: 'secondary',
+          },
+        ],
+      },
+    ];
+  }
+
+  if (entity === 'protocol_list' || entity === 'ticket_list') {
+    const items = Array.isArray(data.items) ? data.items : [];
+    const isProtocols = entity === 'protocol_list';
+    return [
+      {
+        type: 'record_list',
+        title: isProtocols ? 'Protocolos encontrados' : 'Chamados encontrados',
+        subtitle: `${items.length} registro(s) retornado(s)`,
+        tone: isProtocols ? 'cyan' : 'emerald',
+        items: items.slice(0, 12).map((item, index) => {
+          const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+          const id = typeof row.id === 'string' ? row.id : '';
+          const number = typeof row.number === 'string' ? row.number : `#${index + 1}`;
+          const title = typeof row.title === 'string' ? row.title : 'Sem titulo';
+          const status = formatOperationalStatus(row.status);
+          const department = typeof row.departmentName === 'string' ? row.departmentName : undefined;
+          const service = typeof row.serviceName === 'string' ? row.serviceName : undefined;
+          return {
+            label: number,
+            value: title,
+            status,
+            description: [department, service].filter(Boolean).join(' | ') || undefined,
+            href: isProtocols && id ? `/admin/protocolos/${id}` : undefined,
+          };
+        }),
+        actions: [
+          {
+            label: isProtocols ? 'Ver todos protocolos' : 'Ver todos chamados',
+            href: isProtocols ? '/admin/protocolos' : '/admin/chamados/lista',
+            variant: 'primary',
+          },
+          {
+            label: isProtocols ? 'Resumo dos protocolos' : 'Resumo dos chamados',
+            prompt: isProtocols ? 'Quantos protocolos temos em aberto?' : 'Quantos chamados temos pendentes?',
+            variant: 'secondary',
+          },
+        ],
+      },
+    ];
+  }
+
+  return [];
+}
+
 async function buildDeterministicApplicationDataCompletion(params: {
   query: string;
   latencyStartedAt: number;
@@ -1234,6 +1449,7 @@ async function buildDeterministicApplicationDataCompletion(params: {
     circuitBreakerOpen: false,
     routeKind: 'context_metrics',
     deterministicResponse: true,
+    interactiveCards: buildApplicationDataCards(data),
   };
 }
 
@@ -1639,6 +1855,7 @@ export class ChatService {
                 responseFormat: toJsonValue(params.responseFormat),
                 builtinToolsEnabled: false,
                 contextSources: ['data:live_metrics_tools'],
+                interactiveCards: toJsonValue(completion.interactiveCards),
               },
             },
           });
@@ -1666,6 +1883,75 @@ export class ChatService {
           conversationId: conversation.id,
           error: error instanceof Error ? error.message : String(error),
         });
+      }
+    }
+
+    if (inferencePlan.deterministicApplicationContext && !inferencePlan.deterministicApplicationData) {
+      const completion = buildDeterministicApplicationContextCompletion({
+        query: normalized,
+        latencyStartedAt: requestStartedAt,
+      });
+
+      if (completion) {
+        aiObservabilityService.recordInference({
+          routeKind: 'context_navigation',
+          experience: inferencePlan.experience,
+          model: completion.model,
+          latencyMs: completion.latencyMs,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: false,
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: 'ADMIN_CHAT',
+        });
+
+        const assistantMessage = await prisma.aiMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: AiMessageRole.ASSISTANT,
+            content: completion.content,
+            model: completion.model,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            latencyMs: completion.latencyMs,
+            metadata: {
+              finishReason: completion.finishReason,
+              thinkEnabled: false,
+              performance: buildPerformanceMetadata(completion),
+              chatMode,
+              experience: inferencePlan.experience,
+              profile: completion.profile,
+              routeKind: completion.routeKind,
+              attemptedModels: [],
+              usedFallback: false,
+              circuitBreakerOpen: false,
+              deterministicResponse: true,
+              responseFormat: toJsonValue(params.responseFormat),
+              builtinToolsEnabled: false,
+              contextSources: ['app:admin_routes'],
+              interactiveCards: toJsonValue(completion.interactiveCards),
+            },
+          },
+        });
+
+        await prisma.aiConversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessageAt: new Date(),
+            title:
+              conversation.title === 'Nova conversa'
+                ? normalizeConversationTitle(userMessage.content)
+                : undefined,
+          },
+        });
+
+        return {
+          conversationId: conversation.id,
+          assistantMessage,
+          contextSources: 1,
+        };
       }
     }
 
@@ -2173,6 +2459,7 @@ export class ChatService {
                 responseFormat: toJsonValue(params.responseFormat),
                 builtinToolsEnabled: false,
                 contextSources: ['data:live_metrics_tools'],
+                interactiveCards: toJsonValue(completion.interactiveCards),
               },
             },
           });
@@ -2200,6 +2487,77 @@ export class ChatService {
           conversationId: conversation.id,
           error: error instanceof Error ? error.message : String(error),
         });
+      }
+    }
+
+    if (inferencePlan.deterministicApplicationContext && !inferencePlan.deterministicApplicationData) {
+      const completion = buildDeterministicApplicationContextCompletion({
+        query: normalized,
+        latencyStartedAt: requestStartedAt,
+      });
+
+      if (completion) {
+        params.onContentDelta?.(completion.content);
+
+        aiObservabilityService.recordInference({
+          routeKind: 'context_navigation',
+          experience: inferencePlan.experience,
+          model: completion.model,
+          latencyMs: completion.latencyMs,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: false,
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: 'ADMIN_CHAT',
+        });
+
+        const assistantMessage = await prisma.aiMessage.create({
+          data: {
+            conversationId: conversation.id,
+            role: AiMessageRole.ASSISTANT,
+            content: completion.content,
+            model: completion.model,
+            promptTokens: 0,
+            completionTokens: 0,
+            totalTokens: 0,
+            latencyMs: completion.latencyMs,
+            metadata: {
+              finishReason: completion.finishReason,
+              thinkEnabled: false,
+              performance: buildPerformanceMetadata(completion),
+              chatMode,
+              experience: inferencePlan.experience,
+              profile: completion.profile,
+              routeKind: completion.routeKind,
+              attemptedModels: [],
+              usedFallback: false,
+              circuitBreakerOpen: false,
+              deterministicResponse: true,
+              responseFormat: toJsonValue(params.responseFormat),
+              builtinToolsEnabled: false,
+              contextSources: ['app:admin_routes'],
+              interactiveCards: toJsonValue(completion.interactiveCards),
+            },
+          },
+        });
+
+        await prisma.aiConversation.update({
+          where: { id: conversation.id },
+          data: {
+            lastMessageAt: new Date(),
+            title:
+              conversation.title === 'Nova conversa'
+                ? normalizeConversationTitle(userMessage.content)
+                : undefined,
+          },
+        });
+
+        return {
+          conversationId: conversation.id,
+          assistantMessage,
+          contextSources: 1,
+        };
       }
     }
 
@@ -2557,6 +2915,7 @@ export class ChatService {
     usedFallback?: boolean;
     circuitBreakerOpen?: boolean;
     deterministicResponse?: boolean;
+    interactiveCards?: unknown;
     webSearch?: WebSearchMetadata;
   }> {
     const prompt = params.prompt.trim();
@@ -2669,6 +3028,7 @@ export class ChatService {
             usedFallback: false,
             circuitBreakerOpen: false,
             deterministicResponse: true,
+            interactiveCards: completion.interactiveCards,
             webSearch: buildWebSearchMetadata([], false),
           };
         }
@@ -2679,6 +3039,52 @@ export class ChatService {
           source: params.source,
           error: error instanceof Error ? error.message : String(error),
         });
+      }
+    }
+
+    if (inferencePlan.deterministicApplicationContext && !inferencePlan.deterministicApplicationData) {
+      const completion = buildDeterministicApplicationContextCompletion({
+        query: prompt,
+        latencyStartedAt: requestStartedAt,
+      });
+
+      if (completion) {
+        aiObservabilityService.recordInference({
+          routeKind: 'context_navigation',
+          experience: inferencePlan.experience,
+          model: completion.model,
+          latencyMs: completion.latencyMs,
+          deterministicResponse: true,
+          toolFirst: true,
+          webSearch: false,
+          tenantId: params.tenantId,
+          userId: params.userId,
+          source: params.source,
+        });
+
+        return {
+          content: completion.content,
+          model: completion.model,
+          inputTokens: 0,
+          outputTokens: 0,
+          totalTokens: 0,
+          thinking: undefined,
+          firstTokenLatencyMs: 0,
+          totalDurationMs: completion.latencyMs,
+          loadDurationMs: 0,
+          promptEvalDurationMs: 0,
+          evalDurationMs: 0,
+          tokensPerSecond: undefined,
+          contextSources: 1,
+          profile: completion.profile,
+          routeKind: completion.routeKind,
+          attemptedModels: [],
+          usedFallback: false,
+          circuitBreakerOpen: false,
+          deterministicResponse: true,
+          interactiveCards: completion.interactiveCards,
+          webSearch: buildWebSearchMetadata([], false),
+        };
       }
     }
 

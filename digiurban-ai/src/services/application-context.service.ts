@@ -162,6 +162,80 @@ function buildSearchableText(entry: ApplicationContextEntry): string {
   );
 }
 
+function isFunctionalityMapQuery(normalized: string): boolean {
+  return [
+    'funcionalidade',
+    'funcionalidades',
+    'funcoes',
+    'funcoes do sistema',
+    'modulos',
+    'mapa do sistema',
+    'tudo que o sistema faz',
+    'recursos do sistema',
+  ].some((signal) => normalized.includes(signal));
+}
+
+function buildFunctionalityMapResults(limit: number): ApplicationContextResult[] {
+  const preferredPaths = new Set([
+    '/admin',
+    '/admin/protocolos',
+    '/admin/chamados',
+    '/admin/chamados/lista',
+    '/admin/cidadaos',
+    '/admin/servicos',
+    '/admin/gabinete/painel-prefeito',
+    '/admin/gabinete/mapa-demandas',
+    '/admin/agenda',
+    '/admin/ia',
+    '/admin/analytics',
+    '/admin/relatorios',
+    '/admin/meus-documentos',
+    '/admin/templates-documentos',
+    '/admin/organograma',
+    '/admin/servidores/equipe',
+    '/admin/configuracoes',
+    '/admin/integracoes',
+    '/admin/apps/saude/atendimento',
+    '/admin/apps/saude/cadastros',
+    '/admin/apps/saude/farmacia',
+    '/admin/apps/saude/tfd',
+  ]);
+
+  const preferred = applicationEntries.filter((entry) => entry.path && preferredPaths.has(entry.path));
+  const byCategory = new Map<string, ApplicationContextEntry>();
+  for (const entry of generatedEntries) {
+    if (!entry.path || entry.path.includes('[') || entry.path.includes(']')) {
+      continue;
+    }
+    const category = entry.keywords[2] || entry.title;
+    if (!byCategory.has(category)) {
+      byCategory.set(category, entry);
+    }
+  }
+
+  const seen = new Set<string>();
+  return [...preferred, ...Array.from(byCategory.values())]
+    .filter((entry) => {
+      const key = entry.path || entry.id;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, Math.max(1, Math.min(limit, 12)))
+    .map((entry, index) => ({
+      id: entry.id,
+      kind: entry.kind,
+      title: entry.title,
+      summary: entry.summary,
+      path: entry.path,
+      minRole: entry.minRole,
+      permissions: entry.permissions,
+      steps: entry.steps,
+      score: Number((10 - index * 0.1).toFixed(3)),
+      source: entry.source,
+    }));
+}
+
 function scoreEntry(entry: ApplicationContextEntry, queryTerms: string[]): number {
   if (!queryTerms.length) {
     return 0;
@@ -198,6 +272,10 @@ export class ApplicationContextService {
     const normalized = normalizeText(params.query);
     if (!normalized) {
       return [];
+    }
+
+    if (isFunctionalityMapQuery(normalized)) {
+      return buildFunctionalityMapResults(params.limit || 8);
     }
 
     const queryTerms = Array.from(

@@ -7,6 +7,7 @@ type CountRow = {
 };
 
 type ProtocolListRow = {
+  id: string;
   number: string;
   title: string;
   status: string;
@@ -17,6 +18,7 @@ type ProtocolListRow = {
 };
 
 type TicketListRow = {
+  id: string;
   number: string;
   title: string;
   status: string;
@@ -185,6 +187,7 @@ export class ApplicationDataService {
       : Prisma.empty;
     const rows = await prisma.$queryRaw<ProtocolListRow[]>(Prisma.sql`
       SELECT
+        p."id",
         p."number",
         p."title",
         p."status"::text AS "status",
@@ -211,6 +214,7 @@ export class ApplicationDataService {
       limit: params.limit,
       items: rows.map((row) => ({
         number: row.number,
+        id: row.id,
         title: row.title,
         status: row.status,
         priority: row.priority,
@@ -230,6 +234,7 @@ export class ApplicationDataService {
       : Prisma.empty;
     const rows = await prisma.$queryRaw<TicketListRow[]>(Prisma.sql`
       SELECT
+        t."id",
         t."number",
         t."title",
         t."status"::text AS "status",
@@ -256,6 +261,7 @@ export class ApplicationDataService {
       limit: params.limit,
       items: rows.map((row) => ({
         number: row.number,
+        id: row.id,
         title: row.title,
         status: row.status,
         priority: row.priority,
