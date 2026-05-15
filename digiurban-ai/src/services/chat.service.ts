@@ -67,6 +67,7 @@ function buildApplicationContextCards(results: Array<{
   title: string;
   summary: string;
   path?: string;
+  category?: string;
   kind?: string;
   minRole?: string;
   permissions?: string[];
@@ -97,13 +98,20 @@ function buildApplicationContextCards(results: Array<{
     },
   ];
 
-  return [
-    {
+  const groupedResults = concreteResults.reduce((groups, result) => {
+    const group = result.category || 'Geral';
+    const current = groups.get(group) || [];
+    current.push(result);
+    groups.set(group, current);
+    return groups;
+  }, new Map<string, typeof concreteResults>());
+
+  return Array.from(groupedResults.entries()).slice(0, 3).map(([category, entries], groupIndex) => ({
       type: 'action_grid',
-      title: 'Atalhos encontrados',
-      subtitle: 'Funcionalidades mapeadas no portal administrativo',
+      title: groupIndex === 0 ? 'Atalhos encontrados' : category,
+      subtitle: groupIndex === 0 ? 'Funcionalidades mapeadas no portal administrativo' : 'Outras telas relacionadas',
       tone: 'slate',
-      items: concreteResults.map((result) => ({
+      items: entries.map((result) => ({
         label: result.title,
         value: result.path || result.summary,
         description: result.summary,
@@ -116,9 +124,8 @@ function buildApplicationContextCards(results: Array<{
               ? 'Permissao requerida'
               : 'Tela',
       })),
-      actions,
-    },
-  ];
+      actions: groupIndex === 0 ? actions : undefined,
+    }));
 }
 
 function buildApplicationContextContent(results: Array<{
@@ -143,7 +150,7 @@ function buildDeterministicApplicationContextCompletion(params: {
   query: string;
   latencyStartedAt: number;
 }): ChatCompletionResult | null {
-  const results = applicationContextService.search({ query: params.query, limit: 8 });
+  const results = applicationContextService.search({ query: params.query, limit: 24 });
   const content = buildApplicationContextContent(results);
   if (!content) {
     return null;
@@ -1303,6 +1310,34 @@ function formatOperationalList(title: string, items: unknown): string[] {
   return [title, ...lines];
 }
 
+function formatCompactRecordList(title: string, items: unknown): string[] {
+  if (!Array.isArray(items)) {
+    return [];
+  }
+
+  if (!items.length) {
+    return [`${title}: nenhum registro encontrado para esse filtro.`];
+  }
+
+  const preview = items.slice(0, 3).map((item) => {
+    const row = item && typeof item === 'object' ? (item as Record<string, unknown>) : {};
+    const number = typeof row.number === 'string' ? row.number : undefined;
+    const itemTitle =
+      typeof row.title === 'string'
+        ? row.title
+        : typeof row.name === 'string'
+          ? row.name
+          : 'Registro';
+    const status = row.status ? formatOperationalStatus(row.status) : undefined;
+    return [number, itemTitle, status].filter(Boolean).join(' - ');
+  });
+
+  return [
+    `${title}: ${items.length} registro(s) encontrado(s). Exibindo os principais no card abaixo.`,
+    ...preview.map((line) => `- ${line}`),
+  ];
+}
+
 function buildApplicationDataContent(data: Record<string, unknown>): string | null {
   if (data.ok !== true) {
     return null;
@@ -1325,9 +1360,24 @@ function buildApplicationDataContent(data: Record<string, unknown>): string | nu
   } else if (entity === 'admin_tickets') {
     lines.push(...formatMetricBlock('Chamados', data.totals));
   } else if (entity === 'protocol_list') {
-    lines.push(...formatOperationalList('Protocolos encontrados:', data.items));
+    lines.push(...formatCompactRecordList('Protocolos encontrados', data.items));
   } else if (entity === 'ticket_list') {
-    lines.push(...formatOperationalList('Chamados encontrados:', data.items));
+    lines.push(...formatCompactRecordList('Chamados encontrados', data.items));
+  } else if (entity === 'service_list') {
+    lines.push(...formatCompactRecordList('Servicos encontrados', data.items));
+  } else if (entity === 'document_template_list') {
+    lines.push(...formatCompactRecordList('Templates de documento encontrados', data.items));
+    lines.push('Para gerar o documento oficial, abra um protocolo e use a aba de documentos gerados.');
+  } else if (entity === 'citizen_profile') {
+    const found = data.found === true;
+    const item = data.item && typeof data.item === 'object' ? data.item as Record<string, unknown> : null;
+    if (!found || !item) {
+      lines.push('Nenhum cidadao encontrado para o CPF informado.');
+    } else {
+      lines.push(`Cidadao encontrado: ${typeof item.name === 'string' ? item.name : 'Sem nome'}.`);
+      lines.push(`Status: ${item.isActive === false ? 'Inativo' : 'Ativo'} | Verificacao: ${formatOperationalStatus(item.verificationStatus)}.`);
+      lines.push('Abra o cadastro pelo card abaixo para ver os dados completos.');
+    }
   } else {
     lines.push(...formatMetricBlock('Protocolos', data.protocols));
     lines.push(...formatMetricBlock('Chamados', data.adminTickets));
@@ -1416,6 +1466,126 @@ function buildApplicationDataCards(data: Record<string, unknown>): InteractiveCa
             prompt: isProtocols ? 'Quantos protocolos temos em aberto?' : 'Quantos chamados temos pendentes?',
             variant: 'secondary',
           },
+        ],
+      },
+    ];
+  }
+
+  if (entity === 'service_list') {
+    const items = Array.isArray(data.items) ? data.items : [];
+    return [
+      {
+        type: 'record_list',
+        title: 'Servicos encontrados',
+        subtitle: `${items.length} servico(s) do catalogo`,
+        tone: 'emerald',
+        items: items.slice(0, 12).map((item) => {
+          const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+          const id = typeof row.id === 'string' ? row.id : '';
+          const name = typeof row.name === 'string' ? row.name : 'Servico';
+          const department = typeof row.departmentName === 'string' ? row.departmentName : undefined;
+          const type = typeof row.serviceType === 'string' ? formatOperationalStatus(row.serviceType) : undefined;
+          const estimatedDays = typeof row.estimatedDays === 'number' ? `${row.estimatedDays} dia(s)` : undefined;
+          return {
+            label: name,
+            value: department || 'Sem secretaria vinculada',
+            description: [type, estimatedDays, row.requiresDocuments ? 'Exige documentos' : undefined].filter(Boolean).join(' | ') || undefined,
+            href: id ? `/admin/servicos/${id}/editar` : '/admin/servicos',
+            status: typeof row.category === 'string' ? row.category : type,
+          };
+        }),
+        actions: [
+          {
+            label: 'Abrir catalogo',
+            href: '/admin/servicos',
+            variant: 'primary',
+          },
+          {
+            label: 'Criar servico',
+            href: '/admin/servicos/novo',
+            variant: 'secondary',
+          },
+        ],
+      },
+    ];
+  }
+
+  if (entity === 'citizen_profile') {
+    const item = data.item && typeof data.item === 'object' ? data.item as Record<string, unknown> : null;
+    if (!item || typeof item.id !== 'string') {
+      return [
+        {
+          type: 'action_grid',
+          title: 'Cidadao nao encontrado',
+          subtitle: 'Nenhum cadastro localizado para esse CPF',
+          tone: 'amber',
+          items: [
+            {
+              label: 'Cadastrar cidadao',
+              value: '/admin/cidadaos/novo',
+              href: '/admin/cidadaos/novo',
+              description: 'Crie um novo cadastro se o CPF estiver correto.',
+            },
+          ],
+          actions: [
+            { label: 'Abrir cidadaos', href: '/admin/cidadaos', variant: 'primary' },
+          ],
+        },
+      ];
+    }
+
+    return [
+      {
+        type: 'record_list',
+        title: 'Cadastro do cidadao',
+        subtitle: 'Dados consultados diretamente no banco',
+        tone: 'cyan',
+        items: [
+          {
+            label: typeof item.name === 'string' ? item.name : 'Cidadao',
+            value: typeof item.cpf === 'string' ? item.cpf : 'CPF informado',
+            description: [
+              typeof item.email === 'string' ? item.email : undefined,
+              typeof item.phone === 'string' ? item.phone : undefined,
+            ].filter(Boolean).join(' | ') || undefined,
+            href: `/admin/cidadaos/${item.id}`,
+            status: item.isActive === false ? 'Inativo' : 'Ativo',
+          },
+        ],
+        actions: [
+          { label: 'Abrir cadastro', href: `/admin/cidadaos/${item.id}`, variant: 'primary' },
+          { label: 'Ver protocolos', href: `/admin/cidadaos/${item.id}`, variant: 'secondary' },
+        ],
+      },
+    ];
+  }
+
+  if (entity === 'document_template_list') {
+    const items = Array.isArray(data.items) ? data.items : [];
+    return [
+      {
+        type: 'record_list',
+        title: 'Templates de documento',
+        subtitle: `${items.length} modelo(s) disponivel(is)`,
+        tone: 'amber',
+        items: items.slice(0, 8).map((item) => {
+          const row = item && typeof item === 'object' ? item as Record<string, unknown> : {};
+          const id = typeof row.id === 'string' ? row.id : '';
+          const name = typeof row.name === 'string' ? row.name : 'Template';
+          const code = typeof row.code === 'string' ? row.code : '';
+          const documentType = typeof row.documentType === 'string' ? formatOperationalStatus(row.documentType) : undefined;
+          const outputFormat = typeof row.outputFormat === 'string' ? row.outputFormat : undefined;
+          return {
+            label: name,
+            value: code || 'Template ativo',
+            description: [documentType, outputFormat].filter(Boolean).join(' | ') || undefined,
+            href: id ? `/admin/templates-documentos/${id}/view` : '/admin/templates-documentos',
+            status: row.isGlobal ? 'Global' : 'Vinculado',
+          };
+        }),
+        actions: [
+          { label: 'Abrir templates', href: '/admin/templates-documentos', variant: 'primary' },
+          { label: 'Abrir protocolos', href: '/admin/protocolos', variant: 'secondary' },
         ],
       },
     ];

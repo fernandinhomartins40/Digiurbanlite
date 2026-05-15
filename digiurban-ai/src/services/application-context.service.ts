@@ -8,6 +8,7 @@ type ApplicationContextEntry = {
   title: string;
   summary: string;
   path?: string;
+  category?: string;
   minRole?: string;
   permissions?: string[];
   steps?: string[];
@@ -21,6 +22,7 @@ export type ApplicationContextResult = {
   title: string;
   summary: string;
   path?: string;
+  category?: string;
   minRole?: string;
   permissions?: string[];
   steps?: string[];
@@ -130,6 +132,7 @@ const generatedEntries: ApplicationContextEntry[] = (adminRoutes as GeneratedRou
   title: route.title,
   summary: `${route.summary} Categoria: ${route.category}.`,
   path: route.path,
+  category: route.category,
   keywords: route.keywords,
   source: 'generated',
 }));
@@ -170,8 +173,13 @@ function isFunctionalityMapQuery(normalized: string): boolean {
     'funcoes do sistema',
     'modulos',
     'mapa do sistema',
+    'mapeie',
+    'mapeamento',
     'tudo que o sistema faz',
     'recursos do sistema',
+    'todas as funcoes',
+    'todos os modulos',
+    'todas as telas',
   ].some((signal) => normalized.includes(signal));
 }
 
@@ -221,13 +229,14 @@ function buildFunctionalityMapResults(limit: number): ApplicationContextResult[]
       seen.add(key);
       return true;
     })
-    .slice(0, Math.max(1, Math.min(limit, 12)))
+    .slice(0, Math.max(1, Math.min(limit, 24)))
     .map((entry, index) => ({
       id: entry.id,
       kind: entry.kind,
       title: entry.title,
       summary: entry.summary,
       path: entry.path,
+      category: entry.category || entry.keywords[2],
       minRole: entry.minRole,
       permissions: entry.permissions,
       steps: entry.steps,
@@ -275,7 +284,7 @@ export class ApplicationContextService {
     }
 
     if (isFunctionalityMapQuery(normalized)) {
-      return buildFunctionalityMapResults(params.limit || 8);
+      return buildFunctionalityMapResults(params.limit || 24);
     }
 
     const queryTerms = Array.from(
@@ -312,6 +321,7 @@ export class ApplicationContextService {
       title: entry.title,
       summary: entry.summary,
       path: entry.path,
+      category: entry.category || entry.keywords[2],
       minRole: entry.minRole,
       permissions: entry.permissions,
       steps: entry.steps,
