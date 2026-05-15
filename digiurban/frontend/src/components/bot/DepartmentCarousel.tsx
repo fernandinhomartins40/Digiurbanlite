@@ -60,18 +60,18 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-3 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-3 rounded-2xl border border-slate-200 bg-slate-50 p-2.5 sm:p-4 shadow-sm overflow-hidden">
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900">Secretarias</p>
           <p className="text-xs text-slate-500 break-words">Deslize para o lado e toque na secretaria desejada.</p>
         </div>
-        <div className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+        <div className="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 min-[380px]:block">
           {options.length} opcoes
         </div>
       </div>
 
-      <div className="relative group min-w-0 max-w-full overflow-hidden">
+      <div className="relative group w-full min-w-0 max-w-full overflow-hidden">
         <Button
           variant="ghost"
           size="icon"
@@ -83,8 +83,8 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
 
         <div
           ref={scrollRef}
-          className="flex w-full min-w-0 max-w-full gap-2.5 overflow-x-auto overscroll-x-contain scrollbar-hide px-0.5 py-2 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex w-full min-w-0 max-w-full gap-2.5 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-hide px-0.5 py-2 snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', contain: 'inline-size' }}
         >
           {options.map((option) => {
             const displayName = (option.name || option.label || '').replace(/^[^\p{L}\p{N}]+\s*/u, '').trim();
@@ -95,25 +95,26 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
               <button
                 key={option.id}
                 onClick={() => onSelect(option)}
-                className="flex-shrink-0 snap-start w-[min(160px,calc(50vw-24px))] min-w-[132px] max-w-[160px] rounded-2xl border-2 p-3 sm:p-4 transition-all duration-200 hover:scale-[1.02] hover:shadow-lg active:scale-[0.98] cursor-pointer flex flex-col items-center gap-3 text-center overflow-hidden"
+                className="snap-start min-w-0 max-w-full rounded-xl border-2 p-3 sm:p-4 transition-shadow duration-200 hover:shadow-md active:scale-[0.99] cursor-pointer flex flex-col items-center gap-3 text-center overflow-hidden"
                 style={{
                   backgroundColor: theme.light,
                   borderColor: theme.border,
+                  flex: '0 0 clamp(112px, calc((100% - 0.625rem) / 2), 160px)',
                 }}
               >
                 <div
-                  className="flex h-14 w-14 items-center justify-center rounded-2xl shadow-sm"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl shadow-sm sm:h-14 sm:w-14"
                   style={{ backgroundColor: theme.primary + '20' }}
                 >
                   <IconComponent
-                    className="h-7 w-7"
+                    className="h-6 w-6 sm:h-7 sm:w-7"
                     style={{ color: theme.primary }}
                   />
                 </div>
-                <span className="line-clamp-2 max-w-full break-words text-xs font-semibold leading-tight" style={{ color: theme.primary }}>
+                <span className="line-clamp-2 max-w-full min-w-0 break-words [overflow-wrap:anywhere] text-xs font-semibold leading-tight" style={{ color: theme.primary }}>
                   {displayName.replace(/^Secretaria\s*(Municipal\s*de?\s*)?/i, '').trim() || displayName}
                 </span>
-                <div className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] text-gray-600 shadow-sm">
+                <div className="max-w-full rounded-full bg-white/85 px-2 py-1 text-[10px] text-gray-600 shadow-sm">
                   {option.serviceCount || 0} servicos
                 </div>
               </button>

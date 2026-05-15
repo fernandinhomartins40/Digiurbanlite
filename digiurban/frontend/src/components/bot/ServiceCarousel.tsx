@@ -48,13 +48,13 @@ export function ServiceCarousel({ options, categories, departmentName, onSelect 
     : groupByCategory(options);
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-4 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-2.5 sm:p-4 shadow-sm overflow-hidden">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
           <p className="text-xs text-slate-500 break-words">Os servicos estao agrupados por categoria. Deslize lateralmente para explorar.</p>
         </div>
-        <div className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+        <div className="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 min-[380px]:block">
           {options.length} servicos
         </div>
       </div>
@@ -106,7 +106,7 @@ function CategorySection({
         </span>
       </div>
 
-      <div className="relative group min-w-0 max-w-full overflow-hidden">
+      <div className="relative group w-full min-w-0 max-w-full overflow-hidden">
         <Button
           variant="ghost"
           size="icon"
@@ -118,8 +118,8 @@ function CategorySection({
 
         <div
           ref={scrollRef}
-          className="flex w-full min-w-0 max-w-full gap-2.5 overflow-x-auto overscroll-x-contain scrollbar-hide px-0.5 py-1 snap-x snap-mandatory"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex w-full min-w-0 max-w-full gap-2.5 overflow-x-auto overflow-y-hidden overscroll-x-contain scrollbar-hide px-0.5 py-1 snap-x snap-mandatory"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none', contain: 'inline-size' }}
         >
           {services.map((service) => {
             const estimatedDays = service.metadata?.estimatedDays;
@@ -129,21 +129,21 @@ function CategorySection({
               <button
                 key={service.id}
                 onClick={() => onSelect(service)}
-                className="flex-shrink-0 snap-start w-[min(240px,calc(100vw-56px))] max-w-full rounded-2xl border bg-white p-3.5 sm:p-4 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
-                style={{ borderColor: catColor.primary + '40' }}
+                className="snap-start min-w-0 max-w-full rounded-xl border bg-white p-3 sm:p-4 transition-shadow duration-200 hover:shadow-md active:scale-[0.99] cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
+                style={{ borderColor: catColor.primary + '40', flex: '0 0 min(100%, 240px)' }}
               >
-                <div className="font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px] break-words">
+                <div className="min-w-0 font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px] break-words [overflow-wrap:anywhere]">
                   {service.label}
                 </div>
 
                 {service.description && (
-                  <p className="text-[11px] text-gray-500 line-clamp-2 leading-snug min-h-[32px] break-words">
+                  <p className="min-w-0 text-[11px] text-gray-500 line-clamp-2 leading-snug min-h-[32px] break-words [overflow-wrap:anywhere]">
                     {service.description}
                   </p>
                 )}
 
-                <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-1 text-[10px] text-gray-500">
-                  <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                <div className="mt-auto flex min-w-0 flex-col items-start gap-2 pt-1 text-[10px] text-gray-500 min-[430px]:flex-row min-[430px]:items-center min-[430px]:justify-between">
+                  <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-1">
                     {estimatedDays !== undefined && estimatedDays !== null && (
                       <div className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
@@ -158,7 +158,7 @@ function CategorySection({
                     )}
                   </div>
                   <div
-                    className="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
+                    className="max-w-full shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
                     style={{ backgroundColor: `${catColor.primary}15`, color: catColor.primary }}
                   >
                     Selecionar
