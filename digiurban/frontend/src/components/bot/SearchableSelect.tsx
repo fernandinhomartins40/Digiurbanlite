@@ -60,7 +60,7 @@ export function SearchableSelect({
   const selectedOption = options.find(o => o.value === selectedValue);
 
   return (
-    <div ref={dropdownRef} className="w-full max-w-md mx-auto relative">
+    <div ref={dropdownRef} className="w-full min-w-0 max-w-full sm:max-w-md mx-auto relative">
       {/* Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -81,7 +81,7 @@ export function SearchableSelect({
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-10 w-full mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto">
+        <div className="absolute z-10 w-full min-w-0 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto overflow-x-hidden">
           {filteredOptions.length === 0 ? (
             <div className="px-4 py-3 text-center text-gray-500">
               Nenhum resultado encontrado
@@ -96,13 +96,13 @@ export function SearchableSelect({
                   ${option.value === selectedValue ? 'bg-blue-50' : ''}
                 `}
               >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex-1">
-                    <div className="font-medium text-gray-900">
+                <div className="flex min-w-0 items-start justify-between gap-2">
+                  <div className="min-w-0 flex-1">
+                    <div className="font-medium text-gray-900 break-words [overflow-wrap:anywhere]">
                       {option.label}
                     </div>
                     {option.description && (
-                      <div className="text-sm text-gray-600 mt-1">
+                      <div className="text-sm text-gray-600 mt-1 break-words [overflow-wrap:anywhere]">
                         {option.description}
                       </div>
                     )}
@@ -121,12 +121,12 @@ export function SearchableSelect({
       {/* Selected display */}
       {selectedOption && !isOpen && (
         <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex min-w-0 items-center justify-between gap-2">
+            <div className="min-w-0">
               <div className="text-sm font-medium text-blue-900">
                 Selecionado:
               </div>
-              <div className="text-sm text-blue-700">{selectedOption.label}</div>
+              <div className="text-sm text-blue-700 break-words [overflow-wrap:anywhere]">{selectedOption.label}</div>
             </div>
             <Check className="w-5 h-5 text-blue-600" />
           </div>

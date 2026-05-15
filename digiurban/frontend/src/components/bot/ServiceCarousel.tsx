@@ -48,13 +48,13 @@ export function ServiceCarousel({ options, categories, departmentName, onSelect 
     : groupByCategory(options);
 
   return (
-    <div className="w-full min-w-0 space-y-4 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-4 shadow-sm overflow-hidden">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <p className="text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
-          <p className="text-xs text-slate-500">Os servicos estao agrupados por categoria. Deslize lateralmente para explorar.</p>
+    <div className="w-full min-w-0 max-w-full space-y-4 rounded-2xl border border-slate-200 bg-gradient-to-br from-slate-50 to-white p-3 sm:p-4 shadow-sm overflow-hidden">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
+          <p className="text-xs text-slate-500 break-words">Os servicos estao agrupados por categoria. Deslize lateralmente para explorar.</p>
         </div>
-        <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+        <div className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600">
           {options.length} servicos
         </div>
       </div>
@@ -92,13 +92,13 @@ function CategorySection({
   };
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-2 px-1">
+    <div className="min-w-0 space-y-2">
+      <div className="flex min-w-0 items-center gap-2 px-1">
         <div
           className="h-2 w-2 rounded-full"
           style={{ backgroundColor: catColor.primary }}
         />
-        <span className="text-xs font-bold uppercase tracking-wide" style={{ color: catColor.primary }}>
+        <span className="min-w-0 truncate text-xs font-bold uppercase tracking-wide" style={{ color: catColor.primary }}>
           {categoryName}
         </span>
         <span className="text-[10px] text-gray-400">
@@ -106,7 +106,7 @@ function CategorySection({
         </span>
       </div>
 
-      <div className="relative group">
+      <div className="relative group min-w-0 max-w-full overflow-hidden">
         <Button
           variant="ghost"
           size="icon"
@@ -118,7 +118,7 @@ function CategorySection({
 
         <div
           ref={scrollRef}
-          className="flex gap-3 overflow-x-auto scrollbar-hide px-1 py-1 snap-x snap-mandatory"
+          className="flex w-full min-w-0 max-w-full gap-2.5 overflow-x-auto overscroll-x-contain scrollbar-hide px-0.5 py-1 snap-x snap-mandatory"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {services.map((service) => {
@@ -129,36 +129,36 @@ function CategorySection({
               <button
                 key={service.id}
                 onClick={() => onSelect(service)}
-                className="flex-shrink-0 snap-start w-[240px] rounded-2xl border bg-white p-4 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-left flex flex-col gap-3"
+                className="flex-shrink-0 snap-start w-[min(240px,calc(100vw-56px))] max-w-full rounded-2xl border bg-white p-3.5 sm:p-4 transition-all duration-200 hover:shadow-lg hover:scale-[1.02] active:scale-[0.98] cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
                 style={{ borderColor: catColor.primary + '40' }}
               >
-                <div className="font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px]">
+                <div className="font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px] break-words">
                   {service.label}
                 </div>
 
                 {service.description && (
-                  <p className="text-[11px] text-gray-500 line-clamp-2 leading-snug min-h-[32px]">
+                  <p className="text-[11px] text-gray-500 line-clamp-2 leading-snug min-h-[32px] break-words">
                     {service.description}
                   </p>
                 )}
 
-                <div className="mt-auto flex items-center justify-between gap-3 pt-1 text-[10px] text-gray-500">
-                  <div className="flex items-center gap-3">
+                <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-1 text-[10px] text-gray-500">
+                  <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                     {estimatedDays !== undefined && estimatedDays !== null && (
                       <div className="flex items-center gap-1">
                         <Clock className="w-3.5 h-3.5" />
-                        <span>{estimatedDays > 0 ? `${estimatedDays} dias` : 'Prazo variavel'}</span>
+                        <span className="whitespace-nowrap">{estimatedDays > 0 ? `${estimatedDays} dias` : 'Prazo variavel'}</span>
                       </div>
                     )}
                     {requiresDocs && (
                       <div className="flex items-center gap-1">
                         <FileText className="w-3.5 h-3.5" />
-                        <span>Documentos</span>
+                        <span className="whitespace-nowrap">Documentos</span>
                       </div>
                     )}
                   </div>
                   <div
-                    className="rounded-full px-2 py-1 text-[10px] font-medium"
+                    className="shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
                     style={{ backgroundColor: `${catColor.primary}15`, color: catColor.primary }}
                   >
                     Selecionar

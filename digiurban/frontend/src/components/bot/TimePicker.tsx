@@ -81,7 +81,7 @@ export function TimePicker({
       <button
         onClick={() => handleTimeClick(time)}
         className={`
-          px-4 py-3 rounded-lg border-2 transition-all font-medium
+          min-w-0 px-2 py-3 rounded-lg border-2 transition-all font-medium text-sm
           ${
             isSelected
               ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white border-transparent shadow-lg scale-105'
@@ -95,11 +95,11 @@ export function TimePicker({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto bg-white rounded-lg shadow-lg p-6">
+    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg shadow-lg p-4 sm:p-6 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="flex min-w-0 items-center gap-2 mb-6">
         <Clock className="w-6 h-6 text-blue-600" />
-        <h3 className="text-lg font-semibold text-gray-900">
+        <h3 className="min-w-0 text-lg font-semibold text-gray-900 break-words">
           Escolha o horário
         </h3>
       </div>
@@ -110,7 +110,7 @@ export function TimePicker({
           <h4 className="text-sm font-medium text-gray-600 mb-3">
             ☀️ Manhã
           </h4>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid min-w-0 grid-cols-2 gap-2 min-[380px]:grid-cols-3">
             {morningSlots.map(time => (
               <TimeSlotButton key={time} time={time} />
             ))}
@@ -124,7 +124,7 @@ export function TimePicker({
           <h4 className="text-sm font-medium text-gray-600 mb-3">
             🌤️ Tarde
           </h4>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid min-w-0 grid-cols-2 gap-2 min-[380px]:grid-cols-3">
             {afternoonSlots.map(time => (
               <TimeSlotButton key={time} time={time} />
             ))}
@@ -138,7 +138,7 @@ export function TimePicker({
           <h4 className="text-sm font-medium text-gray-600 mb-3">
             🌙 Noite
           </h4>
-          <div className="grid grid-cols-3 gap-2">
+          <div className="grid min-w-0 grid-cols-2 gap-2 min-[380px]:grid-cols-3">
             {eveningSlots.map(time => (
               <TimeSlotButton key={time} time={time} />
             ))}

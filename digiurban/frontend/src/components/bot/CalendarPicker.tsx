@@ -143,9 +143,9 @@ export function CalendarPicker({
   ];
 
   return (
-    <div className="w-full max-w-sm mx-auto bg-white rounded-lg shadow-lg p-4">
+    <div className="w-full min-w-0 max-w-full sm:max-w-sm mx-auto bg-white rounded-lg shadow-lg p-3 sm:p-4 overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex min-w-0 items-center justify-between gap-1 mb-4">
         <button
           onClick={handlePrevMonth}
           className="p-2 hover:bg-gray-100 rounded-full transition-colors"
@@ -153,9 +153,9 @@ export function CalendarPicker({
           <ChevronLeft className="w-5 h-5" />
         </button>
 
-        <div className="flex items-center gap-2">
+        <div className="flex min-w-0 items-center justify-center gap-2">
           <Calendar className="w-5 h-5 text-blue-600" />
-          <span className="font-semibold text-gray-900">
+          <span className="min-w-0 truncate font-semibold text-gray-900">
             {monthNames[currentMonth.getMonth()]} {currentMonth.getFullYear()}
           </span>
         </div>
@@ -201,7 +201,7 @@ export function CalendarPicker({
               onClick={() => handleDateClick(date)}
               disabled={disabled}
               className={`
-                aspect-square p-2 text-sm rounded-lg transition-all
+                aspect-square min-w-0 p-1 sm:p-2 text-sm rounded-lg transition-all
                 ${!isCurrentMonth && 'text-gray-300'}
                 ${isCurrentMonth && !disabled && 'hover:bg-blue-50'}
                 ${isToday && !isSelected && 'border-2 border-blue-500'}

@@ -4,6 +4,7 @@ export type CitizenAiIntent =
   | 'greeting'
   | 'solicitar_servico'
   | 'consultar_protocolo'
+  | 'corrigir_dados'
   | 'meu_perfil'
   | 'documentos'
   | 'minha_familia'
@@ -27,6 +28,7 @@ export type CitizenAiStage =
   | 'collecting_fields'
   | 'awaiting_documents'
   | 'awaiting_review_confirmation'
+  | 'awaiting_correction_field'
   | 'paused_human';
 
 export interface CitizenAiIntentAnalysis {
@@ -48,6 +50,13 @@ export interface CitizenAiFieldExtraction {
   confidence: number;
 }
 
+export interface CitizenAiCorrectionExtraction {
+  fieldId?: string;
+  value?: string | number | boolean;
+  description?: string;
+  confidence: number;
+}
+
 export interface CitizenAiSessionState {
   engine: 'ai_assistant';
   stage: CitizenAiStage;
@@ -65,6 +74,8 @@ export interface CitizenAiSessionState {
   pendingFieldIds?: string[];
   currentFieldId?: string;
   currentFieldLabel?: string;
+  awaitingCorrectionFieldId?: string;
+  awaitingCorrectionFieldLabel?: string;
   description?: string;
   uploadedDocuments?: Array<Record<string, unknown>>;
   protocolNumber?: string;
@@ -78,6 +89,10 @@ export interface CitizenAiSessionState {
   currentPendingDocumentRequests?: Array<Record<string, unknown>>;
   currentPendingFieldRequests?: Array<Record<string, unknown>>;
   reviewText?: string;
+  createdProtocolId?: string;
+  createdProtocolNumber?: string;
+  createdProtocolFingerprint?: string;
+  createdProtocolAt?: string;
   lowConfidenceFallbacks?: number;
   legacyFallbackCount?: number;
 }

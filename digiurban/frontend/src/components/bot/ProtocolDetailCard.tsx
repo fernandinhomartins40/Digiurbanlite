@@ -102,31 +102,31 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
   return (
-    <Card className="border shadow-sm overflow-hidden">
+    <Card className="w-full min-w-0 max-w-full border shadow-sm overflow-hidden">
       <CardContent className="p-0">
         {/* Header: Numero + Status */}
-        <div className="flex items-start justify-between gap-2 p-3 pb-2 border-b bg-muted/30">
+        <div className="flex min-w-0 items-start justify-between gap-2 p-3 pb-2 border-b bg-muted/30">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
               <FileText className="h-3.5 w-3.5 flex-shrink-0" />
-              <span className="font-mono font-medium">#{protocol.number}</span>
+              <span className="min-w-0 truncate font-mono font-medium">#{protocol.number}</span>
             </div>
             <h4 className="text-sm font-semibold leading-tight line-clamp-2">
               {protocol.title || service.name}
             </h4>
           </div>
-          <Badge className={`${statusConfig.className} text-xs whitespace-nowrap flex-shrink-0`}>
+          <Badge className={`${statusConfig.className} text-xs whitespace-nowrap flex-shrink-0 max-[360px]:max-w-[96px] max-[360px]:truncate`}>
             {statusConfig.label}
           </Badge>
         </div>
 
         {/* Info: Servico + Departamento */}
         <div className="px-3 py-2 space-y-1 border-b text-xs text-muted-foreground">
-          <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
             <FileText className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">{service.name}</span>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex min-w-0 items-center gap-1.5">
             <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
             <span className="truncate">{department.name}</span>
           </div>
@@ -160,12 +160,12 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
                     </div>
 
                     {/* Nome da etapa */}
-                    <div className={`flex-1 pb-2 ${isLast ? 'pb-0' : ''}`}>
+                    <div className={`min-w-0 flex-1 pb-2 ${isLast ? 'pb-0' : ''}`}>
                       <span className={`text-xs leading-tight ${
                         isCurrentStage ? 'font-semibold text-blue-700 dark:text-blue-400' :
                         isCompleted ? 'text-green-700 dark:text-green-400' :
                         'text-muted-foreground'
-                      }`}>
+                      } break-words [overflow-wrap:anywhere]`}>
                         {stage.name}
                       </span>
                       {isCurrentStage && (

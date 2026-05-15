@@ -27,11 +27,11 @@ interface BotMessageRendererProps {
 }
 
 const markdownComponents = {
-  p: ({ children }: any) => <p className="mb-3 last:mb-0 break-words">{children}</p>,
+  p: ({ children }: any) => <p className="mb-3 last:mb-0 min-w-0 break-words [overflow-wrap:anywhere]">{children}</p>,
   strong: ({ children }: any) => <strong className="font-semibold text-slate-900">{children}</strong>,
   ul: ({ children }: any) => <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
   ol: ({ children }: any) => <ol className="mb-3 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
-  li: ({ children }: any) => <li className="marker:text-slate-400 break-words">{children}</li>,
+  li: ({ children }: any) => <li className="marker:text-slate-400 min-w-0 break-words [overflow-wrap:anywhere]">{children}</li>,
   hr: () => <hr className="my-4 border-slate-200" />,
   h1: ({ children }: any) => <h1 className="mb-3 text-lg font-semibold text-slate-900 break-words">{children}</h1>,
   h2: ({ children }: any) => <h2 className="mb-3 text-base font-semibold text-slate-900 break-words">{children}</h2>,
@@ -158,14 +158,14 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       }
 
       return (
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
           {options.map((option: any) => (
             <button
               key={option.id}
               onClick={() => onInteraction(option)}
-              className="group rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md active:scale-[0.98] overflow-hidden"
+              className="group min-w-0 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md active:scale-[0.98] overflow-hidden"
             >
-              <div className="flex items-start justify-between gap-2">
+              <div className="flex min-w-0 items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
                   <div className="font-semibold text-slate-900 text-sm leading-snug break-words">{option.label}</div>
                   {option.description && (
@@ -174,7 +174,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
                     </div>
                   )}
                 </div>
-                <div className="shrink-0 mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100 whitespace-nowrap">
+                <div className="shrink-0 mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100 whitespace-nowrap max-[380px]:hidden">
                   Selecionar
                 </div>
               </div>
@@ -186,7 +186,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
 
     if (messageType === 'card' && cards.length > 0) {
       return (
-        <div className="grid gap-3 grid-cols-1">
+        <div className="grid w-full min-w-0 gap-3 grid-cols-1">
           {cards.map((card: any) => (
             <MessageCard
               key={card.id}
@@ -254,12 +254,12 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
   const structuredInput = renderStructuredInput() || (messageType === 'interactive' && renderLegacyInteractive());
 
   return (
-    <div className="space-y-3 w-full overflow-hidden">
+    <div className="space-y-3 w-full min-w-0 max-w-full overflow-hidden">
       {renderProgress()}
 
       {message?.content && (
-        <div className="rounded-2xl border border-slate-200/80 bg-white p-4 shadow-sm overflow-hidden">
-          <div className="text-[15px] leading-7 text-slate-800 break-words overflow-wrap-anywhere">
+        <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
+          <div className="min-w-0 text-[15px] leading-7 text-slate-800 break-words [overflow-wrap:anywhere]">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {message.content}
             </ReactMarkdown>
@@ -272,7 +272,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       )}
 
       {structuredInput && (
-        <div className={disabled ? 'pointer-events-none opacity-60' : undefined} aria-disabled={disabled}>
+        <div className={`w-full min-w-0 max-w-full overflow-hidden ${disabled ? 'pointer-events-none opacity-60' : ''}`} aria-disabled={disabled}>
           {structuredInput}
         </div>
       )}

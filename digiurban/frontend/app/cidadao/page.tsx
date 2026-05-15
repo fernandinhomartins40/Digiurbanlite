@@ -1002,13 +1002,13 @@ export default function CitizenDashboard() {
             </div>
 
             {/* Mensagens */}
-            <ScrollArea className="flex-1 p-4 bg-gray-50 overflow-x-hidden">
+            <ScrollArea className="flex-1 min-w-0 p-2.5 sm:p-4 bg-gray-50 overflow-x-hidden">
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
-                <div className="space-y-4 max-w-4xl mx-auto min-w-0 overflow-hidden">
+                <div className="w-full max-w-4xl mx-auto min-w-0 overflow-hidden space-y-4">
                   {/* ✅ NOVO: Alert de status do bot */}
                   {selectedConversation.isBotConversation && selectedConversation.metadata?.botStatus === 'HUMAN_TAKEOVER' && (
                     <Alert className="bg-orange-50 border-orange-200">
@@ -1041,10 +1041,10 @@ export default function CitizenDashboard() {
                           </div>
                         )}
 
-                        <div className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
+                        <div className={`flex w-full min-w-0 overflow-hidden ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                           {isBot ? (
-                            <div className="w-full min-w-0 overflow-hidden space-y-2">
-                              <div className="flex items-center gap-2 text-blue-700">
+                            <div className="w-full min-w-0 max-w-full overflow-hidden space-y-2">
+                              <div className="flex min-w-0 items-center gap-2 text-blue-700">
                                 <Sparkles className="w-4 h-4 text-blue-600" />
                                 <span className="text-xs font-semibold">DigiBot</span>
                               </div>
@@ -1060,7 +1060,7 @@ export default function CitizenDashboard() {
                           ) : (
                             <div
                               className={cn(
-                                "max-w-[70%] rounded-lg px-4 py-2 shadow-sm",
+                                "max-w-[86%] sm:max-w-[70%] min-w-0 overflow-hidden rounded-lg px-4 py-2 shadow-sm",
                                 isOwnMessage
                                   ? 'bg-blue-600 text-white'
                                   : 'bg-white text-gray-900'

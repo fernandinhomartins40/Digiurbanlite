@@ -66,7 +66,7 @@ export function DocumentUploadCard({
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-4 overflow-hidden">
       <h3 className="text-sm font-semibold mb-3 break-words">{title}</h3>
 
       {/* Upload Area */}
@@ -76,7 +76,7 @@ export function DocumentUploadCard({
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-xl p-5 text-center cursor-pointer transition-all ${
+        className={`relative min-w-0 border-2 border-dashed rounded-xl p-4 sm:p-5 text-center cursor-pointer transition-all overflow-hidden ${
           dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-gray-50'
         }`}
       >
@@ -117,11 +117,11 @@ export function DocumentUploadCard({
       )}
 
       {/* Actions */}
-      <div className="mt-4 flex gap-2">
+      <div className="mt-4 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
         {files.length > 0 && (
           <button
             onClick={() => setFiles([])}
-            className="flex-1 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors text-sm font-medium"
+            className="min-w-0 px-4 py-2.5 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors text-sm font-medium"
           >
             Limpar
           </button>
@@ -129,7 +129,7 @@ export function DocumentUploadCard({
         <button
           onClick={() => files.length > 0 && onUpload(files)}
           disabled={files.length === 0}
-          className="flex-1 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="min-w-0 px-4 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           Enviar {files.length > 0 && `(${files.length})`}
         </button>

@@ -123,7 +123,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
         const opts = (field.options || []).map(normalizeOption);
         if (opts.length >= 2) {
           return (
-            <div className="grid grid-cols-2 gap-2">
+          <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
               {opts.map((opt) => {
                 const isSelected = formData[field.id] === opt.value;
                 return (
@@ -131,7 +131,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
                     key={opt.value}
                     type="button"
                     variant={isSelected ? 'default' : 'outline'}
-                    className={`h-auto py-3 transition-all ${
+                    className={`h-auto min-w-0 py-3 whitespace-normal break-words transition-all ${
                       isSelected
                         ? opt.value === 'true'
                           ? 'bg-green-600 hover:bg-green-700 text-white'
@@ -205,7 +205,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
   };
 
   return (
-    <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-4 space-y-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-4 space-y-4 overflow-hidden">
       {fields.map((field) => {
         const normalized = normalizeField(field);
         if (!normalized.id) return null;

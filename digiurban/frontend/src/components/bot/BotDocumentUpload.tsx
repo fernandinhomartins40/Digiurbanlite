@@ -74,9 +74,9 @@ export function BotDocumentUpload({
   const allRequiredDone = requiredUploaded >= requiredCount;
 
   return (
-    <div className="w-full rounded-2xl border border-slate-200 bg-white p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-start gap-3 border-b border-slate-100 pb-4 mb-4">
+      <div className="flex min-w-0 items-start gap-3 border-b border-slate-100 pb-4 mb-4">
         <div className="shrink-0 rounded-xl bg-blue-50 p-2.5 text-blue-600">
           <FileText className="h-5 w-5" />
         </div>
@@ -118,9 +118,9 @@ export function BotDocumentUpload({
           <span className="break-words">Os arquivos serao enviados junto com a solicitacao.</span>
         </div>
 
-        <div className="flex gap-2">
+        <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
           {allowSkip && (
-            <Button variant="outline" onClick={handleSkip} className="flex-1">
+            <Button variant="outline" onClick={handleSkip} className="min-w-0">
               <SkipForward className="h-4 w-4 mr-2 shrink-0" />
               Pular
             </Button>
@@ -128,7 +128,7 @@ export function BotDocumentUpload({
           <Button
             onClick={handleSubmit}
             disabled={uploadedCount === 0 || (!allRequiredDone && requiredCount > 0)}
-            className="flex-1 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
+            className="min-w-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
           >
             <Send className="h-4 w-4 mr-2 shrink-0" />
             Enviar {uploadedCount > 0 && `(${uploadedCount})`}

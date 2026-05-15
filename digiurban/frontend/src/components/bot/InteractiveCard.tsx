@@ -29,13 +29,13 @@ export function InteractiveCard({
 }: InteractiveCardProps) {
   if (type === 'boolean') {
     return (
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="w-full min-w-0 max-w-full bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm leading-snug break-words">{question}</CardTitle>
           {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 gap-2">
+          <div className="grid min-w-0 grid-cols-2 gap-2">
             <Button
               onClick={() => onSelect('true')}
               variant="outline"
@@ -64,7 +64,7 @@ export function InteractiveCard({
 
   if (type === 'single-choice') {
     return (
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="w-full min-w-0 max-w-full bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm leading-snug break-words">{question}</CardTitle>
           {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
@@ -97,15 +97,15 @@ export function InteractiveCard({
 
   if (type === 'multiple-choice') {
     return (
-      <Card className="bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="w-full min-w-0 max-w-full bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
         <CardHeader className="pb-3">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
               <CardTitle className="text-sm leading-snug break-words">{question}</CardTitle>
               {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
             </div>
             {selectedValues.length > 0 && (
-              <Badge className="bg-blue-600 text-white shrink-0 text-xs">
+              <Badge className="bg-blue-600 text-white shrink-0 text-xs max-[360px]:hidden">
                 {selectedValues.length} sel.
               </Badge>
             )}

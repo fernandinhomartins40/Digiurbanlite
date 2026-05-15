@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import logger from '../../utils/logger';
 import {
+  CitizenAiCorrectionExtraction,
   CitizenAiFieldExtraction,
   CitizenAiIntentAnalysis,
   CitizenAiSelection,
@@ -77,19 +78,22 @@ export class CitizenAiClient {
     citizenId: string;
     message: string;
     recentMessages: string[];
+    sessionContext?: string;
   }): Promise<CitizenAiIntentAnalysis | null> {
     const prompt = [
       'Voce e um classificador de intencao para atendimento municipal.',
       'Responda apenas com JSON valido.',
-      'Intencoes permitidas: greeting, solicitar_servico, consultar_protocolo, meu_perfil, documentos, minha_familia, notificacoes, avaliacao, ajuda, atendimento_humano, unknown.',
+      'Intencoes permitidas: greeting, solicitar_servico, consultar_protocolo, corrigir_dados, meu_perfil, documentos, minha_familia, notificacoes, avaliacao, ajuda, atendimento_humano, unknown.',
       'Campos obrigatorios do JSON: intent, confidence.',
       'Campos opcionais: serviceQuery, protocolNumber, notes.',
       'Regras:',
       '- Use solicitar_servico quando o cidadao quer pedir, abrir, registrar ou solicitar um servico da prefeitura.',
       '- Use consultar_protocolo quando o cidadao quiser consultar andamento e informar ou insinuar numero de protocolo.',
+      '- Use corrigir_dados quando o cidadao quer alterar uma informacao ja coletada no atendimento atual.',
       '- Use atendimento_humano quando pedir atendente, humano, servidor ou suporte humano.',
       '- serviceQuery deve ser uma consulta curta para buscar o servico correto.',
       '- confidence deve variar de 0 a 1.',
+      params.sessionContext ? `Contexto do fluxo atual: ${params.sessionContext}` : 'Contexto do fluxo atual: nenhum',
       `Historico recente: ${params.recentMessages.join(' | ') || 'sem historico relevante'}`,
       `Mensagem atual: ${params.message}`,
     ].join('\n');
@@ -150,6 +154,7 @@ export class CitizenAiClient {
     citizenId: string;
     message: string;
     serviceName: string;
+    sessionContext?: string;
     fields: Array<{
       id: string;
       label: string;
@@ -176,9 +181,10 @@ export class CitizenAiClient {
       'values deve ser um objeto onde cada chave corresponde exatamente a um field id informado.',
       'Nao invente valores. Se um campo nao estiver presente, nao inclua.',
       `Servico: ${params.serviceName}`,
+      params.sessionContext ? `Contexto atual: ${params.sessionContext}` : undefined,
       `Campos disponiveis:\n${fieldText}`,
       `Mensagem do cidadao: ${params.message}`,
-    ].join('\n');
+    ].filter(Boolean).join('\n');
 
     const parsed = await this.requestJson(prompt, params.citizenId);
     if (!parsed) {
@@ -207,12 +213,75 @@ export class CitizenAiClient {
     };
   }
 
+  async extractCorrection(params: {
+    citizenId: string;
+    message: string;
+    serviceName: string;
+    sessionContext: string;
+    fields: Array<{
+      id: string;
+      label: string;
+      type?: string;
+      required?: boolean;
+      options?: Array<{ id?: string; label?: string; value?: string }>;
+    }>;
+  }): Promise<CitizenAiCorrectionExtraction | null> {
+    const fieldText = params.fields
+      .map((field) => {
+        const options =
+          Array.isArray(field.options) && field.options.length > 0
+            ? ` opcoes=${field.options.map((option) => option.label || option.value || option.id).join(', ')}`
+            : '';
+        return `${field.id} | ${field.label} | tipo=${field.type || 'text'}${options}`;
+      })
+      .join('\n');
+
+    const prompt = [
+      'Voce identifica correcoes em um atendimento municipal em andamento.',
+      'Responda apenas com JSON valido.',
+      'Campos obrigatorios: confidence.',
+      'Campos opcionais: fieldId, value, description.',
+      'Use fieldId apenas se a mensagem indicar claramente qual campo deve mudar.',
+      'Use description quando a correcao for sobre a descricao geral da solicitacao.',
+      'Nao invente dados e nao altere campos que nao foram citados.',
+      `Servico: ${params.serviceName}`,
+      `Contexto atual: ${params.sessionContext}`,
+      `Campos corrigiveis:\n${fieldText}`,
+      `Mensagem do cidadao: ${params.message}`,
+    ].join('\n');
+
+    const parsed = await this.requestJson(prompt, params.citizenId);
+    if (!parsed) {
+      return null;
+    }
+
+    const rawValue = parsed.value;
+    const value =
+      typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean'
+        ? rawValue
+        : undefined;
+
+    return {
+      fieldId:
+        typeof parsed.fieldId === 'string' && parsed.fieldId.trim()
+          ? parsed.fieldId.trim()
+          : undefined,
+      value,
+      description:
+        typeof parsed.description === 'string' && parsed.description.trim()
+          ? parsed.description.trim()
+          : undefined,
+      confidence: clampConfidence(parsed.confidence),
+    };
+  }
+
   private normalizeIntent(intent: unknown): CitizenAiIntentAnalysis['intent'] {
     const value = typeof intent === 'string' ? intent.trim().toLowerCase() : '';
     switch (value) {
       case 'greeting':
       case 'solicitar_servico':
       case 'consultar_protocolo':
+      case 'corrigir_dados':
       case 'meu_perfil':
       case 'documentos':
       case 'minha_familia':

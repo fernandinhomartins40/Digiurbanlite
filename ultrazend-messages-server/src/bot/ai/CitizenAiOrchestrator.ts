@@ -76,6 +76,8 @@ const EVALUATION_PATTERNS = ['avaliacao', 'avaliar', 'avaliar atendimento', 'not
 const YES_PATTERNS = ['sim', 'confirmar', 'confirmo', 'ok', 'pode enviar', 'prosseguir'];
 const NO_PATTERNS = ['nao', 'não', 'cancelar', 'corrigir', 'voltar', 'outro'];
 
+const CORRECTION_PATTERNS = ['corrigir', 'corrija', 'alterar', 'altere', 'mudar', 'trocar', 'na verdade', 'o correto', 'esta errado', 'está errado', 'errei'];
+
 type ExecutionLike = FlowExecution & { flow?: { id: string; name: string } | null };
 type FieldDef = { id: string; label: string; type?: string; required?: boolean; options?: Array<{ id?: string; label?: string; value?: string }> };
 
@@ -88,6 +90,9 @@ export class CitizenAiOrchestrator {
     const execution = await this.ensureExecution(params);
     const session = this.getSessionState(execution);
     this.stats.sessionsStarted += 1;
+    if (params.existingExecution && session.stage !== 'triage') {
+      return { execution, response: this.buildResumeResponse(execution, session) };
+    }
     return { execution, response: this.buildWelcomeResponse(execution, session) };
   }
 
@@ -103,7 +108,9 @@ export class CitizenAiOrchestrator {
       return { session: next, requestHumanHandover: true, handoverReason: 'citizen_request', response: { message: 'Certo. Vou sinalizar que voce deseja atendimento humano.', messageType: 'text', metadata: this.meta(execution, next, false) } };
     }
 
-    const globalShortcut = await this.handleGlobalShortcut(execution, session, message);
+    const globalShortcut = this.isFlowLockedStage(session.stage)
+      ? await this.handleLockedFlowShortcut(execution, session, message)
+      : await this.handleGlobalShortcut(execution, session, message);
     if (globalShortcut) return globalShortcut;
 
     if (session.stage === 'awaiting_request_mode') return this.handleRequestMode(execution, session, message);
@@ -119,6 +126,7 @@ export class CitizenAiOrchestrator {
     }
     if (session.stage === 'collecting_fields') return this.handleFieldCollection(execution, session, message);
     if (session.stage === 'awaiting_review_confirmation') return this.handleReviewConfirmation(execution, session, message);
+    if (session.stage === 'awaiting_correction_field') return this.handleCorrectionFieldSelection(execution, session, message);
     if (session.stage === 'awaiting_documents') return { session, response: { message: 'Ainda estou aguardando o envio dos documentos obrigatorios.', messageType: 'text', metadata: this.meta(execution, session, true) } };
     if (session.stage === 'paused_human') return { session, response: { message: 'Sua conversa esta pausada para atendimento humano. Aguarde um servidor assumir.', messageType: 'text', metadata: this.meta(execution, session, false, { paused: true }) } };
 
@@ -215,7 +223,12 @@ export class CitizenAiOrchestrator {
     }
 
     this.stats.aiTurns += 1;
-    const analysis = (await citizenAiClient.analyzeTurn({ citizenId: execution.citizenId, message, recentMessages })) || { intent: 'unknown', confidence: 0.25, protocolNumber };
+    const analysis = (await citizenAiClient.analyzeTurn({
+      citizenId: execution.citizenId,
+      message,
+      recentMessages,
+      sessionContext: this.buildSessionContext(session),
+    })) || { intent: 'unknown', confidence: 0.25, protocolNumber };
     const next: CitizenAiSessionState = { ...session, lastIntent: analysis.intent as CitizenAiSessionState['lastIntent'] };
 
     if (analysis.intent === 'consultar_protocolo') {
@@ -223,6 +236,7 @@ export class CitizenAiOrchestrator {
     }
 
     if (analysis.intent === 'solicitar_servico') return this.beginServiceRequest(execution, next, message, analysis.serviceQuery || message, true);
+    if (analysis.intent === 'corrigir_dados') return this.buildContextualCorrectionFallback(execution, next);
     if (analysis.intent === 'atendimento_humano') {
       this.stats.humanHandoverRequests += 1;
       const paused = this.withStage(next, 'paused_human');
@@ -438,7 +452,13 @@ export class CitizenAiOrchestrator {
 
     const questions = Array.isArray(schemaResult.questions) ? schemaResult.questions as FieldDef[] : [];
     if (questions.length) this.stats.aiTurns += 1;
-    const extraction = questions.length ? await citizenAiClient.extractFields({ citizenId: execution.citizenId, message: userMessage, serviceName: String(schemaResult.service?.name || 'servico'), fields: questions }) : null;
+    const extraction = questions.length ? await citizenAiClient.extractFields({
+      citizenId: execution.citizenId,
+      message: userMessage,
+      serviceName: String(schemaResult.service?.name || 'servico'),
+      fields: questions,
+      sessionContext: this.buildSessionContext(session),
+    }) : null;
     const collectedFormData = extraction?.values || {};
     const pendingFieldIds = questions.filter((f) => f.required !== false).map((f) => f.id).filter((id) => collectedFormData[id] === undefined);
 
@@ -494,6 +514,23 @@ export class CitizenAiOrchestrator {
       return { session: reset, response: this.buildWelcomeResponse(execution, reset) };
     }
 
+    if (this.isCorrectionRequest(userMessage)) {
+      const corrected = await this.applyInlineCorrection(execution, session, userMessage, currentField.id);
+      if (corrected) return corrected;
+    }
+
+    if (this.isCompetingGlobalIntent(userMessage)) {
+      return {
+        session,
+        response: {
+          message: this.buildLockedHelpMessage(session),
+          messageType: 'menu',
+          data: { options: [{ id: 'continuar', label: 'Continuar', description: `Informar ${currentField.label}` }, { id: 'corrigir', label: 'Corrigir dados', description: 'Alterar informacoes coletadas' }, { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Encerrar este fluxo e voltar ao inicio' }] },
+          metadata: this.meta(execution, session, true),
+        },
+      };
+    }
+
     if (currentField.id === 'description') {
       const description = userMessage.trim();
       if (description.length < 10) return { session, response: this.buildDescriptionPrompt(execution, session, 'Descreva com um pouco mais de detalhes para eu registrar corretamente.') };
@@ -503,7 +540,13 @@ export class CitizenAiOrchestrator {
 
     const parsedValue = this.parseFieldValue(currentField, userMessage);
     if (parsedValue === undefined) this.stats.aiTurns += 1;
-    const extraction = parsedValue === undefined ? await citizenAiClient.extractFields({ citizenId: execution.citizenId, message: userMessage, serviceName: session.selectedServiceName || 'servico', fields: [currentField] }) : null;
+    const extraction = parsedValue === undefined ? await citizenAiClient.extractFields({
+      citizenId: execution.citizenId,
+      message: userMessage,
+      serviceName: session.selectedServiceName || 'servico',
+      fields: [currentField],
+      sessionContext: this.buildSessionContext(session),
+    }) : null;
     const value = parsedValue !== undefined ? parsedValue : extraction?.values?.[currentField.id];
     if (value === undefined || value === null || value === '') return { session, response: this.buildFieldPrompt(execution, session, currentField, 'Nao consegui preencher esse dado com seguranca.') };
 
@@ -535,23 +578,43 @@ export class CitizenAiOrchestrator {
 
   private async handleReviewConfirmation(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
     const normalized = this.normalize(userMessage);
+    if (this.isCorrectionRequest(userMessage)) {
+      const corrected = await this.applyInlineCorrection(execution, session, userMessage);
+      if (corrected) return corrected;
+      const waitCorrection = this.withStage(session, 'awaiting_correction_field');
+      await this.persistSession(execution.id, waitCorrection);
+      return { session: waitCorrection, response: this.buildCorrectionMenu(execution, waitCorrection, 'Qual informacao voce quer corrigir?') };
+    }
+
     if (this.matchesAny(normalized, NO_PATTERNS)) {
-      const pendingFieldIds = this.buildRequiredPendingFieldIds(session);
-      const restart: CitizenAiSessionState = { ...session, stage: 'collecting_fields', pendingFieldIds, currentFieldId: pendingFieldIds[0] };
-      await this.persistSession(execution.id, restart);
-      return { session: restart, response: { message: 'Sem problema. Vamos revisar os dados novamente desde o inicio.', messageType: 'text', metadata: this.meta(execution, restart, true) } };
+      const waitCorrection = this.withStage(session, 'awaiting_correction_field');
+      await this.persistSession(execution.id, waitCorrection);
+      return { session: waitCorrection, response: this.buildCorrectionMenu(execution, waitCorrection, 'Sem problema. Escolha qual dado deseja revisar.') };
     }
 
     if (!this.matchesAny(normalized, YES_PATTERNS)) return { session, response: { message: 'Responda com confirmar para enviar ou corrigir para revisar os dados.', messageType: 'menu', data: { options: [{ id: 'confirmar', label: 'Confirmar e enviar', description: 'Criar protocolo agora' }, { id: 'corrigir', label: 'Corrigir dados', description: 'Revisar informacoes antes do envio' }] }, metadata: this.meta(execution, session, true) } };
+
+    const fingerprint = this.buildProtocolFingerprint(session);
+    if (session.createdProtocolFingerprint === fingerprint && (session.createdProtocolId || session.createdProtocolNumber)) {
+      const finished = this.withStage(session, 'triage');
+      await this.persistSession(execution.id, finished);
+      return this.buildDuplicateProtocolResponse(execution, finished);
+    }
 
     const createResult = await this.runAction('createProtocol', { serviceId: session.selectedServiceId, description: session.description, formData: session.collectedFormData, documents: session.uploadedDocuments }, execution, session);
     if (createResult.success === false || !createResult.protocol) return { session, response: { message: typeof createResult.error === 'string' ? createResult.error : 'Nao foi possivel criar o protocolo agora.', messageType: 'text', metadata: this.meta(execution, session, true) } };
 
     this.stats.protocolsCreated += 1;
-    const finished = this.withStage(session, 'triage');
-    await this.persistSession(execution.id, finished);
     const protocol = createResult.protocol as Record<string, any>;
     const protocolNumber = String(protocol.number || protocol.protocolNumber || '');
+    const finished = this.withStage({
+      ...session,
+      createdProtocolId: String(protocol.id || ''),
+      createdProtocolNumber: protocolNumber,
+      createdProtocolFingerprint: fingerprint,
+      createdProtocolAt: new Date().toISOString(),
+    }, 'triage');
+    await this.persistSession(execution.id, finished);
     return { session: finished, response: { message: `Solicitacao enviada com sucesso.\n\nNumero do protocolo: ${protocolNumber || 'gerado com sucesso'}\nServico: ${session.selectedServiceName || 'Solicitacao registrada'}\n\nSe quiser, tambem posso consultar esse protocolo depois para voce.`, messageType: 'card', data: { cards: [{ id: String(protocol.id || protocolNumber || Date.now()), title: `Protocolo ${protocolNumber || 'criado'}`, description: String(protocol.title || session.selectedServiceName || 'Solicitacao registrada'), metadata: { protocolNumber, status: protocol.status || 'ABERTO' } }] }, metadata: this.meta(execution, finished, true) } };
   }
 
@@ -1091,6 +1154,113 @@ export class CitizenAiOrchestrator {
     };
   }
 
+  private async handleCorrectionFieldSelection(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
+    const normalized = this.normalize(userMessage);
+    if (this.matchesAny(normalized, YES_PATTERNS)) {
+      const reviewSession = this.withStage(session, 'awaiting_review_confirmation');
+      reviewSession.reviewText = await this.buildReviewText(execution, reviewSession);
+      await this.persistSession(execution.id, reviewSession);
+      return { session: reviewSession, response: this.buildReviewResponse(execution, reviewSession) };
+    }
+
+    const correction = await this.applyInlineCorrection(execution, session, userMessage);
+    if (correction) return correction;
+
+    const field = this.findCorrectableField(session, userMessage);
+    if (!field) {
+      return { session, response: this.buildCorrectionMenu(execution, session, 'Nao identifiquei qual dado deve mudar. Escolha uma opcao ou escreva, por exemplo: corrigir endereco para Rua Brasil, 100.') };
+    }
+
+    const next: CitizenAiSessionState = {
+      ...session,
+      stage: 'collecting_fields',
+      currentFieldId: field.id,
+      currentFieldLabel: field.label,
+      pendingFieldIds: [field.id],
+      awaitingCorrectionFieldId: undefined,
+      awaitingCorrectionFieldLabel: undefined,
+    };
+    await this.persistSession(execution.id, next);
+    return { session: next, response: this.buildFieldPrompt(execution, next, field, `Certo, vamos corrigir ${field.label}.`) };
+  }
+
+  private async applyInlineCorrection(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string, fallbackFieldId?: string): Promise<CitizenAiDecision | null> {
+    const questions = this.getFormQuestions(session);
+    const correctableFields = this.getCorrectableFields(session);
+    const matchedField = this.findCorrectableField(session, userMessage) || correctableFields.find((field) => field.id === fallbackFieldId);
+
+    let fieldId = matchedField?.id;
+    let value: string | number | boolean | undefined;
+    let description: string | undefined;
+
+    const explicitValue = this.extractCorrectionValue(userMessage);
+    if (matchedField && explicitValue) {
+      value = matchedField.id === 'description'
+        ? explicitValue
+        : this.parseFieldValue(matchedField, explicitValue) ?? explicitValue;
+    }
+
+    if ((!fieldId || value === undefined) && citizenAiClient.available()) {
+      this.stats.aiTurns += 1;
+      const aiCorrection = await citizenAiClient.extractCorrection({
+        citizenId: execution.citizenId,
+        message: userMessage,
+        serviceName: session.selectedServiceName || 'servico',
+        fields: correctableFields,
+        sessionContext: this.buildSessionContext(session),
+      });
+      if (aiCorrection && aiCorrection.confidence >= 0.55) {
+        fieldId = fieldId || aiCorrection.fieldId;
+        value = value ?? aiCorrection.value;
+        description = aiCorrection.description;
+      }
+    }
+
+    if ((!fieldId || value === undefined) && description) {
+      fieldId = 'description';
+      value = description;
+    }
+
+    const targetField = correctableFields.find((field) => field.id === fieldId);
+    if (!targetField || value === undefined || value === null || value === '') return null;
+
+    const normalizedValue = targetField.id === 'description'
+      ? String(value).trim()
+      : this.parseFieldValue(targetField, String(value)) ?? value;
+
+    const updated: CitizenAiSessionState = targetField.id === 'description'
+      ? { ...session, description: String(normalizedValue).trim(), awaitingCorrectionFieldId: undefined, awaitingCorrectionFieldLabel: undefined }
+      : {
+          ...session,
+          collectedFormData: { ...(session.collectedFormData || {}), [targetField.id]: normalizedValue },
+          pendingFieldIds: (session.pendingFieldIds || []).filter((id) => id !== targetField.id),
+          currentFieldId: undefined,
+          currentFieldLabel: undefined,
+          awaitingCorrectionFieldId: undefined,
+          awaitingCorrectionFieldLabel: undefined,
+        };
+
+    const reviewSession = this.withStage(updated, this.buildRequiredPendingFieldIds(updated).length > 0 ? 'collecting_fields' : 'awaiting_review_confirmation');
+    if (reviewSession.stage === 'collecting_fields') {
+      const nextFieldId = this.buildRequiredPendingFieldIds(reviewSession)[0];
+      const nextField = nextFieldId === 'description'
+        ? { id: 'description', label: 'Descricao da solicitacao', type: 'textarea', required: true }
+        : questions.find((field) => field.id === nextFieldId);
+      reviewSession.pendingFieldIds = this.buildRequiredPendingFieldIds(reviewSession);
+      reviewSession.currentFieldId = nextField?.id;
+      reviewSession.currentFieldLabel = nextField?.label;
+      await this.persistSession(execution.id, reviewSession);
+      return { session: reviewSession, response: this.buildFieldPrompt(execution, reviewSession, nextField, `${targetField.label} atualizado.`) };
+    }
+
+    reviewSession.reviewText = await this.buildReviewText(execution, reviewSession);
+    await this.persistSession(execution.id, reviewSession);
+    return {
+      session: reviewSession,
+      response: this.buildReviewResponse(execution, reviewSession, `${targetField.label} atualizado. Revise novamente antes de enviar.`),
+    };
+  }
+
   private async buildReviewText(execution: FlowExecution, session: CitizenAiSessionState): Promise<string> {
     const formatted = await this.runAction('formatProtocolReview', { serviceId: session.selectedServiceId, formData: session.collectedFormData, description: session.description, documents: session.uploadedDocuments }, execution, session);
     if (typeof formatted.reviewText === 'string' && formatted.reviewText.trim()) return formatted.reviewText.trim();
@@ -1104,8 +1274,8 @@ export class CitizenAiOrchestrator {
     ].filter(Boolean).join('\n\n');
   }
 
-  private buildReviewResponse(execution: FlowExecution, session: CitizenAiSessionState): BotResponse {
-    return { message: `${session.reviewText || 'Revise os dados coletados abaixo.'}\n\nConfirma o envio da solicitacao?`, messageType: 'menu', data: { options: [{ id: 'confirmar', label: 'Confirmar e enviar', description: 'Criar o protocolo agora' }, { id: 'corrigir', label: 'Corrigir dados', description: 'Voltar para revisar informacoes' }] }, metadata: this.meta(execution, session, true) };
+  private buildReviewResponse(execution: FlowExecution, session: CitizenAiSessionState, prefix?: string): BotResponse {
+    return { message: `${prefix ? `${prefix}\n\n` : ''}${session.reviewText || 'Revise os dados coletados abaixo.'}\n\nConfirma o envio da solicitacao?`, messageType: 'menu', data: { options: [{ id: 'confirmar', label: 'Confirmar e enviar', description: 'Criar o protocolo agora' }, { id: 'corrigir', label: 'Corrigir dados', description: 'Alterar uma informacao sem reiniciar' }] }, metadata: this.meta(execution, session, true) };
   }
 
   private buildUploadPrompt(execution: FlowExecution, session: CitizenAiSessionState): BotResponse {
@@ -1143,6 +1313,36 @@ export class CitizenAiOrchestrator {
       message: 'Ola. Posso te ajudar com uma solicitacao, consultar protocolo ou navegar por secretaria. Escolha uma opcao ou escreva com suas palavras o que precisa.',
       messageType: 'menu',
       data: { options: QUICK_ACTIONS },
+      metadata: this.meta(execution, session, true),
+    };
+  }
+
+  private buildResumeResponse(execution: FlowExecution, session: CitizenAiSessionState): BotResponse {
+    if (session.stage === 'collecting_fields') {
+      const questions = this.getFormQuestions(session);
+      const currentFieldId = session.currentFieldId || session.pendingFieldIds?.[0];
+      const currentField = currentFieldId === 'description'
+        ? { id: 'description', label: 'Descricao da solicitacao', type: 'textarea', required: true }
+        : questions.find((field) => field.id === currentFieldId);
+      return this.buildFieldPrompt(execution, session, currentField, `Vamos continuar ${session.selectedServiceName || 'sua solicitacao'} de onde paramos.`);
+    }
+
+    if (session.stage === 'awaiting_review_confirmation') {
+      return this.buildReviewResponse(execution, session, 'Ja tenho os dados desta solicitacao. Revise antes de enviar.');
+    }
+
+    if (session.stage === 'awaiting_documents') {
+      return this.buildUploadPrompt(execution, session);
+    }
+
+    if (session.stage === 'awaiting_correction_field') {
+      return this.buildCorrectionMenu(execution, session, 'Estamos corrigindo os dados desta solicitacao.');
+    }
+
+    return {
+      message: this.buildLockedHelpMessage(session),
+      messageType: 'menu',
+      data: { options: [{ id: 'continuar', label: 'Continuar', description: 'Seguir no fluxo atual' }, { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Reiniciar atendimento' }] },
       metadata: this.meta(execution, session, true),
     };
   }
@@ -1450,6 +1650,168 @@ export class CitizenAiOrchestrator {
     const required = questions.filter((field) => field.required !== false).map((field) => field.id).filter((fieldId) => collected[fieldId] === undefined);
     if ((!session.description || String(session.description).trim().length < 10) && questions.length === 0) required.unshift('description');
     return required;
+  }
+
+  private getFormQuestions(session: CitizenAiSessionState): FieldDef[] {
+    return Array.isArray(session.formSchemaData?.questions) ? session.formSchemaData?.questions as FieldDef[] : [];
+  }
+
+  private getCorrectableFields(session: CitizenAiSessionState): FieldDef[] {
+    const fields = this.getFormQuestions(session);
+    const hasDescription = Boolean(session.description || fields.length === 0);
+    return hasDescription
+      ? [{ id: 'description', label: 'Descricao da solicitacao', type: 'textarea', required: true }, ...fields]
+      : fields;
+  }
+
+  private findCorrectableField(session: CitizenAiSessionState, input: string): FieldDef | undefined {
+    const normalized = this.normalize(input);
+    if (!normalized) return undefined;
+    return this.getCorrectableFields(session).find((field) => {
+      const fieldId = this.normalize(field.id);
+      const fieldLabel = this.normalize(field.label);
+      return normalized === fieldId ||
+        normalized === fieldLabel ||
+        normalized.includes(fieldLabel) ||
+        normalized.includes(fieldId);
+    });
+  }
+
+  private extractCorrectionValue(input: string): string | undefined {
+    const trimmed = input.trim();
+    const direct = trimmed.match(/\b(?:para|por|como|correto e|correto eh|correto é)\s+(.+)$/i)?.[1];
+    if (direct?.trim()) return direct.trim();
+    const actually = trimmed.match(/\b(?:na verdade|o correto)\s+(?:e|eh|é)?\s*(.+)$/i)?.[1];
+    if (actually?.trim()) return actually.trim();
+    const colon = trimmed.match(/:\s*(.+)$/)?.[1];
+    if (colon?.trim()) return colon.trim();
+    return undefined;
+  }
+
+  private isCorrectionRequest(message: string): boolean {
+    return this.matchesAny(this.normalize(message), CORRECTION_PATTERNS);
+  }
+
+  private isCompetingGlobalIntent(message: string): boolean {
+    const normalized = this.normalize(message);
+    const intent = this.matchExplicitIntent(normalized);
+    return Boolean(
+      intent &&
+      !['descrever_solicitacao', 'voltar_menu'].includes(intent) &&
+      !this.matchesAny(normalized, YES_PATTERNS) &&
+      !this.matchesAny(normalized, NO_PATTERNS)
+    );
+  }
+
+  private isFlowLockedStage(stage: CitizenAiStage): boolean {
+    return [
+      'collecting_fields',
+      'awaiting_documents',
+      'awaiting_review_confirmation',
+      'awaiting_correction_field',
+      'awaiting_protocol_pending_selection',
+      'awaiting_protocol_pending_text_resolution',
+      'awaiting_protocol_pending_document_upload',
+    ].includes(stage);
+  }
+
+  private async handleLockedFlowShortcut(execution: FlowExecution, session: CitizenAiSessionState, message: string): Promise<CitizenAiDecision | null> {
+    const normalized = this.normalize(message);
+    if (!normalized) return null;
+
+    if (this.matchesAny(normalized, MENU_PATTERNS)) {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    if (this.matchesAny(normalized, HELP_PATTERNS)) {
+      return {
+        session,
+        response: {
+          message: this.buildLockedHelpMessage(session),
+          messageType: 'menu',
+          data: { options: [{ id: 'continuar', label: 'Continuar', description: 'Permanecer neste atendimento' }, { id: 'corrigir', label: 'Corrigir dados', description: 'Alterar informacoes coletadas' }, { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Encerrar este fluxo e voltar ao inicio' }] },
+          metadata: this.meta(execution, session, true),
+        },
+      };
+    }
+
+    return null;
+  }
+
+  private buildLockedHelpMessage(session: CitizenAiSessionState): string {
+    if (session.stage === 'awaiting_review_confirmation') return 'Estamos revisando esta solicitacao. Voce pode confirmar o envio ou corrigir uma informacao sem reiniciar.';
+    if (session.stage === 'collecting_fields') return `Ainda estou coletando dados para ${session.selectedServiceName || 'sua solicitacao'}. Informe o dado solicitado ou diga corrigir para ajustar algo.`;
+    if (session.stage === 'awaiting_documents') return 'Este atendimento esta aguardando documentos obrigatorios. Envie os anexos solicitados para continuar.';
+    if (session.stage.startsWith('awaiting_protocol_pending')) return 'Estamos resolvendo uma pendencia deste protocolo. Conclua esta etapa ou volte ao menu para encerrar o fluxo atual.';
+    return 'Estamos no meio de um atendimento. Posso continuar, corrigir dados ou voltar ao menu.';
+  }
+
+  private buildCorrectionMenu(execution: FlowExecution, session: CitizenAiSessionState, prefix?: string): BotResponse {
+    const options = this.getCorrectableFields(session).map((field) => ({
+      id: field.id,
+      label: field.label,
+      description: field.id === 'description' ? 'Texto principal da solicitacao' : 'Dado informado no formulario',
+    }));
+
+    return {
+      message: `${prefix ? `${prefix}\n\n` : ''}Tambem pode escrever direto, por exemplo: corrigir endereco para Rua Brasil, 100.`,
+      messageType: 'menu',
+      data: { options: [...options, { id: 'confirmar', label: 'Voltar para revisao', description: 'Revisar e confirmar envio' }] },
+      metadata: this.meta(execution, session, true),
+    };
+  }
+
+  private async buildContextualCorrectionFallback(execution: FlowExecution, session: CitizenAiSessionState): Promise<CitizenAiDecision> {
+    const next = this.withStage(session, 'awaiting_correction_field');
+    await this.persistSession(execution.id, next);
+    return { session: next, response: this.buildCorrectionMenu(execution, next, 'Posso corrigir dados quando existe uma solicitacao em andamento.') };
+  }
+
+  private buildSessionContext(session: CitizenAiSessionState): string {
+    const pendingLabels = this.getCorrectableFields(session)
+      .filter((field) => (session.pendingFieldIds || []).includes(field.id))
+      .map((field) => field.label);
+    const collected = Object.entries(session.collectedFormData || {})
+      .slice(0, 8)
+      .map(([key, value]) => `${key}=${String(value)}`)
+      .join('; ');
+
+    return [
+      `stage=${session.stage}`,
+      session.selectedServiceName ? `servico=${session.selectedServiceName}` : undefined,
+      session.currentFieldLabel ? `pergunta_atual=${session.currentFieldLabel}` : undefined,
+      pendingLabels.length ? `pendentes=${pendingLabels.join(', ')}` : undefined,
+      session.description ? `descricao=${session.description}` : undefined,
+      collected ? `dados=${collected}` : undefined,
+      session.protocolNumber ? `protocolo=${session.protocolNumber}` : undefined,
+    ].filter(Boolean).join(' | ');
+  }
+
+  private buildProtocolFingerprint(session: CitizenAiSessionState): string {
+    return JSON.stringify({
+      serviceId: session.selectedServiceId || '',
+      description: session.description || '',
+      formData: Object.keys(session.collectedFormData || {}).sort().reduce<Record<string, unknown>>((acc, key) => {
+        acc[key] = session.collectedFormData?.[key];
+        return acc;
+      }, {}),
+      documents: (session.uploadedDocuments || []).map((doc) => String(doc.filePath || doc.fileName || doc.id || '')).sort(),
+    });
+  }
+
+  private buildDuplicateProtocolResponse(execution: FlowExecution, session: CitizenAiSessionState): CitizenAiDecision {
+    const protocolNumber = session.createdProtocolNumber || '';
+    return {
+      session,
+      response: {
+        message: `Esta solicitacao ja foi enviada e nao vou criar outro protocolo duplicado.\n\nNumero do protocolo: ${protocolNumber || 'gerado anteriormente'}`,
+        messageType: 'card',
+        data: { cards: [{ id: session.createdProtocolId || protocolNumber || 'created-protocol', title: `Protocolo ${protocolNumber || 'criado'}`, description: session.selectedServiceName || 'Solicitacao registrada', metadata: { protocolNumber, status: 'ABERTO' } }] },
+        metadata: this.meta(execution, session, true),
+      },
+    };
   }
 
   private async handleGlobalShortcut(execution: FlowExecution, session: CitizenAiSessionState, message: string): Promise<CitizenAiDecision | null> {

@@ -108,7 +108,7 @@ export function EnhancedChatArea() {
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-50 p-3 space-y-4">
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-gray-50 p-2.5 sm:p-3 space-y-4">
         {messages.length === 0 && (
           <div className="text-center py-12">
             <Bot className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -120,13 +120,13 @@ export function EnhancedChatArea() {
         {messages.map((message: any) => (
           <div
             key={message.id}
-            className={`flex w-full ${
+            className={`flex w-full min-w-0 overflow-hidden ${
               message.senderType === 'CITIZEN' ? 'justify-end' : 'justify-start'
             }`}
           >
             {message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM' ? (
               // Mensagens do bot ocupam a largura total disponível
-              <div className="w-full min-w-0 overflow-hidden">
+              <div className="w-full min-w-0 max-w-full overflow-hidden">
                 <BotMessageRenderer
                   message={message}
                   onInteraction={handleInteraction}
@@ -135,7 +135,7 @@ export function EnhancedChatArea() {
               </div>
             ) : (
               // Mensagens do cidadão ficam alinhadas à direita com largura máxima
-              <div className="max-w-[78%] min-w-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl px-4 py-3 shadow-md">
+              <div className="max-w-[86%] sm:max-w-[78%] min-w-0 overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl px-4 py-3 shadow-md">
                 <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
                 <span className="text-xs text-blue-100 mt-1 block text-right">
                   {new Date(message.createdAt).toLocaleTimeString('pt-BR', {

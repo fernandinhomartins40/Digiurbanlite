@@ -51,10 +51,10 @@ export function ConfirmationCard({
   );
 
   return (
-    <div className="w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
       {/* Header */}
       <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3">
-        <h3 className="text-sm font-semibold text-white">{title}</h3>
+        <h3 className="text-sm font-semibold text-white break-words">{title}</h3>
       </div>
 
       {/* Content */}
@@ -64,7 +64,7 @@ export function ConfirmationCard({
             <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">
               {formatLabel(key)}
             </span>
-            <span className="text-sm text-gray-900 font-medium break-words">
+            <span className="text-sm text-gray-900 font-medium break-words [overflow-wrap:anywhere]">
               {formatValue(key, value)}
             </span>
           </div>
@@ -88,11 +88,11 @@ export function ConfirmationCard({
       </div>
 
       {/* Actions */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex flex-wrap gap-2">
+      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
         {onCancel && (
           <button
             onClick={onCancel}
-            className="flex-1 min-w-[80px] flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
+            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
           >
             <XCircle className="w-4 h-4 shrink-0" />
             Cancelar
@@ -101,7 +101,7 @@ export function ConfirmationCard({
         {onEdit && (
           <button
             onClick={onEdit}
-            className="flex-1 min-w-[80px] flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-blue-500 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-medium text-sm"
+            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-blue-500 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-medium text-sm"
           >
             <Edit className="w-4 h-4 shrink-0" />
             Editar
@@ -109,7 +109,7 @@ export function ConfirmationCard({
         )}
         <button
           onClick={onConfirm}
-          className="flex-1 min-w-[80px] flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-sm"
+          className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-sm min-[380px]:col-span-2"
         >
           <CheckCircle className="w-4 h-4 shrink-0" />
           Confirmar

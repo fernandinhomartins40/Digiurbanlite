@@ -54,9 +54,9 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer overflow-hidden" onClick={handleAction}>
+    <Card className="w-full min-w-0 max-w-full hover:shadow-md transition-shadow cursor-pointer overflow-hidden" onClick={handleAction}>
       <CardHeader className="pb-3">
-        <div className="flex items-start gap-3">
+        <div className="flex min-w-0 items-start gap-3">
           <div className="shrink-0 p-2 bg-blue-100 rounded-lg">
             <FileText className="w-4 h-4 text-blue-600" />
           </div>
@@ -71,7 +71,7 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
             )}
           </div>
           {card.status && (
-            <Badge className={`${STATUS_COLORS[card.status] ?? 'bg-gray-100 text-gray-800'} text-[10px] shrink-0 whitespace-nowrap`}>
+            <Badge className={`${STATUS_COLORS[card.status] ?? 'bg-gray-100 text-gray-800'} text-[10px] shrink-0 whitespace-nowrap max-[360px]:max-w-[96px] max-[360px]:truncate`}>
               {STATUS_LABELS[card.status] ?? card.status}
             </Badge>
           )}
@@ -81,9 +81,9 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
       <CardContent className="pt-0">
         <div className="space-y-1.5 mb-3">
           {card.department && (
-            <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <div className="flex min-w-0 items-center gap-1.5 text-xs text-gray-600">
               <Building2 className="w-3.5 h-3.5 shrink-0" />
-              <span className="break-words">{card.department}</span>
+              <span className="min-w-0 break-words [overflow-wrap:anywhere]">{card.department}</span>
             </div>
           )}
           {card.estimatedDays !== undefined && card.estimatedDays !== null && (
@@ -124,7 +124,7 @@ interface MessageCardsProps {
 export function MessageCards({ cards, onAction }: MessageCardsProps) {
   if (!cards || cards.length === 0) return null;
   return (
-    <div className="grid grid-cols-1 gap-3 my-2">
+    <div className="grid w-full min-w-0 grid-cols-1 gap-3 my-2">
       {cards.map((card) => (
         <MessageCard key={card.id} card={card} onAction={onAction} />
       ))}

@@ -322,9 +322,10 @@ export class FlowEngineService {
       const conversation = await this.findOrCreateBotConversation(citizenId);
       conversationId = conversation.id;
     }
+    const activeConversationId = conversationId;
 
     const conversation = await prisma.conversation.findUnique({
-      where: { id: conversationId },
+      where: { id: activeConversationId },
       select: {
         metadata: true,
         participant1Id: true,
@@ -341,22 +342,25 @@ export class FlowEngineService {
     // 2. Iniciar fluxo
     let response;
     if (normalizedFlowName === 'ai_assistant') {
-      await this.flowEngine.cancelActiveFlow(citizenId);
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
         throw new Error('Flow ai_assistant not found');
       }
       const activeExecution = await this.getActiveExecution(citizenId);
+      const existingAiExecution = this.isAiExecution(activeExecution as any) ? activeExecution : null;
+      if (activeExecution && !existingAiExecution) {
+        await this.flowEngine.cancelActiveFlow(citizenId);
+      }
       const result = await citizenAiOrchestrator.startSession({
         citizenId,
         flowId: aiFlow.id,
-        conversationId,
-        existingExecution: activeExecution as any,
+        conversationId: activeConversationId,
+        existingExecution: existingAiExecution as any,
       });
       response = result.response;
-      await this.linkConversationToExecution(conversationId, result.execution.id, 'ACTIVE');
+      await this.linkConversationToExecution(activeConversationId, result.execution.id, 'ACTIVE');
     } else {
-      response = await this.flowEngine.startFlow(citizenId, normalizedFlowName, conversationId);
+      response = await this.flowEngine.startFlow(citizenId, normalizedFlowName, activeConversationId);
     }
     const botMetadata = this.buildBotMetadata(response);
 
@@ -381,7 +385,7 @@ export class FlowEngineService {
     // 4. Salvar mensagem do bot (✅ REFATORADO com campos queryable)
     const message = await prisma.message.create({
       data: {
-        conversationId,
+        conversationId: activeConversationId,
         senderId: 'DIGIBOT_SYSTEM',
         senderType: 'SYSTEM',
         content: response.message,
@@ -399,7 +403,7 @@ export class FlowEngineService {
 
     // 5. Atualizar lastMessage da conversa
     await prisma.conversation.update({
-      where: { id: conversationId },
+      where: { id: activeConversationId },
       data: {
         lastMessageAt: new Date(),
         lastMessagePreview: response.message.substring(0, 100),
@@ -413,19 +417,19 @@ export class FlowEngineService {
 
     // 6. Emitir via WebSocket
     if (this.wsServer) {
-      this.wsServer.sendMessageToConversation(conversationId, 'message:new', {
-        conversationId,
+      this.wsServer.sendMessageToConversation(activeConversationId, 'message:new', {
+        conversationId: activeConversationId,
         message,
       });
 
       // Notificar também o cidadão diretamente
       this.wsServer.sendMessageToUser(citizenId, 'CITIZEN', 'message:new', {
-        conversationId,
+        conversationId: activeConversationId,
         message,
       });
 
       const conversationDetails = await prisma.conversation.findUnique({
-        where: { id: conversationId },
+        where: { id: activeConversationId },
         include: {
           messages: {
             orderBy: { sentAt: 'desc' },
@@ -441,9 +445,9 @@ export class FlowEngineService {
       }
     }
 
-    await this.scheduleBotInactivityTimeout(conversationId, citizenId, 'ACTIVE');
+    await this.scheduleBotInactivityTimeout(activeConversationId, citizenId, 'ACTIVE');
 
-    return { response, conversationId, message };
+    return { response, conversationId: activeConversationId, message };
   }
 
   /**
