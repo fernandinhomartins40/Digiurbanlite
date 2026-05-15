@@ -48,13 +48,13 @@ export function ServiceCarousel({ options, categories, departmentName, onSelect 
     : groupByCategory(options);
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-4 rounded-2xl border border-slate-200 bg-slate-50 p-2.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-4 rounded-lg border border-slate-200 bg-white p-2.5 sm:p-4 shadow-sm overflow-hidden">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
           <p className="text-xs text-slate-500 break-words">Os servicos estao agrupados por categoria. Deslize lateralmente para explorar.</p>
         </div>
-        <div className="hidden shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 min-[380px]:block">
+        <div className="hidden shrink-0 rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 min-[380px]:block">
           {options.length} servicos
         </div>
       </div>
@@ -110,7 +110,7 @@ function CategorySection({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute left-0 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 rounded-full bg-white/95 shadow-md md:flex md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+          className="absolute left-0 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 rounded-lg bg-white/95 shadow-md md:flex md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           onClick={() => scroll('left')}
         >
           <ChevronLeft className="h-3.5 w-3.5" />
@@ -129,7 +129,7 @@ function CategorySection({
               <button
                 key={service.id}
                 onClick={() => onSelect(service)}
-                className="snap-start min-w-0 max-w-full rounded-xl border bg-white p-3 sm:p-4 transition-shadow duration-200 hover:shadow-md active:scale-[0.99] cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
+                className="snap-start min-w-0 max-w-full rounded-lg border bg-white p-3 sm:p-4 transition-colors duration-200 hover:bg-slate-50 cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
                 style={{ borderColor: catColor.primary + '40', flex: '0 0 min(100%, 240px)' }}
               >
                 <div className="min-w-0 font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px] break-words [overflow-wrap:anywhere]">
@@ -158,7 +158,7 @@ function CategorySection({
                     )}
                   </div>
                   <div
-                    className="max-w-full shrink-0 rounded-full px-2 py-1 text-[10px] font-medium"
+                    className="max-w-full shrink-0 rounded-md px-2 py-1 text-[10px] font-medium"
                     style={{ backgroundColor: `${catColor.primary}15`, color: catColor.primary }}
                   >
                     Selecionar
@@ -172,7 +172,7 @@ function CategorySection({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute right-0 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 rounded-full bg-white/95 shadow-md md:flex md:opacity-0 md:group-hover:opacity-100 transition-opacity"
+          className="absolute right-0 top-1/2 z-10 hidden h-8 w-8 -translate-y-1/2 rounded-lg bg-white/95 shadow-md md:flex md:opacity-0 md:group-hover:opacity-100 transition-opacity"
           onClick={() => scroll('right')}
         >
           <ChevronRight className="h-3.5 w-3.5" />

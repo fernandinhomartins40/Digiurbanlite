@@ -143,12 +143,12 @@ export function CalendarPicker({
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-sm mx-auto bg-white rounded-lg shadow-lg p-3 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full sm:max-w-sm mx-auto bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-4 overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-center justify-between gap-1 mb-4">
         <button
           onClick={handlePrevMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -162,7 +162,7 @@ export function CalendarPicker({
 
         <button
           onClick={handleNextMonth}
-          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -201,11 +201,11 @@ export function CalendarPicker({
               onClick={() => handleDateClick(date)}
               disabled={disabled}
               className={`
-                aspect-square min-w-0 p-1 sm:p-2 text-sm rounded-lg transition-all
+                aspect-square min-w-0 p-1 sm:p-2 text-sm rounded-lg transition-colors
                 ${!isCurrentMonth && 'text-gray-300'}
                 ${isCurrentMonth && !disabled && 'hover:bg-blue-50'}
-                ${isToday && !isSelected && 'border-2 border-blue-500'}
-                ${isSelected && 'bg-gradient-to-r from-blue-500 to-purple-600 text-white font-semibold'}
+                ${isToday && !isSelected && 'border border-blue-600'}
+                ${isSelected && 'bg-slate-900 text-white font-semibold'}
                 ${disabled && 'opacity-40 cursor-not-allowed'}
                 ${!disabled && !isSelected && 'cursor-pointer'}
               `}

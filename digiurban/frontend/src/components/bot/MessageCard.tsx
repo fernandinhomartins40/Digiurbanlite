@@ -29,12 +29,12 @@ interface MessageCardProps {
 }
 
 const STATUS_COLORS: Record<string, string> = {
-  PENDING: 'bg-yellow-100 text-yellow-800',
-  IN_ANALYSIS: 'bg-blue-100 text-blue-800',
-  APPROVED: 'bg-green-100 text-green-800',
-  REJECTED: 'bg-red-100 text-red-800',
-  COMPLETED: 'bg-green-100 text-green-800',
-  CANCELLED: 'bg-gray-100 text-gray-800',
+  PENDING: 'bg-amber-50 text-amber-800 border border-amber-200',
+  IN_ANALYSIS: 'bg-blue-50 text-blue-800 border border-blue-200',
+  APPROVED: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+  REJECTED: 'bg-rose-50 text-rose-800 border border-rose-200',
+  COMPLETED: 'bg-emerald-50 text-emerald-800 border border-emerald-200',
+  CANCELLED: 'bg-slate-100 text-slate-700 border border-slate-200',
 };
 
 const STATUS_LABELS: Record<string, string> = {
@@ -54,11 +54,11 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
   };
 
   return (
-    <Card className="w-full min-w-0 max-w-full hover:shadow-md transition-shadow cursor-pointer overflow-hidden" onClick={handleAction}>
+    <Card className="w-full min-w-0 max-w-full border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-colors cursor-pointer overflow-hidden" onClick={handleAction}>
       <CardHeader className="pb-3">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="shrink-0 p-2 bg-blue-100 rounded-lg">
-            <FileText className="w-4 h-4 text-blue-600" />
+          <div className="shrink-0 p-2 bg-slate-100 rounded-lg">
+            <FileText className="w-4 h-4 text-slate-700" />
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-sm font-semibold break-words leading-snug">
@@ -105,7 +105,7 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
             onClick={handleButtonAction}
             variant="outline"
             size="sm"
-            className="w-full text-xs group hover:bg-blue-50 hover:text-blue-600 hover:border-blue-600"
+            className="w-full rounded-lg text-xs group hover:bg-blue-50 hover:text-blue-700 hover:border-blue-600"
           >
             <span className="truncate">{card.action.label}</span>
             <ArrowRight className="ml-1.5 h-3.5 w-3.5 shrink-0 group-hover:translate-x-0.5 transition-transform" />

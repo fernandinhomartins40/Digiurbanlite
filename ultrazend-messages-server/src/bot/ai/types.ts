@@ -57,6 +57,12 @@ export interface CitizenAiCorrectionExtraction {
   confidence: number;
 }
 
+export interface CitizenAiGuidance {
+  message: string;
+  suggestedActionIds: string[];
+  confidence: number;
+}
+
 export interface CitizenAiSessionState {
   engine: 'ai_assistant';
   stage: CitizenAiStage;

@@ -51,10 +51,10 @@ export function ConfirmationCard({
   );
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-3">
-        <h3 className="text-sm font-semibold text-white break-words">{title}</h3>
+      <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+        <h3 className="text-sm font-semibold text-slate-900 break-words">{title}</h3>
       </div>
 
       {/* Content */}
@@ -92,7 +92,7 @@ export function ConfirmationCard({
         {onCancel && (
           <button
             onClick={onCancel}
-            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors font-medium text-sm"
+            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors font-medium text-sm"
           >
             <XCircle className="w-4 h-4 shrink-0" />
             Cancelar
@@ -101,7 +101,7 @@ export function ConfirmationCard({
         {onEdit && (
           <button
             onClick={onEdit}
-            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border-2 border-blue-500 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-medium text-sm"
+            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm"
           >
             <Edit className="w-4 h-4 shrink-0" />
             Editar
@@ -109,7 +109,7 @@ export function ConfirmationCard({
         )}
         <button
           onClick={onConfirm}
-          className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all font-medium text-sm min-[380px]:col-span-2"
+          className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors font-medium text-sm min-[380px]:col-span-2"
         >
           <CheckCircle className="w-4 h-4 shrink-0" />
           Confirmar

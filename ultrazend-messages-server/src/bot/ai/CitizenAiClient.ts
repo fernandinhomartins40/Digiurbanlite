@@ -3,6 +3,7 @@ import logger from '../../utils/logger';
 import {
   CitizenAiCorrectionExtraction,
   CitizenAiFieldExtraction,
+  CitizenAiGuidance,
   CitizenAiIntentAnalysis,
   CitizenAiSelection,
 } from './types';
@@ -271,6 +272,58 @@ export class CitizenAiClient {
         typeof parsed.description === 'string' && parsed.description.trim()
           ? parsed.description.trim()
           : undefined,
+      confidence: clampConfidence(parsed.confidence),
+    };
+  }
+
+  async generateGuidance(params: {
+    citizenId: string;
+    message: string;
+    recentMessages: string[];
+    sessionContext: string;
+    availableActions: Array<{ id: string; label: string; description?: string }>;
+    serviceSearchSummary?: string;
+  }): Promise<CitizenAiGuidance | null> {
+    const actions = params.availableActions
+      .map((action) => `${action.id} | ${action.label} | ${action.description || ''}`)
+      .join('\n');
+
+    const prompt = [
+      'Voce e o DigiBot, assistente municipal do Digiurban.',
+      'Responda apenas com JSON valido.',
+      'Campos obrigatorios: message, suggestedActionIds, confidence.',
+      'message deve ser curta, natural e contextual, com no maximo 2 frases.',
+      'suggestedActionIds deve conter no maximo 3 ids existentes na lista de acoes permitidas.',
+      'Nao invente servicos, protocolos, dados pessoais, prazos ou informacoes que nao estejam no contexto.',
+      'Se a mensagem estiver confusa, diga o que entendeu e conduza para a melhor proxima acao.',
+      'Se houver erro de digitacao, interprete a intencao provavel sem comentar o erro.',
+      'Mensagens curtas como "saude", "documentos", "perfil", "protocolo" ou "familia" devem ser conduzidas para a acao mais provavel.',
+      'Sempre sugira acoes interativas; nao deixe a conversa terminar sem uma proxima opcao clara.',
+      `Contexto do fluxo: ${params.sessionContext || 'triagem inicial'}`,
+      `Historico recente: ${params.recentMessages.join(' | ') || 'sem historico relevante'}`,
+      params.serviceSearchSummary ? `Resultado da busca interna: ${params.serviceSearchSummary}` : undefined,
+      `Acoes permitidas:\n${actions}`,
+      `Mensagem do cidadao: ${params.message}`,
+    ].filter(Boolean).join('\n');
+
+    const parsed = await this.requestJson(prompt, params.citizenId);
+    if (!parsed) {
+      return null;
+    }
+
+    const validActionIds = new Set(params.availableActions.map((action) => action.id));
+    const suggestedActionIds = Array.isArray(parsed.suggestedActionIds)
+      ? parsed.suggestedActionIds
+          .filter((id: unknown): id is string => typeof id === 'string' && validActionIds.has(id))
+          .slice(0, 3)
+      : [];
+
+    return {
+      message:
+        typeof parsed.message === 'string' && parsed.message.trim()
+          ? parsed.message.trim()
+          : '',
+      suggestedActionIds,
       confidence: clampConfidence(parsed.confidence),
     };
   }

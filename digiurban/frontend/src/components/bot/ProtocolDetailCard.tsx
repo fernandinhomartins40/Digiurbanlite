@@ -65,12 +65,12 @@ interface ProtocolDetailCardProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
-  VINCULADO: { label: 'Vinculado', className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
-  PROGRESSO: { label: 'Em Progresso', className: 'bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200' },
-  PENDENCIA: { label: 'Pendencia', className: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200' },
-  ATUALIZACAO: { label: 'Atualizado', className: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' },
-  CONCLUIDO: { label: 'Concluido', className: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' },
-  CANCELADO: { label: 'Cancelado', className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' },
+  VINCULADO: { label: 'Vinculado', className: 'bg-blue-50 text-blue-800 border border-blue-200' },
+  PROGRESSO: { label: 'Em Progresso', className: 'bg-slate-100 text-slate-800 border border-slate-200' },
+  PENDENCIA: { label: 'Pendencia', className: 'bg-amber-50 text-amber-800 border border-amber-200' },
+  ATUALIZACAO: { label: 'Atualizado', className: 'bg-yellow-50 text-yellow-800 border border-yellow-200' },
+  CONCLUIDO: { label: 'Concluido', className: 'bg-emerald-50 text-emerald-800 border border-emerald-200' },
+  CANCELADO: { label: 'Cancelado', className: 'bg-rose-50 text-rose-800 border border-rose-200' },
 };
 
 function formatDate(dateStr: string): string {
@@ -86,7 +86,7 @@ function StageIcon({ status }: { status: string }) {
     case 'COMPLETED':
       return <CheckCircle2 className="h-4 w-4 text-green-600 flex-shrink-0" />;
     case 'IN_PROGRESS':
-      return <Clock className="h-4 w-4 text-blue-600 animate-pulse flex-shrink-0" />;
+      return <Clock className="h-4 w-4 text-blue-700 animate-pulse flex-shrink-0" />;
     case 'FAILED':
       return <XCircle className="h-4 w-4 text-red-600 flex-shrink-0" />;
     case 'SKIPPED':
@@ -102,7 +102,7 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
   return (
-    <Card className="w-full min-w-0 max-w-full border shadow-sm overflow-hidden">
+    <Card className="w-full min-w-0 max-w-full border-slate-200 shadow-sm overflow-hidden">
       <CardContent className="p-0">
         {/* Header: Numero + Status */}
         <div className="flex min-w-0 items-start justify-between gap-2 p-3 pb-2 border-b bg-muted/30">
@@ -162,14 +162,14 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
                     {/* Nome da etapa */}
                     <div className={`min-w-0 flex-1 pb-2 ${isLast ? 'pb-0' : ''}`}>
                       <span className={`text-xs leading-tight ${
-                        isCurrentStage ? 'font-semibold text-blue-700 dark:text-blue-400' :
-                        isCompleted ? 'text-green-700 dark:text-green-400' :
+                        isCurrentStage ? 'font-semibold text-blue-700' :
+                        isCompleted ? 'text-emerald-700' :
                         'text-muted-foreground'
                       } break-words [overflow-wrap:anywhere]`}>
                         {stage.name}
                       </span>
                       {isCurrentStage && (
-                        <Badge variant="default" className="ml-1.5 bg-blue-600 text-[10px] px-1.5 py-0 h-4">
+                        <Badge variant="default" className="ml-1.5 bg-slate-900 text-[10px] px-1.5 py-0 h-4">
                           Atual
                         </Badge>
                       )}

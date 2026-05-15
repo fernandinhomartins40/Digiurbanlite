@@ -29,7 +29,7 @@ export function InteractiveCard({
 }: InteractiveCardProps) {
   if (type === 'boolean') {
     return (
-      <Card className="w-full min-w-0 max-w-full bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="w-full min-w-0 max-w-full border-slate-200 bg-white shadow-sm overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm leading-snug break-words">{question}</CardTitle>
           {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
@@ -39,7 +39,7 @@ export function InteractiveCard({
             <Button
               onClick={() => onSelect('true')}
               variant="outline"
-              className="h-auto py-3 bg-white hover:bg-green-50 hover:border-green-600 transition-all"
+              className="h-auto rounded-lg border-slate-300 bg-white py-3 text-slate-800 hover:border-emerald-600 hover:bg-emerald-50 hover:text-emerald-700 transition-colors"
             >
               <div className="flex flex-col items-center gap-1.5">
                 <Check className="w-5 h-5 text-green-600" />
@@ -49,7 +49,7 @@ export function InteractiveCard({
             <Button
               onClick={() => onSelect('false')}
               variant="outline"
-              className="h-auto py-3 bg-white hover:bg-red-50 hover:border-red-600 transition-all"
+              className="h-auto rounded-lg border-slate-300 bg-white py-3 text-slate-800 hover:border-rose-600 hover:bg-rose-50 hover:text-rose-700 transition-colors"
             >
               <div className="flex flex-col items-center gap-1.5">
                 <X className="w-5 h-5 text-red-600" />
@@ -64,7 +64,7 @@ export function InteractiveCard({
 
   if (type === 'single-choice') {
     return (
-      <Card className="w-full min-w-0 max-w-full bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="w-full min-w-0 max-w-full border-slate-200 bg-white shadow-sm overflow-hidden">
         <CardHeader className="pb-3">
           <CardTitle className="text-sm leading-snug break-words">{question}</CardTitle>
           {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
@@ -76,7 +76,7 @@ export function InteractiveCard({
                 key={option.id}
                 onClick={() => onSelect(option.id)}
                 variant="outline"
-                className="w-full h-auto py-2.5 px-3 justify-start bg-white hover:bg-blue-50 hover:border-blue-600 transition-all overflow-hidden"
+                className="w-full h-auto rounded-lg border-slate-300 bg-white py-2.5 px-3 justify-start hover:border-blue-600 hover:bg-blue-50 transition-colors overflow-hidden"
               >
                 <div className="flex items-start gap-2.5 w-full min-w-0">
                   <span className="shrink-0 mt-0.5">{option.icon || <Circle className="w-4 h-4 text-blue-600" />}</span>
@@ -97,7 +97,7 @@ export function InteractiveCard({
 
   if (type === 'multiple-choice') {
     return (
-      <Card className="w-full min-w-0 max-w-full bg-gradient-to-br from-blue-50 to-purple-50 border-blue-200 overflow-hidden">
+      <Card className="w-full min-w-0 max-w-full border-slate-200 bg-white shadow-sm overflow-hidden">
         <CardHeader className="pb-3">
           <div className="flex min-w-0 items-start justify-between gap-2">
             <div className="flex-1 min-w-0">
@@ -105,7 +105,7 @@ export function InteractiveCard({
               {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
             </div>
             {selectedValues.length > 0 && (
-              <Badge className="bg-blue-600 text-white shrink-0 text-xs max-[360px]:hidden">
+              <Badge className="bg-slate-900 text-white shrink-0 text-xs max-[360px]:hidden">
                 {selectedValues.length} sel.
               </Badge>
             )}
@@ -125,8 +125,8 @@ export function InteractiveCard({
                   variant="outline"
                   className={`w-full h-auto py-2.5 px-3 justify-start transition-all overflow-hidden ${
                     isSelected
-                      ? 'bg-blue-100 border-blue-600 hover:bg-blue-200'
-                      : 'bg-white hover:bg-blue-50 hover:border-blue-600'
+                      ? 'bg-blue-50 border-blue-700 text-blue-900 hover:bg-blue-100'
+                      : 'bg-white hover:bg-slate-50 hover:border-slate-400'
                   }`}
                 >
                   <div className="flex items-start gap-2.5 w-full min-w-0">
@@ -147,7 +147,7 @@ export function InteractiveCard({
             })}
           </div>
           {selectedValues.length > 0 && (
-            <Button onClick={() => onSelect(selectedValues)} className="w-full mt-3 bg-blue-600 hover:bg-blue-700">
+            <Button onClick={() => onSelect(selectedValues)} className="w-full mt-3 rounded-lg bg-slate-900 hover:bg-slate-800">
               <Check className="w-4 h-4 mr-2" />
               Confirmar Seleção ({selectedValues.length})
             </Button>

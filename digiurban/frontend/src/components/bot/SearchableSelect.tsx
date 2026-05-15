@@ -75,13 +75,13 @@ export function SearchableSelect({
           }}
           onFocus={() => setIsOpen(true)}
           placeholder={placeholder}
-          className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         />
       </div>
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute z-10 w-full min-w-0 mt-2 bg-white border-2 border-gray-200 rounded-lg shadow-lg max-h-64 overflow-y-auto overflow-x-hidden">
+        <div className="absolute z-10 w-full min-w-0 mt-2 bg-white border border-slate-200 rounded-lg shadow-lg max-h-64 overflow-y-auto overflow-x-hidden">
           {filteredOptions.length === 0 ? (
             <div className="px-4 py-3 text-center text-gray-500">
               Nenhum resultado encontrado
@@ -92,7 +92,7 @@ export function SearchableSelect({
                 key={option.value}
                 onClick={() => handleSelect(option.value)}
                 className={`
-                  w-full px-4 py-3 text-left hover:bg-blue-50 transition-colors border-b border-gray-100 last:border-b-0
+                  w-full px-4 py-3 text-left hover:bg-slate-50 transition-colors border-b border-gray-100 last:border-b-0
                   ${option.value === selectedValue ? 'bg-blue-50' : ''}
                 `}
               >
@@ -120,13 +120,13 @@ export function SearchableSelect({
 
       {/* Selected display */}
       {selectedOption && !isOpen && (
-        <div className="mt-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-2 p-3 bg-slate-50 border border-slate-200 rounded-lg">
           <div className="flex min-w-0 items-center justify-between gap-2">
             <div className="min-w-0">
-              <div className="text-sm font-medium text-blue-900">
+              <div className="text-sm font-medium text-slate-900">
                 Selecionado:
               </div>
-              <div className="text-sm text-blue-700 break-words [overflow-wrap:anywhere]">{selectedOption.label}</div>
+              <div className="text-sm text-slate-700 break-words [overflow-wrap:anywhere]">{selectedOption.label}</div>
             </div>
             <Check className="w-5 h-5 text-blue-600" />
           </div>

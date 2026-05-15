@@ -131,7 +131,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
                     key={opt.value}
                     type="button"
                     variant={isSelected ? 'default' : 'outline'}
-                    className={`h-auto min-w-0 py-3 whitespace-normal break-words transition-all ${
+                    className={`h-auto min-w-0 rounded-lg py-3 whitespace-normal break-words transition-colors ${
                       isSelected
                         ? opt.value === 'true'
                           ? 'bg-green-600 hover:bg-green-700 text-white'
@@ -205,7 +205,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-4 space-y-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-slate-200 shadow-sm p-3.5 sm:p-4 space-y-4 overflow-hidden">
       {fields.map((field) => {
         const normalized = normalizeField(field);
         if (!normalized.id) return null;
@@ -227,7 +227,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
           </div>
         );
       })}
-      <Button className="w-full" onClick={handleSubmit}>{submitLabel}</Button>
+      <Button className="w-full rounded-lg bg-slate-900 hover:bg-slate-800" onClick={handleSubmit}>{submitLabel}</Button>
     </div>
   );
 }

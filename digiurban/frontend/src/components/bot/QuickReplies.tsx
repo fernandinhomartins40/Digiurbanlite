@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 interface QuickRepliesProps {
   replies: string[];
@@ -21,9 +21,9 @@ export function QuickReplies({ replies, onSelect, className = '' }: QuickReplies
           variant="outline"
           size="sm"
           onClick={() => onSelect(reply)}
-          className="w-full min-w-0 h-auto py-2 px-3 justify-start bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 border-blue-200 text-blue-700 hover:text-blue-800 hover:border-blue-300 transition-all text-left overflow-hidden"
+          className="w-full min-w-0 h-auto rounded-lg border-slate-300 bg-white py-2 px-3 justify-start text-slate-700 hover:border-blue-600 hover:bg-blue-50 hover:text-blue-800 transition-colors text-left overflow-hidden"
         >
-          <Sparkles className="w-3 h-3 mr-2 shrink-0" />
+          <ArrowRight className="w-3 h-3 mr-2 shrink-0" />
           <span className="min-w-0 break-words [overflow-wrap:anywhere] text-xs leading-relaxed">{reply}</span>
         </Button>
       ))}

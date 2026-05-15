@@ -163,7 +163,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
             <button
               key={option.id}
               onClick={() => onInteraction(option)}
-              className="group min-w-0 rounded-2xl border border-slate-200 bg-white p-3 text-left shadow-sm transition-all duration-200 hover:border-blue-300 hover:shadow-md active:scale-[0.98] overflow-hidden"
+              className="group min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-blue-600 hover:bg-slate-50 overflow-hidden"
             >
               <div className="flex min-w-0 items-start justify-between gap-2">
                 <div className="min-w-0 flex-1">
@@ -174,7 +174,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
                     </div>
                   )}
                 </div>
-                <div className="shrink-0 mt-0.5 rounded-full bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100 whitespace-nowrap max-[380px]:hidden">
+                <div className="shrink-0 mt-0.5 rounded-md bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100 whitespace-nowrap max-[380px]:hidden">
                   Selecionar
                 </div>
               </div>
@@ -258,7 +258,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       {renderProgress()}
 
       {message?.content && (
-        <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
+        <div className="w-full min-w-0 max-w-full rounded-lg border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
           <div className="min-w-0 text-[15px] leading-7 text-slate-800 break-words [overflow-wrap:anywhere]">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {message.content}

@@ -96,6 +96,9 @@ export default function CitizenDashboard() {
   } | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const previousMessageIdsRef = useRef<string[]>([]);
+  const forceBottomOnNextMessagesRef = useRef(false);
   const botRequestInFlightRef = useRef(false);
   const MESSAGES_API_URL = process.env.NEXT_PUBLIC_MESSAGES_API_URL || 'http://localhost:9001/api';
 
@@ -124,7 +127,6 @@ export default function CitizenDashboard() {
       // Se é mensagem para conversa selecionada, adicionar à lista
       if (selectedConversation?.id === conversationId) {
         setMessages(prev => (prev.some(item => item.id === message.id) ? prev : [...prev, message]));
-        scrollToBottom();
         if (message.senderId !== citizen?.id) {
           markConversationAsRead(conversationId);
         }
@@ -174,10 +176,34 @@ export default function CitizenDashboard() {
     }
   }, [selectedConversation?.id]);
 
-  // Auto-scroll quando novas mensagens chegam
+  // Auto-scroll contextual: mensagens do cidadao vao ao fim; respostas do bot alinham no inicio do novo bloco.
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (messages.length === 0) {
+      previousMessageIdsRef.current = [];
+      return;
+    }
+
+    const currentIds = messages.map((message) => message.id);
+    const previousIds = previousMessageIdsRef.current;
+    const previousSet = new Set(previousIds);
+    const newMessages = messages.filter((message) => !previousSet.has(message.id));
+
+    if (previousIds.length === 0 || forceBottomOnNextMessagesRef.current) {
+      forceBottomOnNextMessagesRef.current = false;
+      scrollToBottom('auto');
+    } else if (newMessages.length > 0) {
+      const firstBotMessage = newMessages.find(isSystemBotMessage);
+      const lastNewMessage = newMessages[newMessages.length - 1];
+
+      if (firstBotMessage) {
+        scrollToMessage(firstBotMessage.id, 'start');
+      } else if (lastNewMessage?.senderId === citizen?.id) {
+        scrollToBottom();
+      }
+    }
+
+    previousMessageIdsRef.current = currentIds;
+  }, [messages, citizen?.id]);
 
   /**
    * ✅ NOVO: Auto-iniciar bot quando cidadão abre a página
@@ -216,10 +242,8 @@ export default function CitizenDashboard() {
       if (response.ok) {
         const data = await response.json();
         const normalized = Array.isArray(data) ? data : data.messages || [];
+        forceBottomOnNextMessagesRef.current = true;
         setMessages(normalized);
-
-        setMessages(Array.isArray(data) ? data : data.messages || []);
-        scrollToBottom();
       }
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error);
@@ -294,7 +318,6 @@ export default function CitizenDashboard() {
         );
       }
 
-      scrollToBottom();
     } catch (error) {
       console.error('Erro ao enviar mensagem para o bot:', error);
       const isNetworkError = error instanceof TypeError && error.message === 'Failed to fetch';
@@ -390,7 +413,6 @@ export default function CitizenDashboard() {
         );
       }
 
-      scrollToBottom();
     } catch (error) {
       console.error('Erro ao enviar arquivos para o bot:', error);
       toast({
@@ -473,7 +495,6 @@ export default function CitizenDashboard() {
 
     const messageContent = newMessage.trim();
     setNewMessage('');
-    scrollToBottom();
 
     try {
       const conv = conversations.find(c => c.id === selectedConversation.id);
@@ -499,11 +520,24 @@ export default function CitizenDashboard() {
   /**
    * Scroll para o final
    */
-  const scrollToBottom = () => {
+  const scrollToBottom = (behavior: ScrollBehavior = 'smooth') => {
     setTimeout(() => {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      messagesEndRef.current?.scrollIntoView({ behavior, block: 'end' });
     }, 100);
   };
+
+  const scrollToMessage = (messageId: string, block: ScrollLogicalPosition = 'start') => {
+    setTimeout(() => {
+      messageRefs.current[messageId]?.scrollIntoView({
+        behavior: 'smooth',
+        block,
+        inline: 'nearest',
+      });
+    }, 100);
+  };
+
+  const isSystemBotMessage = (message: Message) =>
+    message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM';
 
   // === Gerenciamento de conversas (limpar para mim, limpar para todos, arquivar, deletar) ===
   const handleClearForMe = async (conversationId: string) => {
@@ -662,7 +696,7 @@ export default function CitizenDashboard() {
           />
           <div className="fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl flex flex-col">
             {/* Header Sidebar */}
-            <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-600 to-purple-600">
+            <div className="p-4 border-b flex items-center justify-between bg-slate-950">
               <div className="flex items-center gap-3">
                 <Avatar className="w-12 h-12 border-2 border-white">
                   <AvatarFallback className="bg-white text-blue-600 font-bold">
@@ -729,7 +763,7 @@ export default function CitizenDashboard() {
         } bg-white flex flex-col`}
       >
         {/* Header da Lista */}
-        <div className="p-4 border-b bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="p-4 border-b bg-slate-950">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Button
@@ -788,7 +822,7 @@ export default function CitizenDashboard() {
                 className={cn(
                   "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
                   selectedConversation?.id === conversation.id && "bg-blue-50",
-                  conversation.isBotConversation && "bg-gradient-to-r from-blue-50 to-purple-50 border-l-4 border-l-blue-600"
+                  conversation.isBotConversation && "bg-slate-50 border-l-4 border-l-blue-700"
                 )}
               >
                 <div className="flex items-start gap-3">
@@ -798,7 +832,7 @@ export default function CitizenDashboard() {
                       conversation.isBotConversation && "ring-2 ring-blue-600"
                     )}>
                       {conversation.isBotConversation ? (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-600 to-purple-600 flex items-center justify-center">
+                        <div className="w-full h-full bg-slate-900 flex items-center justify-center">
                           <Sparkles className="w-6 h-6 text-white" />
                         </div>
                       ) : (
@@ -872,7 +906,7 @@ export default function CitizenDashboard() {
             {/* Header do Chat */}
             <div className={cn(
               "p-4 border-b flex items-center justify-between",
-              selectedConversation.isBotConversation && "bg-gradient-to-r from-blue-600 to-purple-600"
+              selectedConversation.isBotConversation && "bg-slate-950"
             )}>
               <div className="flex items-center gap-3">
                 {isMobileView && (
@@ -891,8 +925,8 @@ export default function CitizenDashboard() {
                   selectedConversation.isBotConversation && "ring-2 ring-white"
                 )}>
                   {selectedConversation.isBotConversation ? (
-                    <div className="w-full h-full bg-white flex items-center justify-center">
-                      <Sparkles className="w-5 h-5 text-blue-600" />
+                    <div className="w-full h-full bg-white/10 border border-white/15 flex items-center justify-center">
+                      <Sparkles className="w-5 h-5 text-white" />
                     </div>
                   ) : (
                     <>
@@ -911,12 +945,12 @@ export default function CitizenDashboard() {
                   )}>
                     {selectedConversation.title || selectedConversation.citizenName}
                     {selectedConversation.isBotConversation && (
-                      <Badge className="bg-white text-blue-600 text-xs">IA</Badge>
+                      <Badge className="bg-white/10 text-white border border-white/15 text-xs">IA</Badge>
                     )}
                   </h3>
                   <p className={cn(
                     "text-xs",
-                    selectedConversation.isBotConversation ? "text-blue-100" : "text-gray-500"
+                    selectedConversation.isBotConversation ? "text-slate-300" : "text-gray-500"
                   )}>
                     {selectedConversation.isBotConversation ? 'Sempre disponível' : (isConnected ? 'Online' : 'Offline')}
                   </p>
@@ -1028,10 +1062,15 @@ export default function CitizenDashboard() {
                       new Date(message.sentAt).toDateString();
 
                     return (
-                      <div key={message.id}>
+                      <div
+                        key={message.id}
+                        ref={(node) => {
+                          messageRefs.current[message.id] = node;
+                        }}
+                      >
                         {showDate && (
                           <div className="flex justify-center my-4">
-                            <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
+                            <span className="bg-white px-3 py-1 rounded-md text-xs text-gray-500 shadow-sm">
                               {new Date(message.sentAt).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
                                 month: 'long',
@@ -1044,8 +1083,8 @@ export default function CitizenDashboard() {
                         <div className={`flex w-full min-w-0 overflow-hidden ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                           {isBot ? (
                             <div className="w-full min-w-0 max-w-full overflow-hidden space-y-2">
-                              <div className="flex min-w-0 items-center gap-2 text-blue-700">
-                                <Sparkles className="w-4 h-4 text-blue-600" />
+                              <div className="flex min-w-0 items-center gap-2 text-slate-700">
+                                <Sparkles className="w-4 h-4 text-slate-600" />
                                 <span className="text-xs font-semibold">DigiBot</span>
                               </div>
                               <BotMessageRenderer
@@ -1062,20 +1101,20 @@ export default function CitizenDashboard() {
                               className={cn(
                                 "max-w-[86%] sm:max-w-[70%] min-w-0 overflow-hidden rounded-lg px-4 py-2 shadow-sm",
                                 isOwnMessage
-                                  ? 'bg-blue-600 text-white'
+                                  ? 'bg-slate-900 text-white'
                                   : 'bg-white text-gray-900'
                               )}
                             >
                               <p className="text-sm break-words whitespace-pre-wrap">{message.content}</p>
                               <div className={`flex items-center justify-end gap-1 mt-1 ${
-                                isOwnMessage ? 'text-blue-100' : 'text-gray-500'
+                                isOwnMessage ? 'text-slate-300' : 'text-gray-500'
                               }`}>
                                 <span className="text-xs">
                                   {formatTime(message.sentAt)}
                                 </span>
                                 {isOwnMessage && (
                                   message.status === 'READ' ? (
-                                    <CheckCheck className="w-3 h-3 text-blue-200" />
+                                    <CheckCheck className="w-3 h-3 text-slate-300" />
                                   ) : message.status === 'DELIVERED' ? (
                                     <CheckCheck className="w-3 h-3" />
                                   ) : (
@@ -1093,15 +1132,15 @@ export default function CitizenDashboard() {
                   {isBotTyping && (
                     <div className="flex justify-start">
                       <div className="w-full min-w-0 overflow-hidden space-y-2">
-                        <div className="flex items-center gap-2 text-blue-700">
-                          <Sparkles className="w-4 h-4 text-blue-600" />
+                        <div className="flex items-center gap-2 text-slate-700">
+                          <Sparkles className="w-4 h-4 text-slate-600" />
                           <span className="text-xs font-semibold">DigiBot</span>
                         </div>
                         <div className="bg-white rounded-lg px-4 py-3 shadow-sm">
                           <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                            <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                            <div className="w-2 h-2 bg-slate-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                           </div>
                         </div>
                       </div>
@@ -1154,7 +1193,7 @@ export default function CitizenDashboard() {
                   <Button
                     type="submit"
                     size="icon"
-                    className="bg-blue-600 hover:bg-blue-700"
+                    className="bg-slate-900 hover:bg-slate-800"
                     disabled={!isConnected || botStructuredInput || isBotTyping}
                   >
                     <Send className="w-5 h-5" />
@@ -1174,9 +1213,9 @@ export default function CitizenDashboard() {
             </form>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500 bg-gradient-to-br from-blue-50 to-purple-50">
+          <div className="flex-1 flex items-center justify-center text-gray-500 bg-slate-50">
             <div className="text-center p-8">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+              <div className="w-24 h-24 mx-auto mb-4 bg-slate-900 rounded-lg flex items-center justify-center">
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Bem-vindo ao DigiUrban!</h3>
@@ -1186,7 +1225,7 @@ export default function CitizenDashboard() {
               {conversations.find(c => c.isBotConversation) && (
                 <Button
                   onClick={() => handleSelectConversation(conversations.find(c => c.isBotConversation)!)}
-                  className="bg-blue-600 hover:bg-blue-700"
+                  className="bg-slate-900 hover:bg-slate-800"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Conversar com DigiBot

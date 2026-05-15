@@ -15,6 +15,13 @@ const QUICK_ACTIONS: MenuOption[] = [
   { id: 'ajuda', label: 'Ajuda', description: 'Tirar duvidas' },
 ];
 
+const CONTEXTUAL_ACTIONS: MenuOption[] = [
+  ...QUICK_ACTIONS,
+  { id: 'minha_familia', label: 'Minha familia', description: 'Ver dependentes e composicao familiar' },
+  { id: 'notificacoes', label: 'Notificacoes', description: 'Ver avisos e comunicados' },
+  { id: 'avaliacao', label: 'Avaliar atendimento', description: 'Registrar uma avaliacao' },
+];
+
 const SERVICE_ENTRY_ACTIONS: MenuOption[] = [
   { id: 'descrever_solicitacao', label: 'Descrever com minhas palavras', description: 'Eu digo o que preciso e o bot sugere o servico' },
   { id: 'explorar_secretarias', label: 'Explorar por secretaria', description: 'Escolher primeiro a secretaria responsavel' },
@@ -65,18 +72,20 @@ const MENU_PATTERNS = [
   'novo atendimento',
 ];
 const HELP_PATTERNS = ['ajuda', 'preciso de ajuda', 'duvida', 'duvidas', 'como funciona'];
-const PROFILE_PATTERNS = ['meu perfil', 'perfil', 'meus dados', 'meus dados cadastrais', 'cadastro'];
-const DOCUMENT_PATTERNS = ['documentos', 'meus documentos', 'meus arquivos', 'arquivos', 'anexos'];
-const PENDING_PATTERNS = ['pendencias', 'minhas pendencias', 'pendencia do protocolo', 'pendencias do protocolo', 'resolver pendencia'];
-const SERVICE_PATTERNS = ['solicitar servico', 'abrir solicitacao', 'nova solicitacao', 'novo protocolo', 'quero solicitar'];
+const PROFILE_PATTERNS = ['meu perfil', 'perfil', 'meus dados', 'meus dados cadastrais', 'cadastro', 'cpf', 'telefone', 'endereco'];
+const DOCUMENT_PATTERNS = ['documentos', 'documento', 'meus documentos', 'meus arquivos', 'arquivos', 'anexos', '2 via', 'segunda via', 'certidao', 'carteira'];
+const PENDING_PATTERNS = ['pendencias', 'pendencia', 'minhas pendencias', 'pendencia do protocolo', 'pendencias do protocolo', 'resolver pendencia'];
+const SERVICE_PATTERNS = ['solicitar servico', 'servico', 'servicos', 'abrir solicitacao', 'nova solicitacao', 'novo protocolo', 'quero solicitar', 'pedido', 'solicitacao', 'chamado', 'criar chamado'];
 const DEPARTMENT_PATTERNS = ['secretaria', 'secretarias', 'explorar secretaria', 'explorar por secretaria', 'navegar por secretaria'];
 const FAMILY_PATTERNS = ['familia', 'minha familia', 'dependentes', 'composicao familiar'];
-const NOTIFICATION_PATTERNS = ['notificacoes', 'notificacao', 'avisos', 'comunicados'];
-const EVALUATION_PATTERNS = ['avaliacao', 'avaliar', 'avaliar atendimento', 'nota do atendimento'];
+const NOTIFICATION_PATTERNS = ['notificacoes', 'notificacao', 'avisos', 'comunicados', 'alertas'];
+const EVALUATION_PATTERNS = ['avaliacao', 'avaliar', 'avaliar atendimento', 'nota do atendimento', 'nota', 'satisfacao'];
 const YES_PATTERNS = ['sim', 'confirmar', 'confirmo', 'ok', 'pode enviar', 'prosseguir'];
 const NO_PATTERNS = ['nao', 'não', 'cancelar', 'corrigir', 'voltar', 'outro'];
 
 const CORRECTION_PATTERNS = ['corrigir', 'corrija', 'alterar', 'altere', 'mudar', 'trocar', 'na verdade', 'o correto', 'esta errado', 'está errado', 'errei'];
+
+const CONTINUE_PATTERNS = ['continuar', 'continue', 'seguir', 'prosseguir', 'manter atendimento'];
 
 type ExecutionLike = FlowExecution & { flow?: { id: string; name: string } | null };
 type FieldDef = { id: string; label: string; type?: string; required?: boolean; options?: Array<{ id?: string; label?: string; value?: string }> };
@@ -215,6 +224,9 @@ export class CitizenAiOrchestrator {
       return { session: next, redirectToFlowName: LEGACY_FLOW_BY_INTENT[explicitIntent], response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) } };
     }
 
+    const departmentDecision = await this.tryDepartmentShortcut(execution, { ...session, lastIntent: 'solicitar_servico' }, message);
+    if (departmentDecision) return departmentDecision;
+
     if (this.shouldTryDirectServiceSearch(message)) {
       const serviceDecision = await this.beginServiceRequest(execution, { ...session, lastIntent: 'solicitar_servico' }, message, message, true);
       if (serviceDecision.session.stage !== 'awaiting_request_mode') {
@@ -252,8 +264,7 @@ export class CitizenAiOrchestrator {
     }
 
     if (Number(analysis.confidence || 0) < 0.45) this.stats.lowConfidenceFallbacks += 1;
-    await this.persistSession(execution.id, next);
-    return { session: next, response: { message: 'Posso te guiar por menus ou entender sua necessidade em linguagem natural. Escolha uma opcao ou descreva o que precisa.', messageType: 'menu', data: { options: QUICK_ACTIONS }, metadata: this.meta(execution, next, true) } };
+    return this.buildAiGuidedFallback(execution, next, message, recentMessages, 'Nenhum servico ou protocolo foi identificado com seguranca.');
   }
 
   private async handleRequestMode(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string): Promise<CitizenAiDecision> {
@@ -276,6 +287,10 @@ export class CitizenAiOrchestrator {
       const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
       await this.persistSession(execution.id, next);
       return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    if (this.matchesAny(this.normalize(userMessage), CONTINUE_PATTERNS)) {
+      return this.buildGuidedServiceEntry(execution, session);
     }
 
     return this.beginServiceRequest(execution, { ...session, lastIntent: 'solicitar_servico' }, userMessage, userMessage, true);
@@ -373,14 +388,20 @@ export class CitizenAiOrchestrator {
     if (!services.length) {
       const next = { ...session, stage: guidedFallback ? 'awaiting_request_mode' as const : session.stage, serviceSearchQuery: searchQuery, lowConfidenceFallbacks: (session.lowConfidenceFallbacks || 0) + 1 };
       await this.persistSession(execution.id, next);
+      if (guidedFallback) {
+        return this.buildAiGuidedFallback(
+          execution,
+          next,
+          userMessage,
+          [],
+          `A busca interna por servicos para "${searchQuery}" nao retornou resultado exato.`
+        );
+      }
       return {
         session: next,
         response: {
-          message: guidedFallback
-            ? 'Nao identifiquei um servico com seguranca. Posso continuar por descricao livre ou te guiar por secretaria.'
-            : 'Nao encontrei um servico claro para essa solicitacao. Descreva com mais detalhes o que precisa.',
-          messageType: guidedFallback ? 'menu' : 'text',
-          data: guidedFallback ? { options: SERVICE_ENTRY_ACTIONS } : undefined,
+          message: 'Nao encontrei um servico claro para essa solicitacao. Descreva com mais detalhes o que precisa.',
+          messageType: 'text',
           metadata: this.meta(execution, next, true),
         },
       };
@@ -1430,18 +1451,20 @@ export class CitizenAiOrchestrator {
 
   private shouldTryDirectServiceSearch(message: string): boolean {
     const normalized = this.normalize(message);
-    if (normalized.length < 6) return false;
+    if (normalized.length < 3) return false;
     if (this.isGreeting(message)) return false;
     if (this.extractProtocolNumber(message)) return false;
     if (this.detectProtocolMode(message)) return false;
     if (this.matchExplicitIntent(normalized)) return false;
     if (this.isHumanRequest(message)) return false;
+    if (this.isAmbiguousTinyMessage(normalized)) return false;
     return true;
   }
 
   private matchesAny(value: string, patterns: string[]): boolean { return patterns.some((pattern) => value.includes(this.normalize(pattern))); }
   private isGreeting(message: string): boolean { const normalized = this.normalize(message); return ['ola', 'oi', 'bom dia', 'boa tarde', 'boa noite'].some((pattern) => normalized.includes(pattern)); }
   private isHumanRequest(message: string): boolean { return this.matchesAny(this.normalize(message), HUMAN_PATTERNS); }
+  private isAmbiguousTinyMessage(normalized: string): boolean { return ['sim', 'nao', 'ok', 'oi', 'ola', 'bom', 'boa', 'e', 'a', 'o'].includes(normalized); }
   private isUnknownProtocolReply(message: string): boolean { return this.matchesAny(this.normalize(message), ['nao sei', 'nao lembro', 'esqueci', 'nao tenho', 'nao lembro do numero']); }
   private extractProtocolNumber(message: string): string | undefined {
     const formatted = message.match(/\b\d{4}[-/]\d{4,}\b/);
@@ -1485,6 +1508,12 @@ export class CitizenAiOrchestrator {
       return 'list';
     }
     if (
+      normalized === 'protocolo' ||
+      normalized === 'protocolos' ||
+      normalized === 'andamento' ||
+      normalized === 'status' ||
+      normalized === 'situacao' ||
+      normalized === 'minhas solicitacoes' ||
       normalized === 'meus protocolos' ||
       normalized === 'listar meus protocolos' ||
       normalized === 'mostrar meus protocolos' ||
@@ -1619,6 +1648,38 @@ export class CitizenAiOrchestrator {
     };
   }
 
+  private async tryDepartmentShortcut(execution: FlowExecution, session: CitizenAiSessionState, message: string): Promise<CitizenAiDecision | null> {
+    const normalized = this.normalize(message);
+    if (normalized.length < 3 || normalized.split(' ').length > 4) return null;
+    if (this.isAmbiguousTinyMessage(normalized)) return null;
+
+    const departmentsResult = await this.runAction('getDepartments', {}, execution, session);
+    const departments = Array.isArray(departmentsResult.departments) ? departmentsResult.departments as MenuOption[] : [];
+    if (!departments.length) return null;
+
+    const selected = departments.find((department) => {
+      const label = this.normalize(String(department.label || ''));
+      const name = this.normalize(String((department as any).name || department.label || ''));
+      const cleanLabel = label.replace(/\bsecretaria\b|\bmunicipal\b|\bde\b|\bda\b|\bdo\b|\bdos\b|\bdas\b/g, ' ').replace(/\s+/g, ' ').trim();
+      const cleanName = name.replace(/\bsecretaria\b|\bmunicipal\b|\bde\b|\bda\b|\bdo\b|\bdos\b|\bdas\b/g, ' ').replace(/\s+/g, ' ').trim();
+      return normalized === cleanLabel ||
+        normalized === cleanName ||
+        cleanLabel.includes(normalized) ||
+        cleanName.includes(normalized) ||
+        normalized.includes(cleanName);
+    });
+
+    if (!selected) return null;
+
+    const next: CitizenAiSessionState = {
+      ...session,
+      stage: 'awaiting_department_selection',
+      departmentCandidates: departments,
+      lastIntent: 'solicitar_servico',
+    };
+    return this.handleDepartmentSelection(execution, next, selected.id);
+  }
+
   private findOptionByInput(input: string, options: MenuOption[]): MenuOption | undefined {
     const normalized = this.normalize(input);
     return options.find((option) => {
@@ -1725,6 +1786,13 @@ export class CitizenAiOrchestrator {
       return { session: next, response: this.buildWelcomeResponse(execution, next) };
     }
 
+    if (this.matchesAny(normalized, CONTINUE_PATTERNS)) {
+      return {
+        session,
+        response: this.buildResumeResponse(execution, session),
+      };
+    }
+
     if (this.matchesAny(normalized, HELP_PATTERNS)) {
       return {
         session,
@@ -1760,6 +1828,55 @@ export class CitizenAiOrchestrator {
       messageType: 'menu',
       data: { options: [...options, { id: 'confirmar', label: 'Voltar para revisao', description: 'Revisar e confirmar envio' }] },
       metadata: this.meta(execution, session, true),
+    };
+  }
+
+  private async buildAiGuidedFallback(
+    execution: FlowExecution,
+    session: CitizenAiSessionState,
+    message: string,
+    recentMessages: string[],
+    serviceSearchSummary?: string
+  ): Promise<CitizenAiDecision> {
+    const availableActions = session.stage === 'awaiting_request_mode'
+      ? SERVICE_ENTRY_ACTIONS
+      : CONTEXTUAL_ACTIONS;
+
+    let responseMessage = session.stage === 'awaiting_request_mode'
+      ? 'Entendi sua necessidade, mas ainda preciso ligar isso a um servico correto. Posso buscar por secretaria ou voce pode descrever de outro jeito.'
+      : 'Entendi sua mensagem, mas preciso escolher o melhor caminho para continuar. Posso abrir uma solicitacao, consultar protocolo ou navegar por secretaria.';
+    let options = availableActions;
+
+    if (citizenAiClient.available()) {
+      this.stats.aiTurns += 1;
+      const guidance = await citizenAiClient.generateGuidance({
+        citizenId: execution.citizenId,
+        message,
+        recentMessages,
+        sessionContext: this.buildSessionContext(session),
+        availableActions,
+        serviceSearchSummary,
+      });
+
+      if (guidance?.message && guidance.confidence >= 0.45) {
+        responseMessage = guidance.message;
+        if (guidance.suggestedActionIds.length > 0) {
+          const suggested = availableActions.filter((action) => guidance.suggestedActionIds.includes(action.id));
+          const remaining = availableActions.filter((action) => !guidance.suggestedActionIds.includes(action.id));
+          options = [...suggested, ...remaining].slice(0, Math.max(3, suggested.length));
+        }
+      }
+    }
+
+    await this.persistSession(execution.id, session);
+    return {
+      session,
+      response: {
+        message: responseMessage,
+        messageType: 'menu',
+        data: { options },
+        metadata: this.meta(execution, session, true),
+      },
     };
   }
 

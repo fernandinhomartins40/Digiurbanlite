@@ -74,10 +74,10 @@ export function BotDocumentUpload({
   const allRequiredDone = requiredUploaded >= requiredCount;
 
   return (
-    <div className="w-full min-w-0 max-w-full rounded-2xl border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-start gap-3 border-b border-slate-100 pb-4 mb-4">
-        <div className="shrink-0 rounded-xl bg-blue-50 p-2.5 text-blue-600">
+        <div className="shrink-0 rounded-lg bg-blue-50 p-2.5 text-blue-700">
           <FileText className="h-5 w-5" />
         </div>
         <div className="min-w-0 flex-1">
@@ -86,11 +86,11 @@ export function BotDocumentUpload({
             Envie os anexos solicitados para concluir a abertura do protocolo.
           </p>
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+            <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
               {uploadedCount} arquivo(s) pronto(s)
             </span>
             {requiredCount > 0 && (
-              <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
+              <span className="rounded-md bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
                 {requiredUploaded}/{requiredCount} obrigatorios
               </span>
             )}
@@ -101,7 +101,7 @@ export function BotDocumentUpload({
       {/* Document list — 1 coluna sempre para não transbordar no mobile */}
       <div className="space-y-3">
         {docConfigs.map(({ docId, config }) => (
-          <div key={docId} className="rounded-xl border border-slate-200 bg-slate-50/70 p-3 overflow-hidden">
+          <div key={docId} className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 overflow-hidden">
             <DocumentUpload
               documentConfig={config}
               value={uploadedFiles[docId] || null}
@@ -128,7 +128,7 @@ export function BotDocumentUpload({
           <Button
             onClick={handleSubmit}
             disabled={uploadedCount === 0 || (!allRequiredDone && requiredCount > 0)}
-            className="min-w-0 bg-gradient-to-r from-blue-500 to-purple-600 text-white hover:from-blue-600 hover:to-purple-700"
+            className="min-w-0 bg-slate-900 text-white hover:bg-slate-800"
           >
             <Send className="h-4 w-4 mr-2 shrink-0" />
             Enviar {uploadedCount > 0 && `(${uploadedCount})`}

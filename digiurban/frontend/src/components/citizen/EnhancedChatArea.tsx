@@ -9,6 +9,9 @@ import { TypingIndicator } from '@/src/components/bot/TypingIndicator';
 export function EnhancedChatArea() {
   const [inputMessage, setInputMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messageRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const previousMessageIdsRef = useRef<string[]>([]);
+  const forceBottomOnNextMessagesRef = useRef(true);
   const interactionInFlightRef = useRef(false);
   const {
     messages,
@@ -23,7 +26,33 @@ export function EnhancedChatArea() {
   }, [loadHistory]);
 
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messages.length === 0) {
+      previousMessageIdsRef.current = [];
+      return;
+    }
+
+    const currentIds = messages.map((message: any) => message.id);
+    const previousIds = previousMessageIdsRef.current;
+    const previousSet = new Set(previousIds);
+    const newMessages = messages.filter((message: any) => !previousSet.has(message.id));
+
+    if (previousIds.length === 0 || forceBottomOnNextMessagesRef.current) {
+      forceBottomOnNextMessagesRef.current = false;
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'auto', block: 'end' }), 100);
+    } else if (newMessages.length > 0) {
+      const firstBotMessage = newMessages.find((message: any) => message.senderId === 'DIGIBOT_SYSTEM' && message.senderType === 'SYSTEM');
+      const lastNewMessage = newMessages[newMessages.length - 1] as any;
+
+      if (firstBotMessage) {
+        setTimeout(() => {
+          messageRefs.current[firstBotMessage.id]?.scrollIntoView({ behavior: 'smooth', block: 'start', inline: 'nearest' });
+        }, 100);
+      } else if (lastNewMessage?.senderType === 'CITIZEN') {
+        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' }), 100);
+      }
+    }
+
+    previousMessageIdsRef.current = currentIds;
   }, [messages]);
 
   const handleSend = async () => {
@@ -92,17 +121,17 @@ export function EnhancedChatArea() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-500 to-purple-600 px-4 py-4 shadow-lg shrink-0">
+      <div className="bg-slate-950 px-4 py-4 shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
-            <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center">
-              <Bot className="w-7 h-7 text-blue-600" />
+            <div className="w-12 h-12 bg-white/10 border border-white/15 rounded-lg flex items-center justify-center">
+              <Bot className="w-7 h-7 text-white" />
             </div>
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-white font-semibold text-lg leading-tight">DigiBot</h2>
-            <p className="text-blue-100 text-sm leading-tight">Assistente Virtual • Online</p>
+            <p className="text-slate-300 text-sm leading-tight">Assistente Virtual • Online</p>
           </div>
         </div>
       </div>
@@ -120,6 +149,9 @@ export function EnhancedChatArea() {
         {messages.map((message: any) => (
           <div
             key={message.id}
+            ref={(node) => {
+              messageRefs.current[message.id] = node;
+            }}
             className={`flex w-full min-w-0 overflow-hidden ${
               message.senderType === 'CITIZEN' ? 'justify-end' : 'justify-start'
             }`}
@@ -135,9 +167,9 @@ export function EnhancedChatArea() {
               </div>
             ) : (
               // Mensagens do cidadão ficam alinhadas à direita com largura máxima
-              <div className="max-w-[86%] sm:max-w-[78%] min-w-0 overflow-hidden bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-2xl px-4 py-3 shadow-md">
+              <div className="max-w-[86%] sm:max-w-[78%] min-w-0 overflow-hidden bg-slate-900 text-white rounded-lg px-4 py-3 shadow-sm">
                 <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
-                <span className="text-xs text-blue-100 mt-1 block text-right">
+                <span className="text-xs text-slate-300 mt-1 block text-right">
                   {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -167,7 +199,7 @@ export function EnhancedChatArea() {
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem..."
               disabled={loading}
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 text-sm"
+              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 text-sm"
               rows={1}
               style={{ minHeight: '48px', maxHeight: '120px' }}
             />
@@ -175,7 +207,7 @@ export function EnhancedChatArea() {
           <button
             onClick={handleSend}
             disabled={!inputMessage.trim() || loading}
-            className="shrink-0 flex items-center justify-center w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 flex items-center justify-center w-12 h-12 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Send className="w-5 h-5" />
           </button>

@@ -21,7 +21,7 @@ export function RatingCard({
   const labels = ['Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-2xl border border-slate-200 shadow-sm p-3.5 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-slate-200 shadow-sm p-3.5 sm:p-4 overflow-hidden">
       <div className="text-center mb-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-1 break-words">{title}</h3>
         <p className="text-xs text-gray-600 break-words">{subtitle}</p>
@@ -35,7 +35,7 @@ export function RatingCard({
             onClick={() => setRating(star)}
             onMouseEnter={() => setHover(star)}
             onMouseLeave={() => setHover(0)}
-            className="transition-transform hover:scale-110 focus:outline-none"
+            className="transition-colors focus:outline-none"
           >
             <Star
               className={`h-8 w-8 sm:w-9 sm:h-9 ${
@@ -71,7 +71,7 @@ export function RatingCard({
       <button
         onClick={() => rating > 0 && onSubmit(rating, comment || undefined)}
         disabled={rating === 0}
-        className="w-full px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-medium text-sm hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full px-4 py-3 bg-slate-900 text-white rounded-lg font-medium text-sm hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Enviar avaliação
       </button>
