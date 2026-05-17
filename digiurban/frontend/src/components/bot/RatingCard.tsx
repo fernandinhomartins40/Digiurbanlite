@@ -38,7 +38,7 @@ export function RatingCard({
             className="transition-colors focus:outline-none"
           >
             <Star
-              className={`h-8 w-8 sm:w-9 sm:h-9 ${
+              className={`h-8 w-8 ${
                 star <= (hover || rating) ? 'fill-yellow-400 text-yellow-400' : 'fill-gray-200 text-gray-300'
               }`}
             />

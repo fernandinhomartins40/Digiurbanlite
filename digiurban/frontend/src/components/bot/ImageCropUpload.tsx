@@ -160,15 +160,15 @@ export function ImageCropUpload({
 
         <div className="space-y-4">
           {!selectedImage ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-4">
               {/* Botão Câmera */}
               <button
                 onClick={handleCamera}
-                className="p-8 border border-dashed border-blue-200 rounded-lg hover:border-teal-500 hover:bg-blue-50 transition-colors"
+                className="min-w-0 p-6 border border-dashed border-blue-200 rounded-lg hover:border-teal-500 hover:bg-blue-50 transition-colors overflow-hidden"
               >
-                <Camera className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium text-gray-700">Tirar Foto</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <Camera className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                <p className="font-medium text-gray-700 text-sm break-words">Tirar Foto</p>
+                <p className="text-xs text-gray-500 mt-1 break-words">
                   Use a câmera do dispositivo
                 </p>
               </button>
@@ -176,11 +176,11 @@ export function ImageCropUpload({
               {/* Botão Upload */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-8 border border-dashed border-blue-200 rounded-lg hover:border-teal-500 hover:bg-blue-50 transition-colors"
+                className="min-w-0 p-6 border border-dashed border-blue-200 rounded-lg hover:border-teal-500 hover:bg-blue-50 transition-colors overflow-hidden"
               >
-                <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
-                <p className="font-medium text-gray-700">Carregar Arquivo</p>
-                <p className="text-sm text-gray-500 mt-1">
+                <Upload className="w-10 h-10 mx-auto mb-2 text-gray-400" />
+                <p className="font-medium text-gray-700 text-sm break-words">Carregar Arquivo</p>
+                <p className="text-xs text-gray-500 mt-1 break-words">
                   Selecione da galeria
                 </p>
               </button>

@@ -155,8 +155,8 @@ export function DocumentUpload({
 
       {/* Área de upload */}
       {!value ? (
-        <Card className={`border-2 border-dashed overflow-hidden ${error ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-amber-400'} transition-colors`}>
-          <div className="p-4 text-center">
+        <Card className={`w-full min-w-0 border-2 border-dashed overflow-hidden ${error ? 'border-red-300 bg-red-50' : 'border-gray-300 hover:border-amber-400'} transition-colors`}>
+          <div className="p-4 text-center overflow-hidden">
             <FileText className="h-8 w-8 text-gray-400 mx-auto mb-2" />
 
             <div className="mb-3">

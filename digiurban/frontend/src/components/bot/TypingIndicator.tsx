@@ -9,8 +9,8 @@ interface TypingIndicatorProps {
 
 export function TypingIndicator({ userName = 'DigiBot' }: TypingIndicatorProps) {
   return (
-    <div className="flex justify-start my-2">
-      <div className="bg-white border border-blue-100 rounded-lg px-4 py-3 shadow-sm max-w-[200px]">
+    <div className="flex justify-start my-2 w-full min-w-0 overflow-hidden">
+      <div className="bg-white border border-blue-100 rounded-lg px-4 py-3 shadow-sm w-fit max-w-[200px] overflow-hidden">
         <div className="flex items-center gap-2 mb-1">
           <Bot className="w-3 h-3 text-blue-700" />
           <span className="text-xs font-semibold text-blue-800">{userName}</span>

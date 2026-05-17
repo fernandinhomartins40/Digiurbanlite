@@ -221,7 +221,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       }
 
       return (
-          <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
           {options.map((option: any, index: number) => {
             const visual = getOptionVisual(option, index);
             const Icon = visual.Icon;
