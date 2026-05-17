@@ -84,8 +84,8 @@ export function TimePicker({
           min-w-0 px-2 py-3 rounded-lg border transition-colors font-medium text-sm
           ${
             isSelected
-              ? 'bg-slate-900 text-white border-slate-900'
-              : 'bg-white border-slate-200 text-slate-700 hover:border-blue-600 hover:bg-blue-50'
+              ? 'bg-gradient-to-br from-blue-700 to-teal-700 text-white border-teal-700'
+              : 'bg-white border-blue-100 text-slate-700 hover:border-teal-500 hover:bg-blue-50'
           }
         `}
       >
@@ -95,7 +95,7 @@ export function TimePicker({
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-slate-200 shadow-sm p-4 sm:p-6 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 sm:p-6 overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-center gap-2 mb-6">
         <Clock className="w-6 h-6 text-blue-600" />

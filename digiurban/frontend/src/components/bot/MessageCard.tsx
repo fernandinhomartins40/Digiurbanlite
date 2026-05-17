@@ -54,11 +54,11 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
   };
 
   return (
-    <Card className="w-full min-w-0 max-w-full border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm transition-colors cursor-pointer overflow-hidden" onClick={handleAction}>
+    <Card className="w-full min-w-0 max-w-full border-blue-100 bg-white hover:border-teal-400 hover:shadow-md transition-all cursor-pointer overflow-hidden" onClick={handleAction}>
       <CardHeader className="pb-3">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="shrink-0 p-2 bg-slate-100 rounded-lg">
-            <FileText className="w-4 h-4 text-slate-700" />
+          <div className="shrink-0 p-2 bg-gradient-to-br from-blue-50 to-teal-50 rounded-lg ring-1 ring-blue-100">
+            <FileText className="w-4 h-4 text-blue-700" />
           </div>
           <div className="flex-1 min-w-0">
             <CardTitle className="text-sm font-semibold break-words leading-snug">
@@ -105,7 +105,7 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
             onClick={handleButtonAction}
             variant="outline"
             size="sm"
-            className="w-full rounded-lg text-xs group hover:bg-blue-50 hover:text-blue-700 hover:border-blue-600"
+            className="w-full rounded-lg text-xs group border-blue-200 text-blue-800 hover:bg-teal-50 hover:text-teal-800 hover:border-teal-500"
           >
             <span className="truncate">{card.action.label}</span>
             <ArrowRight className="ml-1.5 h-3.5 w-3.5 shrink-0 group-hover:translate-x-0.5 transition-transform" />

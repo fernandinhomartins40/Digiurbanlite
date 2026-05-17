@@ -66,7 +66,7 @@ interface ProtocolDetailCardProps {
 
 const STATUS_CONFIG: Record<string, { label: string; className: string }> = {
   VINCULADO: { label: 'Vinculado', className: 'bg-blue-50 text-blue-800 border border-blue-200' },
-  PROGRESSO: { label: 'Em Progresso', className: 'bg-slate-100 text-slate-800 border border-slate-200' },
+  PROGRESSO: { label: 'Em Progresso', className: 'bg-blue-50 text-blue-800 border border-blue-200' },
   PENDENCIA: { label: 'Pendencia', className: 'bg-amber-50 text-amber-800 border border-amber-200' },
   ATUALIZACAO: { label: 'Atualizado', className: 'bg-yellow-50 text-yellow-800 border border-yellow-200' },
   CONCLUIDO: { label: 'Concluido', className: 'bg-emerald-50 text-emerald-800 border border-emerald-200' },
@@ -102,10 +102,10 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
   const sortedStages = [...stages].sort((a, b) => a.order - b.order);
 
   return (
-    <Card className="w-full min-w-0 max-w-full border-slate-200 shadow-sm overflow-hidden">
+    <Card className="w-full min-w-0 max-w-full border-blue-100 shadow-sm overflow-hidden">
       <CardContent className="p-0">
         {/* Header: Numero + Status */}
-        <div className="flex min-w-0 items-start justify-between gap-2 p-3 pb-2 border-b bg-muted/30">
+        <div className="flex min-w-0 items-start justify-between gap-2 p-3 pb-2 border-b border-blue-100 bg-gradient-to-r from-blue-50 to-teal-50">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-0.5">
               <FileText className="h-3.5 w-3.5 flex-shrink-0" />
@@ -169,7 +169,7 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
                         {stage.name}
                       </span>
                       {isCurrentStage && (
-                        <Badge variant="default" className="ml-1.5 bg-slate-900 text-[10px] px-1.5 py-0 h-4">
+                        <Badge variant="default" className="ml-1.5 bg-teal-700 text-[10px] px-1.5 py-0 h-4">
                           Atual
                         </Badge>
                       )}

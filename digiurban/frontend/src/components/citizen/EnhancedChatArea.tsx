@@ -121,23 +121,23 @@ export function EnhancedChatArea() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div className="bg-slate-950 px-4 py-4 shadow-sm shrink-0">
+      <div className="bg-gradient-to-r from-blue-800 via-blue-700 to-teal-700 px-4 py-4 shadow-sm shrink-0">
         <div className="flex items-center gap-3">
           <div className="relative shrink-0">
-            <div className="w-12 h-12 bg-white/10 border border-white/15 rounded-lg flex items-center justify-center">
+            <div className="w-12 h-12 bg-white/15 border border-white/25 rounded-lg flex items-center justify-center shadow-sm">
               <Bot className="w-7 h-7 text-white" />
             </div>
             <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-white" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-white font-semibold text-lg leading-tight">DigiBot</h2>
-            <p className="text-slate-300 text-sm leading-tight">Assistente Virtual • Online</p>
+            <p className="text-blue-50/90 text-sm leading-tight">Assistente Virtual • Online</p>
           </div>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-gray-50 p-2.5 sm:p-3 space-y-4">
+      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-gradient-to-b from-blue-50/45 via-slate-50 to-teal-50/30 p-2.5 sm:p-3 space-y-4">
         {messages.length === 0 && (
           <div className="text-center py-12">
             <Bot className="w-16 h-16 text-gray-300 mx-auto mb-4" />
@@ -167,9 +167,9 @@ export function EnhancedChatArea() {
               </div>
             ) : (
               // Mensagens do cidadão ficam alinhadas à direita com largura máxima
-              <div className="max-w-[86%] sm:max-w-[78%] min-w-0 overflow-hidden bg-slate-900 text-white rounded-lg px-4 py-3 shadow-sm">
+              <div className="max-w-[86%] sm:max-w-[78%] min-w-0 overflow-hidden bg-gradient-to-br from-blue-700 to-teal-700 text-white rounded-lg px-4 py-3 shadow-sm">
                 <p className="whitespace-pre-wrap break-words text-sm leading-relaxed">{message.content}</p>
-                <span className="text-xs text-slate-300 mt-1 block text-right">
+                <span className="text-xs text-blue-50/85 mt-1 block text-right">
                   {new Date(message.createdAt).toLocaleTimeString('pt-BR', {
                     hour: '2-digit',
                     minute: '2-digit',
@@ -190,7 +190,7 @@ export function EnhancedChatArea() {
       </div>
 
       {/* Input Area */}
-      <div className="bg-white border-t border-gray-200 px-3 py-3 shrink-0">
+      <div className="bg-white border-t border-blue-100 px-3 py-3 shrink-0">
         <div className="flex items-end gap-2">
           <div className="flex-1 min-w-0">
             <textarea
@@ -199,7 +199,7 @@ export function EnhancedChatArea() {
               onKeyPress={handleKeyPress}
               placeholder="Digite sua mensagem..."
               disabled={loading}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none disabled:opacity-50 text-sm"
+              className="w-full px-4 py-3 border border-blue-200 rounded-lg bg-blue-50/25 focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none disabled:opacity-50 text-sm"
               rows={1}
               style={{ minHeight: '48px', maxHeight: '120px' }}
             />
@@ -207,7 +207,7 @@ export function EnhancedChatArea() {
           <button
             onClick={handleSend}
             disabled={!inputMessage.trim() || loading}
-            className="shrink-0 flex items-center justify-center w-12 h-12 bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="shrink-0 flex items-center justify-center w-12 h-12 bg-gradient-to-br from-blue-700 to-teal-700 text-white rounded-lg hover:from-blue-800 hover:to-teal-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm"
           >
             <Send className="w-5 h-5" />
           </button>

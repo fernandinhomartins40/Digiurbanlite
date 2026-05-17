@@ -1,7 +1,23 @@
 'use client';
 
 import React, { useRef } from 'react';
-import { ChevronLeft, ChevronRight, Clock, FileText } from 'lucide-react';
+import {
+  BriefcaseBusiness,
+  Building2,
+  Bus,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Droplets,
+  FileText,
+  GraduationCap,
+  Handshake,
+  HeartPulse,
+  Home,
+  ShieldCheck,
+  Trophy,
+  type LucideIcon,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCategoryColor } from '@/lib/department-colors';
 
@@ -39,6 +55,32 @@ function groupByCategory(options: ServiceOption[]): CategoryGroup[] {
   return Object.entries(grouped).map(([name, services]) => ({ name, services }));
 }
 
+const SERVICE_ICONS: Array<{ patterns: string[]; Icon: LucideIcon }> = [
+  { patterns: ['saude', 'consulta', 'medic', 'vacina', 'ubs'], Icon: HeartPulse },
+  { patterns: ['educacao', 'escola', 'aluno', 'matricula'], Icon: GraduationCap },
+  { patterns: ['esporte', 'atleta', 'ginasio', 'ranking'], Icon: Trophy },
+  { patterns: ['agricultura', 'rural', 'produtor', 'propriedade'], Icon: Building2 },
+  { patterns: ['assistencia', 'social', 'beneficio', 'cadastro unico'], Icon: Handshake },
+  { patterns: ['habitacao', 'moradia', 'imovel'], Icon: Home },
+  { patterns: ['agua', 'esgoto', 'drenagem'], Icon: Droplets },
+  { patterns: ['transporte', 'transito', 'onibus'], Icon: Bus },
+  { patterns: ['seguranca', 'denuncia', 'guarda'], Icon: ShieldCheck },
+  { patterns: ['empresa', 'economico', 'alvara'], Icon: BriefcaseBusiness },
+  { patterns: ['documento', 'certidao', 'autorizacao', 'licenca'], Icon: FileText },
+];
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getServiceIcon(service: ServiceOption, categoryName: string): LucideIcon {
+  const haystack = normalizeText(`${service.label} ${service.description || ''} ${categoryName}`);
+  return SERVICE_ICONS.find(({ patterns }) => patterns.some((pattern) => haystack.includes(pattern)))?.Icon || FileText;
+}
+
 export function ServiceCarousel({ options, categories, departmentName, onSelect }: ServiceCarouselProps) {
   const groups = categories && categories.length > 0
     ? categories.map(cat => ({
@@ -48,13 +90,13 @@ export function ServiceCarousel({ options, categories, departmentName, onSelect 
     : groupByCategory(options);
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-4 rounded-lg border border-slate-200 bg-white p-2.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-4 rounded-lg border border-blue-100 bg-white p-2.5 sm:p-4 shadow-sm overflow-hidden">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
           <p className="text-xs text-slate-500 break-words">Os servicos estao agrupados por categoria. Deslize lateralmente para explorar.</p>
         </div>
-        <div className="hidden shrink-0 rounded-md bg-slate-100 px-2.5 py-1 text-[11px] font-medium text-slate-600 min-[380px]:block">
+        <div className="hidden shrink-0 rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 min-[380px]:block">
           {options.length} servicos
         </div>
       </div>
@@ -124,16 +166,29 @@ function CategorySection({
           {services.map((service) => {
             const estimatedDays = service.metadata?.estimatedDays;
             const requiresDocs = service.metadata?.requiresDocuments;
+            const ServiceIcon = getServiceIcon(service, categoryName);
 
             return (
               <button
                 key={service.id}
                 onClick={() => onSelect(service)}
-                className="snap-start min-w-0 max-w-full rounded-lg border bg-white p-3 sm:p-4 transition-colors duration-200 hover:bg-slate-50 cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
-                style={{ borderColor: catColor.primary + '40', flex: '0 0 min(100%, 240px)' }}
+                className="snap-start min-w-0 max-w-full rounded-lg border bg-white p-3 sm:p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
+                style={{
+                  borderColor: catColor.primary + '40',
+                  background: `linear-gradient(135deg, ${catColor.primary}10 0%, #ffffff 58%)`,
+                  flex: '0 0 min(100%, 240px)',
+                }}
               >
-                <div className="min-w-0 font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px] break-words [overflow-wrap:anywhere]">
-                  {service.label}
+                <div className="flex min-w-0 items-start gap-2.5">
+                  <div
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ring-1 ring-black/5"
+                    style={{ backgroundColor: `${catColor.primary}16` }}
+                  >
+                    <ServiceIcon className="h-4 w-4" style={{ color: catColor.primary }} />
+                  </div>
+                  <div className="min-w-0 font-semibold text-sm text-gray-800 leading-tight line-clamp-2 min-h-[40px] break-words [overflow-wrap:anywhere]">
+                    {service.label}
+                  </div>
                 </div>
 
                 {service.description && (
@@ -158,8 +213,8 @@ function CategorySection({
                     )}
                   </div>
                   <div
-                    className="max-w-full shrink-0 rounded-md px-2 py-1 text-[10px] font-medium"
-                    style={{ backgroundColor: `${catColor.primary}15`, color: catColor.primary }}
+                    className="max-w-full shrink-0 rounded-md px-2 py-1 text-[10px] font-semibold ring-1 ring-black/5"
+                    style={{ backgroundColor: `${catColor.primary}18`, color: catColor.primary }}
                   >
                     Selecionar
                   </div>

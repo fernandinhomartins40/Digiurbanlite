@@ -66,7 +66,7 @@ export function DocumentUploadCard({
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-slate-200 shadow-sm p-3.5 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 sm:p-4 overflow-hidden">
       <h3 className="text-sm font-semibold mb-3 break-words">{title}</h3>
 
       {/* Upload Area */}
@@ -77,11 +77,11 @@ export function DocumentUploadCard({
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
         className={`relative min-w-0 border border-dashed rounded-lg p-4 sm:p-5 text-center cursor-pointer transition-colors overflow-hidden ${
-          dragActive ? 'border-blue-600 bg-blue-50' : 'border-slate-300 hover:border-slate-500 hover:bg-slate-50'
+          dragActive ? 'border-teal-600 bg-teal-50' : 'border-blue-200 hover:border-teal-500 hover:bg-blue-50/35'
         }`}
       >
         <input ref={inputRef} type="file" multiple accept={accept} onChange={(e) => handleFiles(e.target.files)} className="hidden" />
-        <Upload className="w-7 h-7 mx-auto mb-2 text-gray-400" />
+        <Upload className="w-7 h-7 mx-auto mb-2 text-blue-600" />
         <p className="text-sm text-gray-700 font-medium mb-1">Toque para selecionar</p>
         <p className="text-xs text-gray-500">Máx {maxFiles} arquivo(s), até {formatSize(maxSize)} cada</p>
       </div>
@@ -90,7 +90,7 @@ export function DocumentUploadCard({
       {files.length > 0 && (
         <div className="mt-3 space-y-2">
           {files.map((file, index) => (
-            <div key={index} className="flex items-center gap-2 p-2.5 bg-slate-50 rounded-lg overflow-hidden">
+            <div key={index} className="flex items-center gap-2 p-2.5 bg-blue-50/45 rounded-lg overflow-hidden">
               <div className="shrink-0">
                 {file.type.startsWith('image/') ? (
                   <img src={URL.createObjectURL(file)} alt={file.name} className="w-9 h-9 object-cover rounded-lg" />
@@ -121,7 +121,7 @@ export function DocumentUploadCard({
         {files.length > 0 && (
           <button
             onClick={() => setFiles([])}
-            className="min-w-0 px-4 py-2.5 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-100 transition-colors text-sm font-medium"
+            className="min-w-0 px-4 py-2.5 border border-blue-200 text-blue-800 rounded-lg hover:bg-blue-50 transition-colors text-sm font-medium"
           >
             Limpar
           </button>
@@ -129,7 +129,7 @@ export function DocumentUploadCard({
         <button
           onClick={() => files.length > 0 && onUpload(files)}
           disabled={files.length === 0}
-          className="min-w-0 px-4 py-2.5 bg-slate-900 text-white rounded-lg font-medium hover:bg-slate-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          className="min-w-0 px-4 py-2.5 bg-gradient-to-r from-blue-700 to-teal-700 text-white rounded-lg font-medium hover:from-blue-800 hover:to-teal-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm"
         >
           Enviar {files.length > 0 && `(${files.length})`}
         </button>

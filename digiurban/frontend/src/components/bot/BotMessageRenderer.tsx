@@ -3,6 +3,25 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import {
+  ArrowRight,
+  Bell,
+  Building2,
+  CalendarDays,
+  ClipboardList,
+  FileText,
+  GraduationCap,
+  HeartPulse,
+  HelpCircle,
+  Leaf,
+  MapPin,
+  MessageSquarePlus,
+  Search,
+  ShieldCheck,
+  User,
+  Users,
+  type LucideIcon,
+} from 'lucide-react';
 import { CalendarPicker } from './CalendarPicker';
 import { TimePicker } from './TimePicker';
 import { ConfirmationCard } from './ConfirmationCard';
@@ -26,13 +45,57 @@ interface BotMessageRendererProps {
   disabled?: boolean;
 }
 
+interface OptionVisual {
+  Icon: LucideIcon;
+  color: string;
+  bg: string;
+  border: string;
+}
+
+const OPTION_VISUALS: Array<{ patterns: string[]; visual: OptionVisual }> = [
+  { patterns: ['saude', 'ubs', 'consulta', 'medic', 'vacina'], visual: { Icon: HeartPulse, color: 'text-rose-700', bg: 'bg-rose-50', border: 'border-rose-100' } },
+  { patterns: ['educacao', 'escola', 'aluno', 'matricula'], visual: { Icon: GraduationCap, color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-100' } },
+  { patterns: ['meio ambiente', 'ambiental', 'arvore', 'fauna', 'vegetal'], visual: { Icon: Leaf, color: 'text-emerald-700', bg: 'bg-emerald-50', border: 'border-emerald-100' } },
+  { patterns: ['protocolo', 'solicitacao', 'chamado', 'andamento', 'status'], visual: { Icon: ClipboardList, color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-100' } },
+  { patterns: ['documento', 'certidao', 'carteira', '2 via', 'segunda via'], visual: { Icon: FileText, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-100' } },
+  { patterns: ['perfil', 'cadastro', 'cpf', 'telefone', 'endereco'], visual: { Icon: User, color: 'text-cyan-700', bg: 'bg-cyan-50', border: 'border-cyan-100' } },
+  { patterns: ['familia', 'familiar', 'dependente'], visual: { Icon: Users, color: 'text-violet-700', bg: 'bg-violet-50', border: 'border-violet-100' } },
+  { patterns: ['notificacao', 'alerta', 'aviso'], visual: { Icon: Bell, color: 'text-orange-700', bg: 'bg-orange-50', border: 'border-orange-100' } },
+  { patterns: ['agenda', 'agendamento', 'horario', 'data'], visual: { Icon: CalendarDays, color: 'text-sky-700', bg: 'bg-sky-50', border: 'border-sky-100' } },
+  { patterns: ['localizacao', 'endereco', 'bairro', 'rua'], visual: { Icon: MapPin, color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-100' } },
+  { patterns: ['secretaria', 'departamento', 'setor'], visual: { Icon: Building2, color: 'text-slate-700', bg: 'bg-slate-50', border: 'border-slate-200' } },
+  { patterns: ['seguranca', 'guarda', 'denuncia'], visual: { Icon: ShieldCheck, color: 'text-red-700', bg: 'bg-red-50', border: 'border-red-100' } },
+  { patterns: ['buscar', 'pesquisar', 'consultar', 'listar'], visual: { Icon: Search, color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-100' } },
+  { patterns: ['ajuda', 'atendente', 'humano', 'suporte'], visual: { Icon: HelpCircle, color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-100' } },
+];
+
+const DEFAULT_OPTION_VISUALS: OptionVisual[] = [
+  { Icon: MessageSquarePlus, color: 'text-blue-700', bg: 'bg-blue-50', border: 'border-blue-100' },
+  { Icon: ClipboardList, color: 'text-teal-700', bg: 'bg-teal-50', border: 'border-teal-100' },
+  { Icon: FileText, color: 'text-amber-700', bg: 'bg-amber-50', border: 'border-amber-100' },
+  { Icon: Building2, color: 'text-indigo-700', bg: 'bg-indigo-50', border: 'border-indigo-100' },
+];
+
+function normalizeText(value: string): string {
+  return value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+}
+
+function getOptionVisual(option: any, index: number): OptionVisual {
+  const haystack = normalizeText(`${option?.label || ''} ${option?.description || ''} ${option?.id || ''}`);
+  const matched = OPTION_VISUALS.find(({ patterns }) => patterns.some((pattern) => haystack.includes(pattern)));
+  return matched?.visual || DEFAULT_OPTION_VISUALS[index % DEFAULT_OPTION_VISUALS.length];
+}
+
 const markdownComponents = {
   p: ({ children }: any) => <p className="mb-3 last:mb-0 min-w-0 break-words [overflow-wrap:anywhere]">{children}</p>,
   strong: ({ children }: any) => <strong className="font-semibold text-slate-900">{children}</strong>,
   ul: ({ children }: any) => <ul className="mb-3 list-disc space-y-1 pl-5 last:mb-0">{children}</ul>,
   ol: ({ children }: any) => <ol className="mb-3 list-decimal space-y-1 pl-5 last:mb-0">{children}</ol>,
   li: ({ children }: any) => <li className="marker:text-slate-400 min-w-0 break-words [overflow-wrap:anywhere]">{children}</li>,
-  hr: () => <hr className="my-4 border-slate-200" />,
+  hr: () => <hr className="my-4 border-blue-100" />,
   h1: ({ children }: any) => <h1 className="mb-3 text-lg font-semibold text-slate-900 break-words">{children}</h1>,
   h2: ({ children }: any) => <h2 className="mb-3 text-base font-semibold text-slate-900 break-words">{children}</h2>,
   h3: ({ children }: any) => <h3 className="mb-2 text-sm font-semibold text-slate-900 break-words">{children}</h3>,
@@ -159,27 +222,35 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
 
       return (
           <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2">
-          {options.map((option: any) => (
-            <button
-              key={option.id}
-              onClick={() => onInteraction(option)}
-              className="group min-w-0 rounded-lg border border-slate-200 bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-blue-600 hover:bg-slate-50 overflow-hidden"
-            >
-              <div className="flex min-w-0 items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-slate-900 text-sm leading-snug break-words">{option.label}</div>
-                  {option.description && (
-                    <div className="mt-0.5 text-xs leading-relaxed text-slate-500 line-clamp-2 break-words">
-                      {option.description}
-                    </div>
-                  )}
+          {options.map((option: any, index: number) => {
+            const visual = getOptionVisual(option, index);
+            const Icon = visual.Icon;
+
+            return (
+              <button
+                key={option.id}
+                onClick={() => onInteraction(option)}
+                className={`group min-w-0 rounded-lg border ${visual.border} bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-teal-500 hover:bg-blue-50/45 overflow-hidden`}
+              >
+                <div className="flex min-w-0 items-start gap-3">
+                  <div className={`shrink-0 rounded-lg ${visual.bg} p-2 ring-1 ring-black/5`}>
+                    <Icon className={`h-4 w-4 ${visual.color}`} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="font-semibold text-slate-900 text-sm leading-snug break-words">{option.label}</div>
+                    {option.description && (
+                      <div className="mt-0.5 text-xs leading-relaxed text-slate-500 line-clamp-2 break-words">
+                        {option.description}
+                      </div>
+                    )}
+                  </div>
+                  <div className={`shrink-0 mt-0.5 rounded-md ${visual.bg} px-2 py-1 text-[11px] font-medium ${visual.color} transition-colors whitespace-nowrap max-[380px]:hidden`}>
+                    <ArrowRight className="h-3 w-3" />
+                  </div>
                 </div>
-                <div className="shrink-0 mt-0.5 rounded-md bg-blue-50 px-2 py-1 text-[11px] font-medium text-blue-700 transition-colors group-hover:bg-blue-100 whitespace-nowrap max-[380px]:hidden">
-                  Selecionar
-                </div>
-              </div>
-            </button>
-          ))}
+              </button>
+            );
+          })}
         </div>
       );
     }
@@ -258,7 +329,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       {renderProgress()}
 
       {message?.content && (
-        <div className="w-full min-w-0 max-w-full rounded-lg border border-slate-200/80 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
+        <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
           <div className="min-w-0 text-[15px] leading-7 text-slate-800 break-words [overflow-wrap:anywhere]">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {message.content}

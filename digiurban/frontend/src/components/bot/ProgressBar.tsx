@@ -22,9 +22,9 @@ export function ProgressBar({ currentStep, totalSteps, label }: ProgressBarProps
         </span>
       </div>
 
-      <div className="w-full bg-slate-200 rounded h-2 overflow-hidden">
+      <div className="w-full bg-blue-100 rounded h-2 overflow-hidden">
         <div
-          className="bg-blue-700 h-2 rounded transition-all duration-500 ease-out"
+          className="bg-gradient-to-r from-blue-700 to-teal-600 h-2 rounded transition-all duration-500 ease-out"
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -38,8 +38,8 @@ export function ProgressBar({ currentStep, totalSteps, label }: ProgressBarProps
               step < currentStep
                 ? 'bg-blue-700 text-white'
                 : step === currentStep
-                ? 'bg-slate-900 text-white ring-4 ring-slate-200'
-                : 'bg-slate-200 text-slate-600'
+                ? 'bg-teal-700 text-white ring-4 ring-teal-100'
+                : 'bg-blue-50 text-blue-700'
             }`}
           >
             {step < currentStep ? '✓' : step}

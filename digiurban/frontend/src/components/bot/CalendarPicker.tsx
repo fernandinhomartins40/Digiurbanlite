@@ -143,12 +143,12 @@ export function CalendarPicker({
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-sm mx-auto bg-white rounded-lg border border-slate-200 shadow-sm p-3 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full sm:max-w-sm mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-3 sm:p-4 overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-center justify-between gap-1 mb-4">
         <button
           onClick={handlePrevMonth}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -162,7 +162,7 @@ export function CalendarPicker({
 
         <button
           onClick={handleNextMonth}
-          className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+          className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
         >
           <ChevronRight className="w-5 h-5" />
         </button>
@@ -205,7 +205,7 @@ export function CalendarPicker({
                 ${!isCurrentMonth && 'text-gray-300'}
                 ${isCurrentMonth && !disabled && 'hover:bg-blue-50'}
                 ${isToday && !isSelected && 'border border-blue-600'}
-                ${isSelected && 'bg-slate-900 text-white font-semibold'}
+                ${isSelected && 'bg-gradient-to-br from-blue-700 to-teal-700 text-white font-semibold'}
                 ${disabled && 'opacity-40 cursor-not-allowed'}
                 ${!disabled && !isSelected && 'cursor-pointer'}
               `}

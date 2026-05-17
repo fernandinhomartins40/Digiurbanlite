@@ -164,7 +164,7 @@ export function ImageCropUpload({
               {/* Botão Câmera */}
               <button
                 onClick={handleCamera}
-                className="p-8 border border-dashed border-slate-300 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition-colors"
+                className="p-8 border border-dashed border-blue-200 rounded-lg hover:border-teal-500 hover:bg-blue-50 transition-colors"
               >
                 <Camera className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                 <p className="font-medium text-gray-700">Tirar Foto</p>
@@ -176,7 +176,7 @@ export function ImageCropUpload({
               {/* Botão Upload */}
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="p-8 border border-dashed border-slate-300 rounded-lg hover:border-blue-600 hover:bg-blue-50 transition-colors"
+                className="p-8 border border-dashed border-blue-200 rounded-lg hover:border-teal-500 hover:bg-blue-50 transition-colors"
               >
                 <Upload className="w-12 h-12 mx-auto mb-3 text-gray-400" />
                 <p className="font-medium text-gray-700">Carregar Arquivo</p>
@@ -309,7 +309,7 @@ export function ImageCropUpload({
                 </Button>
                 <Button
                   onClick={handleUpload}
-                  className="flex-1 bg-slate-900 hover:bg-slate-800"
+                  className="flex-1 bg-gradient-to-r from-blue-700 to-teal-700 hover:from-blue-800 hover:to-teal-800"
                 >
                   <Check className="w-4 h-4 mr-2" />
                   Enviar

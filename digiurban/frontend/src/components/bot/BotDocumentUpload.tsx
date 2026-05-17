@@ -74,7 +74,7 @@ export function BotDocumentUpload({
   const allRequiredDone = requiredUploaded >= requiredCount;
 
   return (
-    <div className="w-full min-w-0 max-w-full rounded-lg border border-slate-200 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-start gap-3 border-b border-slate-100 pb-4 mb-4">
         <div className="shrink-0 rounded-lg bg-blue-50 p-2.5 text-blue-700">
@@ -86,7 +86,7 @@ export function BotDocumentUpload({
             Envie os anexos solicitados para concluir a abertura do protocolo.
           </p>
           <div className="flex flex-wrap gap-2 mt-2">
-            <span className="rounded-md bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+            <span className="rounded-md bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
               {uploadedCount} arquivo(s) pronto(s)
             </span>
             {requiredCount > 0 && (
@@ -101,7 +101,7 @@ export function BotDocumentUpload({
       {/* Document list — 1 coluna sempre para não transbordar no mobile */}
       <div className="space-y-3">
         {docConfigs.map(({ docId, config }) => (
-          <div key={docId} className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 overflow-hidden">
+          <div key={docId} className="rounded-lg border border-blue-100 bg-blue-50/30 p-3 overflow-hidden">
             <DocumentUpload
               documentConfig={config}
               value={uploadedFiles[docId] || null}
@@ -128,7 +128,7 @@ export function BotDocumentUpload({
           <Button
             onClick={handleSubmit}
             disabled={uploadedCount === 0 || (!allRequiredDone && requiredCount > 0)}
-            className="min-w-0 bg-slate-900 text-white hover:bg-slate-800"
+            className="min-w-0 bg-gradient-to-r from-blue-700 to-teal-700 text-white hover:from-blue-800 hover:to-teal-800"
           >
             <Send className="h-4 w-4 mr-2 shrink-0" />
             Enviar {uploadedCount > 0 && `(${uploadedCount})`}
