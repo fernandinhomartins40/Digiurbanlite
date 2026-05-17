@@ -12,7 +12,7 @@ export function ProgressBar({ currentStep, totalSteps, label }: ProgressBarProps
   const progress = (currentStep / totalSteps) * 100;
 
   return (
-    <div className="w-full mb-4">
+    <div className="w-full min-w-0 overflow-hidden mb-4">
       <div className="flex items-center justify-between mb-2">
         <span className="text-sm font-medium text-gray-700">
           {label || `Etapa ${currentStep} de ${totalSteps}`}
@@ -30,15 +30,15 @@ export function ProgressBar({ currentStep, totalSteps, label }: ProgressBarProps
       </div>
 
       {/* Step indicators */}
-      <div className="flex justify-between mt-2">
+      <div className="flex flex-wrap justify-between gap-1 mt-2">
         {Array.from({ length: totalSteps }, (_, i) => i + 1).map(step => (
           <div
             key={step}
-            className={`flex items-center justify-center w-8 h-8 rounded-md text-xs font-semibold transition-all ${
+            className={`flex items-center justify-center w-7 h-7 rounded-md text-xs font-semibold transition-all shrink-0 ${
               step < currentStep
                 ? 'bg-blue-700 text-white'
                 : step === currentStep
-                ? 'bg-teal-700 text-white ring-4 ring-teal-100'
+                ? 'bg-teal-700 text-white ring-2 ring-teal-100'
                 : 'bg-blue-50 text-blue-700'
             }`}
           >
