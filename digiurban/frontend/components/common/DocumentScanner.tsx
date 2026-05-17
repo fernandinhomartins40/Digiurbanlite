@@ -216,6 +216,27 @@ export function DocumentScanner({
   const isMobile = useIsMobile()
   const { vibrate } = useHaptics()
 
+  // Cache de OpenCV e jscanify — carregados uma única vez na montagem
+  const cvRef = useRef<any>(null)
+  const scannerRef = useRef<any>(null)
+  const opencvLoadingRef = useRef<Promise<boolean> | null>(null)
+
+  // Pré-carrega OpenCV + jscanify assim que o componente monta
+  useEffect(() => {
+    const load = async () => {
+      const ready = await waitForOpenCV(10000)
+      if (!ready) return
+      cvRef.current = (window as any).cv
+      try {
+        const { default: JScanify } = await import('jscanify/src/jscanify')
+        scannerRef.current = new JScanify()
+      } catch (e) {
+        console.warn('[Scanner] Falha ao importar jscanify:', e)
+      }
+    }
+    opencvLoadingRef.current = load()
+  }, [])
+
   /**
    * Detecta o tipo de documento baseado no nome
    * Retorna formato com aspectRatio, orientação, ícone e cores apropriadas
@@ -794,27 +815,20 @@ export function DocumentScanner({
     const documentType = documentFormat.type
 
     try {
-      // FASE 7: Aguardar OpenCV.js carregar com retry
-      const opencvReady = await waitForOpenCV(10000)
-      if (!opencvReady) {
-        console.warn('[AutoDetect] OpenCV.js não carregou após timeout, usando fallback')
+      // Usar cv e scanner já carregados; se ainda não prontos, aguardar a promise existente
+      if (!cvRef.current || !scannerRef.current) {
+        if (opencvLoadingRef.current) await opencvLoadingRef.current
+      }
+
+      if (!cvRef.current || !scannerRef.current) {
+        console.warn('[AutoDetect] OpenCV.js não carregou, usando fallback')
         throw new Error('OpenCV.js não carregado')
       }
 
-      const cv = (window as any).cv
+      const cv = cvRef.current
+      const scanner = scannerRef.current
 
-      // Importar jscanify dinamicamente
-      const { default: JScanify } = await import('jscanify/src/jscanify')
-      const scanner = new JScanify()
-
-      // Converter canvas para imagem
-      const img = new Image()
-      img.src = canvasRef.current.toDataURL()
-
-      await new Promise((resolve) => {
-        img.onload = resolve
-      })
-
+      // Ler canvas diretamente — evita roundtrip toDataURL → Image → onload
       const imageArea = canvasRef.current.width * canvasRef.current.height
       let bestCorners: DocumentCorners | null = null
       let bestConfidence = 0
@@ -823,7 +837,7 @@ export function DocumentScanner({
       // PASS 1: Detecção com imagem pré-processada
       console.log('[AutoDetect] PASS 1: Detecção com pré-processamento')
       try {
-        const mat = cv.imread(img)
+        const mat = cv.imread(canvasRef.current)
         matsToClean.push(mat)
 
         const processed = preprocessImage(cv, mat, documentType)
@@ -877,7 +891,7 @@ export function DocumentScanner({
       if (bestConfidence < 75) {
         console.log('[AutoDetect] PASS 2: Threshold agressivo (confiança atual:', bestConfidence, ')')
         try {
-          const mat = cv.imread(img)
+          const mat = cv.imread(canvasRef.current)
           matsToClean.push(mat)
 
           const gray = new cv.Mat()
@@ -970,7 +984,7 @@ export function DocumentScanner({
         let comfortZone = 0.75 // Padrão 75%
 
         // Detectar se documento está muito perto ou longe analisando bordas
-        const cv = (window as any).cv
+        const cv = cvRef.current || (window as any).cv
         if (cv) {
           try {
             const mat = cv.imread(canvasRef.current)
@@ -1629,14 +1643,14 @@ export function DocumentScanner({
     console.log('[Perspectiva] Corners recebidos:', corners)
 
     try {
-      // Aguardar OpenCV.js carregar com retry
-      const opencvReady = await waitForOpenCV(8000)
-      if (!opencvReady) {
+      // Usar cv já carregado; se ainda não pronto, aguardar a promise existente
+      if (!cvRef.current && opencvLoadingRef.current) await opencvLoadingRef.current
+      if (!cvRef.current) {
         console.warn('[Perspectiva] OpenCV.js não carregou, usando imagem original')
         return sourceCanvas
       }
 
-      const cv = (window as any).cv
+      const cv = cvRef.current
 
       // Se não temos corners, retornar canvas original
       if (!corners) {
