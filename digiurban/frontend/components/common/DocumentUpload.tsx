@@ -137,7 +137,7 @@ export function DocumentUpload({
   }
 
   return (
-    <div className="space-y-2 w-full overflow-hidden">
+    <div className="space-y-2 w-full min-w-0 max-w-full overflow-hidden">
       {/* Label */}
       <div className="flex flex-col gap-0.5 min-w-0">
         <Label className="text-sm font-medium break-words">
@@ -212,27 +212,27 @@ export function DocumentUpload({
           </div>
         </Card>
       ) : (
-        <Card className="border-2 border-green-300 bg-green-50 overflow-hidden">
-          <div className="p-3">
-            <div className="flex items-start gap-3">
-              {/* Thumbnail */}
+        <Card className="w-full min-w-0 border-2 border-green-300 bg-green-50 overflow-hidden">
+          <div className="p-3 w-full min-w-0 overflow-hidden">
+            <div className="flex items-start gap-2 w-full min-w-0 overflow-hidden">
+              {/* Thumbnail — tamanho fixo pequeno, nunca cresce */}
               <div className="shrink-0">
                 {preview ? (
-                  <div className="relative w-14 h-14 rounded-lg overflow-hidden border-2 border-green-400">
+                  <div className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-green-400">
                     <img src={preview} alt="Preview" className="w-full h-full object-cover" />
                   </div>
                 ) : (
-                  <div className="w-14 h-14 rounded-lg bg-green-100 border-2 border-green-400 flex items-center justify-center">
-                    <FileText className="h-6 w-6 text-green-600" />
+                  <div className="w-12 h-12 rounded-lg bg-green-100 border-2 border-green-400 flex items-center justify-center">
+                    <FileText className="h-5 w-5 text-green-600" />
                   </div>
                 )}
               </div>
 
-              {/* Info */}
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-1">
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{value.name}</p>
+              {/* Info — ocupa o restante, nunca ultrapassa */}
+              <div className="flex-1 min-w-0 overflow-hidden">
+                <div className="flex items-start gap-1 min-w-0">
+                  <div className="flex-1 min-w-0 overflow-hidden">
+                    <p className="text-sm font-medium text-gray-900 truncate w-full">{value.name}</p>
                     <p className="text-xs text-gray-500">{formatFileSize(value.size)}</p>
                   </div>
                   <div className="flex gap-0.5 shrink-0">
