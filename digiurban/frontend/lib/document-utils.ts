@@ -23,6 +23,8 @@ const MIME_TYPE_MAP: Record<string, string> = {
   'jpeg': 'image/jpeg',
   'png': 'image/png',
   'gif': 'image/gif',
+  'webp': 'image/webp',
+  'bmp': 'image/bmp',
   'doc': 'application/msword',
   'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
   'xls': 'application/vnd.ms-excel',

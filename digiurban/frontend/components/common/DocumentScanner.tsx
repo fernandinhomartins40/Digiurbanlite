@@ -1844,12 +1844,13 @@ export function DocumentScanner({
 
       console.log('[ConfirmPhoto] File criado:', fileName, file.size, 'bytes')
 
-      // Validar arquivo
+      // Validar arquivo — apenas tamanho, pois o formato foi gerado internamente (WebP/JPEG)
       console.log('[ConfirmPhoto] Validando arquivo')
+      const cameraAcceptedFormats = Array.from(new Set([...acceptedFormats, 'webp', 'jpg', 'jpeg']))
       const validation = validateFile(file, {
         name: documentName,
         required: true,
-        acceptedFormats,
+        acceptedFormats: cameraAcceptedFormats,
         maxSizeMB,
         allowCameraUpload: true
       })
