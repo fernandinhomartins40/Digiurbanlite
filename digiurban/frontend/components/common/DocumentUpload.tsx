@@ -7,7 +7,8 @@
  * Componente de upload de documentos com suporte a câmera
  */
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import { Card } from '@/components/ui/card'
@@ -53,6 +54,8 @@ export function DocumentUpload({
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const allowCamera = canUseCameraUpload(documentConfig)
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
 
   /**
    * Manipula seleção de arquivo
@@ -215,11 +218,17 @@ export function DocumentUpload({
         <Card className="w-full min-w-0 border-2 border-green-300 bg-green-50 overflow-hidden">
           <div className="p-3 w-full min-w-0 overflow-hidden">
             <div className="flex items-start gap-2 w-full min-w-0 overflow-hidden">
-              {/* Thumbnail — tamanho fixo pequeno, nunca cresce */}
-              <div className="shrink-0">
+              {/* Thumbnail — dimensões absolutas, nunca cresce */}
+              <div className="shrink-0 w-12 h-12">
                 {preview ? (
-                  <div className="relative w-12 h-12 rounded-lg overflow-hidden border-2 border-green-400">
-                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                  <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-green-400">
+                    <img
+                      src={preview}
+                      alt="Preview"
+                      width={48}
+                      height={48}
+                      className="block w-12 h-12 object-cover"
+                    />
                   </div>
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-green-100 border-2 border-green-400 flex items-center justify-center">
@@ -284,15 +293,16 @@ export function DocumentUpload({
         </Card>
       )}
 
-      {/* Scanner modal */}
-      {showScanner && (
+      {/* Scanner — renderizado via portal no body para nunca afetar o layout do chat */}
+      {showScanner && mounted && createPortal(
         <DocumentScanner
           documentName={documentConfig.name}
           acceptedFormats={documentConfig.acceptedFormats}
           maxSizeMB={documentConfig.maxSizeMB}
           onCapture={handleCameraCapture}
           onCancel={() => setShowScanner(false)}
-        />
+        />,
+        document.body
       )}
 
       {/* Preview modal */}
