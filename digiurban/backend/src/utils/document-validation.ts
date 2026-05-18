@@ -27,6 +27,8 @@ const MIME_TYPE_MAP: Record<string, string[]> = {
   'jpeg': ['image/jpeg'],
   'png': ['image/png'],
   'gif': ['image/gif'],
+  'webp': ['image/webp'],
+  'bmp': ['image/bmp'],
   'doc': ['application/msword'],
   'docx': ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
   'xls': ['application/vnd.ms-excel'],
@@ -40,6 +42,8 @@ const FORMAT_EXTENSIONS: Record<string, string[]> = {
   'jpeg': ['.jpg', '.jpeg'],
   'png': ['.png'],
   'gif': ['.gif'],
+  'webp': ['.webp'],
+  'bmp': ['.bmp'],
   'doc': ['.doc'],
   'docx': ['.docx'],
   'xls': ['.xls'],
@@ -101,8 +105,17 @@ export function validateFile(
     };
   }
 
+  // Normalizar formatos aceitos: se o serviço aceita qualquer imagem e allowCameraUpload,
+  // garantir que webp e bmp também sejam aceitos (gerados pelo scanner da câmera)
+  const acceptedFormats = [...documentConfig.acceptedFormats];
+  const acceptsImages = acceptedFormats.some(f => isImageFormat(f));
+  if (acceptsImages && documentConfig.allowCameraUpload) {
+    if (!acceptedFormats.includes('webp')) acceptedFormats.push('webp');
+    if (!acceptedFormats.includes('bmp')) acceptedFormats.push('bmp');
+  }
+
   // Validar MIME type
-  const allowedMimeTypes = getAllowedMimeTypes(documentConfig.acceptedFormats);
+  const allowedMimeTypes = getAllowedMimeTypes(acceptedFormats);
   if (!allowedMimeTypes.includes(file.mimetype)) {
     return {
       valid: false,
@@ -113,11 +126,11 @@ export function validateFile(
 
   // Validar extensão
   const ext = file.originalname.toLowerCase().substring(file.originalname.lastIndexOf('.'));
-  const allowedExtensions = getAllowedExtensions(documentConfig.acceptedFormats);
+  const allowedExtensions = getAllowedExtensions(acceptedFormats);
   if (!allowedExtensions.includes(ext)) {
     return {
       valid: false,
-      error: `Extensão de arquivo não permitida para ${documentConfig.name}. Extensões aceitas: ${allowedExtensions.join(', ')}`,
+      error: `Extensão de arquivo não permitida para ${documentConfig.name}. Extensões aceitas: ${getAllowedExtensions(documentConfig.acceptedFormats).join(', ')}`,
       errorCode: 'INVALID_EXTENSION'
     };
   }
@@ -201,7 +214,7 @@ export function normalizeDocumentConfigs(requiredDocuments: any[]): DocumentConf
         name: doc,
         description: '',
         required: true,  // ✅ DEFAULT: TRUE (era false)
-        acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
+        acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
         allowCameraUpload: true,
         maxSizeMB: 5
       };
@@ -234,7 +247,7 @@ export function getValidationErrorMessage(result: ValidationResult): string {
  * Verifica se um formato é considerado uma imagem
  */
 export function isImageFormat(format: string): boolean {
-  const imageFormats = ['jpg', 'jpeg', 'png', 'gif'];
+  const imageFormats = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'];
   return imageFormats.includes(format.toLowerCase());
 }
 

@@ -38,6 +38,8 @@ const SECURITY_CONFIG = {
     'image/jpeg',
     'image/png',
     'image/gif',
+    'image/webp',
+    'image/bmp',
     'application/msword',
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-excel',
