@@ -74,7 +74,7 @@ export function BotDocumentUpload({
   const allRequiredDone = requiredUploaded >= requiredCount;
 
   return (
-    <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-start gap-3 border-b border-slate-100 pb-4 mb-4">
         <div className="shrink-0 rounded-lg bg-blue-50 p-2.5 text-blue-700">

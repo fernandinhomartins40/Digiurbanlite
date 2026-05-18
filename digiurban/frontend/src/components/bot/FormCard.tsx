@@ -205,7 +205,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 sm:p-4 space-y-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 space-y-4 overflow-hidden">
       {fields.map((field) => {
         const normalized = normalizeField(field);
         if (!normalized.id) return null;

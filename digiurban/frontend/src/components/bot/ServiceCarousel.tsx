@@ -90,7 +90,7 @@ export function ServiceCarousel({ options, categories, departmentName, onSelect 
     : groupByCategory(options);
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-4 rounded-lg border border-blue-100 bg-white p-2.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-4 rounded-lg border border-blue-100 bg-white p-2.5 shadow-sm overflow-hidden">
       <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
@@ -172,7 +172,7 @@ function CategorySection({
               <button
                 key={service.id}
                 onClick={() => onSelect(service)}
-                className="snap-start min-w-0 max-w-full rounded-lg border bg-white p-3 sm:p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
+                className="snap-start min-w-0 max-w-full rounded-lg border bg-white p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer text-left flex flex-col gap-3 overflow-hidden"
                 style={{
                   borderColor: catColor.primary + '40',
                   background: `linear-gradient(135deg, ${catColor.primary}10 0%, #ffffff 58%)`,

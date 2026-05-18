@@ -81,7 +81,7 @@ export function LocationPicker({
 
   if (mode === 'loading') {
     return (
-      <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-5 sm:p-8 overflow-hidden">
+      <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-5 p-5 overflow-hidden">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-teal-600" />
           <p className="text-gray-600">Obtendo sua localização...</p>
@@ -92,7 +92,7 @@ export function LocationPicker({
 
   if (mode === 'manual') {
     return (
-      <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 sm:p-6 overflow-hidden">
+      <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 p-4 overflow-hidden">
         <div className="flex min-w-0 items-center gap-2 mb-4">
           <Edit3 className="w-5 h-5 text-blue-600" />
           <h3 className="text-lg font-semibold">Digite o endereço</h3>
@@ -179,7 +179,7 @@ export function LocationPicker({
   }
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 sm:p-6 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 p-4 overflow-hidden">
       <div className="flex min-w-0 items-center gap-2 mb-4">
         <MapPin className="w-6 h-6 text-blue-600" />
         <h3 className="text-lg font-semibold">Selecione a localização</h3>
@@ -189,7 +189,7 @@ export function LocationPicker({
         {allowCurrentLocation && (
           <button
             onClick={handleCurrentLocation}
-            className="w-full min-w-0 flex items-center justify-center gap-3 px-3 sm:px-4 py-4 border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors overflow-hidden"
+            className="w-full min-w-0 flex items-center justify-center gap-3 px-3 py-4 border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors overflow-hidden"
           >
             <Navigation className="w-5 h-5" />
             <span className="font-medium">Usar minha localização atual</span>
@@ -199,7 +199,7 @@ export function LocationPicker({
         {allowManualAddress && (
           <button
             onClick={() => setMode('manual')}
-            className="w-full min-w-0 flex items-center justify-center gap-3 px-3 sm:px-4 py-4 border border-blue-200 text-blue-800 rounded-lg hover:bg-blue-50 transition-colors overflow-hidden"
+            className="w-full min-w-0 flex items-center justify-center gap-3 px-3 py-4 border border-blue-200 text-blue-800 rounded-lg hover:bg-blue-50 transition-colors overflow-hidden"
           >
             <Edit3 className="w-5 h-5" />
             <span className="font-medium">Digitar endereço manualmente</span>

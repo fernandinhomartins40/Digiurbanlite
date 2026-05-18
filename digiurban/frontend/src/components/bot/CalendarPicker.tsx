@@ -143,7 +143,7 @@ export function CalendarPicker({
   ];
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-sm mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-3 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3 overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-center justify-between gap-1 mb-4">
         <button
@@ -201,7 +201,7 @@ export function CalendarPicker({
               onClick={() => handleDateClick(date)}
               disabled={disabled}
               className={`
-                aspect-square min-w-0 p-1 sm:p-2 text-sm rounded-lg transition-colors
+                aspect-square min-w-0 p-1 text-sm rounded-lg transition-colors
                 ${!isCurrentMonth && 'text-gray-300'}
                 ${isCurrentMonth && !disabled && 'hover:bg-blue-50'}
                 ${isToday && !isSelected && 'border border-blue-600'}

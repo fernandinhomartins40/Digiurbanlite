@@ -88,32 +88,38 @@ export function ConfirmationCard({
       </div>
 
       {/* Actions */}
-      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
-        {onCancel && (
-          <button
-            onClick={onCancel}
-            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border border-blue-200 text-blue-800 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm"
-          >
-            <XCircle className="w-4 h-4 shrink-0" />
-            Cancelar
-          </button>
-        )}
-        {onEdit && (
-          <button
-            onClick={onEdit}
-            className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-white border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm"
-          >
-            <Edit className="w-4 h-4 shrink-0" />
-            Editar
-          </button>
-        )}
+      <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex flex-col gap-2">
+        {/* Confirmar sempre em cima, largura total */}
         <button
           onClick={onConfirm}
-          className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-700 to-teal-700 text-white rounded-lg hover:from-blue-800 hover:to-teal-800 transition-colors font-medium text-sm min-[380px]:col-span-2"
+          className="w-full min-w-0 flex items-center justify-center gap-1.5 px-3 py-2.5 bg-gradient-to-r from-blue-700 to-teal-700 text-white rounded-lg hover:from-blue-800 hover:to-teal-800 transition-colors font-medium text-sm"
         >
           <CheckCircle className="w-4 h-4 shrink-0" />
-          Confirmar
+          Confirmar e Enviar
         </button>
+        {/* Secundários lado a lado quando existem */}
+        {(onCancel || onEdit) && (
+          <div className="grid gap-2" style={{ gridTemplateColumns: onCancel && onEdit ? '1fr 1fr' : '1fr' }}>
+            {onEdit && (
+              <button
+                onClick={onEdit}
+                className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-blue-600 text-blue-700 rounded-lg hover:bg-blue-50 transition-colors font-medium text-sm"
+              >
+                <Edit className="w-4 h-4 shrink-0" />
+                Corrigir
+              </button>
+            )}
+            {onCancel && (
+              <button
+                onClick={onCancel}
+                className="min-w-0 flex items-center justify-center gap-1.5 px-3 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg hover:bg-gray-50 transition-colors font-medium text-sm"
+              >
+                <XCircle className="w-4 h-4 shrink-0" />
+                Cancelar
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

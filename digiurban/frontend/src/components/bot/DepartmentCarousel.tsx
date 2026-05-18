@@ -60,7 +60,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full space-y-3 rounded-lg border border-blue-100 bg-white p-2.5 sm:p-4 shadow-sm overflow-hidden">
+    <div className="w-full min-w-0 max-w-full space-y-3 rounded-lg border border-blue-100 bg-white p-2.5 shadow-sm overflow-hidden">
       <div className="flex min-w-0 items-center justify-between gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-semibold text-slate-900">Secretarias</p>
@@ -95,7 +95,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
               <button
                 key={option.id}
                 onClick={() => onSelect(option)}
-                className="snap-start min-w-0 max-w-full rounded-lg border p-3 sm:p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer flex flex-col items-center gap-3 text-center overflow-hidden"
+                className="snap-start min-w-0 max-w-full rounded-lg border p-3 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md cursor-pointer flex flex-col items-center gap-3 text-center overflow-hidden"
                 style={{
                   background: `linear-gradient(135deg, ${theme.light} 0%, #ffffff 70%)`,
                   borderColor: theme.border,
@@ -103,11 +103,11 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
                 }}
               >
                 <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg shadow-sm sm:h-14 sm:w-14"
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg shadow-sm"
                   style={{ backgroundColor: theme.primary + '20' }}
                 >
                   <IconComponent
-                    className="h-6 w-6 sm:h-7 sm:w-7"
+                    className="h-6 w-6"
                     style={{ color: theme.primary }}
                   />
                 </div>

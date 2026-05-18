@@ -329,8 +329,8 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       {renderProgress()}
 
       {message?.content && (
-        <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 sm:p-4 shadow-sm overflow-hidden">
-          <div className="min-w-0 text-[15px] leading-7 text-slate-800 break-words [overflow-wrap:anywhere]">
+        <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 shadow-sm overflow-hidden">
+          <div className="min-w-0 text-sm leading-6 text-slate-800 break-words [overflow-wrap:anywhere]">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
               {message.content}
             </ReactMarkdown>

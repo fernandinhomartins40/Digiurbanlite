@@ -95,7 +95,7 @@ export function TimePicker({
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 sm:p-6 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-4 overflow-hidden">
       {/* Header */}
       <div className="flex min-w-0 items-center gap-2 mb-6">
         <Clock className="w-6 h-6 text-blue-600" />

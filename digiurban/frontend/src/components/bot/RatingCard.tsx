@@ -21,14 +21,14 @@ export function RatingCard({
   const labels = ['Péssimo', 'Ruim', 'Regular', 'Bom', 'Excelente'];
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 overflow-hidden">
       <div className="text-center mb-4">
         <h3 className="text-sm font-semibold text-gray-900 mb-1 break-words">{title}</h3>
         <p className="text-xs text-gray-600 break-words">{subtitle}</p>
       </div>
 
       {/* Stars — tamanho fixo para não transbordar */}
-      <div className="flex min-w-0 justify-center gap-1.5 sm:gap-2 mb-4">
+      <div className="flex min-w-0 justify-center gap-1.5 mb-4">
         {[1, 2, 3, 4, 5].map((star) => (
           <button
             key={star}

@@ -68,7 +68,7 @@ export function DocumentUploadCard({
   };
 
   return (
-    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 sm:p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 overflow-hidden">
       <h3 className="text-sm font-semibold mb-3 break-words">{title}</h3>
 
       {/* Upload Area */}
@@ -78,7 +78,7 @@ export function DocumentUploadCard({
         onDragOver={handleDrag}
         onDrop={handleDrop}
         onClick={() => inputRef.current?.click()}
-        className={`relative min-w-0 border border-dashed rounded-lg p-4 sm:p-5 text-center cursor-pointer transition-colors overflow-hidden ${
+        className={`relative min-w-0 border border-dashed rounded-lg p-4 text-center cursor-pointer transition-colors overflow-hidden ${
           dragActive ? 'border-teal-600 bg-teal-50' : 'border-blue-200 hover:border-teal-500 hover:bg-blue-50/35'
         }`}
       >
