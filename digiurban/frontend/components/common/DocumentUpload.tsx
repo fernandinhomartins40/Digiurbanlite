@@ -215,78 +215,68 @@ export function DocumentUpload({
           </div>
         </Card>
       ) : (
-        <Card className="w-full min-w-0 border-2 border-green-300 bg-green-50 overflow-hidden">
-          <div className="p-3 w-full min-w-0 overflow-hidden">
-            <div className="flex items-start gap-2 w-full min-w-0 overflow-hidden">
-              {/* Thumbnail — dimensões absolutas, nunca cresce */}
-              <div className="shrink-0 w-12 h-12">
+        <Card className="w-full border-2 border-green-300 bg-green-50 overflow-hidden">
+          <div className="p-3">
+            {/* linha principal: thumbnail + info + botões */}
+            <div className="grid overflow-hidden" style={{ gridTemplateColumns: '48px 1fr auto' , gap: '8px' }}>
+              {/* Thumbnail — 48×48 fixo, nunca cresce nem encolhe */}
+              <div className="w-12 h-12 shrink-0 rounded-lg overflow-hidden border-2 border-green-400 bg-green-100 flex items-center justify-center">
                 {preview ? (
-                  <div className="w-12 h-12 rounded-lg overflow-hidden border-2 border-green-400">
-                    <img
-                      src={preview}
-                      alt="Preview"
-                      width={48}
-                      height={48}
-                      className="block w-12 h-12 object-cover"
-                    />
-                  </div>
+                  <img
+                    src={preview}
+                    alt="Preview"
+                    width={48}
+                    height={48}
+                    className="block w-12 h-12 object-cover"
+                  />
                 ) : (
-                  <div className="w-12 h-12 rounded-lg bg-green-100 border-2 border-green-400 flex items-center justify-center">
-                    <FileText className="h-5 w-5 text-green-600" />
-                  </div>
+                  <FileText className="h-5 w-5 text-green-600" />
                 )}
               </div>
 
-              {/* Info — ocupa o restante, nunca ultrapassa */}
-              <div className="flex-1 min-w-0 overflow-hidden">
-                <div className="flex items-start gap-1 min-w-0">
-                  <div className="flex-1 min-w-0 overflow-hidden">
-                    <p className="text-sm font-medium text-gray-900 truncate w-full">{value.name}</p>
-                    <p className="text-xs text-gray-500">{formatFileSize(value.size)}</p>
-                  </div>
-                  <div className="flex gap-0.5 shrink-0">
-                    {preview && (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0"
-                        onClick={() => setShowPreviewModal(true)}
-                        title="Visualizar imagem"
-                      >
-                        <Eye className="h-3.5 w-3.5" />
-                      </Button>
-                    )}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                      onClick={removeFile}
-                      disabled={disabled}
-                      title="Remover arquivo"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
-                </div>
-
+              {/* Info — ocupa o espaço restante, trunca o nome */}
+              <div className="min-w-0 overflow-hidden flex flex-col justify-center">
+                <p className="text-sm font-medium text-gray-900 truncate">{value.name}</p>
+                <p className="text-xs text-gray-500">{formatFileSize(value.size)}</p>
                 {uploading && (
-                  <div className="space-y-1 mt-1.5">
-                    <Progress value={100} className="h-1" />
-                    <p className="text-xs text-gray-500 flex items-center gap-1">
-                      <Loader2 className="h-3 w-3 animate-spin shrink-0" />
-                      Processando...
-                    </p>
-                  </div>
+                  <p className="text-xs text-gray-500 flex items-center gap-1 mt-1">
+                    <Loader2 className="h-3 w-3 animate-spin shrink-0" />
+                    Processando...
+                  </p>
                 )}
-
                 {!uploading && (
-                  <div className="flex items-center gap-1 text-xs text-green-600 mt-1">
+                  <p className="text-xs text-green-600 flex items-center gap-1 mt-0.5">
                     <Check className="h-3 w-3 shrink-0" />
-                    Arquivo pronto para envio
-                  </div>
+                    Pronto para envio
+                  </p>
                 )}
+              </div>
+
+              {/* Botões — largura fixa, nunca empurra o nome */}
+              <div className="flex items-center gap-0.5 shrink-0">
+                {preview && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 w-7 p-0"
+                    onClick={() => setShowPreviewModal(true)}
+                    title="Visualizar"
+                  >
+                    <Eye className="h-3.5 w-3.5" />
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 w-7 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                  onClick={removeFile}
+                  disabled={disabled}
+                  title="Remover"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
             </div>
           </div>
