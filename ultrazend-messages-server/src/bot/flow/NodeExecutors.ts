@@ -97,6 +97,10 @@ export class NodeExecutors {
           field.type = 'number';
         } else if (schema?.type === 'boolean') {
           field.type = 'checkbox';
+          field.options = [
+            { value: 'true', label: 'Sim' },
+            { value: 'false', label: 'Não' },
+          ];
         } else {
           field.type = 'text';
         }
@@ -759,7 +763,10 @@ export class NodeExecutors {
 
       // Valida campos obrigatórios
       for (const field of fields) {
-        if (field.required && !formData[field.id]) {
+        const value = formData[field.id];
+        const isMissing = value === null || value === undefined || value === '' ||
+          (Array.isArray(value) && value.length === 0);
+        if (field.required && isMissing) {
           return {
             success: false,
             message: `Campo obrigatório: ${field.label}`,

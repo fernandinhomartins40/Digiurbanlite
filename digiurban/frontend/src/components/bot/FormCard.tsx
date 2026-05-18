@@ -13,6 +13,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Check } from 'lucide-react';
 
 interface FormFieldOption {
   value?: string;
@@ -46,18 +47,29 @@ const normalizeField = (field: FormField) => {
   return { ...field, id, label: field.label || id, type: field.type || 'text' } as Required<FormField>;
 };
 
+// Verifica se um valor deve ser considerado "preenchido" para validação de required
+function hasValue(value: any): boolean {
+  if (value === null || value === undefined || value === '') return false;
+  if (Array.isArray(value)) return value.length > 0;
+  return true; // false, 0, "false" são valores válidos
+}
+
 export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardProps) {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (id: string, value: any) => {
     setFormData((prev) => ({ ...prev, [id]: value }));
+    // Limpa erro ao preencher
+    if (errors[id]) setErrors((prev) => { const n = { ...prev }; delete n[id]; return n; });
   };
 
   const handleSubmit = () => {
     const nextErrors: Record<string, string> = {};
     fields.map(normalizeField).forEach((field) => {
-      if (field.required && !formData[field.id]) nextErrors[field.id] = 'Campo obrigatorio';
+      if (field.required && !hasValue(formData[field.id])) {
+        nextErrors[field.id] = 'Campo obrigatório';
+      }
     });
     setErrors(nextErrors);
     if (Object.keys(nextErrors).length === 0) onSubmit(formData);
@@ -92,26 +104,66 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
         );
       }
 
+      case 'radio': {
+        const opts = (field.options || []).map(normalizeOption);
+        return (
+          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+            {opts.map((opt) => {
+              const isSelected = formData[field.id] === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => handleChange(field.id, opt.value)}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors min-w-0 break-words ${
+                    isSelected
+                      ? 'border-blue-600 bg-blue-50 text-blue-800 font-medium'
+                      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className={`flex-shrink-0 h-4 w-4 rounded-full border-2 flex items-center justify-center ${
+                    isSelected ? 'border-blue-600' : 'border-gray-300'
+                  }`}>
+                    {isSelected && <span className="h-2 w-2 rounded-full bg-blue-600" />}
+                  </span>
+                  {opt.label}
+                </button>
+              );
+            })}
+          </div>
+        );
+      }
+
       case 'multiselect': {
         const opts = (field.options || []).map(normalizeOption);
         return (
           <div className="space-y-2">
             {opts.map((opt) => {
               const current = Array.isArray(formData[field.id]) ? formData[field.id] : [];
+              const isChecked = current.includes(opt.value);
               return (
-                <div key={opt.value} className="flex items-center space-x-2">
-                  <Checkbox
-                    id={`${field.id}-${opt.value}`}
-                    checked={current.includes(opt.value)}
-                    onCheckedChange={(val) => {
-                      const next = val ? [...current, opt.value] : current.filter((i: string) => i !== opt.value);
-                      handleChange(field.id, next);
-                    }}
-                  />
-                  <label htmlFor={`${field.id}-${opt.value}`} className="text-sm text-gray-700 break-words">
-                    {opt.label}
-                  </label>
-                </div>
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    const next = isChecked
+                      ? current.filter((i: string) => i !== opt.value)
+                      : [...current, opt.value];
+                    handleChange(field.id, next);
+                  }}
+                  className={`w-full flex items-center gap-2.5 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors min-w-0 break-words ${
+                    isChecked
+                      ? 'border-blue-600 bg-blue-50 text-blue-800 font-medium'
+                      : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <span className={`flex-shrink-0 h-4 w-4 rounded border flex items-center justify-center ${
+                    isChecked ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+                  }`}>
+                    {isChecked && <Check className="h-3 w-3 text-white" />}
+                  </span>
+                  {opt.label}
+                </button>
               );
             })}
           </div>
@@ -120,42 +172,69 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
 
       case 'checkbox':
       case 'boolean': {
-        const opts = (field.options || []).map(normalizeOption);
-        if (opts.length >= 2) {
+        // Opções explícitas → botões de seleção (Sim/Não ou qualquer par)
+        const rawOpts = field.options || [];
+        const opts = rawOpts.length >= 2
+          ? rawOpts.map(normalizeOption)
+          : [{ value: 'true', label: 'Sim' }, { value: 'false', label: 'Não' }];
+
+        // Normaliza valor atual: aceita boolean nativo e string "true"/"false"
+        const rawVal = formData[field.id];
+        const currentStr =
+          rawVal === true ? 'true' :
+          rawVal === false ? 'false' :
+          rawVal != null ? String(rawVal) : undefined;
+
+        // Se tem exatamente 2 opções (ou é boolean puro), mostra par de botões
+        if (rawOpts.length !== 1) {
           return (
-          <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+            <div className="grid grid-cols-2 gap-2">
               {opts.map((opt) => {
-                const isSelected = formData[field.id] === opt.value;
+                const isSelected = currentStr === opt.value;
+                const isPositive = opt.value === 'true' || opt.value === 'sim' || opt.value === 'yes';
                 return (
-                  <Button
+                  <button
                     key={opt.value}
                     type="button"
-                    variant={isSelected ? 'default' : 'outline'}
-                    className={`h-auto min-w-0 rounded-lg py-3 whitespace-normal break-words transition-colors ${
-                      isSelected
-                        ? opt.value === 'true'
-                          ? 'bg-green-600 hover:bg-green-700 text-white'
-                          : 'bg-red-600 hover:bg-red-700 text-white'
-                        : 'hover:bg-gray-50'
-                    }`}
                     onClick={() => handleChange(field.id, opt.value)}
+                    className={`flex items-center justify-center gap-2 rounded-lg border py-3 px-2 text-sm font-medium transition-colors min-w-0 break-words ${
+                      isSelected
+                        ? isPositive
+                          ? 'border-green-600 bg-green-600 text-white'
+                          : 'border-red-500 bg-red-500 text-white'
+                        : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+                    }`}
                   >
+                    {isSelected && (
+                      <Check className="h-3.5 w-3.5 flex-shrink-0" />
+                    )}
                     {opt.label}
-                  </Button>
+                  </button>
                 );
               })}
             </div>
           );
         }
+
+        // Opção única → checkbox de aceite/concordância
+        const singleOpt = opts[0];
         return (
-          <div className="flex items-center space-x-2">
-            <Checkbox
-              id={field.id}
-              checked={Boolean(formData[field.id])}
-              onCheckedChange={(val) => handleChange(field.id, val)}
-            />
-            <label htmlFor={field.id} className="text-sm text-gray-700 break-words">{field.label}</label>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleChange(field.id, !formData[field.id])}
+            className={`w-full flex items-center gap-3 rounded-lg border px-3 py-2.5 text-sm text-left transition-colors ${
+              formData[field.id]
+                ? 'border-blue-600 bg-blue-50 text-blue-800'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <span className={`flex-shrink-0 h-4 w-4 rounded border flex items-center justify-center ${
+              formData[field.id] ? 'border-blue-600 bg-blue-600' : 'border-gray-300'
+            }`}>
+              {formData[field.id] && <Check className="h-3 w-3 text-white" />}
+            </span>
+            <span className="break-words">{singleOpt.label || field.label}</span>
+          </button>
         );
       }
 
@@ -164,7 +243,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
           <Input
             id={field.id}
             type="number"
-            value={formData[field.id] || ''}
+            value={formData[field.id] ?? ''}
             onChange={(e) => handleChange(field.id, e.target.value)}
             placeholder={field.placeholder || field.label}
           />
@@ -204,20 +283,31 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
     }
   };
 
+  // Tipos que mostram o label separado (acima do campo)
+  const showLabelAbove = (type: string) => !['checkbox', 'boolean'].includes(type);
+
   return (
     <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-3.5 space-y-4 overflow-hidden">
       {fields.map((field) => {
         const normalized = normalizeField(field);
         if (!normalized.id) return null;
         return (
-          <div key={normalized.id} className="space-y-1.5">
-            {normalized.type !== 'checkbox' && normalized.type !== 'boolean' && (
-              <Label htmlFor={normalized.id} className="text-sm break-words">
+          <div key={normalized.id} className="space-y-1.5 min-w-0">
+            {showLabelAbove(normalized.type) && (
+              <Label htmlFor={normalized.id} className="text-sm font-medium break-words">
                 {normalized.label}
                 {normalized.required && <span className="text-red-500 ml-1">*</span>}
               </Label>
             )}
-            {renderField(normalized)}
+            {normalized.type === 'checkbox' || normalized.type === 'boolean' ? (
+              <div>
+                <p className="text-sm font-medium text-gray-800 mb-1.5 break-words">
+                  {normalized.label}
+                  {normalized.required && <span className="text-red-500 ml-1">*</span>}
+                </p>
+                {renderField(normalized)}
+              </div>
+            ) : renderField(normalized)}
             {normalized.description && (
               <p className="text-xs text-muted-foreground break-words">{normalized.description}</p>
             )}
@@ -227,7 +317,12 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
           </div>
         );
       })}
-      <Button className="w-full rounded-lg bg-gradient-to-r from-blue-700 to-teal-700 hover:from-blue-800 hover:to-teal-800" onClick={handleSubmit}>{submitLabel}</Button>
+      <Button
+        className="w-full rounded-lg bg-gradient-to-r from-blue-700 to-teal-700 hover:from-blue-800 hover:to-teal-800"
+        onClick={handleSubmit}
+      >
+        {submitLabel}
+      </Button>
     </div>
   );
 }
