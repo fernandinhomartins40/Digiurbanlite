@@ -59,9 +59,17 @@ export function validateFile(
     };
   }
 
+  // Auto-incluir webp/bmp se o serviço aceita imagens e permite câmera
+  const acceptedFormats = [...documentConfig.acceptedFormats];
+  const acceptsImages = acceptedFormats.some(f => isImageFormat(f));
+  if (acceptsImages && documentConfig.allowCameraUpload) {
+    if (!acceptedFormats.includes('webp')) acceptedFormats.push('webp');
+    if (!acceptedFormats.includes('bmp')) acceptedFormats.push('bmp');
+  }
+
   // Validar tipo
   const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.') + 1);
-  const acceptedFormatsLower = documentConfig.acceptedFormats.map(f => f.toLowerCase());
+  const acceptedFormatsLower = acceptedFormats.map(f => f.toLowerCase());
 
   if (!acceptedFormatsLower.includes(fileExtension)) {
     return {
@@ -388,8 +396,8 @@ export function normalizeDocumentConfig(doc: any): DocumentConfig {
     return {
       name: doc,
       description: '',
-      required: false,
-      acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png'],
+      required: true,
+      acceptedFormats: ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
       allowCameraUpload: true,
       maxSizeMB: 5
     };
@@ -398,8 +406,8 @@ export function normalizeDocumentConfig(doc: any): DocumentConfig {
   return {
     name: doc.name || 'Documento',
     description: doc.description || '',
-    required: doc.required !== undefined ? doc.required : false,
-    acceptedFormats: doc.acceptedFormats || ['pdf', 'jpg', 'jpeg', 'png'],
+    required: doc.required !== undefined ? doc.required : true,
+    acceptedFormats: doc.acceptedFormats || ['pdf', 'jpg', 'jpeg', 'png', 'webp'],
     allowCameraUpload: doc.allowCameraUpload !== undefined ? doc.allowCameraUpload : true,
     maxSizeMB: doc.maxSizeMB || 5
   };
