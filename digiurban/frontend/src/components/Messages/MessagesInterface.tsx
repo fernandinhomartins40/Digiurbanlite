@@ -559,6 +559,22 @@ export function MessagesInterface({
       : 'Aguarde a resposta acima...'
     : 'Digite sua mensagem...';
 
+  // Detecta palavra reservada no que o cidadão está digitando
+  const detectedKeywordHint = (() => {
+    if (mode !== 'citizen' || !selectedConversation?.isBotConversation) return null;
+    const normalized = newMessage.trim().toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+    if (!normalized) return null;
+    const CANCEL_EXACT = ['cancelar', 'cancel', 'sair', 'exit', 'encerrar', 'desistir', 'parar', 'abandonar'];
+    const HUMAN_EXACT = ['humano', 'atendente', 'falar com humano', 'falar com atendente', 'falar com alguem', 'pessoa real'];
+    const MENU_EXACT = ['menu', 'menu principal', 'voltar ao menu', 'inicio', 'reiniciar'];
+    const HELP_EXACT = ['ajuda', 'help', 'preciso de ajuda', 'como funciona', 'nao sei', 'nao entendi'];
+    if (CANCEL_EXACT.includes(normalized)) return { label: 'Encerrar atendimento', color: 'text-red-600 bg-red-50 border-red-200' };
+    if (HUMAN_EXACT.includes(normalized) || normalized.includes('falar com humano') || normalized.includes('falar com atendente')) return { label: 'Solicitar atendente humano', color: 'text-amber-600 bg-amber-50 border-amber-200' };
+    if (MENU_EXACT.includes(normalized) || normalized.includes('voltar ao menu')) return { label: 'Voltar ao menu principal', color: 'text-blue-600 bg-blue-50 border-blue-200' };
+    if (HELP_EXACT.includes(normalized) || normalized.includes('preciso de ajuda')) return { label: 'Abrir central de ajuda', color: 'text-teal-600 bg-teal-50 border-teal-200' };
+    return null;
+  })();
+
   return (
     <div className="flex h-[calc(100vh-12rem)] bg-gray-50">
       {/* ERRO */}
@@ -943,6 +959,12 @@ export function MessagesInterface({
                   {botStructuredInput && (
                     <div className="mb-2 text-xs text-center text-blue-600 bg-blue-50 py-1 px-3 rounded">
                       {botInputHint}
+                    </div>
+                  )}
+                  {detectedKeywordHint && (
+                    <div className={`mb-2 flex items-center gap-1.5 text-xs px-3 py-1.5 rounded border ${detectedKeywordHint.color}`}>
+                      <span className="font-medium">Ação reconhecida:</span>
+                      <span>{detectedKeywordHint.label}</span>
                     </div>
                   )}
                   <div className="flex gap-2">

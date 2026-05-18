@@ -5,6 +5,7 @@ import { BotResponse, ExecutionContext, FlowNode, MenuOption } from '../types';
 import { citizenAiClient } from './CitizenAiClient';
 import { getDigiUrbanIntegration } from '../DigiUrbanIntegration';
 import { CitizenAiDecision, CitizenAiSessionState, CitizenAiStage } from './types';
+import { detectReservedAction, RESERVED_RESPONSES } from '../ReservedKeywords';
 
 const QUICK_ACTIONS: MenuOption[] = [
   { id: 'solicitar_servico', label: 'Solicitar servico', description: 'Abrir uma nova solicitacao guiada' },
@@ -110,12 +111,63 @@ export class CitizenAiOrchestrator {
     const session = this.getSessionState(execution);
     const message = params.message.trim();
 
-    if (this.isHumanRequest(message)) {
+    // ── Palavras reservadas globais (prioridade máxima) ──────────────────────
+    const reservedAction = detectReservedAction(message);
+
+    if (reservedAction === 'cancel') {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        response: {
+          message: RESERVED_RESPONSES.cancel + '\n\nO que você gostaria de fazer?',
+          messageType: 'menu',
+          data: { options: QUICK_ACTIONS },
+          metadata: this.meta(execution, next, true),
+        },
+      };
+    }
+
+    if (reservedAction === 'human') {
       this.stats.humanHandoverRequests += 1;
       const next = this.withStage(session, 'paused_human');
       await this.persistSession(execution.id, next);
-      return { session: next, requestHumanHandover: true, handoverReason: 'citizen_request', response: { message: 'Certo. Vou sinalizar que voce deseja atendimento humano.', messageType: 'text', metadata: this.meta(execution, next, false) } };
+      return {
+        session: next,
+        requestHumanHandover: true,
+        handoverReason: 'citizen_request',
+        response: {
+          message: RESERVED_RESPONSES.human,
+          messageType: 'text',
+          metadata: this.meta(execution, next, false),
+        },
+      };
     }
+
+    if (reservedAction === 'menu') {
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+
+    if (reservedAction === 'help') {
+      const next = { ...session, lastIntent: 'ajuda' as const };
+      this.stats.legacyRedirects += 1;
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        redirectToFlowName: LEGACY_FLOW_BY_INTENT.ajuda,
+        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
+      };
+    }
+
+    if (reservedAction === 'back') {
+      // Volta ao menu quando não há etapa anterior definida
+      const next = this.withStage({ ...session, lastIntent: 'greeting' }, 'triage');
+      await this.persistSession(execution.id, next);
+      return { session: next, response: this.buildWelcomeResponse(execution, next) };
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     const globalShortcut = this.isFlowLockedStage(session.stage)
       ? await this.handleLockedFlowShortcut(execution, session, message)

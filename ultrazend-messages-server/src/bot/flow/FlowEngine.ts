@@ -17,6 +17,7 @@ import { FlowStateManager } from './FlowStateManager';
 import { NodeExecutors } from './NodeExecutors';
 import { TemplateEngine } from './TemplateEngine';
 import { InputValidator } from './InputValidator';
+import { detectReservedAction, RESERVED_RESPONSES } from '../ReservedKeywords';
 
 export class FlowEngine {
   private stateManager: FlowStateManager;
@@ -122,6 +123,43 @@ export class FlowEngine {
         },
       };
     }
+
+    // ── Palavras reservadas nos fluxos legados (JSON flows) ──────────────────
+    if (typeof userInput === 'string') {
+      const reservedAction = detectReservedAction(userInput);
+
+      if (reservedAction === 'cancel') {
+        await this.stateManager.cancelActiveExecutions(citizenId);
+        return this.startFlow(citizenId, 'menu_principal', conversationId);
+      }
+
+      if (reservedAction === 'menu' || reservedAction === 'back') {
+        await this.stateManager.cancelActiveExecutions(citizenId);
+        return this.startFlow(citizenId, 'menu_principal', conversationId);
+      }
+
+      if (reservedAction === 'human') {
+        await this.pauseExecution(citizenId);
+        return {
+          message: RESERVED_RESPONSES.human,
+          messageType: 'text',
+          metadata: {
+            flowId: execution.flowId,
+            executionId: execution.id,
+            nodeId: execution.currentNodeId,
+            waitingForInput: false,
+            paused: true,
+            requestHumanHandover: true,
+          },
+        };
+      }
+
+      if (reservedAction === 'help') {
+        await this.stateManager.cancelActiveExecutions(citizenId);
+        return this.startFlow(citizenId, 'ajuda', conversationId);
+      }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Busca definicao do fluxo
     const flow = await this.getFlowById(execution.flowId);
