@@ -1767,59 +1767,52 @@ export function DocumentScanner({
       let canvas = previewCanvasRef.current
       console.log('[ConfirmPhoto] Canvas obtido:', { width: canvas.width, height: canvas.height })
 
-      // Se temos corners editáveis E não estão nos cantos padrão, aplicar perspectiva
+      // Aplicar crop/perspectiva sempre que houver corners detectados (automático ou manual)
       if (editableCorners && canvasRef.current) {
-        const hasCustomCorners = !(
-          editableCorners.topLeft.x === 0 && editableCorners.topLeft.y === 0 &&
-          editableCorners.topRight.x === canvasRef.current.width &&
-          editableCorners.bottomRight.y === canvasRef.current.height
-        )
+        console.log('[ConfirmPhoto] Aplicando crop/perspectiva com corners detectados')
+        try {
+          const transformedCanvas = await applyPerspectiveTransform(canvasRef.current, editableCorners)
+          console.log('[ConfirmPhoto] Crop/perspectiva concluído:', transformedCanvas.width, 'x', transformedCanvas.height)
 
-        if (hasCustomCorners) {
-          console.log('[ConfirmPhoto] Aplicando transformação de perspectiva com jscanify')
-          try {
-            // Aplicar transformação de perspectiva no canvas original (não no preview)
-            const transformedCanvas = await applyPerspectiveTransform(canvasRef.current, editableCorners)
-            console.log('[ConfirmPhoto] Transformação de perspectiva concluída')
-
-            // Aplicar processamento (filtros) no canvas transformado
-            const processedCanvas = document.createElement('canvas')
-            processedCanvas.width = transformedCanvas.width
-            processedCanvas.height = transformedCanvas.height
-            const ctx = processedCanvas.getContext('2d')
-            if (ctx) {
-              ctx.drawImage(transformedCanvas, 0, 0)
-              if (autoProcessingEnabled) {
-                applyProcessingMode(processedCanvas, processingMode)
-              }
+          const processedCanvas = document.createElement('canvas')
+          processedCanvas.width = transformedCanvas.width
+          processedCanvas.height = transformedCanvas.height
+          const ctx = processedCanvas.getContext('2d')
+          if (ctx) {
+            ctx.drawImage(transformedCanvas, 0, 0)
+            if (autoProcessingEnabled) {
+              applyProcessingMode(processedCanvas, processingMode)
             }
-            canvas = processedCanvas
-          } catch (perspectiveError) {
-            console.error('[ConfirmPhoto] Erro ao aplicar transformação de perspectiva:', perspectiveError)
-            // Continuar com o canvas original se a transformação falhar
-            console.warn('[ConfirmPhoto] Usando canvas sem transformação de perspectiva')
           }
+          canvas = processedCanvas
+        } catch (perspectiveError) {
+          console.error('[ConfirmPhoto] Erro ao aplicar crop/perspectiva:', perspectiveError)
+          console.warn('[ConfirmPhoto] Usando canvas sem crop')
         }
       }
 
       console.log('[ConfirmPhoto] Convertendo canvas para blob com compressão otimizada')
 
-      // OTIMIZADO: Calcular qualidade inicial baseada na resolução
+      // WebP: 25-35% menor que JPEG com mesma qualidade visual
+      // Fallback para JPEG em browsers sem suporte a WebP no canvas
+      const supportsWebP = canvas.toDataURL('image/webp').startsWith('data:image/webp')
+      const mimeType = supportsWebP ? 'image/webp' : 'image/jpeg'
+      const fileExt = supportsWebP ? 'webp' : 'jpg'
+
+      // Qualidade: documentos com texto precisam de mais nitidez
       const resolution = canvas.width * canvas.height
       const isTextHeavy = documentName.toLowerCase().includes('laudo') ||
-                          documentName.toLowerCase().includes('certidão') ||
-                          documentName.toLowerCase().includes('contrato')
+                          documentName.toLowerCase().includes('certid') ||
+                          documentName.toLowerCase().includes('contrato') ||
+                          documentName.toLowerCase().includes('declarac') ||
+                          documentName.toLowerCase().includes('comprovante')
 
-      let initialQuality = 0.85 // Padrão otimizado (reduzido de 0.95)
-      if (resolution > 4000000) { // >4MP
-        initialQuality = isTextHeavy ? 0.80 : 0.75
-      } else if (resolution > 2000000) { // 2-4MP
-        initialQuality = isTextHeavy ? 0.85 : 0.80
-      }
+      let quality = 0.82
+      if (resolution > 4000000) quality = isTextHeavy ? 0.78 : 0.72
+      else if (resolution > 2000000) quality = isTextHeavy ? 0.82 : 0.76
 
-      console.log('[ConfirmPhoto] Qualidade JPEG calculada:', initialQuality, '(resolução:', resolution, ')')
+      console.log('[ConfirmPhoto] Formato:', mimeType, '| Qualidade:', quality, '| Resolução:', resolution)
 
-      // Converter canvas para blob com qualidade otimizada
       const blob = await new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((b) => {
           if (b) {
@@ -1828,14 +1821,12 @@ export function DocumentScanner({
           } else {
             reject(new Error('Erro ao converter canvas para blob'))
           }
-        }, 'image/jpeg', initialQuality)
+        }, mimeType, quality)
       })
 
       const timestamp = Date.now()
-      // ✅ CORREÇÃO: Sanitizar documentName e garantir extensão .jpg
-      // Fallback para "documento" se documentName vazio ou só caracteres especiais
       const sanitizedName = (documentName || 'documento').replace(/[^a-zA-Z0-9]/g, '_').toLowerCase() || 'documento'
-      const fileName = `${sanitizedName}_${timestamp}.jpg`
+      const fileName = `${sanitizedName}_${timestamp}.${fileExt}`
 
       // ✅ CORREÇÃO CRÍTICA: Usar window.File para evitar minificação incorreta
       // Blob não tem propriedade 'name' nativa - FormData envia como "blob"
@@ -1843,7 +1834,7 @@ export function DocumentScanner({
       try {
         // Usar window.File explicitamente para evitar problemas de minificação
         file = new window.File([blob], fileName, {
-          type: 'image/jpeg',
+          type: mimeType,
           lastModified: timestamp
         })
       } catch (e) {
