@@ -107,20 +107,10 @@ cd $APP_DIR
 docker-compose -f docker-compose.vps.yml down || true
 
 echo "🧹 Removendo containers órfãos que possam estar em conflito..."
-docker stop ultrazend-smtp 2>/dev/null || true
-docker rm ultrazend-smtp 2>/dev/null || true
-docker stop ultrazend-messages 2>/dev/null || true
-docker rm ultrazend-messages 2>/dev/null || true
-docker stop digiurban-postgres 2>/dev/null || true
-docker rm digiurban-postgres 2>/dev/null || true
-docker stop digiurban-redis 2>/dev/null || true
-docker rm digiurban-redis 2>/dev/null || true
-docker stop digiurban-flow 2>/dev/null || true
-docker rm digiurban-flow 2>/dev/null || true
-docker stop digiurban-ai 2>/dev/null || true
-docker rm digiurban-ai 2>/dev/null || true
-docker stop digiurban-prices 2>/dev/null || true
-docker rm digiurban-prices 2>/dev/null || true
+for cname in ultrazend-smtp ultrazend-messages digiurban-postgres digiurban-redis digiurban-flow digiurban-ai digiurban-prices digiurban-llamacpp digiurban-vps digiurban-opensearch; do
+  docker stop $cname 2>/dev/null || true
+  docker rm $cname 2>/dev/null || true
+done
 
 echo "✅ Containers órfãos removidos"
 echo ""

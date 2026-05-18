@@ -44,16 +44,10 @@ jobs:
 
             # Remover containers A3rfAos que possam estar em conflito
             echo "Removendo containers A3rfAos..."
-            docker stop ultrazend-smtp 2>/dev/null || true
-            docker rm ultrazend-smtp 2>/dev/null || true
-            docker stop ultrazend-messages 2>/dev/null || true
-            docker rm ultrazend-messages 2>/dev/null || true
-            docker stop digiurban-postgres 2>/dev/null || true
-            docker rm digiurban-postgres 2>/dev/null || true
-            docker stop digiurban-redis 2>/dev/null || true
-            docker rm digiurban-redis 2>/dev/null || true
-            docker stop digiurban-ai 2>/dev/null || true
-            docker rm digiurban-ai 2>/dev/null || true
+            for cname in ultrazend-smtp ultrazend-messages digiurban-postgres digiurban-redis digiurban-ai digiurban-llamacpp digiurban-vps digiurban-opensearch; do
+              docker stop $cname 2>/dev/null || true
+              docker rm $cname 2>/dev/null || true
+            done
 
             # ===== ATUALIZAR CADIGO DO GITHUB =====
             echo "=== Atualizando cA3digo do GitHub ==="
