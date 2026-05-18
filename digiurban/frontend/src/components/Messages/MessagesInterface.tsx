@@ -329,6 +329,12 @@ export function MessagesInterface({
         return;
       }
 
+      // BotDocumentUpload envia array de { docId, documentType, required, file }
+      if (Array.isArray(interaction) && interaction.length > 0 && interaction[0]?.file instanceof File) {
+        await handleBotUpload(interaction.map((item: any) => item.file));
+        return;
+      }
+
       if (interaction && typeof interaction === 'object' && !Array.isArray(interaction)) {
         if (interaction.label && interaction.id) {
           // Envia objeto com optionId para matching exato no backend

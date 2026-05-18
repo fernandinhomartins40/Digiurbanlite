@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Upload, X, File, Check } from 'lucide-react';
+import { Upload, X, File, Check, AlertCircle } from 'lucide-react';
 
 interface DocumentUploadCardProps {
   onUpload: (files: File[]) => void;
@@ -20,6 +20,7 @@ export function DocumentUploadCard({
 }: DocumentUploadCardProps) {
   const [files, setFiles] = useState<File[]>([]);
   const [dragActive, setDragActive] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const formatSize = (bytes: number): string => {
@@ -31,19 +32,19 @@ export function DocumentUploadCard({
   const handleFiles = (newFiles: FileList | null) => {
     if (!newFiles) return;
     const validFiles: File[] = [];
-    const errors: string[] = [];
+    const newErrors: string[] = [];
     Array.from(newFiles).forEach((file) => {
       if (file.size > maxSize) {
-        errors.push(`${file.name}: arquivo muito grande (máx ${formatSize(maxSize)})`);
+        newErrors.push(`"${file.name}": muito grande (máx ${formatSize(maxSize)})`);
         return;
       }
       if (files.length + validFiles.length >= maxFiles) {
-        errors.push(`Máximo de ${maxFiles} arquivos permitidos`);
+        newErrors.push(`Máximo de ${maxFiles} arquivos permitidos`);
         return;
       }
       validFiles.push(file);
     });
-    if (errors.length > 0) alert(errors.join('\n'));
+    setErrors(newErrors);
     if (validFiles.length > 0) setFiles([...files, ...validFiles]);
   };
 
@@ -63,6 +64,7 @@ export function DocumentUploadCard({
 
   const removeFile = (index: number) => {
     setFiles(files.filter((_, i) => i !== index));
+    setErrors([]);
   };
 
   return (
@@ -80,37 +82,49 @@ export function DocumentUploadCard({
           dragActive ? 'border-teal-600 bg-teal-50' : 'border-blue-200 hover:border-teal-500 hover:bg-blue-50/35'
         }`}
       >
-        <input ref={inputRef} type="file" multiple accept={accept} onChange={(e) => handleFiles(e.target.files)} className="hidden" />
+        <input ref={inputRef} type="file" multiple accept={accept} onChange={(e) => { setErrors([]); handleFiles(e.target.files); }} className="hidden" />
         <Upload className="w-7 h-7 mx-auto mb-2 text-blue-600" />
-        <p className="text-sm text-gray-700 font-medium mb-1">Toque para selecionar</p>
-        <p className="text-xs text-gray-500">Máx {maxFiles} arquivo(s), até {formatSize(maxSize)} cada</p>
+        <p className="text-sm text-gray-700 font-medium mb-1 break-words">Toque para selecionar</p>
+        <p className="text-xs text-gray-500 break-words">Máx {maxFiles} arquivo(s), até {formatSize(maxSize)} cada</p>
       </div>
+
+      {/* Erros de validação */}
+      {errors.length > 0 && (
+        <div className="mt-2 space-y-1">
+          {errors.map((err, i) => (
+            <div key={i} className="flex items-start gap-2 p-2 bg-red-50 border border-red-200 rounded-lg overflow-hidden">
+              <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+              <p className="text-xs text-red-700 break-words min-w-0">{err}</p>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* Files List */}
       {files.length > 0 && (
         <div className="mt-3 space-y-2">
           {files.map((file, index) => (
-            <div key={index} className="flex items-center gap-2 p-2.5 bg-blue-50/45 rounded-lg overflow-hidden">
-              <div className="shrink-0">
+            <div key={index} className="grid overflow-hidden rounded-lg bg-blue-50/45 p-2.5" style={{ gridTemplateColumns: '36px 1fr auto', gap: '8px', alignItems: 'center' }}>
+              <div className="w-9 h-9 shrink-0 rounded-lg overflow-hidden bg-slate-200 flex items-center justify-center">
                 {file.type.startsWith('image/') ? (
-                  <img src={URL.createObjectURL(file)} alt={file.name} className="w-9 h-9 object-cover rounded-lg" />
+                  <img src={URL.createObjectURL(file)} alt={file.name} className="w-9 h-9 object-cover" />
                 ) : (
-                  <div className="w-9 h-9 bg-slate-200 rounded-lg flex items-center justify-center">
-                    <File className="w-4 h-4 text-slate-700" />
-                  </div>
+                  <File className="w-4 h-4 text-slate-700" />
                 )}
               </div>
-              <div className="flex-1 min-w-0">
+              <div className="min-w-0 overflow-hidden">
                 <p className="text-xs font-medium text-gray-900 truncate">{file.name}</p>
                 <p className="text-[11px] text-gray-500">{formatSize(file.size)}</p>
               </div>
-              <Check className="w-4 h-4 text-green-500 shrink-0" />
-              <button
-                onClick={(e) => { e.stopPropagation(); removeFile(index); }}
-                className="p-1 hover:bg-gray-200 rounded-lg transition-colors shrink-0"
-              >
-                <X className="w-3.5 h-3.5 text-gray-500" />
-              </button>
+              <div className="flex items-center gap-0.5 shrink-0">
+                <Check className="w-4 h-4 text-green-500" />
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                  className="p-1 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  <X className="w-3.5 h-3.5 text-gray-500" />
+                </button>
+              </div>
             </div>
           ))}
         </div>
