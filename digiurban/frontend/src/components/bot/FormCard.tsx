@@ -107,7 +107,7 @@ export function FormCard({ fields, onSubmit, submitLabel = 'Enviar' }: FormCardP
       case 'radio': {
         const opts = (field.options || []).map(normalizeOption);
         return (
-          <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+          <div className="grid grid-cols-2 gap-2">
             {opts.map((opt) => {
               const isSelected = formData[field.id] === opt.value;
               return (

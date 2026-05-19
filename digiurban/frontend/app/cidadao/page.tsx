@@ -1036,13 +1036,13 @@ export default function CitizenDashboard() {
             </div>
 
             {/* Mensagens */}
-            <ScrollArea className="flex-1 min-w-0 p-2.5 sm:p-4 bg-gradient-to-b from-blue-50/45 via-slate-50 to-teal-50/30 overflow-x-hidden">
+            <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2.5 bg-gradient-to-b from-blue-50/45 via-slate-50 to-teal-50/30">
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                 </div>
               ) : (
-                <div className="w-full max-w-4xl mx-auto min-w-0 overflow-hidden space-y-4">
+                <div className="w-full min-w-0 overflow-hidden space-y-4">
                   {/* ✅ NOVO: Alert de status do bot */}
                   {selectedConversation.isBotConversation && selectedConversation.metadata?.botStatus === 'HUMAN_TAKEOVER' && (
                     <Alert className="bg-orange-50 border-orange-200">
@@ -1099,7 +1099,7 @@ export default function CitizenDashboard() {
                           ) : (
                             <div
                               className={cn(
-                                "max-w-[86%] sm:max-w-[70%] min-w-0 overflow-hidden rounded-lg px-4 py-2 shadow-sm",
+                                "max-w-[86%] min-w-0 overflow-hidden rounded-lg px-3 py-2 shadow-sm",
                                 isOwnMessage
                                   ? 'bg-gradient-to-br from-blue-700 to-teal-700 text-white'
                                   : 'bg-white text-gray-900'
@@ -1149,18 +1149,18 @@ export default function CitizenDashboard() {
                   <div ref={messagesEndRef} />
                 </div>
               )}
-            </ScrollArea>
+            </div>
 
             {/* Input de Mensagem */}
             <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
               {botStructuredInput && (
-                <div className="flex items-center justify-center gap-2 max-w-4xl mx-auto py-2">
+                <div className="flex items-center justify-center gap-2 py-2">
                   <div className="text-center text-sm text-gray-500">
                     {botInputHint}
                   </div>
                 </div>
               )}
-              <div className="flex items-center gap-2 max-w-4xl mx-auto">
+              <div className="flex items-center gap-2">
                 <Button
                   type="button"
                   variant="ghost"
