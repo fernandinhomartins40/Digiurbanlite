@@ -222,7 +222,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       }
 
       return (
-          <div className="grid w-full min-w-0 grid-cols-2 gap-2">
+        <div className="flex w-full min-w-0 flex-col gap-2">
           {options.map((option: any, index: number) => {
             const visual = getOptionVisual(option, index);
             const Icon = visual.Icon;
@@ -231,21 +231,21 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
               <button
                 key={option.id}
                 onClick={() => onInteraction(option)}
-                className={`group min-w-0 rounded-lg border ${visual.border} bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-teal-500 hover:bg-blue-50/45 overflow-hidden`}
+                className={`group w-full min-w-0 rounded-lg border ${visual.border} bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-teal-500 hover:bg-blue-50/45 overflow-hidden`}
               >
-                <div className="flex min-w-0 items-start gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <div className={`shrink-0 rounded-lg ${visual.bg} p-2 ring-1 ring-black/5`}>
                     <Icon className={`h-4 w-4 ${visual.color}`} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="font-semibold text-slate-900 text-sm leading-snug break-words">{option.label}</div>
                     {option.description && (
-                      <div className="mt-0.5 text-xs leading-relaxed text-slate-500 line-clamp-2 break-words">
+                      <div className="mt-0.5 text-xs leading-relaxed text-slate-500 break-words">
                         {option.description}
                       </div>
                     )}
                   </div>
-                  <div className={`shrink-0 mt-0.5 rounded-md ${visual.bg} px-2 py-1 text-[11px] font-medium ${visual.color} transition-colors whitespace-nowrap`}>
+                  <div className={`shrink-0 rounded-md ${visual.bg} p-1.5 ${visual.color}`}>
                     <ArrowRight className="h-3 w-3" />
                   </div>
                 </div>

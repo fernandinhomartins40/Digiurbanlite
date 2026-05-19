@@ -25,7 +25,7 @@ export function ReviewCard({ data }: ReviewCardProps) {
     <div className="w-full min-w-0 max-w-full rounded-xl border border-blue-100 bg-white shadow-sm overflow-hidden">
 
       {/* Header */}
-      <div className="flex items-center gap-2.5 bg-gradient-to-r from-blue-50 to-teal-50 border-b border-blue-100 px-4 py-3">
+      <div className="flex items-center gap-2.5 bg-gradient-to-r from-blue-50 to-teal-50 border-b border-blue-100 px-3 py-3">
         <div className="shrink-0 rounded-lg bg-blue-100 p-1.5">
           <FileText className="h-4 w-4 text-blue-700" />
         </div>
@@ -35,7 +35,7 @@ export function ReviewCard({ data }: ReviewCardProps) {
         </div>
       </div>
 
-      <div className="px-4 py-3 space-y-3">
+      <div className="px-3 py-3 space-y-3">
 
         {/* Serviço + Secretaria */}
         {(data.service || data.department) && (
@@ -92,8 +92,8 @@ export function ReviewCard({ data }: ReviewCardProps) {
                   key={i}
                   className={`flex min-w-0 gap-3 px-3 py-2 ${i % 2 === 0 ? 'bg-white' : 'bg-slate-50/70'}`}
                 >
-                  <span className="text-xs text-slate-500 shrink-0 w-[40%] break-words">{field.label}</span>
-                  <span className="text-xs font-medium text-slate-800 min-w-0 break-words [overflow-wrap:anywhere] flex-1 text-right">
+                  <span className="text-xs text-slate-500 shrink-0 max-w-[45%] break-words leading-relaxed">{field.label}</span>
+                  <span className="text-xs font-medium text-slate-800 min-w-0 break-all flex-1 text-right leading-relaxed">
                     {field.value}
                   </span>
                 </div>
@@ -115,7 +115,7 @@ export function ReviewCard({ data }: ReviewCardProps) {
               {(data.documents || []).map((doc, i) => (
                 <div key={i} className="flex items-center gap-2 min-w-0">
                   <span className="text-xs text-slate-400 shrink-0">{i + 1}.</span>
-                  <span className="text-xs text-slate-700 break-words [overflow-wrap:anywhere] min-w-0">{doc.name}</span>
+                  <span className="text-xs text-slate-700 min-w-0 truncate">{doc.name}</span>
                 </div>
               ))}
             </div>
