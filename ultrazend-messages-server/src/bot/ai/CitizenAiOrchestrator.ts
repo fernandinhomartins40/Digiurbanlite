@@ -1336,6 +1336,10 @@ export class CitizenAiOrchestrator {
 
   private async buildReviewText(execution: FlowExecution, session: CitizenAiSessionState): Promise<string> {
     const formatted = await this.runAction('formatProtocolReview', { serviceId: session.selectedServiceId, formData: session.collectedFormData, description: session.description, documents: session.uploadedDocuments }, execution, session);
+    // Capturar reviewCard na sessão para uso posterior no buildReviewResponse
+    if (formatted.reviewCard) {
+      (session as any)._pendingReviewCard = formatted.reviewCard;
+    }
     if (typeof formatted.reviewText === 'string' && formatted.reviewText.trim()) return formatted.reviewText.trim();
 
     const collectedEntries = Object.entries(session.collectedFormData || {}).map(([key, value]) => `- ${key}: ${String(value)}`).join('\n');
@@ -1348,7 +1352,19 @@ export class CitizenAiOrchestrator {
   }
 
   private buildReviewResponse(execution: FlowExecution, session: CitizenAiSessionState, prefix?: string): BotResponse {
-    return { message: `${prefix ? `${prefix}\n\n` : ''}${session.reviewText || 'Revise os dados coletados abaixo.'}\n\nConfirma o envio da solicitacao?`, messageType: 'menu', data: { options: [{ id: 'confirmar', label: 'Confirmar e enviar', description: 'Criar o protocolo agora' }, { id: 'corrigir', label: 'Corrigir dados', description: 'Alterar uma informacao sem reiniciar' }] }, metadata: this.meta(execution, session, true) };
+    const reviewCard = (session as any)._pendingReviewCard || session.reviewCard;
+    return {
+      message: `${prefix ? `${prefix}\n\n` : ''}Confirma o envio da solicitacao?`,
+      messageType: 'menu',
+      data: {
+        options: [
+          { id: 'confirmar', label: 'Confirmar e enviar', description: 'Criar o protocolo agora' },
+          { id: 'corrigir', label: 'Corrigir dados', description: 'Alterar uma informacao sem reiniciar' },
+        ],
+        ...(reviewCard ? { reviewCard } : {}),
+      },
+      metadata: this.meta(execution, session, true),
+    };
   }
 
   private buildUploadPrompt(execution: FlowExecution, session: CitizenAiSessionState): BotResponse {

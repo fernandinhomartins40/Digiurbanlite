@@ -606,8 +606,8 @@ export const submitEvaluation: ActionHandler = async (params, context) => {
 
 export const formatProtocolReview: ActionHandler = async (_params, context) => {
   try {
-    const reviewText = integration.formatProtocolReview(context.state);
-    return { reviewText };
+    const { reviewText, reviewCard } = integration.formatProtocolReview(context.state);
+    return { reviewText, reviewCard };
   } catch (error: any) {
     console.error('[ActionHandlers.formatProtocolReview] Erro:', error?.message);
     return { success: false, error: formatFriendlyError(error, 'Não foi possível formatar a revisão.') };

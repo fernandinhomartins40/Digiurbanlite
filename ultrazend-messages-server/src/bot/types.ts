@@ -263,6 +263,7 @@ export interface BotResponse {
     locationConfig?: LocationNodeConfig;
     requiredDocuments?: any[];
     protocolDetailCard?: any;
+    reviewCard?: any;
     displayMode?: string;
     categories?: any[];
     departmentName?: string;

@@ -38,6 +38,7 @@ import { FormCard } from './FormCard';
 import { DepartmentCarousel } from './DepartmentCarousel';
 import { ServiceCarousel } from './ServiceCarousel';
 import { BotDocumentUpload } from './BotDocumentUpload';
+import { ReviewCard } from './ReviewCard';
 
 interface BotMessageRendererProps {
   message: any;
@@ -340,6 +341,10 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
 
       {metadata?.protocolDetailCard && (
         <ProtocolDetailCard data={metadata.protocolDetailCard} />
+      )}
+
+      {metadata?.reviewCard && (
+        <ReviewCard data={metadata.reviewCard} />
       )}
 
       {structuredInput && (

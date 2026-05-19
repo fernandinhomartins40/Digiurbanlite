@@ -235,6 +235,11 @@ export class FlowEngineService {
       metadata.protocolDetailCard = response.data.protocolDetailCard;
     }
 
+    // Card estruturado de revisão da solicitação
+    if (response.data?.reviewCard) {
+      metadata.reviewCard = response.data.reviewCard;
+    }
+
     return metadata;
   }
 

@@ -400,7 +400,7 @@ export class DigiUrbanIntegration {
   /**
    * Formatar dados do protocolo para revisão
    */
-  formatProtocolReview(state: any): string {
+  formatProtocolReview(state: any): { reviewText: string; reviewCard: any } {
     const service =
       state.selectedService?.service ||
       state.selectedServiceId_data?.metadata?.service ||
@@ -412,39 +412,32 @@ export class DigiUrbanIntegration {
     const documents = state.uploadedDocuments || [];
     const department = state.selectedDept_data || service?.department;
 
-    let review = `**📝 Revisão da Solicitação**\n\n`;
-    review += `**Serviço:** ${service?.name || 'N/A'}\n`;
-    if (department?.label || department?.name) {
-      review += `**Secretaria:** ${department.label || department.name}\n`;
-    }
-    if (service?.estimatedDays) {
-      review += `**Prazo estimado:** ${service.estimatedDays} dias úteis\n`;
-    }
-    review += `\n`;
+    // Texto markdown simples (fallback)
+    let reviewText = `📝 **Revise sua solicitação antes de confirmar:**`;
 
-    if (description) {
-      review += `**Descrição:**\n${description}\n\n`;
+    // Card estruturado para renderização visual no frontend
+    const formFields: Array<{ label: string; value: string }> = [];
+
+    for (const [key, value] of Object.entries(formData)) {
+      if (key === 'description' || key === 'descricao' || !value) continue;
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase()).trim();
+      formFields.push({ label, value: String(value) });
     }
 
-    if (Object.keys(formData).length > 0) {
-      review += `**Dados do Formulário:**\n`;
-      for (const [key, value] of Object.entries(formData)) {
-        if (key === 'description' || key === 'descricao') continue;
-        // Formatar label mais legível
-        const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase());
-        review += `• ${label}: ${value}\n`;
-      }
-      review += `\n`;
-    }
+    const reviewCard = {
+      service: service?.name || null,
+      department: department?.label || department?.name || null,
+      estimatedDays: service?.estimatedDays || null,
+      description: description || null,
+      formFields,
+      documentsCount: documents.length,
+      documents: documents.map((doc: any) => ({
+        name: doc.fileName || doc.originalName || doc.documentType || 'Documento',
+        type: doc.documentType || null,
+      })),
+    };
 
-    if (documents.length > 0) {
-      review += `**Documentos Anexados:** ${documents.length} arquivo(s)\n`;
-      documents.forEach((doc: any, index: number) => {
-        review += `  ${index + 1}. ${doc.fileName || doc.originalName || 'Documento'}\n`;
-      });
-    }
-
-    return review;
+    return { reviewText, reviewCard };
   }
 }
 
@@ -474,7 +467,7 @@ export default DigiUrbanIntegration;
   }>;
 }) {
   if (!Array.isArray(data.files) || data.files.length === 0) {
-    throw new Error('Nenhum documento informado para resolver a pend�ncia');
+    throw new Error('Nenhum documento informado para resolver a pend�ncia');
   }
 
   const formData = new FormData();
@@ -520,7 +513,7 @@ export default DigiUrbanIntegration;
   }
 
   if (!response.ok) {
-    const errorMessage = payload?.error || `HTTP ${response.status} ao resolver pend�ncia`;
+    const errorMessage = payload?.error || `HTTP ${response.status} ao resolver pend�ncia`;
     const err = new Error(errorMessage) as any;
     err.response = { status: response.status, data: payload };
     throw err;

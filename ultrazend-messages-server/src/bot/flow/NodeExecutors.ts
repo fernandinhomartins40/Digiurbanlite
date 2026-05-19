@@ -230,6 +230,10 @@ export class NodeExecutors {
     if (state?.protocolDetails?.protocolDetailCard) {
       data = { ...data, protocolDetailCard: state.protocolDetails.protocolDetailCard };
     }
+    // Verificar se há reviewCard no state (set by formatProtocolReview action)
+    if (state?.reviewData?.reviewCard) {
+      data = { ...data, reviewCard: state.reviewData.reviewCard };
+    }
 
     return {
       success: true,

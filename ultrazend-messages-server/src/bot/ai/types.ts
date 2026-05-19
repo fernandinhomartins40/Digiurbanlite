@@ -95,6 +95,7 @@ export interface CitizenAiSessionState {
   currentPendingDocumentRequests?: Array<Record<string, unknown>>;
   currentPendingFieldRequests?: Array<Record<string, unknown>>;
   reviewText?: string;
+  reviewCard?: Record<string, any>;
   createdProtocolId?: string;
   createdProtocolNumber?: string;
   createdProtocolFingerprint?: string;
