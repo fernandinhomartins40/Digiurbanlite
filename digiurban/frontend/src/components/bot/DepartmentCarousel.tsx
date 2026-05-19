@@ -66,7 +66,7 @@ export function DepartmentCarousel({ options, onSelect }: DepartmentCarouselProp
           <p className="text-sm font-semibold text-slate-900">Secretarias</p>
           <p className="text-xs text-slate-500 break-words">Deslize para o lado e toque na secretaria desejada.</p>
         </div>
-        <div className="hidden shrink-0 rounded-md bg-teal-50 px-2.5 py-1 text-[11px] font-medium text-teal-700 min-[380px]:block">
+        <div className="shrink-0 rounded-md bg-teal-50 px-2.5 py-1 text-[11px] font-medium text-teal-700">
           {options.length} opcoes
         </div>
       </div>

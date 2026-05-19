@@ -131,6 +131,15 @@ export class DigiUrbanIntegration {
       if (!rawPath) continue;
 
       const resolvedPath = path.isAbsolute(rawPath) ? rawPath : path.resolve(process.cwd(), rawPath);
+
+      // Verificar se o arquivo ainda existe antes de tentar lê-lo
+      try {
+        await fs.access(resolvedPath);
+      } catch {
+        console.warn(`[DigiUrbanIntegration.createProtocol] Arquivo não encontrado, ignorando: ${resolvedPath}`);
+        continue;
+      }
+
       const buffer = await fs.readFile(resolvedPath);
 
       const fileName = String(doc?.fileName || doc?.originalName || path.basename(resolvedPath) || 'documento');
@@ -144,6 +153,12 @@ export class DigiUrbanIntegration {
     }
 
     formData.append('documentTypes', JSON.stringify(documentTypes));
+
+    // Se nenhum arquivo foi encontrado no disco, enviar sem multipart
+    if (uploadedFilePaths.length === 0) {
+      const response = await this.api.post('/internal/protocols', { ...data, documents: [] });
+      return response.data;
+    }
 
     const url = `${this.apiUrl}/internal/protocols`;
     const response = await fetch(url, {

@@ -131,7 +131,7 @@ export function DocumentUploadCard({
       )}
 
       {/* Actions */}
-      <div className="mt-4 grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+      <div className="mt-4 grid grid-cols-2 gap-2">
         {files.length > 0 && (
           <button
             onClick={() => setFiles([])}

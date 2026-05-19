@@ -118,7 +118,7 @@ export function BotDocumentUpload({
           <span className="break-words">Os arquivos serao enviados junto com a solicitacao.</span>
         </div>
 
-        <div className="grid grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+        <div className="grid grid-cols-2 gap-2">
           {allowSkip && (
             <Button variant="outline" onClick={handleSkip} className="min-w-0">
               <SkipForward className="h-4 w-4 mr-2 shrink-0" />
