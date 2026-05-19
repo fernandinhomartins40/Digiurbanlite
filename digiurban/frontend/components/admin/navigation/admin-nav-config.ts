@@ -261,7 +261,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
 
 export const mayorPortalNavigation: AdminNavSection = {
   title: 'Portal do Prefeito',
-  color: 'rose',
+  color: 'indigo',
   items: [
     {
       title: 'Painel do Prefeito',
