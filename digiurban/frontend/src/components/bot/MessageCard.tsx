@@ -71,7 +71,7 @@ export function MessageCard({ card, onAction }: MessageCardProps) {
             )}
           </div>
           {card.status && (
-            <Badge className={`${STATUS_COLORS[card.status] ?? 'bg-gray-100 text-gray-800'} text-[10px] shrink-0 whitespace-nowrap max-[360px]:max-w-[96px] max-[360px]:truncate`}>
+            <Badge className={`${STATUS_COLORS[card.status] ?? 'bg-gray-100 text-gray-800'} text-[10px] shrink-0 whitespace-nowrap`}>
               {STATUS_LABELS[card.status] ?? card.status}
             </Badge>
           )}

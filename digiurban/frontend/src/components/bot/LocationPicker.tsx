@@ -81,7 +81,7 @@ export function LocationPicker({
 
   if (mode === 'loading') {
     return (
-      <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-5 p-5 overflow-hidden">
+      <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-5 overflow-hidden">
         <div className="flex flex-col items-center gap-4">
           <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-200 border-t-teal-600" />
           <p className="text-gray-600">Obtendo sua localização...</p>
@@ -92,20 +92,20 @@ export function LocationPicker({
 
   if (mode === 'manual') {
     return (
-      <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 p-4 overflow-hidden">
+      <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-4 overflow-hidden">
         <div className="flex min-w-0 items-center gap-2 mb-4">
           <Edit3 className="w-5 h-5 text-blue-600" />
           <h3 className="text-lg font-semibold">Digite o endereço</h3>
         </div>
 
         <div className="space-y-3">
-          <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-3 gap-2">
             <input
               type="text"
               placeholder="Rua"
               value={formData.street}
               onChange={e => setFormData({ ...formData, street: e.target.value })}
-              className="min-w-0 min-[380px]:col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="min-w-0 col-span-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             <input
               type="text"
@@ -132,7 +132,7 @@ export function LocationPicker({
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
 
-          <div className="grid min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+          <div className="grid min-w-0 grid-cols-2 gap-2">
             <input
               type="text"
               placeholder="Cidade"
@@ -159,7 +159,7 @@ export function LocationPicker({
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-2 mt-4 min-[380px]:grid-cols-2">
+        <div className="grid grid-cols-2 gap-2 mt-4">
           <button
             onClick={() => setMode('select')}
             className="min-w-0 px-4 py-2 border border-blue-200 text-blue-800 rounded-lg hover:bg-blue-50 transition-colors"
@@ -179,7 +179,7 @@ export function LocationPicker({
   }
 
   return (
-    <div className="w-full min-w-0 max-w-full sm:max-w-md mx-auto bg-white rounded-lg border border-blue-100 shadow-sm p-4 p-4 overflow-hidden">
+    <div className="w-full min-w-0 max-w-full bg-white rounded-lg border border-blue-100 shadow-sm p-4 overflow-hidden">
       <div className="flex min-w-0 items-center gap-2 mb-4">
         <MapPin className="w-6 h-6 text-blue-600" />
         <h3 className="text-lg font-semibold">Selecione a localização</h3>

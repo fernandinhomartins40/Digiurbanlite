@@ -60,7 +60,7 @@ export function SearchableSelect({
   const selectedOption = options.find(o => o.value === selectedValue);
 
   return (
-    <div ref={dropdownRef} className="w-full min-w-0 max-w-full sm:max-w-md mx-auto relative">
+    <div ref={dropdownRef} className="w-full min-w-0 max-w-full relative">
       {/* Input */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />

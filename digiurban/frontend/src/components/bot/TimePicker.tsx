@@ -110,7 +110,7 @@ export function TimePicker({
           <h4 className="text-sm font-medium text-gray-600 mb-3">
             ☀️ Manhã
           </h4>
-          <div className="grid min-w-0 grid-cols-2 gap-2 min-[380px]:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-3 gap-2">
             {morningSlots.map(time => (
               <TimeSlotButton key={time} time={time} />
             ))}
@@ -124,7 +124,7 @@ export function TimePicker({
           <h4 className="text-sm font-medium text-gray-600 mb-3">
             🌤️ Tarde
           </h4>
-          <div className="grid min-w-0 grid-cols-2 gap-2 min-[380px]:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-3 gap-2">
             {afternoonSlots.map(time => (
               <TimeSlotButton key={time} time={time} />
             ))}
@@ -138,7 +138,7 @@ export function TimePicker({
           <h4 className="text-sm font-medium text-gray-600 mb-3">
             🌙 Noite
           </h4>
-          <div className="grid min-w-0 grid-cols-2 gap-2 min-[380px]:grid-cols-3">
+          <div className="grid min-w-0 grid-cols-3 gap-2">
             {eveningSlots.map(time => (
               <TimeSlotButton key={time} time={time} />
             ))}

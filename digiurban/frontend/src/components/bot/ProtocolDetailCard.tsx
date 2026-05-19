@@ -115,7 +115,7 @@ export function ProtocolDetailCard({ data }: ProtocolDetailCardProps) {
               {protocol.title || service.name}
             </h4>
           </div>
-          <Badge className={`${statusConfig.className} text-xs whitespace-nowrap flex-shrink-0 max-[360px]:max-w-[96px] max-[360px]:truncate`}>
+          <Badge className={`${statusConfig.className} text-xs whitespace-nowrap flex-shrink-0`}>
             {statusConfig.label}
           </Badge>
         </div>

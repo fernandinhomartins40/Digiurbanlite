@@ -222,7 +222,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
       }
 
       return (
-          <div className="grid w-full min-w-0 grid-cols-1 gap-2 min-[380px]:grid-cols-2">
+          <div className="grid w-full min-w-0 grid-cols-2 gap-2">
           {options.map((option: any, index: number) => {
             const visual = getOptionVisual(option, index);
             const Icon = visual.Icon;
@@ -245,7 +245,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
                       </div>
                     )}
                   </div>
-                  <div className={`shrink-0 mt-0.5 rounded-md ${visual.bg} px-2 py-1 text-[11px] font-medium ${visual.color} transition-colors whitespace-nowrap max-[380px]:hidden`}>
+                  <div className={`shrink-0 mt-0.5 rounded-md ${visual.bg} px-2 py-1 text-[11px] font-medium ${visual.color} transition-colors whitespace-nowrap`}>
                     <ArrowRight className="h-3 w-3" />
                   </div>
                 </div>

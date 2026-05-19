@@ -159,7 +159,7 @@ export function InteractiveCard({
               {description && <CardDescription className="text-xs break-words">{description}</CardDescription>}
             </div>
             {selectedValues.length > 0 && (
-              <Badge className="bg-blue-700 text-white shrink-0 text-xs max-[360px]:hidden">
+              <Badge className="bg-blue-700 text-white shrink-0 text-xs">
                 {selectedValues.length} sel.
               </Badge>
             )}

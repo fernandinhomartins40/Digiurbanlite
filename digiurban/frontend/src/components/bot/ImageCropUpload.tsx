@@ -160,7 +160,7 @@ export function ImageCropUpload({
 
         <div className="space-y-4">
           {!selectedImage ? (
-            <div className="grid grid-cols-1 min-[380px]:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               {/* Botão Câmera */}
               <button
                 onClick={handleCamera}

@@ -96,7 +96,7 @@ export function ServiceCarousel({ options, categories, departmentName, onSelect 
           <p className="truncate text-sm font-semibold text-slate-900">{departmentName || 'Servicos disponiveis'}</p>
           <p className="text-xs text-slate-500 break-words">Os servicos estao agrupados por categoria. Deslize lateralmente para explorar.</p>
         </div>
-        <div className="hidden shrink-0 rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700 min-[380px]:block">
+        <div className="shrink-0 rounded-md bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-blue-700">
           {options.length} servicos
         </div>
       </div>
@@ -197,7 +197,7 @@ function CategorySection({
                   </p>
                 )}
 
-                <div className="mt-auto flex min-w-0 flex-col items-start gap-2 pt-1 text-[10px] text-gray-500 min-[430px]:flex-row min-[430px]:items-center min-[430px]:justify-between">
+                <div className="mt-auto flex min-w-0 flex-col items-start gap-2 pt-1 text-[10px] text-gray-500">
                   <div className="flex min-w-0 max-w-full flex-wrap items-center gap-x-3 gap-y-1">
                     {estimatedDays !== undefined && estimatedDays !== null && (
                       <div className="flex items-center gap-1">
