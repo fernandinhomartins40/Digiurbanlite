@@ -353,9 +353,17 @@ export class CitizenAiClient {
       return null;
     }
 
+    // Instrução alinhada ao fine-tuning do modelo DigiBot
+    const extraInstruction =
+      'Você é o DigiBot, assistente inteligente do sistema DigiUrban para atendimento municipal. ' +
+      'Você ajuda cidadãos a solicitar serviços, consultar protocolos, atualizar cadastros e navegar pelo sistema. ' +
+      'Responda sempre em português brasileiro de forma clara, objetiva e empática. ' +
+      'Retorne apenas JSON válido sem texto adicional.';
+
     try {
       const response = await this.httpClient.post('', {
         prompt,
+        extraInstruction,
         experience: 'fast',
         mode: 'free',
         think: false,

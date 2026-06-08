@@ -80,8 +80,8 @@ services:
       - 0.0.0.0
       - --port
       - "8080"
-      - -hf
-      - ggml-org/Qwen3-1.7B-GGUF:Q4_K_M
+      - --model
+      - /models/digibot-q4_k_m.gguf
       - --jinja
       - -c
       - "3072"
@@ -341,7 +341,7 @@ services:
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - AI_DEFAULT_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
       - AI_LLAMACPP_BASE_URL=http://llamacpp:8080
-      - AI_LLAMACPP_MODEL=${AI_LLAMACPP_MODEL:-qwen3-1.7b-instruct-q4_k_m}
+      - AI_LLAMACPP_MODEL=${AI_LLAMACPP_MODEL:-digibot-q4_k_m}
       - AI_LLAMACPP_TIMEOUT_MS=90000
       - AI_LLAMACPP_FAST_TIMEOUT_MS=45000
       - AI_LLAMACPP_TEMPERATURE=0.2
