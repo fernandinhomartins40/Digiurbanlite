@@ -97,10 +97,16 @@ services:
       - "${LLAMACPP_THREADS:-4}"
       - --threads-batch
       - "${LLAMACPP_THREADS_BATCH:-4}"
-      - --no-mmap
-      - --flash-attn
+      - -fa
+      - "on"
     networks:
       - digiurban_network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
     deploy:
       resources:
         limits:

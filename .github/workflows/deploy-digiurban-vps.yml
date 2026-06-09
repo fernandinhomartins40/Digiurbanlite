@@ -272,8 +272,8 @@ jobs:
             wait_for_container_health digiurban-postgres 30 5
             wait_for_container_health digiurban-redis 30 5
             wait_for_container_health ultrazend-smtp 30 5
-            wait_for_container_health digiurban-llamacpp 60 10
-            wait_for_http_ready http://127.0.0.1:18080/health 60 10
+            wait_for_container_health digiurban-llamacpp 20 15
+            wait_for_http_ready http://127.0.0.1:18080/health 20 15
             wait_for_container_health ultrazend-messages 30 5
             wait_for_container_health digiurban-ai 30 5
 
