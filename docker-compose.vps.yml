@@ -84,25 +84,29 @@ services:
       - /models/digibot-q4_k_m.gguf
       - --jinja
       - -c
-      - "3072"
+      - "2048"
       - -n
-      - "180"
+      - "120"
       - --parallel
       - "${LLAMACPP_PARALLEL:-1}"
       - --batch-size
       - "${LLAMACPP_BATCH_SIZE:-512}"
       - --ubatch-size
-      - "${LLAMACPP_UBATCH_SIZE:-128}"
+      - "${LLAMACPP_UBATCH_SIZE:-512}"
       - --threads
       - "${LLAMACPP_THREADS:-4}"
+      - --threads-batch
+      - "${LLAMACPP_THREADS_BATCH:-4}"
+      - --no-mmap
+      - --flash-attn
     networks:
       - digiurban_network
     deploy:
       resources:
         limits:
-          memory: 12G
+          memory: 4G
         reservations:
-          memory: 8G
+          memory: 2G
 
   ultrazend-messages:
     build:
@@ -156,108 +160,8 @@ services:
   # ─────────────────────────────────────────────────────────────
   # MÓDULO: digiurban-prices — Pesquisa de Preços Públicos
   # ─────────────────────────────────────────────────────────────
-  compreface-postgres-db:
-    image: exadel/compreface-postgres-db:1.2.0
-    container_name: compreface-postgres-db
-    environment:
-      - POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_DB=${COMPREFACE_POSTGRES_DB:-frs}
-    volumes:
-      - compreface_postgres_data:/var/lib/postgresql/data
-    restart: unless-stopped
-    networks:
-      - digiurban_network
-
-  compreface-core:
-    image: exadel/compreface-core:1.2.0
-    container_name: compreface-core
-    environment:
-      - ML_PORT=3000
-      - IMG_LENGTH_LIMIT=${COMPREFACE_MAX_DETECT_SIZE:-640}
-      - UWSGI_PROCESSES=${COMPREFACE_UWSGI_PROCESSES:-2}
-      - UWSGI_THREADS=${COMPREFACE_UWSGI_THREADS:-1}
-    restart: unless-stopped
-    networks:
-      - digiurban_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl --fail http://localhost:3000/healthcheck || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-
-  compreface-api:
-    image: exadel/compreface-api:1.2.0
-    container_name: compreface-api
-    environment:
-      - POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_URL=jdbc:postgresql://compreface-postgres-db:5432/${COMPREFACE_POSTGRES_DB:-frs}
-      - SPRING_PROFILES_ACTIVE=dev
-      - API_JAVA_OPTS=${COMPREFACE_API_JAVA_OPTS:--Xmx4g}
-      - SAVE_IMAGES_TO_DB=${COMPREFACE_SAVE_IMAGES_TO_DB:-true}
-      - MAX_FILE_SIZE=${COMPREFACE_MAX_FILE_SIZE:-5MB}
-      - MAX_REQUEST_SIZE=${COMPREFACE_MAX_REQUEST_SIZE:-10M}B
-      - CONNECTION_TIMEOUT=${COMPREFACE_CONNECTION_TIMEOUT:-10000}
-      - READ_TIMEOUT=${COMPREFACE_READ_TIMEOUT:-60000}
-    depends_on:
-      compreface-postgres-db:
-        condition: service_started
-      compreface-core:
-        condition: service_healthy
-    restart: unless-stopped
-    networks:
-      - digiurban_network
-
-  compreface-admin:
-    image: exadel/compreface-admin:1.2.0
-    container_name: compreface-admin
-    environment:
-      - POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
-      - POSTGRES_URL=jdbc:postgresql://compreface-postgres-db:5432/${COMPREFACE_POSTGRES_DB:-frs}
-      - SPRING_PROFILES_ACTIVE=dev
-      - ENABLE_EMAIL_SERVER=${COMPREFACE_ENABLE_EMAIL_SERVER:-false}
-      - EMAIL_HOST=${COMPREFACE_EMAIL_HOST:-smtp.gmail.com}
-      - EMAIL_USERNAME=${COMPREFACE_EMAIL_USERNAME:-}
-      - EMAIL_FROM=${COMPREFACE_EMAIL_FROM:-}
-      - EMAIL_PASSWORD=${COMPREFACE_EMAIL_PASSWORD:-}
-      - ADMIN_JAVA_OPTS=${COMPREFACE_ADMIN_JAVA_OPTS:--Xmx1g}
-      - MAX_FILE_SIZE=${COMPREFACE_MAX_FILE_SIZE:-5MB}
-      - MAX_REQUEST_SIZE=${COMPREFACE_MAX_REQUEST_SIZE:-10M}B
-    depends_on:
-      compreface-postgres-db:
-        condition: service_started
-      compreface-api:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - digiurban_network
-
-  compreface-ui:
-    image: exadel/compreface-fe:1.2.0
-    container_name: compreface-ui
-    ports:
-      - "8000:80"
-    environment:
-      - CLIENT_MAX_BODY_SIZE=${COMPREFACE_MAX_REQUEST_SIZE:-10M}
-      - PROXY_READ_TIMEOUT=${COMPREFACE_READ_TIMEOUT:-60000}ms
-      - PROXY_CONNECT_TIMEOUT=${COMPREFACE_CONNECTION_TIMEOUT:-10000}ms
-    depends_on:
-      compreface-api:
-        condition: service_started
-      compreface-admin:
-        condition: service_started
-    restart: unless-stopped
-    networks:
-      - digiurban_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost/ >/dev/null || exit 1"]
-      interval: 20s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+  # CompreFace removido: reconhecimento facial usa face-api.js no browser
+  # + cosine similarity no PostgreSQL. Não há chamadas ao CompreFace no código.
 
   ultrazend-face:
     build:
@@ -275,19 +179,8 @@ services:
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - FACE_PLATFORM_SERVICE_TOKEN=${FACE_PLATFORM_SERVICE_TOKEN:-ultrazend-face-service-token}
       - FACE_PLATFORM_STORAGE_PATH=/app/uploads/face-platform
-      - COMPREFACE_API_URL=${COMPREFACE_API_URL:-http://compreface-ui:80}
-      - COMPREFACE_API_KEY=${COMPREFACE_API_KEY:-}
-      - COMPREFACE_DISCOVER_API_KEY_FROM_DB=${COMPREFACE_DISCOVER_API_KEY_FROM_DB:-true}
-      - COMPREFACE_POSTGRES_HOST=${COMPREFACE_POSTGRES_HOST:-compreface-postgres-db}
-      - COMPREFACE_POSTGRES_PORT=${COMPREFACE_POSTGRES_PORT:-5432}
-      - COMPREFACE_POSTGRES_USER=${COMPREFACE_POSTGRES_USER:-postgres}
-      - COMPREFACE_POSTGRES_PASSWORD=${COMPREFACE_POSTGRES_PASSWORD:-postgres}
-      - COMPREFACE_POSTGRES_DB=${COMPREFACE_POSTGRES_DB:-frs}
-      - COMPREFACE_APP_NAME=${COMPREFACE_APP_NAME:-Digiurban Face Platform}
-      - COMPREFACE_MODEL_NAME=${COMPREFACE_MODEL_NAME:-Digiurban Recognition}
-      - COMPREFACE_TIMEOUT_MS=${COMPREFACE_TIMEOUT_MS:-15000}
-      - COMPREFACE_PREDICTION_COUNT=${COMPREFACE_PREDICTION_COUNT:-5}
-      - COMPREFACE_DETECTION_THRESHOLD=${COMPREFACE_DETECTION_THRESHOLD:-0.8}
+      - COMPREFACE_API_URL=
+      - COMPREFACE_API_KEY=
       - FACE_LIVENESS_PROVIDER=${FACE_LIVENESS_PROVIDER:-guided-live-session}
       - SILENT_FACE_LIVENESS_API_URL=${SILENT_FACE_LIVENESS_API_URL:-}
       - SILENT_FACE_LIVENESS_API_TOKEN=${SILENT_FACE_LIVENESS_API_TOKEN:-}
@@ -305,10 +198,6 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
-      compreface-core:
-        condition: service_started
-      compreface-ui:
-        condition: service_started
     networks:
       - digiurban_network
     healthcheck:
@@ -341,16 +230,16 @@ services:
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - AI_DEFAULT_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
       - AI_LLAMACPP_BASE_URL=http://llamacpp:8080
-      - AI_LLAMACPP_MODEL=${AI_LLAMACPP_MODEL:-digibot-q4_k_m}
-      - AI_LLAMACPP_TIMEOUT_MS=90000
-      - AI_LLAMACPP_FAST_TIMEOUT_MS=45000
-      - AI_LLAMACPP_TEMPERATURE=0.2
+      - AI_LLAMACPP_MODEL=${AI_LLAMACPP_MODEL:-digibot-q4_k_m.gguf}
+      - AI_LLAMACPP_TIMEOUT_MS=60000
+      - AI_LLAMACPP_FAST_TIMEOUT_MS=30000
+      - AI_LLAMACPP_TEMPERATURE=0.1
       - AI_LLAMACPP_TOP_P=0.9
-      - AI_LLAMACPP_NUM_CTX=3072
-      - AI_LLAMACPP_RAG_NUM_CTX=2304
-      - AI_LLAMACPP_MAX_TOKENS=180
-      - AI_LLAMACPP_RAG_MAX_TOKENS=110
-      - AI_LLAMACPP_FAST_MAX_TOKENS=64
+      - AI_LLAMACPP_NUM_CTX=2048
+      - AI_LLAMACPP_RAG_NUM_CTX=2048
+      - AI_LLAMACPP_MAX_TOKENS=120
+      - AI_LLAMACPP_RAG_MAX_TOKENS=80
+      - AI_LLAMACPP_FAST_MAX_TOKENS=48
       - AI_LLAMACPP_TOOL_LOOP_MAX_STEPS=3
       - AI_LLAMACPP_WARMUP_ENABLED=true
       - "AI_LLAMACPP_WARMUP_PROMPT=Responda apenas: ok"
@@ -524,8 +413,6 @@ volumes:
   messages_uploads:
     driver: local
   messages_logs:
-    driver: local
-  compreface_postgres_data:
     driver: local
   face_uploads:
     driver: local
