@@ -20,6 +20,7 @@ import {
 } from '../types';
 import { TemplateEngine } from './TemplateEngine';
 import { InputValidator } from './InputValidator';
+import { citizenAiClient } from '../ai/CitizenAiClient';
 
 export class NodeExecutors {
   constructor(
@@ -399,11 +400,27 @@ export class NodeExecutors {
         }
       }
 
+      // 6. Fallback: IA tenta interpretar texto livre antes de retornar erro
+      if (!matchedOption && citizenAiClient.available() && typeof userInputRaw === 'string') {
+        try {
+          const aiSelection = await citizenAiClient.selectService({
+            citizenId: context.execution.citizenId,
+            message: userInputRaw,
+            candidates: options.map(o => ({ id: o.id, label: o.label, description: o.description })),
+          });
+          if (aiSelection?.selectedId && aiSelection.confidence >= 0.55) {
+            matchedOption = options.find(o => o.id === aiSelection.selectedId);
+          }
+        } catch {
+          // fallback silencioso
+        }
+      }
+
       if (!matchedOption) {
         const optionsList = options.map(o => `• ${o.label}`).join('\n');
         return {
           success: false,
-          message: `❌ Não entendi sua escolha. Por favor, selecione uma das opções abaixo:\n\n${optionsList}`,
+          message: `Não entendi sua escolha. Por favor, selecione uma das opções abaixo:\n\n${optionsList}`,
           waitingForInput: true,
         };
       }

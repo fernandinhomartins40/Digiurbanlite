@@ -530,7 +530,15 @@ export class FlowEngineService {
     // 3. Processar mensagem pelo orquestrador hibrido ou pelo fluxo legado
     const activeExecution = await this.getActiveExecution(citizenId);
     const aiExecutionActive = this.isAiExecution(activeExecution as any);
-    const shouldUseAi = !activeExecution || aiExecutionActive;
+
+    // Texto livre digitado pelo cidadão (não é seleção de opção estruturada)
+    const isFreetextMessage =
+      typeof message === 'string' &&
+      message.trim().length > 2 &&
+      !(message as string).startsWith('/');
+
+    // Usar IA quando: sem execução ativa, em fluxo de IA, ou texto livre em fluxo legado
+    const shouldUseAi = !activeExecution || aiExecutionActive || isFreetextMessage;
 
     let response;
     let botStatus = 'ACTIVE';
