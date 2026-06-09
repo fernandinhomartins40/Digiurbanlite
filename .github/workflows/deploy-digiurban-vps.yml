@@ -11,25 +11,16 @@ permissions:
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
         env:
           GIT_TOKEN: ${{ github.token }}
-        with:
-          host: digiurban.com.br
-          username: root
-          password: ${{ secrets.VPS_PASSWORD }}
-          port: 22
-          timeout: 45m
-          command_timeout: 45m
-          envs: GIT_TOKEN
-          script: |
+        run: |
             set -e
 
             echo "=== Iniciando Deploy DigiUrban ==="
