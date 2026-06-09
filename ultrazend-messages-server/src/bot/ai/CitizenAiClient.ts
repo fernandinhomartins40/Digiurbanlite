@@ -361,10 +361,12 @@ export class CitizenAiClient {
       'Retorne apenas JSON válido sem texto adicional.';
 
     try {
+      const experience = prompt.length > 300 ? 'contextual' : 'fast';
+
       const response = await this.httpClient.post('', {
         prompt,
         extraInstruction,
-        experience: 'fast',
+        experience,
         mode: 'free',
         think: false,
         responseFormat: 'json',
