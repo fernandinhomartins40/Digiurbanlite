@@ -26,7 +26,7 @@ jobs:
             echo "=== Iniciando Deploy DigiUrban ==="
 
             # DiretA3rio da aplicaAAo
-            APP_DIR="/root/digiurban"
+            APP_DIR="/opt/digiurban"
 
             # Parar containers existentes
             echo "Parando containers existentes..."
