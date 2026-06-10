@@ -1263,7 +1263,7 @@ export class CitizenAiOrchestrator {
     const matchedField = this.findCorrectableField(session, userMessage) || correctableFields.find((field) => field.id === fallbackFieldId);
 
     let fieldId = matchedField?.id;
-    let value: string | number | boolean | undefined;
+    let value: string | number | boolean | string[] | undefined;
     let description: string | undefined;
 
     const explicitValue = this.extractCorrectionValue(userMessage);
