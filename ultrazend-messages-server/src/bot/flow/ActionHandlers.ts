@@ -788,22 +788,51 @@ export const processFormSchema: ActionHandler = async (params, _context) => {
           question.placeholder = schema.description;
         }
 
-        // Determinar tipo
+        // Determinar tipo — ordem importa: enum direto tem prioridade sobre type
         if (schema.enum && Array.isArray(schema.enum)) {
+          // Seleção única com enum direto no campo
           question.type = 'select';
           question.options = schema.enum.map((val: any) => ({
             id: String(val),
             label: String(val),
           }));
+        } else if (schema.type === 'array' && schema.items?.enum && Array.isArray(schema.items.enum)) {
+          // Multi-select: array com items.enum (ex: áreas de atuação, tipos de serviço)
+          // No bot pedimos como seleção múltipla — o usuário digita os números separados por vírgula
+          question.type = 'multiselect';
+          question.options = schema.items.enum.map((val: any) => ({
+            id: String(val),
+            label: String(val),
+          }));
+          question.placeholder = `Digite os números das opções separados por vírgula (ex: 1, 3)`;
+        } else if (schema.type === 'array') {
+          // Array genérico sem enum — tratar como texto livre
+          question.type = 'text';
+          if (schema.minItems) {
+            question.placeholder = `Informe pelo menos ${schema.minItems} item(s), separados por vírgula`;
+          }
         } else if (schema.format === 'date') {
           question.type = 'date';
           question.validation = { type: 'text', minLength: 8, maxLength: 10, errorMessage: 'Data inválida. Use o formato DD/MM/AAAA' };
+        } else if (schema.format === 'time') {
+          question.type = 'text';
+          question.placeholder = 'HH:MM (ex: 14:30)';
+          question.validation = { type: 'text', minLength: 4, maxLength: 5, errorMessage: 'Horário inválido. Use o formato HH:MM' };
+        } else if (schema.format === 'date-time') {
+          question.type = 'text';
+          question.placeholder = 'DD/MM/AAAA HH:MM';
+          question.validation = { type: 'text', minLength: 12, maxLength: 16, errorMessage: 'Data e hora inválidas. Use DD/MM/AAAA HH:MM' };
         } else if (schema.format === 'email') {
           question.type = 'email';
           question.validation = { type: 'email', errorMessage: 'Email inválido' };
         } else if (schema.type === 'integer' || schema.type === 'number') {
           question.type = 'number';
-          question.validation = { type: 'number', errorMessage: 'Número inválido' };
+          question.validation = {
+            type: 'number',
+            errorMessage: 'Número inválido',
+            ...(schema.minimum !== undefined && { min: schema.minimum }),
+            ...(schema.maximum !== undefined && { max: schema.maximum }),
+          };
         } else if (schema.type === 'boolean') {
           question.type = 'boolean';
           question.options = [
@@ -811,7 +840,10 @@ export const processFormSchema: ActionHandler = async (params, _context) => {
             { id: 'false', label: 'Não' },
           ];
         } else {
-          // text com validações
+          // string — verificar widget e validações
+          if (schema.widget === 'textarea') {
+            question.type = 'textarea';
+          }
           if (schema.minLength || schema.maxLength) {
             question.validation = {
               type: 'text',

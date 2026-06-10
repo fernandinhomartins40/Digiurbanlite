@@ -1376,6 +1376,15 @@ export class CitizenAiOrchestrator {
   private buildFieldPrompt(execution: FlowExecution, session: CitizenAiSessionState, field?: FieldDef, prefix?: string): BotResponse {
     if (!field) return { message: 'Preciso de mais uma informacao para concluir a solicitacao.', messageType: 'text', metadata: this.meta(execution, session, true) };
     if (Array.isArray(field.options) && field.options.length > 0) {
+      if (field.type === 'multiselect') {
+        // Para multi-select: lista numerada, cidadão digita números separados por vírgula
+        const numbered = field.options.map((opt, i) => `${i + 1}. ${String(opt.label || opt.id || opt.value)}`).join('\n');
+        return {
+          message: `${prefix ? `${prefix}\n\n` : ''}${field.label}${field.required === false ? ' (opcional)' : ''}:\n\n${numbered}\n\nDigite os numeros das opcoes desejadas separados por virgula (ex: 1, 3).`,
+          messageType: 'text',
+          metadata: this.meta(execution, session, true),
+        };
+      }
       return { message: `${prefix ? `${prefix}\n\n` : ''}Informe ${field.label}. Se preferir, selecione uma das opcoes abaixo.`, messageType: 'menu', data: { options: field.options.map((option) => ({ id: String(option.id || option.value || option.label), label: String(option.label || option.value || option.id), description: field.label })) }, metadata: this.meta(execution, session, true) };
     }
     return { message: `${prefix ? `${prefix}\n\n` : ''}Informe ${field.label}${field.required === false ? ' (opcional)' : ''}.`, messageType: 'text', metadata: this.meta(execution, session, true) };
@@ -1757,8 +1766,30 @@ export class CitizenAiOrchestrator {
     });
   }
 
-  private parseFieldValue(field: FieldDef, input: string): string | number | boolean | undefined {
+  private parseFieldValue(field: FieldDef, input: string): string | number | boolean | string[] | undefined {
     const normalized = this.normalize(input);
+
+    // Multi-select: resolve números (ex: "1, 3") ou nomes para array de valores
+    if (field.type === 'multiselect' && Array.isArray(field.options) && field.options.length > 0) {
+      const parts = input.split(/[,;]+/).map(p => p.trim()).filter(Boolean);
+      const selected: string[] = [];
+      for (const part of parts) {
+        const asIndex = parseInt(part, 10);
+        if (!isNaN(asIndex) && asIndex >= 1 && asIndex <= field.options.length) {
+          const opt = field.options[asIndex - 1];
+          selected.push(String(opt.id || opt.label || opt.value));
+        } else {
+          const partNorm = this.normalize(part);
+          const matched = field.options.find(opt => {
+            const optLabel = this.normalize(String(opt.label || opt.id || opt.value || ''));
+            return optLabel === partNorm || optLabel.includes(partNorm) || partNorm.includes(optLabel);
+          });
+          if (matched) selected.push(String(matched.id || matched.label || matched.value));
+        }
+      }
+      return selected.length > 0 ? selected : undefined;
+    }
+
     if (Array.isArray(field.options) && field.options.length > 0) {
       const matched = field.options.find((option) => {
         const optionId = this.normalize(String(option.id || option.value || option.label || ''));

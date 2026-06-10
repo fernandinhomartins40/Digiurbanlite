@@ -43,6 +43,42 @@ export function JSONSchemaForm({ schema, formData, onChange, prefilledData = {} 
                      fieldSchema.type === 'number' || fieldSchema.type === 'integer' ? 'number' :
                      'text';
 
+    // Multi-select para array com items.enum (checkboxes múltiplos)
+    if (fieldSchema.type === 'array' && fieldSchema.items?.enum && Array.isArray(fieldSchema.items.enum)) {
+      const currentValues: string[] = Array.isArray(value) ? value : [];
+      const toggle = (option: string) => {
+        const next = currentValues.includes(option)
+          ? currentValues.filter(v => v !== option)
+          : [...currentValues, option];
+        onChange(fieldName, next);
+      };
+      return (
+        <div key={fieldName} className="space-y-2 col-span-2">
+          <Label className={isPrefilled ? 'text-gray-600' : ''}>
+            {label} {isRequired && <span className="text-red-500">*</span>}
+          </Label>
+          <div className="grid grid-cols-2 gap-2">
+            {fieldSchema.items.enum.map((option: string, index: number) => (
+              <div key={`${fieldName}-${index}`} className="flex items-center space-x-2">
+                <Checkbox
+                  id={`${fieldName}-${index}`}
+                  checked={currentValues.includes(option)}
+                  onCheckedChange={() => toggle(option)}
+                  disabled={isPrefilled}
+                />
+                <Label
+                  htmlFor={`${fieldName}-${index}`}
+                  className="text-sm font-normal cursor-pointer"
+                >
+                  {option}
+                </Label>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    }
+
     // Checkbox para boolean
     if (fieldSchema.type === 'boolean') {
       return (

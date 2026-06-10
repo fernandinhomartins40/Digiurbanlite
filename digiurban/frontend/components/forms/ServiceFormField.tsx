@@ -209,7 +209,32 @@ export function ServiceFormField({ field, value, onChange, isPrefilled = false }
         />
       )}
 
-      {!field.mask && field.type === 'select' && (
+      {!field.mask && field.type === 'select' && field.items?.enum && (
+        // Multi-select: array com items.enum — checkboxes múltiplos
+        <div className="grid grid-cols-2 gap-2">
+          {field.items.enum.map((option: string, index: number) => {
+            const current: string[] = Array.isArray(value) ? value : [];
+            return (
+              <label key={`${field.id}-opt-${index}`} className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={current.includes(option)}
+                  onChange={(e) => {
+                    const next = e.target.checked
+                      ? [...current, option]
+                      : current.filter((v) => v !== option);
+                    onChange(next);
+                  }}
+                  className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm">{option}</span>
+              </label>
+            );
+          })}
+        </div>
+      )}
+
+      {!field.mask && field.type === 'select' && !field.items?.enum && (
         <select
           id={field.id}
           required={field.required}
