@@ -532,10 +532,23 @@ export class FlowEngineService {
     const aiExecutionActive = this.isAiExecution(activeExecution as any);
 
     // Texto livre digitado pelo cidadão (não é seleção de opção estruturada)
-    const isFreetextMessage =
+    let isFreetextMessage =
       typeof message === 'string' &&
       message.trim().length > 2 &&
       !(message as string).startsWith('/');
+
+    // Se há execução legada ativa, verificar se o nó atual é do tipo 'question'.
+    // Nesse caso o cidadão está respondendo a uma pergunta do fluxo — não interceptar com IA.
+    if (isFreetextMessage && activeExecution && !aiExecutionActive) {
+      const currentNodeId = (activeExecution as any).currentNodeId;
+      const flowNodes = (activeExecution as any).flow?.nodes;
+      if (currentNodeId && Array.isArray(flowNodes)) {
+        const currentNode = flowNodes.find((n: any) => n.id === currentNodeId);
+        if (currentNode?.type === 'question') {
+          isFreetextMessage = false;
+        }
+      }
+    }
 
     // Usar IA quando: sem execução ativa, em fluxo de IA, ou texto livre em fluxo legado
     const shouldUseAi = !activeExecution || aiExecutionActive || isFreetextMessage;
