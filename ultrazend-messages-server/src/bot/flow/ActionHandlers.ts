@@ -716,10 +716,33 @@ export const getServicesByDepartment: ActionHandler = async (params, _context) =
   }
 };
 
+// Campos cadastrais do titular preenchidos automaticamente pelo backend via citizenId ou
+// via familyStatsService.getFormPrefillData(). Estes campos NÃO devem ser perguntados no bot.
+// Campos customizados de serviço que por acaso começam com "citizen_" mas não estão aqui
+// devem ser coletados normalmente.
+const CITIZEN_AUTO_FILLED_FIELDS = new Set([
+  // Dados pessoais do titular
+  'citizen_name', 'citizen_cpf', 'citizen_rg', 'citizen_birthdate',
+  'citizen_email', 'citizen_phone', 'citizen_phonesecondary',
+  // Endereço do titular
+  'citizen_zipcode', 'citizen_address', 'citizen_addressnumber',
+  'citizen_addresscomplement', 'citizen_neighborhood', 'citizen_city', 'citizen_state',
+  // Dados socioeconômicos do titular
+  'citizen_mothername', 'citizen_maritalstatus', 'citizen_occupation', 'citizen_familyincome',
+  // Composição familiar (preenchidos via getFormPrefillData)
+  'citizen_quantidadepessoasfamilia', 'citizen_quantidadecriancas',
+  'citizen_quantidadeidosos', 'citizen_quantidadepcd',
+  'citizen_rendafamiliarmens', 'citizen_rendapercapita',
+  // Formatos legados (sem prefixo citizen_)
+  'nome', 'cpf', 'rg', 'datanascimento', 'email', 'telefone',
+  'telefonesecundario', 'cep', 'logradouro', 'numero', 'complemento',
+  'bairro', 'cidade', 'uf', 'nomemae', 'estadocivil', 'profissao', 'rendafamiliar',
+]);
+
 /**
- * Processa o formSchema de um serviço e retorna as perguntas que o bot deve fazer
- * Filtra campos citizen_* (preenchidos automaticamente pelo backend)
- * Retorna array de perguntas para o FlowEngine processar campo por campo
+ * Processa o formSchema de um serviço e retorna as perguntas que o bot deve fazer.
+ * Filtra apenas campos cadastrais do titular (preenchidos automaticamente pelo backend).
+ * Campos customizados dos serviços com prefixo citizen_* são incluídos normalmente.
  */
 export const processFormSchema: ActionHandler = async (params, _context) => {
   const { serviceId } = params;
@@ -751,8 +774,8 @@ export const processFormSchema: ActionHandler = async (params, _context) => {
       const requiredFields = Array.isArray(formSchema.required) ? formSchema.required : [];
 
       for (const [fieldId, schema] of Object.entries(formSchema.properties) as [string, any][]) {
-        // Pular campos citizen_* (preenchidos pelo backend via JWT)
-        if (fieldId.startsWith('citizen_')) continue;
+        // Pular apenas campos cadastrais do titular (preenchidos automaticamente pelo backend)
+        if (CITIZEN_AUTO_FILLED_FIELDS.has(fieldId.toLowerCase())) continue;
 
         const question: any = {
           id: fieldId,
@@ -804,7 +827,7 @@ export const processFormSchema: ActionHandler = async (params, _context) => {
     // Formato legado (fields array)
     else if (formSchema.fields && Array.isArray(formSchema.fields)) {
       for (const field of formSchema.fields) {
-        if (field.id?.startsWith('citizen_')) continue;
+        if (field.id && CITIZEN_AUTO_FILLED_FIELDS.has(field.id.toLowerCase())) continue;
 
         const question: any = {
           id: field.id || field.name,
