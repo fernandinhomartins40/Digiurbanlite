@@ -69,10 +69,29 @@ else
   echo "   Nenhuma migration com falha encontrada."
 fi
 
+# ============================================================================
+# BASELINE DE DRIFT (Fase 0 Multi-Tenant, achado B7 da auditoria)
+# A migration 20260707130000_baseline_drift_repair cria os objetos que até
+# então só existiam via db push. Em bancos ANTIGOS (objetos já presentes) ela
+# não deve executar — é marcada como aplicada. Em bancos NOVOS ela roda normal.
+# Detector: a tabela drift 'fila_atendimento' já existe E a baseline ainda não
+# foi aplicada → resolve --applied.
+# ============================================================================
+BASELINE="20260707130000_baseline_drift_repair"
+BASELINE_DONE=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -t -A   -c "SELECT 1 FROM _prisma_migrations WHERE migration_name='$BASELINE' AND finished_at IS NOT NULL LIMIT 1;" 2>/dev/null || echo "")
+DRIFT_PRESENT=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -t -A   -c "SELECT 1 FROM information_schema.tables WHERE table_name='fila_atendimento' LIMIT 1;" 2>/dev/null || echo "")
+if [ -z "$BASELINE_DONE" ] && [ -n "$DRIFT_PRESENT" ]; then
+  echo "🔧 Banco legado detectado (objetos drift presentes) — marcando baseline como aplicada..."
+  $PRISMA_BIN migrate resolve --applied "$BASELINE" || true
+fi
+
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
 $PRISMA_BIN migrate deploy || {
-  echo "⚠️ Migrations falharam, tentando db push..."
+  # ⚠️ FALLBACK LEGADO — este db push é a ORIGEM do drift de schema (achado B7).
+  # Com a cadeia de migrations reparada (2026-07-07) o deploy deve sempre
+  # passar; se este fallback disparar, investigar ANTES de aceitar o resultado.
+  echo "⚠️⚠️ ATENCAO: migrate deploy FALHOU — fallback db push (gera drift!)..."
   $PRISMA_BIN db push --skip-generate --accept-data-loss || {
     echo "❌ db push falhou"
     exit 1

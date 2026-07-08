@@ -3,6 +3,8 @@ import * as jwt from 'jsonwebtoken';
 import { prisma } from '../lib/prisma';
 import { Citizen } from '@prisma/client';
 import { CitizenAuthenticatedRequest, JWTPayload } from '../types';
+import { logAuditEvent } from '../utils/audit-logger';
+import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
 
 /**
  * Middleware de autenticação para cidadãos
@@ -49,12 +51,31 @@ export const citizenAuthMiddleware = async (
       citizenId?: string;
       userId?: string;
       type: string;
+      tenantId?: string;
     };
+
+    // ✅ Fase 4 Multi-Tenant: validar claim de tenant (vale para cidadão E para
+    // o fallback admin abaixo). Tokens antigos sem claim: janela de transição.
+    const requestTenant = (req as any).tenantId || DEFAULT_TENANT_ID;
+    if (decoded.tenantId && decoded.tenantId !== requestTenant) {
+      logAuditEvent({
+        citizenId: decoded.type === 'citizen' ? decoded.citizenId : undefined,
+        userId: decoded.type === 'admin' ? decoded.userId : undefined,
+        action: 'tenant_claim_mismatch',
+        resource: req.originalUrl || req.path,
+        method: req.method,
+        details: { tokenTenant: decoded.tenantId, requestTenant, context: 'citizen-auth' },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        success: false,
+        errorMessage: 'JWT de outro tenant'
+      }).catch(() => undefined);
+      res.status(401).json({ error: 'Token não pertence a este município' });
+      return;
+    }
 
     // ✅ SUPORTE ADMIN: Aceitar tanto cidadão quanto admin
     if (decoded.type === 'citizen') {
-      // Single tenant: verificação de tenant removida
-
       // Buscar o cidadão no banco com validação de segurança
       const citizen: Citizen | null = await prisma.citizen.findFirst({
         where: {

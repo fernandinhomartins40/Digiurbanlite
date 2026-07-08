@@ -90,12 +90,8 @@ export async function logFromRequest(
     errorMessage?: string;
   }
 ): Promise<void> {
-  const tenant = (req as any).tenant;
-  if (!tenant) {
-    console.warn('[AUDIT] Tentativa de log sem tenant identificado');
-    return;
-  }
-
+  // Auditoria nunca é descartada: o tenant vem do tenantContextMiddleware
+  // (req.tenant) quando disponível; a coluna tenantId no AuditLog chega na Fase 2.
   await logAuditEvent({
     userId: options?.userId,
     citizenId: options?.citizenId,

@@ -8,7 +8,69 @@ datasource db {
 }
 
 // ============================================
+// TENANT (Fase 1 do plano Multi-Tenant)
+// Substitui gradualmente MunicipioConfig; o município
+// atual é migrado como tenant default (id: tenant-default).
+// ============================================
+// Reutiliza o enum TenantStatus já existente (vestígio da versão multi-tenant
+// anterior, definido junto a ServiceRole/Plan — valores: ACTIVE, INACTIVE,
+// SUSPENDED, TRIAL, EXPIRED, CANCELLED; tipo já criado no banco pela migration
+// consolidada 20260106023614).
+model Tenant {
+  id               String       @id @default(cuid())
+  slug             String       @unique // usado em subdomínio: {slug}.TENANT_BASE_DOMAIN (Fase 4)
+  customDomain     String?      @unique // domínio próprio do município (ex.: portal.cidade.sp.gov.br)
+  nome             String
+  cnpj             String       @unique
+  codigoIbge       String?      @unique
+  nomeMunicipio    String
+  ufMunicipio      String
+  status           TenantStatus @default(ACTIVE)
+  suspensionReason String?
+  paymentStatus    String       @default("active") // active, pending, overdue, suspended
+  plan             String       @default("basic") // basic, professional, enterprise
+  planEndsAt       DateTime?
+  maxUsers         Int          @default(10)
+  maxCitizens      Int          @default(10000)
+  features         Json? // features habilitadas por tenant
+  branding         Json? // logo, cores, domínio custom (Fase 7)
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  // Fase 2 (onda piloto): tabelas núcleo escopadas por tenant
+  users               User[]               @relation("TenantUsers")
+  citizens            Citizen[]            @relation("TenantCitizens")
+  departments         Department[]         @relation("TenantDepartments")
+  servicesSimplified  ServiceSimplified[]  @relation("TenantServices")
+  protocolsSimplified ProtocolSimplified[] @relation("TenantProtocols")
+
+  // Fase 2 (onda 2): família de protocolo
+  protocolHistories   ProtocolHistorySimplified[]    @relation("TenantProtocolHistories")
+  protocolEvaluations ProtocolEvaluationSimplified[] @relation("TenantProtocolEvaluations")
+  protocolSLAs        ProtocolSLA[]                  @relation("TenantProtocolSLAs")
+  protocolDocuments   ProtocolDocument[]             @relation("TenantProtocolDocuments")
+  protocolInteractions ProtocolInteraction[]         @relation("TenantProtocolInteractions")
+  protocolPendings    ProtocolPending[]              @relation("TenantProtocolPendings")
+
+  // Fase 2 (onda 3): auditoria e notificações por tenant
+  auditLogs     AuditLog[]     @relation("TenantAuditLogs")
+  notifications Notification[] @relation("TenantNotifications")
+
+  // Fase 2 (onda 4): documentos e dados de cidadão
+  citizenDocuments   CitizenDocument[]   @relation("TenantCitizenDocuments")
+  generatedDocuments GeneratedDocument[] @relation("TenantGeneratedDocuments")
+  documentTemplates  DocumentTemplate[]  @relation("TenantDocumentTemplates")
+  protocolStages     ProtocolStage[]     @relation("TenantProtocolStages")
+  protocolDataFields ProtocolDataField[] @relation("TenantProtocolDataFields")
+
+  @@map("tenants")
+}
+
+// ============================================
 // CONFIGURAÇÃO DO MUNICÍPIO (SINGLETON)
+// ⚠️ DEPRECATED (Fase 1 Multi-Tenant): substituído por Tenant.
+// Rotas legadas ainda escrevem aqui; TenantService faz sync
+// unidirecional para tenants. Remoção prevista na Fase 5.
 // ============================================
 model MunicipioConfig {
   id               String    @id @default("singleton")
@@ -37,6 +99,11 @@ model MunicipioConfig {
 
 model User {
   id                  String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda piloto): nullable durante a transição;
+  // preenchido pela extensão Prisma nas escritas e por backfill na migration.
+  // Vira NOT NULL + unique composta [tenantId, email] na conversão da Fase 2/4.
+  tenantId            String?
+  tenant              Tenant?   @relation("TenantUsers", fields: [tenantId], references: [id])
   email               String    @unique
   name                String
   password            String
@@ -177,6 +244,7 @@ model User {
   faceEnrollmentsApproved FaceEnrollment[]        @relation("FaceEnrollmentApprovedBy")
   faceEventsReviewed      FaceRecognitionEvent[]  @relation("FaceEventReviewedBy")
 
+  @@index([tenantId])
   @@map("users")
 }
 
@@ -298,6 +366,9 @@ model UserSession {
 // Substitui o modelo ProfissionalSaude duplicado
 model Department {
   id          String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId
+  tenantId    String?
+  tenant      Tenant?  @relation("TenantDepartments", fields: [tenantId], references: [id])
   name        String   @unique
   code        String?  @unique
   description String?
@@ -328,11 +399,17 @@ model Department {
   assignments         EmployeeAssignment[] @relation("DepartmentAssignments")
   teams               Team[]               @relation("DepartmentTeams")
 
+  @@index([tenantId])
   @@map("departments")
 }
 
 model Citizen {
   id                  String             @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId.
+  // Substitui o campo órfão municipioId (achado B3 da auditoria), que será
+  // removido na limpeza da Fase 10.
+  tenantId            String?
+  tenant              Tenant?            @relation("TenantCitizens", fields: [tenantId], references: [id])
   cpf                 String
   name                String
   email               String
@@ -425,6 +502,7 @@ model Citizen {
   faceEventsAsGuardian    FaceRecognitionEvent[]   @relation("FaceEventGuardian")
 
   @@unique([cpf])
+  @@index([tenantId])
   @@index([equipeId])
   @@index([microareaId])
   @@map("citizens")
@@ -489,6 +567,9 @@ model PasswordResetToken {
 
 model CitizenDocument {
   id              String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 4) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantCitizenDocuments", fields: [tenantId], references: [id])
   citizenId       String
   documentType    String // RG, CPF, Comprovante de Residência, Protocolo, etc.
   fileName        String
@@ -519,6 +600,7 @@ model CitizenDocument {
   @@index([status])
   @@index([sourceType])
   @@index([sourceDocumentId])
+  @@index([tenantId])
   @@map("citizen_documents")
 }
 
@@ -664,6 +746,9 @@ model ProtocolCitizenLink {
 
 model ServiceSimplified {
   id           String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId
+  tenantId     String?
+  tenant       Tenant? @relation("TenantServices", fields: [tenantId], references: [id])
   name         String
   description  String?
   departmentId String
@@ -715,11 +800,16 @@ model ServiceSimplified {
   // ✅ NOVO: Workflow próprio do serviço
   workflow ServiceWorkflow?
 
+  @@index([tenantId])
   @@map("services_simplified")
 }
 
 model ProtocolSimplified {
   id          String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId.
+  // A numeração de protocolo passa a ser por tenant na conversão da Fase 2.
+  tenantId    String?
+  tenant      Tenant?        @relation("TenantProtocols", fields: [tenantId], references: [id])
   number      String         @unique
   title       String
   description String?
@@ -793,6 +883,8 @@ model ProtocolSimplified {
   categoryProtocolHistory CitizenCategoryProtocolHistory[] @relation("CategoryProtocolHistory")
   centralCalendarEvents   CentralCalendarEvent[]
 
+  @@index([tenantId])
+  @@index([tenantId, status])
   @@index([status])
   @@index([createdAt])
   @@index([moduleType, status])
@@ -804,6 +896,9 @@ model ProtocolSimplified {
 
 model ProtocolHistorySimplified {
   id         String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 2) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolHistories", fields: [tenantId], references: [id])
   action     String
   comment    String?
   oldStatus  String?
@@ -815,11 +910,15 @@ model ProtocolHistorySimplified {
 
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
 
+  @@index([tenantId])
   @@map("protocol_history_simplified")
 }
 
 model ProtocolEvaluationSimplified {
   id             String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 2) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolEvaluations", fields: [tenantId], references: [id])
   protocolId     String
   rating         Int
   comment        String?
@@ -828,6 +927,7 @@ model ProtocolEvaluationSimplified {
 
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
 
+  @@index([tenantId])
   @@map("protocol_evaluations_simplified")
 }
 
@@ -893,6 +993,9 @@ model AdminTicket {
 
 model ProtocolInteraction {
   id         String          @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 2) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolInteractions", fields: [tenantId], references: [id])
   protocolId String
   type       InteractionType
 
@@ -919,6 +1022,7 @@ model ProtocolInteraction {
 
   @@index([protocolId, createdAt])
   @@index([protocolId])
+  @@index([tenantId])
   @@map("protocol_interactions")
 }
 
@@ -945,6 +1049,9 @@ enum InteractionType {
 
 model ProtocolDocument {
   id         String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 2) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolDocuments", fields: [tenantId], references: [id])
   protocolId String
 
   // Tipo de documento
@@ -979,6 +1086,7 @@ model ProtocolDocument {
 
   @@index([protocolId, documentType])
   @@index([protocolId])
+  @@index([tenantId])
   @@map("protocol_documents")
 }
 
@@ -997,6 +1105,9 @@ enum DocumentStatus {
 
 model ProtocolPending {
   id         String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 2) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolPendings", fields: [tenantId], references: [id])
   protocolId String
   stageId    String?
 
@@ -1040,6 +1151,7 @@ model ProtocolPending {
   @@index([protocolId])
   @@index([protocolId, dedupeKey, status])
   @@index([stageId])
+  @@index([tenantId])
   @@map("protocol_pendings")
 }
 
@@ -1069,6 +1181,9 @@ enum PendingStatus {
 
 model ProtocolDataField {
   id         String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 4) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolDataFields", fields: [tenantId], references: [id])
   protocolId String
 
   // Identificação do campo
@@ -1106,6 +1221,7 @@ model ProtocolDataField {
   @@unique([protocolId, fieldKey]) // Apenas 1 registro por campo
   @@index([protocolId, status])
   @@index([status])
+  @@index([tenantId])
   @@map("protocol_data_fields")
 }
 
@@ -1265,6 +1381,9 @@ model ModuleWorkflow {
 
 model ProtocolStage {
   id         String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 4) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolStages", fields: [tenantId], references: [id])
   protocolId String
 
   // Etapa
@@ -1295,6 +1414,7 @@ model ProtocolStage {
 
   @@index([protocolId, stageOrder])
   @@index([protocolId])
+  @@index([tenantId])
   @@map("protocol_stages")
 }
 
@@ -1345,6 +1465,9 @@ enum StageStatus {
 
 model ProtocolSLA {
   id         String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 2) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProtocolSLAs", fields: [tenantId], references: [id])
   protocolId String @unique
 
   // Prazos
@@ -1370,6 +1493,7 @@ model ProtocolSLA {
 
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
 
+  @@index([tenantId])
   @@map("protocol_sla")
 }
 
@@ -1379,6 +1503,9 @@ model ProtocolSLA {
 
 model Notification {
   id         String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 3) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantNotifications", fields: [tenantId], references: [id])
   userId     String? // Admin/servidor
   citizenId  String? // Cidadão
   title      String
@@ -1401,6 +1528,7 @@ model Notification {
   @@index([type])
   @@index([isRead])
   @@index([createdAt])
+  @@index([tenantId])
   @@map("notifications")
 }
 
@@ -2313,6 +2441,9 @@ model CacheEntry {
 
 model AuditLog {
   id           String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 3) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAuditLogs", fields: [tenantId], references: [id])
   userId       String?
   citizenId    String?
   action       String
@@ -2331,6 +2462,7 @@ model AuditLog {
   @@index([citizenId])
   @@index([action])
   @@index([createdAt])
+  @@index([tenantId])
   @@map("audit_logs")
 }
 
@@ -5845,6 +5977,9 @@ enum ChannelSubscriptionStatus {
 
 model DocumentTemplate {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 4) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantDocumentTemplates", fields: [tenantId], references: [id])
 
   // Identificação
   name        String // Ex: "Certidão de Protocolo"
@@ -5893,6 +6028,7 @@ model DocumentTemplate {
 
   @@index([isActive])
   @@index([documentType])
+  @@index([tenantId])
   @@map("document_templates")
 }
 
@@ -5913,6 +6049,9 @@ enum OutputFormat {
 
 model GeneratedDocument {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 4) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantGeneratedDocuments", fields: [tenantId], references: [id])
 
   // Referências
   protocolId String
@@ -5982,6 +6121,7 @@ model GeneratedDocument {
   @@index([publishedToCitizen])
   @@index([validationCode])
   @@index([documentHash])
+  @@index([tenantId])
   @@map("generated_documents")
 }
 

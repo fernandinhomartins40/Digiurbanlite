@@ -27,21 +27,30 @@ CREATE INDEX IF NOT EXISTS "conversations_activeFlowExecutionId_idx" ON "convers
 -- ============================================
 
 -- Adicionar campos de pausa (movidos de metadata para campos diretos)
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "isPaused" BOOLEAN NOT NULL DEFAULT false;
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "pausedBy" TEXT;
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "pausedAt" TIMESTAMP(3);
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "pauseReason" TEXT;
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "resumedAt" TIMESTAMP(3);
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "resumedBy" TEXT;
-
--- Adicionar retry count e metadata genérico
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "retryCount" INTEGER NOT NULL DEFAULT 0;
-ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "metadata" JSONB;
-
--- Criar índices para queries de handover
-CREATE INDEX IF NOT EXISTS "flow_executions_isPaused_idx" ON "flow_executions"("isPaused");
-CREATE INDEX IF NOT EXISTS "flow_executions_pausedAt_idx" ON "flow_executions"("pausedAt");
-CREATE INDEX IF NOT EXISTS "flow_executions_pausedBy_idx" ON "flow_executions"("pausedBy");
+-- REPARO (Fase 0 Multi-Tenant, achado B7): flow_executions é drift (db push) — condicional
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'flow_executions') THEN
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "isPaused" BOOLEAN NOT NULL DEFAULT false;
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "pausedBy" TEXT;
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "pausedAt" TIMESTAMP(3);
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "pauseReason" TEXT;
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "resumedAt" TIMESTAMP(3);
+  END IF;
+END $$;
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'flow_executions') THEN
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "resumedBy" TEXT;
+    -- Adicionar retry count e metadata genérico
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "retryCount" INTEGER NOT NULL DEFAULT 0;
+    ALTER TABLE "flow_executions" ADD COLUMN IF NOT EXISTS "metadata" JSONB;
+    -- Criar índices para queries de handover
+    CREATE INDEX IF NOT EXISTS "flow_executions_isPaused_idx" ON "flow_executions"("isPaused");
+    CREATE INDEX IF NOT EXISTS "flow_executions_pausedAt_idx" ON "flow_executions"("pausedAt");
+    CREATE INDEX IF NOT EXISTS "flow_executions_pausedBy_idx" ON "flow_executions"("pausedBy");
+  END IF;
+END $$;
 
 -- ============================================
 -- PARTE 3: ADICIONAR CAMPOS QUERYABLE NO MESSAGE
@@ -68,7 +77,8 @@ CREATE INDEX IF NOT EXISTS "messages_botFlowNodeId_idx" ON "messages"("botFlowNo
 -- Relacionar Conversation → FlowExecution (ativa)
 DO $$
 BEGIN
-  IF NOT EXISTS (
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'flow_executions')
+  AND NOT EXISTS (
     SELECT 1 FROM information_schema.table_constraints
     WHERE constraint_name = 'conversations_activeFlowExecutionId_fkey'
   ) THEN

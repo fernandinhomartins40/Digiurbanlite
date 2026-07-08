@@ -1,51 +1,81 @@
+-- REPARO (Fase 0 Multi-Tenant, achado B7): migration tornada idempotente.
+-- A consolidada 20260106023614 já cria "ClassificacaoRisco" com valores antigos
+-- (EMERGENCIA..NAO_URGENTE); esta recriava o tipo (Manchester) e abortava todo
+-- deploy em banco novo. Agora: cria se não existir; se existir, adiciona os
+-- valores Manchester (superset não-destrutivo — o schema.prisma usa só as cores).
+
 -- CreateEnum para FluxoAtendimento
-CREATE TYPE "FluxoAtendimento" AS ENUM ('TRADICIONAL', 'ESF', 'MISTO');
+DO $$ BEGIN
+  CREATE TYPE "FluxoAtendimento" AS ENUM ('TRADICIONAL', 'ESF', 'MISTO');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- CreateEnum para ClassificacaoRisco (Protocolo de Manchester)
-CREATE TYPE "ClassificacaoRisco" AS ENUM ('VERMELHO', 'LARANJA', 'AMARELO', 'VERDE', 'AZUL');
+DO $$ BEGIN
+  CREATE TYPE "ClassificacaoRisco" AS ENUM ('VERMELHO', 'LARANJA', 'AMARELO', 'VERDE', 'AZUL');
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+ALTER TYPE "ClassificacaoRisco" ADD VALUE IF NOT EXISTS 'VERMELHO';
+ALTER TYPE "ClassificacaoRisco" ADD VALUE IF NOT EXISTS 'LARANJA';
+ALTER TYPE "ClassificacaoRisco" ADD VALUE IF NOT EXISTS 'AMARELO';
+ALTER TYPE "ClassificacaoRisco" ADD VALUE IF NOT EXISTS 'VERDE';
+ALTER TYPE "ClassificacaoRisco" ADD VALUE IF NOT EXISTS 'AZUL';
 
 -- CreateEnum para CondutaAcolhimento
-CREATE TYPE "CondutaAcolhimento" AS ENUM (
-  'RESOLVER_ACOLHIMENTO',
-  'ENCAMINHAR_MEDICO',
-  'ENCAMINHAR_ENFERMEIRO',
-  'ENCAMINHAR_PROCEDIMENTO',
-  'AGENDAR_CONSULTA',
-  'ENCAMINHAR_EXTERNO',
-  'ORIENTACAO'
-);
+DO $$ BEGIN
+  CREATE TYPE "CondutaAcolhimento" AS ENUM (
+    'RESOLVER_ACOLHIMENTO',
+    'ENCAMINHAR_MEDICO',
+    'ENCAMINHAR_ENFERMEIRO',
+    'ENCAMINHAR_PROCEDIMENTO',
+    'AGENDAR_CONSULTA',
+    'ENCAMINHAR_EXTERNO',
+    'ORIENTACAO'
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- AlterEnum: Adicionar novos valores ao StatusFila
-ALTER TYPE "StatusFila" ADD VALUE 'EM_CLASSIFICACAO_RISCO';
-ALTER TYPE "StatusFila" ADD VALUE 'AGUARDANDO_ATENDIMENTO';
-ALTER TYPE "StatusFila" ADD VALUE 'EM_ACOLHIMENTO';
-ALTER TYPE "StatusFila" ADD VALUE 'RESOLVIDO_ACOLHIMENTO';
-ALTER TYPE "StatusFila" ADD VALUE 'ENCAMINHADO_EXTERNO';
-ALTER TYPE "StatusFila" ADD VALUE 'INTERNADO';
-ALTER TYPE "StatusFila" ADD VALUE 'TRANSFERIDO';
+-- AlterEnum: StatusFila é drift (criado via db push, não existe em banco novo) —
+-- condicional; a baseline de reparo no fim da cadeia cria o estado completo.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_type WHERE typname = 'StatusFila') THEN
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''EM_CLASSIFICACAO_RISCO''';
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''AGUARDANDO_ATENDIMENTO''';
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''EM_ACOLHIMENTO''';
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''RESOLVIDO_ACOLHIMENTO''';
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''ENCAMINHADO_EXTERNO''';
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''INTERNADO''';
+    EXECUTE 'ALTER TYPE "StatusFila" ADD VALUE IF NOT EXISTS ''TRANSFERIDO''';
+  END IF;
+END $$;
 
--- AlterTable: Adicionar campo fluxoAtendimento na UnidadeSaude
-ALTER TABLE "unidades_saude"
-ADD COLUMN "fluxoAtendimento" "FluxoAtendimento" NOT NULL DEFAULT 'TRADICIONAL';
+-- AlterTable: Adicionar campo fluxoAtendimento na UnidadeSaude (condicional)
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'unidades_saude') THEN
+    ALTER TABLE "unidades_saude"
+    ADD COLUMN IF NOT EXISTS "fluxoAtendimento" "FluxoAtendimento" NOT NULL DEFAULT 'TRADICIONAL';
+    CREATE INDEX IF NOT EXISTS "unidades_saude_fluxoAtendimento_idx" ON "unidades_saude"("fluxoAtendimento");
+    COMMENT ON COLUMN "unidades_saude"."fluxoAtendimento" IS 'Tipo de fluxo de atendimento: TRADICIONAL (UPA/UBS sem ESF), ESF (UBS com ESF), MISTO (ambos)';
+  END IF;
+END $$;
 
--- AlterTable: Adicionar campos de Classificação de Risco e Acolhimento na FilaAtendimento
-ALTER TABLE "fila_atendimento"
-ADD COLUMN "classificacaoRisco" "ClassificacaoRisco",
-ADD COLUMN "dataClassificacaoRisco" TIMESTAMP(3),
-ADD COLUMN "queixaPrincipal" TEXT,
-ADD COLUMN "sinaisVitais" JSONB,
-ADD COLUMN "condutaAcolhimento" "CondutaAcolhimento",
-ADD COLUMN "dataAcolhimento" TIMESTAMP(3),
-ADD COLUMN "resolvidoAcolhimento" BOOLEAN NOT NULL DEFAULT false;
+-- AlterTable: fila_atendimento é drift (criada via db push) — condicional
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'fila_atendimento') THEN
+    ALTER TABLE "fila_atendimento"
+    ADD COLUMN IF NOT EXISTS "classificacaoRisco" "ClassificacaoRisco",
+    ADD COLUMN IF NOT EXISTS "dataClassificacaoRisco" TIMESTAMP(3),
+    ADD COLUMN IF NOT EXISTS "queixaPrincipal" TEXT,
+    ADD COLUMN IF NOT EXISTS "sinaisVitais" JSONB,
+    ADD COLUMN IF NOT EXISTS "condutaAcolhimento" "CondutaAcolhimento",
+    ADD COLUMN IF NOT EXISTS "dataAcolhimento" TIMESTAMP(3),
+    ADD COLUMN IF NOT EXISTS "resolvidoAcolhimento" BOOLEAN NOT NULL DEFAULT false;
 
--- Criar índices para melhorar performance
-CREATE INDEX "fila_atendimento_classificacaoRisco_idx" ON "fila_atendimento"("classificacaoRisco");
-CREATE INDEX "fila_atendimento_condutaAcolhimento_idx" ON "fila_atendimento"("condutaAcolhimento");
-CREATE INDEX "fila_atendimento_resolvidoAcolhimento_idx" ON "fila_atendimento"("resolvidoAcolhimento");
-CREATE INDEX "unidades_saude_fluxoAtendimento_idx" ON "unidades_saude"("fluxoAtendimento");
-
--- Comentários para documentação
-COMMENT ON COLUMN "unidades_saude"."fluxoAtendimento" IS 'Tipo de fluxo de atendimento: TRADICIONAL (UPA/UBS sem ESF), ESF (UBS com ESF), MISTO (ambos)';
-COMMENT ON COLUMN "fila_atendimento"."classificacaoRisco" IS 'Classificação de Risco pelo Protocolo de Manchester (UPA)';
-COMMENT ON COLUMN "fila_atendimento"."condutaAcolhimento" IS 'Conduta definida no acolhimento (UBS)';
-COMMENT ON COLUMN "fila_atendimento"."resolvidoAcolhimento" IS 'Se o problema foi resolvido no próprio acolhimento';
+    CREATE INDEX IF NOT EXISTS "fila_atendimento_classificacaoRisco_idx" ON "fila_atendimento"("classificacaoRisco");
+    CREATE INDEX IF NOT EXISTS "fila_atendimento_condutaAcolhimento_idx" ON "fila_atendimento"("condutaAcolhimento");
+    CREATE INDEX IF NOT EXISTS "fila_atendimento_resolvidoAcolhimento_idx" ON "fila_atendimento"("resolvidoAcolhimento");
+    COMMENT ON COLUMN "fila_atendimento"."classificacaoRisco" IS 'Classificação de Risco pelo Protocolo de Manchester (UPA)';
+    COMMENT ON COLUMN "fila_atendimento"."condutaAcolhimento" IS 'Conduta definida no acolhimento (UBS)';
+    COMMENT ON COLUMN "fila_atendimento"."resolvidoAcolhimento" IS 'Se o problema foi resolvido no próprio acolhimento';
+  END IF;
+END $$;

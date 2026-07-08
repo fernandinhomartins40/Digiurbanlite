@@ -10,6 +10,7 @@
     "lint:fix": "eslint src --ext .ts,.js --fix",
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
+    "smoke:tenant": "ts-node --transpile-only scripts/smoke-tenant.ts",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "migrate:ts": "ts-migrate migrate src",

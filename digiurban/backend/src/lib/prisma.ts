@@ -95,9 +95,15 @@ const auditLogFallbackExtension = Prisma.defineExtension({
 
 // ✅ FASE 4: Aplicar extension de cascade delete para arquivos físicos
 // Usa Prisma Client Extensions API (compatível com Prisma 6.x)
+// ✅ FASES 2/3 MULTI-TENANT: tenant-isolation injeta tenantId nas escritas E
+// filtra leituras/mutações de models escopados (detectados via DMMF) a partir
+// do contexto ALS. Ver src/lib/prisma-tenant-extension.ts.
+import { tenantExtension } from './prisma-tenant-extension';
+
 const prismaExtended = prismaBase
   .$extends(cascadeDeleteExtension)
-  .$extends(auditLogFallbackExtension) as unknown as PrismaClient;
+  .$extends(auditLogFallbackExtension)
+  .$extends(tenantExtension) as unknown as PrismaClient;
 
 // Prevent multiple instances of Prisma Client in development
 // Global declaration in src/types/globals.ts

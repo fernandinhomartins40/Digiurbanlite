@@ -4,6 +4,11 @@ import { adminAuthMiddleware } from '../middleware/admin-auth';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
+import { TenantService } from '../services/tenant.service';
+import { seedDefaultDepartments } from '../services/tenant-provisioning.service';
+import crypto from 'crypto';
+import { logAuditEvent, AUDIT_EVENTS } from '../utils/audit-logger';
 import { loginRateLimiter } from '../middleware/rate-limit';
 import { accountLockoutMiddleware } from '../middleware/account-lockout';
 import os from 'os';
@@ -131,7 +136,8 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
         userId: user.id,
         role: user.role,
         departmentId: user.departmentId,
-        type: 'admin'
+        type: 'admin',
+        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
       },
       jwtSecret,
       { expiresIn: '8h' }
@@ -2865,6 +2871,191 @@ router.get('/system-logs/:fileName/stream', adminAuthMiddleware, superAdminOnly,
       error: 'Erro ao iniciar streaming',
       details: error.message
     });
+  }
+});
+
+
+// ============================================================================
+// GESTÃO DE TENANTS (Fases 5/8 Multi-Tenant — groundwork de provisionamento)
+// Na Fase 5 estes endpoints migram para o painel de plataforma (PlatformUser);
+// até lá, SUPER_ADMIN do tenant default opera como plataforma.
+// ============================================================================
+
+const createTenantSchema = z.object({
+  slug: z.string().min(2).max(40).regex(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/, 'slug: minúsculas, números e hífens'),
+  nome: z.string().min(3),
+  cnpj: z.string().min(14),
+  nomeMunicipio: z.string().min(2),
+  ufMunicipio: z.string().length(2),
+  codigoIbge: z.string().optional(),
+  customDomain: z.string().optional(),
+  plan: z.enum(['basic', 'professional', 'enterprise']).optional(),
+  maxUsers: z.number().int().positive().optional(),
+  maxCitizens: z.number().int().positive().optional(),
+  features: z.record(z.string(), z.unknown()).optional(),
+  branding: z.record(z.string(), z.unknown()).optional(),
+  adminName: z.string().min(3),
+  adminEmail: z.string().email(),
+});
+
+const RESERVED_SLUGS = ['default', 'www', 'api', 'admin', 'platform', 'mail', 'smtp'];
+
+// GET /api/super-admin/tenants — listar todos os tenants
+router.get('/tenants', adminAuthMiddleware, superAdminOnly, async (_req: Request, res: Response) => {
+  try {
+    const tenants = await runAsPlatform(async () =>
+      await prisma.tenant.findMany({ orderBy: { createdAt: 'asc' } })
+    );
+    const withCounts = await runAsPlatform(async () =>
+      Promise.all(
+        tenants.map(async (t) => ({
+          ...t,
+          _counts: {
+            users: await prisma.user.count({ where: { tenantId: t.id } }),
+            citizens: await prisma.citizen.count({ where: { tenantId: t.id } }),
+            protocols: await prisma.protocolSimplified.count({ where: { tenantId: t.id } }),
+          },
+        }))
+      )
+    );
+    res.json({ success: true, tenants: withCounts });
+  } catch (error) {
+    console.error('Erro ao listar tenants:', error);
+    res.status(500).json({ error: 'Erro ao listar tenants' });
+  }
+});
+
+// POST /api/super-admin/tenants — provisionar novo município
+// Cria: tenant + usuário ADMIN inicial (senha temporária, mustChangePassword)
+router.post('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const parsed = createTenantSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
+    }
+    const data = parsed.data;
+
+    if (RESERVED_SLUGS.includes(data.slug)) {
+      return res.status(400).json({ error: `Slug reservado: ${data.slug}` });
+    }
+
+    const tempPassword = crypto.randomBytes(9).toString('base64url');
+    const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+    const result = await runAsPlatform(async () =>
+      prisma.$transaction(async (tx) => {
+        const tenant = await tx.tenant.create({
+          data: {
+            slug: data.slug,
+            nome: data.nome,
+            cnpj: data.cnpj,
+            codigoIbge: data.codigoIbge,
+            nomeMunicipio: data.nomeMunicipio,
+            ufMunicipio: data.ufMunicipio,
+            customDomain: data.customDomain,
+            plan: data.plan ?? 'basic',
+            maxUsers: data.maxUsers ?? 10,
+            maxCitizens: data.maxCitizens ?? 10000,
+            features: (data.features as any) ?? undefined,
+            branding: (data.branding as any) ?? undefined,
+          },
+        });
+
+        const admin = await tx.user.create({
+          data: {
+            tenantId: tenant.id,
+            name: data.adminName,
+            email: data.adminEmail,
+            password: passwordHash,
+            role: 'ADMIN',
+            isActive: true,
+            mustChangePassword: true,
+          },
+        });
+
+        // Secretarias padrão (Fase 8) — município nasce operável
+        const departmentsCreated = await seedDefaultDepartments(tx, tenant.id);
+
+        return { tenant, admin, departmentsCreated };
+      })
+    );
+
+    TenantService.invalidate();
+
+    await logAuditEvent({
+      userId: (req as any).userId,
+      action: AUDIT_EVENTS.TENANT_CREATED,
+      resource: req.originalUrl,
+      method: req.method,
+      details: { tenantId: result.tenant.id, slug: result.tenant.slug, adminEmail: data.adminEmail },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      success: true,
+    }).catch(() => undefined);
+
+    res.status(201).json({
+      success: true,
+      tenant: result.tenant,
+      admin: { id: result.admin.id, email: result.admin.email, name: result.admin.name },
+      departmentsCreated: result.departmentsCreated,
+      // Entregue UMA única vez; o admin troca no primeiro login (mustChangePassword)
+      temporaryPassword: tempPassword,
+      accessUrl: process.env.TENANT_BASE_DOMAIN
+        ? `https://${result.tenant.slug}.${process.env.TENANT_BASE_DOMAIN}`
+        : undefined,
+    });
+  } catch (error: any) {
+    if (error?.code === 'P2002') {
+      return res.status(409).json({ error: 'Slug, CNPJ, domínio ou email já em uso' });
+    }
+    console.error('Erro ao provisionar tenant:', error);
+    res.status(500).json({ error: 'Erro ao provisionar tenant' });
+  }
+});
+
+// PATCH /api/super-admin/tenants/:id — atualizar/suspender/reativar
+router.patch('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const updateSchema = createTenantSchema.partial().omit({ adminName: true, adminEmail: true }).extend({
+      status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'TRIAL', 'EXPIRED', 'CANCELLED']).optional(),
+      suspensionReason: z.string().nullable().optional(),
+      paymentStatus: z.string().optional(),
+    });
+    const parsed = updateSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
+    }
+    if (parsed.data.slug && RESERVED_SLUGS.includes(parsed.data.slug)) {
+      return res.status(400).json({ error: `Slug reservado: ${parsed.data.slug}` });
+    }
+
+    const tenant = await runAsPlatform(async () =>
+      await prisma.tenant.update({
+        where: { id: req.params.id },
+        data: parsed.data as any,
+      })
+    );
+
+    TenantService.invalidate();
+
+    await logAuditEvent({
+      userId: (req as any).userId,
+      action: AUDIT_EVENTS.TENANT_CONFIG_CHANGE,
+      resource: req.originalUrl,
+      method: req.method,
+      details: { tenantId: tenant.id, changes: Object.keys(parsed.data) },
+      ip: req.ip,
+      userAgent: req.headers['user-agent'],
+      success: true,
+    }).catch(() => undefined);
+
+    res.json({ success: true, tenant });
+  } catch (error: any) {
+    if (error?.code === 'P2025') {
+      return res.status(404).json({ error: 'Tenant não encontrado' });
+    }
+    console.error('Erro ao atualizar tenant:', error);
+    res.status(500).json({ error: 'Erro ao atualizar tenant' });
   }
 });
 

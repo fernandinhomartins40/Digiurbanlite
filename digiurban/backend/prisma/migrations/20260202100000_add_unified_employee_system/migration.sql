@@ -481,10 +481,19 @@ ALTER TABLE "team_members" ADD CONSTRAINT "team_members_userId_fkey" FOREIGN KEY
 ALTER TABLE "assignment_audits" ADD CONSTRAINT "assignment_audits_assignmentId_fkey" FOREIGN KEY ("assignmentId") REFERENCES "employee_assignments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- Integração com Apps de Saúde
--- Adicionar constraints únicos nas colunas já existentes
-ALTER TABLE "unidades_saude" ADD CONSTRAINT "unidades_saude_organizationalUnitId_key" UNIQUE ("organizationalUnitId");
-ALTER TABLE "equipes_saude" ADD CONSTRAINT "equipes_saude_teamId_key" UNIQUE ("teamId");
-
--- Adicionar foreign keys para integração
-ALTER TABLE "unidades_saude" ADD CONSTRAINT "unidades_saude_organizationalUnitId_fkey" FOREIGN KEY ("organizationalUnitId") REFERENCES "organizational_units"("id") ON DELETE SET NULL ON UPDATE CASCADE;
-ALTER TABLE "equipes_saude" ADD CONSTRAINT "equipes_saude_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "teams"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- REPARO (Fase 0 Multi-Tenant, achado B5/B7): estas colunas são criadas pela
+-- migration 20260202110000_add_columns_before_unified_system, que APESAR do nome
+-- ordena DEPOIS desta (110000 > 100000). Em produção foram aplicadas na ordem de
+-- autoria; em banco novo as colunas ainda não existem aqui — condicional; a
+-- baseline de reparo ao final da cadeia converge o estado.
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'unidades_saude' AND column_name = 'organizationalUnitId') THEN
+    ALTER TABLE "unidades_saude" ADD CONSTRAINT "unidades_saude_organizationalUnitId_key" UNIQUE ("organizationalUnitId");
+    ALTER TABLE "unidades_saude" ADD CONSTRAINT "unidades_saude_organizationalUnitId_fkey" FOREIGN KEY ("organizationalUnitId") REFERENCES "organizational_units"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'equipes_saude' AND column_name = 'teamId') THEN
+    ALTER TABLE "equipes_saude" ADD CONSTRAINT "equipes_saude_teamId_key" UNIQUE ("teamId");
+    ALTER TABLE "equipes_saude" ADD CONSTRAINT "equipes_saude_teamId_fkey" FOREIGN KEY ("teamId") REFERENCES "teams"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+  END IF;
+END $$;

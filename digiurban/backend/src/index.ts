@@ -99,8 +99,18 @@ const conditionalBodyParser = (req: express.Request, res: express.Response, next
 app.use(conditionalBodyParser);
 app.use(cookieParser()); // Parser de cookies para httpOnly tokens
 
-// Servir arquivos de upload de forma segura
-app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+// Contexto de tenant (Fase 1 Multi-Tenant): popula AsyncLocalStorage + req.tenant
+import { tenantContextMiddleware } from './middleware/tenant-context';
+app.use(tenantContextMiddleware);
+
+// Status do tenant (Fase 3/8): bloqueia acesso a município suspenso/inativo/
+// inadimplente (reativa o achado P3, agora fail-closed e por tenant).
+import { tenantStatusMiddleware } from './middleware/tenant-status';
+app.use('/api', tenantStatusMiddleware);
+
+// Servir arquivos de upload — acesso autenticado (Fase 0, achado S1 da auditoria)
+import { uploadsAccessMiddleware } from './middleware/uploads-access';
+app.use('/uploads', uploadsAccessMiddleware, express.static(path.join(process.cwd(), 'uploads')));
 
 // Health check
 app.get('/health', (_req, res: express.Response) => {
@@ -145,7 +155,9 @@ try {
 // ============================================================
 // REGISTRO DE ROTAS — helper para try/catch padronizado
 // ============================================================
-function loadRoute(prefix: string, modulePath: string) {
+const failedRoutes: Array<{ prefix: string; modulePath: string }> = [];
+
+function loadRoute(prefix: string, modulePath: string, ...middlewares: express.RequestHandler[]) {
   try {
     const loaded = require(modulePath);
     const router = loaded?.default || loaded;
@@ -154,7 +166,12 @@ function loadRoute(prefix: string, modulePath: string) {
       throw new Error(`Route module "${modulePath}" does not export a router function`);
     }
 
-    app.use(prefix, router);
+    // Middlewares opcionais (ex.: requireFeature) rodam ANTES do router.
+    if (middlewares.length > 0) {
+      app.use(prefix, ...middlewares, router);
+    } else {
+      app.use(prefix, router);
+    }
   } catch (error) {
     const normalizedError =
       error instanceof Error
@@ -165,9 +182,12 @@ function loadRoute(prefix: string, modulePath: string) {
           }
         : { message: String(error) };
 
+    failedRoutes.push({ prefix, modulePath });
     logger.error(`Failed to load route: ${prefix} (${modulePath})`, { error: normalizedError });
   }
 }
+
+import { requireFeature } from './middleware/require-feature';
 
 // Rotas internas (Messages Server)
 loadRoute('/api/internal', './routes/internal.routes');
@@ -297,7 +317,8 @@ loadRoute('/api/protocol-analytics', './routes/protocol-analytics.routes');
 loadRoute('/api/analytics', './routes/analytics');
 
 // Complementares
-loadRoute('/api/admin/custom-modules', './routes/custom-modules');
+// REMOVIDO (Fase 0, achado do fail-fast): ./routes/custom-modules não existe
+// no repositório — registro morto que falhava em todo boot (404 silencioso).
 loadRoute('/api/admin/face-platform', './routes/face-platform.routes');
 loadRoute('/api/admin/email', './routes/admin-email');
 loadRoute('/api/admin/email-service', './routes/admin-email');
@@ -320,20 +341,22 @@ try { require('./workers/notification.worker'); } catch (e) { logger.error('Fail
 try { require('./jobs/notification.jobs'); } catch (e) { logger.error('Failed to start notification cron jobs', { error: e }); }
 
 // Saúde - Apps integrados
-loadRoute('/api/saude/atendimento', './routes/saude-atendimento.routes');
+// REMOVIDO (Fase 0, achado do fail-fast): ./routes/saude-atendimento.routes não
+// existe no repositório (CLAUDE.md documenta ~52 endpoints — drift doc-código;
+// o adapter saude-unified cobre o prefixo /api/saude). Registro morto removido.
 try {
   const saudeFarmaciaRoutes = require('./routes/saude-farmacia.routes').default;
   app.use('/api/saude/farmacia', saudeFarmaciaRoutes);
   app.use('/api/apps/saude/farmacia', saudeFarmaciaRoutes);
 } catch (e) { logger.error('Failed to load saude-farmacia routes', { error: e }); }
-loadRoute('/api/saude/tfd', './routes/saude-tfd.routes');
-loadRoute('/api/saude', './routes/saude');
-loadRoute('/api/secretarias/saude', './routes/secretarias-saude');
-loadRoute('/api/apps/saude/cadastros', './routes/saude-cadastros.routes');
+loadRoute('/api/saude/tfd', './routes/saude-tfd.routes', requireFeature('saude'));
+loadRoute('/api/saude', './routes/saude', requireFeature('saude'));
+loadRoute('/api/secretarias/saude', './routes/secretarias-saude', requireFeature('saude'));
+loadRoute('/api/apps/saude/cadastros', './routes/saude-cadastros.routes', requireFeature('saude'));
 
 // Dashboards: Educação e Assistência Social
-loadRoute('/api/secretarias/educacao', './routes/secretarias-educacao');
-loadRoute('/api/secretarias/assistencia-social', './routes/secretarias-assistencia-social');
+loadRoute('/api/secretarias/educacao', './routes/secretarias-educacao', requireFeature('educacao'));
+loadRoute('/api/secretarias/assistencia-social', './routes/secretarias-assistencia-social', requireFeature('assistencia-social'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {
@@ -349,9 +372,19 @@ try {
 }
 
 // Adaptadoras: Saúde → Sistema Unificado V2.0
-loadRoute('/api/saude', './routes/saude-unified-adapter.routes');
+loadRoute('/api/saude', './routes/saude-unified-adapter.routes', requireFeature('saude'));
 
-logger.info('All routes loaded successfully');
+// Fail-fast em produção (Fase 0, achado P2): deploy com rota quebrada não
+// pode subir "com sucesso" — o erro viraria 404 silencioso para o cliente.
+if (failedRoutes.length > 0) {
+  logger.error(`${failedRoutes.length} route module(s) failed to load`, { failedRoutes });
+  if (process.env.NODE_ENV === 'production') {
+    logger.error('FATAL: aborting startup in production due to failed route modules');
+    process.exit(1);
+  }
+} else {
+  logger.info('All routes loaded successfully');
+}
 
 // ============================================================
 // MIDDLEWARE DE TRATAMENTO DE ERROS (DEVE VIR POR ULTIMO)
