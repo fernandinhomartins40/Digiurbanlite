@@ -8,6 +8,8 @@ import {
   JWTPayload,
   RoleHierarchy
         } from '../types';
+import { logAuditEvent } from '../utils/audit-logger';
+import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
 
 /**
  * Middleware de autenticação básica para administradores
@@ -23,19 +25,12 @@ export const adminAuthMiddleware = async (
     let token = req.cookies?.digiurban_admin_token;
     const authHeader = req.headers.authorization;
 
-    console.log('[AUTH DEBUG] URL:', req.method, req.originalUrl || req.url);
-    console.log('[AUTH DEBUG] Path:', req.path);
-    console.log('[AUTH DEBUG] Cookie Token:', token ? 'EXISTS' : 'MISSING');
-    console.log('[AUTH DEBUG] Headers Authorization:', authHeader ? 'EXISTS' : 'MISSING');
-
     // Se não tiver token no cookie, tentar header Authorization (compatibilidade retroativa)
     if (!token && authHeader && authHeader.startsWith('Bearer ')) {
       token = authHeader.substring(7);
-      console.log('[AUTH DEBUG] Using token from Authorization header (fallback)');
     }
 
     if (!token) {
-      console.log('[AUTH DEBUG] REJECTED: No token in cookie or Authorization header');
       res.status(401).json({ error: 'Token de acesso necessário' });
       return;
     }
@@ -57,7 +52,27 @@ export const adminAuthMiddleware = async (
       return;
     }
 
-    // Single tenant: verificação de tenant removida
+    // ✅ Fase 4 Multi-Tenant: validar claim de tenant do token contra o tenant
+    // da request (resolvido por host no tenantContextMiddleware).
+    // Janela de transição: tokens antigos SEM claim são aceitos (o contexto
+    // default os cobre); token COM claim divergente é rejeitado e auditado.
+    const tokenTenant = (decoded as JWTPayload & { tenantId?: string }).tenantId;
+    const requestTenant = (req as any).tenantId || DEFAULT_TENANT_ID;
+    if (tokenTenant && tokenTenant !== requestTenant) {
+      logAuditEvent({
+        userId: decoded.userId,
+        action: 'tenant_claim_mismatch',
+        resource: req.originalUrl || req.path,
+        method: req.method,
+        details: { tokenTenant, requestTenant },
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        success: false,
+        errorMessage: 'JWT de outro tenant'
+      }).catch(() => undefined);
+      res.status(401).json({ error: 'Token não pertence a este município' });
+      return;
+    }
 
     // Buscar o usuário no banco com tipos seguros
     const user: UserWithRelations | null = await prisma.user.findFirst({
@@ -393,19 +408,16 @@ export const auditLog = (action: string) => {
     const { user } = req as AuthenticatedRequest;
 
     if (user) {
-      console.log(
-        `[AUDIT] ${new Date().toISOString()} - User: ${user.email} (${user.role}) - Action: ${action} - IP: ${req.ip}`
-      );
-
-      // Aqui você poderia salvar no banco de dados para auditoria
-      // await prisma.auditLog.create({
-      //   data: {
-      //     userId: user.id,
-      //     action,
-      //     ip: req.ip,
-      //     userAgent: req.headers['user-agent']
-      //   }
-      // });
+      // Fire-and-forget: auditoria nunca bloqueia nem falha a operação
+      logAuditEvent({
+        userId: user.id,
+        action,
+        resource: req.originalUrl || req.path,
+        method: req.method,
+        ip: req.ip,
+        userAgent: req.headers['user-agent'],
+        success: true
+      }).catch(() => undefined);
     }
 
     next();

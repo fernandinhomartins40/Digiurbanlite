@@ -2,6 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
+import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
 import { z } from 'zod';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
 import { validateCPF, validateStrongPassword } from '../utils/validators';
@@ -170,7 +171,8 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
         citizenId: citizen.id,
         userId: citizen.id, // Para compatibilidade com ultrazend-messages
         type: 'citizen',
-        userType: 'CITIZEN' // Para compatibilidade com ultrazend-messages
+        userType: 'CITIZEN', // Para compatibilidade com ultrazend-messages
+        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
       },
       process.env.JWT_SECRET!,
       { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }
@@ -364,7 +366,8 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
         citizenId: citizen.id,
         userId: citizen.id,
         type: 'citizen',
-        userType: 'CITIZEN'
+        userType: 'CITIZEN',
+        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
       },
       process.env.JWT_SECRET!,
       { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }

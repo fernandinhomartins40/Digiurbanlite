@@ -1,5 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
+import { TenantService } from '../services/tenant.service';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -29,6 +30,38 @@ function normalizeString(str: string): string {
     .toLowerCase()
     .trim();
 }
+
+// GET /api/public/tenant-config — configuração pública do tenant resolvido pelo
+// HOST da requisição (Fase 7 Multi-Tenant: base do white-label runtime).
+// Sem autenticação; consumido pelo frontend no primeiro paint (SSR/layout).
+router.get(
+  '/tenant-config',
+  handleAsync(async (req, res) => {
+    const tenant = (req as any).tenant || (await TenantService.getByHost(req.hostname));
+
+    if (!tenant) {
+      res.status(404).json({ success: false, error: 'Município não configurado' });
+      return;
+    }
+
+    // Cache curto: branding muda raramente; chave de cache DEVE incluir o host
+    // (CDN/proxy) — nunca compartilhar entre tenants.
+    res.set('Cache-Control', 'public, max-age=60');
+    res.set('Vary', 'Host');
+    res.json({
+      success: true,
+      tenant: {
+        slug: tenant.slug,
+        nome: tenant.nome,
+        nomeMunicipio: tenant.nomeMunicipio,
+        ufMunicipio: tenant.ufMunicipio,
+        status: tenant.status,
+        branding: tenant.branding ?? null,
+        features: tenant.features ?? null,
+      },
+    });
+  })
+);
 
 // GET /api/public/municipio-config - Retornar configuração do município (Single Tenant)
 router.get(

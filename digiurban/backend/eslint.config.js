@@ -34,7 +34,9 @@ export default [
       '@typescript-eslint/explicit-function-return-type': 'off',
       '@typescript-eslint/explicit-module-boundary-types': 'off',
       '@typescript-eslint/no-non-null-assertion': 'warn',
-      '@typescript-eslint/prefer-const': 'error',
+      // REPARO (Fase 0): '@typescript-eslint/prefer-const' não existe no plugin
+      // (é regra core do ESLint) — quebrava TODA execução do lint.
+      'prefer-const': 'error',
       '@typescript-eslint/no-var-requires': 'off',
 
       // Prettier integration
@@ -44,6 +46,31 @@ export default [
       'no-console': 'off', // Allow console.log for logging
       'no-undef': 'off', // TypeScript handles this
       'no-unused-vars': 'off', // Use TypeScript version instead
+    },
+  },
+
+  // ==========================================================================
+  // GUARDA DE ARQUITETURA (Fase 0 Multi-Tenant, achado P1 da auditoria)
+  // Rotas não devem acessar Prisma diretamente — a regra Router → Service →
+  // Prisma é pré-requisito do isolamento por tenant (Fase 3). Warning por ora
+  // (baseline: 71 arquivos); rotas novas nascem conformes; vira 'error' quando
+  // o contador zerar.
+  // ==========================================================================
+  {
+    files: ['src/routes/**/*.ts'],
+    rules: {
+      'no-restricted-imports': [
+        'warn',
+        {
+          patterns: [
+            {
+              group: ['**/lib/prisma'],
+              message:
+                'Rotas não devem acessar Prisma diretamente. Mova a lógica para um service em src/services/ (regra Fase 0 do plano Multi-Tenant).',
+            },
+          ],
+        },
+      ],
     },
   },
 

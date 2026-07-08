@@ -7,6 +7,7 @@ import {
   UserWithRelations,
   JWTPayload
 } from '../types';
+import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
 
 /**
  * Middleware de autenticação para SUPER_ADMIN
@@ -39,7 +40,15 @@ export const superAdminAuth = async (
       return;
     }
 
-    const decoded = jwt.verify(token, jwtSecret) as JWTPayload;
+    const decoded = jwt.verify(token, jwtSecret) as JWTPayload & { tenantId?: string };
+
+    // ✅ Fase 4 Multi-Tenant: claim de tenant deve casar com o tenant da request
+    // (na Fase 5 SUPER_ADMIN migra para PlatformUser cross-tenant).
+    const requestTenant = (req as any).tenantId || DEFAULT_TENANT_ID;
+    if (decoded.tenantId && decoded.tenantId !== requestTenant) {
+      res.status(401).json({ error: 'Token não pertence a este município' });
+      return;
+    }
 
     // Buscar usuário
     const user: UserWithRelations | null = await prisma.user.findFirst({

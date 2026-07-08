@@ -3,6 +3,8 @@ import { Manrope } from 'next/font/google'
 import './globals.css'
 import { ToasterProvider } from '@/components/providers/ToasterProvider'
 import { QueryProvider } from '@/components/providers/QueryProvider'
+import { TenantProvider } from '@/components/providers/TenantProvider'
+import { fetchTenantConfig, brandingToCssVars } from '@/lib/tenant'
 
 const appFont = Manrope({
   subsets: ['latin'],
@@ -126,25 +128,39 @@ export const viewport: Viewport = {
   userScalable: true,
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Fase 7 Multi-Tenant: resolve o município pelo Host da request (server-side)
+  // e injeta o branding no SSR — mesma imagem serve qualquer tenant.
+  const tenantConfig = await fetchTenantConfig()
+  const brandVars = brandingToCssVars(tenantConfig)
+  const brandStyle = Object.entries(brandVars)
+    .map(([k, v]) => `${k}:${v}`)
+    .join(';')
+
   return (
     <html lang="pt-BR">
       <head>
         <meta charSet="utf-8" />
         {/* Compat: alguns browsers reclamam do meta apple-only */}
         <meta name="mobile-web-app-capable" content="yes" />
+        {/* Branding do tenant no :root (SSR, antes do primeiro paint) */}
+        {brandStyle ? (
+          <style dangerouslySetInnerHTML={{ __html: `:root{${brandStyle}}` }} />
+        ) : null}
         {/* OpenCV.js para jscanify (document scanner) - usando CDN com CORS habilitado */}
         <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/opencv.js" async></script>
       </head>
       <body className={`${appFont.variable} font-sans antialiased`}>
-        <QueryProvider>
-          {children}
-          <ToasterProvider />
-        </QueryProvider>
+        <TenantProvider config={tenantConfig}>
+          <QueryProvider>
+            {children}
+            <ToasterProvider />
+          </QueryProvider>
+        </TenantProvider>
       </body>
     </html>
   )

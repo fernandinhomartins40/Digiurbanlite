@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
+import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { BCRYPT_ROUNDS, JWT as JWT_CONFIG } from '../config/security';
@@ -173,7 +174,8 @@ router.post(
         role: user.role,
         departmentId: user.departmentId || undefined,
         type: 'admin',
-        userType: 'SERVER' // Para compatibilidade com ultrazend-messages
+        userType: 'SERVER', // Para compatibilidade com ultrazend-messages
+        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
         };
 
       const jwtSecret = process.env.JWT_SECRET!;
@@ -227,26 +229,18 @@ router.post(
 // GET /api/auth/admin/me - Dados do administrador logado
 router.get('/me', handleAsyncRoute(async (req, res) => {
   try {
-    // 🔍 DEBUG: Log completo para troubleshooting
-    console.log('[/me DEBUG] ===== INÍCIO DA REQUISIÇÃO =====');
-    console.log('[/me DEBUG] Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('[/me DEBUG] Cookies recebidos:', req.cookies);
-    console.log('[/me DEBUG] Cookie digiurban_admin_token:', req.cookies?.digiurban_admin_token ? 'EXISTS' : 'MISSING');
+    // ⚠️ REMOVIDO (Fase 0, achado S4): logs de debug que despejavam headers e
+    // cookies completos (incluindo o JWT) no log — vazamento de credencial.
 
     // Tentar obter token do cookie primeiro, depois do header (fallback)
     let token = req.cookies?.digiurban_admin_token;
 
     // Se não tiver token no cookie, tentar header Authorization (retrocompatibilidade)
     if (!token) {
-      console.log('[/me DEBUG] Token não encontrado no cookie, tentando header Authorization...');
       token = validateAuthHeader(req.headers.authorization);
-      console.log('[/me DEBUG] Token do header:', token ? 'EXISTS' : 'MISSING');
-    } else {
-      console.log('[/me DEBUG] ✅ Token encontrado no cookie');
     }
 
     if (!token) {
-      console.log('[/me DEBUG] ❌ REJEITADO: Nenhum token fornecido');
       res.status(401).json({
         success: false,
         error: 'Authentication failed',
@@ -255,14 +249,10 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
       return;
     }
 
-    console.log('[/me DEBUG] Token encontrado, validando JWT...');
-
     const jwtSecret = process.env.JWT_SECRET!;
     const decoded = jwt.verify(token, jwtSecret) as AdminJwtPayload;
-    console.log('[/me DEBUG] JWT decodificado - userId:', decoded.userId, 'type:', decoded.type);
 
     if (decoded.type !== 'admin') {
-      console.log('[/me DEBUG] ❌ REJEITADO: Token não é do tipo admin (tipo:', decoded.type, ')');
       res.status(401).json({
         success: false,
         error: 'Authentication failed',
@@ -271,7 +261,6 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
       return;
     }
 
-    console.log('[/me DEBUG] ✅ JWT válido, buscando usuário no banco...');
 
     // Operação Prisma com campos explicitamente definidos
     const user = await prisma.user.findFirst({
@@ -313,7 +302,6 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
         });
 
     if (!user) {
-      console.log('[/me DEBUG] ❌ Usuário não encontrado no banco (userId:', decoded.userId, ')');
       res.status(404).json({
         success: false,
         error: 'User not found',
@@ -322,8 +310,6 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
       return;
     }
 
-    console.log('[/me DEBUG] ✅ Usuário encontrado:', user.email, 'role:', user.role);
-    console.log('[/me DEBUG] Carregando stats...');
 
     // Dados já vem sem senha devido ao select explícito
     const userData = user;
@@ -334,8 +320,6 @@ router.get('/me', handleAsyncRoute(async (req, res) => {
       user.departmentId || undefined
     );
 
-    console.log('[/me DEBUG] ✅ Stats carregadas:', JSON.stringify(stats));
-    console.log('[/me DEBUG] ===== SUCESSO - ENVIANDO RESPOSTA =====');
 
     res.json({
       success: true,
