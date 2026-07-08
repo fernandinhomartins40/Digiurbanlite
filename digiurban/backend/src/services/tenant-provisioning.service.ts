@@ -73,6 +73,10 @@ export async function seedDefaultDepartments(
       tenantId,
       isActive: true,
     })),
+    // Com a unique composta [tenantId, name] (migration 20260708120000), o
+    // skipDuplicates é idempotência POR TENANT — nomes iguais em outros
+    // municípios não colidem mais. (Antes da conversão, o unique global fazia
+    // este seed pular silenciosamente secretarias já existentes no default.)
     skipDuplicates: true,
   });
   return result.count;

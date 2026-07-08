@@ -219,6 +219,96 @@ async function main(): Promise<void> {
   const byReserved = await TenantServiceClass.getByHost('www.digiurban.test');
   assert(byReserved?.id === DEFAULT_TENANT_ID, 'subdomínio reservado (www) → default', `got ${byReserved?.slug}`);
 
+  console.log('\n[16] CONVERSÃO DE UNIQUES: mesmos dados em municípios diferentes');
+  // 16a. Mesmo CPF de cidadão em dois tenants (antes: P2002 global)
+  const cpfShared = `777${stamp}`.slice(0, 11);
+  const c1 = await runAsTenant(DEFAULT_TENANT_ID, async () =>
+    await prisma.citizen.create({
+      data: { cpf: cpfShared, name: 'Maria (Sede)', email: `m-a-${stamp}@x.dev`, password: 'x' },
+    })
+  );
+  const c2 = await runAsTenant(tenantB.id, async () =>
+    await prisma.citizen.create({
+      data: { cpf: cpfShared, name: 'Maria (B)', email: `m-b-${stamp}@x.dev`, password: 'x' },
+    })
+  );
+  assert(c1.tenantId === DEFAULT_TENANT_ID && c2.tenantId === tenantB.id, 'mesmo CPF de cidadão em 2 municípios');
+
+  // 16b. Mesmo CPF duplicado DENTRO do mesmo tenant continua bloqueado
+  let dupBlocked = false;
+  try {
+    await runAsTenant(tenantB.id, async () =>
+      await prisma.citizen.create({
+        data: { cpf: cpfShared, name: 'Maria dup', email: `m-dup-${stamp}@x.dev`, password: 'x' },
+      })
+    );
+  } catch (e: any) {
+    dupBlocked = e?.code === 'P2002';
+  }
+  assert(dupBlocked, 'CPF duplicado no MESMO tenant segue bloqueado (P2002)');
+
+  // 16c. Mesmo email de servidor em dois tenants
+  const emailShared = `srv-${stamp}@x.dev`;
+  const u1 = await runAsTenant(DEFAULT_TENANT_ID, async () =>
+    await prisma.user.create({ data: { email: emailShared, name: 'Srv A', password: 'x' } })
+  );
+  const u2 = await runAsTenant(tenantB.id, async () =>
+    await prisma.user.create({ data: { email: emailShared, name: 'Srv B', password: 'x' } })
+  );
+  assert(u1.tenantId !== u2.tenantId, 'mesmo email de servidor em 2 municípios');
+
+  // 16d. Mesmo nome de secretaria em dois tenants (fix do provisionamento)
+  const deptName = `Secretaria de Saúde ${stamp}`;
+  await runAsTenant(DEFAULT_TENANT_ID, async () =>
+    await prisma.department.create({ data: { name: deptName } })
+  );
+  const dB = await runAsTenant(tenantB.id, async () =>
+    await prisma.department.create({ data: { name: deptName } })
+  );
+  assert(dB.tenantId === tenantB.id, 'mesma secretaria (nome) em 2 municípios');
+
+  // 16e. Mesmo moduleType de serviço em dois tenants
+  const mod = `MOD_${stamp}`;
+  await runAsTenant(DEFAULT_TENANT_ID, async () =>
+    await prisma.serviceSimplified.create({
+      data: { name: `Svc A ${stamp}`, departmentId: 'x', serviceType: 'SEM_DADOS' as any, moduleType: mod },
+    }).catch(() => null) // departmentId inválido pode falhar FK — o que importa é a unique
+  );
+  // criar com department real para garantir o teste da unique
+  const depA = await runAsTenant(DEFAULT_TENANT_ID, async () =>
+    await prisma.department.create({ data: { name: `DeptSvc A ${stamp}` } })
+  );
+  const depB2 = await runAsTenant(tenantB.id, async () =>
+    await prisma.department.create({ data: { name: `DeptSvc B ${stamp}` } })
+  );
+  const s1 = await runAsTenant(DEFAULT_TENANT_ID, async () =>
+    await prisma.serviceSimplified.create({
+      data: { name: `Svc A2 ${stamp}`, departmentId: depA.id, serviceType: 'SEM_DADOS' as any, moduleType: `${mod}_2` },
+    })
+  );
+  const s2 = await runAsTenant(tenantB.id, async () =>
+    await prisma.serviceSimplified.create({
+      data: { name: `Svc B2 ${stamp}`, departmentId: depB2.id, serviceType: 'SEM_DADOS' as any, moduleType: `${mod}_2` },
+    })
+  );
+  assert(s1.tenantId !== s2.tenantId && s1.moduleType === s2.moduleType, 'mesmo moduleType de serviço em 2 municípios');
+
+  console.log('\n[17] Provisionamento: seed de secretarias com nomes já existentes no outro tenant');
+  const { seedDefaultDepartments, DEFAULT_DEPARTMENTS } = await import('../src/services/tenant-provisioning.service');
+  // garantir que o tenant DEFAULT já tem todos os nomes padrão (como produção)
+  await runAsTenant(DEFAULT_TENANT_ID, async () => {
+    for (const d of DEFAULT_DEPARTMENTS) {
+      await prisma.department.create({ data: { name: d.name, code: d.code } }).catch(() => null);
+    }
+  });
+  const tenantC = await prisma.tenant.upsert({
+    where: { slug: 'smoke-c' },
+    update: {},
+    create: { slug: 'smoke-c', nome: 'Tenant C', cnpj: `33.333.${stamp % 1000}/0001-33`, nomeMunicipio: 'CidadeC', ufMunicipio: 'BA' },
+  });
+  const seeded = await runAsPlatform(async () => await seedDefaultDepartments(prisma, tenantC.id));
+  assert(seeded === DEFAULT_DEPARTMENTS.length, `provisionamento cria TODAS as ${DEFAULT_DEPARTMENTS.length} secretarias mesmo com nomes existentes no default`, `criou ${seeded}`);
+
   console.log('\n[14] Plataforma enxerga tudo (runAsPlatform sem filtro)');
   const platView = await runAsPlatform(async () =>
     await prisma.department.findMany({ where: { name: { contains: `${stamp}` } } })
@@ -227,8 +317,12 @@ async function main(): Promise<void> {
 
   // Limpeza dos artefatos do smoke (como plataforma, sem escopo)
   await runAsPlatform(async () => {
+    await prisma.serviceSimplified.deleteMany({ where: { name: { contains: `${stamp}` } } });
     await prisma.department.deleteMany({ where: { name: { contains: `${stamp}` } } });
+    await prisma.department.deleteMany({ where: { tenantId: tenantC.id } }); // seeds do teste 17
     await prisma.citizen.deleteMany({ where: { email: { endsWith: `${stamp}@x.dev` } } });
+    await prisma.user.deleteMany({ where: { email: { endsWith: `${stamp}@x.dev` } } });
+    await prisma.tenant.delete({ where: { id: tenantC.id } }).catch(() => null);
   });
 
   console.log(`\nRESULTADO: ${passed} passou / ${failed} falhou`);

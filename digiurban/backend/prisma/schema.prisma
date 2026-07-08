@@ -104,7 +104,7 @@ model User {
   // Vira NOT NULL + unique composta [tenantId, email] na conversão da Fase 2/4.
   tenantId            String?
   tenant              Tenant?   @relation("TenantUsers", fields: [tenantId], references: [id])
-  email               String    @unique
+  email               String // unique composta [tenantId, email] — ver @@unique abaixo
   name                String
   password            String
   role                UserRole  @default(USER)
@@ -119,8 +119,8 @@ model User {
   lastLogin           DateTime?
 
   // ✅ DADOS DE SERVIDOR PÚBLICO (Sistema Unificado)
-  cpf                String?   @unique // CPF do servidor
-  matricula          String?   @unique // Matrícula funcional
+  cpf                String? // CPF do servidor — unique composta [tenantId, cpf]
+  matricula          String? // Matrícula funcional — unique composta [tenantId, matricula]
   rg                 String? // RG
   dataNascimento     DateTime? // Data de nascimento
   telefone           String? // Telefone principal
@@ -244,6 +244,13 @@ model User {
   faceEnrollmentsApproved FaceEnrollment[]        @relation("FaceEnrollmentApprovedBy")
   faceEventsReviewed      FaceRecognitionEvent[]  @relation("FaceEventReviewedBy")
 
+  // Fase 2 (conversão): uniques POR TENANT — o mesmo email/CPF/matrícula pode
+  // existir em municípios diferentes. NOT NULL em tenantId chega em onda futura;
+  // até lá, linhas com tenantId NULL (plataforma) escapam da unicidade (NULLs
+  // são distintos no Postgres) — aceitável na transição.
+  @@unique([tenantId, email])
+  @@unique([tenantId, cpf])
+  @@unique([tenantId, matricula])
   @@index([tenantId])
   @@map("users")
 }
@@ -369,8 +376,8 @@ model Department {
   // Fase 2 Multi-Tenant (onda piloto) — ver nota em User.tenantId
   tenantId    String?
   tenant      Tenant?  @relation("TenantDepartments", fields: [tenantId], references: [id])
-  name        String   @unique
-  code        String?  @unique
+  name        String // unique composta [tenantId, name]
+  code        String? // unique composta [tenantId, code]
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
@@ -399,6 +406,8 @@ model Department {
   assignments         EmployeeAssignment[] @relation("DepartmentAssignments")
   teams               Team[]               @relation("DepartmentTeams")
 
+  @@unique([tenantId, name])
+  @@unique([tenantId, code])
   @@index([tenantId])
   @@map("departments")
 }
@@ -501,7 +510,7 @@ model Citizen {
   faceEventsAsStudent     FaceRecognitionEvent[]   @relation("FaceEventStudent")
   faceEventsAsGuardian    FaceRecognitionEvent[]   @relation("FaceEventGuardian")
 
-  @@unique([cpf])
+  @@unique([tenantId, cpf]) // Fase 2 (conversão): mesmo CPF pode existir em municípios diferentes
   @@index([tenantId])
   @@index([equipeId])
   @@index([microareaId])
@@ -760,7 +769,7 @@ model ServiceSimplified {
   serviceSubtype String? // "CAPTURA_COMPLETA", "SOLICITACAO_SIMPLES", "PAGAMENTO", "CONSULTIVO"
 
   // Para serviços COM_DADOS
-  moduleType           String? @unique // "ATENDIMENTOS_SAUDE", "MATRICULA_ALUNO", etc - DEVE SER ÚNICO
+  moduleType           String? // "ATENDIMENTOS_SAUDE", etc — unique composta [tenantId, moduleType]
   formSchema           Json? // Schema do formulário
   linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (alunos, dependentes, etc)
 
@@ -800,6 +809,7 @@ model ServiceSimplified {
   // ✅ NOVO: Workflow próprio do serviço
   workflow ServiceWorkflow?
 
+  @@unique([tenantId, moduleType])
   @@index([tenantId])
   @@map("services_simplified")
 }

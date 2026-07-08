@@ -321,7 +321,8 @@ export async function getWorkflowStats() {
  * Busca serviço para criar workflow
  */
 export async function getServiceForWorkflow(moduleType: string) {
-  const service = await prisma.serviceSimplified.findUnique({
+  // findFirst: unique agora é composta [tenantId, moduleType]; escopo via extension
+  const service = await prisma.serviceSimplified.findFirst({
     where: { moduleType }
   });
 

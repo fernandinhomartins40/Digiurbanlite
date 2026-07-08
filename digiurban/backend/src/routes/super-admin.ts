@@ -1506,7 +1506,8 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
     // Verificar se email já existe
     const normalizedEmail = normalizeEmail(email) || email;
 
-    const existingUser = await prisma.user.findUnique({
+    // findFirst: unique agora é composta [tenantId, email]; escopo por tenant via extension
+    const existingUser = await prisma.user.findFirst({
       where: { email: normalizedEmail }
     });
 
@@ -1871,7 +1872,8 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
     // Verificar se email já existe
     const normalizedEmail = normalizeEmail(email) || email;
 
-    const existingUser = await prisma.user.findUnique({
+    // findFirst: unique agora é composta [tenantId, email]; escopo por tenant via extension
+    const existingUser = await prisma.user.findFirst({
       where: { email: normalizedEmail }
     });
 
