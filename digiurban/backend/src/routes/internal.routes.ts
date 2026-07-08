@@ -5,6 +5,7 @@
 import { Router, Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
+import { internalTenantContextMiddleware } from '../middleware/internal-tenant-context';
 import { ensureProtocolDir, getProtocolFileUrl, uploadDocuments } from '../config/upload';
 import { prisma } from '../lib/prisma';
 import { validateServiceFormData } from '../lib/json-schema-validator';
@@ -30,6 +31,9 @@ const documentUploadService = new DocumentUploadService();
 
 // Aplicar middleware de autenticação em todas as rotas
 router.use(internalAuthMiddleware);
+// Fase 6 Multi-Tenant: corrige o contexto por requisicao (header X-Tenant-Id
+// ou derivacao pelo citizenId) — o host interno resolveria sempre p/ default.
+router.use(internalTenantContextMiddleware);
 
 const coerceObject = (value: any) => {
   if (value && typeof value === 'object' && !Array.isArray(value)) {

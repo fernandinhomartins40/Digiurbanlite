@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTenant } from '@/components/providers/TenantProvider';
 import { ChevronRight, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
@@ -152,6 +153,7 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
   const pathname = usePathname();
   const { stats, user } = useAdminAuth();
   const { hasPermission, hasMinRole } = useAdminPermissions();
+  const { isFeatureEnabled } = useTenant();
   const [query, setQuery] = useState('');
 
   const mainNavigation = useMemo(
@@ -202,11 +204,19 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
       allSections
         .map((section) => ({
           ...section,
-          items: section.items.filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole)),
+          items: section.items
+            .filter((item) => shouldShowNavItem(item, hasPermission, hasMinRole))
+            // Fase 7 Multi-Tenant: secretarias fora do plano do municipio somem
+            // do menu (o backend tambem nega via requireFeature — UI esconde,
+            // API nega). Convencao: feature = slug de /admin/secretarias/<slug>.
+            .filter((item) => {
+              const m = item.href.match(/^\/admin\/secretarias\/([a-z0-9-]+)/);
+              return m ? isFeatureEnabled(m[1]) : true;
+            }),
         }))
         .filter((section) => section.title !== mayorPortalNavigation.title)
         .filter((section) => section.items.length > 0),
-    [allSections, hasMinRole, hasPermission]
+    [allSections, hasMinRole, hasPermission, isFeatureEnabled]
   );
 
   const visibleMayorPortalItems = useMemo(

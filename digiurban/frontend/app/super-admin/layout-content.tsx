@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { SuperAdminAuthProvider, useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 import {
+  Building2,
   LayoutDashboard,
   UserCog,
   Users,
@@ -48,6 +49,11 @@ const menuItems: MenuItem[] = [
     title: 'Dashboard',
     href: '/super-admin',
     icon: LayoutDashboard
+  },
+  {
+    title: 'Municipios',
+    href: '/super-admin/tenants',
+    icon: Building2
   },
   {
     title: 'Usuários Admin',

@@ -44,6 +44,9 @@ async function main(): Promise<void> {
     // onda 2 (família de protocolo)
     'ProtocolHistorySimplified', 'ProtocolEvaluationSimplified', 'ProtocolSLA',
     'ProtocolDocument', 'ProtocolInteraction', 'ProtocolPending',
+    // onda 5 (amostra dos 56)
+    'UnidadeSaude', 'Medicamento', 'Matricula', 'OrganizationalUnit', 'Team',
+    'CitizenCategory', 'AdminTicket', 'AgendaEvent', 'DigitalCertificate',
   ]) {
     assert(scoped.includes(expected), `${expected} é tenant-scoped`);
   }

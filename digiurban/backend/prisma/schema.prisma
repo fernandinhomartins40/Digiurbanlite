@@ -63,6 +63,64 @@ model Tenant {
   protocolStages     ProtocolStage[]     @relation("TenantProtocolStages")
   protocolDataFields ProtocolDataField[] @relation("TenantProtocolDataFields")
 
+  // Fase 2 (onda 5): módulos
+  unidadeSaudeList UnidadeSaude[] @relation("TenantUnidadeSaude")
+  agendaMedicaList AgendaMedica[] @relation("TenantAgendaMedica")
+  consultaAgendadaList ConsultaAgendada[] @relation("TenantConsultaAgendada")
+  atendimentoMedicoList AtendimentoMedico[] @relation("TenantAtendimentoMedico")
+  consultaMedicaList ConsultaMedica[] @relation("TenantConsultaMedica")
+  atendimentoOdontologicoList AtendimentoOdontologico[] @relation("TenantAtendimentoOdontologico")
+  acompanhamentoPreNatalList AcompanhamentoPreNatal[] @relation("TenantAcompanhamentoPreNatal")
+  visitaDomiciliarList VisitaDomiciliar[] @relation("TenantVisitaDomiciliar")
+  prescricaoList Prescricao[] @relation("TenantPrescricao")
+  exameSolicitadoList ExameSolicitado[] @relation("TenantExameSolicitado")
+  atestadoList Atestado[] @relation("TenantAtestado")
+  encaminhamentoList Encaminhamento[] @relation("TenantEncaminhamento")
+  medicamentoList Medicamento[] @relation("TenantMedicamento")
+  estoqueMedicamentoList EstoqueMedicamento[] @relation("TenantEstoqueMedicamento")
+  dispensacaoMedicamentoList DispensacaoMedicamento[] @relation("TenantDispensacaoMedicamento")
+  loteMedicamentoList LoteMedicamento[] @relation("TenantLoteMedicamento")
+  transferenciaEstoqueList TransferenciaEstoque[] @relation("TenantTransferenciaEstoque")
+  alertaEstoqueList AlertaEstoque[] @relation("TenantAlertaEstoque")
+  solicitacaoTFDList SolicitacaoTFD[] @relation("TenantSolicitacaoTFD")
+  viagemTFDList ViagemTFD[] @relation("TenantViagemTFD")
+  veiculoTFDList VeiculoTFD[] @relation("TenantVeiculoTFD")
+  motoristaTFDList MotoristaTFD[] @relation("TenantMotoristaTFD")
+  equipeSaudeList EquipeSaude[] @relation("TenantEquipeSaude")
+  microareaList Microarea[] @relation("TenantMicroarea")
+  filaAtendimentoList FilaAtendimento[] @relation("TenantFilaAtendimento")
+  escutaInicialList EscutaInicial[] @relation("TenantEscutaInicial")
+  triagemEnfermagemList TriagemEnfermagem[] @relation("TenantTriagemEnfermagem")
+  atividadeColetivaList AtividadeColetiva[] @relation("TenantAtividadeColetiva")
+  configuracaoAgendaList ConfiguracaoAgenda[] @relation("TenantConfiguracaoAgenda")
+  salaConsultorioList SalaConsultorio[] @relation("TenantSalaConsultorio")
+  turnoTrabalhoList TurnoTrabalho[] @relation("TenantTurnoTrabalho")
+  configuracaoAtendimentoList ConfiguracaoAtendimento[] @relation("TenantConfiguracaoAtendimento")
+  unidadeEducacaoList UnidadeEducacao[] @relation("TenantUnidadeEducacao")
+  inscricaoMatriculaList InscricaoMatricula[] @relation("TenantInscricaoMatricula")
+  matriculaList Matricula[] @relation("TenantMatricula")
+  turmaList Turma[] @relation("TenantTurma")
+  veiculoEscolarList VeiculoEscolar[] @relation("TenantVeiculoEscolar")
+  rotaEscolarList RotaEscolar[] @relation("TenantRotaEscolar")
+  professorList Professor[] @relation("TenantProfessor")
+  unidadeCRASList UnidadeCRAS[] @relation("TenantUnidadeCRAS")
+  programaSocialList ProgramaSocial[] @relation("TenantProgramaSocial")
+  cadUnicoFamiliaList CadUnicoFamilia[] @relation("TenantCadUnicoFamilia")
+  inscricaoProgramaSocialList InscricaoProgramaSocial[] @relation("TenantInscricaoProgramaSocial")
+  organizationalUnitList OrganizationalUnit[] @relation("TenantOrganizationalUnit")
+  positionList Position[] @relation("TenantPosition")
+  functionList Function[] @relation("TenantFunction")
+  employeeAssignmentList EmployeeAssignment[] @relation("TenantEmployeeAssignment")
+  teamList Team[] @relation("TenantTeam")
+  agendaEventList AgendaEvent[] @relation("TenantAgendaEvent")
+  centralCalendarList CentralCalendar[] @relation("TenantCentralCalendar")
+  centralCalendarEventList CentralCalendarEvent[] @relation("TenantCentralCalendarEvent")
+  citizenCategoryList CitizenCategory[] @relation("TenantCitizenCategory")
+  digitalCertificateList DigitalCertificate[] @relation("TenantDigitalCertificate")
+  externalDocumentList ExternalDocument[] @relation("TenantExternalDocument")
+  certificateRequestList CertificateRequest[] @relation("TenantCertificateRequest")
+  adminTicketList AdminTicket[] @relation("TenantAdminTicket")
+
   @@map("tenants")
 }
 
@@ -947,7 +1005,10 @@ model ProtocolEvaluationSimplified {
 
 model AdminTicket {
   id     String @id @default(cuid())
-  number String @unique // CH-2025-XXXXX
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAdminTicket", fields: [tenantId], references: [id])
+  number String // CH-2025-XXXXX
 
   // Dados da solicitação
   title       String
@@ -994,6 +1055,8 @@ model AdminTicket {
   @@index([departmentId, status])
   @@index([createdAt])
   @@index([requestedById])
+  @@unique([tenantId, number]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("admin_tickets")
 }
 
@@ -2570,6 +2633,9 @@ model PageConfiguration {
 
 model AgendaEvent {
   id             String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAgendaEvent", fields: [tenantId], references: [id])
   tipo           String
   titulo         String
   descricao      String?
@@ -2587,6 +2653,7 @@ model AgendaEvent {
 
   @@index([dataHoraInicio])
   @@index([status])
+  @@index([tenantId])
   @@map("agenda_events")
 }
 
@@ -2647,6 +2714,9 @@ enum CentralCalendarVisibilityScope {
 
 model CentralCalendar {
   id          String              @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantCentralCalendar", fields: [tenantId], references: [id])
   name        String
   description String?
   type        CentralCalendarType @default(PERSONAL)
@@ -2677,6 +2747,7 @@ model CentralCalendar {
   @@index([departmentId, isActive])
   @@index([organizationalUnitId, isActive])
   @@index([serviceId, isActive])
+  @@index([tenantId])
   @@map("central_calendars")
 }
 
@@ -2703,6 +2774,9 @@ model CentralCalendarMember {
 
 model CentralCalendarEvent {
   id        String                     @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantCentralCalendarEvent", fields: [tenantId], references: [id])
   title     String
   startAt   DateTime
   endAt     DateTime
@@ -2758,6 +2832,7 @@ model CentralCalendarEvent {
   @@index([protocolStageId])
   @@index([departmentId, startAt])
   @@index([organizationalUnitId, startAt])
+  @@index([tenantId])
   @@map("central_calendar_events")
 }
 
@@ -3145,6 +3220,9 @@ enum HousingAttendanceStatus {
 // Unidades de Saúde (UBS, UPA, Hospitais, etc.) - ATUALIZADO
 model UnidadeSaude {
   id                String           @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantUnidadeSaude", fields: [tenantId], references: [id])
   nome              String
   tipo              String // 'UBS', 'UPA', 'Hospital', 'Clínica', 'Posto', 'Outro'
   fluxoAtendimento  FluxoAtendimento @default(TRADICIONAL) // ✅ NOVO: Tipo de fluxo de atendimento
@@ -3193,12 +3271,16 @@ model UnidadeSaude {
   @@index([isActive])
   @@index([cnes])
   @@index([organizationalUnitId])
+  @@index([tenantId])
   @@map("unidades_saude")
 }
 
 // Unidades Educacionais (Escolas, Creches, etc.)
 model UnidadeEducacao {
   id           String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantUnidadeEducacao", fields: [tenantId], references: [id])
   nome         String
   tipo         String // 'Escola', 'Creche', 'EMEI', 'EMEF', 'CEI', 'Outro'
   endereco     String?
@@ -3223,12 +3305,16 @@ model UnidadeEducacao {
   @@index([tipo, isActive])
   @@index([isActive])
   @@index([organizationalUnitId])
+  @@index([tenantId])
   @@map("unidades_educacao")
 }
 
 // Unidades de Assistência Social (CRAS, CREAS)
 model UnidadeCRAS {
   id        String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantUnidadeCRAS", fields: [tenantId], references: [id])
   nome      String
   tipo      String // 'CRAS', 'CREAS'
   endereco  String?
@@ -3248,6 +3334,7 @@ model UnidadeCRAS {
   @@index([tipo, isActive])
   @@index([isActive])
   @@index([organizationalUnitId])
+  @@index([tenantId])
   @@map("unidades_cras")
 }
 
@@ -3379,7 +3466,10 @@ model EstabelecimentoTuristico {
 // Programas Sociais
 model ProgramaSocial {
   id                     String    @id @default(cuid())
-  nome                   String    @unique
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProgramaSocial", fields: [tenantId], references: [id])
+  nome                   String
   descricao              String?
   tipo                   String? // 'Transferência de Renda', 'Apoio Social', 'Capacitação'
   criteriosElegibilidade Json? // Critérios estruturados
@@ -3396,6 +3486,8 @@ model ProgramaSocial {
 
   @@index([tipo, isActive])
   @@index([isActive])
+  @@unique([tenantId, nome]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("programas_sociais")
 }
 
@@ -3666,8 +3758,11 @@ model ProgramaAmbiental {
 // Professores e Instrutores
 model Professor {
   id              String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantProfessor", fields: [tenantId], references: [id])
   nome            String
-  cpf             String   @unique
+  cpf             String
   formacao        String?
   especializacoes Json? // Array de especializações
   areasAtuacao    Json? // Array de áreas
@@ -3681,6 +3776,8 @@ model Professor {
 
   @@index([vinculo, isActive])
   @@index([isActive])
+  @@unique([tenantId, cpf]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("professores")
 }
 
@@ -3806,6 +3903,9 @@ model WorkflowHistory {
 // MS-02: Agenda Médica Inteligente (ATUALIZADO)
 model AgendaMedica {
   id              String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAgendaMedica", fields: [tenantId], references: [id])
   profissionalId  String
   unidadeId       String
   especialidadeId String? // ✅ NOVO: Especialidade vinculada à agenda
@@ -3837,11 +3937,15 @@ model AgendaMedica {
   @@index([unidadeId, isActive])
   @@index([especialidadeId, isActive])
   @@index([salaId, diaSemana])
+  @@index([tenantId])
   @@map("agendas_medicas")
 }
 
 model ConsultaAgendada {
   id             String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantConsultaAgendada", fields: [tenantId], references: [id])
   agendaId       String
   agenda         AgendaMedica   @relation(fields: [agendaId], references: [id])
   citizenId      String
@@ -3860,6 +3964,7 @@ model ConsultaAgendada {
   @@index([agendaId, dataHora])
   @@index([citizenId])
   @@index([status])
+  @@index([tenantId])
   @@map("consultas_agendadas")
 }
 
@@ -3874,6 +3979,9 @@ enum ConsultaStatus {
 // MS-03: Prontuário Eletrônico do Paciente (PEP)
 model AtendimentoMedico {
   id                 String            @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAtendimentoMedico", fields: [tenantId], references: [id])
   workflowId         String            @unique
   protocolId         String?           @unique
   consultaAgendadaId String?           @unique
@@ -3918,6 +4026,7 @@ model AtendimentoMedico {
   @@index([status])
   @@index([workflowId])
   @@index([filaAtendimentoId])
+  @@index([tenantId])
   @@map("atendimentos_medicos")
 }
 
@@ -3939,6 +4048,9 @@ enum AtendimentoStatus {
 // ✅ FASE 1.1: CONSULTA MÉDICA COM MÉTODO SOAP
 model ConsultaMedica {
   id                  String            @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantConsultaMedica", fields: [tenantId], references: [id])
   atendimentoId       String            @unique
   atendimento         AtendimentoMedico @relation(fields: [atendimentoId], references: [id])
   medicoId            String
@@ -3990,6 +4102,7 @@ model ConsultaMedica {
 
   // Relacionamento com Pré-Natal (se for consulta obstétrica)
   consultaPreNatal ConsultaPreNatal?
+  @@index([tenantId])
 
   @@map("consultas_medicas")
 }
@@ -4102,6 +4215,9 @@ enum GravidadeAlergia {
 // ✅ FASE 2.1: ATENDIMENTO ODONTOLÓGICO
 model AtendimentoOdontologico {
   id            String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAtendimentoOdontologico", fields: [tenantId], references: [id])
   atendimentoId String @unique
   dentistaId    String
 
@@ -4126,6 +4242,7 @@ model AtendimentoOdontologico {
   // Relacionamentos
   atendimento AtendimentoMedico @relation("AtendimentoOdonto", fields: [atendimentoId], references: [id])
   dentista    User              @relation("DentistaAtendimentos", fields: [dentistaId], references: [id])
+  @@index([tenantId])
 
   @@map("atendimentos_odontologicos")
 }
@@ -4154,6 +4271,9 @@ model ProcedimentoOdonto {
 // ✅ FASE 2.2: ACOMPANHAMENTO PRÉ-NATAL
 model AcompanhamentoPreNatal {
   id        String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAcompanhamentoPreNatal", fields: [tenantId], references: [id])
   citizenId String @unique // Uma gestação ativa por cidadã
 
   // Dados da Gestação
@@ -4202,6 +4322,7 @@ model AcompanhamentoPreNatal {
 
   @@index([status])
   @@index([riscoGestacional])
+  @@index([tenantId])
   @@map("acompanhamento_pre_natal")
 }
 
@@ -4296,6 +4417,9 @@ enum TipoExamePreNatal {
 // ✅ FASE 2.3: VISITA DOMICILIAR (ACS)
 model VisitaDomiciliar {
   id          String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantVisitaDomiciliar", fields: [tenantId], references: [id])
   acsId       String // Agente Comunitário de Saúde
   citizenId   String? // Cidadão visitado (opcional)
   domicilioId String? // Se houver cadastro domiciliar
@@ -4333,6 +4457,7 @@ model VisitaDomiciliar {
   @@index([acsId, dataVisita])
   @@index([citizenId])
   @@index([tipoVisita])
+  @@index([tenantId])
   @@map("visitas_domiciliares")
 }
 
@@ -4355,6 +4480,9 @@ enum TipoVisita {
 
 model Prescricao {
   id           String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantPrescricao", fields: [tenantId], references: [id])
   consultaId   String
   consulta     ConsultaMedica @relation(fields: [consultaId], references: [id])
   medicamentos Json
@@ -4364,11 +4492,15 @@ model Prescricao {
   dataHora     DateTime       @default(now())
 
   @@index([consultaId])
+  @@index([tenantId])
   @@map("prescricoes")
 }
 
 model ExameSolicitado {
   id            String          @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantExameSolicitado", fields: [tenantId], references: [id])
   consultaId    String
   consulta      ConsultaMedica  @relation(fields: [consultaId], references: [id])
   tipoExame     String
@@ -4380,6 +4512,7 @@ model ExameSolicitado {
   dataHora      DateTime        @default(now())
 
   @@index([consultaId])
+  @@index([tenantId])
   @@map("exames_solicitados")
 }
 
@@ -4400,6 +4533,9 @@ enum StatusExame {
 
 model Atestado {
   id              String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAtestado", fields: [tenantId], references: [id])
   consultaId      String
   consulta        ConsultaMedica @relation(fields: [consultaId], references: [id])
   tipo            TipoAtestado
@@ -4411,6 +4547,7 @@ model Atestado {
   dataHora        DateTime       @default(now())
 
   @@index([consultaId])
+  @@index([tenantId])
   @@map("atestados")
 }
 
@@ -4422,6 +4559,9 @@ enum TipoAtestado {
 
 model Encaminhamento {
   id              String                   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantEncaminhamento", fields: [tenantId], references: [id])
   consultaId      String
   consulta        ConsultaMedica           @relation(fields: [consultaId], references: [id])
   especialidade   String
@@ -4432,6 +4572,7 @@ model Encaminhamento {
   dataHora        DateTime                 @default(now())
 
   @@index([consultaId])
+  @@index([tenantId])
   @@map("encaminhamentos")
 }
 
@@ -4490,6 +4631,9 @@ enum StatusDispensacao {
 
 model Medicamento {
   id             String           @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantMedicamento", fields: [tenantId], references: [id])
   nome           String
   principioAtivo String
   apresentacao   String
@@ -4514,11 +4658,15 @@ model Medicamento {
 
   @@index([nome])
   @@index([isRename])
+  @@index([tenantId])
   @@map("medicamentos")
 }
 
 model EstoqueMedicamento {
   id               String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantEstoqueMedicamento", fields: [tenantId], references: [id])
   medicamentoId    String
   medicamento      Medicamento    @relation(fields: [medicamentoId], references: [id])
   unidadeId        String
@@ -4535,11 +4683,15 @@ model EstoqueMedicamento {
 
   @@index([medicamentoId, unidadeId])
   @@index([validade])
+  @@index([tenantId])
   @@map("estoque_medicamentos")
 }
 
 model DispensacaoMedicamento {
   id            String             @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantDispensacaoMedicamento", fields: [tenantId], references: [id])
   prescricaoId  String?
   medicamentoId String
   estoqueId     String?
@@ -4554,12 +4706,16 @@ model DispensacaoMedicamento {
 
   @@index([citizenId])
   @@index([data])
+  @@index([tenantId])
   @@map("dispensacao_medicamentos")
 }
 
 // MS-06: TFD - Tratamento Fora do Domicílio
 model SolicitacaoTFD {
   id             String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantSolicitacaoTFD", fields: [tenantId], references: [id])
   workflowId     String  @unique
   protocolId     String  @unique
   citizenId      String
@@ -4624,6 +4780,7 @@ model SolicitacaoTFD {
   @@index([workflowId])
   @@index([protocolId])
   @@index([especialidadeId])
+  @@index([tenantId])
   @@map("solicitacoes_tfd")
 }
 
@@ -4654,6 +4811,9 @@ enum TFDStatus {
 
 model ViagemTFD {
   id               String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantViagemTFD", fields: [tenantId], references: [id])
   solicitacaoTFDId String
   solicitacao      SolicitacaoTFD @relation(fields: [solicitacaoTFDId], references: [id])
 
@@ -4694,6 +4854,7 @@ model ViagemTFD {
   @@index([solicitacaoTFDId])
   @@index([veiculoId])
   @@index([motoristaId])
+  @@index([tenantId])
   @@map("viagens_tfd")
 }
 
@@ -4712,6 +4873,9 @@ enum StatusViagemTFD {
 
 model VeiculoTFD {
   id             String           @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantVeiculoTFD", fields: [tenantId], references: [id])
   placa          String           @unique
   modelo         String
   ano            Int
@@ -4729,6 +4893,7 @@ model VeiculoTFD {
   viagens ViagemTFD[]
 
   @@index([status])
+  @@index([tenantId])
   @@map("veiculos_tfd")
 }
 
@@ -4741,6 +4906,9 @@ enum StatusVeiculoTFD {
 
 model MotoristaTFD {
   id           String             @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantMotoristaTFD", fields: [tenantId], references: [id])
   userId       String             @unique
   nome         String
   cpf          String             @unique
@@ -4757,6 +4925,7 @@ model MotoristaTFD {
   viagens ViagemTFD[]
 
   @@index([status])
+  @@index([tenantId])
   @@map("motoristas_tfd")
 }
 
@@ -4809,6 +4978,9 @@ model DestinoTFD {
 // MS-08: Sistema de Matrículas
 model InscricaoMatricula {
   id            String           @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantInscricaoMatricula", fields: [tenantId], references: [id])
   workflowId    String           @unique
   alunoId       String
   responsavelId String
@@ -4855,6 +5027,7 @@ model InscricaoMatricula {
   @@index([serie, turno, status])
   @@index([escolaAtribuida, status])
   @@index([workflowId])
+  @@index([tenantId])
   @@map("inscricoes_matricula")
 }
 
@@ -4882,6 +5055,9 @@ enum MatriculaStatus {
 
 model Matricula {
   id                  String             @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantMatricula", fields: [tenantId], references: [id])
   inscricaoId         String             @unique
   inscricao           InscricaoMatricula @relation(fields: [inscricaoId], references: [id])
   alunoId             String
@@ -4890,7 +5066,7 @@ model Matricula {
   turmaId             String
   turma               Turma              @relation(fields: [turmaId], references: [id])
   anoLetivo           Int
-  numeroMatricula     String             @unique
+  numeroMatricula     String
   dataMatricula       DateTime           @default(now())
   dataInicio          DateTime?
   situacao            SituacaoMatricula
@@ -4902,6 +5078,8 @@ model Matricula {
 
   @@index([alunoId, anoLetivo])
   @@index([turmaId, situacao])
+  @@unique([tenantId, numeroMatricula]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("matriculas")
 }
 
@@ -4914,8 +5092,11 @@ enum SituacaoMatricula {
 
 model Turma {
   id                String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantTurma", fields: [tenantId], references: [id])
   unidadeEducacaoId String
-  codigo            String   @unique
+  codigo            String
   nome              String?
   serie             String
   turno             Turno
@@ -4932,6 +5113,8 @@ model Turma {
   matriculas Matricula[]
 
   @@index([unidadeEducacaoId, serie, turno, ano])
+  @@unique([tenantId, codigo]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("turmas")
 }
 
@@ -4952,6 +5135,9 @@ enum TipoTurma {
 // MS-09: Gestão de Transporte Escolar
 model VeiculoEscolar {
   id             String        @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantVeiculoEscolar", fields: [tenantId], references: [id])
   placa          String        @unique
   modelo         String
   capacidade     Int
@@ -4964,6 +5150,7 @@ model VeiculoEscolar {
   updatedAt      DateTime      @updatedAt
 
   @@index([status])
+  @@index([tenantId])
   @@map("veiculos_escolares")
 }
 
@@ -4976,6 +5163,9 @@ enum VeiculoStatus {
 
 model RotaEscolar {
   id             String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantRotaEscolar", fields: [tenantId], references: [id])
   nome           String
   veiculoId      String
   motoristaId    String
@@ -4988,6 +5178,7 @@ model RotaEscolar {
   updatedAt      DateTime @updatedAt
 
   @@index([turno])
+  @@index([tenantId])
   @@map("rotas_escolares")
 }
 
@@ -5011,6 +5202,9 @@ model AlunoRota {
 // MS-14: CadÚnico Municipal
 model CadUnicoFamilia {
   id                    String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantCadUnicoFamilia", fields: [tenantId], references: [id])
   workflowId            String  @unique
   responsavelFamiliarId String
   nisResponsavel        String? @unique
@@ -5077,6 +5271,7 @@ model CadUnicoFamilia {
   @@index([status])
   @@index([proximaAtualizacao])
   @@index([workflowId])
+  @@index([tenantId])
   @@map("cadunico_familias")
 }
 
@@ -5205,6 +5400,9 @@ enum SituacaoTrabalho {
 // MS-15: Gestão de Programas Sociais
 model InscricaoProgramaSocial {
   id               String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantInscricaoProgramaSocial", fields: [tenantId], references: [id])
   workflowId       String  @unique
   programaId       String
   programaSocialId String?
@@ -5261,6 +5459,7 @@ model InscricaoProgramaSocial {
   @@index([beneficiarioId])
   @@index([numeroBeneficio])
   @@index([workflowId])
+  @@index([tenantId])
   @@map("inscricoes_programas_sociais")
 }
 
@@ -6141,7 +6340,10 @@ model GeneratedDocument {
 
 model CitizenCategory {
   id          String  @id @default(cuid())
-  code        String  @unique // Ex: PRODUTOR_RURAL, ARTISTA_LOCAL
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantCitizenCategory", fields: [tenantId], references: [id])
+  code        String // Ex: PRODUTOR_RURAL, ARTISTA_LOCAL
   name        String // Ex: "Produtor Rural", "Artista Local"
   description String? @db.Text
   department  String // Departamento responsável
@@ -6212,6 +6414,8 @@ model CitizenCategory {
   @@index([categoryType])
   @@index([hasValidity])
   @@index([hasProgression])
+  @@unique([tenantId, code]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("citizen_categories")
 }
 
@@ -6485,6 +6689,9 @@ enum RevocationReason {
 // Certificados Digitais
 model DigitalCertificate {
   id              String          @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantDigitalCertificate", fields: [tenantId], references: [id])
   userId          String? // FK para User (servidor) - opcional
   citizenId       String? // FK para Citizen (cidadão) - opcional
   certificateType CertificateType // Tipo de certificado
@@ -6534,6 +6741,7 @@ model DigitalCertificate {
   @@index([status])
   @@index([expiresAt])
   @@index([thumbprint])
+  @@index([tenantId])
   @@map("digital_certificates")
 }
 
@@ -6603,6 +6811,9 @@ model CertificateRevocationList {
 // Solicitações de Certificado Digital
 model CertificateRequest {
   id     String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantCertificateRequest", fields: [tenantId], references: [id])
   userId String // FK para User (solicitante)
 
   // Informações do Certificado Solicitado
@@ -6637,6 +6848,7 @@ model CertificateRequest {
   @@index([status])
   @@index([requestedAt])
   @@index([reviewedBy])
+  @@index([tenantId])
   @@map("certificate_requests")
 }
 
@@ -6840,6 +7052,9 @@ model FlowExecution {
 // Documentos externos enviados por usuários para assinatura digital
 model ExternalDocument {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantExternalDocument", fields: [tenantId], references: [id])
 
   // Proprietário do documento
   userId    String? // Servidor/Admin que fez upload
@@ -6873,6 +7088,7 @@ model ExternalDocument {
   @@index([citizenId])
   @@index([uploadedAt])
   @@index([isActive])
+  @@index([tenantId])
   @@map("external_documents")
 }
 
@@ -7022,6 +7238,9 @@ model ImunizacaoCidadao {
 
 model LoteMedicamento {
   id              String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantLoteMedicamento", fields: [tenantId], references: [id])
   medicamentoId   String
   lote            String
   dataFabricacao  DateTime
@@ -7040,11 +7259,15 @@ model LoteMedicamento {
   @@index([medicamentoId])
   @@index([unidadeId])
   @@index([dataValidade])
+  @@index([tenantId])
   @@map("lote_medicamento")
 }
 
 model TransferenciaEstoque {
   id                 String              @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantTransferenciaEstoque", fields: [tenantId], references: [id])
   medicamentoId      String
   unidadeOrigemId    String
   unidadeDestinoId   String
@@ -7066,6 +7289,7 @@ model TransferenciaEstoque {
   @@index([unidadeOrigemId])
   @@index([unidadeDestinoId])
   @@index([status])
+  @@index([tenantId])
   @@map("transferencia_estoque")
 }
 
@@ -7078,6 +7302,9 @@ enum StatusTransferencia {
 
 model AlertaEstoque {
   id               String            @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAlertaEstoque", fields: [tenantId], references: [id])
   medicamentoId    String
   unidadeId        String
   tipoAlerta       TipoAlertaEstoque
@@ -7095,6 +7322,7 @@ model AlertaEstoque {
   @@index([unidadeId])
   @@index([tipoAlerta])
   @@index([visualizado])
+  @@index([tenantId])
   @@map("alerta_estoque")
 }
 
@@ -7276,6 +7504,9 @@ enum StatusPrestacao {
 // ✅ NOVA TABELA: Salas/Consultórios
 model SalaConsultorio {
   id           String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantSalaConsultorio", fields: [tenantId], references: [id])
   nome         String // "Consultório 1", "Sala de Curativos", "Sala de Enfermagem"
   numero       String? // Número da sala/identificação
   tipo         TipoSala // Tipo de sala
@@ -7294,6 +7525,7 @@ model SalaConsultorio {
 
   @@index([unidadeId, ativa])
   @@index([tipo, ativa])
+  @@index([tenantId])
   @@map("salas_consultorios")
 }
 
@@ -7315,7 +7547,10 @@ enum TipoSala {
 // ✅ NOVA TABELA: Turnos de Trabalho
 model TurnoTrabalho {
   id         String   @id @default(cuid())
-  nome       String   @unique // "Manhã", "Tarde", "Noite", "Integral"
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantTurnoTrabalho", fields: [tenantId], references: [id])
+  nome       String // "Manhã", "Tarde", "Noite", "Integral"
   descricao  String?
   horaInicio String // "08:00"
   horaFim    String // "12:00"
@@ -7329,12 +7564,17 @@ model TurnoTrabalho {
   agendas AgendaMedica[]
 
   @@index([ativo])
+  @@unique([tenantId, nome]) // Fase 2: por tenant
+  @@index([tenantId])
   @@map("turnos_trabalho")
 }
 
 // ✅ NOVA TABELA: Configurações de Atendimento por Unidade
 model ConfiguracaoAtendimento {
   id        String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantConfiguracaoAtendimento", fields: [tenantId], references: [id])
   unidadeId String @unique
 
   // Configurações de Senhas e Filas
@@ -7380,6 +7620,7 @@ model ConfiguracaoAtendimento {
 
   // Relacionamento
   unidade UnidadeSaude @relation(fields: [unidadeId], references: [id])
+  @@index([tenantId])
 
   @@map("configuracoes_atendimento")
 }
@@ -7528,6 +7769,9 @@ enum StatusTransmissao {
 // ✅ EQUIPES DE SAÚDE (PSF/ESF)
 model EquipeSaude {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantEquipeSaude", fields: [tenantId], references: [id])
 
   // Identificação
   ine  String     @unique // Identificação Nacional de Equipes
@@ -7560,6 +7804,7 @@ model EquipeSaude {
   @@index([unidadeId])
   @@index([ativo])
   @@index([teamId])
+  @@index([tenantId])
   @@map("equipes_saude")
 }
 
@@ -7611,6 +7856,9 @@ model ProfissionalEquipe {
 // ✅ MICROÁREAS (TERRITORIALIZAÇÃO)
 model Microarea {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantMicroarea", fields: [tenantId], references: [id])
 
   // Identificação
   numero    String
@@ -7637,12 +7885,16 @@ model Microarea {
   @@unique([equipeId, numero])
   @@index([equipeId])
   @@index([acsId])
+  @@index([tenantId])
   @@map("microareas")
 }
 
 // ✅ FILA DE ATENDIMENTO (LISTA DE PACIENTES)
 model FilaAtendimento {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantFilaAtendimento", fields: [tenantId], references: [id])
 
   // Cidadão
   citizenId String
@@ -7709,6 +7961,7 @@ model FilaAtendimento {
   @@index([status])
   @@index([dataHoraChegada])
   @@index([prioridade])
+  @@index([tenantId])
   @@map("fila_atendimento")
 }
 
@@ -7781,6 +8034,9 @@ enum CondutaAcolhimento {
 // ✅ ESCUTA INICIAL / ACOLHIMENTO
 model EscutaInicial {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantEscutaInicial", fields: [tenantId], references: [id])
 
   // Vinculação com fila
   filaAtendimentoId String          @unique
@@ -7839,6 +8095,7 @@ model EscutaInicial {
   @@index([unidadeId])
   @@index([riscoEsperado])
   @@index([condutaDefinida])
+  @@index([tenantId])
   @@map("escutas_iniciais")
 }
 
@@ -7867,6 +8124,9 @@ enum CondutaEscutaInicial {
 // ✅ TRIAGEM DE ENFERMAGEM
 model TriagemEnfermagem {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantTriagemEnfermagem", fields: [tenantId], references: [id])
 
   // Vinculação com fila
   filaAtendimentoId String          @unique
@@ -7925,6 +8185,7 @@ model TriagemEnfermagem {
   @@index([enfermeiroId])
   @@index([unidadeId])
   @@index([classificacaoRisco])
+  @@index([tenantId])
   @@map("triagens_enfermagem")
 }
 
@@ -7945,6 +8206,9 @@ enum ClassificacaoManchester {
 // ✅ ATIVIDADE COLETIVA
 model AtividadeColetiva {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantAtividadeColetiva", fields: [tenantId], references: [id])
 
   // Identificação
   tipo      TipoAtividadeColetiva
@@ -7991,6 +8255,7 @@ model AtividadeColetiva {
   @@index([dataHora])
   @@index([tipo])
   @@index([status])
+  @@index([tenantId])
   @@map("atividades_coletivas")
 }
 
@@ -8063,6 +8328,9 @@ model ParticipanteAtividade {
 // ✅ CONFIGURAÇÃO DE AGENDA
 model ConfiguracaoAgenda {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantConfiguracaoAgenda", fields: [tenantId], references: [id])
 
   // Profissional
   profissionalId String
@@ -8106,6 +8374,7 @@ model ConfiguracaoAgenda {
   @@index([profissionalId])
   @@index([unidadeId])
   @@index([ativo])
+  @@index([tenantId])
   @@map("configuracoes_agenda")
 }
 
@@ -8157,6 +8426,9 @@ enum TipoIndisponibilidadeProfissional {
 
 model OrganizationalUnit {
   id    String                    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantOrganizationalUnit", fields: [tenantId], references: [id])
   nome  String
   sigla String?
   tipo  TipoUnidadeOrganizacional // SECRETARIA, DIRETORIA, COORDENADORIA, DIVISAO, SETOR
@@ -8212,6 +8484,7 @@ model OrganizationalUnit {
   @@unique([departmentId, sigla])
   @@index([departmentId, tipo, isActive])
   @@index([parentId])
+  @@index([tenantId])
   @@map("organizational_units")
 }
 
@@ -8246,6 +8519,9 @@ enum WorkflowStageSupportMode {
 
 model Position {
   id        String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantPosition", fields: [tenantId], references: [id])
   nome      String
   descricao String?
   cbo       String? // Classificação Brasileira de Ocupações
@@ -8281,6 +8557,7 @@ model Position {
   @@unique([departmentId, nome])
   @@index([departmentId, tipo, isActive])
   @@index([organizationalUnitId])
+  @@index([tenantId])
   @@map("positions")
 }
 
@@ -8306,6 +8583,9 @@ enum NivelCargo {
 
 model Function {
   id        String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantFunction", fields: [tenantId], references: [id])
   nome      String
   descricao String?
 
@@ -8336,6 +8616,7 @@ model Function {
   @@unique([departmentId, simbolo])
   @@index([departmentId, tipo, isActive])
   @@index([positionId])
+  @@index([tenantId])
   @@map("functions")
 }
 
@@ -8352,6 +8633,9 @@ enum TipoFuncao {
 
 model EmployeeAssignment {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantEmployeeAssignment", fields: [tenantId], references: [id])
 
   userId String
   user   User   @relation("ServidorVinculos", fields: [userId], references: [id], onDelete: Cascade)
@@ -8399,6 +8683,7 @@ model EmployeeAssignment {
   @@index([organizationalUnitId, situacao])
   @@index([positionId])
   @@index([situacao])
+  @@index([tenantId])
   @@map("employee_assignments")
 }
 
@@ -8608,6 +8893,9 @@ enum StatusProfissionalSaude {
 
 model Team {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 5) — ver nota em User.tenantId
+  tenantId String?
+  tenant   Tenant? @relation("TenantTeam", fields: [tenantId], references: [id])
 
   nome       String
   sigla      String?
@@ -8645,6 +8933,7 @@ model Team {
   @@unique([departmentId, sigla])
   @@index([departmentId, ativo])
   @@index([organizationalUnitId])
+  @@index([tenantId])
   @@map("teams")
 }
 

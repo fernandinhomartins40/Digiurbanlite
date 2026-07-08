@@ -60,11 +60,11 @@ export async function createRelationship(params: CreateRelationshipParams) {
   } = params;
 
   // Buscar categorias
-  const sourceCategory = await prisma.citizenCategory.findUnique({
+  const sourceCategory = await prisma.citizenCategory.findFirst({
     where: { code: sourceCategoryCode },
   });
 
-  const targetCategory = await prisma.citizenCategory.findUnique({
+  const targetCategory = await prisma.citizenCategory.findFirst({
     where: { code: targetCategoryCode },
   });
 
@@ -112,7 +112,7 @@ export async function createRelationship(params: CreateRelationshipParams) {
  * Lista todos os relacionamentos de uma categoria
  */
 export async function getCategoryRelationships(categoryCode: string) {
-  const category = await prisma.citizenCategory.findUnique({
+  const category = await prisma.citizenCategory.findFirst({
     where: { code: categoryCode },
   });
 
@@ -179,7 +179,7 @@ export async function validateCategoryAssignment(citizenId: string, categoryCode
     warnings: [],
   };
 
-  const category = await prisma.citizenCategory.findUnique({
+  const category = await prisma.citizenCategory.findFirst({
     where: { code: categoryCode },
   });
 
@@ -289,7 +289,7 @@ export async function validateCategoryAssignment(citizenId: string, categoryCode
  * Verifica se cidadão atende aos requisitos mínimos da categoria
  */
 export async function checkCategoryRequirements(citizenId: string, categoryCode: string) {
-  const category = await prisma.citizenCategory.findUnique({
+  const category = await prisma.citizenCategory.findFirst({
     where: { code: categoryCode },
   });
 
@@ -319,7 +319,7 @@ export async function checkCategoryRequirements(citizenId: string, categoryCode:
  * Processa relacionamentos automáticos ao atribuir uma categoria
  */
 export async function processAutoRelationships(citizenId: string, categoryCode: string, assignedBy?: string) {
-  const category = await prisma.citizenCategory.findUnique({
+  const category = await prisma.citizenCategory.findFirst({
     where: { code: categoryCode },
   });
 
@@ -392,7 +392,7 @@ export async function processAutoRelationships(citizenId: string, categoryCode: 
   // 2. PROCESSAR CATEGORIAS COMPLEMENTARES DO CAMPO
   if (category.complementaryCategories && category.complementaryCategories.length > 0) {
     for (const complementaryCode of category.complementaryCategories) {
-      const complementaryCategory = await prisma.citizenCategory.findUnique({
+      const complementaryCategory = await prisma.citizenCategory.findFirst({
         where: { code: complementaryCode },
       });
 
