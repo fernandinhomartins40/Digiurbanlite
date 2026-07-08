@@ -77,7 +77,8 @@ export async function listCategories(activeOnly: boolean = true): Promise<Catego
  * Busca categoria por código
  */
 export async function getCategoryByCode(code: string): Promise<CitizenCategory | null> {
-  return prisma.citizenCategory.findUnique({
+  // findFirst: unique agora e composta [tenantId, code]; escopo via extension
+  return prisma.citizenCategory.findFirst({
     where: { code },
   });
 }

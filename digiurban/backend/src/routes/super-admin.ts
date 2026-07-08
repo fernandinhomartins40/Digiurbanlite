@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
 import { TenantService } from '../services/tenant.service';
-import { seedDefaultDepartments } from '../services/tenant-provisioning.service';
+import { seedDefaultDepartments, seedDefaultServices } from '../services/tenant-provisioning.service';
 import crypto from 'crypto';
 import { logAuditEvent, AUDIT_EVENTS } from '../utils/audit-logger';
 import { loginRateLimiter } from '../middleware/rate-limit';
@@ -1506,7 +1506,8 @@ router.post('/users', adminAuthMiddleware, superAdminOnly, async (req: Request, 
     // Verificar se email já existe
     const normalizedEmail = normalizeEmail(email) || email;
 
-    const existingUser = await prisma.user.findUnique({
+    // findFirst: unique agora é composta [tenantId, email]; escopo por tenant via extension
+    const existingUser = await prisma.user.findFirst({
       where: { email: normalizedEmail }
     });
 
@@ -1871,7 +1872,8 @@ router.post('/users/admins', adminAuthMiddleware, superAdminOnly, async (req: Re
     // Verificar se email já existe
     const normalizedEmail = normalizeEmail(email) || email;
 
-    const existingUser = await prisma.user.findUnique({
+    // findFirst: unique agora é composta [tenantId, email]; escopo por tenant via extension
+    const existingUser = await prisma.user.findFirst({
       where: { email: normalizedEmail }
     });
 
@@ -2973,10 +2975,11 @@ router.post('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request
           },
         });
 
-        // Secretarias padrão (Fase 8) — município nasce operável
+        // Secretarias e serviços padrão (Fase 8) — município nasce operável
         const departmentsCreated = await seedDefaultDepartments(tx, tenant.id);
+        const servicesCreated = await seedDefaultServices(tx, tenant.id);
 
-        return { tenant, admin, departmentsCreated };
+        return { tenant, admin, departmentsCreated, servicesCreated };
       })
     );
 
@@ -2998,6 +3001,7 @@ router.post('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request
       tenant: result.tenant,
       admin: { id: result.admin.id, email: result.admin.email, name: result.admin.name },
       departmentsCreated: result.departmentsCreated,
+      servicesCreated: result.servicesCreated,
       // Entregue UMA única vez; o admin troca no primeiro login (mustChangePassword)
       temporaryPassword: tempPassword,
       accessUrl: process.env.TENANT_BASE_DOMAIN

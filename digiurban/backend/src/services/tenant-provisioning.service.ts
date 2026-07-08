@@ -25,6 +25,59 @@ export const DEFAULT_DEPARTMENTS: Array<{ name: string; code: string }> = [
   { name: 'Ouvidoria', code: 'OUVIDORIA' },
 ];
 
+/**
+ * Serviços iniciais (SEM_DADOS: geram protocolo de acompanhamento) — o portal
+ * do cidadão do município novo nasce com um catálogo mínimo utilizável.
+ * A chave é o code da secretaria criada por seedDefaultDepartments.
+ */
+export const DEFAULT_SERVICES: Array<{ name: string; description: string; deptCode: string }> = [
+  { name: 'Solicitação Geral', description: 'Abertura de solicitação geral ao município', deptCode: 'ADMIN' },
+  { name: 'Ouvidoria — Reclamação', description: 'Registrar reclamação junto à Ouvidoria', deptCode: 'OUVIDORIA' },
+  { name: 'Ouvidoria — Denúncia', description: 'Registrar denúncia junto à Ouvidoria', deptCode: 'OUVIDORIA' },
+  { name: 'Ouvidoria — Elogio ou Sugestão', description: 'Enviar elogio ou sugestão', deptCode: 'OUVIDORIA' },
+  { name: 'Solicitação de Serviço de Obras', description: 'Tapa-buraco, iluminação, calçadas e afins', deptCode: 'OBRAS' },
+  { name: 'Solicitação — Meio Ambiente', description: 'Poda de árvore, denúncia ambiental e afins', deptCode: 'AMBIENTE' },
+  { name: 'Atendimento — Assistência Social', description: 'Solicitar atendimento da Assistência Social', deptCode: 'ASSISTENCIA' },
+];
+
+/**
+ * Cria os serviços iniciais do tenant, vinculados às secretarias padrão.
+ * Retorna quantos foram criados (idempotente por [tenant, nome+dept]).
+ */
+export async function seedDefaultServices(
+  tx: Prisma.TransactionClient | any,
+  tenantId: string
+): Promise<number> {
+  const departments: Array<{ id: string; code: string | null }> = await tx.department.findMany({
+    where: { tenantId },
+    select: { id: true, code: true },
+  });
+  const byCode = new Map(departments.map((d) => [d.code, d.id]));
+
+  let created = 0;
+  for (const svc of DEFAULT_SERVICES) {
+    const departmentId = byCode.get(svc.deptCode);
+    if (!departmentId) continue; // secretaria não existe neste tenant — pular
+    const exists = await tx.serviceSimplified.findFirst({
+      where: { tenantId, name: svc.name, departmentId },
+      select: { id: true },
+    });
+    if (exists) continue;
+    await tx.serviceSimplified.create({
+      data: {
+        tenantId,
+        name: svc.name,
+        description: svc.description,
+        departmentId,
+        serviceType: 'SEM_DADOS',
+        isActive: true,
+      },
+    });
+    created++;
+  }
+  return created;
+}
+
 export interface UsageLimitResult {
   allowed: boolean;
   code?: 'USER_LIMIT_REACHED' | 'CITIZEN_LIMIT_REACHED';
@@ -73,6 +126,10 @@ export async function seedDefaultDepartments(
       tenantId,
       isActive: true,
     })),
+    // Com a unique composta [tenantId, name] (migration 20260708120000), o
+    // skipDuplicates é idempotência POR TENANT — nomes iguais em outros
+    // municípios não colidem mais. (Antes da conversão, o unique global fazia
+    // este seed pular silenciosamente secretarias já existentes no default.)
     skipDuplicates: true,
   });
   return result.count;

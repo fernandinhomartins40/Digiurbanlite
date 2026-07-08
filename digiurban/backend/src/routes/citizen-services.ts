@@ -176,7 +176,8 @@ router.get('/departments/:department/no-data', async (req, res) => {
     const departmentCode = department.toUpperCase().replace(/-/g, '_');
 
     // Buscar departamento pelo code
-    const dept = await prisma.department.findUnique({
+    // findFirst: unique agora é composta [tenantId, code]; a extension escopa pelo tenant
+    const dept = await prisma.department.findFirst({
       where: { code: departmentCode }
     });
 
