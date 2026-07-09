@@ -77,6 +77,29 @@ export function tryGetTenantId(): string | undefined {
   return storage.getStore()?.tenantId;
 }
 
+/**
+ * Executa uma transação com o GUC `app.tenant_id` setado, ativando o RLS do
+ * PostgreSQL (Fase 3) DENTRO da transação — use para blocos com `$queryRaw`
+ * sensível, onde a Prisma extension não filtra. `SET LOCAL` é escopado à
+ * transação (correto com connection pooling / PgBouncer transaction mode).
+ *
+ *   await withTenantTransaction(prisma, async (tx) => {
+ *     return tx.$queryRaw`SELECT ... FROM protocols_simplified WHERE ...`;
+ *   });
+ */
+export async function withTenantTransaction<T>(
+  prisma: { $transaction: <R>(fn: (tx: any) => Promise<R>) => Promise<R> },
+  fn: (tx: any) => Promise<T>
+): Promise<T> {
+  const ctx = storage.getStore();
+  const tenantId = ctx?.tenantId ?? PLATFORM_CONTEXT_ID;
+  return prisma.$transaction(async (tx: any) => {
+    // set_config com is_local=true => vale só nesta transação
+    await tx.$executeRawUnsafe(`SELECT set_config('app.tenant_id', $1, true)`, tenantId);
+    return fn(tx);
+  });
+}
+
 /** Retorna o contexto completo ou undefined. */
 export function tryGetTenantContext(): TenantContext | undefined {
   return storage.getStore();

@@ -111,10 +111,12 @@ async function main(): Promise<void> {
   assert(citizens.length === 2 && citizens.every((c) => c.tenantId === tenantB.id), 'createMany carimba todos');
 
   console.log('\n[6] runAsPlatform → NÃO injeta');
-  const deptPlat = await runAsPlatform(async () =>
-    await prisma.department.create({ data: { name: `Plataforma ${stamp}` } })
+  // notifications é tenant-scoped mas nullable → prova a não-injeção sem esbarrar
+  // no NOT NULL que agora vale para departments.
+  const notifPlat = await runAsPlatform(async () =>
+    await prisma.notification.create({ data: { title: `Plat ${stamp}`, message: 'x', type: 'SYSTEM' as any } })
   );
-  assert(deptPlat.tenantId === null, 'escrita de plataforma fica sem tenant', `got ${deptPlat.tenantId}`);
+  assert(notifPlat.tenantId === null, 'escrita de plataforma fica sem tenant', `got ${notifPlat.tenantId}`);
 
   console.log('\n[7] Fora de qualquer contexto → fail-soft para default (Fase 2)');
   const deptNoCtx = await prisma.department.create({ data: { name: `SemCtx ${stamp}` } });

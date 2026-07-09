@@ -10,6 +10,8 @@ export interface JwtPayload {
   email?: string;
   name?: string;
   role?: string;
+  tenantId?: string; // Fase 4/6 Multi-Tenant: propagado do backend p/ isolar o bot
+  citizenId?: string;
   iat?: number;
   exp?: number;
 }

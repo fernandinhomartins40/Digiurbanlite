@@ -12,6 +12,7 @@
 
 import { prisma } from '../lib/prisma';
 import { Prisma } from '@prisma/client';
+import { tryGetTenantId, DEFAULT_TENANT_ID } from '../lib/tenant-context';
 
 /**
  * Gera número de protocolo único com proteção contra race conditions
@@ -65,9 +66,15 @@ async function generateNumberWithLock(
 
   // 🔒 LOCK PESSIMISTA: Bloqueia a tabela durante a leitura
   // Outras transações terão que esperar este lock ser liberado
+  // Fase 3 Multi-Tenant: numeração POR TENANT. Seta o GUC (RLS filtra o
+  // FOR UPDATE) e ainda filtra explicitamente por tenantId — o número do
+  // protocolo do município B nao pode herdar a sequência do A.
+  const tenantId = tryGetTenantId() || DEFAULT_TENANT_ID;
+  await tx.$executeRawUnsafe(`SELECT set_config('app.tenant_id', $1, true)`, tenantId);
   const lastProtocol = await tx.$queryRaw<Array<{ number: string }>>`
     SELECT number
     FROM protocols_simplified
+    WHERE "tenantId" = ${tenantId}
     ORDER BY "createdAt" DESC
     LIMIT 1
     FOR UPDATE

@@ -7,6 +7,7 @@ import multer from 'multer';
 import cookieParser from 'cookie-parser';
 import logger from '../utils/logger';
 import { verifyToken, JwtPayload } from '../utils/jwt';
+import { runWithTenant } from '../bot/tenant-context';
 import conversationService from '../delivery/ConversationService';
 import channelService from '../delivery/ChannelService';
 import fileStorage from '../storage/FileStorage';
@@ -126,7 +127,7 @@ export class ExpressServer {
     this.app.use('/api/users', this.authMiddleware.bind(this), this.userRoutes());
 
     // Bot Flow routes
-    this.app.use('/api/bot-flow', this.authMiddleware.bind(this), this.botFlowRoutes());
+    this.app.use('/api/bot-flow', this.authMiddleware.bind(this), this.botTenantMiddleware.bind(this), this.botFlowRoutes());
 
     // ✅ NOVO: Handover routes (bot → humano)
     this.app.use('/api/handover', this.authMiddleware.bind(this), this.handoverRoutes());
@@ -322,6 +323,14 @@ export class ExpressServer {
     } catch (error) {
       res.status(401).json({ error: 'Invalid or expired token' });
     }
+  }
+
+  // Fase 6 Multi-Tenant: estabelece o tenant (claim do JWT) para toda a request
+  // do bot — o interceptor do DigiUrbanIntegration injeta X-Tenant-Id a partir
+  // daqui. Deve rodar APÓS o authMiddleware.
+  private botTenantMiddleware(req: AuthRequest, _res: Response, next: NextFunction): void {
+    const tenantId = (req.user as { tenantId?: string } | undefined)?.tenantId;
+    runWithTenant(tenantId, () => next());
   }
 
   private conversationRoutes() {
