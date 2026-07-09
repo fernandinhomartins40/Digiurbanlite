@@ -198,8 +198,9 @@ async function buildFlowProxyAuthContext(req: AuthenticatedRequest): Promise<Flo
   };
 }
 
-function buildProxyHeaders(context: FlowProxyAuthContext): Record<string, string> {
+function buildProxyHeaders(context: FlowProxyAuthContext, tenantId?: string): Record<string, string> {
   return {
+    'x-tenant-id': tenantId || 'default', // Fase 4 Multi-Tenant
     'x-user-id': context.userId,
     'x-user-name': context.userName,
     'x-user-role': context.userRole,
@@ -246,7 +247,7 @@ async function proxyRequest(
       url: path,
       params: normalizedQuery,
       data: normalizedBody,
-      headers: buildProxyHeaders(auth),
+      headers: buildProxyHeaders(auth, (req as any).tenantId),
     });
 
     res.status(upstream.status).json(upstream.data);
@@ -362,7 +363,7 @@ router.get('/analytics/export/csv', async (req: Request, res: Response, next: Ne
       method: 'GET',
       url: '/analytics/export/csv',
       params: normalizedQuery,
-      headers: buildProxyHeaders(auth),
+      headers: buildProxyHeaders(auth, (req as any).tenantId),
       responseType: 'arraybuffer',
     });
 

@@ -63,6 +63,53 @@ model Tenant {
   protocolStages     ProtocolStage[]     @relation("TenantProtocolStages")
   protocolDataFields ProtocolDataField[] @relation("TenantProtocolDataFields")
 
+  // Fase 2 (onda 6): filhas sensiveis
+  acompanhamentoBeneficio6List AcompanhamentoBeneficio[] @relation("Tenant6AcompanhamentoBeneficio")
+  agendamentoExternoTFD6List AgendamentoExternoTFD[] @relation("Tenant6AgendamentoExternoTFD")
+  alergiaReacao6List AlergiaReacao[] @relation("Tenant6AlergiaReacao")
+  alergiasCidadao6List AlergiasCidadao[] @relation("Tenant6AlergiasCidadao")
+  anexoProntuario6List AnexoProntuario[] @relation("Tenant6AnexoProntuario")
+  aprovacaoGestaoTFD6List AprovacaoGestaoTFD[] @relation("Tenant6AprovacaoGestaoTFD")
+  botConversation6List BotConversation[] @relation("Tenant6BotConversation")
+  botMessage6List BotMessage[] @relation("Tenant6BotMessage")
+  botUpload6List BotUpload[] @relation("Tenant6BotUpload")
+  chamadaPainel6List ChamadaPainel[] @relation("Tenant6ChamadaPainel")
+  channelDelivery6List ChannelDelivery[] @relation("Tenant6ChannelDelivery")
+  channelSubscription6List ChannelSubscription[] @relation("Tenant6ChannelSubscription")
+  citizenCategoryAssignment6List CitizenCategoryAssignment[] @relation("Tenant6CitizenCategoryAssignment")
+  citizenCategoryAuditLog6List CitizenCategoryAuditLog[] @relation("Tenant6CitizenCategoryAuditLog")
+  citizenCategoryBadge6List CitizenCategoryBadge[] @relation("Tenant6CitizenCategoryBadge")
+  citizenCategoryProtocolHistory6List CitizenCategoryProtocolHistory[] @relation("Tenant6CitizenCategoryProtocolHistory")
+  citizenTransferRequest6List CitizenTransferRequest[] @relation("Tenant6CitizenTransferRequest")
+  comorbidadesCidadao6List ComorbidadesCidadao[] @relation("Tenant6ComorbidadesCidadao")
+  consultaPreNatal6List ConsultaPreNatal[] @relation("Tenant6ConsultaPreNatal")
+  conversation6List Conversation[] @relation("Tenant6Conversation")
+  departmentMetrics6List DepartmentMetrics[] @relation("Tenant6DepartmentMetrics")
+  documentoTFD6List DocumentoTFD[] @relation("Tenant6DocumentoTFD")
+  email6List Email[] @relation("Tenant6Email")
+  emailAuthAttempt6List EmailAuthAttempt[] @relation("Tenant6EmailAuthAttempt")
+  emailDraft6List EmailDraft[] @relation("Tenant6EmailDraft")
+  examePreNatal6List ExamePreNatal[] @relation("Tenant6ExamePreNatal")
+  faceRecognitionIdentity6List FaceRecognitionIdentity[] @relation("Tenant6FaceRecognitionIdentity")
+  flowExecution6List FlowExecution[] @relation("Tenant6FlowExecution")
+  imunizacaoCidadao6List ImunizacaoCidadao[] @relation("Tenant6ImunizacaoCidadao")
+  membroFamilia6List MembroFamilia[] @relation("Tenant6MembroFamilia")
+  message6List Message[] @relation("Tenant6Message")
+  messageLog6List MessageLog[] @relation("Tenant6MessageLog")
+  notificationLog6List NotificationLog[] @relation("Tenant6NotificationLog")
+  officialChannel6List OfficialChannel[] @relation("Tenant6OfficialChannel")
+  pagamentoBeneficio6List PagamentoBeneficio[] @relation("Tenant6PagamentoBeneficio")
+  parecerRegulacaoTFD6List ParecerRegulacaoTFD[] @relation("Tenant6ParecerRegulacaoTFD")
+  participanteAtividade6List ParticipanteAtividade[] @relation("Tenant6ParticipanteAtividade")
+  passageiroViagemTFD6List PassageiroViagemTFD[] @relation("Tenant6PassageiroViagemTFD")
+  prestacaoContasTFD6List PrestacaoContasTFD[] @relation("Tenant6PrestacaoContasTFD")
+  proactiveNotification6List ProactiveNotification[] @relation("Tenant6ProactiveNotification")
+  problemaCondicao6List ProblemaCondicao[] @relation("Tenant6ProblemaCondicao")
+  protocolCitizenLink6List ProtocolCitizenLink[] @relation("Tenant6ProtocolCitizenLink")
+  serverPerformance6List ServerPerformance[] @relation("Tenant6ServerPerformance")
+  specializedPage6List SpecializedPage[] @relation("Tenant6SpecializedPage")
+  userDepartment6List UserDepartment[] @relation("Tenant6UserDepartment")
+
   // Fase 2 (onda 5): módulos
   unidadeSaudeList UnidadeSaude[] @relation("TenantUnidadeSaude")
   agendaMedicaList AgendaMedica[] @relation("TenantAgendaMedica")
@@ -316,6 +363,9 @@ model User {
 // ✅ NOVA TABELA: Relacionamento N:N User ↔ Department
 model UserDepartment {
   id           String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (userId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6UserDepartment", fields: [tenantId], references: [id])
   userId       String
   departmentId String
   isPrimary    Boolean  @default(false) // Departamento principal
@@ -331,6 +381,7 @@ model UserDepartment {
   @@index([userId])
   @@index([departmentId])
   @@index([userId, isPrimary])
+  @@index([tenantId])
   @@map("user_departments")
 }
 
@@ -769,6 +820,9 @@ model FamilyInvite {
 
 model ProtocolCitizenLink {
   id         String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (protocolId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ProtocolCitizenLink", fields: [tenantId], references: [id])
   protocolId String
 
   // Vínculo com cidadão cadastrado
@@ -804,6 +858,7 @@ model ProtocolCitizenLink {
   @@index([linkedCitizenId, isVerified])
   @@index([protocolId, isVerified])
   @@index([isVerified, verifiedAt])
+  @@index([tenantId])
   @@map("protocol_citizen_links")
 }
 
@@ -1665,6 +1720,9 @@ model NotificationPreference {
 // Log de notificações enviadas (auditoria + retry)
 model NotificationLog {
   id             String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6NotificationLog", fields: [tenantId], references: [id])
   notificationId String? // Referência à Notification se existir
   userId         String?
   citizenId      String?
@@ -1690,11 +1748,15 @@ model NotificationLog {
   @@index([status])
   @@index([channel])
   @@index([createdAt])
+  @@index([tenantId])
   @@map("notification_logs")
 }
 
 model CitizenTransferRequest {
   id           String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6CitizenTransferRequest", fields: [tenantId], references: [id])
   citizenId    String
   status       String    @default("PENDING")
   reason       String
@@ -1706,6 +1768,7 @@ model CitizenTransferRequest {
   updatedAt    DateTime  @updatedAt
   reviewedBy   User?     @relation(fields: [reviewedById], references: [id])
   citizen      Citizen   @relation(fields: [citizenId], references: [id], onDelete: Cascade)
+  @@index([tenantId])
 
   @@map("citizen_transfer_requests")
 }
@@ -1783,6 +1846,9 @@ model ProtocolMetrics {
 
 model DepartmentMetrics {
   id           String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (departmentId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6DepartmentMetrics", fields: [tenantId], references: [id])
   departmentId String
 
   // Período
@@ -1809,6 +1875,7 @@ model DepartmentMetrics {
 
   @@unique([departmentId, periodType, periodDate])
   @@index([departmentId, periodType])
+  @@index([tenantId])
   @@map("department_metrics")
 }
 
@@ -1848,6 +1915,9 @@ model ServiceMetrics {
 
 model ServerPerformance {
   id     String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (userId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ServerPerformance", fields: [tenantId], references: [id])
   userId String
 
   // Período
@@ -1880,6 +1950,7 @@ model ServerPerformance {
 
   @@unique([userId, periodType, periodDate])
   @@index([userId, periodType])
+  @@index([tenantId])
   @@map("server_performance")
 }
 
@@ -2180,6 +2251,9 @@ model EmailUser {
 
 model Email {
   id            String       @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (userId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6Email", fields: [tenantId], references: [id])
   emailServerId String?
   domainId      String?
   userId        String?
@@ -2218,6 +2292,7 @@ model Email {
   user          EmailUser?   @relation(fields: [userId], references: [id])
   domain        EmailDomain? @relation(fields: [domainId], references: [id])
   emailServer   EmailServer? @relation(fields: [emailServerId], references: [id])
+  @@index([tenantId])
 
   @@map("emails")
 }
@@ -2274,6 +2349,9 @@ model EmailStats {
 
 model EmailAuthAttempt {
   id        String     @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (userId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6EmailAuthAttempt", fields: [tenantId], references: [id])
   userId    String?
   email     String
   ipAddress String
@@ -2282,6 +2360,7 @@ model EmailAuthAttempt {
   reason    String?
   timestamp DateTime   @default(now())
   user      EmailUser? @relation(fields: [userId], references: [id])
+  @@index([tenantId])
 
   @@map("email_auth_attempts")
 }
@@ -2364,6 +2443,9 @@ model EmailPlanAllowedDomain {
 // ✅ NOVA TABELA: Rascunhos de email
 model EmailDraft {
   id          String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (userId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6EmailDraft", fields: [tenantId], references: [id])
   userId      String   @map("user_id")
   accountId   String?  @map("account_id")
   to          String?
@@ -2379,6 +2461,7 @@ model EmailDraft {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([tenantId])
   @@map("email_drafts")
 }
 
@@ -2541,6 +2624,9 @@ model AuditLog {
 
 model SpecializedPage {
   id                 String              @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (departmentId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6SpecializedPage", fields: [tenantId], references: [id])
   pageKey            String
   code               String
   name               String
@@ -2575,6 +2661,7 @@ model SpecializedPage {
 
   @@unique([pageKey])
   @@unique([code])
+  @@index([tenantId])
   @@map("specialized_pages")
 }
 
@@ -4110,6 +4197,9 @@ model ConsultaMedica {
 // ✅ FASE 1.2: LISTA DE PROBLEMAS E CONDIÇÕES (CIAP2/CID10)
 model ProblemaCondicao {
   id        String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ProblemaCondicao", fields: [tenantId], references: [id])
   citizenId String
 
   // Codificação
@@ -4145,6 +4235,7 @@ model ProblemaCondicao {
   @@index([citizenId, status])
   @@index([codigo])
   @@index([tipo])
+  @@index([tenantId])
   @@map("problemas_condicoes")
 }
 
@@ -4168,6 +4259,9 @@ enum GravidadeProblema {
 // ✅ FASE 1.3: ALERGIAS E REAÇÕES ADVERSAS
 model AlergiaReacao {
   id        String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6AlergiaReacao", fields: [tenantId], references: [id])
   citizenId String
 
   tipo       TipoAlergia
@@ -4189,6 +4283,7 @@ model AlergiaReacao {
 
   @@index([citizenId, ativo])
   @@index([tipo])
+  @@index([tenantId])
   @@map("alergias_reacoes")
 }
 
@@ -4328,6 +4423,9 @@ model AcompanhamentoPreNatal {
 
 model ConsultaPreNatal {
   id               String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (preNatalId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ConsultaPreNatal", fields: [tenantId], references: [id])
   preNatalId       String
   consultaMedicaId String? @unique // Vínculo com consulta médica geral
 
@@ -4357,11 +4455,15 @@ model ConsultaPreNatal {
   consultaMedica ConsultaMedica?        @relation(fields: [consultaMedicaId], references: [id])
 
   @@index([preNatalId])
+  @@index([tenantId])
   @@map("consultas_pre_natal")
 }
 
 model ExamePreNatal {
   id         String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (preNatalId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ExamePreNatal", fields: [tenantId], references: [id])
   preNatalId String
 
   tipoExame       TipoExamePreNatal
@@ -4378,6 +4480,7 @@ model ExamePreNatal {
 
   @@index([preNatalId])
   @@index([tipoExame])
+  @@index([tenantId])
   @@map("exames_pre_natal")
 }
 
@@ -5314,6 +5417,9 @@ enum CadUnicoStatus {
 
 model MembroFamilia {
   id              String          @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (familiaId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6MembroFamilia", fields: [tenantId], references: [id])
   familiaId       String
   familia         CadUnicoFamilia @relation(fields: [familiaId], references: [id])
   citizenId       String?
@@ -5335,6 +5441,7 @@ model MembroFamilia {
 
   @@index([familiaId])
   @@index([cpf])
+  @@index([tenantId])
   @@map("membros_familia")
 }
 
@@ -5486,6 +5593,9 @@ enum ProgramaSocialStatus {
 
 model AcompanhamentoBeneficio {
   id                    String                  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (inscricaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6AcompanhamentoBeneficio", fields: [tenantId], references: [id])
   inscricaoId           String
   inscricao             InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
   tipo                  TipoAcompanhamento
@@ -5498,6 +5608,7 @@ model AcompanhamentoBeneficio {
   proximoAcompanhamento DateTime?
 
   @@index([inscricaoId])
+  @@index([tenantId])
   @@map("acompanhamentos_beneficio")
 }
 
@@ -5511,6 +5622,9 @@ enum TipoAcompanhamento {
 
 model PagamentoBeneficio {
   id            String                  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (inscricaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6PagamentoBeneficio", fields: [tenantId], references: [id])
   inscricaoId   String
   inscricao     InscricaoProgramaSocial @relation(fields: [inscricaoId], references: [id])
   competencia   String
@@ -5522,6 +5636,7 @@ model PagamentoBeneficio {
   observacoes   String?
 
   @@index([inscricaoId, competencia])
+  @@index([tenantId])
   @@map("pagamentos_beneficio")
 }
 
@@ -5586,6 +5701,9 @@ model MessageServer {
 
 model Conversation {
   id              String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (protocolId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6Conversation", fields: [tenantId], references: [id])
   messageServerId String
 
   // Participantes
@@ -5641,6 +5759,7 @@ model Conversation {
   @@index([protocolId])
   @@index([status, lastMessageAt])
   @@index([isBotConversation, status])
+  @@index([tenantId])
   @@map("conversations")
 }
 
@@ -5669,6 +5788,9 @@ enum ConversationStatus {
 
 model Message {
   id             String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (conversationId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6Message", fields: [tenantId], references: [id])
   conversationId String
 
   // Autor
@@ -5722,6 +5844,7 @@ model Message {
   @@index([senderId, senderType])
   @@index([status, sentAt])
   @@index([isDeleted])
+  @@index([tenantId])
   @@map("messages")
 }
 
@@ -5750,6 +5873,9 @@ enum MessageStatus {
 
 model OfficialChannel {
   id              String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (departmentId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6OfficialChannel", fields: [tenantId], references: [id])
   messageServerId String
 
   // Informações
@@ -5784,11 +5910,15 @@ model OfficialChannel {
 
   @@index([isActive, isPublic])
   @@index([slug])
+  @@index([tenantId])
   @@map("official_channels")
 }
 
 model ChannelSubscription {
   id        String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ChannelSubscription", fields: [tenantId], references: [id])
   channelId String
   citizenId String
 
@@ -5817,6 +5947,7 @@ model ChannelSubscription {
   @@unique([channelId, citizenId])
   @@index([citizenId, status])
   @@index([channelId, status])
+  @@index([tenantId])
   @@map("channel_subscriptions")
 }
 
@@ -5878,6 +6009,9 @@ enum BroadcastStatus {
 
 model ChannelDelivery {
   id             String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ChannelDelivery", fields: [tenantId], references: [id])
   messageId      String
   subscriptionId String
   citizenId      String
@@ -5908,6 +6042,7 @@ model ChannelDelivery {
   @@index([messageId, status])
   @@index([citizenId, status])
   @@index([status, queuedAt])
+  @@index([tenantId])
   @@map("channel_deliveries")
 }
 
@@ -6014,6 +6149,9 @@ enum ModerationAction {
 
 model MessageLog {
   id              String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (conversationId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6MessageLog", fields: [tenantId], references: [id])
   messageServerId String?
 
   // Tipo de evento
@@ -6045,6 +6183,7 @@ model MessageLog {
   @@index([level, timestamp])
   @@index([userId])
   @@index([citizenId])
+  @@index([tenantId])
   @@map("message_logs")
 }
 
@@ -6421,6 +6560,9 @@ model CitizenCategory {
 
 model CitizenCategoryAssignment {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (protocolId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6CitizenCategoryAssignment", fields: [tenantId], references: [id])
 
   citizenId String
   citizen   Citizen @relation("CitizenCategories", fields: [citizenId], references: [id], onDelete: Cascade)
@@ -6489,6 +6631,7 @@ model CitizenCategoryAssignment {
   @@index([isExpired])
   @@index([level])
   @@index([lastProtocolDate])
+  @@index([tenantId])
   @@map("citizen_category_assignments")
 }
 
@@ -6497,6 +6640,9 @@ model CitizenCategoryAssignment {
 // ============================================================================
 model CitizenCategoryProtocolHistory {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (protocolId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6CitizenCategoryProtocolHistory", fields: [tenantId], references: [id])
 
   // Relacionamentos
   assignmentId String
@@ -6531,6 +6677,7 @@ model CitizenCategoryProtocolHistory {
   @@index([categoryId])
   @@index([eventType])
   @@index([eventDate])
+  @@index([tenantId])
   @@map("citizen_category_protocol_history")
 }
 
@@ -6539,6 +6686,9 @@ model CitizenCategoryProtocolHistory {
 // ============================================================================
 model CitizenCategoryAuditLog {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (assignmentId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6CitizenCategoryAuditLog", fields: [tenantId], references: [id])
 
   // Relacionamentos
   assignmentId String
@@ -6571,6 +6721,7 @@ model CitizenCategoryAuditLog {
   @@index([categoryId])
   @@index([action])
   @@index([actionDate])
+  @@index([tenantId])
   @@map("citizen_category_audit_log")
 }
 
@@ -6613,6 +6764,9 @@ model CitizenCategoryRelationship {
 // ============================================================================
 model CitizenCategoryBadge {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (categoryId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6CitizenCategoryBadge", fields: [tenantId], references: [id])
 
   // Relacionamento com categoria
   categoryId String
@@ -6641,6 +6795,7 @@ model CitizenCategoryBadge {
 
   @@index([categoryId])
   @@index([active])
+  @@index([tenantId])
   @@map("citizen_category_badges")
 }
 
@@ -6866,6 +7021,9 @@ enum CertificateRequestStatus {
 // Conversação com o DigiBot
 model BotConversation {
   id            String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6BotConversation", fields: [tenantId], references: [id])
   citizenId     String
   intent        String?
   confidence    Float?
@@ -6887,12 +7045,16 @@ model BotConversation {
   @@index([currentFlow])
   @@index([isActive])
   @@index([createdAt])
+  @@index([tenantId])
   @@map("bot_conversations")
 }
 
 // Mensagens da conversa com o bot
 model BotMessage {
   id             String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (conversationId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6BotMessage", fields: [tenantId], references: [id])
   conversationId String
   role           String // 'user' | 'bot' | 'system'
   content        String   @db.Text
@@ -6910,6 +7072,7 @@ model BotMessage {
   @@index([role])
   @@index([intent])
   @@index([createdAt])
+  @@index([tenantId])
   @@map("bot_messages")
 }
 
@@ -6934,6 +7097,9 @@ model BotAnalytics {
 // Notificações proativas do sistema
 model ProactiveNotification {
   id           String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ProactiveNotification", fields: [tenantId], references: [id])
   citizenId    String
   type         String // 'protocol_expiring' | 'protocol_approved' | 'appointment_reminder' | 'suggestion'
   title        String
@@ -6952,12 +7118,16 @@ model ProactiveNotification {
   @@index([type])
   @@index([scheduledFor])
   @@index([sentAt])
+  @@index([tenantId])
   @@map("proactive_notifications")
 }
 
 // Uploads de arquivos durante conversas com o bot
 model BotUpload {
   id             String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (conversationId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6BotUpload", fields: [tenantId], references: [id])
   citizenId      String
   conversationId String?
   fileName       String
@@ -6973,6 +7143,7 @@ model BotUpload {
   @@index([citizenId])
   @@index([conversationId])
   @@index([uploadedAt])
+  @@index([tenantId])
   @@map("bot_uploads")
 }
 
@@ -7007,6 +7178,9 @@ model FlowDefinition {
 // Execuções de fluxos (estado de conversação)
 model FlowExecution {
   id             String  @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (conversationId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6FlowExecution", fields: [tenantId], references: [id])
   citizenId      String
   flowId         String
   conversationId String? // Vincula com UltraZend Messages
@@ -7042,6 +7216,7 @@ model FlowExecution {
   @@index([conversationId])
   @@index([status])
   @@index([startedAt])
+  @@index([tenantId])
   @@map("flow_executions")
 }
 
@@ -7102,6 +7277,9 @@ model ExternalDocument {
 
 model ChamadaPainel {
   id           String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (unidadeId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ChamadaPainel", fields: [tenantId], references: [id])
   unidadeId    String
   filaId       String
   consultorio  String
@@ -7114,6 +7292,7 @@ model ChamadaPainel {
 
   @@index([unidadeId])
   @@index([exibidoEm])
+  @@index([tenantId])
   @@map("chamada_painel")
 }
 
@@ -7146,6 +7325,9 @@ enum TipoIndisponibilidade {
 
 model AlergiasCidadao {
   id              String           @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6AlergiasCidadao", fields: [tenantId], references: [id])
   citizenId       String
   alergia         String
   gravidade       GravidadeAlergia
@@ -7157,11 +7339,15 @@ model AlergiasCidadao {
   usuario User    @relation("UserAllergyRecords", fields: [usuarioRegistro], references: [id])
 
   @@index([citizenId])
+  @@index([tenantId])
   @@map("alergias_cidadao")
 }
 
 model ComorbidadesCidadao {
   id              String    @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ComorbidadesCidadao", fields: [tenantId], references: [id])
   citizenId       String
   cid10           String
   descricao       String
@@ -7177,11 +7363,15 @@ model ComorbidadesCidadao {
 
   @@index([citizenId])
   @@index([ativo])
+  @@index([tenantId])
   @@map("comorbidades_cidadao")
 }
 
 model AnexoProntuario {
   id             String             @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (atendimentoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6AnexoProntuario", fields: [tenantId], references: [id])
   citizenId      String
   atendimentoId  String?
   tipoDocumento  TipoDocumentoAnexo
@@ -7199,6 +7389,7 @@ model AnexoProntuario {
 
   @@index([citizenId])
   @@index([atendimentoId])
+  @@index([tenantId])
   @@map("anexo_prontuario")
 }
 
@@ -7214,6 +7405,9 @@ enum TipoDocumentoAnexo {
 
 model ImunizacaoCidadao {
   id             String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (unidadeId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ImunizacaoCidadao", fields: [tenantId], references: [id])
   citizenId      String
   vacina         String
   dose           String
@@ -7229,6 +7423,7 @@ model ImunizacaoCidadao {
 
   @@index([citizenId])
   @@index([dataAplicacao])
+  @@index([tenantId])
   @@map("imunizacao_cidadao")
 }
 
@@ -7339,6 +7534,9 @@ enum TipoAlertaEstoque {
 
 model DocumentoTFD {
   id             String           @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (solicitacaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6DocumentoTFD", fields: [tenantId], references: [id])
   solicitacaoId  String
   tipoDocumento  TipoDocumentoTFD
   nomeArquivo    String
@@ -7352,6 +7550,7 @@ model DocumentoTFD {
   usuario     User           @relation("UserTFDDocuments", fields: [usuarioUpload], references: [id])
 
   @@index([solicitacaoId])
+  @@index([tenantId])
   @@map("documento_tfd")
 }
 
@@ -7368,6 +7567,9 @@ enum TipoDocumentoTFD {
 
 model ParecerRegulacaoTFD {
   id                String        @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (solicitacaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ParecerRegulacaoTFD", fields: [tenantId], references: [id])
   solicitacaoId     String
   medicoReguladorId String
   parecer           String        @db.Text
@@ -7380,6 +7582,7 @@ model ParecerRegulacaoTFD {
 
   @@index([solicitacaoId])
   @@index([status])
+  @@index([tenantId])
   @@map("parecer_regulacao_tfd")
 }
 
@@ -7391,6 +7594,9 @@ enum StatusParecer {
 
 model AprovacaoGestaoTFD {
   id                String        @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (solicitacaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6AprovacaoGestaoTFD", fields: [tenantId], references: [id])
   solicitacaoId     String
   gestorId          String
   decisao           DecisaoGestao
@@ -7403,6 +7609,7 @@ model AprovacaoGestaoTFD {
 
   @@index([solicitacaoId])
   @@index([decisao])
+  @@index([tenantId])
   @@map("aprovacao_gestao_tfd")
 }
 
@@ -7414,6 +7621,9 @@ enum DecisaoGestao {
 
 model AgendamentoExternoTFD {
   id                 String   @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (solicitacaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6AgendamentoExternoTFD", fields: [tenantId], references: [id])
   solicitacaoId      String
   hospitalDestino    String
   especialidade      String
@@ -7430,11 +7640,15 @@ model AgendamentoExternoTFD {
 
   @@index([solicitacaoId])
   @@index([dataHoraConsulta])
+  @@index([tenantId])
   @@map("agendamento_externo_tfd")
 }
 
 model PassageiroViagemTFD {
   id               String         @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (solicitacaoId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6PassageiroViagemTFD", fields: [tenantId], references: [id])
   viagemId         String
   solicitacaoId    String
   citizenId        String
@@ -7451,6 +7665,7 @@ model PassageiroViagemTFD {
   @@index([viagemId])
   @@index([solicitacaoId])
   @@index([citizenId])
+  @@index([tenantId])
   @@map("passageiro_viagem_tfd")
 }
 
@@ -7463,6 +7678,9 @@ enum StatusEmbarque {
 
 model PrestacaoContasTFD {
   id                   String          @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (viagemId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6PrestacaoContasTFD", fields: [tenantId], references: [id])
   viagemId             String          @unique
   combustivelLitros    Float
   combustivelValor     Float
@@ -7487,6 +7705,7 @@ model PrestacaoContasTFD {
 
   @@index([viagemId])
   @@index([status])
+  @@index([tenantId])
   @@map("prestacao_contas_tfd")
 }
 
@@ -8302,6 +8521,9 @@ model ProfissionalAtividade {
 // ✅ PARTICIPANTES DA ATIVIDADE COLETIVA
 model ParticipanteAtividade {
   id String @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6ParticipanteAtividade", fields: [tenantId], references: [id])
 
   atividadeId String
   atividade   AtividadeColetiva @relation(fields: [atividadeId], references: [id])
@@ -8322,6 +8544,7 @@ model ParticipanteAtividade {
   @@unique([atividadeId, citizenId])
   @@index([atividadeId])
   @@index([citizenId])
+  @@index([tenantId])
   @@map("participantes_atividades")
 }
 
@@ -9185,6 +9408,9 @@ enum GuardianNotificationStatus {
 
 model FaceRecognitionIdentity {
   id        String                        @id @default(cuid())
+  // Fase 2 Multi-Tenant (onda 6) — herda tenant do pai (citizenId)
+  tenantId String?
+  tenant   Tenant? @relation("Tenant6FaceRecognitionIdentity", fields: [tenantId], references: [id])
   personId  String                        @unique
   citizenId String?                       @unique
   label     String?
@@ -9201,6 +9427,7 @@ model FaceRecognitionIdentity {
   events      FaceRecognitionEvent[]
 
   @@index([status])
+  @@index([tenantId])
   @@map("face_recognition_identities")
 }
 

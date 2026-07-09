@@ -5,6 +5,7 @@
  */
 
 import axios, { AxiosInstance } from 'axios';
+import { getBotTenantId } from './tenant-context';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -24,6 +25,18 @@ export class DigiUrbanIntegration {
         'Content-Type': 'application/json',
       },
       timeout: 15000,
+    });
+
+    // Fase 6 Multi-Tenant: propaga o tenant do cidadão (ALS) em TODA chamada.
+    // O backend (internal-tenant-context) prioriza este header sobre a
+    // derivação por citizenId — cobre listServices/searchServices etc.
+    this.api.interceptors.request.use((config) => {
+      const tenantId = getBotTenantId();
+      if (tenantId) {
+        config.headers = config.headers || {};
+        (config.headers as Record<string, string>)['X-Tenant-Id'] = tenantId;
+      }
+      return config;
     });
 
     // Interceptor de retry para falhas de conexão

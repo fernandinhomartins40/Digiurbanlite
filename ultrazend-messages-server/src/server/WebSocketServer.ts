@@ -10,6 +10,7 @@ import type { ParticipantType } from '@prisma/client';
 export interface AuthenticatedSocket extends Socket {
   userId: string;
   userType: ParticipantType;
+  tenantId?: string; // Fase 6 Multi-Tenant
   userData: JwtPayload;
 }
 
@@ -94,6 +95,7 @@ export class WebSocketServer {
         // Adicionar dados do usuário ao socket
         (socket as AuthenticatedSocket).userId = payload.userId;
         (socket as AuthenticatedSocket).userType = payload.userType;
+        (socket as AuthenticatedSocket).tenantId = (payload as { tenantId?: string }).tenantId;
         (socket as AuthenticatedSocket).userData = payload;
 
         // Registrar sessão WebSocket
@@ -199,6 +201,13 @@ export class WebSocketServer {
 
       // Também entrar na sala genérica (backward compatibility)
       socket.join(`user:${socket.userId}`);
+
+      // Fase 6 Multi-Tenant: sala com prefixo de tenant (defesa em profundidade).
+      // Os ids sao cuid globais, entao userId ja isola — o prefixo garante que
+      // broadcasts direcionados por tenant nunca cruzem municipios.
+      if (socket.tenantId) {
+        socket.join(`t:${socket.tenantId}:user:${socket.userId}`);
+      }
 
       // Buscar conversas do usuário
       const conversations = await prisma.conversation.findMany({

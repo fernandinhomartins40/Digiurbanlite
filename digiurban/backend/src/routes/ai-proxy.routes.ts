@@ -41,9 +41,10 @@ function buildProxyHeaders(req: Request): Record<string, string> {
   const userId = auth.userId;
   const userName = auth.user?.name;
   const departmentId = auth.user?.departmentId;
-  const tenantHeader = req.headers['x-tenant-id'];
-  const tenantId =
-    typeof tenantHeader === 'string' && tenantHeader.trim() ? tenantHeader.trim() : 'default';
+  // Fase 4 Multi-Tenant: usar o tenant JÁ resolvido pelo tenantContextMiddleware
+  // (por host/JWT), não um header do browser que nunca chega. Antes caía sempre
+  // em 'default' — toda IA de todos os municípios ia para o mesmo tenant.
+  const tenantId = (req as any).tenantId || 'default';
 
   return {
     ...(userId ? { 'x-user-id': userId } : {}),

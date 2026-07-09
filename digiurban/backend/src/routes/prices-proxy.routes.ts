@@ -59,6 +59,7 @@ async function proxyRequest(
       params: req.query,
       data: req.body,
       headers: {
+        'x-tenant-id': (req as any).tenantId || 'default', // Fase 4 Multi-Tenant
         ...(userId ? { 'x-user-id': userId } : {}),
       },
     });
@@ -97,6 +98,7 @@ router.post('/reports/price-research', async (req: Request, res: Response, next:
       url: '/reports/price-research',
       data: req.body,
       headers: {
+        'x-tenant-id': (req as any).tenantId || 'default', // Fase 4 Multi-Tenant
         ...(userId ? { 'x-user-id': userId } : {}),
       },
       responseType: 'stream',
