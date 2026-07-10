@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext'
+import { useTenant } from '@/components/providers/TenantProvider'
 import { useToast } from '@/hooks/use-toast'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -54,58 +55,17 @@ export default function CitizenLoginPage() {
     municipio: '',
   })
 
-  // Estado para o município configurado (Single Tenant)
-  const [municipioConfig, setMunicipioConfig] = useState<{
-    nomeMunicipio: string
-    ufMunicipio: string
-    codigoIbge: string | null
-  } | null>(null)
-  const [loadingMunicipioConfig, setLoadingMunicipioConfig] = useState(true)
-
-  // Buscar configuração do município (Single Tenant)
-  useEffect(() => {
-    const fetchMunicipioConfig = async () => {
-      setLoadingMunicipioConfig(true)
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-        const url = `${apiUrl}/public/municipio-config`
-
-        console.log('[Login] Buscando configuração do município:', url)
-
-        const response = await fetch(url)
-        const data = await response.json()
-
-        console.log('[Login] Configuração do município:', data)
-
-        if (data.success && data.config) {
-          setMunicipioConfig({
-            nomeMunicipio: data.config.nomeMunicipio,
-            ufMunicipio: data.config.ufMunicipio,
-            codigoIbge: data.config.codigoIbge || null
-          })
-          console.log('[Login] Município configurado:', data.config.nomeMunicipio)
-        } else {
-          console.error('[Login] Erro na resposta:', data)
-          toast({
-            variant: 'destructive',
-            title: 'Erro',
-            description: 'Não foi possível carregar a configuração do município',
-          })
-        }
-      } catch (error) {
-        console.error('[Login] Erro ao buscar configuração do município:', error)
-        toast({
-          variant: 'destructive',
-          title: 'Erro',
-          description: 'Não foi possível conectar ao servidor',
-        })
-      } finally {
-        setLoadingMunicipioConfig(false)
-      }
-    }
-
-    fetchMunicipioConfig()
-  }, [])
+  // Multi-tenant: o município vem do TenantProvider (resolvido por HOST no SSR),
+  // não de um fetch client-side. Garante que suacidade.digiurban.com.br mostre
+  // SUA cidade — antes o endpoint legado /municipio-config devolvia sempre o
+  // mesmo singleton independentemente do host.
+  const { config: tenantConfig } = useTenant()
+  const municipioConfig = {
+    nomeMunicipio: tenantConfig.nomeMunicipio,
+    ufMunicipio: tenantConfig.ufMunicipio,
+    codigoIbge: tenantConfig.codigoIbge ?? null,
+  }
+  const loadingMunicipioConfig = false
 
   // Carregar credenciais salvas ao montar componente
   useEffect(() => {

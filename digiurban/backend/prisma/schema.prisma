@@ -531,7 +531,7 @@ model Citizen {
   cpf                 String
   name                String
   email               String
-  personId            String?            @unique
+  personId            String? // unique composta [tenantId, personId] — mesma pessoa pode ser cidadã de 2 municípios
   phone               String?
   birthDate           DateTime?
   address             Json?
@@ -620,6 +620,7 @@ model Citizen {
   faceEventsAsGuardian    FaceRecognitionEvent[]   @relation("FaceEventGuardian")
 
   @@unique([tenantId, cpf]) // Fase 2 (conversão): mesmo CPF pode existir em municípios diferentes
+  @@unique([tenantId, personId]) // mesma Person (CPF global) por município
   @@index([tenantId])
   @@index([equipeId])
   @@index([microareaId])
@@ -639,7 +640,7 @@ model Person {
   updatedAt DateTime  @updatedAt
 
   user         User?
-  citizen      Citizen?
+  citizens     Citizen[]
   faceIdentity FaceRecognitionIdentity?
 
   @@index([name])

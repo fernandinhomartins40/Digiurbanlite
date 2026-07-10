@@ -213,7 +213,15 @@ export const tenantExtension = Prisma.defineExtension((client) =>
 );
 
 /**
- * Garante que o registro-alvo de update/delete pertence ao tenant atual.
+ * Bloqueia update/delete/upsert cujo alvo pertence a OUTRO tenant.
+ *
+ * Semântica FAIL-SAFE p/ transações: só lança se o registro EXISTE e é de outro
+ * tenant. Se não for encontrado, NÃO lança — pode ser um registro criado na
+ * MESMA transação ainda não commitada (o preflight roda no client base, fora do
+ * tx), e nesse caso o where por id já é seguro + o RLS cobre o resíduo. Antes,
+ * lançar em "não encontrado" quebrava todo create+update na mesma transação
+ * (ex.: registro de cidadão → syncCitizenPersonIdentity).
+ *
  * Usa o client da camada anterior (sem re-entrar nesta extension).
  */
 async function assertOwnership(
@@ -223,11 +231,13 @@ async function assertOwnership(
   tenantId: string
 ): Promise<void> {
   const delegate = (client as Record<string, any>)[model.charAt(0).toLowerCase() + model.slice(1)];
-  const mine = await delegate.findFirst({
-    where: scopeWhere(where, tenantId),
-    select: { tenantId: true },
-  });
-  if (!mine) throw notFoundError(model);
+  const target = await delegate.findFirst({ where, select: { tenantId: true } });
+  // target === null: não visível fora do tx (registro da própria transação) OU
+  // não existe → deixar a operação seguir (segura pelo where único + RLS).
+  // target de outro tenant → bloquear.
+  if (target && target.tenantId != null && target.tenantId !== tenantId) {
+    throw notFoundError(model);
+  }
 }
 
 /** upsert: permite create (alvo inexistente), bloqueia update cross-tenant. */
@@ -239,7 +249,7 @@ async function assertNoCrossTenantTarget(
 ): Promise<void> {
   const delegate = (client as Record<string, any>)[model.charAt(0).toLowerCase() + model.slice(1)];
   const target = await delegate.findFirst({ where, select: { tenantId: true } });
-  if (target && target.tenantId !== tenantId) throw notFoundError(model);
+  if (target && target.tenantId != null && target.tenantId !== tenantId) throw notFoundError(model);
 }
 
 /** @deprecated nome antigo — mantido para compat de import */

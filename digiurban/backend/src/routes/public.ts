@@ -55,6 +55,7 @@ router.get(
         nome: tenant.nome,
         nomeMunicipio: tenant.nomeMunicipio,
         ufMunicipio: tenant.ufMunicipio,
+        codigoIbge: tenant.codigoIbge ?? null,
         status: tenant.status,
         branding: tenant.branding ?? null,
         features: tenant.features ?? null,
