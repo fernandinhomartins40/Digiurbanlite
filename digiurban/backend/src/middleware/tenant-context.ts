@@ -39,10 +39,28 @@ export const tenantContextMiddleware = async (
   let tenant: TenantRecord | null = null;
 
   try {
+    // 1) Resolução por HOST (subdomínio/domínio custom). Se o host identifica
+    //    um tenant ESPECÍFICO (não o default), ele tem precedência absoluta —
+    //    ninguém troca de município via header estando num subdomínio próprio.
     tenant = await TenantService.getByHost(req.hostname);
+
+    // 2) Se o host caiu no DEFAULT (domínio raiz / localhost), a SELEÇÃO do
+    //    cidadão vale: header X-Tenant-Slug (seletor do portal) ou cookie.
+    //    Assim um único domínio serve todos os municípios via dropdown.
+    const isDefaultHost = !tenant || tenant.id === DEFAULT_TENANT_ID;
+    if (isDefaultHost) {
+      const selected =
+        (req.headers['x-tenant-slug'] as string | undefined)?.trim() ||
+        req.cookies?.digiurban_tenant_slug;
+      if (selected) {
+        const bySelection = await TenantService.getBySlug(selected);
+        if (bySelection && bySelection.status === 'ACTIVE') {
+          tenant = bySelection;
+        }
+      }
+    }
   } catch (error) {
-    // Transitório (Fase 1): sem enforcement dependente, não derrubar a request.
-    // A partir da Fase 3/4 este caminho vira fail-closed (503).
+    // Transitório: sem enforcement dependente, não derrubar a request.
     logger.warn('tenantContextMiddleware: falha ao resolver tenant, usando default sintético', {
       host: req.hostname,
       error: error instanceof Error ? error.message : String(error),

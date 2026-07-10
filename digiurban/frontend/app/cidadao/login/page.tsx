@@ -55,17 +55,70 @@ export default function CitizenLoginPage() {
     municipio: '',
   })
 
-  // Multi-tenant: o município vem do TenantProvider (resolvido por HOST no SSR),
-  // não de um fetch client-side. Garante que suacidade.digiurban.com.br mostre
-  // SUA cidade — antes o endpoint legado /municipio-config devolvia sempre o
-  // mesmo singleton independentemente do host.
+  // Multi-tenant: o município vem do host (subdomínio) OU da seleção do cidadão.
+  // - Se o host já identifica um município específico (ex.: cidade.digiurban.com.br),
+  //   o TenantProvider o resolve e NÃO mostramos o seletor.
+  // - No domínio raiz (host = default), o cidadão ESCOLHE o município num seletor;
+  //   a escolha vira o cookie digiurban_tenant_slug (o backend a lê no header/cookie).
   const { config: tenantConfig } = useTenant()
-  const municipioConfig = {
-    nomeMunicipio: tenantConfig.nomeMunicipio,
-    ufMunicipio: tenantConfig.ufMunicipio,
-    codigoIbge: tenantConfig.codigoIbge ?? null,
+  const hostResolvedTenant = tenantConfig.slug !== 'default'
+
+  type Municipio = { slug: string; nomeMunicipio: string; ufMunicipio: string; codigoIbge: string | null }
+  const [municipios, setMunicipios] = useState<Municipio[]>([])
+  const [selectedSlug, setSelectedSlug] = useState<string>('')
+  const [loadingMunicipios, setLoadingMunicipios] = useState(!hostResolvedTenant)
+
+  // Buscar lista de municípios (apenas quando o host NÃO define um específico)
+  useEffect(() => {
+    if (hostResolvedTenant) return
+    ;(async () => {
+      setLoadingMunicipios(true)
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+        const res = await fetch(`${apiUrl}/public/municipios`)
+        const data = await res.json()
+        if (data.success) {
+          setMunicipios(data.municipios)
+          // restaurar seleção anterior do cookie
+          const cookieSlug = document.cookie
+            .split('; ')
+            .find((c) => c.startsWith('digiurban_tenant_slug='))
+            ?.split('=')[1]
+          if (cookieSlug && data.municipios.some((m: Municipio) => m.slug === cookieSlug)) {
+            setSelectedSlug(cookieSlug)
+          }
+        }
+      } catch {
+        // silencioso: sem lista, o cidadão vê estado vazio
+      } finally {
+        setLoadingMunicipios(false)
+      }
+    })()
+  }, [hostResolvedTenant])
+
+  // Município efetivo: o do host (se específico) ou o selecionado
+  const selectedMunicipio = municipios.find((m) => m.slug === selectedSlug)
+  const municipioConfig = hostResolvedTenant
+    ? {
+        nomeMunicipio: tenantConfig.nomeMunicipio,
+        ufMunicipio: tenantConfig.ufMunicipio,
+        codigoIbge: tenantConfig.codigoIbge ?? null,
+      }
+    : selectedMunicipio
+    ? {
+        nomeMunicipio: selectedMunicipio.nomeMunicipio,
+        ufMunicipio: selectedMunicipio.ufMunicipio,
+        codigoIbge: selectedMunicipio.codigoIbge,
+      }
+    : null
+  const loadingMunicipioConfig = loadingMunicipios
+
+  // Grava a seleção em cookie (o backend lê digiurban_tenant_slug ou X-Tenant-Slug)
+  const handleSelectMunicipio = (slug: string) => {
+    setSelectedSlug(slug)
+    // cookie de sessão, escopo raiz; enviado automaticamente e via header no auth
+    document.cookie = `digiurban_tenant_slug=${slug}; path=/; SameSite=Lax`
   }
-  const loadingMunicipioConfig = false
 
   // Carregar credenciais salvas ao montar componente
   useEffect(() => {
@@ -92,6 +145,12 @@ export default function CitizenLoginPage() {
   const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError(null)
+
+    // No domínio raiz é obrigatório escolher o município antes de entrar
+    if (!hostResolvedTenant && !selectedSlug) {
+      setError('Selecione o seu município para continuar')
+      return
+    }
 
     const cpfNumbers = loginData.cpf.replace(/\D/g, '')
     if (cpfNumbers.length !== 11) {
@@ -250,6 +309,50 @@ export default function CitizenLoginPage() {
     )
   }
 
+  // Seletor/indicador de município reutilizado nas abas de login e registro
+  const municipioSelector = (
+    <div className="space-y-2">
+      <Label className="text-[#193642] font-medium">Município</Label>
+      {loadingMunicipioConfig ? (
+        <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+          <div className="animate-spin h-4 w-4 border-2 border-[#0f6fbe] border-t-transparent rounded-full" />
+          <span className="text-sm text-gray-600">Carregando municípios...</span>
+        </div>
+      ) : hostResolvedTenant && municipioConfig ? (
+        <div className="flex items-center gap-3 p-3 bg-[#a7dbc9]/20 border border-[#a7dbc9] rounded-lg">
+          <MapPin className="h-5 w-5 text-[#0f6fbe] flex-shrink-0" />
+          <div className="text-sm">
+            <span className="font-semibold text-[#193642]">
+              {municipioConfig.nomeMunicipio} - {municipioConfig.ufMunicipio}
+            </span>
+            <p className="text-xs text-gray-700 mt-0.5">Sistema exclusivo para cidadãos deste município</p>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-1">
+          <div className="relative">
+            <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-[#0f6fbe] pointer-events-none" />
+            <select
+              value={selectedSlug}
+              onChange={(e) => handleSelectMunicipio(e.target.value)}
+              className="w-full pl-10 pr-3 py-3 rounded-lg border border-[#a7dbc9] bg-white text-[#193642] text-sm focus:outline-none focus:ring-2 focus:ring-[#0f6fbe]"
+            >
+              <option value="">Selecione o seu município...</option>
+              {municipios.map((m) => (
+                <option key={m.slug} value={m.slug}>
+                  {m.nomeMunicipio} - {m.ufMunicipio}
+                </option>
+              ))}
+            </select>
+          </div>
+          {municipios.length === 0 && (
+            <p className="text-xs text-red-600">Nenhum município disponível no momento.</p>
+          )}
+        </div>
+      )}
+    </div>
+  )
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#0f6fbe] via-[#0f6fbe] to-[#193642] p-4 relative overflow-hidden">
       {/* Decorative elements */}
@@ -299,6 +402,8 @@ export default function CitizenLoginPage() {
                     <span className="text-sm">{error}</span>
                   </div>
                 )}
+
+                {municipioSelector}
 
                 <div className="space-y-2">
                   <Label htmlFor="login-cpf" className="text-[#193642] font-medium">CPF</Label>
@@ -461,34 +566,7 @@ export default function CitizenLoginPage() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="register-municipio" className="text-[#193642] font-medium">Município</Label>
-                  {loadingMunicipioConfig ? (
-                    <div className="flex items-center gap-2 p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                      <div className="animate-spin h-4 w-4 border-2 border-[#0f6fbe] border-t-transparent rounded-full" />
-                      <span className="text-sm text-gray-600">Carregando município...</span>
-                    </div>
-                  ) : municipioConfig ? (
-                    <div className="flex items-center gap-3 p-3 bg-[#a7dbc9]/20 border border-[#a7dbc9] rounded-lg">
-                      <MapPin className="h-5 w-5 text-[#0f6fbe] flex-shrink-0" />
-                      <div className="text-sm">
-                        <span className="font-semibold text-[#193642]">
-                          {municipioConfig.nomeMunicipio} - {municipioConfig.ufMunicipio}
-                        </span>
-                        <p className="text-xs text-gray-700 mt-0.5">
-                          Sistema exclusivo para cidadãos deste município
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-lg">
-                      <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
-                      <span className="text-sm text-red-700">
-                        Não foi possível carregar o município
-                      </span>
-                    </div>
-                  )}
-                </div>
+                {municipioSelector}
 
                 <div className="space-y-2">
                   <Label htmlFor="register-password" className="text-[#193642] font-medium">Senha *</Label>
