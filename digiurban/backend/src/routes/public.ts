@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import { TenantService } from '../services/tenant.service';
+import { runAsPlatform } from '../lib/tenant-context';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -30,6 +31,32 @@ function normalizeString(str: string): string {
     .toLowerCase()
     .trim();
 }
+
+// GET /api/public/municipios — lista os municípios (tenants) ATIVOS para o
+// seletor do portal do cidadão. Sem autenticação. Operação de plataforma
+// (runAsPlatform) porque precisa ver todos os tenants, não só o do host.
+router.get(
+  '/municipios',
+  handleAsync(async (req, res) => {
+    const municipios = await runAsPlatform(async () =>
+      prisma.tenant.findMany({
+        // exclui o tenant genérico "default" (não é um município real selecionável)
+        where: { status: 'ACTIVE', slug: { not: 'default' } },
+        select: {
+          id: true,
+          slug: true,
+          nome: true,
+          nomeMunicipio: true,
+          ufMunicipio: true,
+          codigoIbge: true,
+        },
+        orderBy: [{ ufMunicipio: 'asc' }, { nomeMunicipio: 'asc' }],
+      })
+    );
+    res.set('Cache-Control', 'public, max-age=300'); // catálogo muda raramente
+    res.json({ success: true, municipios });
+  })
+);
 
 // GET /api/public/tenant-config — configuração pública do tenant resolvido pelo
 // HOST da requisição (Fase 7 Multi-Tenant: base do white-label runtime).
