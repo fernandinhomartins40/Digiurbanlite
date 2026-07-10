@@ -21,6 +21,7 @@ export interface TenantConfig {
   nome: string
   nomeMunicipio: string
   ufMunicipio: string
+  codigoIbge?: string | null
   status: string
   branding: TenantBranding | null
   features: Record<string, unknown> | null

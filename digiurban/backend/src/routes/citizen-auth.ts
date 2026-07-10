@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
 import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
+import { TenantService } from '../services/tenant.service';
 import { z } from 'zod';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
 import { validateCPF, validateStrongPassword } from '../utils/validators';
@@ -113,25 +114,10 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
     // Hash da senha com rounds padronizados (OWASP 2024)
     const hashedPassword = await bcrypt.hash(data.password, BCRYPT_ROUNDS);
 
-    // Determinar municipioId
-    let municipioId = data.municipioId;
-
-    // Se não foi fornecido municipioId mas foi fornecido codigo IBGE, buscar ou criar município
-    if (!municipioId && data.codigoIbge) {
-      console.log('🏙️ Buscando município pelo código IBGE:', data.codigoIbge);
-
-      // Buscar município na configuração (single tenant)
-      let municipioConfig = await prisma.municipioConfig.findFirst({
-        where: { codigoIbge: data.codigoIbge }
-      });
-
-      if (municipioConfig) {
-        municipioId = municipioConfig.id;
-        console.log('✅ Município encontrado na configuração:', municipioConfig.nomeMunicipio);
-      } else {
-        console.log('⚠️ Município não encontrado na configuração. Será necessário cadastro manual do município.');
-      }
-    }
+    // Multi-tenant: o município (tenant) NÃO é escolhido pelo cidadão — vem do
+    // HOST da requisição e é carimbado automaticamente pela Prisma tenant
+    // extension no create abaixo. O campo legado `municipioId` (single-tenant)
+    // não é mais preenchido no registro; será removido em limpeza futura.
 
     // Criar cidadão com status de verificação pendente (Bronze)
     const citizen = await prisma.$transaction(async (tx) => {
@@ -143,7 +129,6 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
           phone: normalizedPhone,
           password: hashedPassword,
           address: data.address,
-          municipioId: municipioId,
           isActive: true,
           verificationStatus: 'PENDING',
           registrationSource: 'SELF',
@@ -214,10 +199,11 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
       });
 
       if (emailServer) {
-        // Buscar configuração do município
-        const municipioConfig = await prisma.municipioConfig.findUnique({
-          where: { id: 'singleton' }
-        });
+        // Multi-tenant: nome do município vem do tenant do cidadão recém-criado
+        // (carimbado pela extension), não do singleton legado.
+        const tenantOfCitizen = citizen.tenantId
+          ? await TenantService.getById(citizen.tenantId)
+          : null;
 
         // Enviar email de boas-vindas de forma assíncrona (não bloqueia resposta)
         getSystemEmail('suporte').then(supportEmail => {
@@ -225,7 +211,7 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
             emailServer.id,
             citizen.email,
             citizen.name,
-            municipioConfig?.nome || 'DigiUrban',
+            tenantOfCitizen?.nome || 'DigiUrban',
             process.env.FRONTEND_URL || 'https://digiurban.com.br',
             process.env.SUPPORT_EMAIL || supportEmail
           ).catch(error => {
@@ -491,21 +477,13 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
     // Remover senha da resposta
     const { password: _, ...citizenData } = citizen;
 
-    // Buscar informações do tenant (município)
+    // Multi-tenant: o tenant do cidadão é o carimbado pela extension
+    // (citizen.tenantId), resolvido via TenantService. NÃO usar mais o campo
+    // legado municipioId nem o municipio_config singleton.
     let tenantInfo = null;
-    if (citizen.municipioId) {
-      const tenant = await prisma.municipioConfig.findUnique({
-        where: { id: citizen.municipioId },
-        select: {
-          id: true,
-          nome: true,
-          nomeMunicipio: true,
-          ufMunicipio: true,
-          codigoIbge: true,
-          isActive: true
-        }
-      });
-      // Mapear para o formato esperado pelo frontend
+    const effectiveTenantId = citizen.tenantId || decoded.tenantId;
+    if (effectiveTenantId) {
+      const tenant = await TenantService.getById(effectiveTenantId);
       if (tenant) {
         tenantInfo = {
           id: tenant.id,
@@ -513,14 +491,14 @@ router.get('/me', asyncHandler(async (req: Request, res: Response) => {
           nomeMunicipio: tenant.nomeMunicipio,
           ufMunicipio: tenant.ufMunicipio,
           codigoIbge: tenant.codigoIbge,
-          status: tenant.isActive ? 'active' : 'inactive'
+          status: tenant.status === 'ACTIVE' ? 'active' : 'inactive'
         };
       }
     }
 
     return res.json({
       citizen: citizenData,
-      tenantId: citizen.municipioId || decoded.tenantId,
+      tenantId: effectiveTenantId,
       tenant: tenantInfo
     });
   } catch (error: unknown) {

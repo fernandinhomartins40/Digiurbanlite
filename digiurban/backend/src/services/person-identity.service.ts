@@ -29,7 +29,7 @@ async function fetchPersonById(db: IdentityDbClient, id: string) {
     where: { id },
     include: {
       user: { select: { id: true } },
-      citizen: { select: { id: true } },
+      citizens: { select: { id: true } },
     },
   });
 }
@@ -39,7 +39,7 @@ async function fetchPersonByCpf(db: IdentityDbClient, cpf: string) {
     where: { cpf },
     include: {
       user: { select: { id: true } },
-      citizen: { select: { id: true } },
+      citizens: { select: { id: true } },
     },
   });
 }
