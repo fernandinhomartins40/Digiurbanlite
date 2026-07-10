@@ -26,7 +26,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Copiar package files do backend
 COPY digiurban/backend/package.json digiurban/backend/package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN sh -c 'n=0; until npm install --legacy-peer-deps; do n=$((n+1)); if [ $n -ge 3 ]; then exit 1; fi; echo "retry npm install $n/3"; sleep 10; done'
 
 # Copiar código do backend
 COPY digiurban/backend ./
@@ -88,7 +88,7 @@ ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
-RUN npm install --legacy-peer-deps
+RUN sh -c 'n=0; until npm install --legacy-peer-deps; do n=$((n+1)); if [ $n -ge 3 ]; then exit 1; fi; echo "retry npm install $n/3"; sleep 10; done'
 
 # Copiar código do frontend
 COPY digiurban/frontend ./

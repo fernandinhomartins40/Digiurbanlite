@@ -17,7 +17,7 @@ COPY package*.json ./
 COPY tsconfig.json ./
 COPY tsconfig.prisma.json ./
 
-RUN npm install --legacy-peer-deps --prefer-offline --no-audit
+RUN sh -c 'n=0; until npm install --legacy-peer-deps --prefer-offline --no-audit; do n=$((n+1)); if [ $n -ge 3 ]; then exit 1; fi; echo "retry npm install $n/3"; sleep 10; done'
 
 COPY prisma ./prisma
 COPY src ./src
@@ -44,7 +44,7 @@ RUN npm config set fetch-retry-mintimeout 20000 && \
 
 COPY package*.json ./
 
-RUN npm install --omit=dev --legacy-peer-deps --prefer-offline --no-audit
+RUN sh -c 'n=0; until npm install --omit=dev --legacy-peer-deps --prefer-offline --no-audit; do n=$((n+1)); if [ $n -ge 3 ]; then exit 1; fi; echo "retry npm install $n/3"; sleep 10; done'
 
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
