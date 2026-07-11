@@ -21,7 +21,8 @@ import { TenantRecord } from '../services/tenant.service';
 // Prefixos liberados mesmo com tenant suspenso/inadimplente.
 const BYPASS_PREFIXES = [
   '/api/public/',
-  '/api/super-admin', // plataforma precisa operar sobre tenant suspenso
+  '/api/platform', // console de plataforma (Fase C) opera sobre tenant suspenso
+  '/api/super-admin', // legado — dupla aceitação até o corte (Fase D/H)
   '/api/admin/auth/login',
   '/api/admin/auth/logout',
   '/api/citizen/auth/login',

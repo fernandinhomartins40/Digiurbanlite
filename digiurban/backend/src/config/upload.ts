@@ -8,6 +8,8 @@
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { tryGetTenantContext, DEFAULT_TENANT_ID } from '../lib/tenant-context';
+import { isTenantStrict, reportTenantFailSoft } from '../lib/tenant-telemetry';
 
 // Diretório de uploads
 // ✅ IMPORTANTE: Usar /app/uploads (compartilhado com ultrazend-smtp via volume)
@@ -18,11 +20,59 @@ if (!fs.existsSync(UPLOAD_DIR)) {
   fs.mkdirSync(UPLOAD_DIR, { recursive: true });
 }
 
+// ============================================================================
+// FASE B MULTI-TENANT: PARTICIONAMENTO POR TENANT
+// ============================================================================
+// Layout novo: uploads/t/{tenantId}/{categoria}/... — o segmento fixo "t/"
+// distingue o layout particionado do legado (protocols/, documents/, ...) e
+// permite ao gate de leitura (uploads-access.ts) validar o tenant do path
+// contra o claim do JWT sem consultar o banco.
+// Leituras têm fallback para o layout legado até a migração física
+// (scripts/migrate-uploads-tenant.ts) ser executada.
+
+/** Segmento raiz do layout particionado por tenant. */
+export const TENANT_UPLOADS_SEGMENT = 't';
+
+/**
+ * Resolve o tenant para operações de upload.
+ * Ordem: explícito (jobs/scripts com a linha do banco em mãos) → contexto ALS.
+ * Transição (até a Fase D/fail-closed): sem contexto → default, com log — a
+ * mesma postura fail-soft do restante da base.
+ */
+export function resolveUploadTenantId(explicitTenantId?: string | null): string {
+  if (explicitTenantId) return explicitTenantId;
+  const ctx = tryGetTenantContext();
+  if (ctx && !ctx.isPlatform && ctx.tenantId) return ctx.tenantId;
+
+  // Fase D: telemetria sempre; TENANT_STRICT lança (arquivo no diretório do
+  // município errado é corrupção silenciosa — jobs/plataforma devem passar o
+  // tenant explicitamente).
+  reportTenantFailSoft('upload-resolver');
+  if (isTenantStrict()) {
+    throw new Error(
+      'TENANT_STRICT: operação de arquivo sem tenant — passe o tenantId explicitamente em jobs/contexto de plataforma.'
+    );
+  }
+  return DEFAULT_TENANT_ID;
+}
+
+/** Diretório físico particionado: uploads/t/{tenantId}/{...segments} */
+export function getTenantUploadDir(tenantId: string | undefined | null, ...segments: string[]): string {
+  return path.join(UPLOAD_DIR, TENANT_UPLOADS_SEGMENT, resolveUploadTenantId(tenantId), ...segments);
+}
+
+/** URL pública particionada: /uploads/t/{tenantId}/{...segments} */
+export function getTenantUploadUrl(tenantId: string | undefined | null, ...segments: string[]): string {
+  return `/uploads/${TENANT_UPLOADS_SEGMENT}/${resolveUploadTenantId(tenantId)}/${segments.join('/')}`;
+}
+
 // Configuração de storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    // Criar subdiretórios por tipo de documento
-    const uploadPath = path.join(UPLOAD_DIR, 'documents');
+    // Fase B: staging particionado por tenant — o tenant vem da request
+    // (tenantContextMiddleware) ou do contexto ALS via resolveUploadTenantId.
+    const tenantId = (req as any).tenantId as string | undefined;
+    const uploadPath = getTenantUploadDir(tenantId, 'documents');
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }
@@ -119,23 +169,45 @@ export const deleteFile = (filePath: string): void => {
 };
 
 // ============================================================================
-// FASE 1: PADRÃO ÚNICO DE ARMAZENAMENTO
+// FASE 1: PADRÃO ÚNICO DE ARMAZENAMENTO (agora particionado por tenant)
 // ============================================================================
 
 /**
  * Obtém URL pública do arquivo no padrão canônico
- * PADRÃO: /uploads/protocols/{protocolId}/{filename}
+ * PADRÃO (Fase B): /uploads/t/{tenantId}/protocols/{protocolId}/{filename}
  */
-export const getProtocolFileUrl = (protocolId: string, filename: string): string => {
-  return `/uploads/protocols/${protocolId}/${filename}`;
+export const getProtocolFileUrl = (
+  protocolId: string,
+  filename: string,
+  tenantId?: string | null
+): string => {
+  return getTenantUploadUrl(tenantId, 'protocols', protocolId, filename);
 };
 
 /**
- * Obtém caminho físico absoluto do arquivo
- * PADRÃO: {cwd}/uploads/protocols/{protocolId}/{filename}
+ * Obtém caminho físico absoluto do arquivo.
+ * PADRÃO (Fase B): {uploads}/t/{tenantId}/protocols/{protocolId}/{filename}
+ *
+ * COMPAT (até a migração física): se o arquivo não existe no layout novo mas
+ * existe no legado ({uploads}/protocols/...), devolve o legado — leituras de
+ * arquivos ainda não migrados continuam funcionando.
  */
-export const getProtocolFilePath = (protocolId: string, filename: string): string => {
-  return path.join(UPLOAD_DIR, 'protocols', protocolId, filename);
+export const getProtocolFilePath = (
+  protocolId: string,
+  filename: string,
+  tenantId?: string | null
+): string => {
+  const tenantPath = path.join(
+    getTenantUploadDir(tenantId, 'protocols', protocolId),
+    filename
+  );
+  if (fs.existsSync(tenantPath)) return tenantPath;
+
+  const legacyPath = path.join(UPLOAD_DIR, 'protocols', protocolId, filename);
+  if (fs.existsSync(legacyPath)) return legacyPath;
+
+  // Nenhum existe (ex.: validação de integridade): reportar o caminho canônico
+  return tenantPath;
 };
 
 /**
@@ -147,10 +219,11 @@ export const extractFilename = (fileUrl: string): string => {
 };
 
 /**
- * Cria diretório do protocolo se não existir
+ * Cria diretório do protocolo se não existir (layout particionado — escritas
+ * novas SEMPRE vão para uploads/t/{tenantId}/protocols/).
  */
-export const ensureProtocolDir = (protocolId: string): string => {
-  const protocolDir = path.join(UPLOAD_DIR, 'protocols', protocolId);
+export const ensureProtocolDir = (protocolId: string, tenantId?: string | null): string => {
+  const protocolDir = getTenantUploadDir(tenantId, 'protocols', protocolId);
   if (!fs.existsSync(protocolDir)) {
     fs.mkdirSync(protocolDir, { recursive: true });
   }

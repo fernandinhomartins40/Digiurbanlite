@@ -28,6 +28,7 @@
 
 import { Prisma } from '@prisma/client';
 import { tryGetTenantId, tryGetTenantContext, DEFAULT_TENANT_ID } from './tenant-context';
+import { isTenantStrict, reportTenantFailSoft } from './tenant-telemetry';
 
 /** Models (nomes Prisma, ex.: "User") que possuem campo escalar tenantId. */
 const TENANT_SCOPED_MODELS: Set<string> = new Set(
@@ -41,12 +42,31 @@ export function getTenantScopedModels(): string[] {
   return [...TENANT_SCOPED_MODELS].sort();
 }
 
-/** tenantId efetivo para a operação atual, ou undefined para não escopar. */
+/**
+ * tenantId efetivo para a operação atual, ou undefined para não escopar.
+ *
+ * ⚠️ Só chamar para models ESCOPADOS (os hooks checam TENANT_SCOPED_MODELS
+ * antes — ordem importa): sob TENANT_STRICT esta função LANÇA sem contexto, e
+ * models globais (Tenant, PlatformUser, municipio_config...) são consultados
+ * legitimamente sem contexto pela própria resolução de host do middleware.
+ */
 function resolveTenantId(): string | undefined {
   const ctx = tryGetTenantContext();
   if (ctx?.isPlatform) return undefined; // plataforma: sem escopo
-  // Transição (1 tenant): fail-soft para o default; fail-closed chega na Fase 4
-  return tryGetTenantId() || DEFAULT_TENANT_ID;
+  const fromContext = tryGetTenantId();
+  if (fromContext) return fromContext;
+
+  // Fase D: contexto ausente. Telemetria sempre; TENANT_STRICT transforma o
+  // fail-soft em erro visível (dev/CI/staging primeiro; produção após a
+  // telemetria zerar). Sem strict: default, como na transição.
+  reportTenantFailSoft('prisma-extension');
+  if (isTenantStrict()) {
+    throw new Error(
+      'TENANT_STRICT: operação Prisma sem contexto de tenant. ' +
+        'Requisições HTTP passam pelo tenantContextMiddleware; jobs devem usar runAsTenant()/runAsPlatform().'
+    );
+  }
+  return DEFAULT_TENANT_ID;
 }
 
 function injectIntoData(data: unknown, tenantId: string): void {
@@ -81,15 +101,15 @@ export const tenantExtension = Prisma.defineExtension((client) =>
       $allModels: {
         // ================= ESCRITA (Fase 2) =================
         async create({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             injectIntoData((args as { data?: unknown }).data, tenantId);
           }
           return query(args);
         },
         async createMany({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             const data = (args as { data?: unknown }).data;
             if (Array.isArray(data)) {
               for (const item of data) injectIntoData(item, tenantId);
@@ -102,57 +122,57 @@ export const tenantExtension = Prisma.defineExtension((client) =>
 
         // ================= LEITURA (Fase 3) =================
         async findMany({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async findFirst({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async findFirstOrThrow({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async count({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async aggregate({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async groupBy({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async updateMany({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async deleteMany({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             (args as { where?: unknown }).where = scopeWhere((args as { where?: unknown }).where, tenantId);
           }
           return query(args);
@@ -160,8 +180,8 @@ export const tenantExtension = Prisma.defineExtension((client) =>
 
         // findUnique não aceita colunas extras no where → reescrito p/ findFirst
         async findUnique({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             const delegate = (client as unknown as Record<string, any>)[
               model.charAt(0).toLowerCase() + model.slice(1)
             ];
@@ -171,8 +191,8 @@ export const tenantExtension = Prisma.defineExtension((client) =>
           return query(args);
         },
         async findUniqueOrThrow({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             const delegate = (client as unknown as Record<string, any>)[
               model.charAt(0).toLowerCase() + model.slice(1)
             ];
@@ -184,22 +204,22 @@ export const tenantExtension = Prisma.defineExtension((client) =>
 
         // ======= MUTAÇÃO POR CHAVE ÚNICA: preflight de ownership =======
         async update({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             await assertOwnership(client, model, (args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async delete({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             await assertOwnership(client, model, (args as { where?: unknown }).where, tenantId);
           }
           return query(args);
         },
         async upsert({ model, args, query }) {
-          const tenantId = resolveTenantId();
-          if (tenantId && TENANT_SCOPED_MODELS.has(model)) {
+          const tenantId = TENANT_SCOPED_MODELS.has(model) ? resolveTenantId() : undefined;
+          if (tenantId) {
             injectIntoData((args as { create?: unknown }).create, tenantId);
             // Se o alvo do where existir em OUTRO tenant, o caminho de update
             // sequestraria registro alheio — bloquear.

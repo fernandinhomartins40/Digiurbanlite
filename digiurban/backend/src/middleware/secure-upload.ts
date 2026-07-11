@@ -19,6 +19,7 @@ import {
   normalizeDocumentConfigs,
   validateFile
 } from '../utils/document-validation';
+import { resolveUploadTenantId, TENANT_UPLOADS_SEGMENT } from '../config/upload';
 
 // Tipos de vírus/malware conhecidos em magic numbers
 const MALICIOUS_SIGNATURES = [
@@ -139,10 +140,14 @@ export function createSecureStorage(
       const year = date.getFullYear();
       const month = String(date.getMonth() + 1).padStart(2, '0');
 
-      // uploads/documents/2025/01/
+      // Fase B Multi-Tenant: uploads/t/{tenantId}/documents/2025/01/
+      // Tenant da request (tenantContextMiddleware) ou do contexto ALS.
+      const tenantId = resolveUploadTenantId(req.tenantId);
       const uploadPath = path.join(
         process.cwd(),
         baseDir,
+        TENANT_UPLOADS_SEGMENT,
+        tenantId,
         subDir,
         String(year),
         month

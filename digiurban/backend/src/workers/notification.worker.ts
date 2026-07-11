@@ -13,16 +13,36 @@ import { sendEmail } from '../services/notification-channels/email';
 import { sendSMS } from '../services/notification-channels/sms';
 import { sendWhatsApp } from '../services/notification-channels/whatsapp';
 import { NotificationPayload, NotificationChannel } from '../types/notification.types';
+import { runAsTenant, DEFAULT_TENANT_ID } from '../lib/tenant-context';
 
 interface NotificationJobData {
   notificationId?: string;
   channel: NotificationChannel;
   payload: NotificationPayload;
+  /** Fase A Multi-Tenant: carimbado pelo producer (notification.service.ts) */
+  tenantId?: string;
 }
 
 const worker = new Worker<NotificationJobData>(
   'notifications',
   async (job: Job<NotificationJobData>) => {
+    // Fase A Multi-Tenant: o worker roda fora do ciclo HTTP — restabelecer o
+    // contexto do tenant que enfileirou. Jobs legados (sem tenantId, drenagem
+    // da fila antiga) processam como default, com aviso.
+    let tenantId = job.data.tenantId;
+    if (!tenantId) {
+      console.warn(`[Worker] Job ${job.id} sem tenantId (legado) — processando como tenant default`);
+      tenantId = DEFAULT_TENANT_ID;
+    }
+    return runAsTenant(tenantId, () => processNotificationJob(job));
+  },
+  {
+    connection: redis,
+    concurrency: 10, // Processar 10 notificações em paralelo
+  }
+);
+
+async function processNotificationJob(job: Job<NotificationJobData>) {
     const { channel, payload, notificationId } = job.data;
 
     console.log(`[Worker] Processing ${channel} notification for ${payload.type}`);
@@ -80,12 +100,7 @@ const worker = new Worker<NotificationJobData>(
 
       throw error; // BullMQ vai fazer retry
     }
-  },
-  {
-    connection: redis,
-    concurrency: 10, // Processar 10 notificações em paralelo
-  }
-);
+}
 
 worker.on('completed', (job) => {
   console.log(`✅ [Worker] Notification sent: ${job.id} (${job.data.channel})`);

@@ -228,6 +228,10 @@ try {
   logger.error('Failed to load certificates/signing routes', { error: e });
 }
 
+// Plataforma (Fase C Multi-Tenant): PlatformUser + gestão de municípios.
+// Substitui /api/super-admin/tenants (dupla aceitação até o corte).
+loadRoute('/api/platform', './routes/platform');
+
 // Super Admin
 const superAdminRoutes = require('./routes/super-admin').default;
 app.use('/api/super-admin', superAdminRoutes);

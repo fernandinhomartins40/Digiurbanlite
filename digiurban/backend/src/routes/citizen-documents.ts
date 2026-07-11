@@ -9,6 +9,7 @@ import * as path from 'path';
 import * as fs from 'fs';
 import { documentUploadService } from '../services/document-upload.service';
 import { createSecureUploadMiddleware, validateUploadedFilesMiddleware } from '../middleware/secure-upload';
+import { ensureProtocolDir } from '../config/upload';
 
 // ====================== TIPOS E INTERFACES ISOLADAS ======================
 
@@ -151,12 +152,9 @@ async function moveFilesToProtocol(
   protocolId: string
 ): Promise<UploadedFile[]> {
   const uploadedFiles: UploadedFile[] = [];
-  const uploadDir = path.join(process.cwd(), 'uploads', 'protocols', protocolId);
-
-  // Criar diretório se não existir
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
+  // Fase B Multi-Tenant: layout particionado uploads/t/{tenantId}/protocols/
+  // (tenant do contexto ALS da request; cria o diretório se não existir)
+  const uploadDir = ensureProtocolDir(protocolId);
 
   for (const file of files) {
     try {

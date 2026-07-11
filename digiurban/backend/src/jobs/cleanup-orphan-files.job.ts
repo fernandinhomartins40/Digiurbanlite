@@ -24,6 +24,7 @@
 import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
+import { runAsPlatform } from '../lib/tenant-context';
 
 const prisma = new PrismaClient();
 
@@ -298,8 +299,14 @@ export function scheduleCleanupJob() {
 }
 
 // Se executado diretamente via CLI
+// Fase A Multi-Tenant: runAsPlatform explícito — este job DELETA arquivos cujo
+// registro não é encontrado no banco. Ele usa um PrismaClient próprio (sem a
+// extension), mas o contexto de plataforma garante que uma futura migração
+// para o prisma compartilhado jamais rode escopada a um tenant (o fail-soft
+// esconderia os registros dos demais municípios e seus arquivos seriam
+// apagados como "órfãos").
 if (require.main === module) {
-  cleanupOrphanFiles()
+  runAsPlatform(() => cleanupOrphanFiles())
     .then(() => {
       console.log('');
       process.exit(0);

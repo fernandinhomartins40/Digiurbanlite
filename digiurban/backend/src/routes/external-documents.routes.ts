@@ -5,6 +5,7 @@ import multer from 'multer';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { resolveUploadTenantId, getTenantUploadDir } from '../config/upload';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -49,14 +50,15 @@ router.post('/upload', authenticateAdmin, upload.single('file'), async (req, res
     // Gerar hash do documento
     const documentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
 
-    // Criar diretório se não existir
-    const uploadDir = path.join(process.cwd(), 'uploads', 'external-docs');
+    // Criar diretório se não existir (Fase B: particionado por tenant)
+    const uploadTenantId = resolveUploadTenantId((req as any).tenantId);
+    const uploadDir = getTenantUploadDir(uploadTenantId, 'external-docs');
     await fs.mkdir(uploadDir, { recursive: true });
 
     // Salvar arquivo com nome único
     const uniqueFileName = `${Date.now()}_${userId}_${file.originalname}`;
-    const filePath = path.join('uploads', 'external-docs', uniqueFileName);
-    const fullPath = path.join(process.cwd(), filePath);
+    const filePath = `uploads/t/${uploadTenantId}/external-docs/${uniqueFileName}`;
+    const fullPath = path.join(uploadDir, uniqueFileName);
 
     await fs.writeFile(fullPath, file.buffer);
 
@@ -119,14 +121,15 @@ router.post('/upload-external', authenticateAdmin, upload.single('file'), async 
     // Gerar hash do documento
     const documentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
 
-    // Criar diretório se não existir
-    const uploadDir = path.join(process.cwd(), 'uploads', 'external-docs');
+    // Criar diretório se não existir (Fase B: particionado por tenant)
+    const uploadTenantId = resolveUploadTenantId((req as any).tenantId);
+    const uploadDir = getTenantUploadDir(uploadTenantId, 'external-docs');
     await fs.mkdir(uploadDir, { recursive: true });
 
     // Salvar arquivo com nome único
     const uniqueFileName = `${Date.now()}_${userId}_${file.originalname}`;
-    const filePath = path.join('uploads', 'external-docs', uniqueFileName);
-    const fullPath = path.join(process.cwd(), filePath);
+    const filePath = `uploads/t/${uploadTenantId}/external-docs/${uniqueFileName}`;
+    const fullPath = path.join(uploadDir, uniqueFileName);
 
     await fs.writeFile(fullPath, file.buffer);
 
@@ -189,14 +192,15 @@ router.post('/upload-external-citizen', authenticateCitizen, upload.single('file
     // Gerar hash do documento
     const documentHash = crypto.createHash('sha256').update(file.buffer).digest('hex');
 
-    // Criar diretório se não existir
-    const uploadDir = path.join(process.cwd(), 'uploads', 'external-docs');
+    // Criar diretório se não existir (Fase B: particionado por tenant)
+    const uploadTenantId = resolveUploadTenantId((req as any).tenantId);
+    const uploadDir = getTenantUploadDir(uploadTenantId, 'external-docs');
     await fs.mkdir(uploadDir, { recursive: true });
 
     // Salvar arquivo com nome único
     const uniqueFileName = `${Date.now()}_${citizenId}_${file.originalname}`;
-    const filePath = path.join('uploads', 'external-docs', uniqueFileName);
-    const fullPath = path.join(process.cwd(), filePath);
+    const filePath = `uploads/t/${uploadTenantId}/external-docs/${uniqueFileName}`;
+    const fullPath = path.join(uploadDir, uniqueFileName);
 
     await fs.writeFile(fullPath, file.buffer);
 

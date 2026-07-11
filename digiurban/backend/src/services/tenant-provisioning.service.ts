@@ -146,3 +146,144 @@ export async function getTenantUsage(tenantId: string): Promise<{ users: number;
     return { users, citizens };
   });
 }
+
+// ============================================================================
+// FASE C MULTI-TENANT: gestão de tenants extraída das rotas
+// ============================================================================
+// Compartilhada entre /api/platform (PlatformUser, caminho novo) e
+// /api/super-admin (dupla aceitação — corta na Fase D/H). Router → Service.
+
+export const RESERVED_SLUGS = ['default', 'www', 'api', 'admin', 'platform', 'mail', 'smtp'];
+
+export interface ProvisionTenantInput {
+  slug: string;
+  nome: string;
+  cnpj: string;
+  nomeMunicipio: string;
+  ufMunicipio: string;
+  codigoIbge?: string;
+  customDomain?: string;
+  plan?: string;
+  maxUsers?: number;
+  maxCitizens?: number;
+  features?: unknown;
+  branding?: unknown;
+  adminName: string;
+  adminEmail: string;
+}
+
+/** Lista todos os tenants com contadores de uso (visão de plataforma). */
+export async function listTenantsWithUsage(): Promise<unknown[]> {
+  const { prisma } = await import('../lib/prisma');
+  return runAsPlatform(async () => {
+    const tenants = await prisma.tenant.findMany({ orderBy: { createdAt: 'asc' } });
+    return Promise.all(
+      tenants.map(async (t: any) => ({
+        ...t,
+        _counts: {
+          users: await prisma.user.count({ where: { tenantId: t.id } }),
+          citizens: await prisma.citizen.count({ where: { tenantId: t.id } }),
+          protocols: await prisma.protocolSimplified.count({ where: { tenantId: t.id } }),
+        },
+      }))
+    );
+  });
+}
+
+export interface ProvisionResult {
+  tenant: any;
+  admin: { id: string; email: string; name: string };
+  departmentsCreated: number;
+  servicesCreated: number;
+  /** Entregue UMA única vez; o admin troca no primeiro login */
+  temporaryPassword: string;
+}
+
+/**
+ * Provisiona município completo em transação atômica:
+ * tenant + ADMIN inicial (senha temporária, mustChangePassword) + secretarias
+ * e serviços padrão. Lança ReservedSlugError/P2002 para as rotas traduzirem.
+ */
+export async function provisionTenant(input: ProvisionTenantInput): Promise<ProvisionResult> {
+  if (RESERVED_SLUGS.includes(input.slug)) {
+    const err = new Error(`Slug reservado: ${input.slug}`) as Error & { code?: string };
+    err.code = 'RESERVED_SLUG';
+    throw err;
+  }
+
+  const crypto = await import('crypto');
+  const bcrypt = await import('bcryptjs');
+  const { prisma } = await import('../lib/prisma');
+
+  const tempPassword = crypto.randomBytes(9).toString('base64url');
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  const result = await runAsPlatform(async () =>
+    prisma.$transaction(async (tx: any) => {
+      const tenant = await tx.tenant.create({
+        data: {
+          slug: input.slug,
+          nome: input.nome,
+          cnpj: input.cnpj,
+          codigoIbge: input.codigoIbge,
+          nomeMunicipio: input.nomeMunicipio,
+          ufMunicipio: input.ufMunicipio,
+          customDomain: input.customDomain,
+          plan: input.plan ?? 'basic',
+          maxUsers: input.maxUsers ?? 10,
+          maxCitizens: input.maxCitizens ?? 10000,
+          features: (input.features as any) ?? undefined,
+          branding: (input.branding as any) ?? undefined,
+        },
+      });
+
+      const admin = await tx.user.create({
+        data: {
+          tenantId: tenant.id,
+          name: input.adminName,
+          email: input.adminEmail,
+          password: passwordHash,
+          role: 'ADMIN',
+          isActive: true,
+          mustChangePassword: true,
+        },
+      });
+
+      // Secretarias e serviços padrão (Fase 8) — município nasce operável
+      const departmentsCreated = await seedDefaultDepartments(tx, tenant.id);
+      const servicesCreated = await seedDefaultServices(tx, tenant.id);
+
+      return { tenant, admin, departmentsCreated, servicesCreated };
+    })
+  );
+
+  const { TenantService } = await import('./tenant.service');
+  TenantService.invalidate();
+
+  return {
+    tenant: result.tenant,
+    admin: { id: result.admin.id, email: result.admin.email, name: result.admin.name },
+    departmentsCreated: result.departmentsCreated,
+    servicesCreated: result.servicesCreated,
+    temporaryPassword: tempPassword,
+  };
+}
+
+/** Atualiza/suspende/reativa um tenant (visão de plataforma). */
+export async function updateTenant(id: string, data: Record<string, unknown>): Promise<any> {
+  if (typeof data.slug === 'string' && RESERVED_SLUGS.includes(data.slug)) {
+    const err = new Error(`Slug reservado: ${data.slug}`) as Error & { code?: string };
+    err.code = 'RESERVED_SLUG';
+    throw err;
+  }
+
+  const { prisma } = await import('../lib/prisma');
+  const tenant = await runAsPlatform(async () =>
+    await prisma.tenant.update({ where: { id }, data: data as any })
+  );
+
+  const { TenantService } = await import('./tenant.service');
+  TenantService.invalidate();
+
+  return tenant;
+}

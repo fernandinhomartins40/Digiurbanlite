@@ -11,6 +11,7 @@
 
 import * as categoryService from '../services/citizen-category-expanded.service';
 import { prisma } from '../lib/prisma';
+import { forEachActiveTenant } from '../lib/tenant-iterator';
 
 /**
  * Verifica e marca categorias expiradas
@@ -195,6 +196,7 @@ export async function checkCategoryProgression() {
 
 /**
  * Job principal que executa todas as verificações
+ * Fase A Multi-Tenant: itera os tenants ativos — categorias são dado municipal.
  */
 export async function runCategoryMaintenanceJob() {
   console.log('\n' + '='.repeat(80));
@@ -204,14 +206,24 @@ export async function runCategoryMaintenanceJob() {
   const startTime = Date.now();
 
   try {
-    // 1. Verificar categorias expiradas
-    const expiredResult = await checkExpiredCategories();
+    const totals = { expired: 0, reminders: 0, progressions: 0 };
 
-    // 2. Enviar lembretes de renovação
-    const remindersResult = await sendRenewalReminders();
+    const summary = await forEachActiveTenant('category-maintenance', async (tenant) => {
+      console.log(`\n🏛️  Tenant: ${tenant.slug}`);
 
-    // 3. Verificar progressão
-    const progressionResult = await checkCategoryProgression();
+      // 1. Verificar categorias expiradas
+      const expiredResult = await checkExpiredCategories();
+
+      // 2. Enviar lembretes de renovação
+      const remindersResult = await sendRenewalReminders();
+
+      // 3. Verificar progressão
+      const progressionResult = await checkCategoryProgression();
+
+      totals.expired += expiredResult.total;
+      totals.reminders += remindersResult.remindersSent;
+      totals.progressions += progressionResult.progressionsApplied;
+    });
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 
@@ -219,18 +231,19 @@ export async function runCategoryMaintenanceJob() {
     console.log('✅ JOB CONCLUÍDO COM SUCESSO');
     console.log('='.repeat(80));
     console.log(`⏱️  Duração: ${duration}s`);
-    console.log(`📊 Resumo:`);
-    console.log(`   - Categorias expiradas: ${expiredResult.total}`);
-    console.log(`   - Lembretes enviados: ${remindersResult.remindersSent}`);
-    console.log(`   - Progressões aplicadas: ${progressionResult.progressionsApplied}`);
+    console.log(`📊 Resumo (${summary.succeeded}/${summary.total} tenants):`);
+    console.log(`   - Categorias expiradas: ${totals.expired}`);
+    console.log(`   - Lembretes enviados: ${totals.reminders}`);
+    console.log(`   - Progressões aplicadas: ${totals.progressions}`);
     console.log('='.repeat(80) + '\n');
 
     return {
-      success: true,
+      success: summary.failed.length === 0,
       duration,
-      expired: expiredResult.total,
-      reminders: remindersResult.remindersSent,
-      progressions: progressionResult.progressionsApplied,
+      expired: totals.expired,
+      reminders: totals.reminders,
+      progressions: totals.progressions,
+      tenants: summary,
     };
   } catch (error) {
     console.error('\n' + '='.repeat(80));
