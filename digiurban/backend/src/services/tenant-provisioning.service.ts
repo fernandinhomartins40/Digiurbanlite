@@ -164,6 +164,7 @@ export interface ProvisionTenantInput {
   codigoIbge?: string;
   customDomain?: string;
   plan?: string;
+  planEndsAt?: string | Date | null;
   maxUsers?: number;
   maxCitizens?: number;
   features?: unknown;
@@ -171,6 +172,25 @@ export interface ProvisionTenantInput {
   adminName: string;
   adminEmail: string;
 }
+
+/**
+ * Catálogo de módulos ativáveis por município (slug = feature do requireFeature
+ * / useTenantFeature). Fonte única para o wizard e o toggle de módulos.
+ * Contrato: ausência da chave = habilitado; só `false` explícito desabilita.
+ */
+export const AVAILABLE_MODULES: Array<{ slug: string; label: string }> = [
+  { slug: 'saude', label: 'Saúde' },
+  { slug: 'educacao', label: 'Educação' },
+  { slug: 'assistencia-social', label: 'Assistência Social' },
+  { slug: 'agricultura', label: 'Agricultura' },
+  { slug: 'obras', label: 'Obras e Serviços' },
+  { slug: 'meio-ambiente', label: 'Meio Ambiente' },
+  { slug: 'cultura', label: 'Cultura' },
+  { slug: 'esporte', label: 'Esporte e Lazer' },
+  { slug: 'turismo', label: 'Turismo' },
+  { slug: 'seguranca', label: 'Segurança Pública' },
+  { slug: 'habitacao', label: 'Habitação' },
+];
 
 /** Lista todos os tenants com contadores de uso (visão de plataforma). */
 export async function listTenantsWithUsage(): Promise<unknown[]> {
@@ -228,8 +248,9 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
           codigoIbge: input.codigoIbge,
           nomeMunicipio: input.nomeMunicipio,
           ufMunicipio: input.ufMunicipio,
-          customDomain: input.customDomain,
+          customDomain: input.customDomain || undefined,
           plan: input.plan ?? 'basic',
+          planEndsAt: input.planEndsAt ? new Date(input.planEndsAt) : undefined,
           maxUsers: input.maxUsers ?? 10,
           maxCitizens: input.maxCitizens ?? 10000,
           features: (input.features as any) ?? undefined,
@@ -286,4 +307,122 @@ export async function updateTenant(id: string, data: Record<string, unknown>): P
   TenantService.invalidate();
 
   return tenant;
+}
+
+// ============================================================================
+// DETALHE / GESTÃO DE ADMINS (painel de município)
+// ============================================================================
+
+/** Detalhe completo de um município: dados, uso vs limites e admins. */
+export async function getTenantDetail(id: string): Promise<any | null> {
+  const { prisma } = await import('../lib/prisma');
+  return runAsPlatform(async () => {
+    const tenant = await prisma.tenant.findUnique({ where: { id } });
+    if (!tenant) return null;
+
+    const [users, citizens, protocols, admins] = await Promise.all([
+      prisma.user.count({ where: { tenantId: id } }),
+      prisma.citizen.count({ where: { tenantId: id } }),
+      prisma.protocolSimplified.count({ where: { tenantId: id } }),
+      prisma.user.findMany({
+        where: { tenantId: id, role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+        select: {
+          id: true, name: true, email: true, role: true, isActive: true,
+          mustChangePassword: true, lastLogin: true, createdAt: true,
+        },
+        orderBy: { createdAt: 'asc' },
+      }),
+    ]);
+
+    return {
+      ...tenant,
+      usage: {
+        users, citizens, protocols,
+        maxUsers: tenant.maxUsers, maxCitizens: tenant.maxCitizens,
+      },
+      admins,
+    };
+  });
+}
+
+/** Cria um novo ADMIN para um município (senha temporária, mustChangePassword). */
+export async function createTenantAdmin(
+  tenantId: string,
+  input: { name: string; email: string }
+): Promise<{ id: string; email: string; name: string; temporaryPassword: string }> {
+  const crypto = await import('crypto');
+  const bcrypt = await import('bcryptjs');
+  const { prisma } = await import('../lib/prisma');
+
+  const tempPassword = crypto.randomBytes(9).toString('base64url');
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  const admin = await runAsPlatform(async () =>
+    prisma.user.create({
+      data: {
+        tenantId,
+        name: input.name,
+        email: input.email,
+        password: passwordHash,
+        role: 'ADMIN',
+        isActive: true,
+        mustChangePassword: true,
+      },
+      select: { id: true, email: true, name: true },
+    })
+  );
+
+  return { ...admin, temporaryPassword: tempPassword };
+}
+
+/** Reseta a senha de um usuário de um município (nova senha temporária). */
+export async function resetTenantUserPassword(
+  tenantId: string,
+  userId: string
+): Promise<{ temporaryPassword: string }> {
+  const crypto = await import('crypto');
+  const bcrypt = await import('bcryptjs');
+  const { prisma } = await import('../lib/prisma');
+
+  const tempPassword = crypto.randomBytes(9).toString('base64url');
+  const passwordHash = await bcrypt.hash(tempPassword, 12);
+
+  // Preflight de ownership: o usuário precisa pertencer ao tenant informado —
+  // impede reset cross-tenant a partir do painel.
+  const updated = await runAsPlatform(async () => {
+    const user = await prisma.user.findFirst({
+      where: { id: userId, tenantId },
+      select: { id: true },
+    });
+    if (!user) {
+      const err = new Error('Usuário não encontrado neste município') as Error & { code?: string };
+      err.code = 'P2025';
+      throw err;
+    }
+    return prisma.user.update({
+      where: { id: userId },
+      data: { password: passwordHash, mustChangePassword: true },
+    });
+  });
+
+  if (!updated) throw new Error('Falha ao resetar senha');
+  return { temporaryPassword: tempPassword };
+}
+
+/** Ativa/desativa um usuário de um município. */
+export async function setTenantUserActive(
+  tenantId: string,
+  userId: string,
+  isActive: boolean
+): Promise<void> {
+  const { prisma } = await import('../lib/prisma');
+  await runAsPlatform(async () => {
+    const user = await prisma.user.findFirst({ where: { id: userId, tenantId }, select: { id: true } });
+    if (!user) {
+      const err = new Error('Usuário não encontrado neste município') as Error & { code?: string };
+      err.code = 'P2025';
+      throw err;
+    }
+    await prisma.user.update({ where: { id: userId }, data: { isActive } });
+  });
 }

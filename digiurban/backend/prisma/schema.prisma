@@ -755,6 +755,7 @@ model CitizenDocument {
 
 model Invoice {
   id          String        @id @default(cuid())
+  tenantId    String? // Fatura de plataforma por município (billing SaaS)
   number      String        @unique
   amount      Float
   plan        Plan
@@ -768,6 +769,7 @@ model Invoice {
   paymentUrl  String?
   metadata    Json?
 
+  @@index([tenantId])
   @@map("invoices")
 }
 

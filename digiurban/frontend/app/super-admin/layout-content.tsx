@@ -25,7 +25,8 @@ import {
   Bot,
   Globe,
   ScrollText,
-  CreditCard
+  CreditCard,
+  UserPlus
 } from 'lucide-react';
 
 interface MenuItem {
@@ -54,6 +55,16 @@ const menuItems: MenuItem[] = [
     title: 'Municipios',
     href: '/super-admin/tenants',
     icon: Building2
+  },
+  {
+    title: 'Faturamento',
+    href: '/super-admin/billing',
+    icon: CreditCard
+  },
+  {
+    title: 'Leads',
+    href: '/super-admin/leads',
+    icon: UserPlus
   },
   {
     title: 'Usuários Admin',
