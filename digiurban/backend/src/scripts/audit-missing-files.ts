@@ -83,9 +83,9 @@ async function auditMissingFiles() {
       continue;
     }
 
-    // Verificar se arquivo existe
+    // Verificar se arquivo existe (tenant da própria linha — script roda sem contexto)
     const filename = extractFilename(doc.fileUrl);
-    const filePath = getProtocolFilePath(doc.protocolId, filename);
+    const filePath = getProtocolFilePath(doc.protocolId, filename, (doc as any).tenantId);
     const exists = fs.existsSync(filePath);
 
     if (!exists) {

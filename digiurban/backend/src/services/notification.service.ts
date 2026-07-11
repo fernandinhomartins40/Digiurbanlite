@@ -8,6 +8,7 @@
 import { Queue, QueueEvents } from 'bullmq';
 import { prisma } from '../lib/prisma';
 import redis from '../lib/redis';
+import { tryGetTenantId } from '../lib/tenant-context';
 import {
   NotificationPayload,
   NotificationChannel,
@@ -97,12 +98,16 @@ export class NotificationService {
       }
 
       // 5. Enfileirar jobs para cada canal
+      // Fase A Multi-Tenant: o worker roda em outro processo/contexto — o
+      // tenantId PRECISA viajar no payload para o processamento ser escopado.
+      const tenantId = tryGetTenantId();
       const jobs = channels.map((channel) => ({
         name: `send-${channel}`,
         data: {
           notificationId,
           channel,
           payload,
+          tenantId,
         },
         opts: {
           priority: payload.priority === 'high' ? 1 : payload.priority === 'low' ? 20 : 10,
@@ -127,12 +132,14 @@ export class NotificationService {
     payload: Omit<NotificationPayload, 'recipientId' | 'recipientType'>,
     recipients: Array<{ type: 'user' | 'citizen'; id: string }>
   ): Promise<void> {
+    const tenantId = tryGetTenantId();
     const jobs = recipients.map((recipient) => ({
       name: 'notify',
       data: {
         ...payload,
         recipientType: recipient.type,
         recipientId: recipient.id,
+        tenantId,
       },
     }));
 

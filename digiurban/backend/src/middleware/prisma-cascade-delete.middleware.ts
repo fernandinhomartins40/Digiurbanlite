@@ -84,8 +84,15 @@ function deleteProtocolDirectory(protocolId: string, protocolNumber?: string): v
 /**
  * Prisma Client Extension para cascade delete de arquivos físicos
  * Usa a API de query hooks para interceptar operações de delete
+ *
+ * FIX (Fase B): a forma antiga acessava `(query as any).__prismaClient`, que
+ * NUNCA existiu — todo delete/deleteMany destes models lançava TypeError. A
+ * forma callback do defineExtension captura o client da camada anterior para
+ * os lookups pré-delete. O `args.where` já chega escopado pela tenant
+ * extension (camada mais externa), então o lookup respeita o isolamento.
  */
-export const cascadeDeleteExtension = Prisma.defineExtension({
+export const cascadeDeleteExtension = Prisma.defineExtension((baseClient) =>
+  baseClient.$extends({
   name: 'cascadeDelete',
 
   query: {
@@ -95,18 +102,18 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
        */
       async delete({ args, query }) {
         // 1. Buscar informações do documento antes de deletar
-        const document = await (query as any).__prismaClient.protocolDocument.findUnique({
+        const document = await (baseClient as any).protocolDocument.findFirst({
           where: args.where,
-          select: { id: true, protocolId: true, fileUrl: true, fileName: true }
+          select: { id: true, protocolId: true, fileUrl: true, fileName: true, tenantId: true }
         });
 
         // 2. Executar delete no banco
         const result = await query(args);
 
-        // 3. Deletar arquivo físico se existir
+        // 3. Deletar arquivo físico se existir (tenant da linha — Fase B)
         if (document?.fileUrl) {
           const filename = extractFilename(document.fileUrl);
-          const filePath = getProtocolFilePath(document.protocolId, filename);
+          const filePath = getProtocolFilePath(document.protocolId, filename, document.tenantId);
           deletePhysicalFile(filePath);
 
           // Verificar se diretório do protocolo ficou vazio
@@ -122,19 +129,19 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
        */
       async deleteMany({ args, query }) {
         // 1. Buscar documentos antes de deletar
-        const documents = await (query as any).__prismaClient.protocolDocument.findMany({
+        const documents = await (baseClient as any).protocolDocument.findMany({
           where: args.where,
-          select: { id: true, protocolId: true, fileUrl: true }
+          select: { id: true, protocolId: true, fileUrl: true, tenantId: true }
         });
 
         // 2. Executar delete no banco
         const result = await query(args);
 
-        // 3. Deletar arquivos físicos
+        // 3. Deletar arquivos físicos (tenant da linha — Fase B)
         for (const doc of documents) {
           if (doc.fileUrl) {
             const filename = extractFilename(doc.fileUrl);
-            const filePath = getProtocolFilePath(doc.protocolId, filename);
+            const filePath = getProtocolFilePath(doc.protocolId, filename, doc.tenantId);
             deletePhysicalFile(filePath);
           }
         }
@@ -157,7 +164,7 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
        */
       async delete({ args, query }) {
         // 1. Buscar informações do protocolo antes de deletar
-        const protocol = await (query as any).__prismaClient.protocolSimplified.findUnique({
+        const protocol = await (baseClient as any).protocolSimplified.findFirst({
           where: args.where,
           select: { id: true, number: true }
         });
@@ -182,7 +189,7 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
        */
       async deleteMany({ args, query }) {
         // 1. Buscar protocolos antes de deletar
-        const protocols = await (query as any).__prismaClient.protocolSimplified.findMany({
+        const protocols = await (baseClient as any).protocolSimplified.findMany({
           where: args.where,
           select: { id: true, number: true }
         });
@@ -202,7 +209,8 @@ export const cascadeDeleteExtension = Prisma.defineExtension({
       }
     }
   }
-});
+  })
+);
 
 /**
  * INSTRUÇÕES DE USO:

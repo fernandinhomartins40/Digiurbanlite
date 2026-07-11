@@ -20,6 +20,7 @@ import {
   reconcileDocument,
   auditAllDocuments
 } from '../services/document-integrity.service';
+import { runAsPlatform } from '../lib/tenant-context';
 
 const prisma = new PrismaClient();
 
@@ -150,8 +151,12 @@ export function scheduleReconciliationJob() {
 }
 
 // Se executado diretamente via CLI
+// Fase A Multi-Tenant: runAsPlatform — integridade de documentos é manutenção
+// GLOBAL (document-integrity.service usa o prisma compartilhado; sem contexto,
+// o fail-soft limitaria a auditoria ao tenant default e docs dos demais
+// municípios ficariam invisíveis ao job).
 if (require.main === module) {
-  reconcileDocumentsJob()
+  runAsPlatform(() => reconcileDocumentsJob())
     .then((report) => {
       console.log('');
       console.log('✅ Job concluído com sucesso!');

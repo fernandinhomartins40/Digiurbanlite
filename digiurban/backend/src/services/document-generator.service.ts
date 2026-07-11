@@ -15,6 +15,7 @@ import {
   generateDocumentHash
 } from '../utils/validation-code.utils';
 import { getSystemEmail } from '../utils/email-domain.utils';
+import { resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
 
 const prisma = new PrismaClient();
 
@@ -474,9 +475,12 @@ export async function generateDocument(input: GenerateDocumentInput) {
     };
 
     // Definir nome do arquivo
+    // Fase B Multi-Tenant: PDFs gerados particionados por tenant (linha do
+    // protocolo quando disponível, senão contexto ALS)
     const timestamp = Date.now();
     const fileName = `${protocol.number}_${template.code}_${timestamp}.pdf`;
-    const uploadsDir = path.join(process.cwd(), 'uploads', 'generated', protocolId);
+    const uploadTenantId = resolveUploadTenantId((protocol as any).tenantId);
+    const uploadsDir = getTenantUploadDir(uploadTenantId, 'generated', protocolId);
 
     // Criar diretório se não existir
     await fs.mkdir(uploadsDir, { recursive: true });
@@ -524,7 +528,7 @@ export async function generateDocument(input: GenerateDocumentInput) {
         protocolId,
         templateId,
         fileName,
-        filePath: `/uploads/generated/${protocolId}/${fileName}`,
+        filePath: getTenantUploadUrl(uploadTenantId, 'generated', protocolId, fileName),
         fileSize: stats.size,
         mimeType: 'application/pdf',
         generatedBy,

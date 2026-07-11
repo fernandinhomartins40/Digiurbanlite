@@ -10,12 +10,20 @@
 
 import cron from 'node-cron';
 import { prisma } from '../lib/prisma';
+import { runAsPlatform } from '../lib/tenant-context';
+
+/**
+ * Fase A Multi-Tenant: jobs de e-mail são operação de PLATAFORMA — os models
+ * Email* não têm tenantId e o AuditLog resultante fica sem carimbo de tenant
+ * (evento de plataforma). O wrapper evita o fail-soft para o tenant default.
+ */
+const asPlatform = (fn: () => Promise<void>) => () => runAsPlatform(fn);
 
 /**
  * Reset diário dos contadores de emails enviados
  * Executa todo dia às 00:00
  */
-export const resetDailyEmailCounters = cron.schedule('0 0 * * *', async () => {
+export const resetDailyEmailCounters = cron.schedule('0 0 * * *', asPlatform(async () => {
   try {
     console.log('[CRON] Iniciando reset de contadores diários de email...');
 
@@ -59,13 +67,13 @@ export const resetDailyEmailCounters = cron.schedule('0 0 * * *', async () => {
       }
     }).catch(err => console.error('[CRON] Failed to log error:', err));
   }
-});
+}));
 
 /**
  * Reset mensal dos contadores de emails enviados
  * Executa todo dia 1 do mês às 00:00
  */
-export const resetMonthlyEmailCounters = cron.schedule('0 0 1 * *', async () => {
+export const resetMonthlyEmailCounters = cron.schedule('0 0 1 * *', asPlatform(async () => {
   try {
     console.log('[CRON] Iniciando reset de contadores mensais de email...');
 
@@ -109,13 +117,13 @@ export const resetMonthlyEmailCounters = cron.schedule('0 0 1 * *', async () => 
       }
     }).catch(err => console.error('[CRON] Failed to log error:', err));
   }
-});
+}));
 
 /**
  * Verificar e atualizar status de subscriptions expiradas
  * Executa todo dia às 02:00
  */
-export const checkExpiredSubscriptions = cron.schedule('0 2 * * *', async () => {
+export const checkExpiredSubscriptions = cron.schedule('0 2 * * *', asPlatform(async () => {
   try {
     console.log('[CRON] Verificando subscriptions expiradas...');
 
@@ -219,7 +227,7 @@ export const checkExpiredSubscriptions = cron.schedule('0 2 * * *', async () => 
       }
     }).catch(err => console.error('[CRON] Failed to log error:', err));
   }
-});
+}));
 
 /**
  * Iniciar todos os cron jobs de email

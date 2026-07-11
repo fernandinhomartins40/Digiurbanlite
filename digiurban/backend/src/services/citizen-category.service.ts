@@ -3,6 +3,7 @@
 // ============================================================================
 
 import { prisma } from '../lib/prisma';
+import { withTenantTransaction } from '../lib/tenant-context';
 import { CitizenCategory, CitizenCategoryAssignment, Citizen } from '@prisma/client';
 import * as expandedService from './citizen-category-expanded.service';
 import * as relationshipsService from './citizen-category-relationships.service';
@@ -638,14 +639,18 @@ export async function getCitizensByMultipleCategories(
 
   if (matchAll) {
     // Cidadãos que possuem TODAS as categorias (AND)
-    const citizenIds = await prisma.$queryRaw<Array<{ citizenId: string }>>`
-      SELECT "citizenId"
-      FROM "citizen_category_assignments"
-      WHERE "categoryId" IN (${categoryIds.join(',')})
-        AND "active" = true
-      GROUP BY "citizenId"
-      HAVING COUNT(DISTINCT "categoryId") = ${categoryIds.length}
-    `;
+    // Fase E: $queryRaw não passa pela extension — withTenantTransaction seta
+    // o GUC e o RLS filtra assignments por tenant dentro da transação.
+    const citizenIds: Array<{ citizenId: string }> = await withTenantTransaction(prisma, async (tx) =>
+      tx.$queryRaw<Array<{ citizenId: string }>>`
+        SELECT "citizenId"
+        FROM "citizen_category_assignments"
+        WHERE "categoryId" IN (${categoryIds.join(',')})
+          AND "active" = true
+        GROUP BY "citizenId"
+        HAVING COUNT(DISTINCT "categoryId") = ${categoryIds.length}
+      `
+    );
 
     return prisma.citizen.findMany({
       where: {

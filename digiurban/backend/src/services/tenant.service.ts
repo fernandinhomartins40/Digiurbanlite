@@ -18,6 +18,7 @@
 import { prisma } from '../lib/prisma';
 import { logger } from '../config/logger.config';
 import { DEFAULT_TENANT_ID, DEFAULT_TENANT_SLUG } from '../lib/tenant-context';
+import { isTenantStrictHost, defaultTenantHosts, reportTenantFailSoft } from '../lib/tenant-telemetry';
 
 export { DEFAULT_TENANT_ID, DEFAULT_TENANT_SLUG };
 
@@ -213,8 +214,22 @@ export class TenantService {
       }
     }
 
-    // 3) Fallback de transição
+    // 3) Hosts que legitimamente mapeiam para o tenant default: localhost,
+    //    IPs de dev, host interno e TENANT_DEFAULT_HOSTS (domínio do modo
+    //    single-tenant). Não é fail-soft — é mapeamento explícito.
+    const isIpHost = /^\d{1,3}(\.\d{1,3}){3}$/.test(normalized) || normalized.includes(':');
+    if (!tenant && (isIpHost || defaultTenantHosts().has(normalized))) {
+      tenant = await TenantService.getDefault();
+    }
+
+    // 4) Host DESCONHECIDO (Fase D): telemetria sempre; com TENANT_STRICT_HOST
+    //    NÃO resolve (o tenantStatusMiddleware responde TENANT_UNRESOLVED).
+    //    Sem strict: fallback de transição para o default, como antes.
     if (!tenant) {
+      reportTenantFailSoft('host-desconhecido', { host: normalized });
+      if (isTenantStrictHost()) {
+        return null;
+      }
       tenant = await TenantService.getDefault();
     }
 

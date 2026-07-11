@@ -118,9 +118,22 @@ async function main(): Promise<void> {
   );
   assert(notifPlat.tenantId === null, 'escrita de plataforma fica sem tenant', `got ${notifPlat.tenantId}`);
 
-  console.log('\n[7] Fora de qualquer contexto → fail-soft para default (Fase 2)');
-  const deptNoCtx = await prisma.department.create({ data: { name: `SemCtx ${stamp}` } });
-  assert(deptNoCtx.tenantId === DEFAULT_TENANT_ID, 'sem contexto usa tenant default', `got ${deptNoCtx.tenantId}`);
+  // Fase D: sob TENANT_STRICT o fail-soft vira erro — o teste acompanha o modo.
+  const strictMode = process.env.TENANT_STRICT === '1' || process.env.TENANT_STRICT === 'true';
+  if (strictMode) {
+    console.log('\n[7] Fora de qualquer contexto → LANÇA (Fase D, TENANT_STRICT)');
+    let threw = false;
+    try {
+      await prisma.department.create({ data: { name: `SemCtx ${stamp}` } });
+    } catch (e: any) {
+      threw = /TENANT_STRICT/.test(e?.message || '');
+    }
+    assert(threw, 'sem contexto lança erro TENANT_STRICT');
+  } else {
+    console.log('\n[7] Fora de qualquer contexto → fail-soft para default (Fase 2)');
+    const deptNoCtx = await prisma.department.create({ data: { name: `SemCtx ${stamp}` } });
+    assert(deptNoCtx.tenantId === DEFAULT_TENANT_ID, 'sem contexto usa tenant default', `got ${deptNoCtx.tenantId}`);
+  }
 
   // ==========================================================================
   // FASE 3 — ISOLAMENTO DE LEITURA/MUTAÇÃO (tenant-isolation suite)

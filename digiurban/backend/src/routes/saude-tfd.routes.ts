@@ -1329,7 +1329,7 @@ router.get('/configuracoes/destinos', async (req: Request, res: Response) => {
 // UPLOAD DE DOCUMENTOS TFD
 // ============================================================================
 
-import { uploadSingle } from '../config/upload';
+import { uploadSingle, resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
 import path from 'path';
 import fs from 'fs/promises';
 
@@ -1346,8 +1346,9 @@ router.post('/solicitacao/:id/upload-documento', uploadSingle, async (req: Reque
     const solicitacaoId = req.params.id;
     const { tipoDocumento, descricao } = req.body;
 
-    // Mover arquivo para pasta específica de TFD
-    const tfdDir = path.join(process.cwd(), 'uploads', 'saude', 'tfd', solicitacaoId);
+    // Mover arquivo para pasta específica de TFD (Fase B: particionado por tenant)
+    const tfdTenantId = resolveUploadTenantId((req as any).tenantId);
+    const tfdDir = getTenantUploadDir(tfdTenantId, 'saude', 'tfd', solicitacaoId);
     await fs.mkdir(tfdDir, { recursive: true });
 
     const newFileName = `${tipoDocumento}_${Date.now()}${path.extname(req.file.originalname)}`;
@@ -1360,7 +1361,7 @@ router.post('/solicitacao/:id/upload-documento', uploadSingle, async (req: Reque
       message: 'Documento enviado com sucesso',
       file: {
         fileName: newFileName,
-        filePath: `/uploads/saude/tfd/${solicitacaoId}/${newFileName}`,
+        filePath: getTenantUploadUrl(tfdTenantId, 'saude', 'tfd', solicitacaoId, newFileName),
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         tipoDocumento,
@@ -1385,8 +1386,9 @@ router.post('/viagem/:id/upload-comprovante', uploadSingle, async (req: Request,
     const viagemId = req.params.id;
     const { tipo, valor, descricao } = req.body;
 
-    // Mover arquivo para pasta específica de comprovantes
-    const comprovantesDir = path.join(process.cwd(), 'uploads', 'saude', 'tfd', 'comprovantes', viagemId);
+    // Mover arquivo para pasta específica de comprovantes (Fase B: por tenant)
+    const compTenantId = resolveUploadTenantId((req as any).tenantId);
+    const comprovantesDir = getTenantUploadDir(compTenantId, 'saude', 'tfd', 'comprovantes', viagemId);
     await fs.mkdir(comprovantesDir, { recursive: true });
 
     const newFileName = `comprovante_${tipo}_${Date.now()}${path.extname(req.file.originalname)}`;
@@ -1399,7 +1401,7 @@ router.post('/viagem/:id/upload-comprovante', uploadSingle, async (req: Request,
       message: 'Comprovante enviado com sucesso',
       file: {
         fileName: newFileName,
-        filePath: `/uploads/saude/tfd/comprovantes/${viagemId}/${newFileName}`,
+        filePath: getTenantUploadUrl(compTenantId, 'saude', 'tfd', 'comprovantes', viagemId, newFileName),
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
         tipo,

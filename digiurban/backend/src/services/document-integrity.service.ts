@@ -83,8 +83,10 @@ export async function validateDocumentIntegrity(
   }
 
   // Verificar se arquivo existe fisicamente
+  // Fase B Multi-Tenant: tenant vem da própria linha — este serviço também
+  // roda como plataforma (reconcile-documents.job), onde não há contexto ALS.
   const filename = extractFilename(doc.fileUrl);
-  const filePath = getProtocolFilePath(doc.protocolId, filename);
+  const filePath = getProtocolFilePath(doc.protocolId, filename, (doc as any).tenantId);
   const fileExists = fs.existsSync(filePath);
 
   // Determinar status esperados baseado na existência do arquivo

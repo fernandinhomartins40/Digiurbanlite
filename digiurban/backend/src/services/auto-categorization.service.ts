@@ -11,9 +11,12 @@
  * ============================================================================
  */
 
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+// Fase E Multi-Tenant: client COMPARTILHADO (com a tenant extension) no lugar
+// do PrismaClient cru — todas as operações deste serviço passam a ser
+// escopadas pelo contexto ALS; o $queryRaw é coberto pelo RLS via
+// withTenantTransaction.
+import { prisma } from '../lib/prisma';
+import { withTenantTransaction } from '../lib/tenant-context';
 
 export interface AutoCategorizationResult {
   success: boolean;
@@ -70,17 +73,21 @@ export async function assignCategoriesOnProtocolApproval(
 
     // Buscar categorias que têm esse moduleType em triggerServices
     // PostgreSQL: WHERE 'CADASTRO_PRODUTOR' = ANY(triggerServices)
-    const matchingCategories = await prisma.$queryRaw<Array<{
-      id: string;
-      code: string;
-      name: string;
-      department: string;
-    }>>`
-      SELECT id, code, name, department
-      FROM citizen_categories
-      WHERE active = true
-        AND ${moduleType} = ANY("triggerServices")
-    `;
+    // Fase E: $queryRaw não passa pela extension — withTenantTransaction seta
+    // o GUC app.tenant_id e o RLS filtra por tenant dentro da transação.
+    const matchingCategories = await withTenantTransaction(prisma, async (tx) =>
+      tx.$queryRaw<Array<{
+        id: string;
+        code: string;
+        name: string;
+        department: string;
+      }>>`
+        SELECT id, code, name, department
+        FROM citizen_categories
+        WHERE active = true
+          AND ${moduleType} = ANY("triggerServices")
+      `
+    );
 
     console.log(`   ✓ Encontradas ${matchingCategories.length} categorias compatíveis`);
 

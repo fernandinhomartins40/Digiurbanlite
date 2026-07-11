@@ -20,6 +20,7 @@ import { runAsTenant } from '../lib/tenant-context';
 import { TenantService, DEFAULT_TENANT_ID, TenantRecord } from '../services/tenant.service';
 import { logger } from '../config/logger.config';
 import { logAuditEvent } from '../utils/audit-logger';
+import { requiresTokenClaim, reportTenantFailSoft } from '../lib/tenant-telemetry';
 
 declare global {
   // eslint-disable-next-line @typescript-eslint/no-namespace
@@ -90,6 +91,7 @@ export const tenantContextMiddleware = async (
         userId?: string;
         citizenId?: string;
         tenantId?: string;
+        type?: string;
       };
       if (decoded.tenantId && decoded.tenantId !== tenantId) {
         logAuditEvent({
@@ -106,6 +108,25 @@ export const tenantContextMiddleware = async (
         }).catch(() => undefined);
         _res.status(401).json({ error: 'Token não pertence a este município' });
         return;
+      }
+
+      // ✅ Fase D — fim da janela de dupla aceitação: token VÁLIDO sem claim
+      // de tenant é sessão do modo single-tenant. Telemetria sempre; com
+      // TENANT_REQUIRE_TOKEN_CLAIM=1 exige novo login (o login novo emite o
+      // claim). Tokens type='platform' não têm claim POR DESIGN — isentos.
+      if (!decoded.tenantId && decoded.type !== 'platform') {
+        reportTenantFailSoft('jwt-sem-claim', {
+          path: req.originalUrl || req.path,
+          tokenType: decoded.type,
+        });
+        if (requiresTokenClaim()) {
+          _res.status(401).json({
+            error: 'Sessão expirada',
+            message: 'Sua sessão é anterior à atualização do sistema. Faça login novamente.',
+            code: 'TENANT_CLAIM_REQUIRED',
+          });
+          return;
+        }
       }
     } catch {
       // Assinatura inválida/expirada: deixar o middleware de auth responder

@@ -21,6 +21,7 @@ import { Request, Response, NextFunction } from 'express';
 import { runAsTenant, runAsPlatform, tryGetTenantId, DEFAULT_TENANT_ID } from '../lib/tenant-context';
 import { prisma } from '../lib/prisma';
 import { logger } from '../config/logger.config';
+import { reportTenantFailSoft } from '../lib/tenant-telemetry';
 
 function extractCitizenId(req: Request): string | undefined {
   const candidates = [
@@ -66,6 +67,15 @@ export const internalTenantContextMiddleware = async (
   }
 
   // 3) Fallback: contexto já estabelecido (host interno → default)
+  // Fase D: o Messages Server atual SEMPRE envia X-Tenant-Id (interceptor) —
+  // cair aqui indica deploy defasado do Messages Server ou chamada sem
+  // citizenId. Telemetria para zerar antes do corte; sem strict aqui (o corte
+  // depende do deploy coordenado do serviço satélite).
+  if (!tenantId) {
+    reportTenantFailSoft('internal-sem-tenant', {
+      path: req.originalUrl || req.path,
+    });
+  }
   const effective = tenantId || tryGetTenantId() || DEFAULT_TENANT_ID;
   (req as any).tenantId = effective;
 

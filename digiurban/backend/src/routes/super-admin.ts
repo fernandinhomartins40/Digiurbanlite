@@ -6,7 +6,13 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
 import { TenantService } from '../services/tenant.service';
-import { seedDefaultDepartments, seedDefaultServices } from '../services/tenant-provisioning.service';
+import {
+  seedDefaultDepartments,
+  seedDefaultServices,
+  listTenantsWithUsage,
+  provisionTenant,
+  updateTenant,
+} from '../services/tenant-provisioning.service';
 import crypto from 'crypto';
 import { logAuditEvent, AUDIT_EVENTS } from '../utils/audit-logger';
 import { loginRateLimiter } from '../middleware/rate-limit';
@@ -2900,27 +2906,24 @@ const createTenantSchema = z.object({
   adminEmail: z.string().email(),
 });
 
-const RESERVED_SLUGS = ['default', 'www', 'api', 'admin', 'platform', 'mail', 'smtp'];
+// (RESERVED_SLUGS agora vive no tenant-provisioning.service — validado lá)
+
+// ⚠️ DUPLA ACEITAÇÃO (Fase C): estes endpoints foram MIGRADOS para
+// /api/platform/tenants (PlatformUser — identidade de plataforma separada do
+// tenant, achado R2). Permanecem aqui apenas até o corte (Fase D/H), agora
+// delegando para o MESMO service. Não adicionar funcionalidades novas aqui.
+function warnDeprecatedTenantEndpoint(req: Request): void {
+  console.warn(
+    `[DEPRECATED] ${req.method} ${req.originalUrl} — use /api/platform/tenants (PlatformUser). Corte previsto na Fase D/H.`
+  );
+}
 
 // GET /api/super-admin/tenants — listar todos os tenants
-router.get('/tenants', adminAuthMiddleware, superAdminOnly, async (_req: Request, res: Response) => {
+router.get('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
-    const tenants = await runAsPlatform(async () =>
-      await prisma.tenant.findMany({ orderBy: { createdAt: 'asc' } })
-    );
-    const withCounts = await runAsPlatform(async () =>
-      Promise.all(
-        tenants.map(async (t) => ({
-          ...t,
-          _counts: {
-            users: await prisma.user.count({ where: { tenantId: t.id } }),
-            citizens: await prisma.citizen.count({ where: { tenantId: t.id } }),
-            protocols: await prisma.protocolSimplified.count({ where: { tenantId: t.id } }),
-          },
-        }))
-      )
-    );
-    res.json({ success: true, tenants: withCounts });
+    warnDeprecatedTenantEndpoint(req);
+    const tenants = await listTenantsWithUsage();
+    res.json({ success: true, tenants });
   } catch (error) {
     console.error('Erro ao listar tenants:', error);
     res.status(500).json({ error: 'Erro ao listar tenants' });
@@ -2931,66 +2934,20 @@ router.get('/tenants', adminAuthMiddleware, superAdminOnly, async (_req: Request
 // Cria: tenant + usuário ADMIN inicial (senha temporária, mustChangePassword)
 router.post('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
+    warnDeprecatedTenantEndpoint(req);
     const parsed = createTenantSchema.safeParse(req.body);
     if (!parsed.success) {
       return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
     }
-    const data = parsed.data;
 
-    if (RESERVED_SLUGS.includes(data.slug)) {
-      return res.status(400).json({ error: `Slug reservado: ${data.slug}` });
-    }
-
-    const tempPassword = crypto.randomBytes(9).toString('base64url');
-    const passwordHash = await bcrypt.hash(tempPassword, 12);
-
-    const result = await runAsPlatform(async () =>
-      prisma.$transaction(async (tx) => {
-        const tenant = await tx.tenant.create({
-          data: {
-            slug: data.slug,
-            nome: data.nome,
-            cnpj: data.cnpj,
-            codigoIbge: data.codigoIbge,
-            nomeMunicipio: data.nomeMunicipio,
-            ufMunicipio: data.ufMunicipio,
-            customDomain: data.customDomain,
-            plan: data.plan ?? 'basic',
-            maxUsers: data.maxUsers ?? 10,
-            maxCitizens: data.maxCitizens ?? 10000,
-            features: (data.features as any) ?? undefined,
-            branding: (data.branding as any) ?? undefined,
-          },
-        });
-
-        const admin = await tx.user.create({
-          data: {
-            tenantId: tenant.id,
-            name: data.adminName,
-            email: data.adminEmail,
-            password: passwordHash,
-            role: 'ADMIN',
-            isActive: true,
-            mustChangePassword: true,
-          },
-        });
-
-        // Secretarias e serviços padrão (Fase 8) — município nasce operável
-        const departmentsCreated = await seedDefaultDepartments(tx, tenant.id);
-        const servicesCreated = await seedDefaultServices(tx, tenant.id);
-
-        return { tenant, admin, departmentsCreated, servicesCreated };
-      })
-    );
-
-    TenantService.invalidate();
+    const result = await provisionTenant(parsed.data);
 
     await logAuditEvent({
       userId: (req as any).userId,
       action: AUDIT_EVENTS.TENANT_CREATED,
       resource: req.originalUrl,
       method: req.method,
-      details: { tenantId: result.tenant.id, slug: result.tenant.slug, adminEmail: data.adminEmail },
+      details: { tenantId: result.tenant.id, slug: result.tenant.slug, adminEmail: parsed.data.adminEmail },
       ip: req.ip,
       userAgent: req.headers['user-agent'],
       success: true,
@@ -2999,16 +2956,19 @@ router.post('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request
     res.status(201).json({
       success: true,
       tenant: result.tenant,
-      admin: { id: result.admin.id, email: result.admin.email, name: result.admin.name },
+      admin: result.admin,
       departmentsCreated: result.departmentsCreated,
       servicesCreated: result.servicesCreated,
       // Entregue UMA única vez; o admin troca no primeiro login (mustChangePassword)
-      temporaryPassword: tempPassword,
+      temporaryPassword: result.temporaryPassword,
       accessUrl: process.env.TENANT_BASE_DOMAIN
         ? `https://${result.tenant.slug}.${process.env.TENANT_BASE_DOMAIN}`
         : undefined,
     });
   } catch (error: any) {
+    if (error?.code === 'RESERVED_SLUG') {
+      return res.status(400).json({ error: error.message });
+    }
     if (error?.code === 'P2002') {
       return res.status(409).json({ error: 'Slug, CNPJ, domínio ou email já em uso' });
     }
@@ -3020,6 +2980,7 @@ router.post('/tenants', adminAuthMiddleware, superAdminOnly, async (req: Request
 // PATCH /api/super-admin/tenants/:id — atualizar/suspender/reativar
 router.patch('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
+    warnDeprecatedTenantEndpoint(req);
     const updateSchema = createTenantSchema.partial().omit({ adminName: true, adminEmail: true }).extend({
       status: z.enum(['ACTIVE', 'INACTIVE', 'SUSPENDED', 'TRIAL', 'EXPIRED', 'CANCELLED']).optional(),
       suspensionReason: z.string().nullable().optional(),
@@ -3029,18 +2990,8 @@ router.patch('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Re
     if (!parsed.success) {
       return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
     }
-    if (parsed.data.slug && RESERVED_SLUGS.includes(parsed.data.slug)) {
-      return res.status(400).json({ error: `Slug reservado: ${parsed.data.slug}` });
-    }
 
-    const tenant = await runAsPlatform(async () =>
-      await prisma.tenant.update({
-        where: { id: req.params.id },
-        data: parsed.data as any,
-      })
-    );
-
-    TenantService.invalidate();
+    const tenant = await updateTenant(req.params.id, parsed.data as Record<string, unknown>);
 
     await logAuditEvent({
       userId: (req as any).userId,
@@ -3055,6 +3006,9 @@ router.patch('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Re
 
     res.json({ success: true, tenant });
   } catch (error: any) {
+    if (error?.code === 'RESERVED_SLUG') {
+      return res.status(400).json({ error: error.message });
+    }
     if (error?.code === 'P2025') {
       return res.status(404).json({ error: 'Tenant não encontrado' });
     }

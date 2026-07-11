@@ -3,9 +3,20 @@
  * Proteção contra ataques de força bruta e DDoS
  */
 
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
+import type { Request } from 'express';
 import { RATE_LIMIT } from '../config/security';
 import { logger } from '../config/logger.config';
+
+/**
+ * Fase F Multi-Tenant: chave composta {tenantId}:{ip} em todos os limiters.
+ * Sem isso a cota é GLOBAL por IP — um município sob abuso esgota o limite de
+ * todos (risco R9), e municípios atrás do mesmo NAT/proxy dividem a cota.
+ * ipKeyGenerator normaliza IPv6 (exigência do express-rate-limit v8 para
+ * keyGenerators customizados).
+ */
+const tenantIpKey = (req: Request): string =>
+  `${(req as any).tenantId || 'no-tenant'}:${ipKeyGenerator(req.ip || '')}`;
 
 /**
  * Rate limiter para rotas de login
@@ -19,6 +30,7 @@ export const loginRateLimiter = rateLimit({
     message: RATE_LIMIT.MESSAGE,
     retryAfter: Math.ceil(RATE_LIMIT.WINDOW_MS / 1000 / 60), // em minutos
   },
+  keyGenerator: tenantIpKey,
   standardHeaders: true, // Retorna rate limit info nos headers `RateLimit-*`
   legacyHeaders: false,  // Desabilita headers `X-RateLimit-*`
   skipSuccessfulRequests: false,
@@ -44,6 +56,7 @@ export const apiRateLimiter = rateLimit({
     error: 'Too many requests',
     message: 'Muitas requisições. Por favor, aguarde um momento.',
   },
+  keyGenerator: tenantIpKey,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -59,6 +72,7 @@ export const registerRateLimiter = rateLimit({
     error: 'Too many registrations',
     message: 'Muitas tentativas de cadastro. Tente novamente em 15 minutos.',
   },
+  keyGenerator: tenantIpKey,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -73,6 +87,7 @@ export const sensitiveOperationLimiter = rateLimit({
     error: 'Too many sensitive operations',
     message: 'Muitas operações sensíveis. Tente novamente em 1 hora.',
   },
+  keyGenerator: tenantIpKey,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -87,6 +102,7 @@ export const passwordResetLimiter = rateLimit({
     error: 'Too many password reset attempts',
     message: 'Muitas tentativas de reset de senha. Tente novamente em 15 minutos.',
   },
+  keyGenerator: tenantIpKey,
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -101,6 +117,7 @@ export const dataExportLimiter = rateLimit({
     error: 'Too many export requests',
     message: 'Limite de exportações diárias atingido. Tente novamente amanhã.',
   },
+  keyGenerator: tenantIpKey,
   standardHeaders: true,
   legacyHeaders: false,
 });

@@ -58,6 +58,12 @@ export const requestLoggerMiddleware = (
       timestamp: new Date().toISOString()
     };
 
+    // Fase F Multi-Tenant: carimbo de tenant em TODA linha de request —
+    // pré-requisito de observabilidade por município (dashboards/alertas).
+    if ((req as any).tenantId) {
+      logData.tenantId = (req as any).tenantId;
+    }
+
     // Adicionar userId se autenticado
     if ((req as any).user?.id) {
       logData.userId = (req as any).user.id;

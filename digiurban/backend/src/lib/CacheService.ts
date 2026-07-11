@@ -1,5 +1,7 @@
 import { prisma } from './prisma';
 import * as crypto from 'crypto';
+import { tryGetTenantContext, DEFAULT_TENANT_ID, PLATFORM_CONTEXT_ID } from './tenant-context';
+import { reportTenantFailSoft } from './tenant-telemetry';
 
 export interface CacheOptions {
   ttl?: number; // Time to live em segundos (padrão: 300)
@@ -380,15 +382,33 @@ export class CacheService {
   }
 
   /**
-   * Gera chave de cache com hash
+   * Gera chave de cache com hash — SEMPRE namespaced por tenant (Fase F).
+   *
+   * Formato: t:{tenantId}:{key} | t:__platform__:{key}
+   * Cache é infraestrutura compartilhada: sem o namespace, um valor cacheado
+   * por um município poderia ser servido a outro (risco R9 da auditoria).
+   * Sem contexto: telemetria + prefixo do tenant default (não lança — o miss
+   * é barato e as operações subjacentes já falham sob TENANT_STRICT).
    */
   private generateKey(key: string): string {
-    if (key.length <= 100) {
-      return key;
+    const ctx = tryGetTenantContext();
+    let scope: string;
+    if (ctx?.isPlatform) {
+      scope = PLATFORM_CONTEXT_ID;
+    } else if (ctx?.tenantId) {
+      scope = ctx.tenantId;
+    } else {
+      reportTenantFailSoft('cache-service');
+      scope = DEFAULT_TENANT_ID;
     }
 
-    // Para chaves muito longas, usar hash
-    return crypto.createHash('md5').update(key).digest('hex');
+    const namespaced = `t:${scope}:${key}`;
+    if (namespaced.length <= 100) {
+      return namespaced;
+    }
+
+    // Para chaves muito longas, hash do RESTO preservando o namespace
+    return `t:${scope}:${crypto.createHash('md5').update(key).digest('hex')}`;
   }
 
   /**
