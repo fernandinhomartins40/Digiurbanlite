@@ -246,5 +246,29 @@ router.get(
   })
 );
 
+// POST /api/public/leads — captação de lead (landing / demo / contato).
+// Público e sem autenticação; alimenta o funil do painel super-admin.
+router.post(
+  '/leads',
+  handleAsync(async (req, res) => {
+    const { name, email, phone, company, position, source, message } = req.body || {};
+    if (!name || !email) {
+      res.status(400).json({ success: false, error: 'Nome e email são obrigatórios' });
+      return;
+    }
+    const { createLead } = await import('../services/platform-billing.service');
+    const lead = await createLead({
+      name: String(name),
+      email: String(email),
+      phone: phone ? String(phone) : undefined,
+      company: company ? String(company) : undefined,
+      position: position ? String(position) : undefined,
+      source: source ? String(source) : 'CONTACT_FORM',
+      message: message ? String(message) : undefined,
+    });
+    res.status(201).json({ success: true, leadId: lead.id });
+  })
+);
+
 export default router;
 

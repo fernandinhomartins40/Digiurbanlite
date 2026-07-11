@@ -65,12 +65,22 @@ export default function AuditLogsTab() {
   const [filterAction, setFilterAction] = useState<string>('all');
   const [filterResource, setFilterResource] = useState<string>('all');
   const [dateRange, setDateRange] = useState<'1h' | '24h' | '7d' | '30d' | 'all'>('24h');
+  const [filterTenant, setFilterTenant] = useState<string>('all');
+  const [tenantOptions, setTenantOptions] = useState<Array<{ id: string; nome: string }>>([]);
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [showExportMenu, setShowExportMenu] = useState(false);
 
   useEffect(() => {
     loadAuditData();
-  }, [router, dateRange, filterStatus, filterAction, filterResource]);
+  }, [router, dateRange, filterStatus, filterAction, filterResource, filterTenant]);
+
+  // Municípios para o filtro cross-tenant (auditoria de plataforma)
+  useEffect(() => {
+    fetch('/api/super-admin/tenants')
+      .then((r) => (r.ok ? r.json() : { tenants: [] }))
+      .then((d) => setTenantOptions((d.tenants || []).map((t: any) => ({ id: t.id, nome: t.nome }))))
+      .catch(() => setTenantOptions([]));
+  }, []);
 
   useEffect(() => {
     if (!autoRefresh) return;
@@ -89,7 +99,8 @@ export default function AuditLogsTab() {
         dateRange,
         ...(filterStatus !== 'all' && { status: filterStatus }),
         ...(filterAction !== 'all' && { action: filterAction }),
-        ...(filterResource !== 'all' && { resource: filterResource })
+        ...(filterResource !== 'all' && { resource: filterResource }),
+        ...(filterTenant !== 'all' && { tenantId: filterTenant })
       });
 
       const [logsResponse, statsResponse] = await Promise.all([
@@ -299,6 +310,20 @@ export default function AuditLogsTab() {
               <option value="7d">Últimos 7 dias</option>
               <option value="30d">Últimos 30 dias</option>
               <option value="all">Todos</option>
+            </select>
+          </div>
+
+          {/* Tenant Filter (auditoria cross-tenant da plataforma) */}
+          <div>
+            <select
+              value={filterTenant}
+              onChange={(e) => setFilterTenant(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+            >
+              <option value="all">Todos os municípios</option>
+              {tenantOptions.map((t) => (
+                <option key={t.id} value={t.id}>{t.nome}</option>
+              ))}
             </select>
           </div>
 

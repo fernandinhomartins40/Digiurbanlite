@@ -12,7 +12,20 @@ import {
   listTenantsWithUsage,
   provisionTenant,
   updateTenant,
+  getTenantDetail,
+  createTenantAdmin,
+  resetTenantUserPassword,
+  setTenantUserActive,
+  AVAILABLE_MODULES,
 } from '../services/tenant-provisioning.service';
+import {
+  listTenantInvoices,
+  listAllInvoices,
+  createInvoice,
+  updateInvoiceStatus,
+  listLeads,
+  updateLeadStatus,
+} from '../services/platform-billing.service';
 import crypto from 'crypto';
 import { logAuditEvent, AUDIT_EVENTS } from '../utils/audit-logger';
 import { loginRateLimiter } from '../middleware/rate-limit';
@@ -2094,6 +2107,7 @@ router.get('/audit', adminAuthMiddleware, superAdminOnly, async (req: Request, r
       action,
       resource,
       userId,
+      tenantId,
       page = '1',
       limit = '50'
     } = req.query;
@@ -2137,6 +2151,10 @@ router.get('/audit', adminAuthMiddleware, superAdminOnly, async (req: Request, r
     }
     if (userId) {
       where.userId = userId as string;
+    }
+    // Filtro por município (auditoria cross-tenant da plataforma)
+    if (tenantId && tenantId !== 'all') {
+      where.tenantId = tenantId as string;
     }
 
     // Paginação
@@ -3014,6 +3032,178 @@ router.patch('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Re
     }
     console.error('Erro ao atualizar tenant:', error);
     res.status(500).json({ error: 'Erro ao atualizar tenant' });
+  }
+});
+
+// ============================================================================
+// DETALHE / ADMINS / MÓDULOS DE UM MUNICÍPIO (painel de plataforma)
+// ============================================================================
+
+// GET /api/super-admin/modules — catálogo de módulos ativáveis (para o wizard)
+router.get('/modules', adminAuthMiddleware, superAdminOnly, (_req: Request, res: Response) => {
+  res.json({ success: true, modules: AVAILABLE_MODULES });
+});
+
+// GET /api/super-admin/tenants/:id — detalhe (uso, limites, admins)
+router.get('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const detail = await getTenantDetail(req.params.id);
+    if (!detail) return res.status(404).json({ error: 'Município não encontrado' });
+    res.json({ success: true, tenant: detail });
+  } catch (error) {
+    console.error('Erro ao buscar detalhe do município:', error);
+    res.status(500).json({ error: 'Erro ao buscar município' });
+  }
+});
+
+// POST /api/super-admin/tenants/:id/admins — novo ADMIN municipal
+router.post('/tenants/:id/admins', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({ name: z.string().min(3), email: z.string().email() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Nome e email válidos são obrigatórios' });
+
+    const admin = await createTenantAdmin(req.params.id, parsed.data);
+    await logAuditEvent({
+      userId: (req as any).userId,
+      action: 'tenant_admin_created',
+      resource: req.originalUrl,
+      method: req.method,
+      details: { tenantId: req.params.id, adminEmail: parsed.data.email },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    res.status(201).json({ success: true, admin });
+  } catch (error: any) {
+    if (error?.code === 'P2002') return res.status(409).json({ error: 'Email já em uso' });
+    console.error('Erro ao criar admin:', error);
+    res.status(500).json({ error: 'Erro ao criar administrador' });
+  }
+});
+
+// POST /api/super-admin/tenants/:id/users/:userId/reset-password
+router.post('/tenants/:id/users/:userId/reset-password', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const result = await resetTenantUserPassword(req.params.id, req.params.userId);
+    await logAuditEvent({
+      userId: (req as any).userId,
+      action: 'tenant_user_password_reset',
+      resource: req.originalUrl,
+      method: req.method,
+      details: { tenantId: req.params.id, targetUserId: req.params.userId },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    res.json({ success: true, ...result });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: error.message });
+    console.error('Erro ao resetar senha:', error);
+    res.status(500).json({ error: 'Erro ao resetar senha' });
+  }
+});
+
+// PATCH /api/super-admin/tenants/:id/users/:userId — ativar/desativar
+router.patch('/tenants/:id/users/:userId', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({ isActive: z.boolean() });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'isActive é obrigatório' });
+    await setTenantUserActive(req.params.id, req.params.userId, parsed.data.isActive);
+    res.json({ success: true });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: error.message });
+    console.error('Erro ao atualizar usuário:', error);
+    res.status(500).json({ error: 'Erro ao atualizar usuário' });
+  }
+});
+
+// ============================================================================
+// BILLING POR MUNICÍPIO
+// ============================================================================
+
+// GET /api/super-admin/invoices — todas as faturas (filtro opcional ?status=)
+router.get('/invoices', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const invoices = await listAllInvoices(req.query.status as string | undefined);
+    res.json({ success: true, invoices });
+  } catch (error) {
+    console.error('Erro ao listar faturas:', error);
+    res.status(500).json({ error: 'Erro ao listar faturas' });
+  }
+});
+
+// GET /api/super-admin/tenants/:id/invoices — faturas de um município
+router.get('/tenants/:id/invoices', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const invoices = await listTenantInvoices(req.params.id);
+    res.json({ success: true, invoices });
+  } catch (error) {
+    console.error('Erro ao listar faturas do município:', error);
+    res.status(500).json({ error: 'Erro ao listar faturas' });
+  }
+});
+
+// POST /api/super-admin/tenants/:id/invoices — gerar fatura
+router.post('/tenants/:id/invoices', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({
+      amount: z.number().positive().optional(),
+      plan: z.string().optional(),
+      period: z.string().optional(),
+      dueDate: z.string().optional(),
+      description: z.string().optional(),
+    });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
+    const invoice = await createInvoice({ tenantId: req.params.id, ...parsed.data });
+    res.status(201).json({ success: true, invoice });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: 'Município não encontrado' });
+    console.error('Erro ao gerar fatura:', error);
+    res.status(500).json({ error: 'Erro ao gerar fatura' });
+  }
+});
+
+// PATCH /api/super-admin/invoices/:invoiceId — mudar status (pagar/cancelar)
+router.patch('/invoices/:invoiceId', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({ status: z.enum(['PAID', 'CANCELLED', 'FAILED', 'PENDING', 'OVERDUE']) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Status inválido' });
+    const invoice = await updateInvoiceStatus(req.params.invoiceId, parsed.data.status);
+    res.json({ success: true, invoice });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: 'Fatura não encontrada' });
+    console.error('Erro ao atualizar fatura:', error);
+    res.status(500).json({ error: 'Erro ao atualizar fatura' });
+  }
+});
+
+// ============================================================================
+// LEADS (funil de captação)
+// ============================================================================
+
+// GET /api/super-admin/leads — funil (filtro opcional ?status=)
+router.get('/leads', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const leads = await listLeads(req.query.status as string | undefined);
+    res.json({ success: true, leads });
+  } catch (error) {
+    console.error('Erro ao listar leads:', error);
+    res.status(500).json({ error: 'Erro ao listar leads' });
+  }
+});
+
+// PATCH /api/super-admin/leads/:leadId — mover no funil
+router.patch('/leads/:leadId', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const schema = z.object({ status: z.string().min(1) });
+    const parsed = schema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Status é obrigatório' });
+    const lead = await updateLeadStatus(req.params.leadId, parsed.data.status);
+    res.json({ success: true, lead });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: 'Lead não encontrado' });
+    console.error('Erro ao atualizar lead:', error);
+    res.status(500).json({ error: 'Erro ao atualizar lead' });
   }
 });
 
