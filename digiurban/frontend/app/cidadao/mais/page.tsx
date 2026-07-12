@@ -17,6 +17,7 @@ import {
   MessageSquare
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { MunicipioSwitcher } from '@/components/citizen/MunicipioSwitcher';
 
 interface MenuItem {
   id: string;
@@ -143,6 +144,9 @@ export default function MaisPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Trocar de município (só aparece com cadastro em 2+ prefeituras) */}
+        <MunicipioSwitcher />
 
         {/* Menu Items */}
         <div className="space-y-2">

@@ -31,8 +31,18 @@ import {
   GovernmentServiceStructuredData,
   FAQStructuredData,
 } from '@/src/components/seo/StructuredData';
+import { useTenant } from '@/components/providers/TenantProvider';
+import { MunicipioLanding } from '@/components/landing/MunicipioLanding';
 
 export default function LandingPage() {
+  const { config } = useTenant();
+
+  // Subdomínio de município (host resolveu slug != 'default') → landing
+  // white-label da prefeitura. Domínio raiz → landing institucional DigiUrban.
+  if (config.slug && config.slug !== 'default') {
+    return <MunicipioLanding />;
+  }
+
   return (
     <main className="min-h-screen bg-white">
       {/* Structured Data - Schema.org JSON-LD */}

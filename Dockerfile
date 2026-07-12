@@ -89,10 +89,14 @@ ARG NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
 # WebSocket: String vazia = mesma origem (Nginx faz proxy via /socket.io/)
 # Socket.IO detecta automaticamente http/https e wss/ws
 ARG NEXT_PUBLIC_MESSAGES_WS_URL=
+# Domínio base dos subdomínios de município ({slug}.digiurban.com.br). Usado
+# pela troca de município (MunicipioSwitcher) para montar a URL do subdomínio.
+ARG NEXT_PUBLIC_TENANT_BASE_DOMAIN=
 
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_MESSAGES_API_URL=$NEXT_PUBLIC_MESSAGES_API_URL
 ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
+ENV NEXT_PUBLIC_TENANT_BASE_DOMAIN=$NEXT_PUBLIC_TENANT_BASE_DOMAIN
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./

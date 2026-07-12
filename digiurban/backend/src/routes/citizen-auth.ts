@@ -2,7 +2,7 @@ import { Router, Request, Response, NextFunction } from 'express';
 import { prisma } from '../lib/prisma';
 import * as bcrypt from 'bcryptjs';
 import * as jwt from 'jsonwebtoken';
-import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
+import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
 import { TenantService } from '../services/tenant.service';
 import { z } from 'zod';
 import { AuthenticatedRequest, SuccessResponse, ErrorResponse } from '../types';
@@ -23,6 +23,75 @@ import facePlatformClientService from '../services/face-platform-client.service'
 import { autoPromoteToGold, getCitizenAccessLevelSummary } from '../services/citizen-verification.service';
 
 const router = Router();
+
+// ============================================================================
+// SESSÃO POR MUNICÍPIO (subdomínios white-label)
+// ============================================================================
+// Requisito de produto: um cidadão pode estar CADASTRADO em vários municípios
+// (mesmo CPF → N vínculos Citizen, via Person global por CPF), mas cada SESSÃO
+// pertence a UM município. O cookie é emitido SEM domain compartilhado — fica
+// preso ao host que autenticou (saocarlos.digiurban.com.br não compartilha
+// sessão com ribeirao.digiurban.com.br). A troca de município re-emite o token.
+
+const CITIZEN_COOKIE = 'digiurban_citizen_token';
+
+function citizenCookieOptions() {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    maxAge: 8 * 60 * 60 * 1000, // 8 horas
+    path: '/',
+    // SEM domain: sessão presa ao host (isolamento de sessão por município).
+  };
+}
+
+/** Emite o cookie de sessão de cidadão para um município específico. */
+function issueCitizenSession(res: Response, citizen: { id: string; tenantId: string | null }): string {
+  const token = jwt.sign(
+    {
+      citizenId: citizen.id,
+      userId: citizen.id, // compat ultrazend-messages
+      type: 'citizen',
+      userType: 'CITIZEN',
+      tenantId: citizen.tenantId || DEFAULT_TENANT_ID,
+    },
+    process.env.JWT_SECRET!,
+    { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }
+  );
+  res.cookie(CITIZEN_COOKIE, token, citizenCookieOptions());
+  return token;
+}
+
+/**
+ * Vínculos de um CPF em todos os municípios (visão de plataforma).
+ * Um item por município onde o CPF tem cadastro ativo.
+ */
+async function findCitizenLinksByCpf(cpf: string): Promise<
+  Array<{ id: string; tenantId: string | null; name: string; email: string; password: string | null }>
+> {
+  return runAsPlatform(async () =>
+    prisma.citizen.findMany({
+      where: { cpf, isActive: true },
+      select: { id: true, tenantId: true, name: true, email: true, password: true },
+    })
+  );
+}
+
+/**
+ * Vínculos de um EMAIL em todos os municípios (fallback para login por email).
+ * Email pode repetir entre municípios; mesma semântica de escolha do CPF.
+ */
+async function findCitizenLinksByEmail(email: string): Promise<
+  Array<{ id: string; tenantId: string | null; name: string; email: string; password: string | null }>
+> {
+  return runAsPlatform(async () =>
+    prisma.citizen.findMany({
+      where: { email, isActive: true },
+      select: { id: true, tenantId: true, name: true, email: true, password: true },
+    })
+  );
+}
 
 // ✅ PADRONIZADO: Schemas de validação alinhados com nomenclatura do banco
 const registerSchema = z.object({
@@ -150,28 +219,9 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
       return createdCitizen;
     });
 
-    // Gerar token JWT com expiração configurada
-    const token = jwt.sign(
-      {
-        citizenId: citizen.id,
-        userId: citizen.id, // Para compatibilidade com ultrazend-messages
-        type: 'citizen',
-        userType: 'CITIZEN', // Para compatibilidade com ultrazend-messages
-        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }
-    );
-
-    // ✅ SEGURANÇA: Setar cookie httpOnly com o token
-    res.cookie('digiurban_citizen_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 8 * 60 * 60 * 1000, // 8 horas
-      path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.digiurban.com.br' : undefined
-        });
+    // Emitir sessão do município onde o cidadão se cadastrou (cookie por host,
+    // sem domain compartilhado — sessão presa a este município).
+    issueCitizenSession(res, { id: citizen.id, tenantId: citizen.tenantId });
 
     // Remover senha da resposta
     const { password: _, ...citizenData } = citizen;
@@ -309,73 +359,96 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('citizen'), asy
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    // Buscar cidadão
-    const citizen = await prisma.citizen.findFirst({
-      where: {
-          OR: loginConditions,
-        isActive: true
-        }
-        });
+    // ========================================================================
+    // RESOLUÇÃO MULTI-MUNICÍPIO (CPF pode ter cadastro em N municípios)
+    // ========================================================================
+    // Busca TODOS os vínculos do CPF/email (visão de plataforma), valida senha
+    // e decide o município:
+    //   1. Host de subdomínio identifica um município → login fixo nele
+    //   2. Domínio raiz + seleção (X-Tenant-Slug/cookie) → o município escolhido
+    //   3. Sem host e sem seleção, com 1 vínculo → esse município
+    //   4. Sem host e sem seleção, com 2+ vínculos → 409 pede escolha (lista)
+    const allLinks = normalizedCpfLogin
+      ? await findCitizenLinksByCpf(normalizedCpfLogin)
+      : await findCitizenLinksByEmail(normalizedEmailLogin!);
 
-    if (!citizen || !citizen.password) {
-      // Registrar tentativa falhada (sem tenant específico)
-      await logAuditEvent({
-        action: AUDIT_EVENTS.LOGIN_FAILED,
-        resource: '/api/auth/citizen/login',
-        method: 'POST',
-        ip: req.ip || req.socket.remoteAddress,
-        userAgent: req.headers['user-agent'],
-        success: false,
-        details: { login: loginIdentifier, reason: 'Cidadão não encontrado' }
-      });
-      return res.status(401).json({ error: 'Credenciais inválidas' });
+    // Vínculos cuja senha confere (o cidadão pode ter senhas diferentes por
+    // município — só entram os que ele consegue autenticar)
+    const authenticated: typeof allLinks = [];
+    for (const link of allLinks) {
+      if (link.password && (await bcrypt.compare(data.password, link.password))) {
+        authenticated.push(link);
+      }
     }
 
-    // Verificar senha
-    const validPassword = await bcrypt.compare(data.password, citizen.password);
-    if (!validPassword) {
-      // Registrar tentativa falhada
+    if (authenticated.length === 0) {
       await recordFailedLogin('citizen', loginIdentifier);
-      await logLoginFailed(req, loginIdentifier, 'Senha incorreta');
+      await logLoginFailed(req, loginIdentifier, 'Credenciais inválidas');
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
-    // Resetar contador de tentativas falhadas após sucesso
-    await resetFailedAttempts('citizen', citizen.id);
+    // Município do host (subdomínio da prefeitura) — precedência absoluta.
+    const requestTenant = req.tenantId && req.tenantId !== DEFAULT_TENANT_ID ? req.tenantId : null;
 
-    // Log de auditoria: login bem-sucedido
-    await logLoginSuccess(req, 'citizen', citizen.id);
-
-    // Gerar token JWT com campos compatíveis com ultrazend-messages
-    const token = jwt.sign(
-      {
-        citizenId: citizen.id,
-        userId: citizen.id,
-        type: 'citizen',
-        userType: 'CITIZEN',
-        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
-      },
-      process.env.JWT_SECRET!,
-      { expiresIn: JWT_CONFIG.CITIZEN_EXPIRES_IN }
-    );
-
-    // ✅ SEGURANÇA: Setar cookie httpOnly com o token
-    res.cookie('digiurban_citizen_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 8 * 60 * 60 * 1000, // 8 horas
-      path: '/',
-      domain: process.env.NODE_ENV === 'production' ? '.digiurban.com.br' : undefined
+    let chosen: (typeof authenticated)[number] | undefined;
+    if (requestTenant) {
+      chosen = authenticated.find((l) => l.tenantId === requestTenant);
+      if (!chosen) {
+        // CPF válido, mas não tem cadastro NESTE município (subdomínio).
+        await logLoginFailed(req, loginIdentifier, 'Sem cadastro neste município');
+        return res.status(401).json({
+          error: 'Você não possui cadastro nesta prefeitura',
+          code: 'NO_LINK_IN_TENANT',
         });
+      }
+    } else if (authenticated.length === 1) {
+      chosen = authenticated[0];
+    } else {
+      // Múltiplos municípios e nenhum fixado pelo host → o cidadão deve escolher.
+      const tenants = await runAsPlatform(async () =>
+        Promise.all(
+          authenticated.map(async (l) => {
+            const t = l.tenantId ? await TenantService.getById(l.tenantId) : null;
+            return {
+              tenantId: l.tenantId,
+              slug: t?.slug || null,
+              nome: t?.nome || 'Município',
+              nomeMunicipio: t?.nomeMunicipio || '',
+              ufMunicipio: t?.ufMunicipio || '',
+            };
+          })
+        )
+      );
+      return res.status(409).json({
+        error: 'Selecione o município',
+        code: 'MUNICIPIO_SELECTION_REQUIRED',
+        message: 'Seu CPF está cadastrado em mais de um município. Escolha qual deseja acessar.',
+        municipios: tenants,
+      });
+    }
 
-    // Remover senha da resposta
-    const { password: _, ...citizenData } = citizen;
+    // Sucesso: emitir sessão do município escolhido.
+    await resetFailedAttempts('citizen', chosen.id);
+    await logLoginSuccess(req, 'citizen', chosen.id);
+
+    issueCitizenSession(res, { id: chosen.id, tenantId: chosen.tenantId });
+
+    // Retornar o cidadão do município escolhido (sem senha)
+    const citizenData = await runAsPlatform(async () =>
+      prisma.citizen.findFirst({
+        where: { id: chosen!.id },
+        select: {
+          id: true, name: true, email: true, cpf: true, phone: true,
+          tenantId: true, isActive: true, verificationStatus: true,
+        },
+      })
+    );
 
     return res.json({
       success: true,
       message: 'Login realizado com sucesso',
-      citizen: citizenData
+      citizen: citizenData,
+      tenantId: chosen.tenantId,
     });
   } catch (error: unknown) {
     console.error('Erro no login:', sanitizeForLog(error));
@@ -925,17 +998,101 @@ router.put('/profile', asyncHandler(async (req: Request, res: Response) => {
 
 // POST /api/auth/citizen/logout - Logout (limpar cookie)
 router.post('/logout', asyncHandler(async (req: Request, res: Response) => {
-  // ✅ Limpar cookie httpOnly
-  res.clearCookie('digiurban_citizen_token', {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    path: '/'
-        });
+  // Limpar o cookie novo (por host, sem domain) E o legado (com domain
+  // compartilhado) — cobre sessões emitidas antes da mudança de escopo.
+  res.clearCookie(CITIZEN_COOKIE, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', path: '/' });
+  if (process.env.NODE_ENV === 'production') {
+    res.clearCookie(CITIZEN_COOKIE, { httpOnly: true, secure: true, sameSite: 'lax', path: '/', domain: '.digiurban.com.br' });
+  }
 
   res.json({
     success: true,
     message: 'Logout realizado com sucesso'
+  });
+}));
+
+// GET /api/auth/citizen/municipios - Municípios onde o CPF logado tem cadastro
+// Base do botão "trocar de município": lista os vínculos do CPF do cidadão
+// autenticado, marcando o município atual (o da sessão).
+router.get('/municipios', citizenAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const cpf = (req as any).citizen?.cpf as string | undefined;
+  const currentTenant = (req as any).tenantId as string | undefined;
+  if (!cpf) {
+    return res.status(401).json({ error: 'Não autenticado' });
+  }
+
+  const links = await findCitizenLinksByCpf(cpf);
+  const municipios = await runAsPlatform(async () =>
+    Promise.all(
+      links.map(async (l) => {
+        const t = l.tenantId ? await TenantService.getById(l.tenantId) : null;
+        return {
+          citizenId: l.id,
+          tenantId: l.tenantId,
+          slug: t?.slug || null,
+          nome: t?.nome || 'Município',
+          nomeMunicipio: t?.nomeMunicipio || '',
+          ufMunicipio: t?.ufMunicipio || '',
+          status: t?.status || 'ACTIVE',
+          current: l.tenantId === currentTenant,
+        };
+      })
+    )
+  );
+
+  // Só municípios operáveis
+  res.json({ success: true, municipios: municipios.filter((m) => m.status === 'ACTIVE' || m.current) });
+}));
+
+// POST /api/auth/citizen/switch-municipio - Troca a sessão para outro município
+// do mesmo CPF, SEM redigitar senha. Re-emite o cookie com o citizenId do
+// vínculo no município alvo. Só permite alvos onde o CPF tem cadastro (o CPF
+// da sessão atual é a prova de identidade — a senha já foi validada no login).
+router.post('/switch-municipio', citizenAuthMiddleware, asyncHandler(async (req: Request, res: Response) => {
+  const cpf = (req as any).citizen?.cpf as string | undefined;
+  if (!cpf) {
+    return res.status(401).json({ error: 'Não autenticado' });
+  }
+
+  const { tenantId } = z.object({ tenantId: z.string().min(1) }).parse(req.body);
+
+  const links = await findCitizenLinksByCpf(cpf);
+  const target = links.find((l) => l.tenantId === tenantId);
+  if (!target) {
+    return res.status(403).json({ error: 'Você não possui cadastro neste município', code: 'NO_LINK_IN_TENANT' });
+  }
+
+  const targetTenant = await TenantService.getById(tenantId);
+  if (!targetTenant || targetTenant.status !== 'ACTIVE') {
+    return res.status(403).json({ error: 'Município indisponível', code: 'TENANT_UNAVAILABLE' });
+  }
+
+  issueCitizenSession(res, { id: target.id, tenantId: target.tenantId });
+
+  await logAuditEvent({
+    citizenId: target.id,
+    action: 'citizen_switch_municipio',
+    resource: '/api/auth/citizen/switch-municipio',
+    method: 'POST',
+    details: { fromTenant: (req as any).tenantId, toTenant: tenantId, cpf },
+    ip: req.ip,
+    userAgent: req.headers['user-agent'],
+    success: true,
+  }).catch(() => undefined);
+
+  const citizenData = await runAsPlatform(async () =>
+    prisma.citizen.findFirst({
+      where: { id: target.id },
+      select: { id: true, name: true, email: true, cpf: true, tenantId: true },
+    })
+  );
+
+  res.json({
+    success: true,
+    message: `Sessão trocada para ${targetTenant.nome}`,
+    citizen: citizenData,
+    tenantId,
+    slug: targetTenant.slug,
   });
 }));
 
