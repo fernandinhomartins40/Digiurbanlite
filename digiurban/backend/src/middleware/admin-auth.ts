@@ -9,7 +9,7 @@ import {
   RoleHierarchy
         } from '../types';
 import { logAuditEvent } from '../utils/audit-logger';
-import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
+import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
 
 /**
  * Middleware de autenticação básica para administradores
@@ -52,42 +52,51 @@ export const adminAuthMiddleware = async (
       return;
     }
 
-    // ✅ Fase 4 Multi-Tenant: validar claim de tenant do token contra o tenant
-    // da request (resolvido por host no tenantContextMiddleware).
-    // Janela de transição: tokens antigos SEM claim são aceitos (o contexto
-    // default os cobre); token COM claim divergente é rejeitado e auditado.
-    const tokenTenant = (decoded as JWTPayload & { tenantId?: string }).tenantId;
-    const requestTenant = (req as any).tenantId || DEFAULT_TENANT_ID;
-    if (tokenTenant && tokenTenant !== requestTenant) {
-      logAuditEvent({
-        userId: decoded.userId,
-        action: 'tenant_claim_mismatch',
-        resource: req.originalUrl || req.path,
-        method: req.method,
-        details: { tokenTenant, requestTenant },
-        ip: req.ip,
-        userAgent: req.headers['user-agent'],
-        success: false,
-        errorMessage: 'JWT de outro tenant'
-      }).catch(() => undefined);
-      res.status(401).json({ error: 'Token não pertence a este município' });
-      return;
-    }
-
-    // Buscar o usuário no banco com tipos seguros
-    const user: UserWithRelations | null = await prisma.user.findFirst({
-      where: {
-        id: decoded.userId,
-        isActive: true
+    // Buscar o usuário no banco. runAsPlatform: o lookup não pode ser escopado
+    // pela tenant-extension aqui, senão um SUPER_ADMIN (identidade de
+    // plataforma, tenantId=tenant-default) some quando o navegador está
+    // escopado a outro município (ex.: cookie digiurban_tenant_slug). Para
+    // usuários normais o claim de tenant é revalidado logo abaixo.
+    const user: UserWithRelations | null = await runAsPlatform(async () =>
+      prisma.user.findFirst({
+        where: {
+          id: decoded.userId,
+          isActive: true
         },
-      include: {
-        department: true
-      }
-      });
+        include: {
+          department: true
+        }
+      })
+    );
 
     if (!user) {
       res.status(401).json({ error: 'Usuário não encontrado ou inativo' });
       return;
+    }
+
+    // ✅ Fase 4 Multi-Tenant: validar claim de tenant do token contra o tenant
+    // da request (resolvido por host no tenantContextMiddleware).
+    // SUPER_ADMIN é cross-tenant (identidade de plataforma) → isento da checagem.
+    // Usuários normais: token COM claim divergente é rejeitado e auditado
+    // (tokens antigos SEM claim seguem aceitos na janela de transição).
+    if (user.role !== 'SUPER_ADMIN') {
+      const tokenTenant = (decoded as JWTPayload & { tenantId?: string }).tenantId;
+      const requestTenant = (req as any).tenantId || DEFAULT_TENANT_ID;
+      if (tokenTenant && tokenTenant !== requestTenant) {
+        logAuditEvent({
+          userId: decoded.userId,
+          action: 'tenant_claim_mismatch',
+          resource: req.originalUrl || req.path,
+          method: req.method,
+          details: { tokenTenant, requestTenant },
+          ip: req.ip,
+          userAgent: req.headers['user-agent'],
+          success: false,
+          errorMessage: 'JWT de outro tenant'
+        }).catch(() => undefined);
+        res.status(401).json({ error: 'Token não pertence a este município' });
+        return;
+      }
     }
 
     // Adicionar usuário e informações à requisição usando tipos seguros

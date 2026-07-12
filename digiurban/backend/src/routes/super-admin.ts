@@ -121,16 +121,24 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
   try {
     const data = loginSchema.parse(req.body);
 
-    // Buscar usuário pelo email
-    const user = await prisma.user.findFirst({
-      where: {
-        email: data.email,
-        isActive: true
-      },
-      include: {
-        department: true
-      }
-    });
+    // Buscar usuário pelo email — SUPER_ADMIN é identidade de PLATAFORMA:
+    // runAsPlatform evita que a tenant-extension esconda o usuário quando o
+    // contexto do host/cookie aponta para outro município (ex.: cookie
+    // digiurban_tenant_slug de um portal de cidadão). Sem isto, o login falha
+    // com "não autorizado" sempre que o navegador está escopado a um tenant
+    // diferente do do super-admin.
+    const user = await runAsPlatform(async () =>
+      prisma.user.findFirst({
+        where: {
+          email: data.email,
+          isActive: true,
+          role: 'SUPER_ADMIN'
+        },
+        include: {
+          department: true
+        }
+      })
+    );
 
     // Verificar se existe e se é SUPER_ADMIN
     if (!user || user.role !== 'SUPER_ADMIN') {

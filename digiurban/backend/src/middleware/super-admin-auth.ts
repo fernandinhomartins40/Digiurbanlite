@@ -7,7 +7,7 @@ import {
   UserWithRelations,
   JWTPayload
 } from '../types';
-import { DEFAULT_TENANT_ID } from '../lib/tenant-context';
+import { DEFAULT_TENANT_ID, runAsPlatform } from '../lib/tenant-context';
 
 /**
  * Middleware de autenticação para SUPER_ADMIN
@@ -42,24 +42,22 @@ export const superAdminAuth = async (
 
     const decoded = jwt.verify(token, jwtSecret) as JWTPayload & { tenantId?: string };
 
-    // ✅ Fase 4 Multi-Tenant: claim de tenant deve casar com o tenant da request
-    // (na Fase 5 SUPER_ADMIN migra para PlatformUser cross-tenant).
-    const requestTenant = (req as any).tenantId || DEFAULT_TENANT_ID;
-    if (decoded.tenantId && decoded.tenantId !== requestTenant) {
-      res.status(401).json({ error: 'Token não pertence a este município' });
-      return;
-    }
-
-    // Buscar usuário
-    const user: UserWithRelations | null = await prisma.user.findFirst({
-      where: {
-        id: decoded.userId,
-        isActive: true
-      },
-      include: {
-        department: true
-      }
-    });
+    // SUPER_ADMIN é identidade de PLATAFORMA (cross-tenant): NÃO validar o claim
+    // de tenant contra o host (o super-admin do tenant-default precisa operar
+    // mesmo quando o navegador está escopado a outro município — ex.: cookie
+    // digiurban_tenant_slug). E a busca do usuário roda em runAsPlatform para
+    // que a tenant-extension não o esconda pelo contexto do host.
+    const user: UserWithRelations | null = await runAsPlatform(async () =>
+      prisma.user.findFirst({
+        where: {
+          id: decoded.userId,
+          isActive: true
+        },
+        include: {
+          department: true
+        }
+      })
+    );
 
     if (!user) {
       res.status(401).json({ error: 'Usuário não encontrado ou inativo' });
