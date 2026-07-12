@@ -13,31 +13,58 @@
 import { Prisma } from '@prisma/client';
 import { runAsPlatform } from '../lib/tenant-context';
 
-/** Secretarias mínimas que todo município recebe ao ser provisionado. */
+/**
+ * Secretarias que todo município recebe ao ser provisionado.
+ * Reflete as secretarias REAIS da aplicação (app/admin/secretarias/*) — o
+ * município nasce completo. O que a prefeitura não usar pode ser desabilitado
+ * no wizard/detalhe (toggle de módulos por feature = slug abaixo).
+ * `code` = SLUG da secretaria (alinhado com AVAILABLE_MODULES e requireFeature).
+ */
 export const DEFAULT_DEPARTMENTS: Array<{ name: string; code: string }> = [
-  { name: 'Gabinete do Prefeito', code: 'GABINETE' },
-  { name: 'Secretaria de Administração', code: 'ADMIN' },
-  { name: 'Secretaria de Saúde', code: 'SAUDE' },
-  { name: 'Secretaria de Educação', code: 'EDUCACAO' },
-  { name: 'Secretaria de Assistência Social', code: 'ASSISTENCIA' },
-  { name: 'Secretaria de Obras', code: 'OBRAS' },
-  { name: 'Secretaria de Meio Ambiente', code: 'AMBIENTE' },
-  { name: 'Ouvidoria', code: 'OUVIDORIA' },
+  { name: 'Gabinete do Prefeito', code: 'gabinete' },
+  { name: 'Secretaria Municipal de Administração', code: 'administracao' },
+  { name: 'Secretaria Municipal de Agricultura', code: 'agricultura' },
+  { name: 'Secretaria Municipal de Assistência Social', code: 'assistencia-social' },
+  { name: 'Secretaria Municipal de Cultura', code: 'cultura' },
+  { name: 'Coordenadoria de Defesa Civil', code: 'defesa-civil' },
+  { name: 'Secretaria Municipal de Desenvolvimento Econômico', code: 'desenvolvimento-economico' },
+  { name: 'Secretaria Municipal de Educação', code: 'educacao' },
+  { name: 'Secretaria Municipal de Esportes', code: 'esportes' },
+  { name: 'Secretaria Municipal de Finanças', code: 'financas' },
+  { name: 'Secretaria Municipal de Habitação', code: 'habitacao' },
+  { name: 'Secretaria Municipal de Meio Ambiente', code: 'meio-ambiente' },
+  { name: 'Secretaria Municipal de Mobilidade Urbana', code: 'mobilidade-urbana' },
+  { name: 'Secretaria Municipal de Obras Públicas', code: 'obras-publicas' },
+  { name: 'Secretaria Municipal de Planejamento Urbano', code: 'planejamento-urbano' },
+  { name: 'Secretaria Municipal de Políticas para Mulheres', code: 'politicas-mulheres' },
+  { name: 'Secretaria Municipal de Saúde', code: 'saude' },
+  { name: 'Secretaria Municipal de Segurança Pública', code: 'seguranca-publica' },
+  { name: 'Secretaria Municipal de Serviços Públicos', code: 'servicos-publicos' },
+  { name: 'Secretaria Municipal de Tecnologia e Inovação', code: 'tecnologia-inovacao' },
+  { name: 'Secretaria Municipal de Transportes e Trânsito', code: 'transportes-transito' },
+  { name: 'Secretaria Municipal de Turismo', code: 'turismo' },
+  { name: 'Ouvidoria', code: 'ouvidoria' },
 ];
 
 /**
  * Serviços iniciais (SEM_DADOS: geram protocolo de acompanhamento) — o portal
- * do cidadão do município novo nasce com um catálogo mínimo utilizável.
- * A chave é o code da secretaria criada por seedDefaultDepartments.
+ * do cidadão do município novo nasce com um catálogo utilizável, cobrindo as
+ * principais secretarias de atendimento ao cidadão.
+ * `deptCode` = code da secretaria criada por seedDefaultDepartments.
  */
 export const DEFAULT_SERVICES: Array<{ name: string; description: string; deptCode: string }> = [
-  { name: 'Solicitação Geral', description: 'Abertura de solicitação geral ao município', deptCode: 'ADMIN' },
-  { name: 'Ouvidoria — Reclamação', description: 'Registrar reclamação junto à Ouvidoria', deptCode: 'OUVIDORIA' },
-  { name: 'Ouvidoria — Denúncia', description: 'Registrar denúncia junto à Ouvidoria', deptCode: 'OUVIDORIA' },
-  { name: 'Ouvidoria — Elogio ou Sugestão', description: 'Enviar elogio ou sugestão', deptCode: 'OUVIDORIA' },
-  { name: 'Solicitação de Serviço de Obras', description: 'Tapa-buraco, iluminação, calçadas e afins', deptCode: 'OBRAS' },
-  { name: 'Solicitação — Meio Ambiente', description: 'Poda de árvore, denúncia ambiental e afins', deptCode: 'AMBIENTE' },
-  { name: 'Atendimento — Assistência Social', description: 'Solicitar atendimento da Assistência Social', deptCode: 'ASSISTENCIA' },
+  { name: 'Solicitação Geral', description: 'Abertura de solicitação geral ao município', deptCode: 'administracao' },
+  { name: 'Ouvidoria — Reclamação', description: 'Registrar reclamação junto à Ouvidoria', deptCode: 'ouvidoria' },
+  { name: 'Ouvidoria — Denúncia', description: 'Registrar denúncia junto à Ouvidoria', deptCode: 'ouvidoria' },
+  { name: 'Ouvidoria — Elogio ou Sugestão', description: 'Enviar elogio ou sugestão', deptCode: 'ouvidoria' },
+  { name: 'Atendimento — Saúde', description: 'Solicitar atendimento ou informação de saúde', deptCode: 'saude' },
+  { name: 'Matrícula e Atendimento — Educação', description: 'Solicitações da rede municipal de ensino', deptCode: 'educacao' },
+  { name: 'Atendimento — Assistência Social', description: 'Solicitar atendimento da Assistência Social', deptCode: 'assistencia-social' },
+  { name: 'Solicitação de Obras', description: 'Tapa-buraco, iluminação, calçadas e afins', deptCode: 'obras-publicas' },
+  { name: 'Serviços Públicos', description: 'Coleta, limpeza urbana, poda e afins', deptCode: 'servicos-publicos' },
+  { name: 'Meio Ambiente', description: 'Poda de árvore, denúncia ambiental e afins', deptCode: 'meio-ambiente' },
+  { name: 'Habitação', description: 'Programas e solicitações habitacionais', deptCode: 'habitacao' },
+  { name: 'Agricultura', description: 'Atendimento ao produtor rural', deptCode: 'agricultura' },
 ];
 
 /**
@@ -174,22 +201,36 @@ export interface ProvisionTenantInput {
 }
 
 /**
- * Catálogo de módulos ativáveis por município (slug = feature do requireFeature
- * / useTenantFeature). Fonte única para o wizard e o toggle de módulos.
+ * Catálogo de secretarias/módulos ativáveis por município.
+ * slug = pasta em app/admin/secretarias/ = feature do requireFeature/
+ * useTenantFeature. Fonte única para o wizard e o toggle de módulos.
  * Contrato: ausência da chave = habilitado; só `false` explícito desabilita.
+ *
+ * ⚠️ Manter em sincronia com as secretarias reais da aplicação
+ * (digiurban/frontend/app/admin/secretarias/*).
  */
 export const AVAILABLE_MODULES: Array<{ slug: string; label: string }> = [
-  { slug: 'saude', label: 'Saúde' },
-  { slug: 'educacao', label: 'Educação' },
-  { slug: 'assistencia-social', label: 'Assistência Social' },
+  { slug: 'administracao', label: 'Administração' },
   { slug: 'agricultura', label: 'Agricultura' },
-  { slug: 'obras', label: 'Obras e Serviços' },
-  { slug: 'meio-ambiente', label: 'Meio Ambiente' },
+  { slug: 'assistencia-social', label: 'Assistência Social' },
   { slug: 'cultura', label: 'Cultura' },
-  { slug: 'esporte', label: 'Esporte e Lazer' },
-  { slug: 'turismo', label: 'Turismo' },
-  { slug: 'seguranca', label: 'Segurança Pública' },
+  { slug: 'defesa-civil', label: 'Defesa Civil' },
+  { slug: 'desenvolvimento-economico', label: 'Desenvolvimento Econômico' },
+  { slug: 'educacao', label: 'Educação' },
+  { slug: 'esportes', label: 'Esportes' },
+  { slug: 'financas', label: 'Finanças' },
   { slug: 'habitacao', label: 'Habitação' },
+  { slug: 'meio-ambiente', label: 'Meio Ambiente' },
+  { slug: 'mobilidade-urbana', label: 'Mobilidade Urbana' },
+  { slug: 'obras-publicas', label: 'Obras Públicas' },
+  { slug: 'planejamento-urbano', label: 'Planejamento Urbano' },
+  { slug: 'politicas-mulheres', label: 'Políticas para Mulheres' },
+  { slug: 'saude', label: 'Saúde' },
+  { slug: 'seguranca-publica', label: 'Segurança Pública' },
+  { slug: 'servicos-publicos', label: 'Serviços Públicos' },
+  { slug: 'tecnologia-inovacao', label: 'Tecnologia e Inovação' },
+  { slug: 'transportes-transito', label: 'Transportes e Trânsito' },
+  { slug: 'turismo', label: 'Turismo' },
 ];
 
 /** Lista todos os tenants com contadores de uso (visão de plataforma). */
