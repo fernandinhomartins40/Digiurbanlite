@@ -88,6 +88,8 @@ export default function TenantsPage() {
   const [saving, setSaving] = useState(false);
   const [provisioned, setProvisioned] = useState<ProvisionResult | null>(null);
   const [actingId, setActingId] = useState<string | null>(null);
+  const [baseDomain, setBaseDomain] = useState<string | null>(null);
+  const [subdomainEnabled, setSubdomainEnabled] = useState<boolean>(true);
 
   useEffect(() => {
     fetchTenants();
@@ -95,6 +97,13 @@ export default function TenantsPage() {
       .then((r) => (r.ok ? r.json() : { modules: [] }))
       .then((d) => setModules(d.modules || []))
       .catch(() => setModules([]));
+    fetch('/api/super-admin/platform-info')
+      .then((r) => (r.ok ? r.json() : {}))
+      .then((d: { tenantBaseDomain?: string | null; subdomainEnabled?: boolean }) => {
+        setBaseDomain(d.tenantBaseDomain ?? null);
+        setSubdomainEnabled(d.subdomainEnabled !== false);
+      })
+      .catch(() => {});
   }, []);
 
   const fetchTenants = async () => {
@@ -320,6 +329,32 @@ export default function TenantsPage() {
                 <div>
                   <Label>Domínio próprio (opcional)</Label>
                   <Input placeholder="portal.cidade.mg.gov.br" value={form.customDomain} onChange={(e) => set('customDomain', e.target.value)} />
+                  <p className="text-xs text-muted-foreground mt-1">Se a prefeitura tem domínio próprio. Deixe vazio para usar o subdomínio.</p>
+                </div>
+
+                {/* Endereço da prefeitura (subdomínio) — prévia em tempo real */}
+                <div className="md:col-span-2">
+                  <Label>Endereço da prefeitura</Label>
+                  <div className="rounded-lg border p-3 bg-muted/30 flex items-center gap-2 text-sm">
+                    <Globe className="h-4 w-4 text-muted-foreground" />
+                    {baseDomain ? (
+                      <code className="font-medium">
+                        https://{form.slug || '{slug}'}.{baseDomain}
+                      </code>
+                    ) : (
+                      <span className="text-muted-foreground">
+                        {form.customDomain
+                          ? <>domínio próprio: <code>https://{form.customDomain}</code></>
+                          : 'o subdomínio será {slug}.<domínio-base>'}
+                      </span>
+                    )}
+                  </div>
+                  {!subdomainEnabled && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      ⚠️ O domínio base ainda não está configurado no servidor (TENANT_BASE_DOMAIN).
+                      O município será criado, mas o subdomínio só responderá após a configuração de infraestrutura (DNS + TLS + env).
+                    </p>
+                  )}
                 </div>
               </div>
             )}
@@ -475,11 +510,30 @@ export default function TenantsPage() {
                     <Badge className={badge.className}>{badge.label}</Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    {t.nomeMunicipio}/{t.ufMunicipio} · slug <code>{t.slug}</code> · plano {t.plan}
-                    {t.customDomain ? <> · {t.customDomain}</> : null}
+                    {t.nomeMunicipio}/{t.ufMunicipio} · plano {t.plan}
                   </p>
                 </CardHeader>
                 <CardContent className="space-y-3">
+                  {/* Endereço da prefeitura */}
+                  {(() => {
+                    const url = t.customDomain
+                      ? `https://${t.customDomain}`
+                      : baseDomain
+                      ? `https://${t.slug}.${baseDomain}`
+                      : null;
+                    return (
+                      <div className="flex items-center gap-1.5 text-xs">
+                        <Globe className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                        {url ? (
+                          <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline truncate">
+                            {url.replace('https://', '')}
+                          </a>
+                        ) : (
+                          <span className="text-muted-foreground">slug <code>{t.slug}</code></span>
+                        )}
+                      </div>
+                    );
+                  })()}
                   <div className="flex gap-4 text-sm text-muted-foreground">
                     <span className="flex items-center gap-1"><UserCheck className="h-4 w-4" />{t._counts.users}</span>
                     <span className="flex items-center gap-1"><Users className="h-4 w-4" />{t._counts.citizens}</span>

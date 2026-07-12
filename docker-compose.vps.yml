@@ -311,6 +311,8 @@ services:
         - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL:-http://localhost:3001}
         - NEXT_PUBLIC_MESSAGES_API_URL=${NEXT_PUBLIC_MESSAGES_API_URL:-/messages-api}
         - NEXT_PUBLIC_MESSAGES_WS_URL=${NEXT_PUBLIC_MESSAGES_WS_URL:-wss://digiurban.com.br}
+        # Domínio base p/ a troca de município (MunicipioSwitcher) montar subdomínios
+        - NEXT_PUBLIC_TENANT_BASE_DOMAIN=${NEXT_PUBLIC_TENANT_BASE_DOMAIN:-digiurban.com.br}
     container_name: digiurban-vps
     ports:
       - "3060:80"   # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
@@ -348,6 +350,11 @@ services:
 
       # Tenants
       - DEFAULT_TENANT=demo
+      # Multi-tenant por subdomínio: {slug}.digiurban.com.br → tenant do slug.
+      # Sem esta variável, todo subdomínio cai no tenant default.
+      - TENANT_BASE_DOMAIN=${TENANT_BASE_DOMAIN:-digiurban.com.br}
+      # Hosts que resolvem para o tenant default (domínio raiz single-tenant).
+      - TENANT_DEFAULT_HOSTS=${TENANT_DEFAULT_HOSTS:-digiurban.com.br,www.digiurban.com.br}
 
       # Service Token (para Messages Server)
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}

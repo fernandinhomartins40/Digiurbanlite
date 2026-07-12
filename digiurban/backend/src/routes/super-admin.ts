@@ -3052,6 +3052,20 @@ router.get('/modules', adminAuthMiddleware, superAdminOnly, (_req: Request, res:
   res.json({ success: true, modules: AVAILABLE_MODULES });
 });
 
+// GET /api/super-admin/platform-info — dados da plataforma p/ o painel montar
+// o endereço da prefeitura (subdomínio) e sinalizar se a infra está pronta.
+router.get('/platform-info', adminAuthMiddleware, superAdminOnly, (_req: Request, res: Response) => {
+  const baseDomain = (process.env.TENANT_BASE_DOMAIN || '').trim();
+  res.json({
+    success: true,
+    tenantBaseDomain: baseDomain || null,
+    // reservados que não podem ser slug (espelha o TenantService.getByHost)
+    reservedSlugs: ['default', 'www', 'api', 'admin', 'platform', 'mail', 'smtp'],
+    // subdomínio só funciona de fato se o backend souber o domínio base
+    subdomainEnabled: !!baseDomain,
+  });
+});
+
 // GET /api/super-admin/tenants/:id — detalhe (uso, limites, admins)
 router.get('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {

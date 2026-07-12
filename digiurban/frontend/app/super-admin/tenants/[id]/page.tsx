@@ -23,7 +23,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft, Loader2, Save, Ban, CheckCircle, UserPlus, KeyRound, Copy,
-  Users, FileText, UserCheck, Building2, CreditCard, Plus,
+  Users, FileText, UserCheck, Building2, CreditCard, Plus, Globe,
 } from 'lucide-react';
 
 interface Admin {
@@ -71,17 +71,21 @@ export default function TenantDetailPage() {
   const [maxCitizens, setMaxCitizens] = useState(10000);
   const [planEndsAt, setPlanEndsAt] = useState('');
   const [customDomain, setCustomDomain] = useState('');
+  const [slug, setSlug] = useState('');
   const [corPrimaria, setCorPrimaria] = useState('#2563eb');
   const [corSecundaria, setCorSecundaria] = useState('#f59e0b');
   const [disabled, setDisabled] = useState<string[]>([]);
+  const [baseDomain, setBaseDomain] = useState<string | null>(null);
+  const [subdomainEnabled, setSubdomainEnabled] = useState(true);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [tRes, mRes, iRes] = await Promise.all([
+      const [tRes, mRes, iRes, pRes] = await Promise.all([
         fetch(`/api/super-admin/tenants/${id}`),
         fetch('/api/super-admin/modules'),
         fetch(`/api/super-admin/tenants/${id}/invoices`),
+        fetch('/api/super-admin/platform-info'),
       ]);
       if (tRes.ok) {
         const t: TenantDetail = (await tRes.json()).tenant;
@@ -91,6 +95,7 @@ export default function TenantDetailPage() {
         setMaxCitizens(t.maxCitizens);
         setPlanEndsAt(t.planEndsAt ? t.planEndsAt.slice(0, 10) : '');
         setCustomDomain(t.customDomain || '');
+        setSlug(t.slug);
         setCorPrimaria(t.branding?.corPrimaria || '#2563eb');
         setCorSecundaria(t.branding?.corSecundaria || '#f59e0b');
         const feats = t.features || {};
@@ -98,6 +103,11 @@ export default function TenantDetailPage() {
       }
       if (mRes.ok) setModules((await mRes.json()).modules || []);
       if (iRes.ok) setInvoices((await iRes.json()).invoices || []);
+      if (pRes.ok) {
+        const p = await pRes.json();
+        setBaseDomain(p.tenantBaseDomain ?? null);
+        setSubdomainEnabled(p.subdomainEnabled !== false);
+      }
     } finally {
       setLoading(false);
     }
@@ -122,13 +132,26 @@ export default function TenantDetailPage() {
     const branding: Record<string, string> = { corPrimaria, corSecundaria };
     if (tenant?.branding?.logoUrl) branding.logoUrl = tenant.branding.logoUrl;
     patchTenant(
-      { plan, maxUsers, maxCitizens, planEndsAt: planEndsAt || null, customDomain: customDomain || undefined, features, branding },
+      { plan, maxUsers, maxCitizens, planEndsAt: planEndsAt || null, features, branding },
       'Configurações salvas'
     );
   };
 
-  const toggleModule = (slug: string) =>
-    setDisabled((d) => (d.includes(slug) ? d.filter((s) => s !== slug) : [...d, slug]));
+  // Endereço da prefeitura: slug (subdomínio) + domínio próprio
+  const saveAddress = () => {
+    const cleanSlug = slug.toLowerCase().replace(/[^a-z0-9-]/g, '');
+    if (cleanSlug.length < 3) {
+      toast({ title: 'Slug inválido', description: 'Mínimo de 3 caracteres (a-z, 0-9, hífen)', variant: 'destructive' });
+      return;
+    }
+    patchTenant(
+      { slug: cleanSlug, customDomain: customDomain || undefined },
+      'Endereço atualizado'
+    );
+  };
+
+  const toggleModule = (moduleSlug: string) =>
+    setDisabled((d) => (d.includes(moduleSlug) ? d.filter((s) => s !== moduleSlug) : [...d, moduleSlug]));
 
   const suspend = () => patchTenant({ status: 'SUSPENDED', suspensionReason: 'Suspenso pelo painel de plataforma' }, 'Município suspenso');
   const reactivate = () => patchTenant({ status: 'ACTIVE', suspensionReason: null }, 'Município reativado');
@@ -244,6 +267,7 @@ export default function TenantDetailPage() {
       <Tabs defaultValue="config">
         <TabsList>
           <TabsTrigger value="config">Plano & Configuração</TabsTrigger>
+          <TabsTrigger value="address">Endereço</TabsTrigger>
           <TabsTrigger value="modules">Módulos</TabsTrigger>
           <TabsTrigger value="admins">Administradores</TabsTrigger>
           <TabsTrigger value="billing">Faturas</TabsTrigger>
@@ -267,8 +291,7 @@ export default function TenantDetailPage() {
                 <div><Label>Máx. cidadãos</Label><Input type="number" value={maxCitizens} onChange={(e) => setMaxCitizens(Number(e.target.value))} /></div>
                 <div><Label>Validade</Label><Input type="date" value={planEndsAt} onChange={(e) => setPlanEndsAt(e.target.value)} /></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="md:col-span-1"><Label>Domínio próprio</Label><Input value={customDomain} onChange={(e) => setCustomDomain(e.target.value)} placeholder="portal.cidade.gov.br" /></div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label>Cor primária</Label>
                   <div className="flex gap-2 items-center"><input type="color" value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} className="h-10 w-14 rounded border" /><Input value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} /></div>
@@ -279,6 +302,62 @@ export default function TenantDetailPage() {
                 </div>
               </div>
               <Button onClick={saveConfig} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar configuração</Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Endereço — subdomínio (slug) + domínio próprio */}
+        <TabsContent value="address">
+          <Card>
+            <CardHeader><CardTitle className="text-base flex items-center gap-2"><Globe className="h-4 w-4" /> Endereço da prefeitura</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              {/* URL efetiva */}
+              <div className="rounded-lg border p-4 bg-muted/30">
+                <div className="text-xs text-muted-foreground mb-1">Endereço atual</div>
+                {(() => {
+                  const url = customDomain
+                    ? `https://${customDomain}`
+                    : baseDomain
+                    ? `https://${slug}.${baseDomain}`
+                    : null;
+                  return url ? (
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline font-medium flex items-center gap-1.5">
+                      <Globe className="h-4 w-4" /> {url}
+                    </a>
+                  ) : (
+                    <span className="text-muted-foreground text-sm">slug <code>{slug}</code> (domínio base não configurado)</span>
+                  );
+                })()}
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label>Slug (subdomínio)</Label>
+                  <div className="flex items-center gap-1">
+                    <Input value={slug} onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))} disabled={tenant.slug === 'default'} />
+                    {baseDomain && <span className="text-sm text-muted-foreground whitespace-nowrap">.{baseDomain}</span>}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {tenant.slug === 'default' ? 'O município padrão não pode alterar o slug.' : 'Alterar o slug muda o endereço de acesso da prefeitura.'}
+                  </p>
+                </div>
+                <div>
+                  <Label>Domínio próprio (opcional)</Label>
+                  <Input value={customDomain} onChange={(e) => setCustomDomain(e.target.value)} placeholder="portal.cidade.gov.br" />
+                  <p className="text-xs text-muted-foreground mt-1">Sobrepõe o subdomínio. Requer o DNS do domínio apontando para a plataforma.</p>
+                </div>
+              </div>
+
+              {!subdomainEnabled && (
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800">
+                  ⚠️ O domínio base (TENANT_BASE_DOMAIN) ainda não está configurado no servidor. O slug é salvo, mas o
+                  subdomínio só responderá após a configuração de infraestrutura (DNS wildcard + TLS + variável de ambiente).
+                </div>
+              )}
+
+              <Button onClick={saveAddress} disabled={saving || tenant.slug === 'default'}>
+                {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar endereço
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>
