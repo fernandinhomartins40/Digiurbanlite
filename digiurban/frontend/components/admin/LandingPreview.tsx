@@ -49,7 +49,7 @@ export function LandingPreview({ nome, nomeMunicipio, ufMunicipio, primary, seco
       </div>
 
       {/* hero */}
-      <div className="px-3 py-4" style={{ background: `linear-gradient(135deg, ${primary}0d, ${secondary}0d)` }}>
+      <div className="px-3 py-4" style={{ background: `${primary}0a` }}>
         <span className="inline-block rounded-full px-2 py-0.5 text-[9px] font-medium mb-1.5" style={{ background: `${secondary}22`, color: primary }}>
           Portal do Cidadão
         </span>

@@ -86,6 +86,22 @@ export async function fetchTenantConfig(): Promise<TenantConfig> {
   }
 }
 
+/**
+ * Escolhe preto ou branco como cor de texto sobre um fundo `hex`, com base na
+ * luminância percebida (WCAG). Garante contraste correto de textos/ícones sobre
+ * a cor de destaque do município — que pode ser clara (amarelo) ou escura (roxo).
+ */
+export function readableTextOn(hex: string): '#111827' | '#ffffff' {
+  const c = hex.replace('#', '')
+  const full = c.length === 3 ? c.split('').map((x) => x + x).join('') : c
+  const r = parseInt(full.slice(0, 2), 16) || 0
+  const g = parseInt(full.slice(2, 4), 16) || 0
+  const b = parseInt(full.slice(4, 6), 16) || 0
+  // Luminância relativa (aprox. sRGB) — limiar ~0.6 favorece legibilidade.
+  const lum = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+  return lum > 0.6 ? '#111827' : '#ffffff'
+}
+
 /** Converte o branding do tenant em CSS custom properties para o :root. */
 export function brandingToCssVars(config: TenantConfig): Record<string, string> {
   const vars: Record<string, string> = {}

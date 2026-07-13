@@ -16,6 +16,7 @@ import {
 } from 'lucide-react'
 import { PasswordStrengthIndicator } from '@/components/ui/password-strength-indicator'
 import { InstallPWABanner } from '@/components/citizen/InstallPWABanner'
+import { readableTextOn } from '@/lib/tenant'
 import Link from 'next/link'
 
 export default function CitizenLoginPage() {
@@ -60,6 +61,8 @@ export default function CitizenLoginPage() {
 
   const primary = tenantConfig.branding?.corPrimaria || '#2563eb'
   const secondary = tenantConfig.branding?.corSecundaria || '#f59e0b'
+  const onPrimary = readableTextOn(primary)
+  const onSecondary = readableTextOn(secondary)
   const logo = tenantConfig.branding?.logoUrl || null
   const municipioNome = tenantConfig.nomeMunicipio || tenantConfig.nome
 
@@ -289,15 +292,17 @@ export default function CitizenLoginPage() {
     }
   }
 
-  // Estilos derivados do branding do município (usados em vários pontos)
+  // Estilos derivados do branding do município (usados em vários pontos).
+  // Sem gradientes: cor principal sólida no botão/CTA, texto legível calculado
+  // por contraste. A cor de destaque fica só em acentos (badge, hover).
   const inputFocus = { '--tw-ring-color': primary } as React.CSSProperties
-  const primaryBtn: React.CSSProperties = { background: `linear-gradient(135deg, ${primary}, ${secondary})` }
+  const primaryBtn: React.CSSProperties = { background: primary, color: onPrimary }
 
   if (success) {
     return (
       <div
         className="min-h-screen flex items-center justify-center p-4"
-        style={{ background: `linear-gradient(135deg, ${primary}, ${secondary})` }}
+        style={{ background: primary }}
       >
         <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-8">
           <div className="text-center space-y-4">
@@ -376,19 +381,19 @@ export default function CitizenLoginPage() {
   ]
 
   return (
-    <div className="min-h-screen w-full lg:grid lg:grid-cols-2 bg-gray-50">
+    <div
+      className="min-h-screen w-full lg:grid lg:grid-cols-2"
+      style={{ background: `${primary}0a` }}
+    >
       {/* ===================================================================== */}
       {/* PAINEL ESQUERDO — identidade visual do município (oculto no mobile) */}
       {/* ===================================================================== */}
       <aside
-        className="relative hidden lg:flex flex-col justify-between p-12 text-white overflow-hidden"
-        style={{ background: `linear-gradient(150deg, ${primary}, ${secondary})` }}
+        className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
+        style={{ background: primary, color: onPrimary }}
       >
-        {/* elementos decorativos */}
-        <div className="pointer-events-none absolute inset-0 opacity-20">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white blur-3xl" />
-          <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-black/20 blur-3xl" />
-        </div>
+        {/* Acento sutil da cor de destaque — barra fina no topo, sem gradiente */}
+        <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: secondary }} />
 
         {/* topo: logo + nome */}
         <div className="relative z-10 flex items-center gap-3">
@@ -396,13 +401,16 @@ export default function CitizenLoginPage() {
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logo} alt={tenantConfig.nome} className="h-12 w-auto rounded-lg bg-white/90 p-1.5" />
           ) : (
-            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold">
+            <div
+              className="h-12 w-12 rounded-xl flex items-center justify-center text-xl font-bold"
+              style={{ background: secondary, color: onSecondary }}
+            >
               {municipioNome.charAt(0)}
             </div>
           )}
           <div>
             <div className="font-bold leading-tight">{tenantConfig.nome}</div>
-            <div className="text-xs text-white/70">
+            <div className="text-xs" style={{ color: onPrimary, opacity: 0.7 }}>
               {tenantConfig.nomeMunicipio}{tenantConfig.ufMunicipio ? `/${tenantConfig.ufMunicipio}` : ''}
             </div>
           </div>
@@ -410,13 +418,16 @@ export default function CitizenLoginPage() {
 
         {/* meio: título + destaques */}
         <div className="relative z-10 max-w-md">
-          <span className="inline-block rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium mb-5">
+          <span
+            className="inline-block rounded-full px-3 py-1 text-xs font-semibold mb-5"
+            style={{ background: secondary, color: onSecondary }}
+          >
             Portal do Cidadão
           </span>
           <h2 className="text-4xl font-bold leading-tight">
             Bem-vindo ao portal digital de {municipioNome}
           </h2>
-          <p className="mt-4 text-white/80 text-lg">
+          <p className="mt-4 text-lg" style={{ color: onPrimary, opacity: 0.85 }}>
             Resolva sua vida com a prefeitura sem filas — tudo online, seguro e disponível 24h.
           </p>
 
@@ -425,12 +436,15 @@ export default function CitizenLoginPage() {
               const Icon = d.icon
               return (
                 <div key={d.title} className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center flex-shrink-0">
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: secondary, color: onSecondary }}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="font-semibold">{d.title}</div>
-                    <div className="text-sm text-white/70">{d.desc}</div>
+                    <div className="text-sm" style={{ color: onPrimary, opacity: 0.75 }}>{d.desc}</div>
                   </div>
                 </div>
               )
@@ -439,7 +453,7 @@ export default function CitizenLoginPage() {
         </div>
 
         {/* rodapé do painel */}
-        <div className="relative z-10 text-xs text-white/60">
+        <div className="relative z-10 text-xs" style={{ color: onPrimary, opacity: 0.6 }}>
           {tenantConfig.nome} — Governo Digital
         </div>
       </aside>
@@ -457,8 +471,8 @@ export default function CitizenLoginPage() {
                 <img src={logo} alt={tenantConfig.nome} className="h-11 w-auto" />
               ) : (
                 <div
-                  className="h-11 w-11 rounded-xl flex items-center justify-center text-white text-lg font-bold"
-                  style={{ background: primary }}
+                  className="h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold"
+                  style={{ background: primary, color: onPrimary }}
                 >
                   {municipioNome.charAt(0)}
                 </div>
@@ -481,7 +495,7 @@ export default function CitizenLoginPage() {
               <TabsTrigger
                 value="login"
                 className="rounded-lg py-2.5 transition-colors data-[state=active]:shadow-sm"
-                style={activeTab === 'login' ? { background: primary, color: '#fff' } : undefined}
+                style={activeTab === 'login' ? { background: primary, color: onPrimary } : undefined}
               >
                 <span className="flex items-center justify-center gap-2 w-full">
                   <LogIn className="h-4 w-4" /> Entrar
@@ -490,7 +504,7 @@ export default function CitizenLoginPage() {
               <TabsTrigger
                 value="register"
                 className="rounded-lg py-2.5 transition-colors data-[state=active]:shadow-sm"
-                style={activeTab === 'register' ? { background: primary, color: '#fff' } : undefined}
+                style={activeTab === 'register' ? { background: primary, color: onPrimary } : undefined}
               >
                 <span className="flex items-center justify-center gap-2 w-full">
                   <UserPlus className="h-4 w-4" /> Cadastrar
@@ -582,7 +596,7 @@ export default function CitizenLoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all"
+                  className="w-full h-12 rounded-xl font-semibold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all"
                   style={primaryBtn}
                   disabled={isLoading}
                 >
@@ -746,7 +760,7 @@ export default function CitizenLoginPage() {
 
                 <Button
                   type="submit"
-                  className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all"
+                  className="w-full h-12 rounded-xl font-semibold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all"
                   style={primaryBtn}
                   disabled={isLoading}
                 >

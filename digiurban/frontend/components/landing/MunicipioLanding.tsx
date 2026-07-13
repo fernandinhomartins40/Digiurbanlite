@@ -13,6 +13,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useTenant } from '@/components/providers/TenantProvider';
+import { readableTextOn } from '@/lib/tenant';
 import {
   ArrowRight, FileText, MessageSquare, Bell, UserCog, ShieldCheck, Building2,
   Search, ClipboardList, Clock, Smartphone, Heart, GraduationCap, HandHeart,
@@ -59,6 +60,8 @@ export function MunicipioLanding() {
   const { config } = useTenant();
   const primary = config.branding?.corPrimaria || '#2563eb';
   const secondary = config.branding?.corSecundaria || '#f59e0b';
+  const onPrimary = readableTextOn(primary);
+  const onSecondary = readableTextOn(secondary);
   const logo = config.branding?.logoUrl || null;
   const municipio = config.nomeMunicipio || config.nome;
 
@@ -81,7 +84,7 @@ export function MunicipioLanding() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={logo} alt={config.nome} className="h-10 w-auto" />
             ) : (
-              <div className="h-10 w-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ background: primary }}>
+              <div className="h-10 w-10 rounded-lg flex items-center justify-center font-bold" style={{ background: primary, color: onPrimary }}>
                 {municipio.charAt(0)}
               </div>
             )}
@@ -91,7 +94,7 @@ export function MunicipioLanding() {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/cidadao/login" className="hidden sm:inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white hover:opacity-90" style={{ background: primary }}>
+            <Link href="/cidadao/login" className="hidden sm:inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90" style={{ background: primary, color: onPrimary }}>
               <LogIn className="h-4 w-4" /> Entrar
             </Link>
             <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium border" style={{ borderColor: primary, color: primary }}>
@@ -102,10 +105,10 @@ export function MunicipioLanding() {
       </header>
 
       {/* Hero — o cidadão em primeiro lugar */}
-      <section style={{ background: `linear-gradient(135deg, ${primary}0d, ${secondary}0d)` }}>
+      <section style={{ background: `${primary}0a` }}>
         <div className="container mx-auto px-4 py-12 md:py-20 grid md:grid-cols-2 gap-10 items-center">
           <div>
-            <span className="inline-block rounded-full px-3 py-1 text-xs font-medium mb-4" style={{ background: `${secondary}22`, color: primary }}>
+            <span className="inline-block rounded-full px-3 py-1 text-xs font-semibold mb-4" style={{ background: secondary, color: onSecondary }}>
               Portal do Cidadão
             </span>
             <h1 className="text-3xl md:text-5xl font-bold text-gray-900 leading-tight">
@@ -115,7 +118,7 @@ export function MunicipioLanding() {
               Solicite serviços, acompanhe seus protocolos e fale com a prefeitura — tudo online, sem filas.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link href="/cidadao/login" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold text-white shadow-sm hover:opacity-90" style={{ background: primary }}>
+              <Link href="/cidadao/login" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold shadow-sm hover:opacity-90" style={{ background: primary, color: onPrimary }}>
                 Acessar o portal <ArrowRight className="h-5 w-5" />
               </Link>
               <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold border hover:bg-gray-50" style={{ borderColor: primary, color: primary }}>
@@ -209,15 +212,16 @@ export function MunicipioLanding() {
       </section>
 
       {/* CTA final */}
-      <section className="py-16" style={{ background: primary }}>
-        <div className="container mx-auto px-4 text-center text-white">
+      <section className="py-16" style={{ background: primary, color: onPrimary }}>
+        <div className="container mx-auto px-4 text-center">
           <h2 className="text-2xl md:text-3xl font-bold">Comece agora</h2>
-          <p className="mt-2 text-white/80">Crie sua conta e resolva sua vida com a prefeitura de {municipio} online.</p>
+          <p className="mt-2" style={{ color: onPrimary, opacity: 0.85 }}>Crie sua conta e resolva sua vida com a prefeitura de {municipio} online.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold bg-white hover:bg-white/90" style={{ color: primary }}>
+            {/* Botão de destaque (secundária) — contrasta sempre com o fundo primário */}
+            <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold hover:opacity-90" style={{ background: secondary, color: onSecondary }}>
               Criar minha conta <ArrowRight className="h-5 w-5" />
             </Link>
-            <Link href="/cidadao/login" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold border border-white/40 text-white hover:bg-white/10">
+            <Link href="/cidadao/login" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold border hover:opacity-90" style={{ borderColor: onPrimary === '#ffffff' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.25)', color: onPrimary }}>
               Já tenho conta
             </Link>
           </div>

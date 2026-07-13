@@ -11,6 +11,7 @@ import {
   Loader2, Building2, Lock, Eye, EyeOff, Mail, Shield, ArrowRight,
   LayoutDashboard, Users, ClipboardList, BarChart3,
 } from 'lucide-react'
+import { readableTextOn } from '@/lib/tenant'
 import Link from 'next/link'
 
 export default function AdminLoginPage() {
@@ -26,11 +27,14 @@ export default function AdminLoginPage() {
   const { config: tenantConfig } = useTenant()
   const primary = tenantConfig.branding?.corPrimaria || '#2563eb'
   const secondary = tenantConfig.branding?.corSecundaria || '#f59e0b'
+  const onPrimary = readableTextOn(primary)
+  const onSecondary = readableTextOn(secondary)
   const logo = tenantConfig.branding?.logoUrl || null
   const municipioNome = tenantConfig.nomeMunicipio || tenantConfig.nome
 
+  // Sem gradientes: principal sólida no botão/painel, destaque só em acentos.
   const inputFocus = { '--tw-ring-color': primary } as React.CSSProperties
-  const primaryBtn: React.CSSProperties = { background: `linear-gradient(135deg, ${primary}, ${secondary})` }
+  const primaryBtn: React.CSSProperties = { background: primary, color: onPrimary }
 
   // Carregar credenciais salvas ao montar componente
   useEffect(() => {
@@ -80,44 +84,48 @@ export default function AdminLoginPage() {
   ]
 
   return (
-    <div className="min-h-screen w-full lg:grid lg:grid-cols-2 bg-gray-50">
+    <div className="min-h-screen w-full lg:grid lg:grid-cols-2" style={{ background: `${primary}0a` }}>
       {/* ===================================================================== */}
       {/* PAINEL ESQUERDO — identidade visual do município (oculto no mobile)  */}
       {/* ===================================================================== */}
       <aside
-        className="relative hidden lg:flex flex-col justify-between p-12 text-white overflow-hidden"
-        style={{ background: `linear-gradient(150deg, ${primary}, ${secondary})` }}
+        className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
+        style={{ background: primary, color: onPrimary }}
       >
-        <div className="pointer-events-none absolute inset-0 opacity-20">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-white blur-3xl" />
-          <div className="absolute -bottom-32 -left-16 w-96 h-96 rounded-full bg-black/20 blur-3xl" />
-        </div>
+        {/* Acento sutil da cor de destaque — barra fina no topo, sem gradiente */}
+        <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: secondary }} />
 
         <div className="relative z-10 flex items-center gap-3">
           {logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={logo} alt={tenantConfig.nome} className="h-12 w-auto rounded-lg bg-white/90 p-1.5" />
           ) : (
-            <div className="h-12 w-12 rounded-xl bg-white/20 backdrop-blur flex items-center justify-center text-xl font-bold">
+            <div
+              className="h-12 w-12 rounded-xl flex items-center justify-center text-xl font-bold"
+              style={{ background: secondary, color: onSecondary }}
+            >
               {municipioNome.charAt(0)}
             </div>
           )}
           <div>
             <div className="font-bold leading-tight">{tenantConfig.nome}</div>
-            <div className="text-xs text-white/70">
+            <div className="text-xs" style={{ color: onPrimary, opacity: 0.7 }}>
               {tenantConfig.nomeMunicipio}{tenantConfig.ufMunicipio ? `/${tenantConfig.ufMunicipio}` : ''}
             </div>
           </div>
         </div>
 
         <div className="relative z-10 max-w-md">
-          <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 backdrop-blur px-3 py-1 text-xs font-medium mb-5">
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold mb-5"
+            style={{ background: secondary, color: onSecondary }}
+          >
             <Shield className="h-3.5 w-3.5" /> Área dos servidores
           </span>
           <h2 className="text-4xl font-bold leading-tight">
             Sistema de gestão de {municipioNome}
           </h2>
-          <p className="mt-4 text-white/80 text-lg">
+          <p className="mt-4 text-lg" style={{ color: onPrimary, opacity: 0.85 }}>
             A administração municipal em um só lugar — protocolos, equipes e indicadores.
           </p>
 
@@ -126,12 +134,15 @@ export default function AdminLoginPage() {
               const Icon = d.icon
               return (
                 <div key={d.title} className="flex items-start gap-3">
-                  <div className="h-10 w-10 rounded-xl bg-white/15 backdrop-blur flex items-center justify-center flex-shrink-0">
+                  <div
+                    className="h-10 w-10 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: secondary, color: onSecondary }}
+                  >
                     <Icon className="h-5 w-5" />
                   </div>
                   <div>
                     <div className="font-semibold">{d.title}</div>
-                    <div className="text-sm text-white/70">{d.desc}</div>
+                    <div className="text-sm" style={{ color: onPrimary, opacity: 0.75 }}>{d.desc}</div>
                   </div>
                 </div>
               )
@@ -139,7 +150,7 @@ export default function AdminLoginPage() {
           </div>
         </div>
 
-        <div className="relative z-10 text-xs text-white/60">
+        <div className="relative z-10 text-xs" style={{ color: onPrimary, opacity: 0.6 }}>
           {tenantConfig.nome} — Governo Digital
         </div>
       </aside>
@@ -156,8 +167,8 @@ export default function AdminLoginPage() {
                 <img src={logo} alt={tenantConfig.nome} className="h-11 w-auto" />
               ) : (
                 <div
-                  className="h-11 w-11 rounded-xl flex items-center justify-center text-white text-lg font-bold"
-                  style={{ background: primary }}
+                  className="h-11 w-11 rounded-xl flex items-center justify-center text-lg font-bold"
+                  style={{ background: primary, color: onPrimary }}
                 >
                   {municipioNome.charAt(0)}
                 </div>
@@ -171,9 +182,9 @@ export default function AdminLoginPage() {
             </div>
             <div
               className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-md mb-4"
-              style={primaryBtn}
+              style={{ background: primary, color: onPrimary }}
             >
-              <Building2 className="h-7 w-7 text-white" />
+              <Building2 className="h-7 w-7" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Portal Administrativo</h1>
             <p className="text-gray-500 mt-1.5">Acesse o sistema de gestão de {municipioNome}</p>
@@ -262,7 +273,7 @@ export default function AdminLoginPage() {
 
             <Button
               type="submit"
-              className="w-full h-12 rounded-xl text-white font-semibold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all"
+              className="w-full h-12 rounded-xl font-semibold text-base shadow-md hover:shadow-lg hover:opacity-95 transition-all"
               style={primaryBtn}
               disabled={loading || !email || !password}
             >
