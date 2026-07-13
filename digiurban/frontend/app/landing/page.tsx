@@ -138,7 +138,7 @@ export default function LandingPage() {
                   <ChevronRight className="w-5 h-5" />
                 </Link>
                 <Link
-                  href="/cidadao/register"
+                  href="/cidadao/login?tab=register"
                   className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border-2 border-white/30 px-6 sm:px-8 py-3 sm:py-4 rounded-xl font-semibold backdrop-blur-sm transition-all"
                 >
                   Criar Conta
@@ -645,7 +645,7 @@ export default function LandingPage() {
                 <ChevronRight className="w-5 h-5" />
               </Link>
               <Link
-                href="/cidadao/register"
+                href="/cidadao/login?tab=register"
                 className="inline-flex items-center justify-center gap-2 bg-white/10 hover:bg-white/20 text-white border-2 border-white/30 px-8 sm:px-10 py-3 sm:py-4 rounded-xl font-semibold text-base sm:text-lg backdrop-blur-sm transition-all"
               >
                 Criar Conta Gratuita

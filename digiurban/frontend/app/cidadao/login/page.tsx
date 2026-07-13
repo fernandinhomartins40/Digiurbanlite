@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext'
 import { useTenant } from '@/components/providers/TenantProvider'
 import { useToast } from '@/hooks/use-toast'
@@ -19,8 +19,9 @@ import { InstallPWABanner } from '@/components/citizen/InstallPWABanner'
 import { readableTextOn } from '@/lib/tenant'
 import Link from 'next/link'
 
-export default function CitizenLoginPage() {
+function CitizenLoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { login, register, isLoading } = useCitizenAuth()
   const { toast } = useToast()
   const [error, setError] = useState<string | null>(null)
@@ -28,7 +29,9 @@ export default function CitizenLoginPage() {
   const [showLoginPassword, setShowLoginPassword] = useState(false)
   const [showRegisterPassword, setShowRegisterPassword] = useState(false)
   const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false)
-  const [activeTab, setActiveTab] = useState<'login' | 'register'>('login')
+  const [activeTab, setActiveTab] = useState<'login' | 'register'>(
+    searchParams?.get('tab') === 'register' ? 'register' : 'login'
+  )
 
   const [loginData, setLoginData] = useState({
     cpf: '',
@@ -785,5 +788,14 @@ export default function CitizenLoginPage() {
       {/* Banner PWA */}
       <InstallPWABanner />
     </div>
+  )
+}
+
+// useSearchParams (aba via ?tab=register) exige Suspense boundary no Next 14.
+export default function CitizenLoginPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}>
+      <CitizenLoginForm />
+    </Suspense>
   )
 }

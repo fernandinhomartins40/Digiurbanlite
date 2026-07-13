@@ -97,7 +97,7 @@ export function MunicipioLanding() {
             <Link href="/cidadao/login" className="hidden sm:inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium hover:opacity-90" style={{ background: primary, color: onPrimary }}>
               <LogIn className="h-4 w-4" /> Entrar
             </Link>
-            <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium border" style={{ borderColor: primary, color: primary }}>
+            <Link href="/cidadao/login?tab=register" className="inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium border" style={{ borderColor: primary, color: primary }}>
               <UserPlus className="h-4 w-4" /> Cadastrar
             </Link>
           </div>
@@ -121,7 +121,7 @@ export function MunicipioLanding() {
               <Link href="/cidadao/login" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold shadow-sm hover:opacity-90" style={{ background: primary, color: onPrimary }}>
                 Acessar o portal <ArrowRight className="h-5 w-5" />
               </Link>
-              <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold border hover:bg-gray-50" style={{ borderColor: primary, color: primary }}>
+              <Link href="/cidadao/login?tab=register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold border hover:bg-gray-50" style={{ borderColor: primary, color: primary }}>
                 Criar minha conta
               </Link>
             </div>
@@ -218,7 +218,7 @@ export function MunicipioLanding() {
           <p className="mt-2" style={{ color: onPrimary, opacity: 0.85 }}>Crie sua conta e resolva sua vida com a prefeitura de {municipio} online.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             {/* Botão de destaque (secundária) — contrasta sempre com o fundo primário */}
-            <Link href="/cidadao/register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold hover:opacity-90" style={{ background: secondary, color: onSecondary }}>
+            <Link href="/cidadao/login?tab=register" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold hover:opacity-90" style={{ background: secondary, color: onSecondary }}>
               Criar minha conta <ArrowRight className="h-5 w-5" />
             </Link>
             <Link href="/cidadao/login" className="inline-flex items-center gap-2 rounded-lg px-6 py-3 text-base font-semibold border hover:opacity-90" style={{ borderColor: onPrimary === '#ffffff' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.25)', color: onPrimary }}>

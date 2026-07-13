@@ -53,6 +53,23 @@ const allowedOrigins = [
   'http://localhost:3060'
 ].filter(Boolean) as string[];
 
+// Multi-tenant: cada município é servido em {slug}.TENANT_BASE_DOMAIN. Seria
+// inviável cadastrar cada subdomínio na whitelist, então aceitamos DINAMICAMENTE
+// qualquer subdomínio (e o apex) do domínio base — é o que o navegador envia como
+// Origin ao logar por palmital.digiurban.com.br. Sem isto, o login pelo subdomínio
+// morre no middleware CORS com 500 (achado: "Origin ... não permitido pelo CORS").
+const tenantBaseDomain = (process.env.TENANT_BASE_DOMAIN || '').trim().toLowerCase();
+const isTenantOrigin = (origin: string): boolean => {
+  if (!tenantBaseDomain) return false;
+  try {
+    const host = new URL(origin).hostname.toLowerCase();
+    // apex (digiurban.com.br) ou qualquer subdomínio (*.digiurban.com.br)
+    return host === tenantBaseDomain || host.endsWith(`.${tenantBaseDomain}`);
+  } catch {
+    return false;
+  }
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
@@ -62,7 +79,7 @@ app.use(
         return callback(null, true);
       }
 
-      if (allowedOrigins.includes(origin)) {
+      if (allowedOrigins.includes(origin) || isTenantOrigin(origin)) {
         callback(null, true);
       } else {
         logger.warn(`CORS bloqueado para origin não autorizado: ${origin}`);
