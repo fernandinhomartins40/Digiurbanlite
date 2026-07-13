@@ -1,0 +1,1001 @@
+================================================================================
+DIGIURBAN — DOCUMENTO TÉCNICO COMPLETO
+Paraná Anjo Inovador 3ª Edição
+================================================================================
+Elaborado em: junho/2026
+Responsável: Fernando Martins — Fundador e Desenvolvedor
+================================================================================
+
+
+================================================================================
+SUMÁRIO
+================================================================================
+
+1. VISÃO GERAL DA SOLUÇÃO
+2. PROBLEMA RESOLVIDO E JUSTIFICATIVA
+3. ADERÊNCIA AO PROGRAMA PARANÁ ANJO INOVADOR
+4. STATUS ATUAL DE DESENVOLVIMENTO — MVP FUNCIONAL
+5. ARQUITETURA TÉCNICA DA PLATAFORMA
+6. MÓDULOS E FUNCIONALIDADES IMPLEMENTADAS
+   6.1 Gestão de Protocolos e Serviços Digitais
+   6.2 Portal do Cidadão
+   6.3 Módulo de Saúde
+   6.4 Módulo de Educação
+   6.5 Módulo de Assistência Social
+   6.6 Chatbot Inteligente (DigiBot)
+   6.7 Inteligência Artificial Local
+   6.8 Gestão Documental e Assinatura Digital
+   6.9 Email Corporativo Municipal
+   6.10 Organograma e Gestão de Servidores
+   6.11 Analytics e Dashboards
+   6.12 Notificações em Tempo Real
+   6.13 Busca Inteligente em Preços Públicos
+   6.14 Segurança Facial em Unidades Escolares
+   6.15 Agenda Central e Gabinete do Prefeito
+7. STACK TECNOLÓGICO COMPLETO
+8. DADOS QUANTITATIVOS DO PROJETO
+9. MODELO DE NEGÓCIO SAAS PARA MUNICÍPIOS
+10. ALINHAMENTO COM ODS E CIDADES INTELIGENTES
+11. DIFERENCIAIS COMPETITIVOS
+12. EVIDÊNCIAS DE DESENVOLVIMENTO
+
+
+================================================================================
+1. VISÃO GERAL DA SOLUÇÃO
+================================================================================
+
+O DigiUrban é uma plataforma GovTech SaaS de gestão pública municipal, desenvolvida
+para transformar digitalmente prefeituras de pequeno e médio porte que ainda operam
+com processos manuais, papelada, ligações telefônicas e sistemas desconectados.
+
+A solução é composta por um ecossistema integrado de 4 serviços principais e 3
+serviços auxiliares especializados, todos orquestrados em arquitetura de
+microserviços com Docker Compose:
+
+  - Backend REST API (Express 5 + TypeScript + PostgreSQL/Prisma)
+  - Frontend Web PWA (Next.js 14 + React 18)
+  - Servidor de Mensagens e Chatbot (Socket.IO + FlowEngine + IA)
+  - Servidor SMTP Municipal (envio/recebimento de email institucional)
+  - Serviço de IA Local (llama.cpp + Qwen 1.7B — sem envio de dados para nuvem)
+  - Motor de Processos (BullMQ + workflows automáticos)
+  - Módulo de Preços Públicos (OpenSearch + scraping de fontes governamentais)
+
+A plataforma centraliza em um único ambiente:
+  - Abertura e acompanhamento de protocolos digitais
+  - Portal do cidadão com autenticação e acompanhamento de serviços
+  - Gestão de secretarias municipais (saúde, educação, assistência social e demais)
+  - Chatbot conversacional com IA para atendimento 24/7
+  - Gestão documental com assinatura digital
+  - Email corporativo institucional
+  - Analytics e KPIs de desempenho administrativo
+  - Notificações em tempo real por múltiplos canais
+
+
+================================================================================
+2. PROBLEMA RESOLVIDO E JUSTIFICATIVA
+================================================================================
+
+A realidade das prefeituras brasileiras de pequeno e médio porte é marcada por:
+
+  COMUNICAÇÃO:
+  - Atendimento ao cidadão via telefone ou balcão presencial
+  - Sem canais digitais unificados de solicitação
+  - Informações perdidas em cadernos ou planilhas
+  - Cidadão sem como rastrear sua solicitação
+
+  GESTÃO INTERNA:
+  - Protocolos em papel sem rastreabilidade
+  - Ausência de indicadores de desempenho
+  - Falta de controle de SLA e prazos
+  - Departamentos operando em silos sem integração
+
+  SAÚDE E SERVIÇOS:
+  - Agendamentos médicos ainda manuais
+  - Farmácia sem controle informatizado de estoque
+  - TFD (Tratamento Fora do Domicílio) sem sistema de gestão
+  - Prontuários e registros em papel
+
+  DOCUMENTAÇÃO:
+  - Documentos sem assinatura digital
+  - Arquivamento físico sem busca eficiente
+  - Templates sem padronização
+
+  TRANSPARÊNCIA:
+  - Ausência de dados consolidados para o gestor
+  - Sem dashboards de acompanhamento
+  - Dificuldade de prestar contas com dados
+
+O DigiUrban resolve todos esses problemas com uma plataforma única, acessível
+por navegador e mobile, sem necessidade de instalação, integrada entre
+departamentos e com custo compatível com a realidade municipal.
+
+
+================================================================================
+3. ADERÊNCIA AO PROGRAMA PARANÁ ANJO INOVADOR
+================================================================================
+
+ÁREA TEMÁTICA: Cidades Inteligentes (enquadramento principal)
+
+ODS ATENDIDOS:
+  (X) ODS 8 — Trabalho Decente e Crescimento Econômico
+      Moderniza a gestão, reduz retrabalho, aumenta produtividade dos servidores
+
+  (X) ODS 9 — Indústria, Inovação e Infraestrutura
+      Desenvolvimento de tecnologia original com IA e automação
+
+  (X) ODS 11 — Cidades e Comunidades Sustentáveis
+      Transformação digital de municípios, especialmente pequenos
+
+  (X) ODS 16 — Paz, Justiça e Instituições Eficazes
+      Transparência pública, rastreabilidade de demandas, redução de burocracia
+
+  (X) ODS 17 — Parcerias e Meios de Implementação
+      Modelo escalável de parceria entre startup GovTech e prefeituras
+
+ENQUADRAMENTO DO PROJETO:
+  Desenvolvimento de produto: SIM — plataforma SaaS funcional em produção
+  Processo inovador em Cidades Inteligentes: SIM
+  Inovação tecnológica: SIM — IA local (llama.cpp), chatbot, assinatura digital,
+    face recognition, analytics preditivo
+
+PERFIL DA STARTUP:
+  Setor: GovTech / Smart Cities / Transformação Digital
+  Modelo de entrega: SaaS (Software as a Service)
+  Público-alvo: Prefeituras municipais do Paraná e Brasil
+  Fase atual: MVP funcional desenvolvido e operacional
+
+POR QUE O DIGIURBAN SE ENQUADRA NO EDITAL:
+  1. É uma solução de produto (software SaaS), não de serviço pontual
+  2. Tem impacto direto em gestão pública e cidadãos
+  3. É escalável para múltiplos municípios
+  4. Desenvolvido com tecnologias de ponta (IA, WebSocket, cloud-native)
+  5. Tem potencial de expansão regional e nacional
+  6. O fundador conhece o problema real por experiência em prefeitura
+  7. O projeto tem estrutura técnica documentada e código real produzido
+
+
+================================================================================
+4. STATUS ATUAL DE DESENVOLVIMENTO — MVP FUNCIONAL
+================================================================================
+
+O DigiUrban possui um MVP completo e funcional, não apenas uma ideia ou protótipo
+de tela. Trata-se de um sistema real com:
+
+  - Código-fonte completo em TypeScript (backend + frontend + 5 serviços)
+  - Banco de dados relacional com 171 modelos de dados estruturados
+  - 88 rotas de API implementadas e funcionais
+  - 220+ páginas no frontend (App Router Next.js)
+  - Sistema de autenticação dupla (servidores públicos + cidadãos)
+  - Chatbot com motor de fluxos conversacionais e IA integrada
+  - Módulos de saúde, educação e assistência social implementados
+  - Assinatura digital de documentos (certificados X.509)
+  - Email corporativo municipal completo com DKIM/SPF
+  - Sistema de analytics com dashboards por perfil de acesso
+  - Infraestrutura Docker Compose pronta para deploy em VPS
+
+O sistema é orquestrado via Docker Compose e possui:
+  - Nginx como proxy reverso e balanceador
+  - Supervisord para gerenciamento de processos
+  - PostgreSQL como banco principal
+  - Redis para cache, filas e sessões
+  - Container de IA local com llama.cpp (Qwen 1.7B)
+
+EVIDÊNCIAS TÉCNICAS DO MVP:
+  - Repositório Git com histórico de commits
+  - Prisma migrations com todo o schema de banco de dados
+  - Dockerfile multi-stage (backend-builder + frontend-builder + runner)
+  - docker-compose.vps.yml para deploy em produção
+  - Seeds de dados para configuração inicial
+  - Scripts de diagnóstico e type-check
+
+
+================================================================================
+5. ARQUITETURA TÉCNICA DA PLATAFORMA
+================================================================================
+
+                    ┌─────────────────────────────────────┐
+                    │          USUÁRIO / CIDADÃO           │
+                    │    Browser / PWA / WhatsApp          │
+                    └──────────────┬──────────────────────┘
+                                   │
+                    ┌──────────────▼──────────────────────┐
+                    │              NGINX                    │
+                    │    Proxy Reverso + SSL + Static       │
+                    └────────┬─────────────┬──────────────┘
+                             │             │
+              ┌──────────────▼──┐   ┌──────▼────────────────┐
+              │  NEXT.JS 14     │   │  EXPRESS 5 BACKEND     │
+              │  Frontend PWA   │   │  REST API + Socket.IO  │
+              │  Porta 3000     │   │  Porta 3001            │
+              └─────────────────┘   └──────┬────────────────┘
+                                           │
+              ┌──────────────────────────┬─┴──────────────────────┐
+              │                          │                          │
+  ┌───────────▼──────┐    ┌─────────────▼────┐    ┌──────────────▼─────┐
+  │  MESSAGES SERVER  │    │   POSTGRESQL      │    │   REDIS             │
+  │  Socket.IO + Bot  │    │   Banco Principal │    │   Cache + Filas     │
+  │  Porta 9001       │    │   Porta 5432      │    │   Porta 6379        │
+  └───────────┬───────┘    └──────────────────┘    └────────────────────┘
+              │
+  ┌───────────▼───────────────────────────────────────┐
+  │           SERVIÇOS AUXILIARES                      │
+  │                                                    │
+  │  digiurban-ai:     llama.cpp + Qwen 1.7B (8080)   │
+  │  digiurban-flow:   BullMQ + Playwright (workflows)  │
+  │  digiurban-prices: OpenSearch + Scraping            │
+  │  ultrazend-smtp:   MX Server (25) + Submission (587)│
+  └───────────────────────────────────────────────────┘
+
+PADRÕES ARQUITETURAIS:
+  - Monorepo com serviços independentes
+  - REST API com prefixo /api (88 rotas)
+  - WebSocket para comunicação em tempo real
+  - JWT em cookies HTTP-only (segurança CSRF)
+  - Autenticação separada: admin (digiurban_admin_token) e cidadão (digiurban_citizen_token)
+  - Roles hierárquicas: USER → COORDINATOR → MANAGER → ADMIN → SUPER_ADMIN + CITIZEN
+  - Multi-tenant: suporte a múltiplos municípios (modelo SUPER_ADMIN)
+
+SEGURANÇA:
+  - Helmet.js para headers de segurança HTTP
+  - bcrypt para hash de senhas
+  - JWT com expiração configurável
+  - Certificados digitais X.509 para assinatura
+  - DKIM/SPF para autenticidade de emails
+  - Chaves privadas criptografadas com AES-256-GCM
+  - IA local (dados nunca saem do servidor)
+  - Adequação à LGPD na arquitetura de dados
+
+
+================================================================================
+6. MÓDULOS E FUNCIONALIDADES IMPLEMENTADAS
+================================================================================
+
+------------------------------------------------------------------------
+6.1 GESTÃO DE PROTOCOLOS E SERVIÇOS DIGITAIS
+------------------------------------------------------------------------
+
+O módulo de protocolos é o coração do DigiUrban. Permite que qualquer
+solicitação do cidadão seja aberta, tramitada e concluída digitalmente.
+
+FUNCIONALIDADES:
+  - Abertura de protocolo via portal do cidadão ou balcão digital
+  - Formulário dinâmico configurável por tipo de serviço (formSchema JSON)
+  - Atribuição a servidor/departamento responsável
+  - Histórico completo de tramitação com timestamps
+  - Controle de status: VINCULADO → PROGRESSO → CONCLUIDO/CANCELADO/PENDENCIA
+  - Transições de status controladas por role (config matrix)
+  - SLA (Service Level Agreement) por tipo de serviço com alertas de vencimento
+  - Pendências formais com descrição e prazo
+  - Atualizações e interações registradas com histórico
+  - Documentos anexos ao protocolo
+  - Campos de dados customizados por protocolo
+  - Avaliação de satisfação pelo cidadão (rating 0-5, comentário, recomendação)
+  - Vinculação cidadão-protocolo com histórico familiar
+  - Exportação CSV com UTF-8 BOM (compatível com Excel)
+  - Estágios configuráveis de tramitação
+
+CONFIGURAÇÃO DE SERVIÇOS:
+  - Catálogo de serviços por secretaria/departamento
+  - Wizard de 8 passos para criação de serviços (ServiceFormWizard)
+  - Formulário dinâmico com campos customizáveis
+  - Workflows de aprovação por tipo de serviço
+  - Módulos de secretaria configuráveis por departamento
+
+MODELOS DE DADOS ENVOLVIDOS:
+  ServiceSimplified, ProtocolSimplified, ProtocolHistorySimplified,
+  ProtocolInteraction, ProtocolDocument, ProtocolPending, ProtocolDataField,
+  ProtocolStage, ProtocolStageArtifact, ProtocolSLA, ProtocolCitizenLink,
+  ProtocolServerAssignment, ProtocolEvaluationSimplified, ServiceWorkflow
+
+------------------------------------------------------------------------
+6.2 PORTAL DO CIDADÃO
+------------------------------------------------------------------------
+
+Interface dedicada para o cidadão interagir com a prefeitura sem precisar
+ir presencialmente ao atendimento.
+
+FUNCIONALIDADES:
+  - Cadastro e autenticação de cidadão (cookie HTTP-only)
+  - Abertura de novos protocolos/solicitações
+  - Acompanhamento em tempo real do status das solicitações
+  - Histórico completo de protocolos
+  - Avaliação de atendimento após conclusão
+  - Gestão de documentos pessoais
+  - Gestão de família (membros dependentes, convites)
+  - Chat direto com atendentes municipais
+  - Notificações personalizadas (in-app, email, push)
+  - Perfil editável (dados pessoais, endereço, contato)
+  - Acesso ao catálogo de serviços disponíveis
+  - Configuração de preferências de notificação
+
+PÁGINAS DO PORTAL CIDADÃO:
+  /cidadao/         — Landing page autenticada
+  /cidadao/login    — Autenticação
+  /cidadao/perfil   — Dados pessoais
+  /cidadao/protocolos       — Lista de protocolos
+  /cidadao/servicos         — Catálogo de serviços
+  /cidadao/mensagens        — Chat com atendentes
+  /cidadao/familia          — Gestão de família
+  /cidadao/documentos       — Documentos pessoais
+  /cidadao/notificacoes     — Preferências
+
+------------------------------------------------------------------------
+6.3 MÓDULO DE SAÚDE
+------------------------------------------------------------------------
+
+Um dos módulos mais completos da plataforma, cobrindo desde agendamento
+até TFD, farmácia e prontuário.
+
+SUBMODULOS IMPLEMENTADOS:
+
+  ATENDIMENTO MÉDICO (52 endpoints):
+  - Cadastro de unidades de saúde (UBS, UPA, CAPS, etc.)
+  - Especialidades médicas configuráveis
+  - Profissionais de saúde com vínculo a equipes
+  - Agendas médicas com turnos configuráveis
+  - Salas e consultórios
+  - Agendamento de consultas com disponibilidade em tempo real
+  - Fila de atendimento com triagem de enfermagem
+  - Prontuário eletrônico (histórico, alergias, comorbidades)
+  - Acompanhamento pré-natal (consultas, exames)
+  - Imunizações e vacinas
+  - Atividades coletivas e participantes
+  - Visitas domiciliares
+  - Escuta inicial e triagem
+  - Configuração de agenda por profissional/especialidade
+  - Indisponibilidade de agenda (feriados, licenças)
+  - Atendimento odontológico
+
+  FARMÁCIA (28 endpoints):
+  - Cadastro de medicamentos com código CATMAT
+  - Gestão de estoque por unidade
+  - Lotes e validades
+  - Dispensação de medicamentos com histórico
+  - Transferências entre unidades
+  - Alertas de estoque mínimo
+  - Prescrições vinculadas ao prontuário
+  - Exportação para relatórios
+
+  TFD — TRATAMENTO FORA DO DOMICÍLIO (52 endpoints):
+  - Solicitação de TFD com documentação obrigatória
+  - Especialidades e destinos de tratamento
+  - Parecer de regulação médica
+  - Aprovação pela gestão
+  - Agendamento externo com prestadores
+  - Viagens e passageiros
+  - Motoristas e veículos
+  - Prestação de contas de viagem
+  - Documentos comprobatórios de TFD
+
+  CADASTROS DE SAÚDE (Sistema Unificado V2.0):
+  - Interface unificada para gestão de todos os cadastros
+  - 23 sub-páginas de gerenciamento (unidades, agendas, especialidades, salas, turnos, profissionais)
+  - Microáreas de cobertura
+  - Equipes de saúde (ESF, NASF, etc.)
+
+------------------------------------------------------------------------
+6.4 MÓDULO DE EDUCAÇÃO
+------------------------------------------------------------------------
+
+FUNCIONALIDADES:
+  - Cadastro de unidades educacionais (escolas, CEIs, CMEIs)
+  - Inscrições e matrículas online
+  - Gestão de turmas
+  - Rotas escolares com veículos
+  - Alunos por rota
+  - Segurança escolar com reconhecimento facial
+  - Dados de professores com informações profissionais
+
+------------------------------------------------------------------------
+6.5 MÓDULO DE ASSISTÊNCIA SOCIAL
+------------------------------------------------------------------------
+
+FUNCIONALIDADES:
+  - Unidades CRAS (Centro de Referência de Assistência Social)
+  - Inscrição em programas sociais
+  - Acompanhamento de benefícios
+  - Pagamentos de benefícios com histórico
+  - Dados CadÚnico por família
+  - Programas sociais configuráveis
+
+------------------------------------------------------------------------
+6.6 CHATBOT INTELIGENTE — DIGIBOT
+------------------------------------------------------------------------
+
+O DigiBot é o assistente virtual do DigiUrban, com arquitetura de fluxos
+conversacionais e integração com IA local para compreensão de linguagem natural.
+
+ARQUITETURA DO BOT:
+  FlowEngine → NodeExecutors → ActionHandlers → DigiUrbanIntegration → Backend API
+         ↕
+  CitizenAiOrchestrator → CitizenAiClient → digiurban-ai (llama.cpp)
+
+TIPOS DE NÓS CONVERSACIONAIS (9 tipos):
+  message   — Envio de mensagem informativa
+  question  — Coleta de resposta livre do cidadão
+  menu      — Menu de opções clicável
+  action    — Execução de ação no sistema (criar protocolo, buscar dados)
+  condition — Desvio condicional de fluxo baseado em dados
+  form      — Formulário multi-campo em conversa
+  upload    — Recebimento de arquivos do cidadão
+  location  — Coleta de localização geográfica
+  end       — Finalização de fluxo
+
+FLUXOS PRÉ-CONFIGURADOS (9 fluxos com seed automático no boot):
+  menu-principal.json        — Menu principal com 8 opções
+  solicitar-servico.json     — Abertura de protocolo via chat
+  consultar-protocolo.json   — Consulta + histórico + documentos
+  meu-perfil.json            — Edição de dados pessoais pelo chat
+  documentos.json            — Acesso a documentos
+  avaliacao.json             — Avaliação de atendimento
+  minha-familia.json         — Gestão de família
+  notificacoes.json          — Preferências de notificação
+  ajuda.json                 — Ajuda e suporte
+
+FUNCIONALIDADES DO BOT:
+  - Motor de estado persistente (FlowStateManager) — retoma onde parou
+  - Template engine para respostas dinâmicas com dados do cidadão
+  - Validação inteligente de entrada (InputValidator)
+  - Integração direta com backend para criar/consultar protocolos
+  - Upload de arquivos em conversa (fotos, documentos)
+  - Palavras-chave reservadas para navegação (menu, cancelar, voltar)
+  - Timeout 15s para chamadas ao backend com retry automático
+  - Erros amigáveis em pt-BR com fallback ao menu principal
+  - Proteção de conversa bot contra delete/archive acidental
+  - Analytics de uso do bot (BotAnalytics)
+  - Mensagens e uploads armazenados permanentemente
+
+CANAIS SUPORTADOS:
+  - Chat web (interface do portal do cidadão)
+  - WebSocket em tempo real (Socket.IO)
+  - Preparado para WhatsApp Business API
+
+IA NO BOT:
+  O DigiBot usa a CitizenAiOrchestrator para interpretar texto livre do cidadão
+  e extrair intenção, dados e respostas fora dos fluxos estruturados. Isso permite
+  que o cidadão escreva de forma natural e o bot entenda o que foi solicitado,
+  sem precisar seguir menus rígidos.
+
+------------------------------------------------------------------------
+6.7 INTELIGÊNCIA ARTIFICIAL LOCAL
+------------------------------------------------------------------------
+
+O DigiUrban possui um serviço dedicado de IA (digiurban-ai) que roda
+completamente on-premise, sem enviar dados dos cidadãos para serviços externos.
+
+TECNOLOGIAS:
+  - llama.cpp — Runtime de inferência LLM otimizado para CPU/GPU
+  - Qwen 1.7B — Modelo de linguagem leve e eficiente
+  - RAG (Retrieval Augmented Generation) — Busca contextual nos dados do município
+  - Cache semântico de respostas para redução de custos computacionais
+  - Provedor plugável — permite troca de modelo sem alterar a lógica
+
+CASOS DE USO DA IA:
+  - Interpretação de texto livre no chatbot
+  - Classificação de solicitações
+  - Sugestão de tipo de serviço com base na descrição
+  - Extração de dados de formulários preenchidos em linguagem natural
+  - Análise preditiva de gargalos em protocolos
+  - Respostas contextualizadas com dados do município e cidadão
+
+PRIVACIDADE:
+  Toda a inferência de IA ocorre no próprio servidor do município.
+  Nenhum dado de cidadão ou conversa é enviado para APIs externas como
+  OpenAI, Google ou outros. Isso é fundamental para conformidade com LGPD.
+
+------------------------------------------------------------------------
+6.8 GESTÃO DOCUMENTAL E ASSINATURA DIGITAL
+------------------------------------------------------------------------
+
+FUNCIONALIDADES:
+  - Editor WYSIWYG de templates de documentos (TipTap)
+  - Inserção de placeholders dinâmicos (nome, CPF, protocolo, data, etc.)
+  - Geração automática de documentos PDF a partir de templates HTML
+  - Assinatura digital automática com certificados X.509
+  - Placeholder de assinatura configurável (tamanho, posição)
+  - Certificados digitais próprios com chave pública/privada RSA
+  - Criptografia AES-256-GCM para chaves privadas em repouso
+  - Validação pública de documentos assinados (QR code / URL pública)
+  - Documentos externos do cidadão (RG, CPF, comprovante, etc.)
+  - Documentos internos de protocolo com histórico de versões
+  - Seed de certificado do sistema para assinatura automática
+
+MODELOS ENVOLVIDOS:
+  DocumentTemplate, GeneratedDocument, DigitalCertificate, CertificateRequest,
+  CertificateRevocationList, Signature, CitizenDocument, ExternalDocument
+
+------------------------------------------------------------------------
+6.9 EMAIL CORPORATIVO MUNICIPAL
+------------------------------------------------------------------------
+
+O DigiUrban inclui um servidor SMTP completo para emails institucionais
+da prefeitura, sem depender de serviços externos de email.
+
+COMPONENTES:
+  - MX Server (porta 25): Recebe emails de servidores externos via DNS MX
+  - Submission Server (porta 587): Envio autenticado por clientes
+  - DKIM automático com RSA 2048 para autenticidade
+  - MX Delivery: Entrega direta via DNS sem relay externo
+  - Interface web de email completa (inbox, enviados, rascunhos, lixeira)
+  - Múltiplas contas de email por domínio municipal
+  - Templates de email para comunicações automáticas
+  - Planos de email configuráveis com limites e domínios
+  - Estatísticas de email por conta/domínio
+  - Composição de emails com editor rico
+
+------------------------------------------------------------------------
+6.10 ORGANOGRAMA E GESTÃO DE SERVIDORES PÚBLICOS
+------------------------------------------------------------------------
+
+FUNCIONALIDADES:
+  - Estrutura hierárquica de unidades organizacionais
+  - Cargos e funções por unidade
+  - Atribuição de servidores a cargos e departamentos
+  - Hierarquias funcionais configuráveis
+  - Equipes com membros e responsabilidades
+  - Dados profissionais por categoria (saúde, educação, engenharia, social)
+  - Auditoria de atribuições (AssignmentAudit)
+  - Painel do Prefeito com visão consolidada
+  - Agenda central compartilhada entre departamentos
+  - Gabinete com gestão de demandas prioritárias
+
+------------------------------------------------------------------------
+6.11 ANALYTICS E DASHBOARDS
+------------------------------------------------------------------------
+
+O DigiUrban possui um sistema de analytics multinível com 5 dashboards
+adaptados ao perfil do usuário logado.
+
+DASHBOARDS DISPONÍVEIS:
+  - Dashboard do Servidor (USER): protocolos atribuídos, pendências, SLA
+  - Dashboard do Coordenador (COORDINATOR): visão do departamento
+  - Dashboard do Gerente (MANAGER): múltiplos departamentos
+  - Dashboard do Admin (ADMIN): visão completa do município
+  - Dashboard do Prefeito (painel-prefeito): KPIs executivos
+
+MÉTRICAS DISPONÍVEIS:
+  - Total de protocolos por status/período
+  - Tempo médio de resolução por serviço/departamento
+  - SLA: percentual dentro/fora do prazo
+  - Gargalos identificados automaticamente (ProtocolBottleneck)
+  - Performance individual por servidor
+  - Tendências e variações semanais/mensais
+  - Benchmarks por população municipal
+  - Análise preditiva de demanda
+  - KPIs configuráveis com alertas
+  - Cache de métricas para performance em tempo real
+
+MODELOS ENVOLVIDOS:
+  Analytics, ProtocolMetrics, DepartmentMetrics, ServiceMetrics,
+  ServerPerformance, ProtocolBottleneck, KPI, Report, ReportExecution,
+  Dashboard, Alert, AlertTrigger, MetricCache, Benchmark, Prediction
+
+------------------------------------------------------------------------
+6.12 NOTIFICAÇÕES EM TEMPO REAL
+------------------------------------------------------------------------
+
+CANAIS DE ENTREGA:
+  - In-app: Notificações dentro da plataforma (SSE — Server-Sent Events)
+  - Push: Web Push via Service Worker (PWA)
+  - Email: Templates automáticos por tipo de evento
+  - WebSocket: Atualização em tempo real sem reload de página
+
+TIPOS DE NOTIFICAÇÃO:
+  - Mudança de status do protocolo
+  - Nova mensagem de atendente/cidadão
+  - SLA próximo do vencimento
+  - Protocolo atribuído ao servidor
+  - Pendência registrada
+  - Documentos disponíveis
+  - Avaliação solicitada após conclusão
+
+CONFIGURAÇÃO:
+  - Preferências individuais por usuário/cidadão
+  - Horários de silêncio (não incomodar)
+  - Tipos de notificação habilitados por canal
+  - Histórico de notificações enviadas
+
+------------------------------------------------------------------------
+6.13 BUSCA INTELIGENTE EM PREÇOS PÚBLICOS
+------------------------------------------------------------------------
+
+Módulo especializado para suporte a processos de compras e licitações.
+
+FUNCIONALIDADES:
+  - Integração com múltiplas fontes de preços governamentais:
+    * BPS (Banco de Preços do Sistema)
+    * PNCP (Portal Nacional de Compras Públicas)
+    * ComprasNet
+    * FNDE
+    * CATMAT (Catálogo de Materiais do Governo Federal)
+  - Indexação full-text com OpenSearch para busca eficiente
+  - Web scraping com Playwright para cotações atualizadas
+  - Classificação automática de itens por categoria
+  - Score de confiança por cotação de preço
+  - Fila de processamento BullMQ para ingestão assíncrona
+  - Exportação de cotações em XLSX
+
+------------------------------------------------------------------------
+6.14 SEGURANÇA FACIAL EM UNIDADES ESCOLARES
+------------------------------------------------------------------------
+
+Funcionalidade avançada para controle de acesso e presença em escolas.
+
+FUNCIONALIDADES:
+  - Reconhecimento facial com MediaPipe e TensorFlow.js
+  - Cadastro de identidades de alunos, funcionários e responsáveis
+  - Detecção de presença automática na entrada da escola
+  - Identificação de guardiões/responsáveis autorizados
+  - Zones de acesso configuráveis por dispositivo/câmera
+  - Eventos de reconhecimento com timestamp e confiança
+  - Configuração de privacidade individual por cidadão (LGPD)
+  - Embeddings faciais armazenados de forma segura
+
+MODELOS:
+  FaceRecognitionIdentity, FaceEnrollment, FaceRecognitionEvent,
+  FaceDevice, FaceZone, FaceEmbedding, CitizenPrivacySettings
+
+------------------------------------------------------------------------
+6.15 AGENDA CENTRAL E GABINETE DO PREFEITO
+------------------------------------------------------------------------
+
+AGENDA CENTRAL:
+  - Calendário compartilhado entre departamentos
+  - Eventos com visibilidade configurável (pública, privada, por departamento)
+  - Participantes e confirmações
+  - Links de acesso para reuniões virtuais
+  - Membro da agenda com permissões de edição
+
+GABINETE DO PREFEITO:
+  - Painel executivo com KPIs de toda a prefeitura
+  - Demandas prioritárias com rastreabilidade
+  - Gestão de agenda da chefia
+  - Relatórios executivos configuráveis
+
+
+================================================================================
+7. STACK TECNOLÓGICO COMPLETO
+================================================================================
+
+LINGUAGENS E RUNTIMES:
+  TypeScript 5.9     — Linguagem principal (todos os serviços)
+  Node.js 22+        — Runtime backend e serviços
+  React 18.3         — UI Framework
+  Next.js 14.2       — Framework frontend (App Router)
+
+BANCO DE DADOS E PERSISTÊNCIA:
+  PostgreSQL 14+     — Banco relacional principal
+  Prisma 6.19        — ORM com migrations e type-safety
+  Redis 5.x          — Cache, filas e sessões
+  OpenSearch 2.7     — Busca full-text (módulo de preços)
+
+FRAMEWORKS E BIBLIOTECAS BACKEND:
+  Express 5.1        — Framework HTTP API
+  Socket.IO 4.8      — WebSocket bidirecional
+  BullMQ 5.40        — Filas e jobs assíncronos
+  JWT                — Autenticação stateless
+  bcrypt             — Hash de senhas
+  Helmet.js          — Segurança HTTP headers
+  Multer 2.0         — Upload de arquivos (10MB/arquivo, 50MB total)
+  Winston 3.19       — Logging estruturado
+  Zod / Joi          — Validação de schemas
+
+FRONTEND E UI:
+  Tailwind CSS 3.4   — Utility-first CSS
+  Radix UI           — Componentes acessíveis (shadcn/ui)
+  TanStack Query 5   — Server state management
+  React Hook Form    — Formulários performáticos
+  Zod                — Validação client-side
+  TipTap             — Editor WYSIWYG rico
+  Recharts           — Gráficos e visualizações
+  Leaflet 1.9        — Mapas interativos
+  pdfjs-dist         — Visualização de PDFs
+  Socket.IO Client   — WebSocket no browser
+
+INTELIGÊNCIA ARTIFICIAL:
+  llama.cpp          — Runtime LLM local (CPU/GPU)
+  Qwen 1.7B          — Modelo de linguagem open-source
+  TensorFlow.js      — ML no browser (reconhecimento facial)
+  MediaPipe          — Processamento de visão computacional
+
+DOCUMENTOS E SEGURANÇA:
+  pdf-lib            — Geração de PDFs
+  Tesseract.js       — OCR de documentos
+  node-forge / crypto — Certificados X.509 e criptografia
+  AES-256-GCM        — Criptografia de chaves privadas
+
+EMAIL E SMTP:
+  smtp-server 3.14   — Servidor SMTP MX e Submission
+  mailparser 3.7     — Parse de emails recebidos
+  Nodemailer 6.9     — Envio de emails
+  DKIM (RSA 2048)    — Autenticação de emails
+
+AUTOMAÇÃO E TESTING:
+  Playwright 1.50    — E2E tests + web scraping
+  Jest               — Unit tests
+  Workbox            — Service Worker (PWA)
+
+INFRAESTRUTURA:
+  Docker             — Containerização
+  Docker Compose     — Orquestração multi-container
+  Nginx              — Proxy reverso + SSL + static files
+  Supervisord        — Gerenciamento de processos
+  VPS               — Deploy em servidor dedicado
+
+
+================================================================================
+8. DADOS QUANTITATIVOS DO PROJETO
+================================================================================
+
+BACKEND:
+  106 arquivos TypeScript
+  88 rotas de API implementadas
+  171 modelos de dados no Prisma Schema
+  213 models totais incluindo enums e types
+  ~94 prefixos de rota registrados em index.ts
+
+FRONTEND:
+  220+ páginas e sub-páginas (App Router Next.js)
+  47 custom hooks desenvolvidos
+  Componentes shadcn/ui customizados
+  5 dashboards por perfil de usuário
+  PWA com Service Worker (offline support)
+
+MESSAGES SERVER (CHATBOT):
+  58 arquivos TypeScript
+  9 tipos de nós conversacionais
+  9 fluxos pré-configurados
+  Motor completo: FlowEngine, NodeExecutors, ActionHandlers,
+    FlowStateManager, InputValidator, TemplateEngine
+
+SMTP SERVER:
+  13 arquivos TypeScript
+  2 portas de email (25 MX + 587 Submission)
+  DKIM automático configurado
+
+SERVIÇO DE IA:
+  2.009 arquivos (incluindo modelo Qwen 1.7B)
+  llama.cpp runtime configurado
+  RAG implementado
+
+SERVIÇO DE FLUXOS:
+  28 arquivos TypeScript
+  BullMQ + Playwright para automação
+
+SERVIÇO DE PREÇOS:
+  59 arquivos TypeScript
+  5 fontes de dados governamentais integradas
+  OpenSearch indexado
+
+
+================================================================================
+9. MODELO DE NEGÓCIO SAAS PARA MUNICÍPIOS
+================================================================================
+
+PROPOSTA DE VALOR:
+  Uma única plataforma que substitui múltiplos sistemas desconectados,
+  com custo mensal acessível para qualquer município brasileiro.
+
+MODELO DE CONTRATAÇÃO:
+  - SaaS (Software as a Service) com cobrança mensal por município
+  - Sem licença de instalação ou custos iniciais elevados
+  - Implantação em nuvem ou servidor próprio do município
+  - Suporte técnico incluso
+  - Treinamento de servidores incluso
+
+SEGMENTAÇÃO DE MERCADO:
+  Target principal:   Municípios de 5.000 a 100.000 habitantes
+  Target secundário:  Municípios acima de 100.000 habitantes (versão enterprise)
+  Mercado total:      5.570 municípios no Brasil
+  Foco inicial:       399 municípios do Paraná
+
+ESTIMATIVA DE TICKET MÉDIO:
+  Pequenos municípios (até 20k hab):   R$ 1.500 a R$ 3.000/mês
+  Médios municípios (20k a 100k hab):  R$ 3.000 a R$ 8.000/mês
+  Grandes municípios (acima de 100k):  Negociação enterprise
+
+PROJEÇÃO DE EXPANSÃO:
+  Ano 1 (piloto): 1 a 3 municípios validados
+  Ano 2: 10 municípios no Paraná
+  Ano 3: 30 municípios no Paraná + expansão para outros estados
+  Ano 5: 100+ municípios / expansão nacional
+
+POTENCIAL DE RECEITA RECORRENTE (ARR):
+  Com 10 municípios @ R$ 3.000/mês:  R$ 360.000/ano
+  Com 30 municípios @ R$ 4.000/mês:  R$ 1.440.000/ano
+  Com 100 municípios @ R$ 5.000/mês: R$ 6.000.000/ano
+
+MODELO WHITE-LABEL:
+  A plataforma permite configuração completa por município:
+  - Logo, cores e identidade visual
+  - Nome do município nas comunicações
+  - Domínio personalizado
+  - Módulos habilitados conforme necessidade
+
+DIFERENCIAIS DE PRECIFICAÇÃO:
+  - Custo drasticamente menor que sistemas legados de prefeitura
+  - Implantação em dias, não meses
+  - Sem custo de servidor (cloud incluso)
+  - Sem custo de licença de banco de dados
+  - Atualizações automáticas sem custo adicional
+
+
+================================================================================
+10. ALINHAMENTO COM ODS E CIDADES INTELIGENTES
+================================================================================
+
+CIDADES INTELIGENTES:
+O DigiUrban implementa os pilares fundamentais do conceito de Smart City:
+
+  GOVERNANÇA INTELIGENTE:
+  - Transparência ativa (cidadão acompanha sua solicitação)
+  - Decisões baseadas em dados (analytics e KPIs)
+  - Automação de processos (workflows)
+  - Redução de burocracia (formulários digitais)
+
+  SERVIÇOS PÚBLICOS DIGITAIS:
+  - Atendimento 24/7 via chatbot com IA
+  - Portal do cidadão unificado
+  - Documentos digitais com validade jurídica
+  - Notificações proativas
+
+  SAÚDE INTELIGENTE:
+  - Agendamento digital de consultas
+  - Prontuário eletrônico
+  - Gestão de farmácia com alertas
+  - TFD gerenciado digitalmente
+
+  EDUCAÇÃO E SEGURANÇA:
+  - Matrícula digital
+  - Rotas escolares otimizadas
+  - Reconhecimento facial para segurança
+
+  DADOS E PRIVACIDADE:
+  - IA 100% local (dados não saem do município)
+  - Adequação LGPD por design
+  - Audit log de todas as operações
+
+ODS 8 — TRABALHO DECENTE E CRESCIMENTO ECONÔMICO:
+  Aumenta a produtividade dos servidores públicos, reduz retrabalho
+  e permite que a gestão pública seja mais eficiente com os mesmos recursos.
+
+ODS 9 — INOVAÇÃO E INFRAESTRUTURA:
+  Cria infraestrutura digital pública com tecnologia de ponta:
+  IA local, WebSocket, PWA, assinatura digital, DKIM.
+
+ODS 11 — CIDADES SUSTENTÁVEIS:
+  Democratiza o acesso à tecnologia para municípios pequenos que não
+  teriam condições de desenvolver sistemas próprios. Reduz deslocamentos
+  físicos ao digitalizar serviços.
+
+ODS 16 — INSTITUIÇÕES EFICAZES:
+  Aumenta a transparência, rastreabilidade e accountability da gestão pública.
+  O cidadão sabe exatamente onde está sua solicitação e quem é o responsável.
+
+ODS 17 — PARCERIAS:
+  Modelo de parceria entre startup GovTech e prefeituras, com potencial
+  de consórcios municipais para redução de custo por município.
+
+
+================================================================================
+11. DIFERENCIAIS COMPETITIVOS
+================================================================================
+
+1. IA LOCAL (sem cloud externo)
+   Diferente dos concorrentes que usam ChatGPT/OpenAI, o DigiUrban processa
+   todas as requisições de IA localmente com llama.cpp + Qwen 1.7B.
+   VANTAGEM: Conformidade total com LGPD, dados sensíveis nunca saem do município.
+
+2. PLATAFORMA VERDADEIRAMENTE INTEGRADA
+   Um único sistema que cobre: protocolos, chatbot, saúde, educação, social,
+   email institucional, documentos digitais, organograma, analytics.
+   VANTAGEM: O município não precisa de 10 sistemas diferentes.
+
+3. EMAIL CORPORATIVO PRÓPRIO
+   Servidor SMTP completo incluso, com DKIM/SPF e domínio próprio.
+   VANTAGEM: Prefeitura tem @cidade.pr.gov.br sem pagar Google Workspace.
+
+4. CHATBOT COM FLUXOS CONFIGURÁVEIS
+   O gestor pode criar e editar fluxos de atendimento sem programação.
+   VANTAGEM: Adapta-se ao workflow específico de cada município.
+
+5. ASSINATURA DIGITAL NATIVA
+   Documentos com validade jurídica assinados automaticamente.
+   VANTAGEM: Elimina a necessidade de sistemas externos de assinatura.
+
+6. RECONHECIMENTO FACIAL EDUCACIONAL
+   Controle de acesso e presença em escolas com IA de visão computacional.
+   VANTAGEM: Funcionalidade raríssima em sistemas municipais.
+
+7. BUSCA DE PREÇOS PÚBLICOS
+   Cotação de preços em fontes governamentais (PNCP, ComprasNet, CATMAT).
+   VANTAGEM: Suporte a processos de compras e licitações.
+
+8. MULTI-TENANT E ESCALÁVEL
+   Um deploy atende múltiplos municípios isolados (SUPER_ADMIN).
+   VANTAGEM: Custo de infraestrutura compartilhado, margem crescente.
+
+9. MVP FUNCIONAL COMPLETO
+   Não é protótipo — é um sistema real com 88 rotas, 171 models, 220+ páginas.
+   VANTAGEM: Demonstração concreta da capacidade de entrega.
+
+10. FUNDADOR COM EXPERIÊNCIA EM PREFEITURA
+    O DigiUrban foi desenvolvido por alguém que conhece os problemas
+    reais da gestão municipal por dentro.
+    VANTAGEM: Produto construído para resolver dores reais, não hipotéticas.
+
+
+================================================================================
+12. EVIDÊNCIAS DE DESENVOLVIMENTO
+================================================================================
+
+O DigiUrban possui as seguintes evidências concretas de desenvolvimento
+que podem ser apresentadas aos avaliadores do Paraná Anjo Inovador:
+
+CÓDIGO-FONTE:
+  - Repositório Git com histórico completo de commits
+  - Backend em TypeScript: 106 arquivos, 88 rotas implementadas
+  - Frontend Next.js: 220+ páginas, 47 hooks customizados
+  - 5 serviços adicionais completamente codificados
+  - Schema Prisma com 171 modelos de dados documentados
+
+INFRAESTRUTURA:
+  - Dockerfile multi-stage completo e funcional
+  - docker-compose.vps.yml para deploy em produção
+  - Scripts de startup e configuração automatizada
+  - nginx.conf com todas as rotas configuradas
+  - supervisord.conf para gerenciamento de processos
+
+BANCO DE DADOS:
+  - Migrations Prisma completas e versionadas
+  - Seeds de dados para configuração inicial
+  - 171 models documentados no schema
+  - Relacionamentos complexos implementados
+
+FUNCIONALIDADES DEMONSTRÁVEIS:
+  - Login de servidor público e cidadão
+  - Abertura e acompanhamento de protocolo
+  - Chatbot com fluxos conversacionais
+  - Dashboard com analytics
+  - Gestão de saúde (agendamento, farmácia, TFD)
+  - Geração de documentos PDF com assinatura digital
+  - Email corporativo
+
+TECNOLOGIA DE PONTA:
+  - IA local com llama.cpp rodando em container
+  - Reconhecimento facial com TensorFlow.js
+  - WebSocket em tempo real (Socket.IO)
+  - PWA com suporte offline
+  - Busca full-text com OpenSearch
+
+EVIDÊNCIAS PARA RELATÓRIOS TRIMESTRAIS:
+  - Commits no Git por período
+  - Screenshots funcionais do sistema
+  - Vídeos de demonstração das funcionalidades
+  - Documentação técnica (CLAUDE.md)
+  - Deploy em ambiente de staging/produção
+  - Logs de acesso e uso
+
+================================================================================
+CONCLUSÃO
+================================================================================
+
+O DigiUrban é uma solução GovTech completa, com MVP funcional desenvolvido,
+tecnologia de ponta (IA local, assinatura digital, WebSocket, PWA), modelo
+de negócio SaaS escalável e aderência total aos critérios do Paraná Anjo
+Inovador 3ª Edição na área de Cidades Inteligentes.
+
+O projeto tem:
+  - Problema real e validado (gestão pública municipal desatualizada)
+  - Solução tecnológica funcionando (não é só ideia)
+  - Modelo de negócio com recorrência (SaaS mensal por município)
+  - Potencial de escala (399 municípios no PR, 5.570 no Brasil)
+  - Fundador com experiência no problema
+  - Alinhamento com ODS e políticas de inovação pública
+  - Contribuição para o ecossistema GovTech paranaense
+
+================================================================================
+Fernando Martins — Fundador DigiUrban
+fernandinhomartins040@gmail.com
+Municípios piloto: Palmital/PR, Guarapuava/PR
+================================================================================
