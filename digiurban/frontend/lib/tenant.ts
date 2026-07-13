@@ -60,10 +60,16 @@ export async function fetchTenantConfig(): Promise<TenantConfig> {
     // ⚠️ undici (fetch do Node/Next) DESCARTA o header `Host` por segurança.
     // O backend Express (trust proxy=1) resolve o tenant por `X-Forwarded-Host`,
     // que passa livremente — é assim que o host original chega ao getByHost.
+    //
+    // ⚠️ CACHE: NÃO usar next.revalidate aqui. O cache de fetch do Next chaveia
+    // pela URL e IGNORA headers — a URL é a mesma para todos os municípios, só
+    // o header x-forwarded-host muda. Com cache, o PRIMEIRO host renderizado
+    // populava o cache e TODOS os outros recebiam aquele tenant (bug: subdomínio
+    // de município caía na config do default → landing comercial).
+    // 'no-store' força resolução por-request pelo host correto.
     const res = await fetch(`${base}/public/tenant-config`, {
       headers: { 'x-forwarded-host': host },
-      // branding muda raramente; revalida a cada 60s (alinha com Cache-Control do backend)
-      next: { revalidate: 60 },
+      cache: 'no-store',
     })
 
     if (!res.ok) return DEFAULT_TENANT_CONFIG

@@ -6,6 +6,12 @@ import { QueryProvider } from '@/components/providers/QueryProvider'
 import { TenantProvider } from '@/components/providers/TenantProvider'
 import { fetchTenantConfig, brandingToCssVars } from '@/lib/tenant'
 
+// Multi-tenant: o layout resolve o município pelo HOST a cada request. Sem
+// isto, o Next faria prerender estático (SSG) do layout com o host do build
+// (default) e serviria o mesmo branding/landing para TODOS os subdomínios.
+// force-dynamic garante SSR por-request → cada município resolve o seu tenant.
+export const dynamic = 'force-dynamic'
+
 const appFont = Manrope({
   subsets: ['latin'],
   variable: '--font-app',
