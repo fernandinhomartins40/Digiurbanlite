@@ -52,10 +52,16 @@ export async function fetchTenantConfig(): Promise<TenantConfig> {
 
     // Base interna: em produção o backend é acessível via localhost dentro do
     // container; SSR não passa pelo Nginx. Configurável por env.
-    const base =
-      process.env.INTERNAL_API_URL ||
-      process.env.NEXT_PUBLIC_API_URL ||
-      'http://localhost:3001/api'
+    //
+    // ⚠️ CRÍTICO: NÃO usar NEXT_PUBLIC_API_URL aqui. No deploy ela vale "/api"
+    // (caminho RELATIVO, correto só para o browser). No server (undici) uma URL
+    // relativa é inválida → fetch lança "Failed to parse URL" → cai no catch →
+    // retorna DEFAULT_TENANT_CONFIG (slug 'default') → landing COMERCIAL em todo
+    // subdomínio. O SSR precisa de uma URL ABSOLUTA para o backend interno.
+    const rawBase =
+      process.env.INTERNAL_API_URL || 'http://localhost:3001/api'
+    // Guarda extra: se alguém setar uma base relativa, força o localhost interno.
+    const base = rawBase.startsWith('http') ? rawBase : 'http://localhost:3001/api'
 
     // ⚠️ undici (fetch do Node/Next) DESCARTA o header `Host` por segurança.
     // O backend Express (trust proxy=1) resolve o tenant por `X-Forwarded-Host`,
