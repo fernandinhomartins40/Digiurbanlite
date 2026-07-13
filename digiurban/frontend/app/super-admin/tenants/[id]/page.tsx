@@ -23,8 +23,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import {
   ArrowLeft, Loader2, Save, Ban, CheckCircle, UserPlus, KeyRound, Copy,
-  Users, FileText, UserCheck, Building2, CreditCard, Plus, Globe,
+  Users, FileText, UserCheck, Building2, CreditCard, Plus, Globe, Palette, Upload,
 } from 'lucide-react';
+import { LandingPreview } from '@/components/admin/LandingPreview';
+
+// Paleta de cores sugeridas (institucionais comuns em prefeituras)
+const PALETA = ['#2563eb', '#0ea5e9', '#059669', '#16a34a', '#ca8a04', '#f59e0b', '#dc2626', '#9333ea', '#0f766e', '#1e40af'];
 
 interface Admin {
   id: string; name: string; email: string; role: string; isActive: boolean;
@@ -74,6 +78,8 @@ export default function TenantDetailPage() {
   const [slug, setSlug] = useState('');
   const [corPrimaria, setCorPrimaria] = useState('#2563eb');
   const [corSecundaria, setCorSecundaria] = useState('#f59e0b');
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [disabled, setDisabled] = useState<string[]>([]);
   const [baseDomain, setBaseDomain] = useState<string | null>(null);
   const [subdomainEnabled, setSubdomainEnabled] = useState(true);
@@ -98,6 +104,7 @@ export default function TenantDetailPage() {
         setSlug(t.slug);
         setCorPrimaria(t.branding?.corPrimaria || '#2563eb');
         setCorSecundaria(t.branding?.corSecundaria || '#f59e0b');
+        setLogoUrl(t.branding?.logoUrl || null);
         const feats = t.features || {};
         setDisabled(Object.keys(feats).filter((k) => feats[k] === false));
       }
@@ -126,15 +133,40 @@ export default function TenantDetailPage() {
     } finally { setSaving(false); }
   };
 
+  const currentBranding = () => {
+    const b: Record<string, string> = { corPrimaria, corSecundaria };
+    if (logoUrl) b.logoUrl = logoUrl;
+    return b;
+  };
+
   const saveConfig = () => {
     const features: Record<string, boolean> = {};
     for (const s of disabled) features[s] = false;
-    const branding: Record<string, string> = { corPrimaria, corSecundaria };
-    if (tenant?.branding?.logoUrl) branding.logoUrl = tenant.branding.logoUrl;
     patchTenant(
-      { plan, maxUsers, maxCitizens, planEndsAt: planEndsAt || null, features, branding },
+      { plan, maxUsers, maxCitizens, planEndsAt: planEndsAt || null, features, branding: currentBranding() },
       'Configurações salvas'
     );
+  };
+
+  // Identidade visual: cores + logo
+  const saveBranding = () => patchTenant({ branding: currentBranding() }, 'Identidade visual salva');
+
+  const uploadLogo = async (file: File) => {
+    setUploadingLogo(true);
+    try {
+      const fd = new FormData();
+      fd.append('logo', file);
+      const res = await fetch(`/api/super-admin/tenants/${id}/logo`, { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok) {
+        setLogoUrl(data.logoUrl);
+        toast({ title: 'Logo enviado' });
+      } else {
+        toast({ title: 'Erro', description: data.error, variant: 'destructive' });
+      }
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   // Endereço da prefeitura: slug (subdomínio) + domínio próprio
@@ -267,6 +299,7 @@ export default function TenantDetailPage() {
       <Tabs defaultValue="config">
         <TabsList>
           <TabsTrigger value="config">Plano & Configuração</TabsTrigger>
+          <TabsTrigger value="branding">Identidade Visual</TabsTrigger>
           <TabsTrigger value="address">Endereço</TabsTrigger>
           <TabsTrigger value="modules">Módulos</TabsTrigger>
           <TabsTrigger value="admins">Administradores</TabsTrigger>
@@ -291,19 +324,87 @@ export default function TenantDetailPage() {
                 <div><Label>Máx. cidadãos</Label><Input type="number" value={maxCitizens} onChange={(e) => setMaxCitizens(Number(e.target.value))} /></div>
                 <div><Label>Validade</Label><Input type="date" value={planEndsAt} onChange={(e) => setPlanEndsAt(e.target.value)} /></div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label>Cor primária</Label>
-                  <div className="flex gap-2 items-center"><input type="color" value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} className="h-10 w-14 rounded border" /><Input value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} /></div>
-                </div>
-                <div>
-                  <Label>Cor secundária</Label>
-                  <div className="flex gap-2 items-center"><input type="color" value={corSecundaria} onChange={(e) => setCorSecundaria(e.target.value)} className="h-10 w-14 rounded border" /><Input value={corSecundaria} onChange={(e) => setCorSecundaria(e.target.value)} /></div>
-                </div>
-              </div>
+              <p className="text-xs text-muted-foreground">As cores e o logo da prefeitura ficam na aba <strong>Identidade Visual</strong>.</p>
               <Button onClick={saveConfig} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar configuração</Button>
             </CardContent>
           </Card>
+        </TabsContent>
+
+        {/* Identidade Visual — cores + logo com preview ao vivo */}
+        <TabsContent value="branding">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <Card>
+              <CardHeader><CardTitle className="text-base flex items-center gap-2"><Palette className="h-4 w-4" /> Identidade visual</CardTitle></CardHeader>
+              <CardContent className="space-y-5">
+                <div>
+                  <Label>Cor primária</Label>
+                  <div className="flex gap-2 items-center mt-1">
+                    <input type="color" value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} className="h-10 w-14 rounded border cursor-pointer" />
+                    <Input value={corPrimaria} onChange={(e) => setCorPrimaria(e.target.value)} className="font-mono" />
+                  </div>
+                  <div className="flex gap-1.5 mt-2">
+                    {PALETA.map((c) => (
+                      <button key={c} type="button" onClick={() => setCorPrimaria(c)} title={c}
+                        className="h-6 w-6 rounded-full border-2" style={{ background: c, borderColor: corPrimaria === c ? '#111' : 'transparent' }} />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Cor secundária</Label>
+                  <div className="flex gap-2 items-center mt-1">
+                    <input type="color" value={corSecundaria} onChange={(e) => setCorSecundaria(e.target.value)} className="h-10 w-14 rounded border cursor-pointer" />
+                    <Input value={corSecundaria} onChange={(e) => setCorSecundaria(e.target.value)} className="font-mono" />
+                  </div>
+                  <div className="flex gap-1.5 mt-2">
+                    {PALETA.map((c) => (
+                      <button key={c} type="button" onClick={() => setCorSecundaria(c)} title={c}
+                        className="h-6 w-6 rounded-full border-2" style={{ background: c, borderColor: corSecundaria === c ? '#111' : 'transparent' }} />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <Label>Logo da prefeitura</Label>
+                  <div className="flex items-center gap-3 mt-1">
+                    {logoUrl && (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={logoUrl} alt="logo" className="h-12 w-auto max-w-[120px] object-contain border rounded p-1" />
+                    )}
+                    <label className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer hover:bg-muted">
+                      {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {logoUrl ? 'Trocar logo' : 'Enviar logo'}
+                      <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="hidden"
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} disabled={uploadingLogo} />
+                    </label>
+                    {logoUrl && (
+                      <Button size="sm" variant="ghost" className="text-red-600" onClick={() => setLogoUrl(null)}>Remover</Button>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, SVG ou WEBP · até 2 MB. O logo aparece na landing pública do município.</p>
+                </div>
+                <Button onClick={saveBranding} disabled={saving}>
+                  {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar identidade visual
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Preview ao vivo */}
+            <Card>
+              <CardHeader><CardTitle className="text-base">Prévia da landing</CardTitle></CardHeader>
+              <CardContent>
+                <LandingPreview
+                  nome={tenant.nome}
+                  nomeMunicipio={tenant.nomeMunicipio}
+                  ufMunicipio={tenant.ufMunicipio}
+                  primary={corPrimaria}
+                  secondary={corSecundaria}
+                  logoUrl={logoUrl}
+                />
+                <p className="text-xs text-muted-foreground mt-3 text-center">
+                  Prévia aproximada de <code>{baseDomain ? `${slug}.${baseDomain}` : 'landing do município'}</code>
+                </p>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         {/* Endereço — subdomínio (slug) + domínio próprio */}

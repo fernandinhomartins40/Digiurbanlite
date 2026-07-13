@@ -35,6 +35,7 @@ import { exec } from 'child_process';
 import { promisify } from 'util';
 import fs from 'fs/promises';
 import path from 'path';
+import multer from 'multer';
 import emailServerRouter from './email-server';
 import {
   ACTIVE_ORGANIZATIONAL_ASSIGNMENT_STATUSES,
@@ -3065,6 +3066,61 @@ router.get('/platform-info', adminAuthMiddleware, superAdminOnly, (_req: Request
     subdomainEnabled: !!baseDomain,
   });
 });
+
+// POST /api/super-admin/tenants/:id/logo — upload do logo (identidade visual)
+// Salvo em uploads/public/branding/{tenantId}/ (prefixo /public/ é liberado
+// sem auth pelo uploads-access) — o logo aparece na landing pública do
+// município. Grava branding.logoUrl no tenant.
+const logoUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB
+  fileFilter: (_req, file, cb) => {
+    const ok = ['image/png', 'image/jpeg', 'image/svg+xml', 'image/webp'].includes(file.mimetype);
+    if (ok) cb(null, true);
+    else cb(new Error('Formato inválido — use PNG, JPG, SVG ou WEBP'));
+  },
+});
+
+router.post(
+  '/tenants/:id/logo',
+  adminAuthMiddleware,
+  superAdminOnly,
+  logoUpload.single('logo'),
+  async (req: Request, res: Response) => {
+    try {
+      const file = (req as any).file as { buffer: Buffer; mimetype: string } | undefined;
+      if (!file) return res.status(400).json({ error: 'Nenhum arquivo enviado' });
+
+      const tenantId = req.params.id;
+      const tenant = await runAsPlatform(async () =>
+        prisma.tenant.findUnique({ where: { id: tenantId }, select: { id: true, branding: true } })
+      );
+      if (!tenant) return res.status(404).json({ error: 'Município não encontrado' });
+
+      // uploads/public/branding/{tenantId}/logo.{ext}
+      const ext = file.mimetype === 'image/png' ? 'png'
+        : file.mimetype === 'image/svg+xml' ? 'svg'
+        : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
+      const uploadBase = process.env.UPLOAD_BASE_PATH || path.join(process.cwd(), 'uploads');
+      const dir = path.join(uploadBase, 'public', 'branding', tenantId);
+      await fs.mkdir(dir, { recursive: true });
+      const fileName = `logo-${Date.now()}.${ext}`;
+      await fs.writeFile(path.join(dir, fileName), file.buffer);
+
+      const logoUrl = `/uploads/public/branding/${tenantId}/${fileName}`;
+      const branding = { ...(tenant.branding as Record<string, unknown> | null || {}), logoUrl };
+      await updateTenant(tenantId, { branding });
+
+      res.json({ success: true, logoUrl });
+    } catch (error: any) {
+      if (error?.message?.includes('Formato inválido')) {
+        return res.status(400).json({ error: error.message });
+      }
+      console.error('Erro ao enviar logo:', error);
+      res.status(500).json({ error: 'Erro ao enviar logo' });
+    }
+  }
+);
 
 // GET /api/super-admin/tenants/:id — detalhe (uso, limites, admins)
 router.get('/tenants/:id', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
