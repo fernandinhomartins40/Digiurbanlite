@@ -12,6 +12,8 @@ import { HandoverService } from './HandoverService'; // ✅ NOVO
 import fs from 'fs/promises';
 import path from 'path';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
+import { getBotTenantId } from '../bot/tenant-context';
+import { resolveTenantId } from '../utils/tenant';
 
 export class FlowEngineService {
   private flowEngine: FlowEngine;
@@ -89,6 +91,8 @@ export class FlowEngineService {
 
         const botMessage = await prisma.message.create({
           data: {
+            // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+            tenantId: await resolveTenantId({ conversationId }),
             conversationId,
             senderId: 'DIGIBOT_SYSTEM',
             senderType: 'SYSTEM',
@@ -390,6 +394,8 @@ export class FlowEngineService {
     // 4. Salvar mensagem do bot (✅ REFATORADO com campos queryable)
     const message = await prisma.message.create({
       data: {
+        // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+        tenantId: await resolveTenantId({ conversationId: activeConversationId }),
         conversationId: activeConversationId,
         senderId: 'DIGIBOT_SYSTEM',
         senderType: 'SYSTEM',
@@ -512,6 +518,8 @@ export class FlowEngineService {
 
     const userMessage = await prisma.message.create({
       data: {
+        // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+        tenantId: await resolveTenantId({ conversationId }),
         conversationId,
         senderId: citizenId,
         senderType: 'CITIZEN',
@@ -616,6 +624,8 @@ export class FlowEngineService {
     // 4. Salvar resposta do bot (✅ REFATORADO)
     const botMessage = await prisma.message.create({
       data: {
+        // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+        tenantId: await resolveTenantId({ conversationId }),
         conversationId,
         senderId: 'DIGIBOT_SYSTEM',
         senderType: 'SYSTEM',
@@ -898,6 +908,8 @@ export class FlowEngineService {
 
     const userMessage = await prisma.message.create({
       data: {
+        // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+        tenantId: await resolveTenantId({ conversationId }),
         conversationId,
         senderId: citizenId,
         senderType: 'CITIZEN',
@@ -962,6 +974,8 @@ export class FlowEngineService {
 
     const botMessage = await prisma.message.create({
       data: {
+        // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+        tenantId: await resolveTenantId({ conversationId }),
         conversationId,
         senderId: 'DIGIBOT_SYSTEM',
         senderType: 'SYSTEM',
@@ -1048,10 +1062,13 @@ export class FlowEngineService {
   }
 
   private async getFlowDefinitionByName(name: string): Promise<{ id: string; name: string } | null> {
+    // Onda 8 multi-tenant: fluxo do tenant do contexto; fallback legado (NULL).
+    const tenantId = getBotTenantId() || process.env.DEFAULT_TENANT_ID || 'tenant-default';
     const flow = await prisma.flowDefinition.findFirst({
       where: {
         name,
         isActive: true,
+        tenantId,
       },
       select: {
         id: true,
@@ -1059,7 +1076,19 @@ export class FlowEngineService {
       },
     });
 
-    return flow;
+    if (flow) return flow;
+
+    return prisma.flowDefinition.findFirst({
+      where: {
+        name,
+        isActive: true,
+        tenantId: null,
+      },
+      select: {
+        id: true,
+        name: true,
+      },
+    });
   }
 
   private async linkConversationToExecution(
@@ -1139,6 +1168,8 @@ export class FlowEngineService {
       // Criar nova conversa (✅ REFATORADO - sem campos antigos)
       conversation = await prisma.conversation.create({
         data: {
+          // Fase 5 multi-tenant: conversa do bot nasce com o tenant do cidadão
+          tenantId: await resolveTenantId({ citizenId }),
           messageServerId,
           participant1Id: citizenId,
           participant1Type: 'CITIZEN',

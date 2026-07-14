@@ -7,7 +7,7 @@
  * Lista municípios com uso + wizard de provisionamento em 6 passos
  * (dados → plano/limites → branding → módulos → admin → revisão). Restaura o
  * fluxo completo pré-single-tenant sobre o backend multi-tenant atual.
- * Consome /api/super-admin/tenants (GET/POST/PATCH) e navega para o detalhe.
+ * Consome /api/platform/tenants (GET/POST/PATCH) e navega para o detalhe.
  */
 
 import { useEffect, useState } from 'react';
@@ -93,11 +93,11 @@ export default function TenantsPage() {
 
   useEffect(() => {
     fetchTenants();
-    fetch('/api/super-admin/modules')
+    fetch('/api/platform/modules')
       .then((r) => (r.ok ? r.json() : { modules: [] }))
       .then((d) => setModules(d.modules || []))
       .catch(() => setModules([]));
-    fetch('/api/super-admin/platform-info')
+    fetch('/api/platform/platform-info')
       .then((r) => (r.ok ? r.json() : {}))
       .then((d: { tenantBaseDomain?: string | null; subdomainEnabled?: boolean }) => {
         setBaseDomain(d.tenantBaseDomain ?? null);
@@ -109,7 +109,7 @@ export default function TenantsPage() {
   const fetchTenants = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/super-admin/tenants');
+      const res = await fetch('/api/platform/tenants');
       if (res.ok) setTenants((await res.json()).tenants || []);
     } catch (err) {
       console.error('Erro ao listar municípios:', err);
@@ -171,7 +171,7 @@ export default function TenantsPage() {
         adminName: form.adminName, adminEmail: form.adminEmail,
       };
 
-      const res = await fetch('/api/super-admin/tenants', {
+      const res = await fetch('/api/platform/tenants', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -195,7 +195,7 @@ export default function TenantsPage() {
   const handleStatus = async (t: TenantRow, status: 'ACTIVE' | 'SUSPENDED') => {
     setActingId(t.id);
     try {
-      const res = await fetch(`/api/super-admin/tenants/${t.id}`, {
+      const res = await fetch(`/api/platform/tenants/${t.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(

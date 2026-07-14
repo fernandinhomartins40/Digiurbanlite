@@ -6,7 +6,7 @@
  * ============================================================================
  * Kanban simples de leads (NEW → CONTACTED → QUALIFIED → WON/LOST). Alimentado
  * pelo endpoint público POST /api/public/leads (landing/demo).
- * Consome /api/super-admin/leads (GET/PATCH).
+ * Consome /api/platform/leads (GET/PATCH).
  */
 
 import { useEffect, useState } from 'react';
@@ -38,14 +38,14 @@ export default function LeadsPage() {
   const load = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/super-admin/leads');
+      const res = await fetch('/api/platform/leads');
       if (res.ok) setLeads((await res.json()).leads || []);
     } finally { setLoading(false); }
   };
   useEffect(() => { load(); }, []);
 
   const move = async (id: string, status: string) => {
-    const res = await fetch(`/api/super-admin/leads/${id}`, {
+    const res = await fetch(`/api/platform/leads/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     });
     if (res.ok) { toast({ title: 'Lead atualizado' }); load(); }

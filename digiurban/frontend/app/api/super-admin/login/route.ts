@@ -44,6 +44,22 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    // Fase 1 do plano multi-tenant 2026-07-13: o backend também emite o cookie
+    // digiurban_platform_token (ponte SUPER_ADMIN → PlatformUser) — repassar
+    // os demais Set-Cookie do backend, senão o painel perde o acesso a
+    // /api/platform/* (tenants, billing, leads, schema, backups).
+    const backendCookies =
+      typeof (response.headers as any).getSetCookie === 'function'
+        ? ((response.headers as any).getSetCookie() as string[])
+        : response.headers.get('set-cookie')
+          ? [response.headers.get('set-cookie') as string]
+          : [];
+    for (const cookie of backendCookies) {
+      if (!cookie.startsWith('digiurban_admin_token=')) {
+        nextResponse.headers.append('set-cookie', cookie);
+      }
+    }
+
     return nextResponse;
   } catch (error) {
     console.error('Erro no login:', error);

@@ -45,6 +45,25 @@ PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_US
 # Usar prisma local (evita npx baixar versao 7.x incompativel)
 PRISMA_BIN="./node_modules/.bin/prisma"
 
+# ============================================================================
+# CREDENCIAL DE MIGRATION (Fase 2 do plano multi-tenant 2026-07-13)
+# Com o RLS armado, a app conecta como role NÃO-superuser (digiurban_app) via
+# DATABASE_URL — mas migrations precisam da credencial ELEVADA (dono das
+# tabelas). Se MIGRATE_DATABASE_URL estiver definida, TODO comando de
+# migration/db push deste script usa essa credencial; o restante da app
+# (generate, seed, runtime) permanece na DATABASE_URL normal.
+# ============================================================================
+prisma_migrate() {
+  if [ -n "$MIGRATE_DATABASE_URL" ]; then
+    DATABASE_URL="$MIGRATE_DATABASE_URL" $PRISMA_BIN "$@"
+  else
+    $PRISMA_BIN "$@"
+  fi
+}
+if [ -n "$MIGRATE_DATABASE_URL" ]; then
+  echo "🔐 MIGRATE_DATABASE_URL definida — migrations com credencial elevada (app roda como role restrito)"
+fi
+
 # Resolver QUALQUER migration com falha registrada no banco (evita P3009 bloqueando deploy)
 # Consulta a tabela _prisma_migrations e marca como rolled-back toda que estiver em falha
 echo "🔧 Verificando e resolvendo migrations com falha..."
@@ -62,7 +81,7 @@ if [ -n "$FAILED_MIGRATIONS" ]; then
     migration=$(echo "$migration" | tr -d '[:space:]')
     if [ -n "$migration" ]; then
       echo "   → Marcando como rolled-back: $migration"
-      $PRISMA_BIN migrate resolve --rolled-back "$migration" 2>/dev/null || true
+      prisma_migrate migrate resolve --rolled-back "$migration" 2>/dev/null || true
     fi
   done
 else
@@ -82,17 +101,17 @@ BASELINE_DONE=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres 
 DRIFT_PRESENT=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -t -A   -c "SELECT 1 FROM information_schema.tables WHERE table_name='fila_atendimento' LIMIT 1;" 2>/dev/null || echo "")
 if [ -z "$BASELINE_DONE" ] && [ -n "$DRIFT_PRESENT" ]; then
   echo "🔧 Banco legado detectado (objetos drift presentes) — marcando baseline como aplicada..."
-  $PRISMA_BIN migrate resolve --applied "$BASELINE" || true
+  prisma_migrate migrate resolve --applied "$BASELINE" || true
 fi
 
 # Executar migrations PRIMEIRO (antes de gerar client)
 echo "📦 Executando migrations do Prisma..."
-$PRISMA_BIN migrate deploy || {
+prisma_migrate migrate deploy || {
   # ⚠️ FALLBACK LEGADO — este db push é a ORIGEM do drift de schema (achado B7).
   # Com a cadeia de migrations reparada (2026-07-07) o deploy deve sempre
   # passar; se este fallback disparar, investigar ANTES de aceitar o resultado.
   echo "⚠️⚠️ ATENCAO: migrate deploy FALHOU — fallback db push (gera drift!)..."
-  $PRISMA_BIN db push --skip-generate --accept-data-loss || {
+  prisma_migrate db push --skip-generate --accept-data-loss || {
     echo "❌ db push falhou"
     exit 1
   }

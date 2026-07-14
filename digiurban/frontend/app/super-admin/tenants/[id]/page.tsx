@@ -6,7 +6,7 @@
  * ============================================================================
  * Uso vs limites, plano/limites editáveis, branding, módulos (toggle),
  * suspensão, administradores (criar / reset de senha / ativar) e faturas.
- * Consome /api/super-admin/tenants/:id e sub-recursos.
+ * Consome /api/platform/tenants/:id e sub-recursos.
  */
 
 import { useEffect, useState, useCallback } from 'react';
@@ -88,10 +88,10 @@ export default function TenantDetailPage() {
     setLoading(true);
     try {
       const [tRes, mRes, iRes, pRes] = await Promise.all([
-        fetch(`/api/super-admin/tenants/${id}`),
-        fetch('/api/super-admin/modules'),
-        fetch(`/api/super-admin/tenants/${id}/invoices`),
-        fetch('/api/super-admin/platform-info'),
+        fetch(`/api/platform/tenants/${id}`),
+        fetch('/api/platform/modules'),
+        fetch(`/api/platform/tenants/${id}/invoices`),
+        fetch('/api/platform/platform-info'),
       ]);
       if (tRes.ok) {
         const t: TenantDetail = (await tRes.json()).tenant;
@@ -125,7 +125,7 @@ export default function TenantDetailPage() {
   const patchTenant = async (body: Record<string, unknown>, successMsg: string) => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/super-admin/tenants/${id}`, {
+      const res = await fetch(`/api/platform/tenants/${id}`, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
       if (res.ok) { toast({ title: successMsg }); load(); }
@@ -156,7 +156,7 @@ export default function TenantDetailPage() {
     try {
       const fd = new FormData();
       fd.append('logo', file);
-      const res = await fetch(`/api/super-admin/tenants/${id}/logo`, { method: 'POST', body: fd });
+      const res = await fetch(`/api/platform/tenants/${id}/logo`, { method: 'POST', body: fd });
       const data = await res.json();
       if (res.ok) {
         setLogoUrl(data.logoUrl);
@@ -195,7 +195,7 @@ export default function TenantDetailPage() {
     }
     setSaving(true);
     try {
-      const res = await fetch(`/api/super-admin/tenants/${id}/admins`, {
+      const res = await fetch(`/api/platform/tenants/${id}/admins`, {
         method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newAdmin),
       });
       const data = await res.json();
@@ -209,14 +209,14 @@ export default function TenantDetailPage() {
   };
 
   const resetPassword = async (userId: string, name: string) => {
-    const res = await fetch(`/api/super-admin/tenants/${id}/users/${userId}/reset-password`, { method: 'POST' });
+    const res = await fetch(`/api/platform/tenants/${id}/users/${userId}/reset-password`, { method: 'POST' });
     const data = await res.json();
     if (res.ok) setTempPassword({ label: `Nova senha de ${name}`, value: data.temporaryPassword });
     else toast({ title: 'Erro', description: data.error, variant: 'destructive' });
   };
 
   const toggleUserActive = async (userId: string, isActive: boolean) => {
-    const res = await fetch(`/api/super-admin/tenants/${id}/users/${userId}`, {
+    const res = await fetch(`/api/platform/tenants/${id}/users/${userId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ isActive }),
     });
     if (res.ok) load();
@@ -225,14 +225,14 @@ export default function TenantDetailPage() {
   const generateInvoice = async () => {
     setSaving(true);
     try {
-      const res = await fetch(`/api/super-admin/tenants/${id}/invoices`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+      const res = await fetch(`/api/platform/tenants/${id}/invoices`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
       if (res.ok) { toast({ title: 'Fatura gerada' }); load(); }
       else toast({ title: 'Erro', description: (await res.json()).error, variant: 'destructive' });
     } finally { setSaving(false); }
   };
 
   const setInvoiceStatus = async (invoiceId: string, status: string) => {
-    const res = await fetch(`/api/super-admin/invoices/${invoiceId}`, {
+    const res = await fetch(`/api/platform/invoices/${invoiceId}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     });
     if (res.ok) load();

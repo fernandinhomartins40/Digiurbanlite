@@ -76,7 +76,7 @@ export default function AuditLogsTab() {
 
   // Municípios para o filtro cross-tenant (auditoria de plataforma)
   useEffect(() => {
-    fetch('/api/super-admin/tenants')
+    fetch('/api/platform/tenants')
       .then((r) => (r.ok ? r.json() : { tenants: [] }))
       .then((d) => setTenantOptions((d.tenants || []).map((t: any) => ({ id: t.id, nome: t.nome }))))
       .catch(() => setTenantOptions([]));

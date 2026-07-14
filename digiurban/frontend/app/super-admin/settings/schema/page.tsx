@@ -70,7 +70,7 @@ export default function SchemaManagementPage() {
   const loadSchemaData = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/super-admin/schema');
+      const response = await fetch('/api/platform/schema');
 
       if (response.ok) {
         const result = await response.json();
@@ -113,7 +113,7 @@ export default function SchemaManagementPage() {
 
     setRunningMigrations(true);
     try {
-      const response = await fetch('/api/super-admin/schema/run-migrations', {
+      const response = await fetch('/api/platform/schema/run-migrations', {
         method: 'POST'
       });
 

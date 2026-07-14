@@ -4,13 +4,13 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/ap
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/super-admin/system/backup/[fileName] - Download de backup
+// GET /api/platform/system/backup/[fileName] - Download de backup
 export async function GET(
   request: NextRequest,
   { params }: { params: { fileName: string } }
 ) {
   try {
-    const token = request.cookies.get('digiurban_admin_token')?.value;
+    const token = request.cookies.get('digiurban_platform_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -20,11 +20,11 @@ export async function GET(
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/super-admin/system/backup/${params.fileName}`,
+      `${BACKEND_URL}/platform/system/backup/${params.fileName}`,
       {
         method: 'GET',
         headers: {
-          'Cookie': `digiurban_admin_token=${token}`
+          'Cookie': `digiurban_platform_token=${token}`
         }
       }
     );
@@ -51,13 +51,13 @@ export async function GET(
   }
 }
 
-// DELETE /api/super-admin/system/backup/[fileName] - Deletar backup
+// DELETE /api/platform/system/backup/[fileName] - Deletar backup
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { fileName: string } }
 ) {
   try {
-    const token = request.cookies.get('digiurban_admin_token')?.value;
+    const token = request.cookies.get('digiurban_platform_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -67,11 +67,11 @@ export async function DELETE(
     }
 
     const response = await fetch(
-      `${BACKEND_URL}/super-admin/system/backup/${params.fileName}`,
+      `${BACKEND_URL}/platform/system/backup/${params.fileName}`,
       {
         method: 'DELETE',
         headers: {
-          'Cookie': `digiurban_admin_token=${token}`
+          'Cookie': `digiurban_platform_token=${token}`
         }
       }
     );

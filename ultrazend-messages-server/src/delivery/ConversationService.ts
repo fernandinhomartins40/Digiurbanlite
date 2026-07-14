@@ -2,6 +2,7 @@ import prisma from '../utils/prisma';
 import logger from '../utils/logger';
 import { ParticipantType, ConversationType } from '@prisma/client';
 import { ensureActiveMessageServerId } from '../utils/messageServer';
+import { resolveTenantId } from '../utils/tenant';
 
 export class ConversationService {
   /**
@@ -112,8 +113,17 @@ export class ConversationService {
       if (!conversation) {
         const messageServerId = await ensureActiveMessageServerId();
 
+        // Fase 5 multi-tenant (plano 2026-07-13): conversa nasce com o tenant
+        // do cidadão participante — visível às leituras escopadas do backend.
+        const citizenParticipantId =
+          participant1Type === 'CITIZEN' ? participant1Id
+          : participant2Type === 'CITIZEN' ? participant2Id
+          : null;
+        const tenantId = await resolveTenantId({ citizenId: citizenParticipantId });
+
         conversation = await prisma.conversation.create({
           data: {
+            tenantId,
             messageServerId,
             participant1Id,
             participant1Type,

@@ -18,6 +18,7 @@ import { NodeExecutors } from './NodeExecutors';
 import { TemplateEngine } from './TemplateEngine';
 import { InputValidator } from './InputValidator';
 import { detectReservedAction, RESERVED_RESPONSES } from '../ReservedKeywords';
+import { getBotTenantId } from '../tenant-context';
 
 export class FlowEngine {
   private stateManager: FlowStateManager;
@@ -573,12 +574,26 @@ export class FlowEngine {
    * Busca definicao de fluxo por nome
    */
   private async getFlowDefinition(name: string): Promise<FlowDefinition | null> {
-    const flow = await prisma.flowDefinition.findFirst({
+    // Onda 8 multi-tenant: fluxo do TENANT do cidadão (claim do JWT via
+    // contexto ALS); fallback para linha legada (tenantId NULL, pré-onda 8).
+    const tenantId = getBotTenantId() || process.env.DEFAULT_TENANT_ID || 'tenant-default';
+    let flow = await prisma.flowDefinition.findFirst({
       where: {
         name,
         isActive: true,
+        tenantId,
       },
     });
+
+    if (!flow) {
+      flow = await prisma.flowDefinition.findFirst({
+        where: {
+          name,
+          isActive: true,
+          tenantId: null,
+        },
+      });
+    }
 
     return flow ? this.mapToFlowDefinition(flow) : null;
   }

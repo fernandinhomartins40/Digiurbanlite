@@ -246,8 +246,11 @@ try {
 }
 
 // Plataforma (Fase C Multi-Tenant): PlatformUser + gestão de municípios.
-// Substitui /api/super-admin/tenants (dupla aceitação até o corte).
+// Corte executado (plano 2026-07-13): /api/super-admin/tenants* responde 410.
 loadRoute('/api/platform', './routes/platform');
+// Painel de plataforma completo (Fases 1/6 do plano 2026-07-13): detalhe de
+// municípios, admins, billing, leads, métricas, schema, migrations, backups.
+loadRoute('/api/platform', './routes/platform-panel.routes');
 
 // Super Admin
 const superAdminRoutes = require('./routes/super-admin').default;

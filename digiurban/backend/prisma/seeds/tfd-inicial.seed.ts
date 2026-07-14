@@ -32,11 +32,11 @@ async function seedTFD() {
   ];
 
   for (const esp of especialidades) {
-    await prisma.especialidadeTFD.upsert({
-      where: { nome: esp.nome },
-      update: {},
-      create: esp,
-    });
+    // onda 8: unique composta [tenantId, nome] — findFirst é escopado pela tenant-extension
+    const existing = await prisma.especialidadeTFD.findFirst({ where: { nome: esp.nome } });
+    if (!existing) {
+      await prisma.especialidadeTFD.create({ data: esp });
+    }
   }
   console.log(`   ✅ ${especialidades.length} especialidades criadas\n`);
 
@@ -87,17 +87,18 @@ async function seedTFD() {
   ];
 
   for (const dest of destinos) {
-    await prisma.destinoTFD.upsert({
+    // onda 8: unique composta [tenantId, cidade, estado, hospital] — findFirst
+    // é escopado pela tenant-extension
+    const existing = await prisma.destinoTFD.findFirst({
       where: {
-        cidade_estado_hospital: {
-          cidade: dest.cidade,
-          estado: dest.estado,
-          hospital: dest.hospital || '',
-        },
+        cidade: dest.cidade,
+        estado: dest.estado,
+        hospital: dest.hospital || '',
       },
-      update: {},
-      create: dest,
     });
+    if (!existing) {
+      await prisma.destinoTFD.create({ data: dest });
+    }
   }
   console.log(`   ✅ ${destinos.length} destinos criados\n`);
 

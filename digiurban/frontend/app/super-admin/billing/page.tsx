@@ -5,7 +5,7 @@
  * FATURAMENTO DA PLATAFORMA — painel super-admin
  * ============================================================================
  * Visão consolidada das faturas de todos os municípios (MRR, pendências,
- * inadimplência). Consome /api/super-admin/invoices.
+ * inadimplência). Consome /api/platform/invoices.
  */
 
 import { useEffect, useState } from 'react';
@@ -38,7 +38,7 @@ export default function BillingPage() {
     setLoading(true);
     try {
       const qs = status !== 'all' ? `?status=${status}` : '';
-      const res = await fetch(`/api/super-admin/invoices${qs}`);
+      const res = await fetch(`/api/platform/invoices${qs}`);
       if (res.ok) setInvoices((await res.json()).invoices || []);
     } finally { setLoading(false); }
   };
@@ -46,7 +46,7 @@ export default function BillingPage() {
   useEffect(() => { load(filter); }, [filter]);
 
   const setStatus = async (id: string, status: string) => {
-    const res = await fetch(`/api/super-admin/invoices/${id}`, {
+    const res = await fetch(`/api/platform/invoices/${id}`, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status }),
     });
     if (res.ok) { toast({ title: 'Fatura atualizada' }); load(filter); }

@@ -4,10 +4,10 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/ap
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/super-admin/schema - Obter informações do schema do banco de dados
-export async function GET(request: NextRequest) {
+// POST /api/platform/schema/run-migrations
+export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('digiurban_admin_token')?.value;
+    const token = request.cookies.get('digiurban_platform_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -16,10 +16,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/super-admin/schema`, {
-      method: 'GET',
+    const response = await fetch(`${BACKEND_URL}/platform/schema/run-migrations`, {
+      method: 'POST',
       headers: {
-        'Cookie': `digiurban_admin_token=${token}`
+        'Cookie': `digiurban_platform_token=${token}`,
+        'Content-Type': 'application/json'
       }
     });
 
@@ -31,7 +32,7 @@ export async function GET(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Erro ao obter schema:', error);
+    console.error('Erro ao executar migrations:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }

@@ -196,11 +196,11 @@ export async function seed06AgendasTurnos() {
   ];
 
   for (const turno of turnos) {
-    await prisma.turnoTrabalho.upsert({
-      where: { nome: turno.nome },
-      update: {},
-      create: turno,
-    });
+    // onda 8: unique composta [tenantId, nome] — findFirst é escopado pela tenant-extension
+    const existing = await prisma.turnoTrabalho.findFirst({ where: { nome: turno.nome } });
+    if (!existing) {
+      await prisma.turnoTrabalho.create({ data: turno });
+    }
 
     console.log(`   ✅ Turno: ${turno.nome} (${turno.horaInicio} - ${turno.horaFim})`);
   }

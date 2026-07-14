@@ -318,6 +318,17 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 
 ## Gotchas e Armadilhas Comuns
 
+### Multi-Tenant (plano 2026-07-13 implementado)
+- Isolamento automático: models com campo `tenantId` são escopados pela extension (`lib/prisma-tenant-extension.ts`, detecção via DMMF) — novas tabelas municipais DEVEM ter `tenantId String?` + `@@index([tenantId])`
+- Uniques de catálogo são compostas `[tenantId, x]` — `findUnique({ where: { nome } })` não compila; usar `findFirst` (a extension escopa)
+- Endpoints de plataforma vivem em `/api/platform` (PlatformUser, cookie `digiurban_platform_token`); `/api/super-admin/tenants*` responde **410**
+- Login do super-admin espelha SUPER_ADMIN do tenant default como PlatformUser (ponte de identidade) — o proxy Next repassa todos os Set-Cookie
+- Jobs/seeds: `runAsTenant()`/`forEachActiveTenant()`; seeds standalone têm normalização de `tenantId` NULL no fim do `seed-consolidated.ts`
+- Fluxos do bot são POR TENANT (`[tenantId, name]`); seeder do Messages Server itera tenants ativos
+- Messages Server: schema local é cópia — ao mudar Conversation/Message/FlowDefinition no backend, sincronizar `ultrazend-messages-server/prisma/schema.prisma`; escritas usam `resolveTenantId()` (`src/utils/tenant.ts`)
+- Deploy: RLS só vale com role não-superuser (`digiurban_app` + `MIGRATE_DATABASE_URL` p/ migrations); flags `TENANT_STRICT*` no compose
+- Smoke de isolamento: `npm run smoke:tenant:isolation` (2 tenants efêmeros, requer banco)
+
 ### Backend
 - `concludedAt` para tempo de conclusão (NÃO `updatedAt`)
 - `createdById` (não `createdBy`)

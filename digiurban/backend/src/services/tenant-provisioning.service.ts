@@ -11,7 +11,18 @@
  */
 
 import { Prisma } from '@prisma/client';
-import { runAsPlatform } from '../lib/tenant-context';
+import { runAsPlatform, runAsTenant } from '../lib/tenant-context';
+import {
+  programasSociaisData,
+  tiposObraServicoData,
+  especialidadesMedicasData,
+  tiposProducaoAgricolaData,
+  especiesArvoreData,
+  tiposEstabelecimentoTuristicoData,
+  modalidadesEsportivasData,
+  tiposAtividadeCulturalData,
+  tiposOcorrenciaData,
+} from '../data/default-catalogs.data';
 
 /**
  * Secretarias que todo município recebe ao ser provisionado.
@@ -319,6 +330,15 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
     })
   );
 
+  // Catálogos de referência da onda 8 (plano 2026-07-13): sem isto o município
+  // novo nasce com dropdowns vazios (especialidades médicas, tipos de obra,
+  // modalidades etc.). Best-effort pós-commit — falha não desfaz o tenant.
+  try {
+    await seedDefaultCatalogs(result.tenant.id);
+  } catch (catalogError) {
+    console.error(`[PROVISION] Falha ao semear catálogos do tenant ${result.tenant.slug}:`, catalogError);
+  }
+
   const { TenantService } = await import('./tenant.service');
   TenantService.invalidate();
 
@@ -329,6 +349,33 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
     servicesCreated: result.servicesCreated,
     temporaryPassword: tempPassword,
   };
+}
+
+/**
+ * Catálogos de referência (onda 8 — plano 2026-07-13) que todo município NOVO
+ * recebe no provisionamento: especialidades médicas, tipos de obra/serviço,
+ * modalidades esportivas etc. Sem isto os dropdowns nascem vazios.
+ *
+ * Idempotente: uniques compostas [tenantId, x] + skipDuplicates. Ativos
+ * físicos e programas específicos (máquinas, viaturas, cursos, programas
+ * habitacionais/ambientais) NÃO são semeados — são dados do município.
+ */
+export async function seedDefaultCatalogs(tenantId: string): Promise<void> {
+  const { prisma } = await import('../lib/prisma');
+  const withTenant = <T extends object>(rows: T[]) =>
+    rows.map((r) => ({ ...r, tenantId })) as any[];
+
+  await runAsTenant(tenantId, async () => {
+    await prisma.tipoObraServico.createMany({ data: withTenant(tiposObraServicoData), skipDuplicates: true });
+    await prisma.especialidadeMedica.createMany({ data: withTenant(especialidadesMedicasData), skipDuplicates: true });
+    await prisma.tipoProducaoAgricola.createMany({ data: withTenant(tiposProducaoAgricolaData), skipDuplicates: true });
+    await prisma.especieArvore.createMany({ data: withTenant(especiesArvoreData), skipDuplicates: true });
+    await prisma.tipoEstabelecimentoTuristico.createMany({ data: withTenant(tiposEstabelecimentoTuristicoData), skipDuplicates: true });
+    await prisma.modalidadeEsportiva.createMany({ data: withTenant(modalidadesEsportivasData), skipDuplicates: true });
+    await prisma.tipoAtividadeCultural.createMany({ data: withTenant(tiposAtividadeCulturalData), skipDuplicates: true });
+    await prisma.tipoOcorrencia.createMany({ data: withTenant(tiposOcorrenciaData), skipDuplicates: true });
+    await prisma.programaSocial.createMany({ data: withTenant(programasSociaisData), skipDuplicates: true });
+  });
 }
 
 /** Atualiza/suspende/reativa um tenant (visão de plataforma). */

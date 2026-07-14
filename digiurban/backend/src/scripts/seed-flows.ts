@@ -56,15 +56,16 @@ async function seedFlows() {
 
       console.log(`📄 Processando: ${flowData.name}`);
 
-      // Verifica se já existe
-      const existing = await prisma.flowDefinition.findUnique({
+      // Verifica se já existe NO TENANT atual (unique composta [tenantId, name]
+      // — onda 8; findFirst é escopado pela tenant-extension)
+      const existing = await prisma.flowDefinition.findFirst({
         where: { name: flowData.name },
       });
 
       if (existing) {
         // Atualiza
         await prisma.flowDefinition.update({
-          where: { name: flowData.name },
+          where: { id: existing.id },
           data: {
             description: flowData.description,
             version: flowData.version,

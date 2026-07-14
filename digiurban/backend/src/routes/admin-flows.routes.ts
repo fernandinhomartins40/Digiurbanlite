@@ -177,8 +177,9 @@ router.post('/', async (req: Request, res: Response) => {
       });
     }
 
-    // Valida que o nome não existe
-    const existing = await prisma.flowDefinition.findUnique({
+    // Valida que o nome não existe NO TENANT atual (unique composta
+    // [tenantId, name] — onda 8; findFirst é escopado pela tenant-extension)
+    const existing = await prisma.flowDefinition.findFirst({
       where: { name },
     });
 
@@ -239,7 +240,8 @@ const updateFlowHandler = async (req: Request, res: Response) => {
     const updateData: any = {};
 
     if (name !== undefined && name !== flow.name) {
-      const existing = await prisma.flowDefinition.findUnique({
+      // unique composta [tenantId, name] — findFirst escopado (onda 8)
+      const existing = await prisma.flowDefinition.findFirst({
         where: { name },
       });
 
@@ -371,7 +373,8 @@ router.post('/:id/duplicate', async (req: Request, res: Response) => {
     }
 
     // Verifica se novo nome já existe
-    const existing = await prisma.flowDefinition.findUnique({
+    // unique composta [tenantId, name] — findFirst escopado (onda 8)
+    const existing = await prisma.flowDefinition.findFirst({
       where: { name: duplicateName },
     });
 

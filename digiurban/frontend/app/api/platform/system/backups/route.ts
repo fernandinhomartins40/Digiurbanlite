@@ -4,10 +4,10 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/ap
 
 export const dynamic = 'force-dynamic';
 
-// GET /api/super-admin/system/backups
+// GET /api/platform/system/backups
 export async function GET(request: NextRequest) {
   try {
-    const token = request.cookies.get('digiurban_admin_token')?.value;
+    const token = request.cookies.get('digiurban_platform_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -16,9 +16,9 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/super-admin/system/backups`, {
+    const response = await fetch(`${BACKEND_URL}/platform/system/backups`, {
       headers: {
-        'Cookie': `digiurban_admin_token=${token}`
+        'Cookie': `digiurban_platform_token=${token}`
       }
     });
 
@@ -38,10 +38,10 @@ export async function GET(request: NextRequest) {
   }
 }
 
-// POST /api/super-admin/system/backups
+// POST /api/platform/system/backups
 export async function POST(request: NextRequest) {
   try {
-    const token = request.cookies.get('digiurban_admin_token')?.value;
+    const token = request.cookies.get('digiurban_platform_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -50,10 +50,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/super-admin/system/backups`, {
+    const response = await fetch(`${BACKEND_URL}/platform/system/backups`, {
       method: 'POST',
       headers: {
-        'Cookie': `digiurban_admin_token=${token}`
+        'Cookie': `digiurban_platform_token=${token}`
       }
     });
 

@@ -36,7 +36,7 @@ export default function OperationsPage() {
   const fetchBackups = async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/super-admin/system/backups');
+      const response = await fetch('/api/platform/system/backups');
       if (response.ok) {
         const data = await response.json();
         setBackups(data.data);
@@ -51,7 +51,7 @@ export default function OperationsPage() {
   const handleCreateBackup = async () => {
     setCreating(true);
     try {
-      const response = await fetch('/api/super-admin/system/backup', {
+      const response = await fetch('/api/platform/system/backup', {
         method: 'POST'
       });
 
@@ -87,7 +87,7 @@ export default function OperationsPage() {
 
   const handleDownloadBackup = async (fileName: string) => {
     try {
-      const response = await fetch(`/api/super-admin/system/backup/${fileName}`);
+      const response = await fetch(`/api/platform/system/backup/${fileName}`);
 
       if (response.ok) {
         const blob = await response.blob();
@@ -122,7 +122,7 @@ export default function OperationsPage() {
     }
 
     try {
-      const response = await fetch(`/api/super-admin/system/backup/${fileName}`, {
+      const response = await fetch(`/api/platform/system/backup/${fileName}`, {
         method: 'DELETE'
       });
 
@@ -150,7 +150,7 @@ export default function OperationsPage() {
     }
 
     try {
-      const response = await fetch(`/api/super-admin/system/backup/${fileName}/restore`, {
+      const response = await fetch(`/api/platform/system/backup/${fileName}/restore`, {
         method: 'POST'
       });
 

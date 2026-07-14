@@ -466,6 +466,34 @@ async function main() {
     const seedDocumentTemplates = (await import('./seeds/document-templates.seed')).default;
     await seedDocumentTemplates();
 
+    // ========================================================================
+    // 10. NORMALIZAÇÃO MULTI-TENANT (onda 8 — plano 2026-07-13)
+    // Os seeds usam PrismaClient cru (sem a tenant-extension), então linhas
+    // criadas aqui nascem com tenantId NULL — invisíveis às leituras escopadas
+    // do app. Este passo herda o tenant default em TODA tabela com coluna
+    // tenantId (mesmo critério do backfill das migrations das ondas 1-8).
+    // ========================================================================
+    console.log('\n🔟 Normalizando tenantId dos dados seedados...');
+    try {
+      await prisma.$executeRawUnsafe(`
+        DO $seedfix$
+        DECLARE r RECORD; default_tenant TEXT;
+        BEGIN
+          SELECT id INTO default_tenant FROM tenants ORDER BY "createdAt" ASC LIMIT 1;
+          IF default_tenant IS NULL THEN default_tenant := 'tenant-default'; END IF;
+          FOR r IN
+            SELECT DISTINCT table_name FROM information_schema.columns
+            WHERE column_name = 'tenantId' AND table_schema = 'public' AND table_name <> 'tenants'
+          LOOP
+            EXECUTE format('UPDATE %I SET "tenantId" = %L WHERE "tenantId" IS NULL', r.table_name, default_tenant);
+          END LOOP;
+        END $seedfix$;
+      `);
+      console.log('   ✅ tenantId normalizado para o tenant default');
+    } catch (normalizeError) {
+      console.error('   ⚠️  Erro na normalização de tenantId (continuando):', normalizeError);
+    }
+
     console.log('\n╔════════════════════════════════════════════════════════╗');
     console.log('║  🚀 Sistema pronto para uso!                          ║');
     console.log('╚════════════════════════════════════════════════════════╝\n');

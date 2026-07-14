@@ -4876,6 +4876,7 @@ model MessageServer {
 
 model Conversation {
   id              String @id @default(cuid())
+  tenantId        String? // Fase 5 do plano 2026-07-13: isolamento por município (coluna já existe no schema do backend)
   messageServerId String
 
   // Participantes
@@ -4926,6 +4927,7 @@ model Conversation {
   activeFlowExecution  FlowExecution? @relation("ActiveFlowExecution", fields: [activeFlowExecutionId], references: [id], onDelete: SetNull)
 
   @@unique([participant1Id, participant1Type, participant2Id, participant2Type, protocolId])
+  @@index([tenantId])
   @@index([participant1Id, participant1Type, status])
   @@index([participant2Id, participant2Type, status])
   @@index([protocolId])
@@ -4959,6 +4961,7 @@ enum ConversationStatus {
 
 model Message {
   id             String @id @default(cuid())
+  tenantId       String? // Fase 5 do plano 2026-07-13: isolamento por município (coluna já existe no schema do backend)
   conversationId String
 
   // Autor
@@ -5008,6 +5011,7 @@ model Message {
   replies      Message[]       @relation("MessageReplies")
   reports      MessageReport[]
 
+  @@index([tenantId])
   @@index([conversationId, sentAt])
   @@index([senderId, senderType])
   @@index([status, sentAt])
@@ -6232,12 +6236,13 @@ model BotUpload {
 // Definições de fluxos conversacionais
 model FlowDefinition {
   id          String   @id @default(cuid())
-  name        String   @unique
+  tenantId    String? // Onda 8 multi-tenant (plano 2026-07-13): fluxos POR município
+  name        String // unique composta [tenantId, name] — onda 8
   description String?  @db.Text
   version     String   @default("1.0.0")
   isActive    Boolean  @default(true)
   isDefault   Boolean  @default(false) // Fluxo padrão do sistema
-  municipioId String? // Fluxo customizado por município
+  municipioId String? // legado — substituído por tenantId (onda 8)
   nodes       Json // Array de nodos do fluxo
   metadata    Json? // Tags, categorias, ícones, etc
   createdAt   DateTime @default(now())
@@ -6247,6 +6252,8 @@ model FlowDefinition {
   // Relacionamentos
   executions FlowExecution[]
 
+  @@unique([tenantId, name]) // onda 8: por tenant
+  @@index([tenantId])
   @@index([municipioId])
   @@index([isActive])
   @@index([isDefault])

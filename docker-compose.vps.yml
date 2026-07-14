@@ -354,7 +354,24 @@ services:
       # Sem esta variável, todo subdomínio cai no tenant default.
       - TENANT_BASE_DOMAIN=${TENANT_BASE_DOMAIN:-digiurban.com.br}
       # Hosts que resolvem para o tenant default (domínio raiz single-tenant).
-      - TENANT_DEFAULT_HOSTS=${TENANT_DEFAULT_HOSTS:-digiurban.com.br,www.digiurban.com.br}
+      # ⚠️ Antes de ligar TENANT_STRICT_HOST, inclua aqui TODO host legítimo
+      # que não seja subdomínio/domínio de tenant (ex.: o IP do VPS).
+      - TENANT_DEFAULT_HOSTS=${TENANT_DEFAULT_HOSTS:-digiurban.com.br,www.digiurban.com.br,72.60.10.108}
+
+      # ── Hardening multi-tenant (Fase 2 do plano 2026-07-13) ──────────────
+      # Onda 1 (LIGADO por padrão): JWT sem claim de tenant (sessão anterior à
+      # atualização) exige novo login — o login novo emite o claim.
+      - TENANT_REQUIRE_TOKEN_CLAIM=${TENANT_REQUIRE_TOKEN_CLAIM:-1}
+      # Onda 1b (ligar após conferir TENANT_DEFAULT_HOSTS acima): host
+      # desconhecido deixa de cair no default e recebe 503 TENANT_UNRESOLVED.
+      - TENANT_STRICT_HOST=${TENANT_STRICT_HOST:-0}
+      # Onda 2 (ligar quando a telemetria de fail-soft zerar por alguns dias):
+      # operação Prisma/upload sem contexto de tenant LANÇA erro.
+      - TENANT_STRICT=${TENANT_STRICT:-0}
+      # RLS armado: DATABASE_URL deve usar o role NÃO-superuser digiurban_app
+      # (backend/scripts/setup-app-role.sql). Migrations continuam com a
+      # credencial elevada via MIGRATE_DATABASE_URL (usada só no startup.sh).
+      - MIGRATE_DATABASE_URL=${MIGRATE_DATABASE_URL:-}
 
       # Service Token (para Messages Server)
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}

@@ -11,6 +11,7 @@
     "format": "prettier --write \"src/**/*.{ts,js,json}\"",
     "format:check": "prettier --check \"src/**/*.{ts,js,json}\"",
     "smoke:tenant": "ts-node --transpile-only scripts/smoke-tenant.ts",
+    "smoke:tenant:isolation": "tsx scripts/smoke-multi-tenant.ts",
     "type-check": "tsc --noEmit",
     "type-check:watch": "tsc --noEmit --watch",
     "migrate:ts": "ts-migrate migrate src",

@@ -5,6 +5,7 @@
 
 import prisma from '../utils/prisma';
 import { WebSocketServer } from '../server/WebSocketServer';
+import { resolveTenantId } from '../utils/tenant';
 
 export class HandoverService {
   private wsServer: WebSocketServer | null = null;
@@ -233,6 +234,8 @@ export class HandoverService {
           // Enviar mensagem ao cidadão
           const botMessage = await prisma.message.create({
             data: {
+              // Fase 5 multi-tenant: mensagem herda o tenant (ALS ou conversa)
+              tenantId: await resolveTenantId({ conversationId }),
               conversationId,
               senderId: 'DIGIBOT_SYSTEM',
               senderType: 'SYSTEM',

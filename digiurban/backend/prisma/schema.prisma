@@ -3498,6 +3498,7 @@ model UnidadeCRAS {
 // Espaços Públicos (Quadras, Ginásios, Teatros, Centros Culturais, etc.)
 model EspacoPublico {
   id          String   @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   nome        String
   tipo        String // 'Quadra', 'Ginásio', 'Campo', 'Piscina', 'Teatro', 'Centro Cultural', 'Praça', 'Outro'
   categoria   String? // 'Esportivo', 'Cultural', 'Lazer', 'Misto'
@@ -3515,6 +3516,7 @@ model EspacoPublico {
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("espacos_publicos")
+  @@index([tenantId])
 }
 
 // ========================================
@@ -3524,6 +3526,7 @@ model EspacoPublico {
 // Conjuntos Habitacionais
 model ConjuntoHabitacional {
   id                  String   @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   nome                String
   endereco            String?
   bairro              String?
@@ -3541,12 +3544,14 @@ model ConjuntoHabitacional {
 
   @@index([isActive])
   @@map("conjuntos_habitacionais")
+  @@index([tenantId])
 }
 
 // Viaturas e Equipamentos de Segurança
 model ViaturaSeguranca {
   id                String    @id @default(cuid())
-  codigo            String    @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  codigo            String // unique composta [tenantId, codigo] — onda 8
   tipo              String // 'Patrulha', 'Moto', 'Bicicleta', 'Viatura Especial'
   placa             String?
   modelo            String?
@@ -3561,14 +3566,17 @@ model ViaturaSeguranca {
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
+  @@unique([tenantId, codigo]) // onda 8: por tenant
   @@index([status, isActive])
   @@index([isActive])
   @@map("viaturas_seguranca")
+  @@index([tenantId])
 }
 
 // Parques e Praças
 model ParquePraca {
   id                   String    @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   nome                 String
   tipo                 String // 'Parque', 'Praça', 'Jardim', 'Área Verde'
   endereco             String?
@@ -3589,11 +3597,13 @@ model ParquePraca {
   @@index([tipo, isActive])
   @@index([isActive])
   @@map("parques_pracas")
+  @@index([tenantId])
 }
 
 // Estabelecimentos Turísticos
 model EstabelecimentoTuristico {
   id         String   @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   nome       String
   tipo       String // 'Hotel', 'Pousada', 'Restaurante', 'Atração Turística'
   endereco   String?
@@ -3614,6 +3624,7 @@ model EstabelecimentoTuristico {
   @@index([tipo, isActive])
   @@index([isActive])
   @@map("estabelecimentos_turisticos")
+  @@index([tenantId])
 }
 
 // ========================================
@@ -3651,7 +3662,8 @@ model ProgramaSocial {
 // Tipos de Obras e Serviços
 model TipoObraServico {
   id                      String   @id @default(cuid())
-  nome                    String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                    String // unique composta [tenantId, nome] — onda 8
   categoria               String // 'Pavimentação', 'Drenagem', 'Iluminação', 'Saneamento'
   descricao               String?
   tempoMedioExecucao      Int? // Dias
@@ -3662,15 +3674,18 @@ model TipoObraServico {
   createdAt               DateTime @default(now())
   updatedAt               DateTime @updatedAt
 
+  @@unique([tenantId, nome]) // onda 8: por tenant
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("tipos_obra_servico")
+  @@index([tenantId])
 }
 
 // Especialidades Médicas (ATUALIZADO)
 model EspecialidadeMedica {
   id                  String   @id @default(cuid())
-  nome                String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                String // unique composta [tenantId, nome] — onda 8
   descricao           String?
   area                String? // 'Clínica Médica', 'Cirúrgica', 'Diagnóstica'
   tempoMedioConsulta  Int? // Minutos
@@ -3686,15 +3701,18 @@ model EspecialidadeMedica {
   agendas         AgendaMedica[]
   solicitacoesTFD SolicitacaoTFD[]
 
+  @@unique([tenantId, nome]) // onda 8: por tenant
   @@index([area, isActive])
   @@index([isActive])
   @@map("especialidades_medicas")
+  @@index([tenantId])
 }
 
 // Tipos de Produção Agrícola
 model TipoProducaoAgricola {
   id                           String   @id @default(cuid())
-  nome                         String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                         String // unique composta [tenantId, nome] — onda 8
   categoria                    String // 'Vegetal', 'Animal'
   subcategoria                 String? // 'Grãos', 'Hortaliças', 'Pecuária Leiteira'
   sazonalidade                 Json? // Meses de plantio/colheita
@@ -3704,17 +3722,20 @@ model TipoProducaoAgricola {
   createdAt                    DateTime @default(now())
   updatedAt                    DateTime @updatedAt
 
+  @@unique([tenantId, nome]) // onda 8: por tenant
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("tipos_producao_agricola")
+  @@index([tenantId])
 }
 
 // Máquinas e Equipamentos Agrícolas
 model MaquinaAgricola {
   id                    String    @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   tipo                  String // 'Trator', 'Arado', 'Grade', 'Plantadeira'
   modelo                String?
-  identificacao         String    @unique
+  identificacao         String // unique composta [tenantId, identificacao] — onda 8
   status                String    @default("Disponível") // 'Disponível', 'Emprestada', 'Manutenção'
   capacidade            String?
   potencia              String?
@@ -3730,12 +3751,15 @@ model MaquinaAgricola {
   @@index([status, isActive])
   @@index([isActive])
   @@map("maquinas_agricolas")
+  @@unique([tenantId, identificacao]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Espécies de Árvores
 model EspecieArvore {
   id                   String   @id @default(cuid())
-  nomeComum            String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nomeComum            String
   nomeCientifico       String?
   familia              String?
   origem               String? // 'Nativa', 'Exótica'
@@ -3755,12 +3779,15 @@ model EspecieArvore {
   @@index([origem, isActive])
   @@index([isActive])
   @@map("especies_arvore")
+  @@unique([tenantId, nomeComum]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Tipos de Estabelecimentos Turísticos (Categorias)
 model TipoEstabelecimentoTuristico {
   id                    String   @id @default(cuid())
-  nome                  String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                  String
   categoria             String? // 'Hospedagem', 'Alimentação', 'Atração', 'Serviço'
   requisitosLegais      Json? // ['Alvará', 'Licença Sanitária']
   documentosNecessarios Json? // Array de documentos
@@ -3773,12 +3800,15 @@ model TipoEstabelecimentoTuristico {
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("tipos_estabelecimento_turistico")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Modalidades Esportivas
 model ModalidadeEsportiva {
   id                       String   @id @default(cuid())
-  nome                     String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                     String
   categoria                String // 'Individual', 'Coletivo'
   tipo                     String? // 'Quadra', 'Campo', 'Piscina', 'Tatame'
   faixasEtarias            Json? // ['Infantil', 'Juvenil', 'Adulto', 'Sênior']
@@ -3792,12 +3822,15 @@ model ModalidadeEsportiva {
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("modalidades_esportivas")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Tipos de Atividades Culturais
 model TipoAtividadeCultural {
   id                       String   @id @default(cuid())
-  nome                     String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                     String
   categoria                String? // 'Artes Visuais', 'Artes Cênicas', 'Música', 'Literatura'
   materialNecessario       Json? // Array de materiais
   faixasEtarias            Json? // Idades recomendadas
@@ -3811,12 +3844,15 @@ model TipoAtividadeCultural {
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("tipos_atividade_cultural")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Tipos de Ocorrências
 model TipoOcorrencia {
   id                        String   @id @default(cuid())
-  nome                      String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                      String
   categoria                 String // 'Contra Pessoa', 'Contra Patrimônio', 'Ordem Pública'
   gravidade                 Int      @default(3) // 1-5
   requererBoletimOcorrencia Boolean  @default(false)
@@ -3830,12 +3866,15 @@ model TipoOcorrencia {
   @@index([categoria, gravidade, isActive])
   @@index([isActive])
   @@map("tipos_ocorrencia")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Cursos Profissionalizantes
 model CursoProfissionalizante {
   id                   String    @id @default(cuid())
-  nome                 String    @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                 String
   categoria            String? // 'Informática', 'Artesanato', 'Mecânica'
   area                 String?
   cargaHoraria         Int? // Horas totais
@@ -3857,12 +3896,15 @@ model CursoProfissionalizante {
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("cursos_profissionalizantes")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Programas Habitacionais
 model ProgramaHabitacional {
   id                     String    @id @default(cuid())
-  nome                   String    @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                   String
   descricao              String?
   tipo                   String // 'Aquisição', 'Melhoria', 'Regularização'
   criteriosElegibilidade Json? // Critérios estruturados
@@ -3882,12 +3924,15 @@ model ProgramaHabitacional {
   @@index([tipo, isActive])
   @@index([isActive])
   @@map("programas_habitacionais")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Programas Ambientais
 model ProgramaAmbiental {
   id                       String    @id @default(cuid())
-  nome                     String    @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome                     String
   descricao                String?
   tipo                     String? // 'Coleta Seletiva', 'Arborização', 'Educação Ambiental'
   objetivos                String?
@@ -3905,6 +3950,8 @@ model ProgramaAmbiental {
   @@index([tipo, isActive])
   @@index([isActive])
   @@map("programas_ambientais")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // ========================================
@@ -3941,9 +3988,10 @@ model Professor {
 // Guias Turísticos
 model GuiaTuristico {
   id              String   @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   nome            String
-  cpf             String   @unique
-  cadastur        String?  @unique // Cadastro do Ministério do Turismo
+  cpf             String
+  cadastur        String? // Cadastro do Ministério do Turismo
   idiomas         Json? // Array de idiomas
   especialidades  Json? // ['Histórico', 'Ecológico', 'Aventura']
   certificacoes   Json? // Array de certificações
@@ -3957,6 +4005,9 @@ model GuiaTuristico {
 
   @@index([isActive])
   @@map("guias_turisticos")
+  @@unique([tenantId, cpf]) // onda 8: por tenant
+  @@unique([tenantId, cadastur]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // ========================================
@@ -3966,7 +4017,8 @@ model GuiaTuristico {
 // Tipos de Documentos
 model TipoDocumento {
   id                String   @id @default(cuid())
-  nome              String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome              String
   descricao         String?
   categoria         String // 'Identificação', 'Comprovante', 'Declaração', 'Licença'
   formatosAceitos   Json? // ['PDF', 'JPG', 'PNG']
@@ -3980,6 +4032,8 @@ model TipoDocumento {
   @@index([categoria, isActive])
   @@index([isActive])
   @@map("tipos_documento")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // ============================================================================
@@ -4420,6 +4474,7 @@ model AtendimentoOdontologico {
 
 model ProcedimentoOdonto {
   id                  String @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   atendimentoOdontoId String
 
   codigoSIGTAP String // Código SIGTAP do procedimento
@@ -4437,6 +4492,7 @@ model ProcedimentoOdonto {
   @@index([atendimentoOdontoId])
   @@index([codigoSIGTAP])
   @@map("procedimentos_odonto")
+  @@index([tenantId])
 }
 
 // ✅ FASE 2.2: ACOMPANHAMENTO PRÉ-NATAL
@@ -5118,7 +5174,8 @@ enum StatusMotoristaTFD {
 // Especialidades TFD (gerenciadas dinamicamente pelo APP)
 model EspecialidadeTFD {
   id        String   @id @default(cuid())
-  nome      String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  nome      String
   descricao String?
   ativo     Boolean  @default(true)
   ordem     Int      @default(0)
@@ -5128,11 +5185,14 @@ model EspecialidadeTFD {
   @@index([ativo])
   @@index([ordem])
   @@map("especialidades_tfd")
+  @@unique([tenantId, nome]) // onda 8: por tenant
+  @@index([tenantId])
 }
 
 // Destinos TFD (cidades/hospitais frequentes)
 model DestinoTFD {
   id             String   @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   cidade         String
   estado         String
   hospital       String?
@@ -5144,10 +5204,11 @@ model DestinoTFD {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 
-  @@unique([cidade, estado, hospital])
+  @@unique([tenantId, cidade, estado, hospital]) // onda 8: por tenant
   @@index([ativo])
   @@index([cidade])
   @@map("destinos_tfd")
+  @@index([tenantId])
 }
 
 // ============================================================================
@@ -5363,6 +5424,7 @@ model RotaEscolar {
 
 model AlunoRota {
   id            String   @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   alunoId       String
   rotaId        String
   pontoEmbarque String
@@ -5372,6 +5434,7 @@ model AlunoRota {
 
   @@unique([alunoId, rotaId])
   @@map("alunos_rotas")
+  @@index([tenantId])
 }
 
 // ============================================================================
@@ -7232,7 +7295,8 @@ model BotUpload {
 // Definições de fluxos conversacionais
 model FlowDefinition {
   id          String   @id @default(cuid())
-  name        String   @unique
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
+  name        String
   description String?  @db.Text
   version     String   @default("1.0.0")
   isActive    Boolean  @default(true)
@@ -7251,6 +7315,8 @@ model FlowDefinition {
   @@index([isActive])
   @@index([isDefault])
   @@map("flow_definitions")
+  @@unique([tenantId, name])
+  @@index([tenantId])
 }
 
 // Execuções de fluxos (estado de conversação)
@@ -7929,6 +7995,7 @@ model ConfiguracaoAtendimento {
 // ✅ CONFIGURAÇÃO DE INTEGRAÇÃO e-SUS
 model ConfiguracaoESUS {
   id          String @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   municipioId String @unique // Vinculado ao município
 
   // Configurações de Integração
@@ -7974,11 +8041,13 @@ model ConfiguracaoESUS {
 
   @@index([integracaoAtiva])
   @@map("configuracoes_esus")
+  @@index([tenantId])
 }
 
 // ✅ REGISTRO DE TRANSMISSÕES e-SUS
 model TransmissaoESUS {
   id             String @id @default(cuid())
+  tenantId String? // Onda 8 multi-tenant (plano 2026-07-13)
   configuracaoId String
 
   // Identificação
@@ -8021,6 +8090,7 @@ model TransmissaoESUS {
   @@index([fichaId])
   @@index([status, proximaTentativa])
   @@map("transmissoes_esus")
+  @@index([tenantId])
 }
 
 // ✅ ENUMS de Integração e-SUS

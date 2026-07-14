@@ -4,10 +4,13 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/ap
 
 export const dynamic = 'force-dynamic';
 
-// POST /api/super-admin/schema/run-migrations
-export async function POST(request: NextRequest) {
+// POST /api/platform/system/backup/[fileName]/restore - Restaurar backup
+export async function POST(
+  request: NextRequest,
+  { params }: { params: { fileName: string } }
+) {
   try {
-    const token = request.cookies.get('digiurban_admin_token')?.value;
+    const token = request.cookies.get('digiurban_platform_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -16,13 +19,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const response = await fetch(`${BACKEND_URL}/super-admin/schema/run-migrations`, {
-      method: 'POST',
-      headers: {
-        'Cookie': `digiurban_admin_token=${token}`,
-        'Content-Type': 'application/json'
+    const response = await fetch(
+      `${BACKEND_URL}/platform/system/backup/${params.fileName}/restore`,
+      {
+        method: 'POST',
+        headers: {
+          'Cookie': `digiurban_platform_token=${token}`
+        }
       }
-    });
+    );
 
     if (!response.ok) {
       const error = await response.json();
@@ -32,7 +37,7 @@ export async function POST(request: NextRequest) {
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Erro ao executar migrations:', error);
+    console.error('Erro ao restaurar backup:', error);
     return NextResponse.json(
       { error: 'Erro interno do servidor' },
       { status: 500 }
