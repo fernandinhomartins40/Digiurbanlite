@@ -24,6 +24,7 @@ import os from 'os';
 import multer from 'multer';
 import { prisma } from '../lib/prisma';
 import { runAsPlatform } from '../lib/tenant-context';
+import { UPLOAD_BASE_DIR } from '../config/upload';
 import {
   platformAuthMiddleware,
   requirePlatformRole,
@@ -136,8 +137,8 @@ router.post(
       const ext = file.mimetype === 'image/png' ? 'png'
         : file.mimetype === 'image/svg+xml' ? 'svg'
         : file.mimetype === 'image/webp' ? 'webp' : 'jpg';
-      const uploadBase = process.env.UPLOAD_BASE_PATH || path.join(process.cwd(), 'uploads');
-      const dir = path.join(uploadBase, 'public', 'branding', tenantId);
+      // Mesma raiz que o express.static serve (fonte única) — ver config/upload.
+      const dir = path.join(UPLOAD_BASE_DIR, 'public', 'branding', tenantId);
       await fs.mkdir(dir, { recursive: true });
       const fileName = `logo-${Date.now()}.${ext}`;
       await fs.writeFile(path.join(dir, fileName), file.buffer);

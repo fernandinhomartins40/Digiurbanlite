@@ -13,7 +13,12 @@ import { isTenantStrict, reportTenantFailSoft } from '../lib/tenant-telemetry';
 
 // Diretório de uploads
 // ✅ IMPORTANTE: Usar /app/uploads (compartilhado com ultrazend-smtp via volume)
-const UPLOAD_DIR = process.env.UPLOAD_BASE_PATH || path.join(process.cwd(), 'uploads');
+// ⚠️ FONTE ÚNICA: o express.static (index.ts) e TODOS os endpoints que gravam
+// arquivos devem usar ESTE mesmo diretório. Divergir (ex.: gravar em
+// UPLOAD_BASE_PATH mas servir de process.cwd()/uploads) faz o arquivo existir
+// mas nunca ser servido (404). Por isso é exportado como UPLOAD_BASE_DIR.
+export const UPLOAD_BASE_DIR = process.env.UPLOAD_BASE_PATH || path.join(process.cwd(), 'uploads');
+const UPLOAD_DIR = UPLOAD_BASE_DIR;
 
 // Criar diretório se não existir
 if (!fs.existsSync(UPLOAD_DIR)) {

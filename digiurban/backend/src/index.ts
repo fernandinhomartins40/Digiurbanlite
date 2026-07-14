@@ -3,7 +3,6 @@ import cors from 'cors';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
-import path from 'path';
 import http from 'http';
 import { initializeSocket } from './socket';
 import { requestLoggerMiddleware } from './middleware/request-logger.middleware';
@@ -126,8 +125,12 @@ import { tenantStatusMiddleware } from './middleware/tenant-status';
 app.use('/api', tenantStatusMiddleware);
 
 // Servir arquivos de upload — acesso autenticado (Fase 0, achado S1 da auditoria)
+// ⚠️ Serve de UPLOAD_BASE_DIR (mesma raiz onde os uploads GRAVAM). Antes era
+// process.cwd()/uploads fixo — divergia de UPLOAD_BASE_PATH no container e o
+// logo do município (gravado lá) nunca era servido (404 → não aparecia).
 import { uploadsAccessMiddleware } from './middleware/uploads-access';
-app.use('/uploads', uploadsAccessMiddleware, express.static(path.join(process.cwd(), 'uploads')));
+import { UPLOAD_BASE_DIR } from './config/upload';
+app.use('/uploads', uploadsAccessMiddleware, express.static(UPLOAD_BASE_DIR));
 
 // Health check
 app.get('/health', (_req, res: express.Response) => {
