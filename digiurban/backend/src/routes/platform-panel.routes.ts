@@ -45,6 +45,12 @@ import {
   listLeads,
   updateLeadStatus,
 } from '../services/platform-billing.service';
+import {
+  listPlans,
+  createPlan,
+  updatePlan,
+  removePlan,
+} from '../services/plan-config.service';
 import { logAuditEvent } from '../utils/audit-logger';
 
 const router = Router();
@@ -267,6 +273,113 @@ router.patch('/invoices/:invoiceId', PLATFORM_ADMIN, async (req: Request, res: R
     if (error?.code === 'P2025') return res.status(404).json({ error: 'Fatura não encontrada' });
     console.error('Erro ao atualizar fatura:', error);
     res.status(500).json({ error: 'Erro ao atualizar fatura' });
+  }
+});
+
+// ============================================================================
+// CATÁLOGO DE PLANOS (PlanConfig) — configurável, substitui o hardcode
+// ============================================================================
+
+const planSchema = z.object({
+  code: z.string().min(2).max(40),
+  name: z.string().min(2).max(120),
+  description: z.string().max(500).optional().nullable(),
+  monthlyPrice: z.number().min(0).optional(),
+  maxUsers: z.number().int().optional(),
+  maxCitizens: z.number().int().optional(),
+  features: z.record(z.string(), z.boolean()).optional().nullable(),
+  isActive: z.boolean().optional(),
+  sortOrder: z.number().int().optional(),
+});
+
+/** Normaliza o `features` do payload (index signature do Zod → Record limpo). */
+function normalizeFeatures(f: unknown): Record<string, boolean> | null | undefined {
+  if (f === undefined) return undefined;
+  if (f === null) return null;
+  return { ...(f as Record<string, boolean>) };
+}
+
+// GET /api/platform/plans — catálogo de planos (com contagem de municípios)
+router.get('/plans', async (_req: Request, res: Response) => {
+  try {
+    const plans = await listPlans();
+    const active = plans.filter((p) => p.isActive);
+    const mrr = plans.reduce((sum, p) => sum + (p.isActive ? p.monthlyPrice * p.tenants : 0), 0);
+    const subscribers = plans.reduce((sum, p) => sum + p.tenants, 0);
+    res.json({
+      success: true,
+      plans,
+      stats: { totalPlans: plans.length, activePlans: active.length, totalSubscribers: subscribers, totalMRR: mrr },
+    });
+  } catch (error) {
+    console.error('Erro ao listar planos:', error);
+    res.status(500).json({ error: 'Erro ao listar planos' });
+  }
+});
+
+// POST /api/platform/plans — criar plano
+router.post('/plans', PLATFORM_ADMIN, async (req: Request, res: Response) => {
+  try {
+    const parsed = planSchema.safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
+    const plan = await createPlan({ ...parsed.data, features: normalizeFeatures(parsed.data.features) });
+    await logAuditEvent({
+      action: 'plan_created',
+      resource: req.originalUrl,
+      method: req.method,
+      details: { context: 'platform', platformUserId: platformUserId(req), code: plan.code },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    res.status(201).json({ success: true, plan, message: 'Plano criado com sucesso' });
+  } catch (error: any) {
+    if (error?.code === 'P2002') return res.status(409).json({ error: 'Já existe um plano com este código' });
+    console.error('Erro ao criar plano:', error);
+    res.status(500).json({ error: 'Erro ao criar plano' });
+  }
+});
+
+// PUT /api/platform/plans/:id — editar plano (code é imutável)
+router.put('/plans/:id', PLATFORM_ADMIN, async (req: Request, res: Response) => {
+  try {
+    const parsed = planSchema.partial().safeParse(req.body);
+    if (!parsed.success) return res.status(400).json({ error: 'Dados inválidos', details: parsed.error.flatten() });
+    const { code, ...data } = parsed.data; // ignora code — não editável
+    const plan = await updatePlan(req.params.id, { ...data, features: normalizeFeatures(data.features) });
+    await logAuditEvent({
+      action: 'plan_updated',
+      resource: req.originalUrl,
+      method: req.method,
+      details: { context: 'platform', platformUserId: platformUserId(req), planId: req.params.id },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    res.json({ success: true, plan, message: 'Plano atualizado com sucesso' });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: 'Plano não encontrado' });
+    console.error('Erro ao atualizar plano:', error);
+    res.status(500).json({ error: 'Erro ao atualizar plano' });
+  }
+});
+
+// DELETE /api/platform/plans/:id — remove (ou desativa, se em uso)
+router.delete('/plans/:id', PLATFORM_ADMIN, async (req: Request, res: Response) => {
+  try {
+    const result = await removePlan(req.params.id);
+    await logAuditEvent({
+      action: result.deleted ? 'plan_deleted' : 'plan_deactivated',
+      resource: req.originalUrl,
+      method: req.method,
+      details: { context: 'platform', platformUserId: platformUserId(req), planId: req.params.id },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    res.json({
+      success: true,
+      deleted: result.deleted,
+      message: result.deleted ? 'Plano removido' : 'Plano em uso — foi desativado (não removido)',
+    });
+  } catch (error: any) {
+    if (error?.code === 'P2025') return res.status(404).json({ error: 'Plano não encontrado' });
+    console.error('Erro ao remover plano:', error);
+    res.status(500).json({ error: 'Erro ao remover plano' });
   }
 });
 

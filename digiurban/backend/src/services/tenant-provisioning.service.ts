@@ -272,6 +272,29 @@ export interface ProvisionResult {
 }
 
 /**
+ * Herança de limites/features do catálogo de planos (PlanConfig).
+ * Dado um `plan` (code) e o que o chamador informou explicitamente, devolve os
+ * valores efetivos: campos NÃO informados herdam do plano; campos informados
+ * são OVERRIDE por município. Se o plano não existe no catálogo, mantém o que
+ * veio (ou os defaults do caller). `-1` no plano = ilimitado (mantido como -1).
+ */
+export async function resolvePlanLimits(
+  plan: string | undefined,
+  explicit: { maxUsers?: number; maxCitizens?: number; features?: unknown }
+): Promise<{ maxUsers?: number; maxCitizens?: number; features?: unknown }> {
+  if (!plan) return explicit;
+  const { getPlanByCode } = await import('./plan-config.service');
+  const cfg = await getPlanByCode(plan);
+  if (!cfg) return explicit;
+
+  return {
+    maxUsers: explicit.maxUsers ?? cfg.maxUsers,
+    maxCitizens: explicit.maxCitizens ?? cfg.maxCitizens,
+    features: explicit.features ?? (cfg.features ?? undefined),
+  };
+}
+
+/**
  * Provisiona município completo em transação atômica:
  * tenant + ADMIN inicial (senha temporária, mustChangePassword) + secretarias
  * e serviços padrão. Lança ReservedSlugError/P2002 para as rotas traduzirem.
@@ -290,6 +313,14 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
   const tempPassword = crypto.randomBytes(9).toString('base64url');
   const passwordHash = await bcrypt.hash(tempPassword, 12);
 
+  const plan = input.plan ?? 'basic';
+  // Herança do catálogo: limites/features não informados vêm do plano escolhido.
+  const limits = await resolvePlanLimits(plan, {
+    maxUsers: input.maxUsers,
+    maxCitizens: input.maxCitizens,
+    features: input.features,
+  });
+
   const result = await runAsPlatform(async () =>
     prisma.$transaction(async (tx: any) => {
       const tenant = await tx.tenant.create({
@@ -301,11 +332,11 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
           nomeMunicipio: input.nomeMunicipio,
           ufMunicipio: input.ufMunicipio,
           customDomain: input.customDomain || undefined,
-          plan: input.plan ?? 'basic',
+          plan,
           planEndsAt: input.planEndsAt ? new Date(input.planEndsAt) : undefined,
-          maxUsers: input.maxUsers ?? 10,
-          maxCitizens: input.maxCitizens ?? 10000,
-          features: (input.features as any) ?? undefined,
+          maxUsers: limits.maxUsers ?? 10,
+          maxCitizens: limits.maxCitizens ?? 10000,
+          features: (limits.features as any) ?? undefined,
           branding: (input.branding as any) ?? undefined,
         },
       });
@@ -384,6 +415,20 @@ export async function updateTenant(id: string, data: Record<string, unknown>): P
     const err = new Error(`Slug reservado: ${data.slug}`) as Error & { code?: string };
     err.code = 'RESERVED_SLUG';
     throw err;
+  }
+
+  // Se o plano está sendo alterado, herda do catálogo os campos NÃO enviados no
+  // payload (limites/features). Enviar maxUsers/maxCitizens/features = override
+  // por município; omiti-los = herdar do plano.
+  if (typeof data.plan === 'string') {
+    const limits = await resolvePlanLimits(data.plan, {
+      maxUsers: data.maxUsers as number | undefined,
+      maxCitizens: data.maxCitizens as number | undefined,
+      features: 'features' in data ? data.features : undefined,
+    });
+    if (data.maxUsers === undefined && limits.maxUsers !== undefined) data.maxUsers = limits.maxUsers;
+    if (data.maxCitizens === undefined && limits.maxCitizens !== undefined) data.maxCitizens = limits.maxCitizens;
+    if (!('features' in data) && limits.features !== undefined) data.features = limits.features;
   }
 
   const { prisma } = await import('../lib/prisma');

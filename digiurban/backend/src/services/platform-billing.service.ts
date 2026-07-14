@@ -8,8 +8,13 @@
  */
 
 import { runAsPlatform } from '../lib/tenant-context';
+import { getPlanByCode } from './plan-config.service';
 
-/** Preço-base mensal por plano (centavos evitados: Float como no schema legado). */
+/**
+ * Preço-base mensal por plano — FALLBACK apenas. A fonte de verdade é o
+ * catálogo PlanConfig (getPlanByCode). Este mapa cobre o caso de o plano do
+ * município não existir no catálogo (dado legado), evitando fatura R$ 0.
+ */
 export const PLAN_MONTHLY_PRICE: Record<string, number> = {
   STARTER: 299,
   PROFESSIONAL: 799,
@@ -19,6 +24,13 @@ export const PLAN_MONTHLY_PRICE: Record<string, number> = {
   professional: 799,
   enterprise: 1999,
 };
+
+/** Preço mensal de um plano: catálogo (PlanConfig) → fallback ao mapa legado. */
+export async function resolvePlanPrice(plan: string): Promise<number> {
+  const cfg = await getPlanByCode(plan);
+  if (cfg && typeof cfg.monthlyPrice === 'number') return cfg.monthlyPrice;
+  return PLAN_MONTHLY_PRICE[plan] ?? PLAN_MONTHLY_PRICE[(plan || '').toUpperCase()] ?? PLAN_MONTHLY_PRICE.STARTER;
+}
 
 function normalizePlanEnum(plan: string): 'STARTER' | 'PROFESSIONAL' | 'ENTERPRISE' {
   const p = (plan || '').toUpperCase();
@@ -73,7 +85,7 @@ export async function createInvoice(input: CreateInvoiceInput): Promise<any> {
 
     const planStr = input.plan || tenant.plan;
     const planEnum = normalizePlanEnum(planStr);
-    const amount = input.amount ?? PLAN_MONTHLY_PRICE[planStr] ?? PLAN_MONTHLY_PRICE.STARTER;
+    const amount = input.amount ?? (await resolvePlanPrice(planStr));
     const now = new Date();
     const period = input.period || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     const dueDate = input.dueDate ? new Date(input.dueDate) : new Date(now.getTime() + 15 * 24 * 60 * 60 * 1000);

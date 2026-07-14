@@ -53,11 +53,16 @@ const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   CANCELLED: { label: 'Cancelado', className: 'bg-gray-300 text-gray-800' },
 };
 
-const PLANS = [
-  { value: 'basic', label: 'Básico', users: 10, citizens: 10000, price: 'R$ 299/mês' },
-  { value: 'professional', label: 'Profissional', users: 50, citizens: 100000, price: 'R$ 799/mês' },
-  { value: 'enterprise', label: 'Enterprise', users: 200, citizens: 1000000, price: 'R$ 1.999/mês' },
+// Fallback usado só se o catálogo /api/platform/plans estiver indisponível.
+interface WizardPlan { value: string; label: string; users: number; citizens: number; price: string }
+const PLANS_FALLBACK: WizardPlan[] = [
+  { value: 'STARTER', label: 'Starter', users: 10, citizens: 10000, price: 'R$ 299/mês' },
+  { value: 'PROFESSIONAL', label: 'Profissional', users: 50, citizens: 50000, price: 'R$ 799/mês' },
+  { value: 'ENTERPRISE', label: 'Enterprise', users: -1, citizens: -1, price: 'R$ 1.999/mês' },
 ];
+
+/** -1 = ilimitado. */
+const fmtLimit = (v: number) => (v === -1 ? 'Ilimitado' : v.toLocaleString('pt-BR'));
 
 const STEPS = [
   { title: 'Dados', icon: Building2 },
@@ -82,6 +87,7 @@ export default function TenantsPage() {
   const [tenants, setTenants] = useState<TenantRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [modules, setModules] = useState<ModuleDef[]>([]);
+  const [plans, setPlans] = useState<WizardPlan[]>(PLANS_FALLBACK);
   const [showWizard, setShowWizard] = useState(false);
   const [step, setStep] = useState(0);
   const [form, setForm] = useState({ ...EMPTY_WIZARD });
@@ -97,6 +103,24 @@ export default function TenantsPage() {
       .then((r) => (r.ok ? r.json() : { modules: [] }))
       .then((d) => setModules(d.modules || []))
       .catch(() => setModules([]));
+    // Catálogo de planos configurável (super-admin › Planos). Só planos ativos.
+    fetch('/api/platform/plans')
+      .then((r) => (r.ok ? r.json() : { plans: [] }))
+      .then((d) => {
+        const active = (d.plans || []).filter((p: any) => p.isActive);
+        if (active.length > 0) {
+          setPlans(
+            active.map((p: any) => ({
+              value: p.code,
+              label: p.name,
+              users: p.maxUsers,
+              citizens: p.maxCitizens,
+              price: `R$ ${Number(p.monthlyPrice).toLocaleString('pt-BR')}/mês`,
+            }))
+          );
+        }
+      })
+      .catch(() => {});
     fetch('/api/platform/platform-info')
       .then((r) => (r.ok ? r.json() : {}))
       .then((d: { tenantBaseDomain?: string | null; subdomainEnabled?: boolean }) => {
@@ -122,7 +146,7 @@ export default function TenantsPage() {
     setForm((f) => ({ ...f, [k]: v }));
 
   const applyPlan = (planValue: string) => {
-    const p = PLANS.find((x) => x.value === planValue);
+    const p = plans.find((x) => x.value === planValue);
     if (p) setForm((f) => ({ ...f, plan: p.value, maxUsers: p.users, maxCitizens: p.citizens }));
   };
 
@@ -232,7 +256,14 @@ export default function TenantsPage() {
           </p>
         </div>
         {!showWizard && (
-          <Button onClick={() => setShowWizard(true)}>
+          <Button
+            onClick={() => {
+              // pré-seleciona o primeiro plano do catálogo (aplica seus limites)
+              const first = plans[0];
+              if (first) setForm((f) => ({ ...f, plan: first.value, maxUsers: first.users, maxCitizens: first.citizens }));
+              setShowWizard(true);
+            }}
+          >
             <Plus className="h-4 w-4 mr-2" /> Novo município
           </Button>
         )}
@@ -363,7 +394,7 @@ export default function TenantsPage() {
             {step === 1 && (
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                  {PLANS.map((p) => (
+                  {plans.map((p) => (
                     <button
                       key={p.value}
                       type="button"
@@ -373,7 +404,7 @@ export default function TenantsPage() {
                       <div className="font-semibold">{p.label}</div>
                       <div className="text-primary text-lg font-bold">{p.price}</div>
                       <div className="text-xs text-muted-foreground mt-2">
-                        {p.users} usuários · {p.citizens.toLocaleString('pt-BR')} cidadãos
+                        {fmtLimit(p.users)} usuários · {fmtLimit(p.citizens)} cidadãos
                       </div>
                     </button>
                   ))}
@@ -467,7 +498,7 @@ export default function TenantsPage() {
                 <ReviewRow label="Município" value={`${form.nome} — ${form.nomeMunicipio}/${form.ufMunicipio}`} />
                 <ReviewRow label="Slug / Domínio" value={`${form.slug}${form.customDomain ? ` · ${form.customDomain}` : ''}`} />
                 <ReviewRow label="CNPJ" value={form.cnpj} />
-                <ReviewRow label="Plano" value={`${PLANS.find((p) => p.value === form.plan)?.label} · ${form.maxUsers} usuários · ${form.maxCitizens.toLocaleString('pt-BR')} cidadãos${form.planEndsAt ? ` · até ${form.planEndsAt}` : ''}`} />
+                <ReviewRow label="Plano" value={`${plans.find((p) => p.value === form.plan)?.label ?? form.plan} · ${fmtLimit(form.maxUsers)} usuários · ${fmtLimit(form.maxCitizens)} cidadãos${form.planEndsAt ? ` · até ${form.planEndsAt}` : ''}`} />
                 <ReviewRow label="Módulos desabilitados" value={form.disabledModules.length ? form.disabledModules.map((s) => modules.find((m) => m.slug === s)?.label || s).join(', ') : 'nenhum (todos habilitados)'} />
                 <ReviewRow label="Administrador" value={`${form.adminName} (${form.adminEmail})`} />
               </div>

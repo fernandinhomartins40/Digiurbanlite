@@ -83,15 +83,18 @@ export default function TenantDetailPage() {
   const [disabled, setDisabled] = useState<string[]>([]);
   const [baseDomain, setBaseDomain] = useState<string | null>(null);
   const [subdomainEnabled, setSubdomainEnabled] = useState(true);
+  // Catálogo de planos (para o dropdown + herança de limites ao trocar de plano)
+  const [availablePlans, setAvailablePlans] = useState<Array<{ code: string; name: string; maxUsers: number; maxCitizens: number }>>([]);
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [tRes, mRes, iRes, pRes] = await Promise.all([
+      const [tRes, mRes, iRes, pRes, plansRes] = await Promise.all([
         fetch(`/api/platform/tenants/${id}`),
         fetch('/api/platform/modules'),
         fetch(`/api/platform/tenants/${id}/invoices`),
         fetch('/api/platform/platform-info'),
+        fetch('/api/platform/plans'),
       ]);
       if (tRes.ok) {
         const t: TenantDetail = (await tRes.json()).tenant;
@@ -110,6 +113,7 @@ export default function TenantDetailPage() {
       }
       if (mRes.ok) setModules((await mRes.json()).modules || []);
       if (iRes.ok) setInvoices((await iRes.json()).invoices || []);
+      if (plansRes.ok) setAvailablePlans((await plansRes.json()).plans || []);
       if (pRes.ok) {
         const p = await pRes.json();
         setBaseDomain(p.tenantBaseDomain ?? null);
@@ -314,16 +318,37 @@ export default function TenantDetailPage() {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <div>
                   <Label>Plano</Label>
-                  <select className="w-full h-10 border rounded-md px-2" value={plan} onChange={(e) => setPlan(e.target.value)}>
-                    <option value="basic">Básico</option>
-                    <option value="professional">Profissional</option>
-                    <option value="enterprise">Enterprise</option>
+                  <select
+                    className="w-full h-10 border rounded-md px-2"
+                    value={plan}
+                    onChange={(e) => {
+                      const code = e.target.value;
+                      setPlan(code);
+                      // Ao trocar de plano, sugere os limites do catálogo (o super-admin
+                      // pode ajustar em seguida = override por município).
+                      const cfg = availablePlans.find((p) => p.code.toLowerCase() === code.toLowerCase());
+                      if (cfg) {
+                        setMaxUsers(cfg.maxUsers);
+                        setMaxCitizens(cfg.maxCitizens);
+                      }
+                    }}
+                  >
+                    {/* plano atual do município pode ser um code legado fora do catálogo */}
+                    {!availablePlans.some((p) => p.code.toLowerCase() === plan.toLowerCase()) && (
+                      <option value={plan}>{plan}</option>
+                    )}
+                    {availablePlans.map((p) => (
+                      <option key={p.code} value={p.code}>{p.name}</option>
+                    ))}
                   </select>
                 </div>
                 <div><Label>Máx. usuários</Label><Input type="number" value={maxUsers} onChange={(e) => setMaxUsers(Number(e.target.value))} /></div>
                 <div><Label>Máx. cidadãos</Label><Input type="number" value={maxCitizens} onChange={(e) => setMaxCitizens(Number(e.target.value))} /></div>
                 <div><Label>Validade</Label><Input type="date" value={planEndsAt} onChange={(e) => setPlanEndsAt(e.target.value)} /></div>
               </div>
+              <p className="text-xs text-muted-foreground">
+                Trocar o plano sugere os limites do catálogo — você pode ajustar manualmente (override por município). Os planos são configurados em <strong>Planos</strong>. Use <strong>-1</strong> para ilimitado.
+              </p>
               <p className="text-xs text-muted-foreground">As cores e o logo da prefeitura ficam na aba <strong>Identidade Visual</strong>.</p>
               <Button onClick={saveConfig} disabled={saving}>{saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar configuração</Button>
             </CardContent>

@@ -790,6 +790,31 @@ model Lead {
   @@map("leads")
 }
 
+// ============================================================================
+// PLAN CONFIG (catálogo de planos da plataforma — configurável no super-admin)
+// ============================================================================
+// Entidade de PLATAFORMA (sem tenantId, igual a Invoice/Lead). Define nome,
+// preço e limites de cada plano SaaS. Municípios (Tenant.plan) referenciam pelo
+// `code`; herdam maxUsers/maxCitizens/features do plano, com override por
+// município (quando o Tenant grava valores próprios). Substitui o antigo
+// PLAN_MONTHLY_PRICE hardcoded do platform-billing.service.
+model PlanConfig {
+  id           String   @id @default(cuid())
+  code         String   @unique // "STARTER", "BASIC"… casa com Tenant.plan (imutável após criar)
+  name         String // "Município Pequeno"
+  description  String?
+  monthlyPrice Float    @default(0) // R$ inteiros/mês
+  maxUsers     Int      @default(10)
+  maxCitizens  Int      @default(10000)
+  features     Json? // { saude: true, educacao: false, ... } — mesmo contrato de Tenant.features
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("plan_configs")
+}
+
 model FamilyComposition {
   id           String             @id @default(cuid())
   tenantId String? // Fase E Multi-Tenant (onda 7)
