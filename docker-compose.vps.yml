@@ -133,6 +133,10 @@ services:
       - MESSAGES_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
       - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
       - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
+      # Multi-tenant (plano 2026-07-13): fallback do seeder de fluxos e do
+      # resolveTenantId quando não há claim/contexto (deve casar com a linha
+      # 'tenant-default' criada pela migration add_tenants_table).
+      - DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID:-tenant-default}
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
       - CITIZEN_AI_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
@@ -350,6 +354,9 @@ services:
 
       # Tenants
       - DEFAULT_TENANT=demo
+      # Identidade do tenant migrado do modo single-tenant (linha 'tenant-default'
+      # criada pela migration 20260707120000_add_tenants_table).
+      - DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID:-tenant-default}
       # Multi-tenant por subdomínio: {slug}.digiurban.com.br → tenant do slug.
       # Sem esta variável, todo subdomínio cai no tenant default.
       - TENANT_BASE_DOMAIN=${TENANT_BASE_DOMAIN:-digiurban.com.br}

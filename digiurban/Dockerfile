@@ -145,9 +145,12 @@ COPY --from=backend-builder /app/backend/prisma ./prisma
 COPY --from=backend-builder /app/backend/package.json ./
 COPY --from=backend-builder /app/backend/node_modules/.prisma ./node_modules/.prisma
 
-# Copiar diretórios de dados e seeds do código fonte (não do builder)
-COPY digiurban/backend/src/data ./src/data
-COPY digiurban/backend/src/seeds ./src/seeds
+# Copiar código-fonte completo do backend (não só data/seeds):
+# - prisma/seeds importa src/data/default-catalogs.data (onda 8 multi-tenant)
+# - scripts/smoke-tenant*.ts importam src/lib/* — permite rodar os smokes de
+#   isolamento DENTRO do container: npm run smoke:tenant:isolation
+# (builder já contém digiurban/shared em src/shared — copiar do builder)
+COPY --from=backend-builder /app/backend/src ./src
 
 # Copiar scripts diretamente do contexto
 COPY digiurban/backend/scripts ./scripts

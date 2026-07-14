@@ -140,7 +140,7 @@ jobs:
 
             # 2. Remover imagens base do Node.js (forAa download novo)
             echo "Yi  Removendo imagens base do Node.js..."
-            docker images | grep "node.*18-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            docker images | grep "node.*20-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
 
             # 3. Limpar build cache do Docker
             echo "Yi  Limpando build cache do Docker..."
@@ -162,7 +162,7 @@ jobs:
 
             # 7. ForAar pull das imagens base
             echo "Y ForAando pull de imagens base..."
-            docker pull node:18-bookworm-slim
+            docker pull node:20-bookworm-slim
 
             # ===== VALIDAAAO PRA-BUILD: Verificar arquivos crAticos =====
             echo "=== Validando arquivos crAticos antes do build ==="
@@ -294,6 +294,24 @@ jobs:
             docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "as i  Seed de fluxos falhou mas continuando deploy"
             echo "a... Fluxos do bot populados"
 
+            # ===== VALIDACOES MULTI-TENANT (plano 2026-07-13) =====
+            echo "=== Validando corte dos endpoints legados de plataforma (410) ==="
+            LEGACY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3060/api/super-admin/tenants || echo "000")
+            echo "GET /api/super-admin/tenants -> HTTP ${LEGACY_STATUS}"
+            if [ "${LEGACY_STATUS}" = "200" ]; then
+              echo "ERRO DE SEGURANCA: endpoint legado de plataforma respondeu 200 (deveria ser 410)!"
+              exit 1
+            fi
+            if [ "${LEGACY_STATUS}" = "410" ]; then
+              echo "OK: endpoints legados cortados (410 Gone)"
+            else
+              echo "AVISO: esperado 410, recebido ${LEGACY_STATUS} (verificar manualmente)"
+            fi
+
+            echo "=== Smoke de isolamento multi-tenant (2 tenants efemeros) ==="
+            docker exec digiurban-vps sh -c "cd /app/backend && npm run smoke:tenant:isolation" \
+              || echo "AVISO: smoke de isolamento multi-tenant falhou - investigar antes de ativar TENANT_STRICT"
+
             # ===== VALIDAR LLAMA.CPP =====
             echo "=== Validando llama.cpp com Qwen3 1.7B ==="
             docker logs digiurban-llamacpp --tail=80 || true
@@ -307,6 +325,15 @@ jobs:
             wait_for_container_health digiurban-vps 36 10
 
             echo "a... llama.cpp configurado com sucesso!"
+
+            # ===== RE-SEED DOS FLUXOS POR TENANT (plano 2026-07-13) =====
+            # O ultrazend-messages sobe ANTES do backend (que aplica as
+            # migrations, incluindo a onda 8 com flow_definitions.tenantId).
+            # Reiniciar o messages APOS o backend garante que o seeder de
+            # fluxos por tenant rode com o schema ja migrado.
+            echo "=== Reiniciando ultrazend-messages (seeder de fluxos pos-migrations) ==="
+            docker-compose -f docker-compose.vps.yml restart ultrazend-messages
+            wait_for_container_health ultrazend-messages 30 5
 
             # ===== VERIFICAR MIGRATIONS DO ULTRAZEND MESSAGES =====
             echo "=== Verificando migrations do UltraZend Messages ==="

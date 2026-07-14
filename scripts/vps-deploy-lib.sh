@@ -170,6 +170,35 @@ write_vps_env_file() {
     ai_service_token="$(generate_random_secret "digiurban-ai-service-token")"
   fi
 
+  # ── Multi-tenant / RLS (plano 2026-07-13) ─────────────────────────────────
+  # Estas variáveis são PRESERVADAS do .env anterior a cada deploy. Sem isto,
+  # armar o RLS (DATABASE_URL → role digiurban_app + MIGRATE_DATABASE_URL) ou
+  # ligar as flags TENANT_STRICT* seria silenciosamente REVERTIDO no deploy
+  # seguinte, porque este arquivo é regenerado do zero.
+  local database_url migrate_database_url
+  local tenant_require_claim tenant_strict_host tenant_strict
+  local tenant_base_domain tenant_default_hosts
+
+  database_url="$(read_env_value DATABASE_URL "${backup_path}")"
+  if [ -z "${database_url}" ]; then
+    database_url="postgresql://digiurban:digiurban2024@postgres:5432/digiurban"
+  fi
+
+  # Credencial ELEVADA usada só pelas migrations (startup.sh/prisma_migrate).
+  # Vazia = migrations usam a própria DATABASE_URL (modo pré-RLS).
+  migrate_database_url="$(read_env_value MIGRATE_DATABASE_URL "${backup_path}")"
+
+  tenant_require_claim="$(read_env_value TENANT_REQUIRE_TOKEN_CLAIM "${backup_path}")"
+  [ -z "${tenant_require_claim}" ] && tenant_require_claim="1"
+  tenant_strict_host="$(read_env_value TENANT_STRICT_HOST "${backup_path}")"
+  [ -z "${tenant_strict_host}" ] && tenant_strict_host="0"
+  tenant_strict="$(read_env_value TENANT_STRICT "${backup_path}")"
+  [ -z "${tenant_strict}" ] && tenant_strict="0"
+  tenant_base_domain="$(read_env_value TENANT_BASE_DOMAIN "${backup_path}")"
+  [ -z "${tenant_base_domain}" ] && tenant_base_domain="digiurban.com.br"
+  tenant_default_hosts="$(read_env_value TENANT_DEFAULT_HOSTS "${backup_path}")"
+  [ -z "${tenant_default_hosts}" ] && tenant_default_hosts="digiurban.com.br,www.digiurban.com.br,72.60.10.108"
+
   cat > "${env_path}" <<EOF
 # Node.js
 NODE_ENV=production
@@ -188,8 +217,10 @@ POSTGRES_USER=digiurban
 POSTGRES_PASSWORD=digiurban2024
 POSTGRES_DB=digiurban
 
-# Database URL (PostgreSQL)
-DATABASE_URL=postgresql://digiurban:digiurban2024@postgres:5432/digiurban
+# Database URL (PostgreSQL) — preservada do .env anterior (RLS: digiurban_app)
+DATABASE_URL=${database_url}
+# Credencial elevada só p/ migrations (vazia = usa DATABASE_URL)
+MIGRATE_DATABASE_URL=${migrate_database_url}
 
 # Redis
 REDIS_URL=redis://redis:6379
@@ -210,8 +241,14 @@ FRONTEND_URL=https://www.digiurban.com.br
 CORS_ORIGIN=https://www.digiurban.com.br
 ALLOWED_ORIGINS=https://www.digiurban.com.br,http://www.digiurban.com.br,https://digiurban.com.br,http://digiurban.com.br,http://72.60.10.108:3060,http://localhost:3060
 
-# Tenants
+# Tenants / hardening multi-tenant (plano 2026-07-13; preservados entre deploys)
 DEFAULT_TENANT=demo
+DEFAULT_TENANT_ID=tenant-default
+TENANT_BASE_DOMAIN=${tenant_base_domain}
+TENANT_DEFAULT_HOSTS=${tenant_default_hosts}
+TENANT_REQUIRE_TOKEN_CLAIM=${tenant_require_claim}
+TENANT_STRICT_HOST=${tenant_strict_host}
+TENANT_STRICT=${tenant_strict}
 
 # Logs
 LOG_LEVEL=info
