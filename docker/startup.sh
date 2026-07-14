@@ -62,6 +62,18 @@ prisma_migrate() {
 }
 if [ -n "$MIGRATE_DATABASE_URL" ]; then
   echo "🔐 MIGRATE_DATABASE_URL definida — migrations com credencial elevada (app roda como role restrito)"
+else
+  # Guard-rail: sem credencial elevada, migrations que criam tabelas ou armam RLS
+  # rodam como a role da app. Se o RLS JÁ está armado (a app é role restrita),
+  # esses comandos falham por privilégio. Detecta a policy tenant_isolation e avisa
+  # ALTO — protege qualquer deploy que adicione tabelas (ex.: Registry / F0).
+  RLS_ARMED=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -t -A \
+    -c "SELECT 1 FROM pg_policies WHERE policyname='tenant_isolation' LIMIT 1;" 2>/dev/null || echo "")
+  if [ -n "$RLS_ARMED" ]; then
+    echo "⚠️⚠️ ATENCAO: RLS armado no banco mas MIGRATE_DATABASE_URL AUSENTE."
+    echo "    Migrations que criam tabelas/armam RLS podem falhar por privilégio."
+    echo "    Defina MIGRATE_DATABASE_URL (credencial owner) no .env da VPS."
+  fi
 fi
 
 # Resolver QUALQUER migration com falha registrada no banco (evita P3009 bloqueando deploy)

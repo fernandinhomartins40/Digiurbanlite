@@ -40,6 +40,10 @@ async function main() {
   for (const model of ['EspecialidadeMedica', 'FlowDefinition', 'AlunoRota', 'DestinoTFD', 'ConfiguracaoESUS']) {
     check(`extension cobre ${model} (onda 8)`, scoped.has(model));
   }
+  // 5b. Cobertura DMMF do Registry (F0)
+  for (const model of ['EntityType', 'FieldDefinition', 'EntityRecord', 'RecordIndex', 'EntityRelation']) {
+    check(`extension cobre ${model} (Registry F0)`, scoped.has(model));
+  }
 
   const [tenantA, tenantB] = await runAsPlatform(async () =>
     Promise.all(
@@ -62,6 +66,7 @@ async function main() {
   const cleanup: Array<() => Promise<unknown>> = [];
   cleanup.push(() =>
     runAsPlatform(async () => {
+      await prisma.entityType.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id] } } });
       await prisma.especialidadeMedica.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id] } } });
       await prisma.flowDefinition.deleteMany({ where: { tenantId: { in: [tenantA.id, tenantB.id] } } });
       await prisma.tenant.deleteMany({ where: { id: { in: [tenantA.id, tenantB.id] } } });
@@ -122,6 +127,21 @@ async function main() {
       prisma.flowDefinition.create({ data: { name: flowName, nodes: [] } })
     );
     check('mesmo nome de fluxo permitido em outro tenant', flowDupB.tenantId === tenantB.id);
+
+    // 6. Registry (F0): EntityType escopado por tenant
+    const etCode = `SMOKE_ET_${STAMP}`;
+    const etA = await runAsTenant(tenantA.id, async () =>
+      prisma.entityType.create({ data: { code: etCode, name: 'Smoke Type', kind: 'EVENT' } })
+    );
+    check('EntityType create injeta tenantId do contexto', etA.tenantId === tenantA.id, etA.tenantId);
+    const etSeenByB = await runAsTenant(tenantB.id, async () =>
+      prisma.entityType.findFirst({ where: { code: etCode } })
+    );
+    check('EntityType do tenant A invisível no B', etSeenByB === null);
+    const etDupB = await runAsTenant(tenantB.id, async () =>
+      prisma.entityType.create({ data: { code: etCode, name: 'Smoke Type', kind: 'EVENT' } })
+    );
+    check('mesmo code de EntityType permitido em outro tenant (unique composta)', etDupB.tenantId === tenantB.id);
   } finally {
     console.log('🧹 Limpando tenants efêmeros...');
     for (const fn of cleanup) {
