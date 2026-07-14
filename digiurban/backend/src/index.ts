@@ -212,6 +212,9 @@ import { requireFeature } from './middleware/require-feature';
 // Rotas internas (Messages Server)
 loadRoute('/api/internal', './routes/internal.routes');
 
+// Registry — motor de dados orientado a metadados (F2: query + schema)
+loadRoute('/api/registry', './routes/registry.routes');
+
 // Módulo de Pesquisa de Preços Públicos (proxy → digiurban-prices)
 loadRoute('/api/prices', './routes/prices-proxy.routes');
 

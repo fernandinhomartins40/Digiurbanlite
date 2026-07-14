@@ -4,6 +4,8 @@
 >
 > Princípio-mestre: **cada mudança é aditiva, atrás de flag e reversível.** Nada do fluxo atual é removido até o novo caminho estar validado em produção, tenant a tenant.
 
+> **Progresso:** ✅ F0 (schema/migration/RLS/GIN, em produção) · ✅ F1 (importador de metadados) · ✅ F2 (motor de query + rotas `/api/registry/*`) · ⬜ F3–F7.
+
 ---
 
 ## Índice
