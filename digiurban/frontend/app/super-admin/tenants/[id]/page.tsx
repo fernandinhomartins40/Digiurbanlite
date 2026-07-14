@@ -79,6 +79,7 @@ export default function TenantDetailPage() {
   const [corPrimaria, setCorPrimaria] = useState('#2563eb');
   const [corSecundaria, setCorSecundaria] = useState('#f59e0b');
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null); // objectURL local durante upload
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [disabled, setDisabled] = useState<string[]>([]);
   const [baseDomain, setBaseDomain] = useState<string | null>(null);
@@ -139,7 +140,8 @@ export default function TenantDetailPage() {
 
   const currentBranding = () => {
     const b: Record<string, string> = { corPrimaria, corSecundaria };
-    if (logoUrl) b.logoUrl = logoUrl;
+    // grava a URL limpa (sem o cache-buster ?v= usado só na exibição)
+    if (logoUrl) b.logoUrl = logoUrl.split('?')[0];
     return b;
   };
 
@@ -156,20 +158,45 @@ export default function TenantDetailPage() {
   const saveBranding = () => patchTenant({ branding: currentBranding() }, 'Identidade visual salva');
 
   const uploadLogo = async (file: File) => {
+    // Validação client-side (feedback imediato antes de subir)
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: 'Arquivo muito grande', description: 'O logo deve ter no máximo 2 MB.', variant: 'destructive' });
+      return;
+    }
+    // Preview otimista: mostra a miniatura na hora, antes do upload terminar.
+    const localPreview = URL.createObjectURL(file);
+    setLogoPreview(localPreview);
     setUploadingLogo(true);
     try {
       const fd = new FormData();
       fd.append('logo', file);
-      const res = await fetch(`/api/platform/tenants/${id}/logo`, { method: 'POST', body: fd });
-      const data = await res.json();
-      if (res.ok) {
-        setLogoUrl(data.logoUrl);
-        toast({ title: 'Logo enviado' });
+      const res = await fetch(`/api/platform/tenants/${id}/logo`, {
+        method: 'POST',
+        body: fd,
+        credentials: 'include',
+      });
+      let data: any = {};
+      try { data = await res.json(); } catch { /* corpo vazio (ex.: 502) */ }
+
+      if (res.ok && data?.logoUrl) {
+        // cache-busting: força o navegador a buscar a nova imagem servida pela API
+        setLogoUrl(`${data.logoUrl}?v=${Date.now()}`);
+        setLogoPreview(null);
+        toast({ title: 'Logo enviado', description: 'Já aparece na landing do município.' });
       } else {
-        toast({ title: 'Erro', description: data.error, variant: 'destructive' });
+        setLogoPreview(null);
+        toast({
+          title: 'Falha no upload do logo',
+          description: data?.error || `Erro ${res.status}. Tente novamente ou verifique o arquivo.`,
+          variant: 'destructive',
+        });
       }
+    } catch (err: any) {
+      setLogoPreview(null);
+      toast({ title: 'Falha no upload do logo', description: err?.message || 'Erro de rede.', variant: 'destructive' });
     } finally {
       setUploadingLogo(false);
+      URL.revokeObjectURL(localPreview);
     }
   };
 
@@ -391,21 +418,35 @@ export default function TenantDetailPage() {
                 <div>
                   <Label>Logo da prefeitura</Label>
                   <div className="flex items-center gap-3 mt-1">
-                    {logoUrl && (
+                    {(logoPreview || logoUrl) && (
                       // eslint-disable-next-line @next/next/no-img-element
-                      <img src={logoUrl} alt="logo" className="h-12 w-auto max-w-[120px] object-contain border rounded p-1" />
+                      <img
+                        src={logoPreview || logoUrl || ''}
+                        alt="logo"
+                        className="h-12 w-auto max-w-[120px] object-contain border rounded p-1 bg-white"
+                        onError={() => {
+                          // a URL final não carregou (arquivo não servido) — avisa
+                          if (!logoPreview) {
+                            toast({
+                              title: 'Logo não pôde ser exibido',
+                              description: 'O arquivo foi enviado mas não está acessível. Reenvie ou contate o suporte.',
+                              variant: 'destructive',
+                            });
+                          }
+                        }}
+                      />
                     )}
                     <label className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm cursor-pointer hover:bg-muted">
                       {uploadingLogo ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
-                      {logoUrl ? 'Trocar logo' : 'Enviar logo'}
+                      {uploadingLogo ? 'Enviando...' : (logoUrl ? 'Trocar logo' : 'Enviar logo')}
                       <input type="file" accept="image/png,image/jpeg,image/svg+xml,image/webp" className="hidden"
-                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); }} disabled={uploadingLogo} />
+                        onChange={(e) => { const f = e.target.files?.[0]; if (f) uploadLogo(f); e.target.value = ''; }} disabled={uploadingLogo} />
                     </label>
-                    {logoUrl && (
+                    {logoUrl && !uploadingLogo && (
                       <Button size="sm" variant="ghost" className="text-red-600" onClick={() => setLogoUrl(null)}>Remover</Button>
                     )}
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, SVG ou WEBP · até 2 MB. O logo aparece na landing pública do município.</p>
+                  <p className="text-xs text-muted-foreground mt-1">PNG, JPG, SVG ou WEBP · até 2 MB. O logo aparece na landing pública do município. O upload é salvo automaticamente.</p>
                 </div>
                 <Button onClick={saveBranding} disabled={saving}>
                   {saving ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Save className="h-4 w-4 mr-2" />} Salvar identidade visual
