@@ -152,9 +152,12 @@ const createTenantSchema = z.object({
   ufMunicipio: z.string().length(2),
   codigoIbge: z.string().optional(),
   customDomain: z.string().optional(),
-  plan: z.enum(['basic', 'professional', 'enterprise']).optional(),
-  maxUsers: z.number().int().positive().optional(),
-  maxCitizens: z.number().int().positive().optional(),
+  // `plan` é o CODE de um PlanConfig do catálogo (configurável no super-admin),
+  // não mais um enum fixo. String livre; o backend resolve limites/preço pelo code.
+  plan: z.string().min(2).max(40).optional(),
+  // -1 = ilimitado (herdado de planos sem teto). Por isso NÃO usar .positive().
+  maxUsers: z.number().int().min(-1).optional(),
+  maxCitizens: z.number().int().min(-1).optional(),
   features: z.record(z.string(), z.unknown()).optional(),
   branding: z.record(z.string(), z.unknown()).optional(),
   adminName: z.string().min(3),

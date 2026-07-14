@@ -133,12 +133,15 @@ export async function checkTenantUsageLimit(
   kind: 'user' | 'citizen',
   limits: { maxUsers: number; maxCitizens: number }
 ): Promise<UsageLimitResult> {
+  // -1 = ilimitado (plano sem teto): pula a checagem.
   if (kind === 'user') {
+    if (limits.maxUsers === -1) return { allowed: true };
     const current = await tx.user.count({ where: { isActive: true } });
     if (current >= limits.maxUsers) {
       return { allowed: false, code: 'USER_LIMIT_REACHED', current, limit: limits.maxUsers };
     }
   } else {
+    if (limits.maxCitizens === -1) return { allowed: true };
     const current = await tx.citizen.count({ where: { isActive: true } });
     if (current >= limits.maxCitizens) {
       return { allowed: false, code: 'CITIZEN_LIMIT_REACHED', current, limit: limits.maxCitizens };

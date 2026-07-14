@@ -256,8 +256,9 @@ export default function TenantDetailPage() {
     );
   }
 
-  const usersPct = Math.min(100, Math.round((tenant.usage.users / Math.max(1, tenant.usage.maxUsers)) * 100));
-  const citizensPct = Math.min(100, Math.round((tenant.usage.citizens / Math.max(1, tenant.usage.maxCitizens)) * 100));
+  // -1 = ilimitado → sem barra (0%).
+  const usersPct = tenant.usage.maxUsers === -1 ? 0 : Math.min(100, Math.round((tenant.usage.users / Math.max(1, tenant.usage.maxUsers)) * 100));
+  const citizensPct = tenant.usage.maxCitizens === -1 ? 0 : Math.min(100, Math.round((tenant.usage.citizens / Math.max(1, tenant.usage.maxCitizens)) * 100));
 
   return (
     <div className="space-y-6 p-6">
@@ -589,7 +590,7 @@ function UsageCard({ icon: Icon, label, value, max, pct }: { icon: any; label: s
     <Card>
       <CardContent className="py-4">
         <div className="flex items-center gap-2 text-muted-foreground text-sm"><Icon className="h-4 w-4" /> {label}</div>
-        <div className="text-2xl font-bold mt-1">{value.toLocaleString('pt-BR')} <span className="text-sm font-normal text-muted-foreground">/ {max.toLocaleString('pt-BR')}</span></div>
+        <div className="text-2xl font-bold mt-1">{value.toLocaleString('pt-BR')} <span className="text-sm font-normal text-muted-foreground">/ {max === -1 ? 'Ilimitado' : max.toLocaleString('pt-BR')}</span></div>
         <Progress value={pct} className={`h-2 mt-2 ${pct >= 90 ? '[&>div]:bg-red-500' : ''}`} />
       </CardContent>
     </Card>
