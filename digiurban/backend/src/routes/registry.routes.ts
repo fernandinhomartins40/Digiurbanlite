@@ -23,6 +23,14 @@ import {
   type RegistryQueryInput,
 } from '../services/registry/registry-query.service';
 import { generateDashboard } from '../services/registry/registry-dashboard.service';
+import {
+  createEntityType,
+  updateEntityType,
+  deleteEntityType,
+  reindexEntityType,
+  RegistryAdminError,
+  type EntityTypeInput,
+} from '../services/registry/registry-admin.service';
 
 const router = Router();
 
@@ -160,6 +168,61 @@ router.get('/records/:id/relations', requireMinRole(UserRole.USER), async (req, 
   } catch (error) {
     console.error('Erro em /registry/records/:id/relations:', error);
     return res.status(500).json({ error: 'Erro ao obter relações do registro' });
+  }
+});
+
+// ============================================================================
+// F6 — CRUD do editor no-code (define a estrutura de dados sem deploy).
+// Exige ADMIN: cria/edita tipos e campos que dirigem busca/dashboard.
+// ============================================================================
+
+/** POST /api/registry/entity-types — cria um tipo (+ campos). */
+router.post('/entity-types', requireMinRole(UserRole.ADMIN), async (req, res) => {
+  try {
+    const created = await createEntityType(req.body as EntityTypeInput);
+    return res.status(201).json(created);
+  } catch (error) {
+    if (error instanceof RegistryAdminError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao criar EntityType:', error);
+    return res.status(500).json({ error: 'Erro ao criar tipo de entidade' });
+  }
+});
+
+/** PUT /api/registry/entity-types/:code — atualiza tipo e campos (dispara reindex se preciso). */
+router.put('/entity-types/:code', requireMinRole(UserRole.ADMIN), async (req, res) => {
+  try {
+    const updated = await updateEntityType(req.params.code, req.body as EntityTypeInput);
+    return res.json(updated);
+  } catch (error) {
+    if (error instanceof RegistryAdminError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao atualizar EntityType:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar tipo de entidade' });
+  }
+});
+
+/** DELETE /api/registry/entity-types/:code[?hard=true] — desativa (ou exclui se sem registros). */
+router.delete('/entity-types/:code', requireMinRole(UserRole.ADMIN), async (req, res) => {
+  try {
+    const hard = String(req.query.hard) === 'true';
+    const result = await deleteEntityType(req.params.code, hard);
+    return res.json(result);
+  } catch (error) {
+    if (error instanceof RegistryAdminError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao excluir EntityType:', error);
+    return res.status(500).json({ error: 'Erro ao excluir tipo de entidade' });
+  }
+});
+
+/** POST /api/registry/entity-types/:code/reindex — reprojeta índices dos registros. */
+router.post('/entity-types/:code/reindex', requireMinRole(UserRole.ADMIN), async (req, res) => {
+  try {
+    const entityType = await prisma.entityType.findFirst({ where: { code: req.params.code }, select: { id: true } });
+    if (!entityType) return res.status(404).json({ error: `Tipo não encontrado: ${req.params.code}` });
+    const result = await reindexEntityType(entityType.id);
+    return res.json(result);
+  } catch (error) {
+    console.error('Erro ao reindexar EntityType:', error);
+    return res.status(500).json({ error: 'Erro ao reindexar tipo de entidade' });
   }
 });
 
