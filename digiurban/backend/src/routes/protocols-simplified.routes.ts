@@ -2551,5 +2551,100 @@ router.post('/jobs/revert-delegations', requireMinRole(UserRole.ADMIN), async (r
   }
 });
 
+/**
+ * GET /api/protocols/secretaria/:departmentId
+ * Módulo Protocolos geral da secretaria (reforma de módulos por secretaria).
+ * - scope=mine (default): só os protocolos atribuídos ao servidor logado
+ *   (assignedUserId OU currentAssignedUserId).
+ * - scope=department: todos os protocolos da secretaria (respeita role —
+ *   USER só enxerga os seus mesmo pedindo department).
+ * Query: ?scope=mine|department&status=&search=&page=&limit=
+ */
+router.get('/secretaria/:departmentId', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const userId = authReq.userId;
+    const user = authReq.user;
+    const { departmentId } = req.params;
+    const {
+      scope = 'mine',
+      status,
+      search,
+      page = '1',
+      limit = '50',
+    } = req.query as Record<string, string>;
+
+    const where: any = { departmentId };
+
+    // Escopo: meus vs secretaria. USER nunca vê além dos seus (mesmo em department).
+    const wantDepartment = scope === 'department';
+    const canSeeDepartment = user.role !== 'USER';
+    if (!wantDepartment || !canSeeDepartment) {
+      where.OR = [{ assignedUserId: userId }, { currentAssignedUserId: userId }];
+    }
+
+    if (status && status !== 'all') where.status = status;
+
+    if (search) {
+      const s = { contains: search, mode: 'insensitive' as const };
+      const searchOr = [
+        { number: s },
+        { title: s },
+        { citizen: { name: s } },
+      ];
+      // Combina com o filtro de escopo (AND) sem sobrescrever o OR de atribuição.
+      where.AND = [{ OR: searchOr }];
+    }
+
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit as string) || 50));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [data, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        skip,
+        take: limitNum,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          citizen: { select: { id: true, name: true, cpf: true } },
+          service: { select: { id: true, name: true, serviceType: true } },
+          department: { select: { id: true, name: true } },
+          assignedUser: { select: { id: true, name: true } },
+          currentAssignedUser: { select: { id: true, name: true } },
+          sla: { select: { isOverdue: true, daysOverdue: true, expectedEndDate: true } },
+          _count: { select: { history: true } },
+        },
+      }),
+      prisma.protocolSimplified.count({ where }),
+    ]);
+
+    return res.json({
+      scope: wantDepartment && canSeeDepartment ? 'department' : 'mine',
+      data: data.map((p) => ({
+        id: p.id,
+        number: p.number,
+        title: p.title,
+        description: p.description,
+        status: p.status,
+        priority: p.priority,
+        createdAt: p.createdAt,
+        dueDate: p.dueDate,
+        citizen: p.citizen,
+        service: p.service,
+        department: p.department,
+        assignedUser: p.currentAssignedUser || p.assignedUser,
+        hasData: p.service?.serviceType === 'COM_DADOS',
+        sla: p.sla,
+        _count: { history: p._count?.history ?? 0 },
+      })),
+      pagination: { total, page: pageNum, limit: limitNum, totalPages: Math.ceil(total / limitNum) },
+    });
+  } catch (error) {
+    console.error('[protocols/secretaria] erro:', error);
+    return res.status(500).json({ error: 'Erro ao listar protocolos da secretaria' });
+  }
+});
+
 export default router;
 
