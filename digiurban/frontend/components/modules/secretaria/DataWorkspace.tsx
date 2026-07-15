@@ -22,6 +22,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Plus, Settings2, X, Save, Loader2 } from 'lucide-react';
 import { renderWidget, widgetSpan, WidgetSkeleton } from './widgets/WidgetRegistry';
 import { RegistryRecordForm } from './RegistryRecordForm';
+import { WidgetEditor } from './WidgetEditor';
+import { Sparkles } from 'lucide-react';
 
 const WIDGET_LABELS: Record<string, string> = {
   STATS: 'Visão geral', FILTER: 'Filtros', TABLE: 'Tabela', CARDS: 'Cartões',
@@ -44,7 +46,18 @@ export function DataWorkspace({ code }: { code: string }) {
   const [reloadKey, setReloadKey] = useState(0);
   const [formOpen, setFormOpen] = useState(false);
   const [addOpen, setAddOpen] = useState(false);
+  const [editorOpen, setEditorOpen] = useState(false);
   const [busy, setBusy] = useState(false);
+
+  // entityTypeId garantido (materializa o layout se ainda for sugestão).
+  const ensureEntityTypeId = useCallback(async (): Promise<string> => {
+    if (entityTypeId) return entityTypeId;
+    await adoptLayout(code);
+    const ws = await getWorkspace(code);
+    const id = ws.widgets.find((w) => w.entityTypeId)?.entityTypeId || '';
+    setEntityTypeId(id);
+    return id;
+  }, [entityTypeId, code]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -69,13 +82,10 @@ export function DataWorkspace({ code }: { code: string }) {
   };
 
   const addWidget = async (type: WidgetType) => {
-    if (!entityTypeId) { // precisa materializar o layout primeiro
-      await doAdopt();
-    }
-    const etId = entityTypeId || (await getWorkspace(code)).widgets.find((w) => w.entityTypeId)?.entityTypeId || '';
-    if (!etId) return;
     setBusy(true);
     try {
+      const etId = await ensureEntityTypeId();
+      if (!etId) return;
       await createWidget({ entityTypeId: etId, scope: 'SHARED', type, title: WIDGET_LABELS[type] || type, order: widgets.length });
       setAddOpen(false);
       await load();
@@ -100,6 +110,7 @@ export function DataWorkspace({ code }: { code: string }) {
         </div>
         <div className="flex flex-wrap gap-2">
           <Button size="sm" onClick={() => setFormOpen(true)}><Plus className="mr-1 h-4 w-4" /> Novo registro</Button>
+          <Button size="sm" variant="outline" onClick={() => setEditorOpen(true)}><Sparkles className="mr-1 h-4 w-4" /> Criar widget</Button>
           {canManage && (
             <>
               {source === 'suggested' && (
@@ -145,6 +156,14 @@ export function DataWorkspace({ code }: { code: string }) {
         </DialogContent>
       </Dialog>
 
+      {/* Modal: criar widget customizado (W5) */}
+      <Dialog open={editorOpen} onOpenChange={setEditorOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader><DialogTitle>Criar widget</DialogTitle></DialogHeader>
+          <WidgetEditorLoader code={code} schema={schema} ensureId={ensureEntityTypeId} onSaved={async () => { setEditorOpen(false); await load(); }} onCancel={() => setEditorOpen(false)} />
+        </DialogContent>
+      </Dialog>
+
       {/* Modal: adicionar widget */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
         <DialogContent>
@@ -160,4 +179,19 @@ export function DataWorkspace({ code }: { code: string }) {
       </Dialog>
     </div>
   );
+}
+
+/** Garante o entityTypeId (materializa layout se necessário) antes do editor. */
+function WidgetEditorLoader({ code, schema, ensureId, onSaved, onCancel }: {
+  code: string;
+  schema: EntityType;
+  ensureId: () => Promise<string>;
+  onSaved: () => void;
+  onCancel: () => void;
+}) {
+  const [etId, setEtId] = useState<string | null>(null);
+  useEffect(() => { ensureId().then(setEtId).catch(() => setEtId('')); }, [ensureId]);
+  if (etId === null) return <div className="p-6 text-center text-muted-foreground"><Loader2 className="mx-auto h-4 w-4 animate-spin" /></div>;
+  if (etId === '') return <div className="p-6 text-center text-muted-foreground">Não foi possível preparar o widget.</div>;
+  return <WidgetEditor schema={schema} entityTypeId={etId} onSaved={onSaved} onCancel={onCancel} />;
 }

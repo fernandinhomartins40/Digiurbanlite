@@ -56,11 +56,13 @@ const REGISTRY: Partial<Record<WidgetType, React.ComponentType<WidgetProps>>> = 
 };
 
 export function renderWidget(type: WidgetType, props: WidgetProps): React.ReactNode {
-  // SAVED_QUERY: delega ao componente da visualização escolhida.
+  // SAVED_QUERY: delega ao componente da visualização escolhida, aplicando os
+  // filtros salvos no config (fixos, sobrepõem os filtros compartilhados).
   if (type === 'SAVED_QUERY') {
     const view = (props.config?.view as WidgetType) || 'TABLE';
     const Comp = REGISTRY[view] || TableWidget;
-    return <Comp {...props} />;
+    const savedFilters = (props.config?.filters as Record<string, unknown>) || {};
+    return <Comp {...props} sharedFilters={{ ...props.sharedFilters, ...savedFilters }} />;
   }
   const Comp = REGISTRY[type];
   if (!Comp) return null;

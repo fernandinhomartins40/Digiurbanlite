@@ -1,5 +1,5 @@
 'use client';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -7,6 +7,7 @@ import { Download } from 'lucide-react';
 import type { WidgetProps } from './WidgetRegistry';
 import type { FieldDefinition } from '@/services/registry.service';
 import { useRecords } from './useRecords';
+import { RecordDetailModal } from '../RecordDetailModal';
 
 function fmt(f: FieldDefinition, v: unknown) {
   if (v == null || v === '') return '—';
@@ -21,7 +22,8 @@ export function TableWidget({ code, schema, sharedFilters, reloadKey }: WidgetPr
     const c = (schema.fields ?? []).filter((f) => f.displayInTable);
     return c.length ? c : (schema.fields ?? []).slice(0, 6);
   }, [schema]);
-  const { rows, total, loading } = useRecords(code, schema, sharedFilters, reloadKey);
+  const { rows, total, loading, reload } = useRecords(code, schema, sharedFilters, reloadKey);
+  const [detail, setDetail] = useState<{ id: string; data: Record<string, unknown> } | null>(null);
 
   const exportCsv = () => {
     const head = cols.map((c) => `"${c.label}"`).join(';');
@@ -50,7 +52,7 @@ export function TableWidget({ code, schema, sharedFilters, reloadKey }: WidgetPr
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.id} className="border-b hover:bg-muted/20">
+                    <tr key={r.id} className="cursor-pointer border-b hover:bg-muted/20" onClick={() => setDetail(r)}>
                       {cols.map((c) => <td key={c.key} className="px-4 py-2">{c.isPII ? <span className="text-muted-foreground">{fmt(c, r.data[c.key])}</span> : fmt(c, r.data[c.key])}</td>)}
                     </tr>
                   ))}
@@ -59,6 +61,7 @@ export function TableWidget({ code, schema, sharedFilters, reloadKey }: WidgetPr
             )}
         </div>
       </CardContent>
+      <RecordDetailModal schema={schema} record={detail} onClose={() => setDetail(null)} onChanged={reload} />
     </Card>
   );
 }
