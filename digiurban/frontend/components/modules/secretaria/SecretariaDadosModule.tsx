@@ -37,8 +37,15 @@ export function SecretariaDadosModule({ departmentCode, departmentName }: Props)
       setLoading(true);
       try {
         const { entityTypes } = await listEntityTypes();
-        const filtered = departmentCode
-          ? entityTypes.filter((t) => !t.department || t.department === departmentCode)
+        // O EntityType.department guarda o code CANÔNICO do banco
+        // (MAIÚSCULO_UNDERSCORE, ex. "SAUDE"), mas a página passa o slug
+        // (minúsculo-hífen, ex. "saude"). Normalizar antes de comparar —
+        // mesma conversão que o backend faz em /services (replace('-','_').upper).
+        const normalized = departmentCode
+          ? departmentCode.replace(/-/g, '_').toUpperCase()
+          : undefined;
+        const filtered = normalized
+          ? entityTypes.filter((t) => !t.department || t.department === normalized)
           : entityTypes;
         setTypes(filtered);
         setActiveCode(filtered[0]?.code ?? null);

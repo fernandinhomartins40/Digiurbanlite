@@ -29,32 +29,37 @@ import {
  * Reflete as secretarias REAIS da aplicação (app/admin/secretarias/*) — o
  * município nasce completo. O que a prefeitura não usar pode ser desabilitado
  * no wizard/detalhe (toggle de módulos por feature = slug abaixo).
- * `code` = SLUG da secretaria (alinhado com AVAILABLE_MODULES e requireFeature).
+ * `code` = MAIÚSCULO_UNDERSCORE — formato CANÔNICO do banco, igual ao tenant
+ * default e aos seeds de serviço (prisma/seeds/services/*.seed.ts). Sem isto, os
+ * 400+ serviços não encontram suas secretarias no tenant novo (bug do palmital,
+ * 2026-07-15). O frontend/requireFeature usam o SLUG minúsculo-hífen e convertem
+ * para este formato (replace('-','_').toUpperCase()) — ver routes/services.ts;
+ * requireFeature compara com tenant.features por string literal, não com o code.
  */
 export const DEFAULT_DEPARTMENTS: Array<{ name: string; code: string }> = [
-  { name: 'Gabinete do Prefeito', code: 'gabinete' },
-  { name: 'Secretaria Municipal de Administração', code: 'administracao' },
-  { name: 'Secretaria Municipal de Agricultura', code: 'agricultura' },
-  { name: 'Secretaria Municipal de Assistência Social', code: 'assistencia-social' },
-  { name: 'Secretaria Municipal de Cultura', code: 'cultura' },
-  { name: 'Coordenadoria de Defesa Civil', code: 'defesa-civil' },
-  { name: 'Secretaria Municipal de Desenvolvimento Econômico', code: 'desenvolvimento-economico' },
-  { name: 'Secretaria Municipal de Educação', code: 'educacao' },
-  { name: 'Secretaria Municipal de Esportes', code: 'esportes' },
-  { name: 'Secretaria Municipal de Finanças', code: 'financas' },
-  { name: 'Secretaria Municipal de Habitação', code: 'habitacao' },
-  { name: 'Secretaria Municipal de Meio Ambiente', code: 'meio-ambiente' },
-  { name: 'Secretaria Municipal de Mobilidade Urbana', code: 'mobilidade-urbana' },
-  { name: 'Secretaria Municipal de Obras Públicas', code: 'obras-publicas' },
-  { name: 'Secretaria Municipal de Planejamento Urbano', code: 'planejamento-urbano' },
-  { name: 'Secretaria Municipal de Políticas para Mulheres', code: 'politicas-mulheres' },
-  { name: 'Secretaria Municipal de Saúde', code: 'saude' },
-  { name: 'Secretaria Municipal de Segurança Pública', code: 'seguranca-publica' },
-  { name: 'Secretaria Municipal de Serviços Públicos', code: 'servicos-publicos' },
-  { name: 'Secretaria Municipal de Tecnologia e Inovação', code: 'tecnologia-inovacao' },
-  { name: 'Secretaria Municipal de Transportes e Trânsito', code: 'transportes-transito' },
-  { name: 'Secretaria Municipal de Turismo', code: 'turismo' },
-  { name: 'Ouvidoria', code: 'ouvidoria' },
+  { name: 'Gabinete do Prefeito', code: 'GABINETE' },
+  { name: 'Secretaria Municipal de Administração', code: 'ADMINISTRACAO' },
+  { name: 'Secretaria Municipal de Agricultura', code: 'AGRICULTURA' },
+  { name: 'Secretaria Municipal de Assistência Social', code: 'ASSISTENCIA_SOCIAL' },
+  { name: 'Secretaria Municipal de Cultura', code: 'CULTURA' },
+  { name: 'Coordenadoria de Defesa Civil', code: 'DEFESA_CIVIL' },
+  { name: 'Secretaria Municipal de Desenvolvimento Econômico', code: 'DESENVOLVIMENTO_ECONOMICO' },
+  { name: 'Secretaria Municipal de Educação', code: 'EDUCACAO' },
+  { name: 'Secretaria Municipal de Esportes', code: 'ESPORTES' },
+  { name: 'Secretaria Municipal de Finanças', code: 'FINANCAS' },
+  { name: 'Secretaria Municipal de Habitação', code: 'HABITACAO' },
+  { name: 'Secretaria Municipal de Meio Ambiente', code: 'MEIO_AMBIENTE' },
+  { name: 'Secretaria Municipal de Mobilidade Urbana', code: 'MOBILIDADE_URBANA' },
+  { name: 'Secretaria Municipal de Obras Públicas', code: 'OBRAS_PUBLICAS' },
+  { name: 'Secretaria Municipal de Planejamento Urbano', code: 'PLANEJAMENTO_URBANO' },
+  { name: 'Secretaria Municipal de Políticas para Mulheres', code: 'POLITICAS_MULHERES' },
+  { name: 'Secretaria Municipal de Saúde', code: 'SAUDE' },
+  { name: 'Secretaria Municipal de Segurança Pública', code: 'SEGURANCA_PUBLICA' },
+  { name: 'Secretaria Municipal de Serviços Públicos', code: 'SERVICOS_PUBLICOS' },
+  { name: 'Secretaria Municipal de Tecnologia e Inovação', code: 'TECNOLOGIA_INOVACAO' },
+  { name: 'Secretaria Municipal de Transportes e Trânsito', code: 'TRANSPORTES_TRANSITO' },
+  { name: 'Secretaria Municipal de Turismo', code: 'TURISMO' },
+  { name: 'Ouvidoria', code: 'OUVIDORIA' },
 ];
 
 /**
@@ -64,18 +69,18 @@ export const DEFAULT_DEPARTMENTS: Array<{ name: string; code: string }> = [
  * `deptCode` = code da secretaria criada por seedDefaultDepartments.
  */
 export const DEFAULT_SERVICES: Array<{ name: string; description: string; deptCode: string }> = [
-  { name: 'Solicitação Geral', description: 'Abertura de solicitação geral ao município', deptCode: 'administracao' },
-  { name: 'Ouvidoria — Reclamação', description: 'Registrar reclamação junto à Ouvidoria', deptCode: 'ouvidoria' },
-  { name: 'Ouvidoria — Denúncia', description: 'Registrar denúncia junto à Ouvidoria', deptCode: 'ouvidoria' },
-  { name: 'Ouvidoria — Elogio ou Sugestão', description: 'Enviar elogio ou sugestão', deptCode: 'ouvidoria' },
-  { name: 'Atendimento — Saúde', description: 'Solicitar atendimento ou informação de saúde', deptCode: 'saude' },
-  { name: 'Matrícula e Atendimento — Educação', description: 'Solicitações da rede municipal de ensino', deptCode: 'educacao' },
-  { name: 'Atendimento — Assistência Social', description: 'Solicitar atendimento da Assistência Social', deptCode: 'assistencia-social' },
-  { name: 'Solicitação de Obras', description: 'Tapa-buraco, iluminação, calçadas e afins', deptCode: 'obras-publicas' },
-  { name: 'Serviços Públicos', description: 'Coleta, limpeza urbana, poda e afins', deptCode: 'servicos-publicos' },
-  { name: 'Meio Ambiente', description: 'Poda de árvore, denúncia ambiental e afins', deptCode: 'meio-ambiente' },
-  { name: 'Habitação', description: 'Programas e solicitações habitacionais', deptCode: 'habitacao' },
-  { name: 'Agricultura', description: 'Atendimento ao produtor rural', deptCode: 'agricultura' },
+  { name: 'Solicitação Geral', description: 'Abertura de solicitação geral ao município', deptCode: 'ADMINISTRACAO' },
+  { name: 'Ouvidoria — Reclamação', description: 'Registrar reclamação junto à Ouvidoria', deptCode: 'OUVIDORIA' },
+  { name: 'Ouvidoria — Denúncia', description: 'Registrar denúncia junto à Ouvidoria', deptCode: 'OUVIDORIA' },
+  { name: 'Ouvidoria — Elogio ou Sugestão', description: 'Enviar elogio ou sugestão', deptCode: 'OUVIDORIA' },
+  { name: 'Atendimento — Saúde', description: 'Solicitar atendimento ou informação de saúde', deptCode: 'SAUDE' },
+  { name: 'Matrícula e Atendimento — Educação', description: 'Solicitações da rede municipal de ensino', deptCode: 'EDUCACAO' },
+  { name: 'Atendimento — Assistência Social', description: 'Solicitar atendimento da Assistência Social', deptCode: 'ASSISTENCIA_SOCIAL' },
+  { name: 'Solicitação de Obras', description: 'Tapa-buraco, iluminação, calçadas e afins', deptCode: 'OBRAS_PUBLICAS' },
+  { name: 'Serviços Públicos', description: 'Coleta, limpeza urbana, poda e afins', deptCode: 'SERVICOS_PUBLICOS' },
+  { name: 'Meio Ambiente', description: 'Poda de árvore, denúncia ambiental e afins', deptCode: 'MEIO_AMBIENTE' },
+  { name: 'Habitação', description: 'Programas e solicitações habitacionais', deptCode: 'HABITACAO' },
+  { name: 'Agricultura', description: 'Atendimento ao produtor rural', deptCode: 'AGRICULTURA' },
 ];
 
 /**
