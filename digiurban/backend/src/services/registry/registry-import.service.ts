@@ -178,6 +178,52 @@ export function parseFormFields(formFieldsConfig: unknown): RawFormField[] {
 }
 
 /**
+ * Extrai campos do `formSchema` no formato JSON Schema usado pelos serviços dos
+ * seeds: `{ properties: { chave: { type, title, enum, widget, format } }, required: [...] }`.
+ * Ignora `citizenFields` (são dados do cidadão, não do formulário do serviço).
+ */
+export function parseFormSchema(formSchema: unknown): RawFormField[] {
+  let schema: Record<string, unknown> | null = null;
+  if (typeof formSchema === 'string') {
+    try { schema = JSON.parse(formSchema); } catch { return []; }
+  } else if (formSchema && typeof formSchema === 'object') {
+    schema = formSchema as Record<string, unknown>;
+  }
+  if (!schema) return [];
+
+  const properties = schema.properties;
+  if (!properties || typeof properties !== 'object') return [];
+  const required = new Set(Array.isArray(schema.required) ? (schema.required as string[]) : []);
+
+  const out: RawFormField[] = [];
+  for (const [key, raw] of Object.entries(properties as Record<string, unknown>)) {
+    if (!raw || typeof raw !== 'object') continue;
+    const prop = raw as Record<string, unknown>;
+
+    // Mapear JSON Schema type/format/widget/enum → o `type` que normalizeDataType entende
+    let type = String(prop.type ?? 'string');
+    if (Array.isArray(prop.enum) && prop.enum.length) type = 'enum';
+    else if (prop.type === 'array') type = 'array';
+    else if (prop.type === 'boolean') type = 'boolean';
+    else if (prop.type === 'number' || prop.type === 'integer') type = 'number';
+    else if (prop.format === 'date' || prop.format === 'date-time' || prop.widget === 'date') type = 'date';
+    else if (prop.format === 'geo' || prop.widget === 'map' || prop.widget === 'location') type = 'geo';
+    else if (key.toLowerCase().includes('cpf')) type = 'cpf';
+    else if (key.toLowerCase().includes('cnpj')) type = 'cnpj';
+
+    out.push({
+      key,
+      label: (prop.title as string) || key,
+      type,
+      required: required.has(key),
+      // opções do enum para o FieldDefinition.validation
+      // (guardadas em _options; mergeFields não usa, mas o import pode enriquecer depois)
+    });
+  }
+  return out;
+}
+
+/**
  * Constrói um ImportedEntityType a partir de um moduleType, do config de gestão
  * (se existir) e dos serviços daquele moduleType (para pegar formFieldsConfig).
  * `categoryKind` vem da reconciliação com CitizenCategory.triggerServices.
@@ -185,10 +231,15 @@ export function parseFormFields(formFieldsConfig: unknown): RawFormField[] {
 export function buildEntityType(
   moduleType: string,
   managementConfig: ManagementModuleConfig | null,
-  services: Array<{ name?: string; departmentId?: string; formFieldsConfig?: unknown }>,
+  services: Array<{ name?: string; departmentId?: string; formFieldsConfig?: unknown; formSchema?: unknown }>,
   categoryKind: EntityKind | null
 ): ImportedEntityType {
-  const formFields = services.flatMap((s) => parseFormFields(s.formFieldsConfig));
+  // Campos vêm de 3 fontes: formFieldsConfig (array) + formSchema (JSON Schema,
+  // usado pela maioria dos serviços dos seeds) + o ManagementConfig (exibição).
+  const formFields = [
+    ...services.flatMap((s) => parseFormFields(s.formFieldsConfig)),
+    ...services.flatMap((s) => parseFormSchema(s.formSchema)),
+  ];
   const managementFields = managementConfig?.fields ?? [];
   const fields = mergeFields(managementFields, formFields);
 

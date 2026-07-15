@@ -45,7 +45,7 @@ async function collectForTenant(): Promise<ImportedEntityType[]> {
   // Serviços COM_DADOS com moduleType (a extension já escopa por tenant)
   const services = await prisma.serviceSimplified.findMany({
     where: { serviceType: 'COM_DADOS', moduleType: { not: null } },
-    select: { name: true, departmentId: true, moduleType: true, formFieldsConfig: true },
+    select: { name: true, departmentId: true, moduleType: true, formFieldsConfig: true, formSchema: true },
   });
 
   // Categorias e seus triggerServices → mapa moduleType → kind PERSON_ROLE
