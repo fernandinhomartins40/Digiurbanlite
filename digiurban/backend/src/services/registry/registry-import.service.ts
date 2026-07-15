@@ -146,10 +146,18 @@ export function mergeFields(
     if (field.order === 0 && idx > 0) field.order = idx;
   });
 
-  // 2) Fonte de entrada (garante required e campos ausentes na exibição)
+  // 2) Fonte de entrada (formSchema/formFieldsConfig). Quando o campo NÃO veio
+  //    do ManagementConfig, aplica flags padrão sensatas para o módulo ser útil
+  //    sem config manual: os primeiros campos aparecem na tabela; campos
+  //    escalares filtráveis viram indexáveis (busca/filtro reais); ENUM/ARRAY
+  //    facetáveis. Isso é o que faz os widgets funcionarem para os ~300 tipos
+  //    que só têm formSchema.
+  const fromConfig = new Set(managementFields.map((f) => f.key));
+  let inputOrder = 0;
   formFields.forEach((f) => {
     const key = (f.id ?? f.key ?? f.name ?? '').toString().trim();
     if (!key) return;
+    const isNew = !byKey.has(key);
     const field = upsert(key);
     if (f.label) field.label = f.label;
     if (f.type) field.dataType = normalizeDataType(f.type);
@@ -159,6 +167,22 @@ export function mergeFields(
     const metric = guessMetric(key, field.dataType);
     field.isMetric = field.isMetric || metric.isMetric;
     field.aggregation = field.aggregation ?? metric.aggregation;
+
+    // Flags padrão só para campos que NÃO vieram do ManagementConfig.
+    if (!fromConfig.has(key)) {
+      const dt = field.dataType;
+      // indexável: escalares consultáveis (evita GEO/ARRAY como índice único)
+      if (['TEXT', 'ENUM', 'NUMBER', 'DATE', 'BOOL', 'CPF', 'CNPJ'].includes(dt)) {
+        field.indexable = true;
+        field.filterable = field.filterable || ['ENUM', 'BOOL', 'DATE', 'NUMBER'].includes(dt);
+        field.searchable = field.searchable || ['TEXT', 'CPF', 'CNPJ'].includes(dt);
+      }
+      // primeiros ~6 campos aparecem na tabela; todos no card
+      if (inputOrder < 6) field.displayInTable = true;
+      field.displayInCard = true;
+      inputOrder++;
+    }
+    if (isNew) field.order = byKey.size - 1;
   });
 
   return Array.from(byKey.values());
@@ -231,7 +255,7 @@ export function parseFormSchema(formSchema: unknown): RawFormField[] {
 export function buildEntityType(
   moduleType: string,
   managementConfig: ManagementModuleConfig | null,
-  services: Array<{ name?: string; departmentId?: string; formFieldsConfig?: unknown; formSchema?: unknown }>,
+  services: Array<{ name?: string; departmentId?: string; departmentCode?: string | null; formFieldsConfig?: unknown; formSchema?: unknown }>,
   categoryKind: EntityKind | null
 ): ImportedEntityType {
   // Campos vêm de 3 fontes: formFieldsConfig (array) + formSchema (JSON Schema,
@@ -247,7 +271,7 @@ export function buildEntityType(
     code: moduleType,
     name: managementConfig?.title || services[0]?.name || moduleType,
     kind: categoryKind ?? 'EVENT',
-    department: services[0]?.departmentId ?? null,
+    department: services[0]?.departmentCode ?? null,
     materializesFrom: [moduleType],
     fields,
   };

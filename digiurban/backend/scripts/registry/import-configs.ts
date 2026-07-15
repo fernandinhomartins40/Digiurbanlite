@@ -42,11 +42,24 @@ interface TenantReport {
  * moduleTypes reais dos serviços COM_DADOS. Para cada um, monta o EntityType.
  */
 async function collectForTenant(): Promise<ImportedEntityType[]> {
-  // Serviços COM_DADOS com moduleType (a extension já escopa por tenant)
-  const services = await prisma.serviceSimplified.findMany({
+  // Serviços COM_DADOS com moduleType (a extension já escopa por tenant).
+  // Traz o CODE da secretaria (não só o id) — o EntityType.department guarda o
+  // code, que é o que o frontend usa para filtrar por secretaria.
+  const rawServices = await prisma.serviceSimplified.findMany({
     where: { serviceType: 'COM_DADOS', moduleType: { not: null } },
-    select: { name: true, departmentId: true, moduleType: true, formFieldsConfig: true, formSchema: true },
+    select: {
+      name: true,
+      departmentId: true,
+      moduleType: true,
+      formFieldsConfig: true,
+      formSchema: true,
+      department: { select: { code: true } },
+    },
   });
+  const services = rawServices.map((s) => ({
+    ...s,
+    departmentCode: s.department?.code ?? null,
+  }));
 
   // Categorias e seus triggerServices → mapa moduleType → kind PERSON_ROLE
   const categories = await prisma.citizenCategory.findMany({
