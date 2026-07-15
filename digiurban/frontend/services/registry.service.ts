@@ -162,6 +162,56 @@ export function rejectRecord(id: string) {
   return api<RegistryRecord>(`/records/${encodeURIComponent(id)}/reject`, { method: 'POST' });
 }
 
+// ── Widgets do workspace (W0/W1) ─────────────────────────────────────────────
+
+export type WidgetType =
+  | 'TABLE' | 'CARDS' | 'DETAIL' | 'FILTER' | 'STATS' | 'CHART'
+  | 'MAP' | 'AGENDA' | 'TIMELINE' | 'ENROLLMENT' | 'APPROVAL' | 'RELATIONS' | 'SAVED_QUERY';
+
+export interface DataWidget {
+  id?: string;
+  entityTypeId?: string;
+  scope?: 'SHARED' | 'PERSONAL';
+  ownerUserId?: string | null;
+  type: WidgetType;
+  title: string;
+  config?: Record<string, unknown>;
+  layout?: Record<string, unknown>;
+  order: number;
+  suggested?: boolean;
+}
+
+export interface Workspace {
+  entityType: string;
+  entityTypeName: string;
+  widgets: DataWidget[];
+  source: 'saved' | 'suggested';
+}
+
+export function getWorkspace(code: string) {
+  return api<Workspace>(`/entity-types/${encodeURIComponent(code)}/workspace`);
+}
+
+export function getSuggestedWidgets(code: string) {
+  return api<{ widgets: DataWidget[] }>(`/entity-types/${encodeURIComponent(code)}/suggested-widgets`);
+}
+
+export function adoptLayout(code: string) {
+  return api<Workspace>(`/entity-types/${encodeURIComponent(code)}/adopt-layout`, { method: 'POST' });
+}
+
+export function createWidget(input: { entityTypeId: string; scope?: 'SHARED' | 'PERSONAL'; type: WidgetType; title: string; config?: unknown; order?: number }) {
+  return api<DataWidget>('/widgets', { method: 'POST', body: JSON.stringify(input) });
+}
+
+export function updateWidget(id: string, patch: Partial<DataWidget> & { active?: boolean }) {
+  return api<DataWidget>(`/widgets/${encodeURIComponent(id)}`, { method: 'PUT', body: JSON.stringify(patch) });
+}
+
+export function deleteWidget(id: string) {
+  return api<{ deleted: boolean }>(`/widgets/${encodeURIComponent(id)}`, { method: 'DELETE' });
+}
+
 // ── Editor no-code (CRUD) ────────────────────────────────────────────────────
 
 export function createEntityType(input: EntityType) {
