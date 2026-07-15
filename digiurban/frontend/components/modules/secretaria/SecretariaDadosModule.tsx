@@ -19,6 +19,7 @@
  */
 
 import { useEffect, useMemo, useState, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import {
   listEntityTypes,
   getEntityTypeSchema,
@@ -27,6 +28,7 @@ import {
   listRecords,
   approveRecord,
   rejectRecord,
+  getRecordRelations,
   type EntityType,
   type FieldDefinition,
 } from '@/services/registry.service';
@@ -37,7 +39,10 @@ import { Input } from '@/components/ui/input';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { RegistryRecordForm } from './RegistryRecordForm';
-import { Database, Search, LayoutGrid, Table2, Loader2, Inbox, Plus, CheckCircle2, XCircle, Clock } from 'lucide-react';
+import { Database, Search, LayoutGrid, Table2, Loader2, Inbox, Plus, CheckCircle2, XCircle, Clock, Map as MapIcon, Download } from 'lucide-react';
+
+// Mapa só no cliente (Leaflet não roda no SSR).
+const RecordsMap = dynamic(() => import('./RecordsMap'), { ssr: false, loading: () => <div className="p-8 text-center text-muted-foreground">Carregando mapa…</div> });
 
 interface Props {
   /** Código do departamento (Department.department string usada no EntityType). */
@@ -45,7 +50,7 @@ interface Props {
   departmentName?: string;
 }
 
-type View = 'table' | 'approval' | 'panel';
+type View = 'table' | 'map' | 'approval' | 'panel';
 
 type EntityTypeWithCount = EntityType & { _count?: { records: number; fields: number } };
 
@@ -142,6 +147,8 @@ function EntityTypeView({ code, schema }: { code: string; schema: EntityType }) 
   const openEdit = (rec: { id: string; data: Record<string, unknown> }) => { setEditing(rec); setFormOpen(true); };
   const afterSave = () => { setFormOpen(false); setReloadKey((k) => k + 1); };
 
+  const hasGeo = (schema.fields ?? []).some((f) => f.dataType === 'GEO');
+
   const tabBtn = (v: View, icon: React.ReactNode, label: string) => (
     <button onClick={() => setView(v)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md ${view === v ? 'bg-white shadow-sm font-medium' : 'text-muted-foreground'}`}>
       {icon} {label}
@@ -153,6 +160,7 @@ function EntityTypeView({ code, schema }: { code: string; schema: EntityType }) 
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
           {tabBtn('table', <Table2 className="h-4 w-4" />, 'Registros')}
+          {hasGeo && tabBtn('map', <MapIcon className="h-4 w-4" />, 'Mapa')}
           {tabBtn('approval', <Clock className="h-4 w-4" />, 'Aprovação')}
           {tabBtn('panel', <LayoutGrid className="h-4 w-4" />, 'Painel')}
         </div>
@@ -160,6 +168,7 @@ function EntityTypeView({ code, schema }: { code: string; schema: EntityType }) 
       </div>
 
       {view === 'table' && <RecordsTable key={`t-${reloadKey}`} code={code} schema={schema} onEdit={openEdit} />}
+      {view === 'map' && <RecordsMap code={code} schema={schema} />}
       {view === 'approval' && <ApprovalQueue key={`a-${reloadKey}`} code={code} schema={schema} onChanged={() => setReloadKey((k) => k + 1)} />}
       {view === 'panel' && <DashboardPanel key={`p-${reloadKey}`} code={code} />}
 
@@ -169,6 +178,7 @@ function EntityTypeView({ code, schema }: { code: string; schema: EntityType }) 
             <DialogTitle>{editing ? 'Editar registro' : `Novo · ${schema.name}`}</DialogTitle>
           </DialogHeader>
           <RegistryRecordForm schema={schema} record={editing} onSaved={afterSave} onCancel={() => setFormOpen(false)} />
+          {editing && <RecordRelations recordId={editing.id} />}
         </DialogContent>
       </Dialog>
     </div>
@@ -234,6 +244,43 @@ function ApprovalQueue({ code, schema, onChanged }: { code: string; schema: Enti
   );
 }
 
+/** Relações de um registro (grafo): entidades ligadas a este registro. */
+function RecordRelations({ recordId }: { recordId: string }) {
+  const [rels, setRels] = useState<{ outgoing: any[]; incoming: any[] } | null>(null);
+
+  useEffect(() => {
+    getRecordRelations(recordId)
+      .then((r) => setRels({ outgoing: r.outgoing as any[], incoming: r.incoming as any[] }))
+      .catch(() => setRels({ outgoing: [], incoming: [] }));
+  }, [recordId]);
+
+  if (!rels || (rels.outgoing.length === 0 && rels.incoming.length === 0)) return null;
+
+  const line = (rel: any, other: any) => (
+    <li key={other?.id + rel.relType} className="flex items-center gap-2 text-sm">
+      <Badge variant="outline" className="text-xs">{rel.relType}</Badge>
+      <span className="text-muted-foreground">{other?.entityType?.name || other?.entityType?.code}</span>
+      <span className="truncate">{firstValue(other?.data)}</span>
+    </li>
+  );
+
+  return (
+    <div className="mt-4 border-t pt-4">
+      <div className="mb-2 text-sm font-medium">Entidades relacionadas</div>
+      <ul className="space-y-1.5">
+        {rels.outgoing.map((r) => line(r, r.toRecord))}
+        {rels.incoming.map((r) => line(r, r.fromRecord))}
+      </ul>
+    </div>
+  );
+}
+
+function firstValue(data: Record<string, unknown> | undefined): string {
+  if (!data) return '';
+  const v = Object.values(data).find((x) => x != null && x !== '');
+  return v == null ? '' : String(v);
+}
+
 /** Tabela de registros com busca, filtros e facets — tudo do FieldDefinition. */
 function RecordsTable({ code, schema, onEdit }: { code: string; schema: EntityType; onEdit: (rec: { id: string; data: Record<string, unknown> }) => void }) {
   const fields = schema.fields ?? [];
@@ -282,6 +329,24 @@ function RecordsTable({ code, schema, onEdit }: { code: string; schema: EntityTy
     return String(v);
   };
 
+  const exportCsv = () => {
+    const cols = tableCols;
+    const head = cols.map((c) => `"${c.label}"`).join(';');
+    const lines = rows.map((r) => cols.map((c) => {
+      const raw = fmt(c, r.data[c.key]);
+      return `"${String(raw).replace(/"/g, '""')}"`;
+    }).join(';'));
+    // UTF-8 BOM para o Excel (convenção do projeto)
+    const csv = '﻿' + [head, ...lines].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${code.toLowerCase()}_${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-3">
       {/* Busca + filtros */}
@@ -302,6 +367,9 @@ function RecordsTable({ code, schema, onEdit }: { code: string; schema: EntityTy
           </select>
         ))}
         <Badge variant="secondary">{total}</Badge>
+        <Button size="sm" variant="outline" onClick={exportCsv} disabled={rows.length === 0}>
+          <Download className="mr-1 h-4 w-4" /> Exportar
+        </Button>
       </div>
 
       <Card>
