@@ -22,6 +22,7 @@ import { AuthenticatedRequest } from '../types';
 import { getManagementConfig } from './management-configs';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
+import { getRegistryReadMode, shadowCompareCount } from '../services/registry/registry-shadow.service';
 
 const router = Router();
 
@@ -441,6 +442,13 @@ router.get(
       const totalPages = Math.ceil(total / limit);
 
       console.log(`  ✅ Found ${total} protocols, returning ${transformedData.length}`);
+
+      // F3 — Shadow-read: compara paridade com o Registry em background (não
+      // afeta a resposta). Só roda quando REGISTRY_READ=shadow e sem filtros de
+      // busca/status (compara o universo do módulo, não a página filtrada).
+      if (getRegistryReadMode() === 'shadow' && !search && (!status || status === 'all')) {
+        shadowCompareCount({ moduleType: module.toUpperCase(), currentTotal: total });
+      }
 
       return res.json({
         data: transformedData,
