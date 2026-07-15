@@ -130,4 +130,37 @@ router.get('/entity-types/:code/dashboard', requireMinRole(UserRole.USER), async
   }
 });
 
+/**
+ * GET /api/registry/records/:id/relations
+ * Grafo de relações de um EntityRecord (F5): "todos os imóveis do cidadão",
+ * "empresas de um sócio", etc. Retorna relações de saída e de entrada.
+ */
+router.get('/records/:id/relations', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const recordId = req.params.id;
+    const [outgoing, incoming] = await Promise.all([
+      prisma.entityRelation.findMany({
+        where: { fromRecordId: recordId },
+        select: {
+          relType: true,
+          metadata: true,
+          toRecord: { select: { id: true, data: true, entityType: { select: { code: true, name: true } } } },
+        },
+      }),
+      prisma.entityRelation.findMany({
+        where: { toRecordId: recordId },
+        select: {
+          relType: true,
+          metadata: true,
+          fromRecord: { select: { id: true, data: true, entityType: { select: { code: true, name: true } } } },
+        },
+      }),
+    ]);
+    return res.json({ recordId, outgoing, incoming });
+  } catch (error) {
+    console.error('Erro em /registry/records/:id/relations:', error);
+    return res.status(500).json({ error: 'Erro ao obter relações do registro' });
+  }
+});
+
 export default router;

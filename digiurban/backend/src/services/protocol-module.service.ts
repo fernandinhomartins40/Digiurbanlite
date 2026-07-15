@@ -13,6 +13,7 @@ import { generateProtocolNumberSafe } from './protocol-number.service';
 import { protocolStatusEngine } from './protocol-status.engine';
 import { familyStatsService } from './family-stats.service';
 import { GeolocationService } from './geolocation.service';
+import { materializeOnApproval } from './registry/registry-materialize.service';
 
 // ============================================================================
 // TYPES
@@ -456,6 +457,20 @@ export class ProtocolModuleService {
             customData: updatedCustomData as Prisma.JsonObject
           }
         });
+
+        // ✅ F5 — Materializar no Registry na MESMA transação (atrás de
+        // REGISTRY_WRITE; não-fatal). Torna Imóvel/Empresa/Produtor entidades
+        // de 1ª classe consultáveis, com dedup por CPF/CNPJ e relações.
+        await materializeOnApproval(
+          {
+            protocolId,
+            entityTypeCode: protocol.moduleType || protocol.service.moduleType || 'GENERICO',
+            customData: updatedCustomData,
+            citizenId: protocol.citizenId,
+            status: 'ACTIVE',
+          },
+          tx
+        );
       });
     }
 
