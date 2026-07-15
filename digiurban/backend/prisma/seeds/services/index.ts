@@ -5,7 +5,6 @@
 
 import { PrismaClient } from '@prisma/client';
 import { ServiceDefinition } from './types';
-import { generateDefaultWorkflow } from '../../src/services/workflow-template.service';
 
 // Secretarias existentes (13)
 import { healthServices } from './health.seed';
@@ -68,14 +67,25 @@ export const allServices: ServiceDefinition[] = [
 /**
  * Função principal de seed de serviços
  */
-export async function seedServices() {
-  console.log('\n📦 Iniciando seed de serviços simplificados...');
+/**
+ * Semeia o catálogo completo de serviços (allServices).
+ *
+ * @param db  Client/transação a usar. Default: prisma cru (uso original do
+ *            seed-consolidated, single-tenant). Passe a tx do provisionamento
+ *            para escopar por tenant.
+ * @param tenantId  Quando informado, filtra departamentos e cria serviços
+ *            DAQUELE tenant (multi-tenant). Sem tenantId = comportamento antigo.
+ */
+export async function seedServices(db: any = prisma, tenantId?: string) {
+  console.log(`\n📦 Iniciando seed de serviços simplificados${tenantId ? ` (tenant ${tenantId})` : ''}...`);
 
-  // Buscar departamentos
-  const departments = await prisma.department.findMany();
+  // Buscar departamentos (do tenant, quando informado)
+  const departments = await db.department.findMany(
+    tenantId ? { where: { tenantId } } : {}
+  );
 
   const departmentMap = new Map(
-    departments.map(dept => [dept.code, dept.id])
+    departments.map((dept: { code: string | null; id: string }) => [dept.code, dept.id])
   );
 
   let totalCreated = 0;
@@ -89,17 +99,18 @@ export async function seedServices() {
     }
 
     try {
-      // Verificar se serviço já existe
-      const existing = await prisma.serviceSimplified.findFirst({
+      // Verificar se serviço já existe (escopado por tenant quando informado)
+      const existing = await db.serviceSimplified.findFirst({
         where: {
           name: serviceDef.name,
-          departmentId: departmentId
+          departmentId: departmentId,
+          ...(tenantId ? { tenantId } : {}),
         }
       });
 
       if (existing) {
         // Atualizar serviço existente
-        await prisma.serviceSimplified.update({
+        await db.serviceSimplified.update({
           where: { id: existing.id },
           data: {
             description: serviceDef.description,
@@ -129,8 +140,9 @@ export async function seedServices() {
         console.log(`   🔄 ${serviceDef.name} (atualizado)`);
       } else {
         // Criar novo serviço
-        await prisma.serviceSimplified.create({
+        await db.serviceSimplified.create({
           data: {
+            ...(tenantId ? { tenantId } : {}),
             name: serviceDef.name,
             description: serviceDef.description,
             departmentId,

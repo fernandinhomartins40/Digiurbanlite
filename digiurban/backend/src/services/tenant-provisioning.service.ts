@@ -364,6 +364,21 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
     })
   );
 
+  // Catálogo COMPLETO de serviços (400+, com formSchema/moduleType) — sem isto o
+  // município novo nasce só com os 12 serviços genéricos SEM_DADOS e o módulo de
+  // Dados fica vazio. Best-effort pós-commit (é volumoso; não deve travar nem
+  // desfazer o provisionamento). Escopado por tenant.
+  let fullServicesCreated = 0;
+  try {
+    const { seedServices } = await import('../../prisma/seeds/services/index');
+    const { runAsTenant } = await import('../lib/tenant-context');
+    fullServicesCreated = await runAsTenant(result.tenant.id, async () =>
+      seedServices(prisma, result.tenant.id)
+    );
+  } catch (servicesError) {
+    console.error(`[PROVISION] Falha ao semear catálogo completo do tenant ${result.tenant.slug}:`, servicesError);
+  }
+
   // Catálogos de referência da onda 8 (plano 2026-07-13): sem isto o município
   // novo nasce com dropdowns vazios (especialidades médicas, tipos de obra,
   // modalidades etc.). Best-effort pós-commit — falha não desfaz o tenant.
@@ -380,7 +395,7 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
     tenant: result.tenant,
     admin: { id: result.admin.id, email: result.admin.email, name: result.admin.name },
     departmentsCreated: result.departmentsCreated,
-    servicesCreated: result.servicesCreated,
+    servicesCreated: result.servicesCreated + fullServicesCreated,
     temporaryPassword: tempPassword,
   };
 }
