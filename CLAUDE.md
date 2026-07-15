@@ -328,6 +328,17 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Messages Server: schema local é cópia — ao mudar Conversation/Message/FlowDefinition no backend, sincronizar `ultrazend-messages-server/prisma/schema.prisma`; escritas usam `resolveTenantId()` (`src/utils/tenant.ts`)
 - Deploy: RLS só vale com role não-superuser (`digiurban_app` + `MIGRATE_DATABASE_URL` p/ migrations); flags `TENANT_STRICT*` no compose
 - Smoke de isolamento: `npm run smoke:tenant:isolation` (2 tenants efêmeros, requer banco)
+- ⚠️ A extension injeta `tenantId` no `data` de TOPO de create/update, mas **NÃO** em nested create (`{ fields: { create: [...] } }`) — propagar explícito com `tryGetTenantId()` (visto na F6 do Registry)
+
+### Registry — Motor de Dados Orientado a Metadados (plano F0–F7)
+Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_CONFIGS` + `switch` em `analyzeCustomData`). **Serviço estruturado novo = `EntityType` + `FieldDefinition` no banco, NÃO um módulo em código.**
+- Models: `EntityType` (code, kind PERSON_ROLE/PROPERTY/ORG/EVENT), `FieldDefinition` (flags indexable/filterable/facetable/searchable/isMetric/isPII), `EntityRecord` (data JSONB + GIN), `RecordIndex` (projeção invertida tipada dos campos indexáveis), `EntityRelation` (grafo)
+- Serviços: `services/registry/*` — `registry-import` (F1: promove configs→banco), `registry-query` (F2: `POST /api/registry/query`), `registry-materialize` (F3/F5: customData→EntityRecord+índices, idempotente por sourceProtocolId, dedup por naturalKey CPF/CNPJ), `registry-dashboard` (F4), `registry-admin` (F6: CRUD + reindex)
+- Scripts: `scripts/registry/import-configs.ts --apply` (popula tipos/campos), `scripts/registry/backfill.ts --apply` (materializa protocolos existentes)
+- Flags (`.env` da VPS, ativar por tenant nesta ordem): `REGISTRY_READ` (off|shadow|on), `REGISTRY_DASHBOARD` (off|on), `REGISTRY_WRITE` (off|on). Default off = comportamento legado byte a byte
+- Gancho de aprovação: `materializeOnApproval()` em `approveProtocol` (protocol-module.service.ts), NÃO-FATAL — nunca derruba a aprovação
+- `MANAGEMENT_CONFIGS` e o `switch` de `analyzeCustomData` estão DEPRECADOS (fallback enquanto flags off); remover só após F3–F5 estáveis em todos os tenants
+- Cliente frontend: `frontend/src/services/registry.service.ts`
 
 ### Backend
 - `concludedAt` para tempo de conclusão (NÃO `updatedAt`)

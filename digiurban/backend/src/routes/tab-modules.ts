@@ -41,6 +41,13 @@ interface ProtocolData {
   createdAt: Date;
 }
 
+/**
+ * ⚠️ DEPRECADO (Registry F4/F7). O dashboard genérico dirigido por metadados
+ * (`generateDashboard`, ligado por REGISTRY_DASHBOARD=on) substitui este switch
+ * por módulo. Mantido como fallback enquanto a flag estiver off para algum
+ * tenant. Não adicione novos `case` aqui — defina isMetric/facetable nos
+ * FieldDefinition do EntityType (editor no-code). Ver PLANO (F7).
+ */
 function analyzeCustomData(moduleType: string, protocols: ProtocolData[]) {
   const kpis: any[] = [];
   const charts: any[] = [];

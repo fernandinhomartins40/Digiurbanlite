@@ -1,6 +1,17 @@
 /**
  * Configurações da Aba de Gerenciamento Inteligente
  * Define como cada módulo deve exibir e gerenciar seus dados coletados
+ *
+ * ⚠️ DEPRECADO (plano Registry F7). Estes metadados hardcoded foram PROMOVIDOS
+ * para o banco (EntityType/FieldDefinition) pelo importador
+ * `scripts/registry/import-configs.ts`. A fonte de verdade passa a ser o
+ * Registry; novos módulos NÃO devem ser adicionados aqui — crie-os via
+ * `/api/registry/entity-types` (editor no-code, sem deploy).
+ *
+ * REMOÇÃO SEGURA (só após REGISTRY_READ/REGISTRY_DASHBOARD=on estáveis em TODOS
+ * os tenants por uma janela de estabilidade): ver PLANO-IMPLEMENTACAO-REGISTRY.md
+ * (F7). Enquanto as flags estiverem off para algum tenant, este arquivo é o
+ * fallback e NÃO pode ser removido.
  */
 
 export interface FieldConfig {

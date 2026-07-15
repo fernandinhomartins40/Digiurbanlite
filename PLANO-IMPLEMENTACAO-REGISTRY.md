@@ -4,7 +4,9 @@
 >
 > Princípio-mestre: **cada mudança é aditiva, atrás de flag e reversível.** Nada do fluxo atual é removido até o novo caminho estar validado em produção, tenant a tenant.
 
-> **Progresso:** ✅ F0 · ✅ F1 · ✅ F2 · ✅ F3 (`REGISTRY_READ`) · ✅ F4 (`REGISTRY_DASHBOARD`) · ✅ F5 (`REGISTRY_WRITE` + entity resolution + relações) · ✅ F6 (CRUD no-code + reindex, backend + cliente TS) · ⬜ F7.
+> **Progresso:** ✅ F0 · ✅ F1 · ✅ F2 · ✅ F3 (`REGISTRY_READ`) · ✅ F4 (`REGISTRY_DASHBOARD`) · ✅ F5 (`REGISTRY_WRITE` + entity resolution + relações) · ✅ F6 (CRUD no-code + reindex) · ✅ F7a (full-text/trigram; deprecação do hardcode documentada — remoção pendente de estabilização em produção).
+>
+> **Todas as fases de código concluídas.** Resta a ATIVAÇÃO em produção (flags) e, depois de estável, a remoção física do hardcode (F7b — passo manual controlado, ver §F7).
 >
 > **Marco atingido (F4):** serviço novo já tem listagem, filtro, busca e **dashboard** genéricos sem código. **F5:** entidades de 1ª classe (Imóvel/Empresa) consultáveis, dedup por CPF/CNPJ e grafo de relações. **F6:** API completa de definição de tipos/campos (`POST/PUT/DELETE /api/registry/entity-types` + reindex) e cliente TS no frontend — o wizard consome; falta só a tela visual (o app Next completo não está neste repo).
 

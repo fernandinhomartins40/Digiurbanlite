@@ -156,16 +156,20 @@ export async function runRegistryQuery(input: RegistryQueryInput): Promise<Regis
     }
   }
 
-  // 2b) Busca textual simples (F2 básico): contains nos campos searchable indexáveis
+  // 2b) Busca por texto livre (F7): cada palavra do termo deve aparecer em ALGUM
+  //     campo searchable (AND entre palavras, OR entre campos). Acelerada pelo
+  //     índice GIN trigram sobre record_indexes.valueText (migration F7).
   if (input.search?.trim()) {
-    const term = input.search.trim();
+    const tokens = input.search.trim().split(/\s+/).filter(Boolean).slice(0, 6);
     const searchable = [...fieldMap.values()].filter((f) => f.searchable && f.indexable);
-    if (searchable.length) {
-      andClauses.push({
-        OR: searchable.map((f) => ({
-          indexes: { some: { fieldKey: f.key, valueText: { contains: term, mode: 'insensitive' } } },
-        })),
-      });
+    if (searchable.length && tokens.length) {
+      for (const token of tokens) {
+        andClauses.push({
+          OR: searchable.map((f) => ({
+            indexes: { some: { fieldKey: f.key, valueText: { contains: token, mode: 'insensitive' } } },
+          })),
+        });
+      }
     }
   }
 
