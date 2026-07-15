@@ -23,6 +23,7 @@ import { getManagementConfig } from './management-configs';
 import { generateProtocolNumberSafe } from '../services/protocol-number.service';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { getRegistryReadMode, shadowCompareCount } from '../services/registry/registry-shadow.service';
+import { generateDashboard, isRegistryDashboardOn } from '../services/registry/registry-dashboard.service';
 
 const router = Router();
 
@@ -654,8 +655,23 @@ router.get(
         });
       });
 
-      // Métricas específicas por módulo baseadas em customData
-      const moduleSpecificMetrics = analyzeCustomData(module.toUpperCase(), allProtocols);
+      // Métricas específicas por módulo.
+      // F4 — quando REGISTRY_DASHBOARD=on, gera a partir dos metadados (genérico,
+      // vale para QUALQUER módulo). Senão, mantém o switch hardcoded (paridade).
+      let moduleSpecificMetrics: { kpis: any[]; charts: any[]; trends: any[] };
+      if (isRegistryDashboardOn()) {
+        try {
+          moduleSpecificMetrics = await generateDashboard(module.toUpperCase(), {
+            dateFrom: new Date(dateFrom),
+            dateTo: new Date(dateTo),
+          });
+        } catch (err) {
+          console.error('[TAB-MODULES] registry dashboard falhou, fallback ao legado:', err);
+          moduleSpecificMetrics = analyzeCustomData(module.toUpperCase(), allProtocols);
+        }
+      } else {
+        moduleSpecificMetrics = analyzeCustomData(module.toUpperCase(), allProtocols);
+      }
 
       console.log(`  ✅ Dashboard data: ${total} total protocols`);
 

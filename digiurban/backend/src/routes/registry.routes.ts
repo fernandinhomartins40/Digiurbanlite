@@ -22,6 +22,7 @@ import {
   RegistryQueryError,
   type RegistryQueryInput,
 } from '../services/registry/registry-query.service';
+import { generateDashboard } from '../services/registry/registry-dashboard.service';
 
 const router = Router();
 
@@ -109,6 +110,23 @@ router.get('/entity-types/:code/schema', requireMinRole(UserRole.USER), async (r
   } catch (error) {
     console.error('Erro em /registry/entity-types/:code/schema:', error);
     return res.status(500).json({ error: 'Erro ao obter schema do tipo de entidade' });
+  }
+});
+
+/**
+ * GET /api/registry/entity-types/:code/dashboard
+ * Dashboard automático (KPIs/charts/trends) derivado dos metadados. Aceita
+ * ?dateFrom & ?dateTo (ISO). Genérico — vale para qualquer EntityType.
+ */
+router.get('/entity-types/:code/dashboard', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const dateFrom = req.query.dateFrom ? new Date(String(req.query.dateFrom)) : undefined;
+    const dateTo = req.query.dateTo ? new Date(String(req.query.dateTo)) : undefined;
+    const dashboard = await generateDashboard(req.params.code, { dateFrom, dateTo });
+    return res.json(dashboard);
+  } catch (error) {
+    console.error('Erro em /registry/entity-types/:code/dashboard:', error);
+    return res.status(500).json({ error: 'Erro ao gerar dashboard do tipo de entidade' });
   }
 });
 
