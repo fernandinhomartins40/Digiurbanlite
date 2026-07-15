@@ -302,6 +302,38 @@ export async function resolvePlanLimits(
  * tenant + ADMIN inicial (senha temporária, mustChangePassword) + secretarias
  * e serviços padrão. Lança ReservedSlugError/P2002 para as rotas traduzirem.
  */
+/**
+ * Semeia o catálogo completo de serviços (400+) num tenant, carregando as
+ * definições de prisma/seeds/ via `tsx` num processo separado. Necessário
+ * porque prisma/seeds fica FORA de src/ (build de produção só emite src/), então
+ * não pode ser importado estaticamente. Retorna quantos serviços foram criados.
+ */
+async function seedFullServiceCatalog(tenantSlug: string): Promise<number> {
+  const { execFile } = await import('child_process');
+  const path = await import('path');
+  const fs = await import('fs');
+  const { promisify } = await import('util');
+  const execFileP = promisify(execFile);
+
+  const tsx = path.resolve(process.cwd(), 'node_modules/.bin/tsx');
+  const script = path.resolve(process.cwd(), 'scripts/backfill-tenant-services.ts');
+
+  // Ambiente sem tsx/script (ex.: alguns builds): degrada sem quebrar.
+  if (!fs.existsSync(tsx) || !fs.existsSync(script)) {
+    console.warn('[PROVISION] tsx/script de catálogo indisponível — catálogo completo não semeado; rode scripts/backfill-tenant-services.ts manualmente');
+    return 0;
+  }
+
+  const { stdout } = await execFileP(tsx, [script, '--apply', '--tenant', tenantSlug], {
+    cwd: process.cwd(),
+    env: process.env,
+    timeout: 120000,
+    maxBuffer: 10 * 1024 * 1024,
+  });
+  const m = stdout.match(/\+(\d+)\s+criados/);
+  return m ? parseInt(m[1], 10) : 0;
+}
+
 export async function provisionTenant(input: ProvisionTenantInput): Promise<ProvisionResult> {
   if (RESERVED_SLUGS.includes(input.slug)) {
     const err = new Error(`Slug reservado: ${input.slug}`) as Error & { code?: string };
@@ -366,15 +398,13 @@ export async function provisionTenant(input: ProvisionTenantInput): Promise<Prov
 
   // Catálogo COMPLETO de serviços (400+, com formSchema/moduleType) — sem isto o
   // município novo nasce só com os 12 serviços genéricos SEM_DADOS e o módulo de
-  // Dados fica vazio. Best-effort pós-commit (é volumoso; não deve travar nem
-  // desfazer o provisionamento). Escopado por tenant.
+  // Dados fica vazio. As definições vivem em prisma/seeds/ (fora de src/, logo
+  // fora do build de produção), então são carregadas via `tsx` num processo
+  // separado — o build (rootDir: src) NÃO pode importá-las. Best-effort: falha
+  // não desfaz o provisionamento.
   let fullServicesCreated = 0;
   try {
-    const { seedServices } = await import('../../prisma/seeds/services/index');
-    const { runAsTenant } = await import('../lib/tenant-context');
-    fullServicesCreated = await runAsTenant(result.tenant.id, async () =>
-      seedServices(prisma, result.tenant.id)
-    );
+    fullServicesCreated = await seedFullServiceCatalog(result.tenant.slug);
   } catch (servicesError) {
     console.error(`[PROVISION] Falha ao semear catálogo completo do tenant ${result.tenant.slug}:`, servicesError);
   }
