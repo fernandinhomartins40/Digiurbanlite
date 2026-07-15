@@ -39,6 +39,17 @@ import {
   listRecords,
   RegistryRecordError,
 } from '../services/registry/registry-record.service';
+import {
+  getWorkspace,
+  suggestWidgets,
+  createWidget,
+  updateWidget,
+  deleteWidget,
+  adoptSuggestedLayout,
+  RegistryWidgetError,
+  type WidgetInput,
+} from '../services/registry/registry-widget.service';
+import { AuthenticatedRequest } from '../types';
 
 const router = Router();
 
@@ -308,6 +319,87 @@ router.post('/records/:id/reject', requireMinRole(UserRole.COORDINATOR), async (
     if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
     console.error('Erro ao rejeitar registro:', error);
     return res.status(500).json({ error: 'Erro ao rejeitar registro' });
+  }
+});
+
+// ============================================================================
+// Widgets do módulo de Gestão de Dados (W0/W1) — workspace por EntityType.
+// getWorkspace/suggest: USER. Criar/editar SHARED exige COORDINATOR; PERSONAL
+// qualquer USER (só o dono edita).
+// ============================================================================
+
+/** GET /entity-types/:code/workspace — layout efetivo (salvo ou sugerido). */
+router.get('/entity-types/:code/workspace', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const userId = (req as AuthenticatedRequest).userId;
+    return res.json(await getWorkspace(req.params.code, userId));
+  } catch (error) {
+    if (error instanceof RegistryWidgetError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro no workspace:', error);
+    return res.status(500).json({ error: 'Erro ao obter workspace' });
+  }
+});
+
+/** GET /entity-types/:code/suggested-widgets — só a sugestão (para o editor). */
+router.get('/entity-types/:code/suggested-widgets', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    return res.json({ widgets: await suggestWidgets(req.params.code) });
+  } catch (error) {
+    if (error instanceof RegistryWidgetError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro nas sugestões de widget:', error);
+    return res.status(500).json({ error: 'Erro ao sugerir widgets' });
+  }
+});
+
+/** POST /entity-types/:code/adopt-layout — materializa a sugestão como SHARED. */
+router.post('/entity-types/:code/adopt-layout', requireMinRole(UserRole.COORDINATOR), async (req, res) => {
+  try {
+    return res.json(await adoptSuggestedLayout(req.params.code));
+  } catch (error) {
+    if (error instanceof RegistryWidgetError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao adotar layout:', error);
+    return res.status(500).json({ error: 'Erro ao adotar layout' });
+  }
+});
+
+/** POST /widgets — cria widget. PERSONAL: USER; SHARED: COORDINATOR+. */
+router.post('/widgets', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const body = req.body as WidgetInput;
+    const canShared = ([UserRole.COORDINATOR, UserRole.MANAGER, UserRole.ADMIN, UserRole.SUPER_ADMIN] as UserRole[]).includes(authReq.user.role as UserRole);
+    if ((body.scope ?? 'SHARED') === 'SHARED' && !canShared) {
+      return res.status(403).json({ error: 'Widgets da secretaria exigem coordenador ou superior' });
+    }
+    return res.status(201).json(await createWidget(body, authReq.userId));
+  } catch (error) {
+    if (error instanceof RegistryWidgetError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao criar widget:', error);
+    return res.status(500).json({ error: 'Erro ao criar widget' });
+  }
+});
+
+/** PUT /widgets/:id — edita widget (dono, ou COORDINATOR para SHARED). */
+router.put('/widgets/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    return res.json(await updateWidget(req.params.id, req.body, authReq.userId));
+  } catch (error) {
+    if (error instanceof RegistryWidgetError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao atualizar widget:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar widget' });
+  }
+});
+
+/** DELETE /widgets/:id — remove widget. */
+router.delete('/widgets/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    return res.json(await deleteWidget(req.params.id, authReq.userId));
+  } catch (error) {
+    if (error instanceof RegistryWidgetError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao remover widget:', error);
+    return res.status(500).json({ error: 'Erro ao remover widget' });
   }
 });
 
