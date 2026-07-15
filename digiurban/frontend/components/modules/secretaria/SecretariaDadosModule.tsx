@@ -24,13 +24,20 @@ import {
   getEntityTypeSchema,
   queryRecords,
   getDashboard,
+  listRecords,
+  approveRecord,
+  rejectRecord,
   type EntityType,
   type FieldDefinition,
 } from '@/services/registry.service';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Database, Search, LayoutGrid, Table2, Loader2, Inbox } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAdminAuth } from '@/contexts/AdminAuthContext';
+import { RegistryRecordForm } from './RegistryRecordForm';
+import { Database, Search, LayoutGrid, Table2, Loader2, Inbox, Plus, CheckCircle2, XCircle, Clock } from 'lucide-react';
 
 interface Props {
   /** Código do departamento (Department.department string usada no EntityType). */
@@ -38,7 +45,7 @@ interface Props {
   departmentName?: string;
 }
 
-type View = 'table' | 'panel';
+type View = 'table' | 'approval' | 'panel';
 
 type EntityTypeWithCount = EntityType & { _count?: { records: number; fields: number } };
 
@@ -124,28 +131,111 @@ export function SecretariaDadosModule({ departmentCode, departmentName }: Props)
   );
 }
 
-/** Visão de um tipo: alterna entre Tabela e Painel. */
+/** Visão de um tipo: Registros / Aprovação / Painel + cadastro. */
 function EntityTypeView({ code, schema }: { code: string; schema: EntityType }) {
   const [view, setView] = useState<View>('table');
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; data: Record<string, unknown> } | undefined>(undefined);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const openNew = () => { setEditing(undefined); setFormOpen(true); };
+  const openEdit = (rec: { id: string; data: Record<string, unknown> }) => { setEditing(rec); setFormOpen(true); };
+  const afterSave = () => { setFormOpen(false); setReloadKey((k) => k + 1); };
+
+  const tabBtn = (v: View, icon: React.ReactNode, label: string) => (
+    <button onClick={() => setView(v)} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md ${view === v ? 'bg-white shadow-sm font-medium' : 'text-muted-foreground'}`}>
+      {icon} {label}
+    </button>
+  );
 
   return (
     <div className="space-y-3">
-      <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
-        <button onClick={() => setView('table')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md ${view === 'table' ? 'bg-white shadow-sm font-medium' : 'text-muted-foreground'}`}>
-          <Table2 className="h-4 w-4" /> Registros
-        </button>
-        <button onClick={() => setView('panel')} className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm rounded-md ${view === 'panel' ? 'bg-white shadow-sm font-medium' : 'text-muted-foreground'}`}>
-          <LayoutGrid className="h-4 w-4" /> Painel
-        </button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="inline-flex rounded-lg border bg-muted/40 p-0.5">
+          {tabBtn('table', <Table2 className="h-4 w-4" />, 'Registros')}
+          {tabBtn('approval', <Clock className="h-4 w-4" />, 'Aprovação')}
+          {tabBtn('panel', <LayoutGrid className="h-4 w-4" />, 'Painel')}
+        </div>
+        <Button size="sm" onClick={openNew}><Plus className="mr-1 h-4 w-4" /> Novo registro</Button>
       </div>
 
-      {view === 'table' ? <RecordsTable code={code} schema={schema} /> : <DashboardPanel code={code} />}
+      {view === 'table' && <RecordsTable key={`t-${reloadKey}`} code={code} schema={schema} onEdit={openEdit} />}
+      {view === 'approval' && <ApprovalQueue key={`a-${reloadKey}`} code={code} schema={schema} onChanged={() => setReloadKey((k) => k + 1)} />}
+      {view === 'panel' && <DashboardPanel key={`p-${reloadKey}`} code={code} />}
+
+      <Dialog open={formOpen} onOpenChange={setFormOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editing ? 'Editar registro' : `Novo · ${schema.name}`}</DialogTitle>
+          </DialogHeader>
+          <RegistryRecordForm schema={schema} record={editing} onSaved={afterSave} onCancel={() => setFormOpen(false)} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
 
+/** Fila de aprovação: registros PENDING, com aprovar/rejeitar (COORDINATOR+). */
+function ApprovalQueue({ code, schema, onChanged }: { code: string; schema: EntityType; onChanged: () => void }) {
+  const { user } = useAdminAuth();
+  const canApprove = !!user && user.role !== 'USER';
+  const [rows, setRows] = useState<Array<{ id: string; data: Record<string, unknown>; createdAt: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const [busy, setBusy] = useState<string | null>(null);
+  const primary = (schema.fields ?? []).find((f) => f.displayInTable)?.key || (schema.fields ?? [])[0]?.key;
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await listRecords(code, { status: 'PENDING', pageSize: 100 });
+      setRows(res.records);
+    } catch { setRows([]); } finally { setLoading(false); }
+  }, [code]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const act = async (id: string, action: 'approve' | 'reject') => {
+    setBusy(id);
+    try {
+      if (action === 'approve') await approveRecord(id); else await rejectRecord(id);
+      await load();
+      onChanged();
+    } finally { setBusy(null); }
+  };
+
+  if (loading) return <div className="p-8 text-center text-muted-foreground">Carregando fila…</div>;
+  if (rows.length === 0) return <Card><CardContent className="p-8 text-center text-muted-foreground">Nenhum registro pendente de aprovação.</CardContent></Card>;
+
+  return (
+    <Card><CardContent className="p-0">
+      <ul className="divide-y">
+        {rows.map((r) => (
+          <li key={r.id} className="flex items-center gap-3 px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <div className="truncate font-medium">{primary ? String(r.data[primary] ?? '—') : r.id}</div>
+              <div className="text-xs text-muted-foreground">Enviado em {new Date(r.createdAt).toLocaleDateString('pt-BR')}</div>
+            </div>
+            {canApprove ? (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" disabled={busy === r.id} onClick={() => act(r.id, 'approve')}>
+                  <CheckCircle2 className="mr-1 h-4 w-4 text-green-600" /> Aprovar
+                </Button>
+                <Button size="sm" variant="outline" disabled={busy === r.id} onClick={() => act(r.id, 'reject')}>
+                  <XCircle className="mr-1 h-4 w-4 text-red-600" /> Rejeitar
+                </Button>
+              </div>
+            ) : (
+              <Badge variant="secondary">Pendente</Badge>
+            )}
+          </li>
+        ))}
+      </ul>
+    </CardContent></Card>
+  );
+}
+
 /** Tabela de registros com busca, filtros e facets — tudo do FieldDefinition. */
-function RecordsTable({ code, schema }: { code: string; schema: EntityType }) {
+function RecordsTable({ code, schema, onEdit }: { code: string; schema: EntityType; onEdit: (rec: { id: string; data: Record<string, unknown> }) => void }) {
   const fields = schema.fields ?? [];
   const tableCols = useMemo(() => {
     const cols = fields.filter((f) => f.displayInTable);
@@ -229,7 +319,7 @@ function RecordsTable({ code, schema }: { code: string; schema: EntityType }) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-b hover:bg-muted/20">
+                  <tr key={r.id} className="border-b cursor-pointer hover:bg-muted/20" onClick={() => onEdit(r)}>
                     {tableCols.map((c) => (
                       <td key={c.key} className="px-4 py-2">
                         {c.isPII ? <span className="text-muted-foreground">{fmt(c, r.data[c.key])}</span> : fmt(c, r.data[c.key])}

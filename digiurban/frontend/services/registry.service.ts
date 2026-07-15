@@ -113,6 +113,55 @@ export function getRecordRelations(recordId: string) {
   );
 }
 
+// ── Registros (cadastro/edição/aprovação — módulo Dados UI-3) ────────────────
+
+export interface RegistryRecord {
+  id: string;
+  entityType: string;
+  entityTypeName?: string;
+  status: string;
+  data: Record<string, unknown>;
+  sourceProtocolId?: string | null;
+  citizenId?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export function listRecords(code: string, params?: { status?: string; page?: number; pageSize?: number }) {
+  const qs = new URLSearchParams(
+    Object.entries(params || {}).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)])
+  ).toString();
+  return api<{ total: number; page: number; pageSize: number; records: Array<{ id: string; data: Record<string, unknown>; status: string; createdAt: string }> }>(
+    `/entity-types/${encodeURIComponent(code)}/records${qs ? `?${qs}` : ''}`
+  );
+}
+
+export function getRecord(id: string) {
+  return api<RegistryRecord>(`/records/${encodeURIComponent(id)}`);
+}
+
+export function createRecord(code: string, data: Record<string, unknown>, status?: string) {
+  return api<RegistryRecord>(`/entity-types/${encodeURIComponent(code)}/records`, {
+    method: 'POST',
+    body: JSON.stringify({ data, status }),
+  });
+}
+
+export function updateRecord(id: string, data: Record<string, unknown>) {
+  return api<RegistryRecord>(`/records/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    body: JSON.stringify({ data }),
+  });
+}
+
+export function approveRecord(id: string) {
+  return api<RegistryRecord>(`/records/${encodeURIComponent(id)}/approve`, { method: 'POST' });
+}
+
+export function rejectRecord(id: string) {
+  return api<RegistryRecord>(`/records/${encodeURIComponent(id)}/reject`, { method: 'POST' });
+}
+
 // ── Editor no-code (CRUD) ────────────────────────────────────────────────────
 
 export function createEntityType(input: EntityType) {

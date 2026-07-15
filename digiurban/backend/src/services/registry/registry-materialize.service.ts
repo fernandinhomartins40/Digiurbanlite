@@ -106,7 +106,7 @@ export async function materializeProtocol(
   if (byProtocol) {
     await db.entityRecord.update({ where: { id: byProtocol.id }, data: recordData });
     recordId = byProtocol.id;
-    await db.recordIndex.deleteMany({ where: { recordId } });
+    // índices reprojetados por projectIndexes() abaixo (faz o deleteMany)
   } else if (naturalKey) {
     const byKey = await db.entityRecord.findFirst({
       where: { entityTypeId: entityType.id, naturalKey },
@@ -117,7 +117,6 @@ export async function materializeProtocol(
       await db.entityRecord.update({ where: { id: byKey.id }, data: recordData });
       recordId = byKey.id;
       resolvedByNaturalKey = true;
-      await db.recordIndex.deleteMany({ where: { recordId } });
     } else {
       const record = await db.entityRecord.create({ data: recordData, select: { id: true } });
       recordId = record.id;
@@ -129,12 +128,32 @@ export async function materializeProtocol(
     created = true;
   }
 
-  // Projetar campos indexáveis
+  // Projeção de índices + relações declarativas (reutilizável).
+  const indexedFields = await projectIndexes(db, recordId, entityType.fields, data);
+  const relations = await syncReferenceRelations(db, recordId, entityType.fields, data);
+
+  return { recordId, created, indexedFields, relations, resolvedByNaturalKey };
+}
+
+// Tipo mínimo de um FieldDefinition usado na projeção.
+type FieldLike = { key: string; dataType: string; indexable: boolean; validation?: unknown };
+
+/**
+ * Projeta os campos `indexable` de um registro em record_indexes (apaga os
+ * antigos e recria). Retorna a quantidade projetada. Reutilizado por
+ * materialização, cadastro/edição manual (F6/UI) e reindex.
+ */
+export async function projectIndexes(
+  db: Db,
+  recordId: string,
+  fields: FieldLike[],
+  data: Record<string, unknown>
+): Promise<number> {
+  await db.recordIndex.deleteMany({ where: { recordId } });
   const indexRows: Prisma.RecordIndexCreateManyInput[] = [];
-  for (const field of entityType.fields) {
+  for (const field of fields) {
     if (!field.indexable) continue;
-    const raw = (data as Record<string, unknown>)[field.key];
-    const coerced = coerceIndexValue(field.dataType as RegistryDataType, raw);
+    const coerced = coerceIndexValue(field.dataType as RegistryDataType, data[field.key]);
     if (!coerced) continue;
     indexRows.push({
       recordId,
@@ -142,20 +161,24 @@ export async function materializeProtocol(
       [coerced.column]: coerced.value,
     } as Prisma.RecordIndexCreateManyInput);
   }
+  if (indexRows.length > 0) await db.recordIndex.createMany({ data: indexRows });
+  return indexRows.length;
+}
 
-  if (indexRows.length > 0) {
-    await db.recordIndex.createMany({ data: indexRows });
-  }
-
-  // ── Relações declarativas (campos REFERENCE → EntityRelation) ───────────
-  // Um FieldDefinition REFERENCE aponta para outro EntityType via
-  // validation.referenceType; validation.relType define o tipo da relação
-  // (default REFERENCES). O valor do campo é o naturalKey (CPF/CNPJ) do alvo.
+/**
+ * Cria/confirma EntityRelation para campos REFERENCE (valor = naturalKey do
+ * alvo; validation.referenceType/relType). Idempotente. Retorna nº de relações.
+ */
+export async function syncReferenceRelations(
+  db: Db,
+  recordId: string,
+  fields: FieldLike[],
+  data: Record<string, unknown>
+): Promise<number> {
   let relations = 0;
-  for (const field of entityType.fields) {
+  for (const field of fields) {
     if (field.dataType !== 'REFERENCE') continue;
-    const rawValue = (data as Record<string, unknown>)[field.key];
-    const targetKey = normalizeNaturalKey(rawValue);
+    const targetKey = normalizeNaturalKey(data[field.key]);
     if (!targetKey) continue;
 
     const validation = (field.validation ?? {}) as { referenceType?: string; relType?: string };
@@ -174,7 +197,6 @@ export async function materializeProtocol(
     if (!targetRecord || targetRecord.id === recordId) continue;
 
     const relType = validation.relType || 'REFERENCES';
-    // Idempotente: unique [tenantId, fromRecordId, toRecordId, relType]
     const existingRel = await db.entityRelation.findFirst({
       where: { fromRecordId: recordId, toRecordId: targetRecord.id, relType },
       select: { id: true },
@@ -186,8 +208,7 @@ export async function materializeProtocol(
     }
     relations++;
   }
-
-  return { recordId, created, indexedFields: indexRows.length, relations, resolvedByNaturalKey };
+  return relations;
 }
 
 /** Flag REGISTRY_WRITE (off|on) — controla a materialização na aprovação. */

@@ -31,6 +31,14 @@ import {
   RegistryAdminError,
   type EntityTypeInput,
 } from '../services/registry/registry-admin.service';
+import {
+  createRecord,
+  updateRecord,
+  setRecordStatus,
+  getRecord,
+  listRecords,
+  RegistryRecordError,
+} from '../services/registry/registry-record.service';
 
 const router = Router();
 
@@ -223,6 +231,83 @@ router.post('/entity-types/:code/reindex', requireMinRole(UserRole.ADMIN), async
   } catch (error) {
     console.error('Erro ao reindexar EntityType:', error);
     return res.status(500).json({ error: 'Erro ao reindexar tipo de entidade' });
+  }
+});
+
+// ============================================================================
+// EntityRecord — cadastro/edição/aprovação de registros (módulo Dados, UI-3)
+// USER pode listar/ver/cadastrar/editar; aprovação exige COORDINATOR+.
+// ============================================================================
+
+/** GET /entity-types/:code/records?status=&page=&pageSize= — lista/fila. */
+router.get('/entity-types/:code/records', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const result = await listRecords(req.params.code, {
+      status: (req.query.status as string) || undefined,
+      page: req.query.page ? Number(req.query.page) : undefined,
+      pageSize: req.query.pageSize ? Number(req.query.pageSize) : undefined,
+    });
+    return res.json(result);
+  } catch (error) {
+    if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao listar registros:', error);
+    return res.status(500).json({ error: 'Erro ao listar registros' });
+  }
+});
+
+/** POST /entity-types/:code/records — cadastra um registro (status PENDING). */
+router.post('/entity-types/:code/records', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const created = await createRecord(req.params.code, (req.body?.data ?? {}) as Record<string, unknown>, req.body?.status);
+    return res.status(201).json(created);
+  } catch (error) {
+    if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao criar registro:', error);
+    return res.status(500).json({ error: 'Erro ao criar registro' });
+  }
+});
+
+/** GET /records/:id — detalhe do registro. */
+router.get('/records/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    return res.json(await getRecord(req.params.id));
+  } catch (error) {
+    if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao obter registro:', error);
+    return res.status(500).json({ error: 'Erro ao obter registro' });
+  }
+});
+
+/** PUT /records/:id — edita os dados do registro. */
+router.put('/records/:id', requireMinRole(UserRole.USER), async (req, res) => {
+  try {
+    const updated = await updateRecord(req.params.id, (req.body?.data ?? {}) as Record<string, unknown>);
+    return res.json(updated);
+  } catch (error) {
+    if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao atualizar registro:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar registro' });
+  }
+});
+
+/** POST /records/:id/approve — aprova (ACTIVE). POST .../reject — rejeita (INACTIVE). */
+router.post('/records/:id/approve', requireMinRole(UserRole.COORDINATOR), async (req, res) => {
+  try {
+    return res.json(await setRecordStatus(req.params.id, 'ACTIVE'));
+  } catch (error) {
+    if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao aprovar registro:', error);
+    return res.status(500).json({ error: 'Erro ao aprovar registro' });
+  }
+});
+
+router.post('/records/:id/reject', requireMinRole(UserRole.COORDINATOR), async (req, res) => {
+  try {
+    return res.json(await setRecordStatus(req.params.id, 'INACTIVE'));
+  } catch (error) {
+    if (error instanceof RegistryRecordError) return res.status(error.status).json({ error: error.message });
+    console.error('Erro ao rejeitar registro:', error);
+    return res.status(500).json({ error: 'Erro ao rejeitar registro' });
   }
 });
 
