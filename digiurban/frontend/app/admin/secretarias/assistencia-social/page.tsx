@@ -34,6 +34,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaAssistenciaSocialPage() {
   useAdminAuth();
@@ -174,6 +175,9 @@ export default function SecretariaAssistenciaSocialPage() {
             )}
           </CardContent>
         </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="assistencia-social" departmentName="Assistência Social" />
       </div>
 
       {/* Ações Rápidas */}

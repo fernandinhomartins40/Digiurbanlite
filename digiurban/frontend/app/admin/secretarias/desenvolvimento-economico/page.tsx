@@ -25,6 +25,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaDesenvolvimentoEconomicoPage() {
   const { user } = useAdminAuth();
@@ -157,6 +158,9 @@ export default function SecretariaDesenvolvimentoEconomicoPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="desenvolvimento-economico" departmentName="Desenvolvimento Econômico" />
 
       {/* Módulos de Gestão de Dados */}
       <div>

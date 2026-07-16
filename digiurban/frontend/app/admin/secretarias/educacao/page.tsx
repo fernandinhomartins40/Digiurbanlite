@@ -38,6 +38,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaEducacaoPage() {
   useAdminAuth();
@@ -175,6 +176,9 @@ export default function SecretariaEducacaoPage() {
             )}
           </CardContent>
         </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="educacao" departmentName="Educação" />
       </div>
 
       {/* Ações Rápidas */}

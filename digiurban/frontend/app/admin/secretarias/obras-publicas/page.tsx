@@ -35,6 +35,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaObrasPublicasPage() {
   const { user } = useAdminAuth();
@@ -181,6 +182,9 @@ export default function SecretariaObrasPublicasPage() {
             )}
           </CardContent>
         </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="obras-publicas" departmentName="Obras Públicas" />
       </div>
 
       {/* Ações Rápidas */}

@@ -36,6 +36,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaSegurancaPublicaPage() {
   useAdminAuth();
@@ -176,6 +177,9 @@ export default function SecretariaSegurancaPublicaPage() {
             )}
           </CardContent>
         </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="seguranca-publica" departmentName="Segurança Pública" />
       </div>
 
       {/* Ações Rápidas */}

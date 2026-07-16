@@ -434,6 +434,9 @@ export default function SecretariaSaudePage() {
         </CardContent>
       </Card>
 
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="saude" departmentName="Saúde" />
+
       {/* ═══════════════════════════════════════════════════════════════ */}
       {/* SEÇÃO 1: MÓDULOS DE GESTÃO DE DADOS (COM_DADOS)                */}
       {/* ═══════════════════════════════════════════════════════════════ */}
@@ -805,8 +808,6 @@ export default function SecretariaSaudePage() {
           </CardContent>
         </Card>
 
-        {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-        <SecretariaModulosSection slug="saude" departmentName="Saúde" />
       </div>
 {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal

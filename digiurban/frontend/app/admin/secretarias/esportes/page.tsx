@@ -33,6 +33,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaEsportesPage() {
   const { user } = useAdminAuth();
@@ -172,6 +173,9 @@ export default function SecretariaEsportesPage() {
             )}
           </CardContent>
         </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="esportes" departmentName="Esportes" />
       </div>
 
       {/* Ações Rápidas */}

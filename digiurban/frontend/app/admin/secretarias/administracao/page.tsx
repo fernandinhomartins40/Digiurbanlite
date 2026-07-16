@@ -25,6 +25,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaAdministracaoPage() {
   const { user } = useAdminAuth();
@@ -157,6 +158,9 @@ export default function SecretariaAdministracaoPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="administracao" departmentName="Administração" />
 
       {/* Módulos de Gestão de Dados */}
       <div>

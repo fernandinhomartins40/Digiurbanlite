@@ -36,6 +36,7 @@ import { useDepartmentStats } from '@/hooks/useDepartmentStats';
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
+import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
 
 export default function SecretariaServicosPublicosPage() {
   const router = useRouter();
@@ -177,6 +178,9 @@ export default function SecretariaServicosPublicosPage() {
             )}
           </CardContent>
         </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="servicos-publicos" departmentName="Serviços Públicos" />
       </div>
 
       {/* Ações Rápidas */}
