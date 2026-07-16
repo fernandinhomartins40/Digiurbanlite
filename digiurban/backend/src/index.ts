@@ -392,6 +392,7 @@ loadRoute('/api/secretarias/assistencia-social', './routes/secretarias-assistenc
 loadRoute('/api/apps/educacao', './routes/educacao', requireFeature('educacao'));
 loadRoute('/api/apps/assistencia-social', './routes/assistencia-social', requireFeature('assistencia-social'));
 loadRoute('/api/agricultura', './routes/agricultura.routes', requireFeature('agricultura')); // contrato da UI (use-agricultura-api.ts)
+loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFeature('servicos-publicos'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {

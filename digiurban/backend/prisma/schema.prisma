@@ -10160,3 +10160,63 @@ model DistribuicaoSemente {
   @@index([tenantId])
   @@map("distribuicoes_sementes")
 }
+
+// ============================================================================
+// SERVIÇOS PÚBLICOS — App Ordens de Serviço (Fase 1D do plano de apps)
+// Fluxo B2+B4: protocolo aprovado → OS → triagem → despacho → execução →
+// conclusão (retroalimenta o protocolo, NÃO-FATAL).
+// ============================================================================
+
+model OrdemServico {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  protocolId    String?   @unique // quando nasce de protocolo aprovado
+  numero        String // OS-<ano>-<seq> por tenant
+  tipo          String // 'Iluminação', 'Buraco na via', 'Poda', 'Limpeza'...
+  descricao     String?
+  prioridade    String    @default("NORMAL") // BAIXA | NORMAL | ALTA | URGENTE
+  status        String    @default("ABERTA") // ABERTA | DESPACHADA | EM_EXECUCAO | CONCLUIDA | CANCELADA
+  endereco      String?
+  bairro        String?
+  latitude      Float?
+  longitude     Float?
+  fotos         Json? // fotos da solicitação/cidadão
+  equipeId      String? // Team (join manual, sem FK)
+  responsavelId String? // User responsável (join manual)
+  slaPrazo      DateTime?
+  dataDespacho  DateTime?
+  dataInicio    DateTime?
+  dataConclusao DateTime?
+  observacoes   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  apontamentos ApontamentoOS[]
+
+  @@unique([tenantId, numero])
+  @@index([status])
+  @@index([tipo])
+  @@index([bairro])
+  @@index([equipeId])
+  @@index([tenantId])
+  @@map("ordens_servico")
+}
+
+model ApontamentoOS {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  ordemServicoId String
+  ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
+  userId         String? // quem registrou (join manual)
+  tipo           String // DESPACHO | INICIO | EXECUCAO | MATERIAL | NOTA | CONCLUSAO | CANCELAMENTO
+  descricao      String?
+  horas          Float?
+  materiais      Json? // [{item, quantidade, unidade}]
+  fotosAntes     Json?
+  fotosDepois    Json?
+  createdAt      DateTime @default(now())
+
+  @@index([ordemServicoId])
+  @@index([tenantId])
+  @@map("apontamentos_os")
+}

@@ -370,6 +370,38 @@ export default function SecretariaServicosPublicosPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Apps de Serviços Públicos — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Serviços Públicos</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos para a operação de campo
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-orange-200 bg-gradient-to-br from-orange-50 to-amber-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/servicos-publicos')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-orange-700 transition-colors">
+                Ordens de Serviço
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Triagem, despacho para equipes de campo, execução com apontamentos e
+                conclusão retroalimentando o protocolo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
 {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}
