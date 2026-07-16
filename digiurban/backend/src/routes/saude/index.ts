@@ -6,6 +6,9 @@ import equipesRoutes from './equipes.routes';
 import atividadesColetivasRoutes from './atividades-coletivas.routes';
 import agendaRoutes from './agenda.routes';
 import consultaMedicaRoutes from './consulta-medica.routes';
+import painelRoutes from './painel.routes';
+import imunizacaoRoutes from './imunizacao.routes';
+import agendamentoRoutes from './agendamento.routes';
 
 const router = Router();
 
@@ -17,5 +20,8 @@ router.use('/equipes', equipesRoutes);
 router.use('/atividades-coletivas', atividadesColetivasRoutes);
 router.use('/agenda', agendaRoutes);
 router.use('/consulta-medica', consultaMedicaRoutes);
+router.use('/painel', painelRoutes);
+router.use('/imunizacao', imunizacaoRoutes);
+router.use('/agendamento', agendamentoRoutes);
 
 export default router;

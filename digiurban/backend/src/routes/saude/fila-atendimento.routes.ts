@@ -45,8 +45,8 @@ router.patch('/:id/status', async (req, res) => {
 // POST /api/saude/fila-atendimento/chamar-proximo - Chamar próximo paciente
 router.post('/chamar-proximo', async (req, res) => {
   try {
-    const { unidadeId, profissionalId } = req.body;
-    const proximo = await filaAtendimentoService.chamarProximo(unidadeId, profissionalId);
+    const { unidadeId, profissionalId, consultorio } = req.body;
+    const proximo = await filaAtendimentoService.chamarProximo(unidadeId, profissionalId, consultorio);
     res.json(proximo);
   } catch (error) {
     console.error('Erro ao chamar próximo:', error);

@@ -7,6 +7,15 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { obterProntuarioCidadao } from '@/lib/api/atendimento-api';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import {
   User,
   FileText,
@@ -18,6 +27,8 @@ import {
   Activity,
   Download,
   ArrowLeft,
+  Syringe,
+  Plus,
 } from 'lucide-react';
 
 export default function ProntuarioPage() {
@@ -26,10 +37,21 @@ export default function ProntuarioPage() {
   const [prontuario, setProntuario] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('consultas');
+  const [imunizacoes, setImunizacoes] = useState<any[]>([]);
+  const [vacinaDialogAberto, setVacinaDialogAberto] = useState(false);
+  const [salvandoVacina, setSalvandoVacina] = useState(false);
+  const [novaVacina, setNovaVacina] = useState({
+    vacina: '',
+    dose: '',
+    lote: '',
+    dataAplicacao: new Date().toISOString().split('T')[0],
+    observacoes: '',
+  });
 
   useEffect(() => {
     if (params.id) {
       loadProntuario(params.id as string);
+      loadImunizacoes(params.id as string);
     }
   }, [params.id]);
 
@@ -41,6 +63,53 @@ export default function ProntuarioPage() {
       console.error('Erro ao carregar prontuário:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadImunizacoes = async (citizenId: string) => {
+    try {
+      const res = await fetch(`/api/saude/imunizacao/cidadao/${citizenId}`, {
+        credentials: 'include',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setImunizacoes(Array.isArray(data) ? data : []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar imunizações:', error);
+    }
+  };
+
+  const registrarVacina = async () => {
+    if (!novaVacina.vacina || !novaVacina.dose) {
+      alert('Informe a vacina e a dose');
+      return;
+    }
+    setSalvandoVacina(true);
+    try {
+      const res = await fetch('/api/saude/imunizacao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ ...novaVacina, citizenId: params.id }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || 'Erro ao registrar dose');
+      }
+      setVacinaDialogAberto(false);
+      setNovaVacina({
+        vacina: '',
+        dose: '',
+        lote: '',
+        dataAplicacao: new Date().toISOString().split('T')[0],
+        observacoes: '',
+      });
+      await loadImunizacoes(params.id as string);
+    } catch (error: any) {
+      alert(String(error?.message || error));
+    } finally {
+      setSalvandoVacina(false);
     }
   };
 
@@ -167,7 +236,7 @@ export default function ProntuarioPage() {
       <Card>
         <CardContent className="pt-6">
           <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-5">
+            <TabsList className="grid w-full grid-cols-6">
               <TabsTrigger value="consultas">
                 <FileText className="h-4 w-4 mr-2" />
                 Consultas
@@ -187,6 +256,10 @@ export default function ProntuarioPage() {
               <TabsTrigger value="encaminhamentos">
                 <ArrowRight className="h-4 w-4 mr-2" />
                 Encaminhamentos
+              </TabsTrigger>
+              <TabsTrigger value="vacinas">
+                <Syringe className="h-4 w-4 mr-2" />
+                Vacinas
               </TabsTrigger>
             </TabsList>
 
@@ -411,9 +484,125 @@ export default function ProntuarioPage() {
                 ))
               )}
             </TabsContent>
+
+            {/* Vacinas */}
+            <TabsContent value="vacinas" className="space-y-4">
+              <div className="flex justify-end">
+                <Button size="sm" onClick={() => setVacinaDialogAberto(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Registrar dose
+                </Button>
+              </div>
+              {imunizacoes.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  Nenhuma vacina registrada
+                </div>
+              ) : (
+                imunizacoes.map((dose: any) => (
+                  <Card key={dose.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-base flex items-center gap-2">
+                          <Syringe className="h-4 w-4 text-green-600" />
+                          {dose.vacina}
+                        </CardTitle>
+                        <Badge variant="outline">{dose.dose}</Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-sm text-gray-600">
+                        Aplicada em{' '}
+                        {new Date(dose.dataAplicacao).toLocaleDateString('pt-BR')}
+                        {dose.lote && ` | Lote: ${dose.lote}`}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-1">
+                        {dose.unidade?.nome && `Unidade: ${dose.unidade.nome}`}
+                        {dose.profissional?.name &&
+                          ` | Profissional: ${dose.profissional.name}`}
+                      </div>
+                      {dose.observacoes && (
+                        <div className="text-sm text-gray-600 mt-2">{dose.observacoes}</div>
+                      )}
+                    </CardContent>
+                  </Card>
+                ))
+              )}
+            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
+
+      {/* Dialog registrar vacina */}
+      <Dialog open={vacinaDialogAberto} onOpenChange={setVacinaDialogAberto}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Registrar dose de vacina</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="vacina-nome">Vacina *</Label>
+              <Input
+                id="vacina-nome"
+                placeholder="Ex.: Influenza, COVID-19, Tétano"
+                value={novaVacina.vacina}
+                onChange={(e) => setNovaVacina({ ...novaVacina, vacina: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="vacina-dose">Dose *</Label>
+                <Input
+                  id="vacina-dose"
+                  placeholder="Ex.: 1ª dose, Reforço"
+                  value={novaVacina.dose}
+                  onChange={(e) => setNovaVacina({ ...novaVacina, dose: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label htmlFor="vacina-lote">Lote</Label>
+                <Input
+                  id="vacina-lote"
+                  value={novaVacina.lote}
+                  onChange={(e) => setNovaVacina({ ...novaVacina, lote: e.target.value })}
+                />
+              </div>
+            </div>
+            <div>
+              <Label htmlFor="vacina-data">Data da aplicação</Label>
+              <Input
+                id="vacina-data"
+                type="date"
+                value={novaVacina.dataAplicacao}
+                onChange={(e) =>
+                  setNovaVacina({ ...novaVacina, dataAplicacao: e.target.value })
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="vacina-obs">Observações</Label>
+              <Input
+                id="vacina-obs"
+                value={novaVacina.observacoes}
+                onChange={(e) =>
+                  setNovaVacina({ ...novaVacina, observacoes: e.target.value })
+                }
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setVacinaDialogAberto(false)}
+              disabled={salvandoVacina}
+            >
+              Cancelar
+            </Button>
+            <Button onClick={registrarVacina} disabled={salvandoVacina}>
+              {salvandoVacina ? 'Salvando...' : 'Registrar'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

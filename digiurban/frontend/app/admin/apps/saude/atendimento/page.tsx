@@ -358,6 +358,18 @@ export default function ListaAtendimentosPage() {
               {atualizando ? 'Atualizando...' : 'Atualizar'}
             </Button>
             <Button
+              variant="outline"
+              onClick={() => router.push('/admin/apps/saude/atendimento/agendamentos')}
+            >
+              Agendamentos
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => router.push('/admin/apps/saude/atendimento/painel')}
+            >
+              Painel TV
+            </Button>
+            <Button
               onClick={() => router.push('/admin/apps/saude/atendimento/adicionar')}
               className="bg-blue-600 hover:bg-blue-700"
             >

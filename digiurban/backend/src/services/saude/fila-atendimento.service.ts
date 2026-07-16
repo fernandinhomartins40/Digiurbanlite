@@ -67,7 +67,7 @@ export class FilaAtendimentoService {
     });
   }
 
-  async chamarProximo(unidadeId: string, profissionalId: string) {
+  async chamarProximo(unidadeId: string, profissionalId: string, consultorio?: string) {
     const proximo = await prisma.filaAtendimento.findFirst({
       where: {
         unidadeId,
@@ -78,10 +78,30 @@ export class FilaAtendimentoService {
         { prioridade: 'desc' },
         { dataHoraChegada: 'asc' },
       ],
+      include: {
+        citizen: { select: { name: true } },
+      },
     });
 
     if (proximo) {
-      return await this.atualizarStatus(proximo.id, 'EM_CONSULTA');
+      const atualizado = await this.atualizarStatus(proximo.id, 'EM_CONSULTA');
+
+      // Registra a chamada no painel da unidade (não-fatal: o painel nunca
+      // pode impedir o atendimento de prosseguir)
+      try {
+        await prisma.chamadaPainel.create({
+          data: {
+            unidadeId,
+            filaId: proximo.id,
+            consultorio: consultorio || 'Consultório',
+            nomePaciente: proximo.citizen?.name || 'Paciente',
+          },
+        });
+      } catch (painelError) {
+        console.error('Erro ao registrar chamada no painel:', painelError);
+      }
+
+      return atualizado;
     }
 
     return null;
