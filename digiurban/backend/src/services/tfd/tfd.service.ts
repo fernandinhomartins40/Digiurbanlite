@@ -1,10 +1,10 @@
-import { PrismaClient, TFDStatus, MeioPagamento, DocumentStatus, PendingType } from '@prisma/client';
+import { TFDStatus, MeioPagamento, DocumentStatus, PendingType } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import workflowInstanceService from '../workflow/workflow-instance.service';
 import * as protocolDocumentService from '../protocol-document.service';
 import * as protocolPendingService from '../protocol-pending.service';
 import protocolToTFDService from './protocol-to-tfd.service';
 
-const prisma = new PrismaClient();
 
 export interface CreateSolicitacaoTFDDTO {
   citizenId: string;

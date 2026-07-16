@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 
-const prisma = new PrismaClient();
 
 // ============================================================================
 // MS-13: GESTÃO DE CRAS/CREAS

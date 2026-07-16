@@ -7,14 +7,13 @@
  * CRUD completo de WorkflowDefinition.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import {
   CreateWorkflowData,
   UpdateWorkflowData,
   WorkflowDefinitionData,
 } from '../../types/workflow.types';
 
-const prisma = new PrismaClient();
 
 export class WorkflowDefinitionService {
   /**

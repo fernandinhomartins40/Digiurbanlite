@@ -1,9 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import * as forge from 'node-forge';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
 
-const prisma = new PrismaClient();
 
 interface SignDocumentInput {
   documentId: string;

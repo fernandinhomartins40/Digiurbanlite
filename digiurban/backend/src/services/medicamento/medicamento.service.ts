@@ -1,12 +1,11 @@
+import { prisma } from '../../lib/prisma';
 import {
-  PrismaClient,
   TipoMedicamento,
   UnidadeMedida,
   StatusEstoque,
   StatusDispensacao,
 } from '@prisma/client';
 
-const prisma = new PrismaClient();
 
 export interface CreateMedicamentoDTO {
   nome: string;

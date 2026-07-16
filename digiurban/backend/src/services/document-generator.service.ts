@@ -6,7 +6,7 @@
  * templates Handlebars e enviar por email.
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import Handlebars from 'handlebars';
 import fs from 'fs/promises';
 import path from 'path';
@@ -17,7 +17,6 @@ import {
 import { getSystemEmail } from '../utils/email-domain.utils';
 import { resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
 
-const prisma = new PrismaClient();
 
 // ============================================================================
 // INTERFACES

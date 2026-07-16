@@ -2,7 +2,7 @@
 // SERVICE - ESTOQUE DE MEDICAMENTOS
 // ============================================================================
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import {
   CreateLoteMedicamentoDTO,
   UpdateLoteMedicamentoDTO,
@@ -14,7 +14,6 @@ import {
   StatusTransferencia,
 } from '../../types/saude-farmacia.types';
 
-const prisma = new PrismaClient();
 
 export class EstoqueService {
   // ============================================================================
@@ -427,7 +426,21 @@ export class EstoqueService {
   }
 
   async listarLotesProximosVencimento(diasAntes: number = 30, unidadeId?: string) {
-    return this.verificarLotesVencimento(diasAntes);
+    const dataLimite = new Date();
+    dataLimite.setDate(dataLimite.getDate() + diasAntes);
+
+    return await prisma.loteMedicamento.findMany({
+      where: {
+        ...(unidadeId && { unidadeId }),
+        dataValidade: { gte: new Date(), lte: dataLimite },
+        quantidade: { gt: 0 },
+      },
+      include: {
+        medicamento: { select: { nome: true, principioAtivo: true } },
+        unidade: { select: { nome: true } },
+      },
+      orderBy: { dataValidade: 'asc' },
+    });
   }
 
   async listarLotesVencidos(unidadeId?: string) {
@@ -459,10 +472,43 @@ export class EstoqueService {
   }
 
   async obterEstatisticas(unidadeId?: string) {
+    const whereBase = unidadeId ? { unidadeId } : {};
+    const agora = new Date();
+    const em30Dias = new Date();
+    em30Dias.setDate(em30Dias.getDate() + 30);
+
+    const [totalLotes, agregado, medicamentosDistintos, lotesVencidos, lotesProximosVencimento] =
+      await Promise.all([
+        prisma.loteMedicamento.count({
+          where: { ...whereBase, quantidade: { gt: 0 } },
+        }),
+        prisma.loteMedicamento.aggregate({
+          where: { ...whereBase, quantidade: { gt: 0 } },
+          _sum: { quantidade: true },
+        }),
+        prisma.loteMedicamento.findMany({
+          where: { ...whereBase, quantidade: { gt: 0 } },
+          select: { medicamentoId: true },
+          distinct: ['medicamentoId'],
+        }),
+        prisma.loteMedicamento.count({
+          where: { ...whereBase, quantidade: { gt: 0 }, dataValidade: { lt: agora } },
+        }),
+        prisma.loteMedicamento.count({
+          where: {
+            ...whereBase,
+            quantidade: { gt: 0 },
+            dataValidade: { gte: agora, lte: em30Dias },
+          },
+        }),
+      ]);
+
     return {
-      totalLotes: 0,
-      totalMedicamentos: 0,
-      valorTotal: 0,
+      totalLotes,
+      totalMedicamentos: medicamentosDistintos.length,
+      quantidadeTotal: agregado._sum.quantidade || 0,
+      lotesVencidos,
+      lotesProximosVencimento,
     };
   }
 

@@ -1,5 +1,5 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { authenticateAdmin } from '../middleware/auth';
 import {
   autoMapDomainUnits,
@@ -7,7 +7,6 @@ import {
 } from '../services/organizational-unit-mapping.service';
 
 const router = Router();
-const prisma = new PrismaClient();
 router.use(authenticateAdmin);
 
 /**

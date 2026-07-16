@@ -1,8 +1,7 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import * as forge from 'node-forge';
 import { encryptPrivateKey } from './encryption.service';
 
-const prisma = new PrismaClient();
 
 interface IssueCertificateInput {
   userId?: string;

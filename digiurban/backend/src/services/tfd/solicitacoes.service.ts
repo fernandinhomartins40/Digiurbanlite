@@ -2,7 +2,7 @@
 // SERVICE - SOLICITAÇÕES TFD
 // ============================================================================
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import {
   CreateSolicitacaoTFDDTO,
   UpdateSolicitacaoTFDDTO,
@@ -12,7 +12,6 @@ import {
   TipoDocumentoTFD,
 } from '../../types/saude-tfd.types';
 
-const prisma = new PrismaClient();
 
 export class SolicitacoesTFDService {
   /**

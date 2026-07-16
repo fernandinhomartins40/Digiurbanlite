@@ -1,6 +1,6 @@
-import { PrismaClient, VeiculoStatus, Turno } from '@prisma/client';
+import { VeiculoStatus, Turno } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export interface CreateVeiculoEscolarDTO {
   placa: string;

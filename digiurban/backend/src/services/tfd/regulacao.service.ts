@@ -2,7 +2,7 @@
 // SERVICE - REGULAÇÃO MÉDICA TFD
 // ============================================================================
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import {
   CreateParecerRegulacaoDTO,
   UpdateParecerRegulacaoDTO,
@@ -14,7 +14,6 @@ import {
 } from '../../types/saude-tfd.types';
 import { centralCalendarService } from '../central-calendar.service';
 
-const prisma = new PrismaClient();
 
 export class RegulacaoTFDService {
   private async syncAgendamentoExternoComAgendaCentral(

@@ -326,17 +326,35 @@ export default function FarmaciaPage() {
           <CardTitle>Ações Rápidas</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
             <Link href="/admin/apps/saude/farmacia/dispensacao">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <FileText className="h-6 w-6" />
-                <span>Nova Dispensação</span>
+                <span>Dispensação</span>
               </Button>
             </Link>
             <Link href="/admin/apps/saude/farmacia/estoque">
               <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
                 <Package className="h-6 w-6" />
-                <span>Gerenciar Estoque</span>
+                <span>Estoque</span>
+              </Button>
+            </Link>
+            <Link href="/admin/apps/saude/farmacia/lotes">
+              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
+                <Clock className="h-6 w-6" />
+                <span>Lotes & Validade</span>
+              </Button>
+            </Link>
+            <Link href="/admin/apps/saude/farmacia/transferencias">
+              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
+                <ArrowRight className="h-6 w-6" />
+                <span>Transferências</span>
+              </Button>
+            </Link>
+            <Link href="/admin/apps/saude/farmacia/alertas">
+              <Button variant="outline" className="w-full h-20 flex flex-col gap-2">
+                <AlertCircle className="h-6 w-6" />
+                <span>Alertas</span>
               </Button>
             </Link>
             <Link href="/admin/apps/saude/farmacia/relatorios">

@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import { isPrismaMissingTableError } from '../../utils/prisma-missing-table';
 
-const prisma = new PrismaClient();
 
 export class ConsultaMedicaService {
   private async buscarEscutaInicialSegura(filaAtendimentoId: string) {

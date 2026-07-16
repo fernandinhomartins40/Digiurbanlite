@@ -1,12 +1,11 @@
+import { prisma } from '../../lib/prisma';
 import {
-  PrismaClient,
   ProgramaSocialStatus,
   StatusPagamento,
   MeioPagamento,
 } from '@prisma/client';
 import workflowInstanceService from '../workflow/workflow-instance.service';
 
-const prisma = new PrismaClient();
 
 export interface CreateInscricaoProgramaDTO {
   programaId: string;

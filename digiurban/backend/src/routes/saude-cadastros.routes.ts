@@ -1,11 +1,10 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 import { authenticateAdmin } from '../middleware/auth';
 import { isPrismaMissingTableError } from '../utils/prisma-missing-table';
 import { centralCalendarService } from '../services/central-calendar.service';
 
 const router = Router();
-const prisma = new PrismaClient();
 router.use(authenticateAdmin);
 
 async function syncAgendaMedicaWithCentral(agendaId: string) {

@@ -1,6 +1,6 @@
-import { PrismaClient, PrioridadeFila } from '@prisma/client';
+import { PrioridadeFila } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export class TriagemEnfermagemService {
   async criar(data: any) {

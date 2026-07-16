@@ -1,6 +1,6 @@
-import { PrismaClient, ConsultaStatus } from '@prisma/client';
+import { ConsultaStatus } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 
-const prisma = new PrismaClient();
 
 export interface CreateAgendaMedicaDTO {
   profissionalId: string;

@@ -1,9 +1,8 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 
 // ✅ FASE 2: WorkflowStatus agora é String
 type WorkflowStatus = 'ACTIVE' | 'PAUSED' | 'COMPLETED' | 'CANCELLED' | 'ERROR';
 
-const prisma = new PrismaClient();
 
 export interface CreateWorkflowInstanceDTO {
   definitionId: string;

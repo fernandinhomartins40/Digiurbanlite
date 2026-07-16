@@ -1,6 +1,5 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 
-const prisma = new PrismaClient();
 
 // ============================================================================
 // MS-07: GESTÃO DE UNIDADES EDUCACIONAIS

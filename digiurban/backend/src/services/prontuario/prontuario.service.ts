@@ -1,7 +1,7 @@
-import { PrismaClient, TipoAtendimento, AtendimentoStatus, ClassificacaoManchester } from '@prisma/client';
+import { TipoAtendimento, AtendimentoStatus, ClassificacaoManchester } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import workflowInstanceService from '../workflow/workflow-instance.service';
 
-const prisma = new PrismaClient();
 
 export interface IniciarAtendimentoDTO {
   citizenId: string;

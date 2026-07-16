@@ -1,7 +1,6 @@
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import tfdService from './tfd.service';
 
-const prisma = new PrismaClient();
 
 /**
  * 🔗 INTEGRAÇÃO PROTOCOLO → TFD

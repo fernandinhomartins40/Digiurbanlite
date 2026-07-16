@@ -2,7 +2,7 @@
 // SERVICE - VIAGENS TFD
 // ============================================================================
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../lib/prisma';
 import {
   CreateViagemTFDDTO,
   UpdateViagemTFDDTO,
@@ -14,7 +14,6 @@ import {
   StatusPrestacaoContas,
 } from '../../types/saude-tfd.types';
 
-const prisma = new PrismaClient();
 
 export class ViagensTFDService {
   // ============================================================================

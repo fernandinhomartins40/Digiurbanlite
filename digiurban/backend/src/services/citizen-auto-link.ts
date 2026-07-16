@@ -7,9 +7,8 @@
  * DIA 3: DISABLED - Multitenancy removed
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../lib/prisma';
 
-const prisma = new PrismaClient();
 
 interface AutoLinkResult {
   success: boolean;

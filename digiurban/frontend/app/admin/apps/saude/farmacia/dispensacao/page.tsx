@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -8,8 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
-import { registrarDispensacao } from '@/lib/api/farmacia-api';
-import { Package, Plus, Trash2, FileText, ArrowLeft } from 'lucide-react';
+import {
+  registrarDispensacao,
+  listarPrescricoesPendentes,
+  dispensarPrescricaoCompleta,
+} from '@/lib/api/farmacia-api';
+import { Package, Plus, Trash2, FileText, ArrowLeft, ClipboardList, Pill } from 'lucide-react';
 
 interface ItemDispensacao {
   estoqueId: string;
@@ -34,6 +38,50 @@ export default function DispensacaoPage() {
     quantidade: 1,
     lote: '',
   });
+  const [pendentes, setPendentes] = useState<any[]>([]);
+  const [pendentesLoading, setPendentesLoading] = useState(true);
+  const [dispensandoId, setDispensandoId] = useState<string | null>(null);
+
+  useEffect(() => {
+    carregarPendentes();
+  }, []);
+
+  const carregarPendentes = async () => {
+    setPendentesLoading(true);
+    try {
+      const data = await listarPrescricoesPendentes();
+      const lista = Array.isArray(data) ? data : data?.prescricoes || [];
+      setPendentes(lista);
+    } catch (error) {
+      console.error('Erro ao carregar prescrições pendentes:', error);
+      setPendentes([]);
+    } finally {
+      setPendentesLoading(false);
+    }
+  };
+
+  const dispensarCompleta = async (prescricaoId: string) => {
+    setDispensandoId(prescricaoId);
+    try {
+      await dispensarPrescricaoCompleta(prescricaoId);
+      alert('Prescrição dispensada com sucesso!');
+      await carregarPendentes();
+    } catch (error: any) {
+      console.error('Erro ao dispensar prescrição:', error);
+      alert(`Erro ao dispensar prescrição: ${error?.message || error}`);
+    } finally {
+      setDispensandoId(null);
+    }
+  };
+
+  const usarPrescricao = (prescricao: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      prescricaoId: prescricao.id,
+      citizenId: prescricao.citizen?.id || prev.citizenId,
+    }));
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+  };
 
   const handleChange = (field: string, value: any) => {
     setFormData({ ...formData, [field]: value });
@@ -105,6 +153,84 @@ export default function DispensacaoPage() {
           Voltar
         </Button>
       </div>
+
+      {/* Prescrições pendentes de dispensação */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <ClipboardList className="h-5 w-5" />
+            Prescrições pendentes
+            <Badge variant="secondary">{pendentes.length}</Badge>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {pendentesLoading ? (
+            <div className="text-center py-4 text-gray-500">Carregando prescrições...</div>
+          ) : pendentes.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              Nenhuma prescrição aguardando dispensação
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pendentes.slice(0, 10).map((p: any) => {
+                const medicamentos = Array.isArray(p.medicamentos) ? p.medicamentos : [];
+                return (
+                  <div
+                    key={p.id}
+                    className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <div className="font-medium">
+                        {p.citizen?.name || 'Cidadão'}
+                        {p.citizen?.cpf && (
+                          <span className="text-xs text-gray-400 ml-1">({p.citizen.cpf})</span>
+                        )}
+                        {p.medico?.nome && (
+                          <span className="text-sm text-gray-500 font-normal ml-2">
+                            — Dr(a). {p.medico.nome}
+                          </span>
+                        )}
+                      </div>
+                      <div className="text-sm text-gray-500 mt-1">
+                        {medicamentos.length > 0
+                          ? medicamentos
+                              .map((m: any) => m.nome || m.medicamento || m.descricao)
+                              .filter(Boolean)
+                              .join(', ') || `${medicamentos.length} medicamento(s)`
+                          : 'Medicamentos na prescrição'}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-1">
+                        {p.numero && `${p.numero} | `}Prescrita em{' '}
+                        {p.dataEmissao ? new Date(p.dataEmissao).toLocaleDateString('pt-BR') : '-'}
+                        {p.validade &&
+                          ` | Válida até ${new Date(p.validade).toLocaleDateString('pt-BR')}`}
+                      </div>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => usarPrescricao(p)}
+                      >
+                        Usar no formulário
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="bg-green-600 hover:bg-green-700"
+                        disabled={dispensandoId === p.id}
+                        onClick={() => dispensarCompleta(p.id)}
+                      >
+                        <Pill className="h-4 w-4 mr-1" />
+                        {dispensandoId === p.id ? 'Dispensando...' : 'Dispensar tudo'}
+                      </Button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </CardContent>
+      </Card>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* Dados da Dispensação */}

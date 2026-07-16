@@ -1,5 +1,5 @@
+import { prisma } from '../lib/prisma';
 import {
-  PrismaClient,
   UserRole,
   TipoAtribuicaoProtocolo,
   SituacaoAtribuicao,
@@ -11,7 +11,6 @@ import {
   type TicketAssigneeOption
 } from './ticket-assignment.service';
 
-const prisma = new PrismaClient();
 
 /**
  * Serviço para gerenciar atribuições de protocolos

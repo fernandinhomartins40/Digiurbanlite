@@ -149,6 +149,55 @@ router.post('/lote', async (req: Request, res: Response) => {
 });
 
 /**
+ * GET /api/saude/farmacia/lote
+ * Listar lotes (filtros: medicamentoId, unidadeId, limit, offset)
+ */
+router.get('/lote', async (req: Request, res: Response) => {
+  try {
+    const lotes = await EstoqueService.listarLotes({
+      medicamentoId: req.query.medicamentoId as string | undefined,
+      unidadeId: req.query.unidadeId as string | undefined,
+      limit: req.query.limit ? parseInt(req.query.limit as string) : 100,
+      offset: req.query.offset ? parseInt(req.query.offset as string) : 0,
+    });
+    res.json(lotes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/farmacia/lote/proximos-vencimento
+ * Listar lotes próximos do vencimento
+ * (DEVE vir antes de /lote/:id para não ser capturada como id)
+ */
+router.get('/lote/proximos-vencimento', async (req: Request, res: Response) => {
+  try {
+    const diasAntecedencia = req.query.dias ? parseInt(req.query.dias as string) : 90;
+    const unidadeId = req.query.unidadeId as string;
+    const lotes = await EstoqueService.listarLotesProximosVencimento(diasAntecedencia, unidadeId);
+    res.json(lotes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/farmacia/lote/vencidos
+ * Listar lotes vencidos
+ * (DEVE vir antes de /lote/:id para não ser capturada como id)
+ */
+router.get('/lote/vencidos', async (req: Request, res: Response) => {
+  try {
+    const unidadeId = req.query.unidadeId as string;
+    const lotes = await EstoqueService.listarLotesVencidos(unidadeId);
+    res.json(lotes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/saude/farmacia/lote/:id
  * Buscar lote por ID
  */
@@ -216,7 +265,11 @@ router.get('/lote/unidade/:unidadeId', async (req: Request, res: Response) => {
  */
 router.post('/lote/baixa', async (req: Request, res: Response) => {
   try {
-    const lote = await EstoqueService.darBaixaLote(req.body);
+    const { loteId, ...data } = req.body;
+    if (!loteId) {
+      return res.status(400).json({ error: 'loteId é obrigatório' });
+    }
+    const lote = await EstoqueService.darBaixaLote(loteId, data);
     res.json(lote);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -232,35 +285,6 @@ router.post('/lote/:id/adicionar', async (req: Request, res: Response) => {
     const { quantidade, motivo } = req.body;
     const lote = await EstoqueService.adicionarQuantidade(req.params.id, quantidade, motivo);
     res.json(lote);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-/**
- * GET /api/saude/farmacia/lote/proximos-vencimento
- * Listar lotes próximos do vencimento
- */
-router.get('/lote/proximos-vencimento', async (req: Request, res: Response) => {
-  try {
-    const diasAntecedencia = req.query.dias ? parseInt(req.query.dias as string) : 90;
-    const unidadeId = req.query.unidadeId as string;
-    const lotes = await EstoqueService.listarLotesProximosVencimento(diasAntecedencia, unidadeId);
-    res.json(lotes);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
-
-/**
- * GET /api/saude/farmacia/lote/vencidos
- * Listar lotes vencidos
- */
-router.get('/lote/vencidos', async (req: Request, res: Response) => {
-  try {
-    const unidadeId = req.query.unidadeId as string;
-    const lotes = await EstoqueService.listarLotesVencidos(unidadeId);
-    res.json(lotes);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -929,11 +953,11 @@ router.get('/dispensacao/status/:prescricaoId', async (req: Request, res: Respon
  */
 router.post('/dispensacao/completa/:prescricaoId', async (req: Request, res: Response) => {
   try {
-    const { unidadeId, dispensadoPorId } = req.body;
+    const dispensadoPor = req.body.dispensadoPorId || req.body.dispensadoPor || req.userId;
     const resultado = await DispensacaoService.dispensarPrescricaoCompleta(
       req.params.prescricaoId,
-      unidadeId,
-      dispensadoPorId
+      req.body,
+      dispensadoPor
     );
     res.json(resultado);
   } catch (error: any) {
