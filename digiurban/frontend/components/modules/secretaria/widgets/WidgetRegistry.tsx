@@ -69,19 +69,13 @@ export function renderWidget(type: WidgetType, props: WidgetProps): React.ReactN
   return <Comp {...props} />;
 }
 
-/** Largura padrão de cada tipo na grade (colunas de 12). */
-export function widgetSpan(type: WidgetType): number {
-  switch (type) {
-    case 'STATS': return 12;
-    case 'FILTER': return 12;
-    case 'TABLE': return 12;
-    case 'ENROLLMENT': return 12;
-    case 'APPROVAL': return 12;
-    case 'MAP': return 8;
-    case 'AGENDA': return 8;
-    case 'CHART': return 6;
-    case 'TIMELINE': return 6;
-    case 'CARDS': return 12;
-    default: return 6;
-  }
+/**
+ * Largura do widget na grade: 'full' (linha inteira) ou 'half' (metade em telas
+ * médias+). Retorna a CLASSE Tailwind estática completa — classes montadas
+ * dinamicamente são purgadas pelo Tailwind (sem safelist), então precisam ser
+ * literais no código.
+ */
+export function widgetColClass(type: WidgetType): string {
+  const half = new Set<WidgetType>(['CHART', 'TIMELINE']);
+  return half.has(type) ? 'md:col-span-1' : 'md:col-span-2';
 }

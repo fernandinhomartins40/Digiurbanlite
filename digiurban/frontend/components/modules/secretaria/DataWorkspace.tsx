@@ -20,7 +20,7 @@ import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Plus, Settings2, X, Save, Loader2 } from 'lucide-react';
-import { renderWidget, widgetSpan, WidgetSkeleton } from './widgets/WidgetRegistry';
+import { renderWidget, widgetColClass, WidgetSkeleton } from './widgets/WidgetRegistry';
 import { RegistryRecordForm } from './RegistryRecordForm';
 import { WidgetEditor } from './WidgetEditor';
 import { Sparkles } from 'lucide-react';
@@ -127,25 +127,23 @@ export function DataWorkspace({ code }: { code: string }) {
         </div>
       </div>
 
-      {/* Grade de widgets (12 colunas) */}
-      <div className="grid grid-cols-12 gap-4">
-        {widgets.map((w, i) => {
-          const span = widgetSpan(w.type);
-          return (
-            <div key={w.id || `${w.type}-${i}`} className={`col-span-12 ${span <= 6 ? 'md:col-span-6' : span <= 8 ? 'md:col-span-8' : ''} relative`}>
-              {editMode && w.id && (
-                <button onClick={() => removeWidget(w.id)} className="absolute -right-2 -top-2 z-10 rounded-full bg-red-600 p-1 text-white shadow" title="Remover widget">
-                  <X className="h-3 w-3" />
-                </button>
-              )}
-              {renderWidget(w.type, {
-                code, schema, config: w.config,
-                sharedFilters, onFiltersChange: setSharedFilters,
-                reloadKey, onChanged: () => setReloadKey((k) => k + 1),
-              }) || <WidgetSkeleton label={WIDGET_LABELS[w.type] || w.type} />}
-            </div>
-          );
-        })}
+      {/* Grade de widgets: 1 coluna no mobile, 2 no desktop. Classes estáticas
+          (col-span-1/2 + grid-cols-2) para o Tailwind não purgar. */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        {widgets.map((w, i) => (
+          <div key={w.id || `${w.type}-${i}`} className={`relative min-w-0 ${widgetColClass(w.type)}`}>
+            {editMode && w.id && (
+              <button onClick={() => removeWidget(w.id)} className="absolute -right-2 -top-2 z-10 rounded-full bg-red-600 p-1 text-white shadow" title="Remover widget">
+                <X className="h-3 w-3" />
+              </button>
+            )}
+            {renderWidget(w.type, {
+              code, schema, config: w.config,
+              sharedFilters, onFiltersChange: setSharedFilters,
+              reloadKey, onChanged: () => setReloadKey((k) => k + 1),
+            }) || <WidgetSkeleton label={WIDGET_LABELS[w.type] || w.type} />}
+          </div>
+        ))}
       </div>
 
       {/* Modal: novo registro */}
