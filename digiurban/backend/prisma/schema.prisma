@@ -9977,3 +9977,186 @@ model DataWidget {
   @@index([ownerUserId])
   @@map("data_widgets")
 }
+
+// ============================================================================
+// AGRICULTURA — App da Secretaria (Fase 1C do plano de apps)
+// Contrato definido pela UI existente (lib/hooks/use-agricultura-api.ts)
+// Multi-tenant estilo onda 8: tenantId escalar (extension escopa via DMMF)
+// ============================================================================
+
+model ProdutorRural {
+  id                   String    @id @default(cuid())
+  tenantId             String?
+  protocolId           String?   @unique // quando nasce de protocolo aprovado
+  citizenId            String? // ligação com Citizen (join manual, sem FK)
+  cpf                  String
+  nome                 String
+  celular              String?
+  email                String?
+  atividadePrincipal   String?
+  dap                  String? // Declaração de Aptidão ao PRONAF
+  car                  String? // Cadastro Ambiental Rural
+  numeroCarteirinha    String?
+  carteirinhaEmitidaEm DateTime?
+  fotoUrl              String?
+  observacoes          String?
+  isActive             Boolean   @default(true)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  propriedades  PropriedadeRural[]
+  solicitacoes  SolicitacaoAssistenciaTecnica[]
+  distribuicoes DistribuicaoSemente[]
+
+  @@unique([tenantId, cpf])
+  @@unique([tenantId, numeroCarteirinha])
+  @@index([citizenId])
+  @@index([isActive])
+  @@index([tenantId])
+  @@map("produtores_rurais")
+}
+
+model PropriedadeRural {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  produtorId   String
+  produtor     ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
+  nome         String
+  endereco     String?
+  bairro       String? // localidade/comunidade rural
+  areaHectares Float?
+  latitude     Float?
+  longitude    Float?
+  car          String?
+  atividades   Json? // culturas/criações da propriedade
+  fotos        Json? // [{url, descricao, data}]
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  solicitacoes SolicitacaoAssistenciaTecnica[]
+
+  @@index([produtorId])
+  @@index([isActive])
+  @@index([tenantId])
+  @@map("propriedades_rurais")
+}
+
+model TecnicoAgricola {
+  id            String   @id @default(cuid())
+  tenantId      String?
+  userId        String? // ligação opcional com User (join manual)
+  nome          String
+  registro      String? // CREA/CFTA
+  especialidade String?
+  telefone      String?
+  email         String?
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  solicitacoes SolicitacaoAssistenciaTecnica[]
+  visitas      VisitaAssistenciaTecnica[]
+
+  @@index([isActive])
+  @@index([tenantId])
+  @@map("tecnicos_agricolas")
+}
+
+model SolicitacaoAssistenciaTecnica {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  protocolId      String?  @unique // quando nasce de protocolo aprovado
+  produtorId      String
+  produtor        ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
+  propriedadeId   String?
+  propriedade     PropriedadeRural? @relation(fields: [propriedadeId], references: [id], onDelete: SetNull)
+  tecnicoId       String?
+  tecnico         TecnicoAgricola? @relation(fields: [tecnicoId], references: [id], onDelete: SetNull)
+  tipoAssistencia String // 'Manejo de solo', 'Sanidade animal', 'Irrigação'...
+  descricao       String?
+  prioridade      String   @default("NORMAL") // BAIXA | NORMAL | ALTA | URGENTE
+  status          String   @default("ABERTA") // ABERTA | AGENDADA | EM_ATENDIMENTO | CONCLUIDA | CANCELADA
+  observacoes     String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  visitas VisitaAssistenciaTecnica[]
+
+  @@index([produtorId])
+  @@index([status])
+  @@index([tenantId])
+  @@map("solicitacoes_assistencia_tecnica")
+}
+
+model VisitaAssistenciaTecnica {
+  id             String    @id @default(cuid())
+  tenantId       String?
+  solicitacaoId  String
+  solicitacao    SolicitacaoAssistenciaTecnica @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  tecnicoId      String?
+  tecnico        TecnicoAgricola? @relation(fields: [tecnicoId], references: [id], onDelete: SetNull)
+  dataAgendada   DateTime
+  dataInicio     DateTime?
+  dataConclusao  DateTime?
+  status         String    @default("AGENDADA") // AGENDADA | CONFIRMADA | EM_ANDAMENTO | CONCLUIDA | CANCELADA
+  diagnostico    String?
+  recomendacoes  String?
+  fotos          Json? // [{url, descricao}]
+  observacoes    String?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([solicitacaoId])
+  @@index([status])
+  @@index([tenantId])
+  @@map("visitas_assistencia_tecnica")
+}
+
+model EstoqueSemente {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  tipo          String    @default("SEMENTE") // SEMENTE | MUDA
+  cultura       String // 'Milho', 'Feijão', 'Alface'...
+  variedade     String?
+  unidadeMedida String    @default("kg") // kg | saco | unidade | bandeja
+  quantidade    Float     @default(0)
+  estoqueMinimo Float     @default(0)
+  lote          String?
+  validade      DateTime?
+  origem        String? // compra, doação, convênio
+  observacoes   String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  distribuicoes DistribuicaoSemente[]
+
+  @@index([cultura])
+  @@index([isActive])
+  @@index([tenantId])
+  @@map("estoque_sementes")
+}
+
+model DistribuicaoSemente {
+  id               String   @id @default(cuid())
+  tenantId         String?
+  protocolId       String?  @unique // quando nasce de protocolo aprovado
+  estoqueId        String
+  estoque          EstoqueSemente @relation(fields: [estoqueId], references: [id], onDelete: Restrict)
+  produtorId       String
+  produtor         ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
+  quantidade       Float
+  dataDistribuicao DateTime @default(now())
+  safra            String? // ex.: '2026/2027'
+  responsavelId    String? // User que registrou (join manual)
+  observacoes      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([estoqueId])
+  @@index([produtorId])
+  @@index([dataDistribuicao])
+  @@index([tenantId])
+  @@map("distribuicoes_sementes")
+}
