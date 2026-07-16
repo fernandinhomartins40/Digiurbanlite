@@ -50,9 +50,32 @@ export interface RegistrarPagamentoDTO {
 }
 
 export class ProgramaSocialService {
+  /** Garante a definição de workflow do tenant atual e retorna o id. */
+  private async ensureWorkflowDefinition(): Promise<string> {
+    const existente = await prisma.workflowDefinition.findFirst({
+      where: { module: 'ASSISTENCIA_SOCIAL', name: 'Programa Social', isActive: true },
+      select: { id: true },
+    });
+    if (existente) return existente.id;
+
+    const criada = await prisma.workflowDefinition.create({
+      data: {
+        name: 'Programa Social',
+        description: 'Inscrição → análise → aprovação → benefício ativo (pagamentos)',
+        module: 'ASSISTENCIA_SOCIAL',
+        stages: [
+          { id: 'ANALISE', name: 'Análise da inscrição', role: 'USER' },
+          { id: 'APROVACAO', name: 'Aprovação do gestor', role: 'COORDINATOR' },
+        ],
+      },
+    });
+    return criada.id;
+  }
+
   async createInscricao(data: CreateInscricaoProgramaDTO) {
+    const definitionId = await this.ensureWorkflowDefinition();
     const workflow = await workflowInstanceService.create({
-      definitionId: 'programa-social-v1',
+      definitionId,
       entityType: 'INSCRICAO_PROGRAMA_SOCIAL',
       entityId: '',
       citizenId: data.beneficiarioId,
@@ -62,7 +85,9 @@ export class ProgramaSocialService {
 
     const inscricao = await prisma.inscricaoProgramaSocial.create({
       data: {
-        ...data,
+        programaId: data.programaId,
+        familiaId: data.familiaId,
+        beneficiarioId: data.beneficiarioId,
         workflowId: workflow.id,
         status: 'AGUARDANDO_ANALISE',
       },
@@ -126,7 +151,7 @@ export class ProgramaSocialService {
     await prisma.inscricaoProgramaSocial.update({
       where: { id: data.inscricaoId },
       data: {
-        status: 'ATIVA',
+        status: 'ATIVO',
         dataAprovacao: new Date(),
         dataInicio: data.dataInicio,
       },
@@ -206,7 +231,7 @@ export class ProgramaSocialService {
     });
 
     if (!inscricao) throw new Error('Inscrição não encontrada');
-    if (inscricao.status !== 'ATIVO') {
+    if (inscricao.status !== 'ATIVO' && inscricao.status !== 'ATIVA') {
       throw new Error('Benefício não está ativo');
     }
 

@@ -370,6 +370,72 @@ export default function SecretariaAssistenciaSocialPage() {
         </Card>
       </div>
 
+      {/* Apps de Assistência Social — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Assistência Social</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos para a proteção social do município
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-rose-200 bg-gradient-to-br from-rose-50 to-pink-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/assistencia-social/familias')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-rose-700 transition-colors">
+                Famílias (CadÚnico)
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Cadastro de famílias, entrevistas, validação e composição familiar
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-rose-600 hover:bg-rose-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+          <Card
+            className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/assistencia-social/beneficios')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-emerald-700 transition-colors">
+                Programas & Benefícios
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Inscrições em programas sociais, análise, concessão, pagamentos e acompanhamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+          <Card
+            className="border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/assistencia-social/unidades')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-sky-700 transition-colors">
+                Unidades (CRAS/CREAS)
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Centros de referência e equipamentos da assistência social
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-sky-600 hover:bg-sky-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/*
         ============================================================
         SEÇÕES REMOVIDAS (Consolidadas acima):

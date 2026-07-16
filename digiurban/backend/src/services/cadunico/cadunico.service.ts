@@ -58,9 +58,33 @@ export interface ValidarDadosDTO {
 }
 
 export class CadUnicoService {
+  /** Garante a definição de workflow do tenant atual e retorna o id. */
+  private async ensureWorkflowDefinition(): Promise<string> {
+    const existente = await prisma.workflowDefinition.findFirst({
+      where: { module: 'ASSISTENCIA_SOCIAL', name: 'CadÚnico', isActive: true },
+      select: { id: true },
+    });
+    if (existente) return existente.id;
+
+    const criada = await prisma.workflowDefinition.create({
+      data: {
+        name: 'CadÚnico',
+        description: 'Cadastro da família → entrevista → validação → cadastro ativo',
+        module: 'ASSISTENCIA_SOCIAL',
+        stages: [
+          { id: 'AGENDAMENTO', name: 'Agendamento da entrevista', role: 'USER' },
+          { id: 'ENTREVISTA', name: 'Entrevista', role: 'USER' },
+          { id: 'VALIDACAO', name: 'Validação dos dados', role: 'COORDINATOR' },
+        ],
+      },
+    });
+    return criada.id;
+  }
+
   async createFamilia(data: CreateCadUnicoFamiliaDTO) {
+    const definitionId = await this.ensureWorkflowDefinition();
     const workflow = await workflowInstanceService.create({
-      definitionId: 'cadunico-v1',
+      definitionId,
       entityType: 'CADUNICO_FAMILIA',
       entityId: '',
       citizenId: data.responsavelFamiliarId,

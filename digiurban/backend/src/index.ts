@@ -390,6 +390,7 @@ loadRoute('/api/secretarias/assistencia-social', './routes/secretarias-assistenc
 
 // Apps de secretaria (Fase 1 do plano de apps)
 loadRoute('/api/apps/educacao', './routes/educacao', requireFeature('educacao'));
+loadRoute('/api/apps/assistencia-social', './routes/assistencia-social', requireFeature('assistencia-social'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {
