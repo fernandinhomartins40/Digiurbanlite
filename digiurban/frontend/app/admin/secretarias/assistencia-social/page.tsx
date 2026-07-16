@@ -176,8 +176,6 @@ export default function SecretariaAssistenciaSocialPage() {
           </CardContent>
         </Card>
 
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="assistencia-social" departmentName="Assistência Social" />
       </div>
 
       {/* Ações Rápidas */}
@@ -215,6 +213,9 @@ export default function SecretariaAssistenciaSocialPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="assistencia-social" departmentName="Assistência Social" />
 
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}

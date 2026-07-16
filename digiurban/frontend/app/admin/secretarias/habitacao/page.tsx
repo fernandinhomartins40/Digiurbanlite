@@ -175,8 +175,6 @@ export default function SecretariaHabitacaoPage() {
           </CardContent>
         </Card>
 
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="habitacao" departmentName="Habitação" />
       </div>
 
       {/* Ações Rápidas */}
@@ -214,6 +212,9 @@ export default function SecretariaHabitacaoPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="habitacao" departmentName="Habitação" />
 
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}

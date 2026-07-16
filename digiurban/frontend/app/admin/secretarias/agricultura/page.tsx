@@ -192,8 +192,6 @@ export default function SecretariaAgriculturaPage() {
           </CardContent>
         </Card>
 
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="agricultura" departmentName="Agricultura" />
       </div>
 
       {/* Ações Rápidas */}
@@ -232,12 +230,8 @@ export default function SecretariaAgriculturaPage() {
         </CardContent>
       </Card>
 
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* SEÇÕES DUPLICADAS REMOVIDAS - Agora temos apenas 2 seções:     */}
-      {/* 1. Módulos COM_DADOS (acima) - painéis individuais             */}
-      {/* 2. Serviços Gerais SEM_DADOS (acima) - painel agregado         */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="agricultura" departmentName="Agricultura" />
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

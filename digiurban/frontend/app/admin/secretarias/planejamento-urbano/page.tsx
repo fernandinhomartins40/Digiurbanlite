@@ -175,9 +175,6 @@ export default function SecretariaPlanejamentoUrbanoPage() {
             )}
           </CardContent>
         </Card>
-
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="planejamento-urbano" departmentName="Planejamento Urbano" />
       </div>
 
       {/* Ações Rápidas */}
@@ -216,12 +213,8 @@ export default function SecretariaPlanejamentoUrbanoPage() {
         </CardContent>
       </Card>
 
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* SEÇÕES DUPLICADAS REMOVIDAS - Agora temos apenas 2 seções:     */}
-      {/* 1. Módulos COM_DADOS (acima) - painéis individuais             */}
-      {/* 2. Serviços Gerais SEM_DADOS (acima) - painel agregado         */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="planejamento-urbano" departmentName="Planejamento Urbano" />
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

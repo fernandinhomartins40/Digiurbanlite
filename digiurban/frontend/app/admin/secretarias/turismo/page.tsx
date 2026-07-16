@@ -172,9 +172,6 @@ export default function SecretariaTurismoPage() {
             )}
           </CardContent>
         </Card>
-
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="turismo" departmentName="Turismo" />
       </div>
 
       {/* Ações Rápidas */}
@@ -213,12 +210,8 @@ export default function SecretariaTurismoPage() {
         </CardContent>
       </Card>
 
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* SEÇÕES DUPLICADAS REMOVIDAS - Agora temos apenas 2 seções:     */}
-      {/* 1. Módulos COM_DADOS (acima) - painéis individuais             */}
-      {/* 2. Serviços Gerais SEM_DADOS (acima) - painel agregado         */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="turismo" departmentName="Turismo" />
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

@@ -177,9 +177,6 @@ export default function SecretariaSegurancaPublicaPage() {
             )}
           </CardContent>
         </Card>
-
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="seguranca-publica" departmentName="Segurança Pública" />
       </div>
 
       {/* Ações Rápidas */}
@@ -218,12 +215,8 @@ export default function SecretariaSegurancaPublicaPage() {
         </CardContent>
       </Card>
 
-
-      {/* ═══════════════════════════════════════════════════════════════ */}
-      {/* SEÇÕES DUPLICADAS REMOVIDAS - Agora temos apenas 2 seções:     */}
-      {/* 1. Módulos COM_DADOS (acima) - painéis individuais             */}
-      {/* 2. Serviços Gerais SEM_DADOS (acima) - painel agregado         */}
-      {/* ═══════════════════════════════════════════════════════════════ */}
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="seguranca-publica" departmentName="Segurança Pública" />
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

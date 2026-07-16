@@ -173,8 +173,6 @@ export default function SecretariaMeioAmbientePage() {
           </CardContent>
         </Card>
 
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="meio-ambiente" departmentName="Meio Ambiente" />
       </div>
 
       {/* Ações Rápidas */}
@@ -212,6 +210,9 @@ export default function SecretariaMeioAmbientePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="meio-ambiente" departmentName="Meio Ambiente" />
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}
       <div>

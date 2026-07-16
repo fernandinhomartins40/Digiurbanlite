@@ -174,8 +174,6 @@ export default function SecretariaEsportesPage() {
           </CardContent>
         </Card>
 
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="esportes" departmentName="Esportes" />
       </div>
 
       {/* Ações Rápidas */}
@@ -213,6 +211,9 @@ export default function SecretariaEsportesPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="esportes" departmentName="Esportes" />
 
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}

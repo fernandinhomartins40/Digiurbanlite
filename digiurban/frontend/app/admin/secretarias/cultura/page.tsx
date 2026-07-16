@@ -172,9 +172,6 @@ export default function SecretariaCulturaPage() {
             )}
           </CardContent>
         </Card>
-
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="cultura" departmentName="Cultura" />
       </div>
 
       {/* Ações Rápidas */}
@@ -212,6 +209,9 @@ export default function SecretariaCulturaPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="cultura" departmentName="Cultura" />
 
 
       {/* Sugestões Inteligentes de Serviços COM_DADOS */}

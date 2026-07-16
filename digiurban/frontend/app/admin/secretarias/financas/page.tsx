@@ -129,8 +129,6 @@ export default function SecretariaFinancasPage() {
           </CardContent>
         </Card>
 
-      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
-      <SecretariaModulosSection slug="financas" departmentName="Finanças" />
       </div>
 
       {/* Ações Rápidas */}
@@ -161,6 +159,9 @@ export default function SecretariaFinancasPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
+      <SecretariaModulosSection slug="financas" departmentName="Finanças" />
 
 
       {/* Sugestões Inteligentes */}
