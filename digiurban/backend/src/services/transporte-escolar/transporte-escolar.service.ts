@@ -16,6 +16,8 @@ export interface CreateRotaEscolarDTO {
   turno: Turno;
   veiculoId: string;
   motoristaId: string;
+  horarioSaida?: string;
+  horarioRetorno?: string;
   monitorId?: string;
   distanciaTotal?: number;
   tempoEstimado?: number;
@@ -52,7 +54,11 @@ export class TransporteEscolarService {
 
     return await prisma.veiculoEscolar.create({
       data: {
-        ...data,
+        placa: data.placa,
+        modelo: data.modelo,
+        capacidade: data.capacidade,
+        acessibilidade: data.acessibilidade || false,
+        km: data.kmAtual || 0,
         status: 'DISPONIVEL',
         isActive: true,
       },
@@ -134,7 +140,7 @@ export class TransporteEscolarService {
   // ==================== ROTAS ====================
 
   async createRota(data: CreateRotaEscolarDTO) {
-    const { paradas, ...rotaData } = data;
+    const paradas = data.paradas || [];
 
     // Verificar se o veículo está disponível
     const veiculo = await prisma.veiculoEscolar.findUnique({
@@ -145,12 +151,18 @@ export class TransporteEscolarService {
       throw new Error('Veículo não disponível');
     }
 
-    // Criar rota com paradas
+    // Paradas ficam no JSON `pontos` da rota (não há model dedicado)
     const rota = await prisma.rotaEscolar.create({
-      data: rotaData as any,
+      data: {
+        nome: data.nome,
+        turno: data.turno,
+        veiculoId: data.veiculoId,
+        motoristaId: data.motoristaId,
+        horarioSaida: data.horarioSaida || paradas[0]?.horarioEstimado || '07:00',
+        horarioRetorno: data.horarioRetorno || '12:00',
+        pontos: (paradas as any) || [],
+      },
     });
-
-    // Paradas serão criadas separadamente (modelo não existe atualmente)
 
     return await this.findRotaById(rota.id);
   }
@@ -186,7 +198,7 @@ export class TransporteEscolarService {
   async updateRotaStatus(id: string, status: any) {
     return await prisma.rotaEscolar.update({
       where: { id },
-      data: {} as any,
+      data: { isActive: status !== 'INATIVA' && status !== false },
     });
   }
 
@@ -194,12 +206,12 @@ export class TransporteEscolarService {
     // Desativar todos os vínculos de alunos
     await prisma.alunoRota.updateMany({
       where: { rotaId: id },
-      data: {} as any,
+      data: { ativo: false },
     });
 
     return await prisma.rotaEscolar.update({
       where: { id },
-      data: {} as any,
+      data: { isActive: false },
     });
   }
 
@@ -261,14 +273,15 @@ export class TransporteEscolarService {
       data: {
         rotaId: data.rotaId,
         alunoId: data.alunoId,
-      } as any,
+        pontoEmbarque: data.paradaId || 'Ponto principal',
+      },
     });
   }
 
   async desvincularAluno(alunoRotaId: string) {
     return await prisma.alunoRota.update({
       where: { id: alunoRotaId },
-      data: {} as any,
+      data: { ativo: false },
     });
   }
 

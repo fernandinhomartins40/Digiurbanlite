@@ -215,6 +215,73 @@ export default function SecretariaEducacaoPage() {
         </CardContent>
       </Card>
 
+      {/* Apps de Educação — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Educação</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos para a gestão escolar municipal
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-indigo-200 bg-gradient-to-br from-indigo-50 to-blue-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/educacao')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-indigo-700 transition-colors">
+                Gestão Escolar
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Matrículas (inscrição → validação → vaga → confirmação), turmas com controle
+                de vagas e unidades de ensino
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-indigo-600 hover:bg-indigo-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+          <Card
+            className="border-amber-200 bg-gradient-to-br from-amber-50 to-yellow-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/educacao/transporte')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-amber-700 transition-colors">
+                Transporte Escolar
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Frota de veículos, rotas por turno e alunos transportados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+          <Card
+            className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/seguranca-escolar')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-emerald-700 transition-colors">
+                Segurança Escolar
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Reconhecimento facial na entrada/saída com aviso aos responsáveis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Seção: módulos gerais (Protocolos + Dados) desta secretaria */}
       <SecretariaModulosSection slug="educacao" departmentName="Educação" />
 

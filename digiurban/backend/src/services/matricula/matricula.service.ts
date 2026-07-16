@@ -46,9 +46,36 @@ export interface ConfirmarMatriculaDTO {
 }
 
 export class MatriculaService {
+  /**
+   * Garante que a definição de workflow de matrícula existe para o tenant
+   * atual (a tenant extension escopa o findFirst/create). Retorna o id.
+   */
+  private async ensureWorkflowDefinition(): Promise<string> {
+    const existente = await prisma.workflowDefinition.findFirst({
+      where: { module: 'EDUCACAO', name: 'Matrícula Escolar', isActive: true },
+      select: { id: true },
+    });
+    if (existente) return existente.id;
+
+    const criada = await prisma.workflowDefinition.create({
+      data: {
+        name: 'Matrícula Escolar',
+        description: 'Inscrição → validação de documentos → atribuição de vaga → confirmação',
+        module: 'EDUCACAO',
+        stages: [
+          { id: 'VALIDACAO', name: 'Validação de documentos', role: 'USER' },
+          { id: 'ATRIBUICAO_VAGA', name: 'Atribuição de vaga', role: 'COORDINATOR' },
+          { id: 'CONFIRMACAO', name: 'Confirmação da matrícula', role: 'USER' },
+        ],
+      },
+    });
+    return criada.id;
+  }
+
   async createInscricao(data: CreateInscricaoMatriculaDTO) {
+    const definitionId = await this.ensureWorkflowDefinition();
     const workflow = await workflowInstanceService.create({
-      definitionId: 'matricula-v1',
+      definitionId,
       entityType: 'INSCRICAO_MATRICULA',
       entityId: '',
       citizenId: data.alunoId,
@@ -84,7 +111,12 @@ export class MatriculaService {
 
     await prisma.inscricaoMatricula.update({
       where: { id: data.inscricaoId },
-      data: { status: novoStatus },
+      data: {
+        status: novoStatus,
+        validadoPor: data.validadorId,
+        dataValidacao: new Date(),
+        ...(data.aprovado ? {} : { motivoRecusa: data.observacoes || null }),
+      },
     });
 
     await workflowInstanceService.transition(
@@ -117,7 +149,12 @@ export class MatriculaService {
 
     await prisma.inscricaoMatricula.update({
       where: { id: data.inscricaoId },
-      data: { status: 'VAGA_ATRIBUIDA' },
+      data: {
+        status: 'VAGA_ATRIBUIDA',
+        escolaAtribuida: turma.unidadeEducacaoId,
+        turmaAtribuida: turma.id,
+        dataDistribuicao: new Date(),
+      },
     });
 
     await workflowInstanceService.transition(
@@ -148,19 +185,23 @@ export class MatriculaService {
     const count = await prisma.matricula.count();
     const numeroMatricula = `${ano}${(count + 1).toString().padStart(6, '0')}`;
 
-    // Buscar a turma da inscrição (deveria estar no workflow metadata ou outro campo)
-    // Por simplicidade, vou assumir que pegamos a primeira escola de preferência
-    const turmas = await prisma.turma.findMany({
-      where: {
-        unidadeEducacaoId: inscricao.escolaPreferencia1 || '',
-        serie: inscricao.serie,
-        ano,
-        isActive: true,
-      },
-    });
+    // Usa a turma atribuída na etapa anterior; fallback para a 1ª escola de preferência
+    let turma = inscricao.turmaAtribuida
+      ? await prisma.turma.findUnique({ where: { id: inscricao.turmaAtribuida } })
+      : null;
 
-    if (turmas.length === 0) throw new Error('Nenhuma turma disponível');
-    const turma = turmas[0];
+    if (!turma) {
+      const turmas = await prisma.turma.findMany({
+        where: {
+          unidadeEducacaoId: inscricao.escolaPreferencia1 || '',
+          serie: inscricao.serie,
+          ano,
+          isActive: true,
+        },
+      });
+      if (turmas.length === 0) throw new Error('Nenhuma turma disponível');
+      turma = turmas[0];
+    }
 
     const matricula = await prisma.matricula.create({
       data: {

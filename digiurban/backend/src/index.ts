@@ -388,6 +388,9 @@ loadRoute('/api/apps/saude/cadastros', './routes/saude-cadastros.routes', requir
 loadRoute('/api/secretarias/educacao', './routes/secretarias-educacao', requireFeature('educacao'));
 loadRoute('/api/secretarias/assistencia-social', './routes/secretarias-assistencia-social', requireFeature('assistencia-social'));
 
+// Apps de secretaria (Fase 1 do plano de apps)
+loadRoute('/api/apps/educacao', './routes/educacao', requireFeature('educacao'));
+
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {
   app.use('/api/organizational-units', require('./routes/organizational-units.routes').default);
