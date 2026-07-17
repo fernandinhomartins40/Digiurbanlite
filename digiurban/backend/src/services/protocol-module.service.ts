@@ -350,6 +350,18 @@ export class ProtocolModuleService {
       }
     }
 
+    // ============================================================================
+    // ⭐ HOOK AUTOMÁTICO: CONVERTER PROTOCOLO → APPS DE SECRETARIA (NÃO-FATAL)
+    // OS de Serviços Públicos e assistência técnica rural entram na fila do app
+    // ============================================================================
+
+    try {
+      const { convertProtocolToAppOnCreate } = await import('./apps/protocol-to-app.service');
+      await convertProtocolToAppOnCreate(result.protocol);
+    } catch (error) {
+      console.error('❌ Erro ao converter protocolo para app de secretaria (não-fatal):', error);
+    }
+
     return result;
   }
 
@@ -486,6 +498,15 @@ export class ProtocolModuleService {
         additionalData
       }
     });
+
+    // ⭐ HOOK: cadastros aprovados viram entidade do app de secretaria
+    // (produtor/propriedade rural). NÃO-FATAL, padrão materializeOnApproval.
+    try {
+      const { convertProtocolToAppOnApproval } = await import('./apps/protocol-to-app.service');
+      await convertProtocolToAppOnApproval(protocolId);
+    } catch (error) {
+      console.error('❌ Erro ao converter protocolo aprovado para app de secretaria (não-fatal):', error);
+    }
 
     return result.protocol;
   }
