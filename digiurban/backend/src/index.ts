@@ -207,7 +207,7 @@ function loadRoute(prefix: string, modulePath: string, ...middlewares: express.R
   }
 }
 
-import { requireFeature } from './middleware/require-feature';
+import { requireFeature, requireAnyFeature } from './middleware/require-feature';
 
 // Rotas internas (Messages Server)
 loadRoute('/api/internal', './routes/internal.routes');
@@ -393,6 +393,8 @@ loadRoute('/api/apps/educacao', './routes/educacao', requireFeature('educacao'))
 loadRoute('/api/apps/assistencia-social', './routes/assistencia-social', requireFeature('assistencia-social'));
 loadRoute('/api/agricultura', './routes/agricultura.routes', requireFeature('agricultura')); // contrato da UI (use-agricultura-api.ts)
 loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFeature('servicos-publicos'));
+// Fase 2: Licenciamento Urbano é UM app para DUAS secretarias
+loadRoute('/api/apps/licenciamento', './routes/licenciamento', requireAnyFeature(['obras-publicas', 'planejamento-urbano']));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {

@@ -10220,3 +10220,59 @@ model ApontamentoOS {
   @@index([tenantId])
   @@map("apontamentos_os")
 }
+
+// ============================================================================
+// LICENCIAMENTO URBANO — App único p/ Obras Públicas + Planejamento Urbano
+// (Fase 2 do plano de apps, blueprint B4: etapas com pareceres por papel)
+// ============================================================================
+
+model ProcessoLicenciamento {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  protocolId       String?   @unique // quando nasce de protocolo
+  numero           String // LIC-<ano>-<seq> por tenant
+  tipo             String // APROVACAO_PROJETO | ALVARA_CONSTRUCAO | ALVARA_FUNCIONAMENTO | HABITE_SE | VIABILIDADE | DEMOLICAO
+  requerenteNome   String?
+  citizenId        String? // join manual com Citizen
+  endereco         String?
+  bairro           String?
+  latitude         Float?
+  longitude        Float?
+  areaM2           Float?
+  descricao        String?
+  dados            Json? // campos específicos por tipo (uso, zoneamento, ART/RRT...)
+  status           String    @default("ABERTO") // ABERTO | EM_ANALISE | EXIGENCIA | VISTORIA | APROVADO | LICENCA_EMITIDA | INDEFERIDO | CANCELADO
+  responsavelId    String? // User analista responsável (join manual)
+  licencaNumero    String?
+  licencaValidade  DateTime?
+  licencaEmitidaEm DateTime?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  pareceres ParecerLicenciamento[]
+
+  @@unique([tenantId, numero])
+  @@unique([tenantId, licencaNumero])
+  @@index([status])
+  @@index([tipo])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("processos_licenciamento")
+}
+
+model ParecerLicenciamento {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  processoId String
+  processo   ProcessoLicenciamento @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  tipo       String // ANALISE_PROJETO | VISTORIA | EXIGENCIA | JURIDICO | NOTA
+  resultado  String? // FAVORAVEL | DESFAVORAVEL | EXIGENCIA
+  texto      String?
+  fotos      Json?
+  autorId    String? // User (join manual)
+  createdAt  DateTime @default(now())
+
+  @@index([processoId])
+  @@index([tenantId])
+  @@map("pareceres_licenciamento")
+}

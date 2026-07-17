@@ -48,4 +48,27 @@ export function requireFeature(feature: string) {
   };
 }
 
+/**
+ * Variante para apps compartilhados entre secretarias (ex.: Licenciamento
+ * Urbano = Obras Públicas + Planejamento Urbano): libera se QUALQUER uma das
+ * features estiver habilitada; bloqueia só se TODAS estiverem `false`.
+ */
+export function requireAnyFeature(features: string[]) {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const tenant = (req as any).tenant as TenantRecord | null | undefined;
+
+    if (!features.some((feature) => isFeatureEnabled(tenant, feature))) {
+      res.status(403).json({
+        error: 'Módulo indisponível',
+        message: `O módulo "${features.join('/')}" não está habilitado no plano deste município.`,
+        code: 'FEATURE_DISABLED',
+        feature: features.join(','),
+      });
+      return;
+    }
+
+    next();
+  };
+}
+
 export default requireFeature;

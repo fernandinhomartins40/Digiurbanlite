@@ -8,6 +8,13 @@ import { logger } from '../../config/logger.config';
  * protocolId @unique na tabela raiz do app — reprocessar é idempotente.
  */
 
+/** moduleType → tipo de processo de licenciamento (convertidos na CRIAÇÃO). */
+const LICENCIAMENTO_MODULE_TYPES: Record<string, string> = {
+  APROVACAO_PROJETO: 'APROVACAO_PROJETO',
+  ALVARA_CONSTRUCAO: 'ALVARA_CONSTRUCAO',
+  ALVARA_FUNCIONAMENTO: 'ALVARA_FUNCIONAMENTO',
+};
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -79,6 +86,37 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
       bairro: pickField(customData, /bairro|comunidade/i),
     });
     logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → OS ${os.numero}`);
+    return;
+  }
+
+  // ---- Licenciamento Urbano → ProcessoLicenciamento ----
+  if (LICENCIAMENTO_MODULE_TYPES[moduleType]) {
+    const existente = await prisma.processoLicenciamento.findFirst({
+      where: { protocolId: protocol.id },
+    });
+    if (existente) return;
+    const licenciamentoService = (await import('../licenciamento/licenciamento.service')).default;
+    let requerenteNome = pickField(customData, /^nome|requerente/i);
+    if (!requerenteNome && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true },
+      });
+      requerenteNome = citizen?.name || undefined;
+    }
+    const processo = await licenciamentoService.createProcesso({
+      protocolId: protocol.id,
+      tipo: LICENCIAMENTO_MODULE_TYPES[moduleType],
+      citizenId: protocol.citizenId,
+      requerenteNome,
+      endereco: pickField(customData, /endere|logradouro|local da obra/i),
+      bairro: pickField(customData, /bairro/i),
+      descricao: pickField(customData, /descri|observa|finalidade|atividade/i),
+      dados: customData && typeof customData === 'object' ? { formulario: customData } : undefined,
+    });
+    logger.info(
+      `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo de licenciamento ${processo.numero}`
+    );
     return;
   }
 

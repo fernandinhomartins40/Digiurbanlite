@@ -368,6 +368,37 @@ export default function SecretariaPlanejamentoUrbanoPage() {
         </Card>
       </div>
 
+      {/* Apps de Planejamento Urbano — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Planejamento Urbano</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos, compartilhados com Obras Públicas
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-cyan-200 bg-gradient-to-br from-cyan-50 to-sky-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/licenciamento')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-cyan-700 transition-colors">
+                Licenciamento Urbano
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Aprovação de projetos, alvarás de construção/funcionamento, vistorias,
+                pareceres e emissão de licenças com validade
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-cyan-600 hover:bg-cyan-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}
