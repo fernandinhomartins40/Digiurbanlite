@@ -10428,3 +10428,95 @@ model InscricaoHabitacional {
   @@index([tenantId])
   @@map("inscricoes_habitacionais")
 }
+
+// ============================================================================
+// OCORRÊNCIAS & ÁREAS DE RISCO — App da Defesa Civil (Fase 2 do plano de
+// apps, blueprint B2 + mapa). Ocorrência georreferenciada → atendimento →
+// vistoria com laudo/nível de risco → interdição | conclusão. Abrigos com
+// capacidade/ocupação e famílias atingidas (ponte com CadUnicoFamilia da
+// Assistência Social via cadUnicoFamiliaId, join manual).
+// ============================================================================
+
+model OcorrenciaDefesaCivil {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique // quando nasce de protocolo
+  numero          String // DC-<ano>-<seq> por tenant
+  tipo            String // DESLIZAMENTO | ALAGAMENTO | VENDAVAL | INCENDIO | AREA_RISCO | VISTORIA | REMOCAO_PREVENTIVA | SOLICITACAO_ABRIGO | OUTRO
+  gravidade       String    @default("MEDIA") // BAIXA | MEDIA | ALTA | CRITICA
+  solicitanteNome String?
+  citizenId       String? // join manual com Citizen
+  endereco        String?
+  bairro          String?
+  latitude        Float?
+  longitude       Float?
+  descricao       String?
+  dados           Json? // formulário de origem
+  status          String    @default("ABERTA") // ABERTA | EM_ATENDIMENTO | VISTORIADA | INTERDITADA | MONITORAMENTO | CONCLUIDA | CANCELADA
+  responsavelId   String? // User agente responsável (join manual)
+  vistoriaEm      DateTime?
+  laudo           String? // laudo da vistoria técnica
+  nivelRisco      String? // SEM_RISCO | BAIXO | MEDIO | ALTO | MUITO_ALTO
+  interditadoEm   DateTime?
+  fotos           Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  familias FamiliaAtingida[]
+
+  @@unique([tenantId, numero])
+  @@index([status])
+  @@index([tipo])
+  @@index([bairro])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("ocorrencias_defesa_civil")
+}
+
+model Abrigo {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  nome            String
+  endereco        String?
+  bairro          String?
+  capacidade      Int? // pessoas
+  ocupacao        Int      @default(0) // pessoas abrigadas no momento
+  responsavelNome String?
+  telefone        String?
+  latitude        Float?
+  longitude       Float?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@unique([tenantId, nome])
+  @@index([isActive])
+  @@index([tenantId])
+  @@map("abrigos_defesa_civil")
+}
+
+model FamiliaAtingida {
+  id                String    @id @default(cuid())
+  tenantId          String?
+  ocorrenciaId      String?
+  ocorrencia        OcorrenciaDefesaCivil? @relation(fields: [ocorrenciaId], references: [id], onDelete: SetNull)
+  abrigoId          String? // Abrigo atual (join manual; ocupação mantida pelo service)
+  cadUnicoFamiliaId String? // ponte com CadUnicoFamilia da Assistência Social (join manual)
+  responsavelNome   String?
+  cpf               String? // dígitos apenas
+  membros           Int? // pessoas na família
+  situacao          String    @default("DESALOJADA") // DESALOJADA | DESABRIGADA | EM_ABRIGO | RETORNOU
+  necessidades      String?
+  entradaAbrigoEm   DateTime?
+  saidaAbrigoEm     DateTime?
+  observacoes       String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([ocorrenciaId])
+  @@index([abrigoId])
+  @@index([situacao])
+  @@index([cpf])
+  @@index([tenantId])
+  @@map("familias_atingidas")
+}

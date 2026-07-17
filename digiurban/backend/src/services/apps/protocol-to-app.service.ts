@@ -30,6 +30,16 @@ const HABITACAO_MODULE_TYPES = new Set([
   'SOLICITACAO_AUXILIO_ALUGUEL',
 ]);
 
+/** moduleType → tipo de ocorrência da Defesa Civil (convertidos na CRIAÇÃO). */
+const DEFESA_CIVIL_MODULE_TYPES: Record<string, string> = {
+  VISTORIA_AREA_RISCO: 'VISTORIA',
+  DENUNCIA_AREA_RISCO: 'AREA_RISCO',
+  DENUNCIA_CONSTRUCAO: 'AREA_RISCO',
+  REMOCAO_PREVENTIVA: 'REMOCAO_PREVENTIVA',
+  SOLICITACAO_ABRIGO: 'SOLICITACAO_ABRIGO',
+  ALERTA_EMERGENCIA: 'OUTRO',
+};
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -163,6 +173,38 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     });
     logger.info(
       `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo ambiental ${processo.numero}`
+    );
+    return;
+  }
+
+  // ---- Defesa Civil → OcorrenciaDefesaCivil (fila de campo) ----
+  if (DEFESA_CIVIL_MODULE_TYPES[moduleType]) {
+    const existente = await prisma.ocorrenciaDefesaCivil.findFirst({
+      where: { protocolId: protocol.id },
+    });
+    if (existente) return;
+    const defesaCivilService = (await import('../defesa-civil/defesa-civil.service')).default;
+    let solicitanteNome = pickField(customData, /^nome|solicitante|denunciante/i);
+    if (!solicitanteNome && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true },
+      });
+      solicitanteNome = citizen?.name || undefined;
+    }
+    const ocorrencia = await defesaCivilService.createOcorrencia({
+      protocolId: protocol.id,
+      tipo: DEFESA_CIVIL_MODULE_TYPES[moduleType],
+      gravidade: moduleType === 'ALERTA_EMERGENCIA' || moduleType === 'SOLICITACAO_ABRIGO' ? 'ALTA' : 'MEDIA',
+      citizenId: protocol.citizenId,
+      solicitanteNome,
+      endereco: pickField(customData, /endere|logradouro|local/i),
+      bairro: pickField(customData, /bairro|comunidade/i),
+      descricao: pickField(customData, /descri|observa|relato|situacao|risco|motivo/i),
+      dados: customData && typeof customData === 'object' ? { formulario: customData } : undefined,
+    });
+    logger.info(
+      `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → ocorrência Defesa Civil ${ocorrencia.numero}`
     );
     return;
   }

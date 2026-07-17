@@ -271,6 +271,37 @@ export default function SecretariaDefesaCivilPage() {
         )}
       </div>
 
+      {/* Apps de Defesa Civil — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Defesa Civil</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-orange-200 bg-gradient-to-br from-orange-50 to-red-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/defesa-civil')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-orange-700 transition-colors">
+                Ocorrências & Áreas de Risco
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Ocorrências georreferenciadas, vistorias com laudo e interdição, abrigos com
+                capacidade/ocupação e famílias atingidas com ponte ao CadÚnico
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-orange-600 hover:bg-orange-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}

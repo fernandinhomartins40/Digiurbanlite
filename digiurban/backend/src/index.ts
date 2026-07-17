@@ -397,6 +397,7 @@ loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFe
 loadRoute('/api/apps/licenciamento', './routes/licenciamento', requireAnyFeature(['obras-publicas', 'planejamento-urbano']));
 loadRoute('/api/apps/meio-ambiente', './routes/meio-ambiente', requireFeature('meio-ambiente'));
 loadRoute('/api/apps/habitacao', './routes/habitacao', requireFeature('habitacao'));
+loadRoute('/api/apps/defesa-civil', './routes/defesa-civil', requireFeature('defesa-civil'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {
