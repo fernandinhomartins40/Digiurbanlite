@@ -40,6 +40,15 @@ const DEFESA_CIVIL_MODULE_TYPES: Record<string, string> = {
   ALERTA_EMERGENCIA: 'OUTRO',
 };
 
+/** moduleType → {tipo, risco} de caso da Rede da Mulher (convertidos na CRIAÇÃO). */
+const CASO_MULHER_MODULE_TYPES: Record<string, { tipo: string; risco: string }> = {
+  DENUNCIA_VIOLENCIA: { tipo: 'VIOLENCIA_DOMESTICA', risco: 'ALTO' },
+  DENUNCIA_ASSEDIO: { tipo: 'ASSEDIO', risco: 'MEDIO' },
+  ACOLHIMENTO_CASA_ABRIGO: { tipo: 'ACOLHIMENTO', risco: 'ALTO' },
+  MEDIDA_PROTETIVA: { tipo: 'MEDIDA_PROTETIVA', risco: 'ALTO' },
+  ACOMPANHAMENTO_SOCIAL: { tipo: 'ACOMPANHAMENTO', risco: 'MEDIO' },
+};
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -174,6 +183,36 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     logger.info(
       `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo ambiental ${processo.numero}`
     );
+    return;
+  }
+
+  // ---- Rede da Mulher → CasoMulher (B7 sigiloso; sem equipe até a triagem) ----
+  if (CASO_MULHER_MODULE_TYPES[moduleType]) {
+    const existente = await prisma.casoMulher.findFirst({ where: { protocolId: protocol.id } });
+    if (existente) return;
+    const casoMulherService = (await import('../politicas-mulheres/caso-mulher.service')).default;
+    const cfg = CASO_MULHER_MODULE_TYPES[moduleType];
+    let nomeAtendida = pickField(customData, /^nome/i);
+    if (!nomeAtendida && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true },
+      });
+      nomeAtendida = citizen?.name || undefined;
+    }
+    const caso = await casoMulherService.createCaso(
+      {
+        protocolId: protocol.id,
+        tipo: cfg.tipo,
+        risco: cfg.risco,
+        citizenId: protocol.citizenId,
+        nomeAtendida,
+        telefoneSeguro: pickField(customData, /telefone|celular|contato/i),
+        dados: customData && typeof customData === 'object' ? { formulario: customData } : undefined,
+      },
+      {} // sem usuário: caso nasce restrito à gestão até a equipe ser montada
+    );
+    logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → caso sigiloso ${caso.numero}`);
     return;
   }
 

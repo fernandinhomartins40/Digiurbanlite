@@ -10520,3 +10520,73 @@ model FamiliaAtingida {
   @@index([tenantId])
   @@map("familias_atingidas")
 }
+
+// ============================================================================
+// REDE DE ATENDIMENTO À MULHER — App de Políticas p/ Mulheres (Fase 2 do
+// plano de apps, blueprint B7 — SIGILO MÁXIMO). Regras inegociáveis:
+// - Acesso à ficha SOMENTE pela equipe do caso (equipeIds) + ADMIN/SUPER_ADMIN
+// - TODA leitura de ficha gera AuditLog (action CASO_MULHER_READ)
+// - SEM export CSV; listagem fora da equipe é mascarada (sem PII)
+// ============================================================================
+
+model CasoMulher {
+  id                  String   @id @default(cuid())
+  tenantId            String?
+  protocolId          String?  @unique // quando nasce de protocolo
+  numero              String // CM-<ano>-<seq> por tenant
+  tipo                String // VIOLENCIA_DOMESTICA | ASSEDIO | ACOLHIMENTO | MEDIDA_PROTETIVA | ACOMPANHAMENTO | OUTRO
+  risco               String   @default("MEDIO") // BAIXO | MEDIO | ALTO | IMINENTE
+  nomeAtendida        String? // PII — só visível à equipe do caso
+  citizenId           String? // join manual com Citizen
+  telefoneSeguro      String? // telefone seguro para contato (PII)
+  equipeIds           Json? // userIds com acesso à ficha (equipe do caso)
+  planoAcompanhamento String?
+  status              String   @default("ABERTO") // ABERTO | EM_ACOMPANHAMENTO | ENCERRADO
+  dados               Json? // formulário de origem (PII)
+  createdById         String? // User que abriu o caso (entra na equipe)
+  encerradoEm         DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  atendimentos    AtendimentoCasoMulher[]
+  encaminhamentos EncaminhamentoCasoMulher[]
+
+  @@unique([tenantId, numero])
+  @@index([status])
+  @@index([tipo])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("casos_mulher")
+}
+
+model AtendimentoCasoMulher {
+  id      String     @id @default(cuid())
+  tenantId String?
+  casoId  String
+  caso    CasoMulher @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  tipo    String // ACOLHIMENTO | PSICOLOGICO | JURIDICO | SOCIAL | VISITA | CONTATO | NOTA
+  relato  String?
+  autorId String? // User (join manual)
+  createdAt DateTime @default(now())
+
+  @@index([casoId])
+  @@index([tenantId])
+  @@map("atendimentos_caso_mulher")
+}
+
+model EncaminhamentoCasoMulher {
+  id       String     @id @default(cuid())
+  tenantId String?
+  casoId   String
+  caso     CasoMulher @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  destino  String // DEAM | CASA_ABRIGO | MEDIDA_PROTETIVA | DEFENSORIA | MINISTERIO_PUBLICO | CRAS_CREAS | SAUDE | OUTRO
+  detalhes String?
+  status   String     @default("ENCAMINHADO") // ENCAMINHADO | CONFIRMADO | CONCLUIDO
+  autorId  String? // User (join manual)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([casoId])
+  @@index([tenantId])
+  @@map("encaminhamentos_caso_mulher")
+}

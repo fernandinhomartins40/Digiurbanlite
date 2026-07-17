@@ -269,6 +269,38 @@ export default function SecretariaPoliticasMulheresPage() {
         )}
       </div>
 
+      {/* Apps de Políticas para Mulheres — sistemas especializados */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Políticas para Mulheres</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-purple-200 bg-gradient-to-br from-purple-50 to-fuchsia-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/politicas-mulheres')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-purple-700 transition-colors">
+                Rede de Atendimento à Mulher
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Casos sigilosos com acesso restrito à equipe, acolhimentos, encaminhamentos
+                (DEAM, casa abrigo, medida protetiva) e plano de acompanhamento — leituras
+                auditadas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}
