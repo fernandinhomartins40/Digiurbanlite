@@ -15,6 +15,14 @@ const LICENCIAMENTO_MODULE_TYPES: Record<string, string> = {
   ALVARA_FUNCIONAMENTO: 'ALVARA_FUNCIONAMENTO',
 };
 
+/** moduleType → tipo de processo ambiental (convertidos na CRIAÇÃO). */
+const AMBIENTAL_MODULE_TYPES: Record<string, string> = {
+  LICENCA_AMBIENTAL: 'LICENCA_AMBIENTAL',
+  AUTORIZACAO_PODA_CORTE: 'AUTORIZACAO_PODA_CORTE',
+  DENUNCIA_AMBIENTAL: 'DENUNCIA',
+  VISTORIA_AMBIENTAL: 'VISTORIA',
+};
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -116,6 +124,38 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     });
     logger.info(
       `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo de licenciamento ${processo.numero}`
+    );
+    return;
+  }
+
+  // ---- Meio Ambiente → ProcessoAmbiental (licenciamento e fiscalização) ----
+  if (AMBIENTAL_MODULE_TYPES[moduleType]) {
+    const existente = await prisma.processoAmbiental.findFirst({
+      where: { protocolId: protocol.id },
+    });
+    if (existente) return;
+    const meioAmbienteService = (await import('../meio-ambiente/meio-ambiente.service')).default;
+    let requerenteNome = pickField(customData, /^nome|requerente|denunciante/i);
+    if (!requerenteNome && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true },
+      });
+      requerenteNome = citizen?.name || undefined;
+    }
+    const processo = await meioAmbienteService.createProcesso({
+      protocolId: protocol.id,
+      tipo: AMBIENTAL_MODULE_TYPES[moduleType],
+      citizenId: protocol.citizenId,
+      requerenteNome,
+      atividade: pickField(customData, /atividade|empreendimento|especie|árvore|arvore/i),
+      endereco: pickField(customData, /endere|logradouro|local/i),
+      bairro: pickField(customData, /bairro|comunidade/i),
+      descricao: pickField(customData, /descri|observa|relato|denuncia|motivo|justificativa/i),
+      dados: customData && typeof customData === 'object' ? { formulario: customData } : undefined,
+    });
+    logger.info(
+      `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo ambiental ${processo.numero}`
     );
     return;
   }

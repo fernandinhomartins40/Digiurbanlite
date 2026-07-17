@@ -364,7 +364,38 @@ export default function SecretariaMeioAmbientePage() {
           </CardContent>
         </Card>
       </div>
-{/* Modal de Seleção de Serviços */}
+      {/* Apps de Meio Ambiente — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Meio Ambiente</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/meio-ambiente')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-green-700 transition-colors">
+                Licenciamento & Fiscalização Ambiental
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Licenças com condicionantes e validade, denúncias georreferenciadas, vistorias de
+                campo e autos de infração
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-green-600 hover:bg-green-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}

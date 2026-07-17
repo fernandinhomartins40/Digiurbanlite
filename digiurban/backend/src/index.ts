@@ -395,6 +395,7 @@ loadRoute('/api/agricultura', './routes/agricultura.routes', requireFeature('agr
 loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFeature('servicos-publicos'));
 // Fase 2: Licenciamento Urbano é UM app para DUAS secretarias
 loadRoute('/api/apps/licenciamento', './routes/licenciamento', requireAnyFeature(['obras-publicas', 'planejamento-urbano']));
+loadRoute('/api/apps/meio-ambiente', './routes/meio-ambiente', requireFeature('meio-ambiente'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {

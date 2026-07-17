@@ -10276,3 +10276,114 @@ model ParecerLicenciamento {
   @@index([tenantId])
   @@map("pareceres_licenciamento")
 }
+
+// ============================================================================
+// LICENCIAMENTO & FISCALIZAÇÃO AMBIENTAL — App da Secretaria de Meio Ambiente
+// (Fase 2 do plano de apps, blueprint B4 + mapa). Duas correntes na mesma
+// tabela raiz: licenciamento (licença/autorização com condicionantes e
+// validade) e fiscalização (denúncia/vistoria → auto de infração | arquivo).
+// ============================================================================
+
+model ProcessoAmbiental {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  protocolId       String?   @unique // quando nasce de protocolo
+  numero           String // AMB-<ano>-<seq> por tenant
+  tipo             String // LICENCA_AMBIENTAL | AUTORIZACAO_PODA_CORTE | AUTORIZACAO_SUPRESSAO | DENUNCIA | VISTORIA
+  requerenteNome   String? // requerente ou denunciante (denúncia pode ser anônima)
+  citizenId        String? // join manual com Citizen
+  atividade        String? // atividade/empreendimento licenciado ou objeto da denúncia
+  endereco         String?
+  bairro           String?
+  latitude         Float?
+  longitude        Float?
+  descricao        String?
+  dados            Json? // formulário de origem / campos específicos por tipo
+  status           String    @default("ABERTO") // ABERTO | EM_ANALISE | EXIGENCIA | VISTORIA | APROVADO | LICENCA_EMITIDA | AUTUADO | ARQUIVADO | INDEFERIDO | CANCELADO
+  responsavelId    String? // User analista responsável (join manual)
+  condicionantes   Json? // lista de condicionantes da licença
+  licencaNumero    String? // LAM-<ano>-<seq>
+  licencaValidade  DateTime?
+  licencaEmitidaEm DateTime?
+  renovacaoDeId    String? // processo anterior quando é renovação (join manual)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  pareceres ParecerAmbiental[]
+  vistorias VistoriaAmbiental[]
+  autos     AutoInfracaoAmbiental[]
+
+  @@unique([tenantId, numero])
+  @@unique([tenantId, licencaNumero])
+  @@index([status])
+  @@index([tipo])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("processos_ambientais")
+}
+
+model ParecerAmbiental {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  processoId String
+  processo   ProcessoAmbiental @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  tipo       String // ANALISE_TECNICA | JURIDICO | EXIGENCIA | NOTA
+  resultado  String? // FAVORAVEL | DESFAVORAVEL | EXIGENCIA
+  texto      String?
+  fotos      Json?
+  autorId    String? // User (join manual)
+  createdAt  DateTime @default(now())
+
+  @@index([processoId])
+  @@index([tenantId])
+  @@map("pareceres_ambientais")
+}
+
+model VistoriaAmbiental {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  processoId    String
+  processo      ProcessoAmbiental @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  dataAgendada  DateTime?
+  dataRealizada DateTime? // NULL = ainda não realizada
+  fiscalId      String? // User fiscal designado (join manual)
+  resultado     String? // CONFORME | NAO_CONFORME | PARCIAL
+  constatacoes  String?
+  fotos         Json?
+  latitude      Float?
+  longitude     Float?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([processoId])
+  @@index([fiscalId])
+  @@index([tenantId])
+  @@map("vistorias_ambientais")
+}
+
+model AutoInfracaoAmbiental {
+  id                String    @id @default(cuid())
+  tenantId          String?
+  processoId        String
+  processo          ProcessoAmbiental @relation(fields: [processoId], references: [id], onDelete: Cascade)
+  vistoriaId        String? // vistoria que originou o auto (join manual)
+  numero            String // AIA-<ano>-<seq> por tenant
+  infratorNome      String?
+  infratorDocumento String? // CPF/CNPJ
+  descricao         String?
+  enquadramento     String? // base legal
+  gravidade         String? // LEVE | MEDIA | GRAVE | GRAVISSIMA
+  valorMulta        Float?
+  prazoDefesa       DateTime?
+  status            String    @default("LAVRADO") // LAVRADO | NOTIFICADO | EM_DEFESA | MANTIDO | CANCELADO | PAGO
+  fiscalId          String? // User (join manual)
+  fotos             Json?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([tenantId, numero])
+  @@index([processoId])
+  @@index([status])
+  @@index([tenantId])
+  @@map("autos_infracao_ambiental")
+}
