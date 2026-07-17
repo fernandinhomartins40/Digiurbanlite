@@ -367,7 +367,38 @@ export default function SecretariaHabitacaoPage() {
           </CardContent>
         </Card>
       </div>
-{/* Modal de Seleção de Serviços */}
+      {/* Apps de Habitação — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Habitação</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/habitacao')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-amber-700 transition-colors">
+                Programas Habitacionais
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Inscrições com pontuação por critérios, fila classificada, sorteio público e
+                contemplação de unidades dos conjuntos habitacionais
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-amber-600 hover:bg-amber-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
+      {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}

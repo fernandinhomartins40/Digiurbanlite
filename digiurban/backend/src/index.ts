@@ -396,6 +396,7 @@ loadRoute('/api/apps/servicos-publicos', './routes/servicos-publicos', requireFe
 // Fase 2: Licenciamento Urbano é UM app para DUAS secretarias
 loadRoute('/api/apps/licenciamento', './routes/licenciamento', requireAnyFeature(['obras-publicas', 'planejamento-urbano']));
 loadRoute('/api/apps/meio-ambiente', './routes/meio-ambiente', requireFeature('meio-ambiente'));
+loadRoute('/api/apps/habitacao', './routes/habitacao', requireFeature('habitacao'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {

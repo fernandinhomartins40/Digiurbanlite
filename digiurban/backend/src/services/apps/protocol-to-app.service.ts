@@ -23,6 +23,13 @@ const AMBIENTAL_MODULE_TYPES: Record<string, string> = {
   VISTORIA_AMBIENTAL: 'VISTORIA',
 };
 
+/** moduleTypes de Habitação que viram inscrição habitacional na CRIAÇÃO. */
+const HABITACAO_MODULE_TYPES = new Set([
+  'INSCRICAO_PROGRAMA_HABITACIONAL',
+  'INSCRICAO_FILA_HABITACAO',
+  'SOLICITACAO_AUXILIO_ALUGUEL',
+]);
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -156,6 +163,50 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     });
     logger.info(
       `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo ambiental ${processo.numero}`
+    );
+    return;
+  }
+
+  // ---- Habitação → InscricaoHabitacional (fila do app) ----
+  if (HABITACAO_MODULE_TYPES.has(moduleType)) {
+    const existente = await prisma.inscricaoHabitacional.findFirst({
+      where: { protocolId: protocol.id },
+    });
+    if (existente) return;
+    const habitacaoService = (await import('../habitacao/habitacao.service')).default;
+    let nome = pickField(customData, /^nome/i);
+    let cpf = pickField(customData, /^cpf$/i);
+    if ((!nome || !cpf) && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true, cpf: true },
+      });
+      nome = nome || citizen?.name || undefined;
+      cpf = cpf || citizen?.cpf || undefined;
+    }
+    const renda = Object.entries(customData).find(
+      ([k, v]) =>
+        /renda/i.test(k) &&
+        (typeof v === 'number' || (typeof v === 'string' && v.trim() && !isNaN(Number(v))))
+    )?.[1];
+    const membros = Object.entries(customData).find(
+      ([k, v]) =>
+        /membros|pessoas|dependentes|familia/i.test(k) &&
+        (typeof v === 'number' || (typeof v === 'string' && v.trim() && !isNaN(Number(v))))
+    )?.[1];
+    await habitacaoService.createInscricao({
+      protocolId: protocol.id,
+      citizenId: protocol.citizenId,
+      nome,
+      cpf,
+      rendaFamiliar: renda != null ? Number(renda) : undefined,
+      membrosFamilia: membros != null ? Number(membros) : undefined,
+      observacoes:
+        moduleType === 'SOLICITACAO_AUXILIO_ALUGUEL' ? 'Origem: solicitação de auxílio aluguel' : undefined,
+      dados: customData && typeof customData === 'object' ? { formulario: customData } : undefined,
+    });
+    logger.info(
+      `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → inscrição habitacional (${nome || 'sem nome'})`
     );
     return;
   }

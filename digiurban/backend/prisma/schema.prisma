@@ -3955,6 +3955,8 @@ model ProgramaHabitacional {
   createdAt              DateTime  @default(now())
   updatedAt              DateTime  @updatedAt
 
+  inscricoes InscricaoHabitacional[] // app Programas Habitacionais (Fase 2)
+
   @@unique([tenantId, nome]) // onda 8: por tenant
   @@index([tipo, isActive])
   @@index([isActive])
@@ -10386,4 +10388,43 @@ model AutoInfracaoAmbiental {
   @@index([status])
   @@index([tenantId])
   @@map("autos_infracao_ambiental")
+}
+
+// ============================================================================
+// PROGRAMAS HABITACIONAIS — App da Secretaria de Habitação (Fase 2 do plano
+// de apps, blueprint B6 + fila). Aproveita os models de catálogo existentes
+// ProgramaHabitacional (critérios de pontuação) e ConjuntoHabitacional
+// (unidades). Fluxo: inscrição (de protocolo ou manual) → análise →
+// classificação com pontuação → fila → seleção/sorteio → contemplação com
+// unidade (retroalimenta o protocolo, NÃO-FATAL) | indeferimento.
+// ============================================================================
+
+model InscricaoHabitacional {
+  id                   String    @id @default(cuid())
+  tenantId             String?
+  protocolId           String?   @unique // quando nasce de protocolo
+  programaId           String?
+  programa             ProgramaHabitacional? @relation(fields: [programaId], references: [id], onDelete: SetNull)
+  citizenId            String? // join manual com Citizen
+  nome                 String?
+  cpf                  String? // dígitos apenas (dedup por programa no service)
+  rendaFamiliar        Float?
+  membrosFamilia       Int?
+  criteriosAtendidos   Json? // códigos dos critérios do programa atendidos
+  pontuacao            Int       @default(0) // calculada dos critérios do programa
+  status               String    @default("INSCRITA") // INSCRITA | EM_ANALISE | CLASSIFICADA | SELECIONADA | CONTEMPLADA | INDEFERIDA | CANCELADA
+  conjuntoId           String? // ConjuntoHabitacional da unidade contemplada (join manual)
+  unidadeIdentificacao String? // quadra/lote/apto
+  contratoAssinadoEm   DateTime?
+  observacoes          String?
+  dados                Json? // formulário de origem
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([programaId])
+  @@index([status])
+  @@index([citizenId])
+  @@index([cpf])
+  @@index([tenantId])
+  @@map("inscricoes_habitacionais")
 }
