@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -32,6 +33,7 @@ import {
   Clock,
   AlertTriangle,
   ClipboardList,
+  Map as MapIcon,
 } from 'lucide-react';
 
 const STATUS_LABEL: Record<string, { label: string; className?: string }> = {
@@ -312,10 +314,18 @@ export default function OrdensServicoPage() {
             </p>
           </div>
         </div>
-        <Button onClick={() => setNovaAberta(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Nova OS
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link href="/admin/apps/servicos-publicos/mapa">
+            <Button variant="outline">
+              <MapIcon className="h-4 w-4 mr-2" />
+              Mapa
+            </Button>
+          </Link>
+          <Button onClick={() => setNovaAberta(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova OS
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
