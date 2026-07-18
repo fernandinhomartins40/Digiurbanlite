@@ -77,6 +77,13 @@ const PROJETO_CULTURAL_MODULE_TYPES = new Set([
   'APOIO_CULTURAL',
 ]);
 
+/** moduleType → tipo de credencial (Transportes e Trânsito, na CRIAÇÃO). */
+const CREDENCIAL_MODULE_TYPES: Record<string, string> = {
+  CREDENCIAMENTO_TAXI: 'TAXI',
+  CREDENCIAMENTO_MOTOTAXI: 'MOTOTAXI',
+  CREDENCIAMENTO_TRANSPORTE_ESCOLAR: 'TRANSPORTE_ESCOLAR',
+};
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -299,6 +306,80 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
       dados,
     });
     logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → empréstimo de material esportivo`);
+    return;
+  }
+
+  // ---- Trânsito → credencial / vistoria veicular / defesa de autuação ----
+  if (
+    CREDENCIAL_MODULE_TYPES[moduleType] ||
+    moduleType === 'VISTORIA_VEICULO' ||
+    moduleType === 'DEFESA_AUTUACAO'
+  ) {
+    const transitoService = (await import('../transito/transito.service')).default;
+    let nomeSolicitante = pickField(customData, /^nome|titular|requerente/i);
+    let cpfSolicitante = pickField(customData, /^cpf$/i);
+    if ((!nomeSolicitante || !cpfSolicitante) && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true, cpf: true },
+      });
+      nomeSolicitante = nomeSolicitante || citizen?.name || undefined;
+      cpfSolicitante = cpfSolicitante || citizen?.cpf || undefined;
+    }
+    const telefone = pickField(customData, /telefone|celular|contato/i);
+    const placa = pickField(customData, /placa/i);
+    const dados = customData && typeof customData === 'object' ? { formulario: customData } : undefined;
+
+    if (CREDENCIAL_MODULE_TYPES[moduleType]) {
+      const existente = await prisma.credencialTransporte.findFirst({
+        where: { protocolId: protocol.id },
+      });
+      if (existente) return;
+      await transitoService.createCredencial({
+        protocolId: protocol.id,
+        tipo: CREDENCIAL_MODULE_TYPES[moduleType],
+        citizenId: protocol.citizenId,
+        titularNome: nomeSolicitante,
+        cpf: cpfSolicitante,
+        telefone,
+        veiculoPlaca: placa,
+        veiculoModelo: pickField(customData, /modelo|veiculo|veículo|marca/i),
+        ponto: pickField(customData, /ponto/i),
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → credencial de transporte`);
+      return;
+    }
+
+    if (moduleType === 'VISTORIA_VEICULO') {
+      const existente = await prisma.vistoriaVeiculo.findFirst({ where: { protocolId: protocol.id } });
+      if (existente) return;
+      await transitoService.createVistoria({
+        protocolId: protocol.id,
+        citizenId: protocol.citizenId,
+        solicitanteNome: nomeSolicitante,
+        veiculoPlaca: placa,
+        observacoes: pickField(customData, /observa|descri/i),
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → vistoria veicular`);
+      return;
+    }
+
+    // DEFESA_AUTUACAO
+    const existente = await prisma.defesaAutuacao.findFirst({ where: { protocolId: protocol.id } });
+    if (existente) return;
+    await transitoService.createDefesa({
+      protocolId: protocol.id,
+      citizenId: protocol.citizenId,
+      requerenteNome: nomeSolicitante,
+      cpf: cpfSolicitante,
+      numeroAutuacao: pickField(customData, /auto|autuacao|autuação|notificacao|notificação|ait/i),
+      veiculoPlaca: placa,
+      motivo: pickField(customData, /motivo|defesa|justificativa|alegacao|alegação|descri/i),
+      dados,
+    });
+    logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → defesa de autuação`);
     return;
   }
 

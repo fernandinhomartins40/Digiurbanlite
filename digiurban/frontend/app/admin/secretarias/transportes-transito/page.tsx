@@ -269,6 +269,37 @@ export default function SecretariaTransportesTransitoPage() {
         )}
       </div>
 
+      {/* Apps de Transportes e Trânsito — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Transportes e Trânsito</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-sky-200 bg-gradient-to-br from-sky-50 to-blue-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/transportes-transito')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-sky-700 transition-colors">
+                Credenciamentos & Vistorias
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Credenciais de táxi, mototáxi e transporte escolar com validade e renovação,
+                vistorias veiculares agendadas e defesas de autuação com parecer JARI
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-sky-600 hover:bg-sky-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}

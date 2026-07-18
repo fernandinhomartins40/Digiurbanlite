@@ -10911,3 +10911,90 @@ model EmprestimoEquipamentoCultural {
   @@index([tenantId])
   @@map("emprestimos_equipamento_cultural")
 }
+
+// ============================================================================
+// CREDENCIAMENTOS & VISTORIAS — App de Transportes e Trânsito (Fase 3 do
+// plano de apps, blueprint B4-lite + carteirinha). Credenciais de táxi/
+// mototáxi/transporte escolar com validade e renovação, vistoria veicular
+// e defesa de autuação com parecer JARI.
+// ============================================================================
+
+model CredencialTransporte {
+  id               String    @id @default(cuid())
+  tenantId         String?
+  protocolId       String?   @unique // quando nasce de protocolo
+  tipo             String // TAXI | MOTOTAXI | TRANSPORTE_ESCOLAR
+  titularNome      String?
+  cpf              String?
+  citizenId        String? // join manual com Citizen
+  telefone         String?
+  veiculoPlaca     String?
+  veiculoModelo    String?
+  veiculoAno       Int?
+  ponto            String? // ponto de táxi/mototáxi
+  status           String    @default("SOLICITADA") // SOLICITADA | EM_ANALISE | ATIVA | INDEFERIDA | SUSPENSA | CANCELADA
+  numeroCredencial String? // CRD-ano-seq, gerado na emissão
+  validade         DateTime?
+  emitidaEm        DateTime?
+  observacoes      String?
+  dados            Json? // formulário de origem
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  vistorias VistoriaVeiculo[]
+
+  @@index([tipo, status])
+  @@index([cpf])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("credenciais_transporte")
+}
+
+model VistoriaVeiculo {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique // quando nasce de protocolo
+  credencialId    String?
+  credencial      CredencialTransporte? @relation(fields: [credencialId], references: [id], onDelete: SetNull)
+  veiculoPlaca    String?
+  solicitanteNome String?
+  citizenId       String? // join manual com Citizen
+  agendadaPara    DateTime?
+  realizadaEm     DateTime?
+  resultado       String? // APROVADO | REPROVADO | CONDICIONAL
+  itens           String? // itens reprovados / condicionantes
+  vistoriador     String?
+  status          String    @default("SOLICITADA") // SOLICITADA | AGENDADA | REALIZADA | CANCELADA
+  observacoes     String?
+  dados           Json? // formulário de origem
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([credencialId])
+  @@index([status])
+  @@index([tenantId])
+  @@map("vistorias_veiculo")
+}
+
+model DefesaAutuacao {
+  id             String    @id @default(cuid())
+  tenantId       String?
+  protocolId     String?   @unique // quando nasce de protocolo
+  numeroAutuacao String? // auto de infração contestado
+  requerenteNome String?
+  cpf            String?
+  citizenId      String? // join manual com Citizen
+  veiculoPlaca   String?
+  motivo         String? // alegação da defesa
+  status         String    @default("RECEBIDA") // RECEBIDA | EM_ANALISE | DEFERIDA | INDEFERIDA | CANCELADA
+  parecerJari    String?
+  julgadaEm      DateTime?
+  dados          Json? // formulário de origem
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("defesas_autuacao")
+}

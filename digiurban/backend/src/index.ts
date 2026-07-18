@@ -402,6 +402,7 @@ loadRoute('/api/apps/politicas-mulheres', './routes/politicas-mulheres', require
 loadRoute('/api/apps/esportes', './routes/esportes', requireFeature('esportes'));
 // Fase 3: apps leves
 loadRoute('/api/apps/cultura', './routes/cultura', requireFeature('cultura'));
+loadRoute('/api/apps/transportes-transito', './routes/transito', requireFeature('transportes-transito'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {
