@@ -64,6 +64,19 @@ const ESCOLINHA_MODULE_TYPES: Record<string, string> = {
 const RESERVA_ESPACO_MODULE_TYPES = new Set(['RESERVA_ESPACO_ESPORTIVO', 'USO_GINASIO']);
 const COMPETICAO_MODULE_TYPES = new Set(['INSCRICAO_COMPETICAO', 'INSCRICAO_CORRIDA_RUA']);
 
+/** moduleTypes de Cultura → matrícula de oficina / reserva / projeto (na CRIAÇÃO). */
+const OFICINA_MODULE_TYPES = new Set([
+  'INSCRICAO_OFICINA',
+  'INSCRICAO_OFICINA_CULTURAL',
+  'INSCRICAO_GRUPO_OFICINA',
+]);
+const PROJETO_CULTURAL_MODULE_TYPES = new Set([
+  'INSCRICAO_EDITAL',
+  'PROJETO_CULTURAL',
+  'SUBMISSAO_PROJETO_CULTURAL',
+  'APOIO_CULTURAL',
+]);
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -286,6 +299,80 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
       dados,
     });
     logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → empréstimo de material esportivo`);
+    return;
+  }
+
+  // ---- Cultura → matrícula de oficina / reserva de espaço / projeto de edital ----
+  if (
+    OFICINA_MODULE_TYPES.has(moduleType) ||
+    moduleType === 'RESERVA_ESPACO_CULTURAL' ||
+    PROJETO_CULTURAL_MODULE_TYPES.has(moduleType)
+  ) {
+    const culturaService = (await import('../cultura/cultura.service')).default;
+    let nomeSolicitante = pickField(customData, /^nome/i);
+    if (!nomeSolicitante && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true },
+      });
+      nomeSolicitante = citizen?.name || undefined;
+    }
+    const telefone = pickField(customData, /telefone|celular|contato/i);
+    const dados = customData && typeof customData === 'object' ? { formulario: customData } : undefined;
+
+    if (OFICINA_MODULE_TYPES.has(moduleType)) {
+      const existente = await prisma.matriculaOficina.findFirst({ where: { protocolId: protocol.id } });
+      if (existente) return;
+      await culturaService.createMatricula({
+        protocolId: protocol.id,
+        citizenId: protocol.citizenId,
+        atividadePretendida: pickField(customData, /oficina|atividade|curso|linguagem|modalidade/i),
+        nome: pickField(customData, /participante|aluno/i) || nomeSolicitante,
+        responsavelNome: pickField(customData, /responsavel/i),
+        telefone,
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → inscrição em oficina cultural`);
+      return;
+    }
+
+    if (moduleType === 'RESERVA_ESPACO_CULTURAL') {
+      const existente = await prisma.reservaEspaco.findFirst({ where: { protocolId: protocol.id } });
+      if (existente) return;
+      await culturaService.createReserva({
+        protocolId: protocol.id,
+        citizenId: protocol.citizenId,
+        solicitanteNome: nomeSolicitante,
+        data: pickField(customData, /^data|dia/i),
+        horaInicio: pickField(customData, /inicio|hora/i),
+        horaFim: pickField(customData, /fim|termino|término/i),
+        finalidade: pickField(customData, /finalidade|evento|atividade|descri/i),
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → reserva de espaço cultural`);
+      return;
+    }
+
+    // Editais: INSCRICAO_EDITAL / PROJETO_CULTURAL / SUBMISSAO_PROJETO_CULTURAL / APOIO_CULTURAL
+    const existente = await prisma.projetoCultural.findFirst({ where: { protocolId: protocol.id } });
+    if (existente) return;
+    const valor = Object.entries(customData).find(
+      ([k, v]) =>
+        /valor|orcamento|orçamento/i.test(k) &&
+        (typeof v === 'number' || (typeof v === 'string' && v.trim() && !isNaN(Number(v))))
+    )?.[1];
+    await culturaService.createProjeto({
+      protocolId: protocol.id,
+      citizenId: protocol.citizenId,
+      titulo: pickField(customData, /titulo|título|projeto|evento/i),
+      proponente: pickField(customData, /proponente|grupo|artista|entidade/i) || nomeSolicitante,
+      categoria: pickField(customData, /categoria|linguagem|modalidade/i),
+      descricao: pickField(customData, /descri|resumo|justificativa|objeto/i),
+      valorSolicitado: valor != null ? Number(valor) : undefined,
+      telefone,
+      dados,
+    });
+    logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → projeto cultural`);
     return;
   }
 

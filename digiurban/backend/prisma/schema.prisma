@@ -10666,6 +10666,7 @@ model ReservaEspaco {
   id              String   @id @default(cuid())
   tenantId        String?
   protocolId      String?  @unique // quando nasce de protocolo
+  area            String   @default("ESPORTES") // ESPORTES | CULTURA — app dono da reserva (conflito de horário é global por espaço)
   espacoId        String? // EspacoPublico (join manual; atribuível na triagem)
   solicitanteNome String?
   citizenId       String? // join manual com Citizen
@@ -10680,6 +10681,7 @@ model ReservaEspaco {
   updatedAt       DateTime @updatedAt
 
   @@index([espacoId, data])
+  @@index([area, status])
   @@index([status])
   @@index([citizenId])
   @@index([tenantId])
@@ -10750,4 +10752,162 @@ model EmprestimoMaterial {
   @@index([citizenId])
   @@index([tenantId])
   @@map("emprestimos_material_esportivo")
+}
+
+// ============================================================================
+// ESPAÇOS & OFICINAS CULTURAIS — App da Secretaria de Cultura (Fase 3 do
+// plano de apps, blueprints B5 + B6 + B4-lite). Oficinas com turmas/vagas/
+// frequência; reserva de espaços compartilha ReservaEspaco (area = CULTURA);
+// editais com projetos/pareceres; empréstimo de equipamento cultural.
+// ============================================================================
+
+model OficinaCultural {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  nome         String
+  categoria    String // MUSICA | DANCA | TEATRO | ARTES_VISUAIS | ARTESANATO | LITERATURA | AUDIOVISUAL | OUTRA
+  atividade    String? // ex.: "Violão popular" (TipoAtividadeCultural livre)
+  instrutor    String?
+  espacoId     String? // EspacoPublico (join manual)
+  diasHorarios String? // ex.: "Seg/Qua 19h-21h"
+  vagas        Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  matriculas  MatriculaOficina[]
+  frequencias FrequenciaOficina[]
+
+  @@unique([tenantId, nome])
+  @@index([categoria, isActive])
+  @@index([tenantId])
+  @@map("oficinas_culturais")
+}
+
+model MatriculaOficina {
+  id                  String    @id @default(cuid())
+  tenantId            String?
+  protocolId          String?   @unique // quando nasce de protocolo
+  oficinaId           String?
+  oficina             OficinaCultural? @relation(fields: [oficinaId], references: [id], onDelete: SetNull)
+  atividadePretendida String? // do formulário de origem, antes de alocar oficina
+  nome                String? // participante (criança ou adulto)
+  dataNascimento      DateTime?
+  responsavelNome     String?
+  telefone            String?
+  citizenId           String? // join manual com Citizen
+  status              String    @default("INSCRITA") // INSCRITA | MATRICULADA | LISTA_ESPERA | DESLIGADA | CANCELADA
+  observacoes         String?
+  dados               Json? // formulário de origem
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([oficinaId])
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("matriculas_oficina")
+}
+
+model FrequenciaOficina {
+  id            String   @id @default(cuid())
+  tenantId      String?
+  oficinaId     String
+  oficina       OficinaCultural @relation(fields: [oficinaId], references: [id], onDelete: Cascade)
+  data          DateTime // dia da aula
+  presentes     Json? // matriculaIds presentes
+  registradoPor String? // User (join manual)
+  createdAt     DateTime @default(now())
+
+  @@unique([oficinaId, data])
+  @@index([oficinaId])
+  @@index([tenantId])
+  @@map("frequencias_oficina")
+}
+
+model EditalCultural {
+  id                  String    @id @default(cuid())
+  tenantId            String?
+  nome                String
+  categoria           String? // ex.: "Fomento", "Lei Aldir Blanc", "Prêmio"
+  descricao           String?
+  dataInicioInscricoes DateTime?
+  dataFimInscricoes   DateTime?
+  status              String    @default("INSCRICOES_ABERTAS") // INSCRICOES_ABERTAS | EM_ANALISE | RESULTADO_PUBLICADO | ENCERRADO | CANCELADO
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  projetos ProjetoCultural[]
+
+  @@unique([tenantId, nome])
+  @@index([status])
+  @@index([tenantId])
+  @@map("editais_culturais")
+}
+
+model ProjetoCultural {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  protocolId      String?  @unique // quando nasce de protocolo
+  editalId        String?
+  edital          EditalCultural? @relation(fields: [editalId], references: [id], onDelete: SetNull)
+  titulo          String?
+  proponente      String?
+  citizenId       String? // join manual com Citizen
+  telefone        String?
+  categoria       String?
+  descricao       String?
+  valorSolicitado Float?
+  status          String   @default("RECEBIDO") // RECEBIDO | EM_ANALISE | APROVADO | REPROVADO | CANCELADO
+  dados           Json? // formulário de origem
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  pareceres ParecerProjetoCultural[]
+
+  @@index([editalId])
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("projetos_culturais")
+}
+
+model ParecerProjetoCultural {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  projetoId    String
+  projeto      ProjetoCultural @relation(fields: [projetoId], references: [id], onDelete: Cascade)
+  autorId      String? // User (join manual)
+  autorNome    String?
+  recomendacao String? // APROVAR | REPROVAR | AJUSTES
+  texto        String
+  createdAt    DateTime @default(now())
+
+  @@index([projetoId])
+  @@index([tenantId])
+  @@map("pareceres_projeto_cultural")
+}
+
+model EmprestimoEquipamentoCultural {
+  id                    String    @id @default(cuid())
+  tenantId              String?
+  protocolId            String?   @unique // quando nasce de protocolo
+  item                  String?
+  quantidade            Int       @default(1)
+  solicitanteNome       String?
+  citizenId             String? // join manual com Citizen
+  telefone              String?
+  dataEmprestimo        DateTime?
+  dataPrevistaDevolucao DateTime?
+  dataDevolucao         DateTime?
+  status                String    @default("SOLICITADO") // SOLICITADO | EMPRESTADO | DEVOLVIDO | CANCELADO
+  observacoes           String?
+  dados                 Json? // formulário de origem
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("emprestimos_equipamento_cultural")
 }

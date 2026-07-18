@@ -223,6 +223,7 @@ class EsportesService {
   async listReservas(filters?: { espacoId?: string; status?: string; data?: string }) {
     const reservas = await prisma.reservaEspaco.findMany({
       where: {
+        area: 'ESPORTES',
         ...(filters?.espacoId ? { espacoId: filters.espacoId } : {}),
         ...(filters?.status ? { status: filters.status } : {}),
         ...(filters?.data ? { data: new Date(`${filters.data}T00:00:00.000Z`) } : {}),
@@ -248,6 +249,7 @@ class EsportesService {
     return prisma.reservaEspaco.create({
       data: {
         protocolId: data.protocolId,
+        area: 'ESPORTES',
         espacoId: data.espacoId,
         solicitanteNome: data.solicitanteNome,
         citizenId: data.citizenId,
@@ -514,8 +516,10 @@ class EsportesService {
       await Promise.all([
         prisma.matriculaEscolinha.count({ where: { status: 'MATRICULADA' } }),
         prisma.matriculaEscolinha.count({ where: { status: { in: ['INSCRITA', 'LISTA_ESPERA'] } } }),
-        prisma.reservaEspaco.count({ where: { status: 'SOLICITADA' } }),
-        prisma.reservaEspaco.count({ where: { status: 'CONFIRMADA', data: { gte: inicioDia } } }),
+        prisma.reservaEspaco.count({ where: { area: 'ESPORTES', status: 'SOLICITADA' } }),
+        prisma.reservaEspaco.count({
+          where: { area: 'ESPORTES', status: 'CONFIRMADA', data: { gte: inicioDia } },
+        }),
         prisma.emprestimoMaterial.count({ where: { status: 'EMPRESTADO' } }),
         prisma.competicao.count({ where: { status: 'INSCRICOES_ABERTAS' } }),
       ]);

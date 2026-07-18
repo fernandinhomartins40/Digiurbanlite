@@ -365,6 +365,38 @@ export default function SecretariaCulturaPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Apps de Cultura — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Cultura</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-purple-200 bg-gradient-to-br from-purple-50 to-fuchsia-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/cultura')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-purple-700 transition-colors">
+                Espaços & Oficinas Culturais
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Oficinas com controle de vagas e frequência, reserva de espaços sem conflito de
+                horário, editais com projetos e pareceres e empréstimo de equipamento
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
 {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}
