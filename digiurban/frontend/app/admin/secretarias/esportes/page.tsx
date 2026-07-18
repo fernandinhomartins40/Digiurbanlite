@@ -366,6 +366,38 @@ export default function SecretariaEsportesPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Apps de Esportes — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Esportes</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-green-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/esportes')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-emerald-700 transition-colors">
+                Escolinhas & Espaços Esportivos
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Turmas com controle de vagas e frequência, reserva de espaços sem conflito de
+                horário, competições com inscrições e empréstimo de material esportivo
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
 {/* Modal de Seleção de Serviços */}
       <ServiceSelectorModal
         open={showServiceSelectorModal}

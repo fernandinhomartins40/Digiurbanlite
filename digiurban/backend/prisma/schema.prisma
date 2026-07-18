@@ -10590,3 +10590,164 @@ model EncaminhamentoCasoMulher {
   @@index([tenantId])
   @@map("encaminhamentos_caso_mulher")
 }
+
+// ============================================================================
+// ESCOLINHAS & ESPAÇOS ESPORTIVOS — App da Secretaria de Esportes (Fase 2 do
+// plano de apps, blueprints B5 + B6 + B3-lite). Escolinhas com turmas/vagas/
+// frequência; reserva de espaços (reaproveita EspacoPublico) com detecção de
+// conflito; competições com inscrições; empréstimo de material esportivo.
+// ============================================================================
+
+model TurmaEscolinha {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  nome         String
+  modalidade   String // FUTEBOL | BASQUETE | VOLEI | NATACAO | JUDO | CAPOEIRA | GINASTICA | OUTRA
+  faixaEtaria  String? // ex.: "7 a 10 anos"
+  professor    String?
+  espacoId     String? // EspacoPublico (join manual)
+  diasHorarios String? // ex.: "Ter/Qui 18h-19h"
+  vagas        Int?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  matriculas  MatriculaEscolinha[]
+  frequencias FrequenciaEscolinha[]
+
+  @@unique([tenantId, nome])
+  @@index([modalidade, isActive])
+  @@index([tenantId])
+  @@map("turmas_escolinha")
+}
+
+model MatriculaEscolinha {
+  id                   String    @id @default(cuid())
+  tenantId             String?
+  protocolId           String?   @unique // quando nasce de protocolo
+  turmaId              String?
+  turma                TurmaEscolinha? @relation(fields: [turmaId], references: [id], onDelete: SetNull)
+  modalidadePretendida String? // do serviço de origem, antes de alocar turma
+  nomeAluno            String?
+  dataNascimento       DateTime?
+  responsavelNome      String?
+  telefone             String?
+  citizenId            String? // join manual com Citizen
+  status               String    @default("INSCRITA") // INSCRITA | MATRICULADA | LISTA_ESPERA | DESLIGADA | CANCELADA
+  observacoes          String?
+  dados                Json? // formulário de origem
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@index([turmaId])
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("matriculas_escolinha")
+}
+
+model FrequenciaEscolinha {
+  id            String   @id @default(cuid())
+  tenantId      String?
+  turmaId       String
+  turma         TurmaEscolinha @relation(fields: [turmaId], references: [id], onDelete: Cascade)
+  data          DateTime // dia da aula
+  presentes     Json? // matriculaIds presentes
+  registradoPor String? // User (join manual)
+  createdAt     DateTime @default(now())
+
+  @@unique([turmaId, data])
+  @@index([turmaId])
+  @@index([tenantId])
+  @@map("frequencias_escolinha")
+}
+
+model ReservaEspaco {
+  id              String   @id @default(cuid())
+  tenantId        String?
+  protocolId      String?  @unique // quando nasce de protocolo
+  espacoId        String? // EspacoPublico (join manual; atribuível na triagem)
+  solicitanteNome String?
+  citizenId       String? // join manual com Citizen
+  data            DateTime? // dia reservado
+  horaInicio      String? // "18:00"
+  horaFim         String? // "20:00"
+  finalidade      String?
+  status          String   @default("SOLICITADA") // SOLICITADA | CONFIRMADA | RECUSADA | CANCELADA
+  observacoes     String?
+  dados           Json? // formulário de origem
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([espacoId, data])
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("reservas_espaco")
+}
+
+model Competicao {
+  id         String   @id @default(cuid())
+  tenantId   String?
+  nome       String
+  modalidade String?
+  dataInicio DateTime?
+  dataFim    DateTime?
+  local      String?
+  status     String   @default("INSCRICOES_ABERTAS") // INSCRICOES_ABERTAS | EM_ANDAMENTO | ENCERRADA | CANCELADA
+  descricao  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  inscricoes InscricaoCompeticao[]
+
+  @@unique([tenantId, nome])
+  @@index([status])
+  @@index([tenantId])
+  @@map("competicoes_esportivas")
+}
+
+model InscricaoCompeticao {
+  id            String   @id @default(cuid())
+  tenantId      String?
+  protocolId    String?  @unique // quando nasce de protocolo
+  competicaoId  String?
+  competicao    Competicao? @relation(fields: [competicaoId], references: [id], onDelete: SetNull)
+  participante  String? // atleta ou equipe
+  categoria     String?
+  citizenId     String? // join manual com Citizen
+  telefone      String?
+  status        String   @default("INSCRITA") // INSCRITA | CONFIRMADA | CANCELADA
+  dados         Json? // formulário de origem
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([competicaoId])
+  @@index([status])
+  @@index([tenantId])
+  @@map("inscricoes_competicao")
+}
+
+model EmprestimoMaterial {
+  id                     String    @id @default(cuid())
+  tenantId               String?
+  protocolId             String?   @unique // quando nasce de protocolo
+  item                   String?
+  quantidade             Int       @default(1)
+  solicitanteNome        String?
+  citizenId              String? // join manual com Citizen
+  telefone               String?
+  dataEmprestimo         DateTime?
+  dataPrevistaDevolucao  DateTime?
+  dataDevolucao          DateTime?
+  status                 String    @default("SOLICITADO") // SOLICITADO | EMPRESTADO | DEVOLVIDO | CANCELADO
+  observacoes            String?
+  dados                  Json? // formulário de origem
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+
+  @@index([status])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("emprestimos_material_esportivo")
+}

@@ -399,6 +399,7 @@ loadRoute('/api/apps/meio-ambiente', './routes/meio-ambiente', requireFeature('m
 loadRoute('/api/apps/habitacao', './routes/habitacao', requireFeature('habitacao'));
 loadRoute('/api/apps/defesa-civil', './routes/defesa-civil', requireFeature('defesa-civil'));
 loadRoute('/api/apps/politicas-mulheres', './routes/politicas-mulheres', requireFeature('politicas-mulheres'));
+loadRoute('/api/apps/esportes', './routes/esportes', requireFeature('esportes'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {

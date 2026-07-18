@@ -49,6 +49,21 @@ const CASO_MULHER_MODULE_TYPES: Record<string, { tipo: string; risco: string }> 
   ACOMPANHAMENTO_SOCIAL: { tipo: 'ACOMPANHAMENTO', risco: 'MEDIO' },
 };
 
+/** moduleType de escolinha → modalidade pretendida (Esportes, na CRIAÇÃO). */
+const ESCOLINHA_MODULE_TYPES: Record<string, string> = {
+  INSCRICAO_ESCOLINHA_FUTEBOL: 'FUTEBOL',
+  INSCRICAO_ESCOLINHA_BASQUETE: 'BASQUETE',
+  INSCRICAO_ESCOLINHA_VOLEI: 'VOLEI',
+  INSCRICAO_ESCOLINHA_NATACAO: 'NATACAO',
+  INSCRICAO_ESCOLINHA_JUDO: 'JUDO',
+  INSCRICAO_ESCOLINHA_CAPOEIRA: 'CAPOEIRA',
+  INSCRICAO_ESCOLINHA_GINASTICA: 'GINASTICA',
+};
+
+/** moduleTypes de Esportes → reserva / inscrição em competição / empréstimo. */
+const RESERVA_ESPACO_MODULE_TYPES = new Set(['RESERVA_ESPACO_ESPORTIVO', 'USO_GINASIO']);
+const COMPETICAO_MODULE_TYPES = new Set(['INSCRICAO_COMPETICAO', 'INSCRICAO_CORRIDA_RUA']);
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -183,6 +198,94 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
     logger.info(
       `[protocol-to-app] Protocolo ${protocol.number || protocol.id} → processo ambiental ${processo.numero}`
     );
+    return;
+  }
+
+  // ---- Esportes → matrícula de escolinha / reserva / competição / empréstimo ----
+  if (
+    ESCOLINHA_MODULE_TYPES[moduleType] ||
+    RESERVA_ESPACO_MODULE_TYPES.has(moduleType) ||
+    COMPETICAO_MODULE_TYPES.has(moduleType) ||
+    moduleType === 'EMPRESTIMO_MATERIAL_ESPORTIVO'
+  ) {
+    const esportesService = (await import('../esportes/esportes.service')).default;
+    let nomeSolicitante = pickField(customData, /^nome/i);
+    if (!nomeSolicitante && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true },
+      });
+      nomeSolicitante = citizen?.name || undefined;
+    }
+    const telefone = pickField(customData, /telefone|celular|contato/i);
+    const dados = customData && typeof customData === 'object' ? { formulario: customData } : undefined;
+
+    if (ESCOLINHA_MODULE_TYPES[moduleType]) {
+      const existente = await prisma.matriculaEscolinha.findFirst({ where: { protocolId: protocol.id } });
+      if (existente) return;
+      await esportesService.createMatricula({
+        protocolId: protocol.id,
+        citizenId: protocol.citizenId,
+        modalidadePretendida: ESCOLINHA_MODULE_TYPES[moduleType],
+        nomeAluno: pickField(customData, /aluno|crianca|atleta/i) || nomeSolicitante,
+        responsavelNome: pickField(customData, /responsavel/i) || nomeSolicitante,
+        telefone,
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → inscrição de escolinha`);
+      return;
+    }
+
+    if (RESERVA_ESPACO_MODULE_TYPES.has(moduleType)) {
+      const existente = await prisma.reservaEspaco.findFirst({ where: { protocolId: protocol.id } });
+      if (existente) return;
+      await esportesService.createReserva({
+        protocolId: protocol.id,
+        citizenId: protocol.citizenId,
+        solicitanteNome: nomeSolicitante,
+        data: pickField(customData, /^data|dia/i),
+        horaInicio: pickField(customData, /inicio|hora/i),
+        horaFim: pickField(customData, /fim|termino|término/i),
+        finalidade: pickField(customData, /finalidade|evento|atividade|descri/i),
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → reserva de espaço esportivo`);
+      return;
+    }
+
+    if (COMPETICAO_MODULE_TYPES.has(moduleType)) {
+      const existente = await prisma.inscricaoCompeticao.findFirst({ where: { protocolId: protocol.id } });
+      if (existente) return;
+      await esportesService.createInscricaoCompeticao({
+        protocolId: protocol.id,
+        citizenId: protocol.citizenId,
+        participante: pickField(customData, /equipe|atleta|participante/i) || nomeSolicitante,
+        categoria: pickField(customData, /categoria|modalidade/i),
+        telefone,
+        dados,
+      });
+      logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → inscrição em competição`);
+      return;
+    }
+
+    // EMPRESTIMO_MATERIAL_ESPORTIVO
+    const existente = await prisma.emprestimoMaterial.findFirst({ where: { protocolId: protocol.id } });
+    if (existente) return;
+    const quantidade = Object.entries(customData).find(
+      ([k, v]) =>
+        /quantidade|qtd/i.test(k) &&
+        (typeof v === 'number' || (typeof v === 'string' && v.trim() && !isNaN(Number(v))))
+    )?.[1];
+    await esportesService.createEmprestimo({
+      protocolId: protocol.id,
+      citizenId: protocol.citizenId,
+      solicitanteNome: nomeSolicitante,
+      item: pickField(customData, /material|item|equipamento/i),
+      quantidade: quantidade != null ? Number(quantidade) : 1,
+      telefone,
+      dados,
+    });
+    logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → empréstimo de material esportivo`);
     return;
   }
 
