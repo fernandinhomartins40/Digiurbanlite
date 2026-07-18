@@ -60,6 +60,68 @@ export const TRANSITION_MATRIX: Record<string, Record<string, ProtocolStatus[]>>
   },
 
   /**
+   * COORDINATOR - Mesmas transições do USER (coordenação de departamento)
+   */
+  [UserRole.COORDINATOR]: {
+    [ProtocolStatus.VINCULADO]: [
+      ProtocolStatus.PROGRESSO,
+      ProtocolStatus.PENDENCIA,
+      ProtocolStatus.ATUALIZACAO,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ],
+    [ProtocolStatus.PENDENCIA]: [
+      ProtocolStatus.PROGRESSO,
+      ProtocolStatus.ATUALIZACAO,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ],
+    [ProtocolStatus.PROGRESSO]: [
+      ProtocolStatus.PENDENCIA,
+      ProtocolStatus.ATUALIZACAO,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ],
+    [ProtocolStatus.ATUALIZACAO]: [
+      ProtocolStatus.PROGRESSO,
+      ProtocolStatus.PENDENCIA,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ]
+  },
+
+  /**
+   * MANAGER - Mesmas transições do USER (gestão do departamento)
+   */
+  [UserRole.MANAGER]: {
+    [ProtocolStatus.VINCULADO]: [
+      ProtocolStatus.PROGRESSO,
+      ProtocolStatus.PENDENCIA,
+      ProtocolStatus.ATUALIZACAO,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ],
+    [ProtocolStatus.PENDENCIA]: [
+      ProtocolStatus.PROGRESSO,
+      ProtocolStatus.ATUALIZACAO,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ],
+    [ProtocolStatus.PROGRESSO]: [
+      ProtocolStatus.PENDENCIA,
+      ProtocolStatus.ATUALIZACAO,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ],
+    [ProtocolStatus.ATUALIZACAO]: [
+      ProtocolStatus.PROGRESSO,
+      ProtocolStatus.PENDENCIA,
+      ProtocolStatus.CONCLUIDO,
+      ProtocolStatus.CANCELADO
+    ]
+  },
+
+  /**
    * ADMIN - Pode fazer qualquer transição (override)
    */
   [UserRole.ADMIN]: {
@@ -235,6 +297,12 @@ export function isTransitionAllowed(
 ): boolean {
   // Admin pode tudo
   if (actorRole === UserRole.ADMIN || actorRole === UserRole.SUPER_ADMIN) {
+    return true;
+  }
+
+  // SYSTEM: transições automáticas (orquestrador de workflow, jobs).
+  // Nunca é exposto a input de usuário — as rotas usam sempre o role real.
+  if (actorRole === 'SYSTEM') {
     return true;
   }
 

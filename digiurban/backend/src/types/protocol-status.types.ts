@@ -10,9 +10,11 @@
 import { ProtocolStatus, UserRole } from '@prisma/client';
 
 /**
- * Tipo de ator que pode alterar status
+ * Tipo de ator que pode alterar status.
+ * 'SYSTEM' é reservado para transições automáticas (orquestrador de workflow,
+ * jobs) — nunca deve ser usado para ações iniciadas por um usuário.
  */
-export type ActorRole = UserRole | 'CITIZEN';
+export type ActorRole = UserRole | 'CITIZEN' | 'SYSTEM';
 
 /**
  * Input para atualização de status

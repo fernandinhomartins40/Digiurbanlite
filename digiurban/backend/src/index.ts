@@ -369,6 +369,10 @@ loadRoute('/api/notifications', './routes/notification-preferences.routes');
 // Workers e cron jobs
 try { require('./workers/notification.worker'); } catch (e) { logger.error('Failed to start notification worker', { error: e }); }
 try { require('./jobs/notification.jobs'); } catch (e) { logger.error('Failed to start notification cron jobs', { error: e }); }
+// Monitoramento de SLA/pendências (marca atrasos, lembretes, expiração)
+try { require('./jobs/sla-monitor.job').initSlaMonitorJob(); } catch (e) { logger.error('Failed to start SLA monitor job', { error: e }); }
+// Reversão de delegações expiradas (o init existia mas nunca era chamado)
+try { require('./jobs/revertExpiredDelegations.job').initRevertExpiredDelegationsJob(); } catch (e) { logger.error('Failed to start delegation revert job', { error: e }); }
 
 // Saúde - Apps integrados
 // REMOVIDO (Fase 0, achado do fail-fast): ./routes/saude-atendimento.routes não

@@ -107,10 +107,13 @@ export async function validateProtocolUniqueness(
     }
   } catch (error) {
     console.error('[UNIQUENESS] Erro ao validar unicidade:', error);
-    // Em caso de erro, liberar criação (fail-safe)
+    // ⚠️ FAIL-CLOSED: em erro, NEGAR a criação. Liberar (fail-open) permitia
+    // protocolos duplicados justamente quando a validação não conseguiu rodar.
     return {
-      canCreate: true,
+      canCreate: false,
       reason: 'VALIDATION_ERROR',
+      errorMessage:
+        'Não foi possível validar sua solicitação neste momento. Tente novamente em instantes.',
     };
   }
 }

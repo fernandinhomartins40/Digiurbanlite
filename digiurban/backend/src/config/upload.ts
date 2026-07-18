@@ -71,6 +71,24 @@ export function getTenantUploadUrl(tenantId: string | undefined | null, ...segme
   return `/uploads/${TENANT_UPLOADS_SEGMENT}/${resolveUploadTenantId(tenantId)}/${segments.join('/')}`;
 }
 
+/**
+ * Move um arquivo enviado para o destino final.
+ * rename falha com EXDEV quando origem e destino estão em volumes/discos
+ * diferentes (comum em Docker) — fallback para copy + unlink.
+ */
+export function moveUploadedFileSync(sourcePath: string, destPath: string): void {
+  try {
+    fs.renameSync(sourcePath, destPath);
+  } catch (error: any) {
+    if (error?.code === 'EXDEV') {
+      fs.copyFileSync(sourcePath, destPath);
+      fs.unlinkSync(sourcePath);
+      return;
+    }
+    throw error;
+  }
+}
+
 // Configuração de storage
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

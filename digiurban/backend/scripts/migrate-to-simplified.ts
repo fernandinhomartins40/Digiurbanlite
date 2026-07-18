@@ -151,7 +151,8 @@ async function migrateProtocols() {
   for (const oldProtocol of oldProtocols) {
     try {
       // Verificar se j\u00e1 existe
-      const existing = await prisma.protocolSimplified.findUnique({
+      // findFirst: number agora é unique composto [tenantId, number]
+      const existing = await prisma.protocolSimplified.findFirst({
         where: { number: oldProtocol.number }
       })
 

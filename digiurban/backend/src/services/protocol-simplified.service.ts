@@ -5,12 +5,11 @@
  * Implementa o fluxo completo: criar, atualizar, rotear e gerenciar protocolos
  */
 
-import { ProtocolStatus, UserRole } from '@prisma/client'
+import { ProtocolStatus } from '@prisma/client'
 import { prisma } from '../lib/prisma'
 import { generateProtocolNumberSafe } from './protocol-number.service'
-import { protocolStatusEngine } from './protocol-status.engine'
-import { ActorRole } from '../types/protocol-status.types'
 import { GeocodingService } from './geocoding.service'
+import { PROTOCOL_HISTORY_ACTIONS } from '../config/protocol-history-actions'
 
 // ========================================
 // TYPES & INTERFACES
@@ -192,11 +191,12 @@ export class ProtocolServiceSimplified {
       }
     }
 
-    // 4. Gerar número do protocolo
-    const protocolNumber = await generateProtocolNumberSafe()
+    // 4/5. Gerar número E criar protocolo na MESMA transação — o lock de
+    // numeração só vale enquanto a transação está aberta.
+    const protocol = await prisma.$transaction(async (tx) => {
+      const protocolNumber = await generateProtocolNumberSafe(tx)
 
-    // 5. Criar protocolo
-    const protocol = await prisma.protocolSimplified.create({
+      return tx.protocolSimplified.create({
       data: {
         ...rest,
         number: protocolNumber,
@@ -225,17 +225,18 @@ export class ProtocolServiceSimplified {
         department: true
       }
       })
+    })
 
     // 6. Se COM_DADOS, módulo já está vinculado via moduleType
     if (service.serviceType === 'COM_DADOS' && service.moduleType) {
       console.log(`✓ Protocolo ${protocol.number} vinculado ao módulo: ${service.moduleType}`)
     }
 
-    // 7. Criar histórico
+    // 7. Criar histórico (ação canônica — ver protocol-history-actions.ts)
     await prisma.protocolHistorySimplified.create({
       data: {
         protocolId: protocol.id,
-        action: 'CRIADO',
+        action: PROTOCOL_HISTORY_ACTIONS.CREATED,
         newStatus: 'VINCULADO',
         comment: 'Protocolo criado pelo cidadão',
         userId: data.createdById
@@ -245,45 +246,9 @@ export class ProtocolServiceSimplified {
     return protocol
   }
 
-  /**
-   * Atualizar status do protocolo
-   */
-  async updateStatus(input: UpdateProtocolStatusInput) {
-    const { protocolId, newStatus, comment, userId } = input
-
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id: protocolId }
-    })
-
-    if (!protocol) {
-      throw new Error('Protocolo não encontrado')
-    }
-
-    const oldStatus = protocol.status
-
-    // Atualizar protocolo
-    const updated = await prisma.protocolSimplified.update({
-      where: { id: protocolId },
-      data: {
-        status: newStatus,
-        ...(newStatus === 'CONCLUIDO' && { concludedAt: new Date() })
-      }
-    })
-
-    // Registrar histórico
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId,
-        action: 'STATUS_ALTERADO',
-        oldStatus,
-        newStatus,
-        comment,
-        userId
-      }
-    })
-
-    return updated
-  }
+  // ⚠️ REMOVIDO: updateStatus() — era um caminho paralelo que atualizava o
+  // status SEM validação, notificações nem SLA. Toda mudança de status DEVE
+  // passar por protocolStatusEngine.updateStatus().
 
   /**
    * Adicionar comentário ao protocolo
@@ -313,7 +278,9 @@ export class ProtocolServiceSimplified {
 
     const updated = await prisma.protocolSimplified.update({
       where: { id: protocolId },
-      data: { assignedUserId }
+      // Manter os dois campos de atribuição em sincronia — listagens filtram
+      // por ambos (assignedUserId legado + currentAssignedUserId V2)
+      data: { assignedUserId, currentAssignedUserId: assignedUserId }
     })
 
     await prisma.protocolHistorySimplified.create({
@@ -330,12 +297,30 @@ export class ProtocolServiceSimplified {
 
   /**
    * Listar protocolos por departamento
+   * ⚠️ Filtros passam por whitelist — NUNCA espalhar req.query direto no
+   * where do Prisma (injeção de filtros arbitrários via query string).
    */
   async listByDepartment(departmentId: string, filters?: ProtocolFilters) {
+    const safeFilters: any = {}
+    if (filters?.status) safeFilters.status = filters.status
+    if (filters?.moduleType) safeFilters.moduleType = filters.moduleType
+    if (filters?.citizenId) safeFilters.citizenId = filters.citizenId
+    if (filters?.assignedUserId) {
+      safeFilters.OR = [
+        { assignedUserId: filters.assignedUserId },
+        { currentAssignedUserId: filters.assignedUserId }
+      ]
+    }
+    if (filters?.createdAt?.gte || filters?.createdAt?.lte) {
+      safeFilters.createdAt = {}
+      if (filters.createdAt.gte) safeFilters.createdAt.gte = new Date(filters.createdAt.gte)
+      if (filters.createdAt.lte) safeFilters.createdAt.lte = new Date(filters.createdAt.lte)
+    }
+
     return prisma.protocolSimplified.findMany({
       where: {
         departmentId,
-        ...filters
+        ...safeFilters
       },
       include: {
         citizen: {
@@ -430,7 +415,9 @@ export class ProtocolServiceSimplified {
    * Buscar protocolo por número
    */
   async findByNumber(number: string) {
-    return prisma.protocolSimplified.findUnique({
+    // findFirst: "number" é unique composto [tenantId, number] — a
+    // tenant-extension escopa a busca ao município corrente.
+    return prisma.protocolSimplified.findFirst({
       where: { number },
       include: {
         citizen: {
@@ -488,6 +475,10 @@ export class ProtocolServiceSimplified {
    * Avaliar protocolo
    */
   async evaluateProtocol(protocolId: string, rating: number, comment?: string, wouldRecommend = true) {
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+      throw new Error('Avaliação deve ser um número inteiro entre 1 e 5')
+    }
+
     // Verificar se protocolo está concluído
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id: protocolId }
@@ -499,6 +490,16 @@ export class ProtocolServiceSimplified {
 
     if (protocol.status !== 'CONCLUIDO') {
       throw new Error('Apenas protocolos concluídos podem ser avaliados')
+    }
+
+    // Uma avaliação por protocolo (há unique no banco; checagem antecipada
+    // para mensagem amigável)
+    const existing = await prisma.protocolEvaluationSimplified.findFirst({
+      where: { protocolId }
+    })
+
+    if (existing) {
+      throw new Error('Este protocolo já foi avaliado')
     }
 
     return prisma.protocolEvaluationSimplified.create({

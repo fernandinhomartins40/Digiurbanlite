@@ -230,8 +230,10 @@ export async function getOverdueSLAs(tenantId?: string) {
     actualEndDate: null, // Apenas protocolos ainda não finalizados
   };
 
+  // Filtro REAL por tenant (o antigo `where.protocol = {}` era um no-op).
+  // Sem tenantId explícito, a tenant-extension escopa pelo contexto corrente.
   if (tenantId) {
-    where.protocol = {};
+    where.protocol = { tenantId };
   }
 
   return await prisma.protocolSLA.findMany({
@@ -270,7 +272,7 @@ export async function getSLAsNearDue(days: number = 3, tenantId?: string) {
         };
 
   if (tenantId) {
-    where.protocol = {};
+    where.protocol = { tenantId };
   }
 
   return await prisma.protocolSLA.findMany({
@@ -295,23 +297,23 @@ export async function getSLAsNearDue(days: number = 3, tenantId?: string) {
 /**
  * Calcula estatísticas de SLA para um tenant
  */
-export async function calculateSLAStats(tenantId: string) {
-  const slas = await prisma.protocolSLA.findMany({
-    where: {
-      protocol: {}
-        }
-        });
+export async function calculateSLAStats(tenantId?: string) {
+  // Counts direto no banco (antes carregava TODOS os SLAs em memória e o
+  // filtro de tenant era um no-op)
+  const baseWhere: any = tenantId ? { protocol: { tenantId } } : {};
 
-  const total = slas.length;
-  const completed = slas.filter((s) => s.actualEndDate !== null).length;
-  const onTime = slas.filter(
-    (s) => s.actualEndDate !== null && !s.isOverdue
-  ).length;
-  const overdue = slas.filter((s) => s.isOverdue).length;
-  const paused = slas.filter((s) => s.isPaused).length;
-  const active = slas.filter(
-    (s) => s.actualEndDate === null && !s.isPaused
-  ).length;
+  const [total, completed, onTime, overdue, paused, active] = await Promise.all([
+    prisma.protocolSLA.count({ where: baseWhere }),
+    prisma.protocolSLA.count({ where: { ...baseWhere, actualEndDate: { not: null } } }),
+    prisma.protocolSLA.count({
+      where: { ...baseWhere, actualEndDate: { not: null }, isOverdue: false }
+    }),
+    prisma.protocolSLA.count({ where: { ...baseWhere, isOverdue: true } }),
+    prisma.protocolSLA.count({ where: { ...baseWhere, isPaused: true } }),
+    prisma.protocolSLA.count({
+      where: { ...baseWhere, actualEndDate: null, isPaused: false }
+    }),
+  ]);
 
   const complianceRate = completed > 0 ? (onTime / completed) * 100 : 0;
 

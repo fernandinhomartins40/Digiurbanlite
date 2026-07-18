@@ -224,34 +224,40 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
       }
     }
 
-    const protocolNumber = await generateProtocolNumberSafe();
+    // Número gerado DENTRO da transação de criação — o lock de numeração só
+    // vale enquanto a transação está aberta (fora dela, duas requisições
+    // simultâneas recebiam o mesmo número).
+    const protocol = await prisma.$transaction(async (tx) => {
+      const protocolNumber = await generateProtocolNumberSafe(tx);
 
-    const protocol = await prisma.protocolSimplified.create({
-      data: {
-        number: protocolNumber,
-        title: ticket.title,
-        description: ticket.description,
-        priority: ticket.priority,
-        citizenId: ticket.citizenId,
-        serviceId: ticket.serviceId,
-        departmentId: ticket.departmentId,
-        createdById: user.id,
-        assignedUserId: resolvedAssignedUserId,
-        status: 'VINCULADO',
-      },
-      include: {
-        citizen: {
-          select: {
-            name: true,
-            email: true,
+      return tx.protocolSimplified.create({
+        data: {
+          number: protocolNumber,
+          title: ticket.title,
+          description: ticket.description,
+          priority: ticket.priority,
+          citizenId: ticket.citizenId,
+          serviceId: ticket.serviceId,
+          departmentId: ticket.departmentId,
+          createdById: user.id,
+          assignedUserId: resolvedAssignedUserId,
+          currentAssignedUserId: resolvedAssignedUserId,
+          status: 'VINCULADO',
+        },
+        include: {
+          citizen: {
+            select: {
+              name: true,
+              email: true,
+            },
+          },
+          assignedUser: {
+            select: {
+              name: true,
+            },
           },
         },
-        assignedUser: {
-          select: {
-            name: true,
-          },
-        },
-      },
+      });
     });
 
     const updatedTicket = await prisma.adminTicket.update({
@@ -288,7 +294,7 @@ router.post('/tickets/:id/accept', async (req: Request, res: Response) => {
       data: {
         citizenId: ticket.citizenId,
         title: 'Protocolo Criado',
-        message: `A secretaria criou o protocolo ${protocolNumber} para atender sua solicitacao: ${ticket.title}`,
+        message: `A secretaria criou o protocolo ${protocol.number} para atender sua solicitacao: ${ticket.title}`,
         type: 'INFO',
         protocolId: protocol.id,
       },

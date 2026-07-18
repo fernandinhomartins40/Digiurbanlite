@@ -11,6 +11,8 @@ import { ProtocolStatus, Prisma, UserRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { generateProtocolNumberSafe } from './protocol-number.service';
 import { protocolStatusEngine } from './protocol-status.engine';
+import { ActorRole } from '../types/protocol-status.types';
+import { PROTOCOL_HISTORY_ACTIONS } from '../config/protocol-history-actions';
 import { familyStatsService } from './family-stats.service';
 import { GeolocationService } from './geolocation.service';
 import { materializeOnApproval } from './registry/registry-materialize.service';
@@ -34,6 +36,8 @@ export interface CreateProtocolWithModuleInput {
 export interface ApproveProtocolInput {
   protocolId: string;
   userId: string;
+  /** Role real de quem aprova — registrado no histórico e validado pelo engine */
+  actorRole?: ActorRole;
   comment?: string;
   additionalData?: Record<string, any>;
 }
@@ -41,6 +45,8 @@ export interface ApproveProtocolInput {
 export interface RejectProtocolInput {
   protocolId: string;
   userId: string;
+  /** Role real de quem rejeita */
+  actorRole?: ActorRole;
   reason: string;
 }
 
@@ -210,11 +216,11 @@ export class ProtocolModuleService {
       // Os attachments são passados para a rota que chama este service,
       // e ela é responsável por criar os documentos com a lógica completa.
 
-      // Criar histórico
+      // Criar histórico (ação canônica — ver protocol-history-actions.ts)
       await tx.protocolHistorySimplified.create({
         data: {
           protocolId: protocol.id,
-          action: 'CREATED',
+          action: PROTOCOL_HISTORY_ACTIONS.CREATED,
           comment: isComDados
             ? 'Protocolo COM_DADOS criado - aguardando aprovação'
             : 'Protocolo SEM_DADOS criado',
@@ -433,7 +439,7 @@ export class ProtocolModuleService {
    * Aprovar protocolo e ativar entidade virtual
    */
   async approveProtocol(input: ApproveProtocolInput) {
-    const { protocolId, userId, comment, additionalData } = input;
+    const { protocolId, userId, actorRole, comment, additionalData } = input;
 
     // Buscar protocolo
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -445,9 +451,12 @@ export class ProtocolModuleService {
       throw new Error('Protocolo não encontrado');
     }
 
-    // Ativar entidade virtual no customData se for COM_DADOS
-    if (protocol.service.serviceType === 'COM_DADOS' && protocol.customData) {
-      await prisma.$transaction(async (tx) => {
+    // ⚠️ ATÔMICO: ativação do customData, materialização no Registry e mudança
+    // de status rodam na MESMA transação. Se o engine rejeitar a transição
+    // (ex.: COM_DADOS em VINCULADO não pode concluir), NADA é persistido — a
+    // entidade não pode ficar ATIVA com o protocolo não concluído.
+    const result = await prisma.$transaction(async (tx) => {
+      if (protocol.service.serviceType === 'COM_DADOS' && protocol.customData) {
         const customData = protocol.customData as Record<string, any>;
 
         // Atualizar metadados da entidade virtual
@@ -483,21 +492,24 @@ export class ProtocolModuleService {
           },
           tx
         );
-      });
-    }
-
-    // Usar motor centralizado de status
-    const result = await protocolStatusEngine.updateStatus({
-      protocolId,
-      newStatus: ProtocolStatus.CONCLUIDO,
-      actorId: userId,
-      actorRole: UserRole.USER,
-      comment: comment || 'Protocolo aprovado e concluído',
-      metadata: {
-        action: 'approval',
-        additionalData
       }
-    });
+
+      // Motor centralizado de status — dentro da transação
+      return protocolStatusEngine.updateStatus(
+        {
+          protocolId,
+          newStatus: ProtocolStatus.CONCLUIDO,
+          actorId: userId,
+          actorRole: actorRole || UserRole.USER,
+          comment: comment || 'Protocolo aprovado e concluído',
+          metadata: {
+            action: 'approval',
+            additionalData
+          }
+        },
+        tx
+      );
+    }, { timeout: 15000 });
 
     // ⭐ HOOK: cadastros aprovados viram entidade do app de secretaria
     // (produtor/propriedade rural). NÃO-FATAL, padrão materializeOnApproval.
@@ -515,7 +527,7 @@ export class ProtocolModuleService {
    * Rejeitar protocolo
    */
   async rejectProtocol(input: RejectProtocolInput) {
-    const { protocolId, userId, reason } = input;
+    const { protocolId, userId, actorRole, reason } = input;
 
     // Buscar protocolo
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -531,7 +543,7 @@ export class ProtocolModuleService {
       protocolId,
       newStatus: ProtocolStatus.PENDENCIA,
       actorId: userId,
-      actorRole: UserRole.USER,
+      actorRole: actorRole || UserRole.USER,
       comment: `Protocolo rejeitado: ${reason}`,
       reason,
       metadata: {

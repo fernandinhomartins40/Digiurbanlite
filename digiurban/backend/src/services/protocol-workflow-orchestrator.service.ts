@@ -193,7 +193,7 @@ export class ProtocolWorkflowOrchestrator {
           await protocolStatusEngine.updateStatus({
             protocolId: doc.protocolId,
             newStatus: ProtocolStatus.PROGRESSO,
-            actorRole: UserRole.ADMIN, // SYSTEM não existe, usar ADMIN
+            actorRole: 'SYSTEM', // transição automática do orquestrador
             actorId: approvedBy,
             comment: 'Documentação completa e aprovada'
           });
@@ -250,7 +250,7 @@ export class ProtocolWorkflowOrchestrator {
       await protocolStatusEngine.updateStatus({
         protocolId: doc.protocolId,
         newStatus: ProtocolStatus.ATUALIZACAO, // Aguardando cidadão reenviar documento
-        actorRole: UserRole.ADMIN,
+        actorRole: 'SYSTEM',
         actorId: rejectedBy,
         comment: `Documento "${doc.documentType}" rejeitado - Aguardando reenvio`,
         reason: reason
@@ -293,7 +293,7 @@ export class ProtocolWorkflowOrchestrator {
       await protocolStatusEngine.updateStatus({
         protocolId: stage.protocolId,
         newStatus: ProtocolStatus.PENDENCIA,
-        actorRole: UserRole.ADMIN,
+        actorRole: 'SYSTEM',
         actorId: completedBy,
         comment: `Etapa "${stage.stageName}" rejeitada`,
         reason: notes
@@ -341,14 +341,14 @@ export class ProtocolWorkflowOrchestrator {
       await protocolStatusEngine.updateStatus({
         protocolId: stage.protocolId,
         newStatus: ProtocolStatus.CONCLUIDO,
-        actorRole: UserRole.ADMIN, // SYSTEM não existe, usar ADMIN
+        actorRole: 'SYSTEM', // transição automática do orquestrador
         actorId: completedBy,
         comment: 'Todas as etapas do workflow foram concluídas com sucesso',
         reason: 'workflow_completed'
       });
 
-      // Marcar SLA como concluído
-      await slaService.completeSLA(stage.protocolId);
+      // SLA é finalizado pelo próprio engine em status terminal
+      // (finalizeSLA dentro da transação da transição).
 
       // ═══ ATRIBUIR CATEGORIAS AO CIDADÃO ═══
       await this.assignCitizenCategories(stage.protocolId, completedBy);
@@ -473,7 +473,7 @@ export class ProtocolWorkflowOrchestrator {
     await protocolStatusEngine.updateStatus({
       protocolId: stage.protocolId,
       newStatus: ProtocolStatus.PENDENCIA,
-      actorRole: UserRole.ADMIN, // SYSTEM não existe, usar ADMIN
+      actorRole: 'SYSTEM', // transição automática do orquestrador
       actorId: failedBy,
       comment: `Falha na etapa: ${stage.stageName}`,
       reason: reason
@@ -514,7 +514,7 @@ export class ProtocolWorkflowOrchestrator {
       await protocolStatusEngine.updateStatus({
         protocolId: pending.protocolId,
         newStatus: ProtocolStatus.PENDENCIA,
-        actorRole: UserRole.ADMIN, // SYSTEM não existe, usar ADMIN
+        actorRole: 'SYSTEM', // transição automática do orquestrador
         actorId: pending.createdBy,
         comment: pending.title,
         metadata: { pendingId }
@@ -557,7 +557,7 @@ export class ProtocolWorkflowOrchestrator {
       await protocolStatusEngine.updateStatus({
         protocolId: pending.protocolId,
         newStatus: ProtocolStatus.PROGRESSO,
-        actorRole: UserRole.ADMIN, // SYSTEM não existe, usar ADMIN
+        actorRole: 'SYSTEM', // transição automática do orquestrador
         actorId: resolvedBy,
         comment: 'Pendências resolvidas, protocolo retomado',
         metadata: { pendingId }
@@ -1017,7 +1017,7 @@ export class ProtocolWorkflowOrchestrator {
           await protocolStatusEngine.updateStatus({
             protocolId: field.protocolId,
             newStatus: ProtocolStatus.PROGRESSO,
-            actorRole: UserRole.ADMIN,
+            actorRole: 'SYSTEM',
             actorId: approvedBy,
             comment: 'Dados completos e aprovados'
           });

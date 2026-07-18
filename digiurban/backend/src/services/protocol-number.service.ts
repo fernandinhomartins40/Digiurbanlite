@@ -64,20 +64,27 @@ async function generateNumberWithLock(
 ): Promise<string> {
   const year = new Date().getFullYear();
 
-  // 🔒 LOCK PESSIMISTA: Bloqueia a tabela durante a leitura
-  // Outras transações terão que esperar este lock ser liberado
-  // Fase 3 Multi-Tenant: numeração POR TENANT. Seta o GUC (RLS filtra o
-  // FOR UPDATE) e ainda filtra explicitamente por tenantId — o número do
-  // protocolo do município B nao pode herdar a sequência do A.
+  // Fase 3 Multi-Tenant: numeração POR TENANT (e por ANO — a sequência
+  // reinicia na virada do ano).
   const tenantId = tryGetTenantId() || DEFAULT_TENANT_ID;
   await tx.$executeRawUnsafe(`SELECT set_config('app.tenant_id', $1, true)`, tenantId);
+
+  // 🔒 ADVISORY LOCK transacional por tenant: serializa a geração de número
+  // mesmo com a tabela vazia (FOR UPDATE em linha não cobre o 1º protocolo)
+  // e é liberado automaticamente no commit/rollback da transação.
+  // ⚠️ O chamador DEVE criar o protocolo dentro da MESMA transação — gerar o
+  // número numa transação e inserir em outra reabre a corrida de duplicidade.
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'protocol_number:' + tenantId}))`;
+
+  // Maior número do ANO corrente (ORDER BY number, não createdAt — o último
+  // criado não é necessariamente o maior número).
   const lastProtocol = await tx.$queryRaw<Array<{ number: string }>>`
     SELECT number
     FROM protocols_simplified
     WHERE "tenantId" = ${tenantId}
-    ORDER BY "createdAt" DESC
+      AND number LIKE ${year + '-%'}
+    ORDER BY number DESC
     LIMIT 1
-    FOR UPDATE
   `;
 
   let nextSequence = 1;
@@ -89,7 +96,9 @@ async function generateNumberWithLock(
     const parts = lastNumber.split('-');
     if (parts.length === 2) {
       const lastSequence = parseInt(parts[1]);
-      nextSequence = lastSequence + 1;
+      if (!Number.isNaN(lastSequence)) {
+        nextSequence = lastSequence + 1;
+      }
     }
   }
 

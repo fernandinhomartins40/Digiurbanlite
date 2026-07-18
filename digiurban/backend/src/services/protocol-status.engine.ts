@@ -7,9 +7,12 @@
  * Garante validação, histórico e consistência.
  *
  * ÚNICO PONTO DE ENTRADA para alterações de status.
+ * Nenhuma rota/serviço deve fazer `protocolSimplified.update({ status })`
+ * diretamente.
  */
 
 import { ProtocolStatus, UserRole, Prisma } from '@prisma/client';
+import { differenceInCalendarDays } from 'date-fns';
 import { prisma } from '../lib/prisma';
 import {
   UpdateStatusInput,
@@ -41,12 +44,22 @@ export class ProtocolStatusEngine {
    * Garante:
    * - Validação de transições
    * - Registro de histórico
-   * - Execução de hooks
+   * - Finalização do SLA em status terminal
    * - Notificações
+   *
+   * @param tx Transação externa opcional. Quando fornecida, TODA a mudança
+   *           (validação + update + histórico + SLA) roda dentro dela — se o
+   *           chamador der rollback, nada persiste. Notificações são enviadas
+   *           mesmo assim (fire-and-forget, não-fatais).
    */
-  async updateStatus(input: UpdateStatusInput): Promise<StatusTransitionResult> {
+  async updateStatus(
+    input: UpdateStatusInput,
+    tx?: Prisma.TransactionClient
+  ): Promise<StatusTransitionResult> {
+    const db = tx ?? prisma;
+
     // 1️⃣ BUSCAR PROTOCOLO ATUAL
-    const protocol = await prisma.protocolSimplified.findUnique({
+    const protocol = await db.protocolSimplified.findUnique({
       where: { id: input.protocolId },
       include: {
         service: true,
@@ -63,7 +76,6 @@ export class ProtocolStatusEngine {
 
     // Não fazer nada se o status já é o mesmo
     if (currentStatus === input.newStatus) {
-      console.log(`⚠️ Status já é ${input.newStatus}, ignorando atualização`);
       return {
         protocol,
         previousStatus: currentStatus,
@@ -83,19 +95,24 @@ export class ProtocolStatusEngine {
       metadata: input.metadata
     });
 
-    // 3️⃣ EXECUTAR TRANSAÇÃO ATÔMICA
-    const result = await prisma.$transaction(async (tx) => {
+    // 3️⃣ EXECUTAR TRANSAÇÃO ATÔMICA (ou usar a transação do chamador)
+    const runTransition = async (txc: Prisma.TransactionClient) => {
+      const isReopening =
+        isTerminalStatus(currentStatus) && !isTerminalStatus(input.newStatus);
+
       // 3.1 - Atualizar status do protocolo
-      const updatedProtocol = await tx.protocolSimplified.update({
+      const updatedProtocol = await txc.protocolSimplified.update({
         where: { id: input.protocolId },
         data: {
           status: input.newStatus,
           updatedAt: new Date(),
 
-          // Se status terminal, marcar conclusão
-          ...(isTerminalStatus(input.newStatus) && {
-            concludedAt: new Date()
-          })
+          // Status terminal marca o encerramento; reabertura limpa a marca
+          ...(isTerminalStatus(input.newStatus)
+            ? { concludedAt: new Date() }
+            : isReopening
+              ? { concludedAt: null }
+              : {})
         },
         include: {
           service: true,
@@ -105,24 +122,31 @@ export class ProtocolStatusEngine {
       });
 
       // 3.2 - SEMPRE registrar no histórico
-      const history = await tx.protocolHistorySimplified.create({
+      const history = await txc.protocolHistorySimplified.create({
         data: {
           protocolId: input.protocolId,
           action: getActionForStatus(input.newStatus),
           oldStatus: currentStatus,
           newStatus: input.newStatus,
           comment: input.comment || getDefaultComment(input.newStatus),
-          userId: input.actorRole !== 'CITIZEN' ? input.actorId : undefined,
+          userId:
+            input.actorRole !== 'CITIZEN' && input.actorRole !== 'SYSTEM'
+              ? input.actorId
+              : undefined,
           metadata: {
             actorRole: input.actorRole,
+            actorId: input.actorId,
+            ...(input.actorRole === 'CITIZEN' && { citizenId: input.actorId }),
             reason: input.reason,
             ...input.metadata
           } as any
         }
       });
 
-      // 3.3 - Executar hooks específicos do módulo
-      await this.executeModuleHooks(tx, updatedProtocol, currentStatus, input.newStatus);
+      // 3.3 - Status terminal finaliza o SLA na MESMA transação
+      if (isTerminalStatus(input.newStatus)) {
+        await this.finalizeSLA(txc, input.protocolId);
+      }
 
       return {
         protocol: updatedProtocol,
@@ -131,7 +155,9 @@ export class ProtocolStatusEngine {
         transitionedAt: new Date(),
         historyId: history.id
       };
-    });
+    };
+
+    const result = tx ? await runTransition(tx) : await prisma.$transaction(runTransition);
 
     // 4️⃣ PÓS-TRANSAÇÃO: Notificações (fora da transação para não bloquear)
     this.sendNotifications(result.protocol, currentStatus, input.newStatus).catch((error) => {
@@ -139,7 +165,6 @@ export class ProtocolStatusEngine {
       // Não falha a transação se notificação falhar
     });
 
-    // ✅ NOVO: Disparar triggers de notificações
     NotificationTriggers.onProtocolStatusChanged(
       result.protocol.id,
       currentStatus,
@@ -147,8 +172,6 @@ export class ProtocolStatusEngine {
     ).catch((error) => {
       console.error('❌ Erro ao disparar trigger de notificação:', error);
     });
-
-    console.log(`✅ Status atualizado: ${currentStatus} → ${input.newStatus} (Protocolo: ${protocol.number})`);
 
     return result;
   }
@@ -192,7 +215,7 @@ export class ProtocolStatusEngine {
       );
     }
 
-    // 3. ✅ FASE 1: Validações específicas por tipo de serviço
+    // 3. Validações específicas por tipo de serviço
     if (protocolType === 'COM_DADOS') {
       const validation = SERVICE_TYPE_VALIDATIONS.COM_DADOS;
 
@@ -229,102 +252,37 @@ export class ProtocolStatusEngine {
 
   /**
    * ============================================================================
-   * HOOKS DE MÓDULO
+   * SLA
    * ============================================================================
    */
 
   /**
-   * Executa hooks específicos do módulo após mudança de status
+   * Finaliza o SLA quando o protocolo entra em status terminal.
+   * Roda dentro da transação da transição — se ela falhar, o SLA não é tocado.
    */
-  private async executeModuleHooks(
+  private async finalizeSLA(
     tx: Prisma.TransactionClient,
-    protocol: any,
-    oldStatus: ProtocolStatus,
-    newStatus: ProtocolStatus
+    protocolId: string
   ): Promise<void> {
-    const moduleType = protocol.moduleType;
+    const sla = await tx.protocolSLA.findUnique({ where: { protocolId } });
 
-    if (!moduleType) {
-      return; // Sem módulo, sem hooks
+    if (!sla || sla.actualEndDate) {
+      return; // Sem SLA ou já finalizado
     }
 
-    // Hook: PROGRESSO → Ativar entidade do módulo (se existir)
-    if (newStatus === ProtocolStatus.PROGRESSO && oldStatus === ProtocolStatus.VINCULADO) {
-      await this.activateModuleEntity(tx, protocol);
-    }
+    const actualEndDate = new Date();
+    const isOverdue = actualEndDate > sla.expectedEndDate;
 
-    // Hook: CONCLUIDO → Marcar entidade como concluída
-    if (newStatus === ProtocolStatus.CONCLUIDO) {
-      await this.completeModuleEntity(tx, protocol);
-    }
-
-    // Hook: CANCELADO → Inativar entidade
-    if (newStatus === ProtocolStatus.CANCELADO) {
-      await this.deactivateModuleEntity(tx, protocol);
-    }
-
-    // Hook: PENDENCIA → Marcar entidade como pendente
-    if (newStatus === ProtocolStatus.PENDENCIA) {
-      await this.markModuleEntityPending(tx, protocol);
-    }
-  }
-
-  /**
-   * Ativar entidade do módulo quando protocolo vai para PROGRESSO
-   */
-  private async activateModuleEntity(
-    tx: Prisma.TransactionClient,
-    protocol: any
-  ): Promise<void> {
-    const moduleType = protocol.moduleType;
-
-    if (moduleType) {
-      console.log(`✓ Protocolo aprovado para módulo ${moduleType} - dados em customData`);
-      // Com o novo sistema de templates, não há tabelas específicas de módulos
-      // Os dados ficam em ProtocolSimplified.customData
-    }
-  }
-
-  /**
-   * Marcar entidade como concluída quando protocolo é concluído
-   */
-  private async completeModuleEntity(
-    tx: Prisma.TransactionClient,
-    protocol: any
-  ): Promise<void> {
-    const moduleType = protocol.moduleType;
-
-    if (moduleType) {
-      console.log(`✓ Protocolo concluído para módulo ${moduleType} - dados em customData`);
-    }
-  }
-
-  /**
-   * Inativar entidade quando protocolo é cancelado
-   */
-  private async deactivateModuleEntity(
-    tx: Prisma.TransactionClient,
-    protocol: any
-  ): Promise<void> {
-    const moduleType = protocol.moduleType;
-
-    if (moduleType) {
-      console.log(`✓ Protocolo cancelado para módulo ${moduleType} - dados em customData`);
-    }
-  }
-
-  /**
-   * Marcar entidade como pendente
-   */
-  private async markModuleEntityPending(
-    tx: Prisma.TransactionClient,
-    protocol: any
-  ): Promise<void> {
-    const moduleType = protocol.moduleType;
-
-    if (moduleType) {
-      console.log(`✓ Protocolo com pendência para módulo ${moduleType} - dados em customData`);
-    }
+    await tx.protocolSLA.update({
+      where: { protocolId },
+      data: {
+        actualEndDate,
+        isOverdue,
+        daysOverdue: isOverdue
+          ? differenceInCalendarDays(actualEndDate, sla.expectedEndDate)
+          : 0
+      }
+    });
   }
 
   /**
@@ -341,26 +299,16 @@ export class ProtocolStatusEngine {
     oldStatus: ProtocolStatus,
     newStatus: ProtocolStatus
   ): Promise<void> {
-    console.log(`📧 [Notificação] Protocolo ${protocol.number}: ${oldStatus} → ${newStatus}`);
-    console.log(`   Cidadão: ${protocol.citizen?.name || 'N/A'}`);
-    console.log(`   Departamento: ${protocol.department?.name || 'N/A'}`);
-
-    // ✅ FASE 1: Enviar notificação via mensageiro
     try {
       await messageNotificationService.notifyProtocolStatusChanged(
         protocol.id,
         oldStatus,
         newStatus
       );
-      console.log('   ✓ Notificação enviada via mensageiro');
     } catch (error) {
-      console.error('   ✗ Erro ao enviar notificação via mensageiro:', error);
+      console.error('✗ Erro ao enviar notificação via mensageiro:', error);
       // Não falha a transação se notificação falhar
     }
-
-    // TODO: Implementar sistema de notificações adicionais
-    // - Email para cidadão
-    // - SMS (opcional)
   }
 
   /**
@@ -402,4 +350,3 @@ export class ProtocolStatusEngine {
  * ============================================================================
  */
 export const protocolStatusEngine = new ProtocolStatusEngine();
-

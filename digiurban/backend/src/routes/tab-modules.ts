@@ -1431,22 +1431,24 @@ router.post(
         });
       }
 
-      // Gerar número de protocolo - Sistema centralizado com lock
-      const protocolNumber = await generateProtocolNumberSafe();
+      // Número gerado DENTRO da transação de criação (lock de numeração só
+      // vale com a transação aberta)
+      const protocol = await prisma.$transaction(async (tx) => {
+        const protocolNumber = await generateProtocolNumberSafe(tx);
 
-      // Criar protocolo (citizenId será null para registros administrativos)
-      const protocol = await prisma.protocolSimplified.create({
-        data: {
-          number: protocolNumber,
-          title: data.title || 'Novo registro',
-          description: data.description,
-          departmentId: dept.id,
-          serviceId: service.id,
-          citizenId: data.citizenId || userId, // Usa citizenId fornecido ou userId como fallback
-          moduleType: module.toUpperCase(),
-          status: data.status || ProtocolStatus.VINCULADO,
-          customData: data,
-        }
+        return tx.protocolSimplified.create({
+          data: {
+            number: protocolNumber,
+            title: data.title || 'Novo registro',
+            description: data.description,
+            departmentId: dept.id,
+            serviceId: service.id,
+            citizenId: data.citizenId || userId, // Usa citizenId fornecido ou userId como fallback
+            moduleType: module.toUpperCase(),
+            status: data.status || ProtocolStatus.VINCULADO,
+            customData: data,
+          }
+        });
       });
 
       return res.json({

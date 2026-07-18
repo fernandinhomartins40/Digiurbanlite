@@ -2,13 +2,32 @@ import express from 'express';
 import fs from 'fs';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { requireRole } from '../middleware/auth';
+import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { AuthenticatedRequest } from '../types';
 import { UserRole } from '@prisma/client';
 import * as documentService from '../services/protocol-document.service';
 import { getProtocolFilePath, extractFilename } from '../config/upload';
 import { prisma } from '../lib/prisma';
+import { canAccessProtocol } from '../services/protocol-access.service';
 
 const router = express.Router();
+
+/**
+ * Auth híbrida para download de documento: aceita cookie de servidor (admin)
+ * OU cookie de cidadão. A checagem de posse/escopo é feita na rota.
+ * (A rota era PÚBLICA — qualquer pessoa com a URL baixava documentos pessoais.)
+ */
+const hybridDownloadAuth = (
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction
+) => {
+  const hasCitizenToken = !!(req as any).cookies?.digiurban_citizen_token;
+  if (hasCitizenToken) {
+    return citizenAuthMiddleware(req, res, next);
+  }
+  return adminAuthMiddleware(req, res, next);
+};
 
 /**
  * Função inline para detectar MIME type baseado na extensão do arquivo
@@ -344,28 +363,61 @@ router.get(
  */
 router.get(
   '/:protocolId/documents/:documentId/download',
+  hybridDownloadAuth,
   async (req, res) => {
     try {
       const { protocolId, documentId } = req.params;
       const inline = req.query.inline === 'true';
 
-      console.log(`\n[DOWNLOAD] ProtocolId: ${protocolId}, DocumentId: ${documentId}, Inline: ${inline}`);
-
       // Buscar documento
       const document = await documentService.getDocumentById(documentId);
 
-      if (!document) {
-        console.log(`[DOWNLOAD] Documento não encontrado: ${documentId}`);
+      if (!document || document.protocolId !== protocolId) {
         return res.status(404).json({
           success: false,
           error: 'Documento não encontrado'
         });
       }
 
-      console.log(`[DOWNLOAD] Documento encontrado: ${document.fileName}, fileUrl: ${document.fileUrl}`);
+      // ✅ ESCOPO: cidadão só baixa documento do PRÓPRIO protocolo; servidor
+      // segue a regra de acesso por role (atribuição/departamento).
+      const protocol = await prisma.protocolSimplified.findUnique({
+        where: { id: document.protocolId },
+        select: {
+          citizenId: true,
+          departmentId: true,
+          assignedUserId: true,
+          currentAssignedUserId: true
+        }
+      });
+
+      if (!protocol) {
+        return res.status(404).json({
+          success: false,
+          error: 'Protocolo não encontrado'
+        });
+      }
+
+      const citizenId = (req as any).citizen?.id;
+      const adminUser = (req as AuthenticatedRequest).user;
+
+      const allowed = citizenId
+        ? protocol.citizenId === citizenId
+        : adminUser
+          ? canAccessProtocol(
+              { id: adminUser.id, role: adminUser.role, departmentId: adminUser.departmentId },
+              protocol
+            )
+          : false;
+
+      if (!allowed) {
+        return res.status(403).json({
+          success: false,
+          error: 'Você não tem permissão para acessar este documento'
+        });
+      }
 
       if (!document.fileUrl) {
-        console.log(`[DOWNLOAD] Arquivo não disponível para documento: ${documentId}`);
         return res.status(404).json({
           success: false,
           error: 'Arquivo não disponível'
@@ -374,7 +426,6 @@ router.get(
 
       // Se fileUrl é uma URL externa
       if (document.fileUrl.startsWith('http')) {
-        console.log(`[DOWNLOAD] Redirecionando para URL externa: ${document.fileUrl}`);
         return res.redirect(document.fileUrl);
       }
 
@@ -383,26 +434,18 @@ router.get(
       const filePath = getProtocolFilePath(document.protocolId, filename);
 
       if (!fs.existsSync(filePath)) {
-        console.log(`[DOWNLOAD] Arquivo não existe: ${filePath}`);
         return res.status(404).json({
           success: false,
-          error: 'Arquivo não encontrado no servidor',
-          expectedPath: filePath
+          error: 'Arquivo não encontrado no servidor'
         });
       }
 
       const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined, 'application/octet-stream');
 
-      console.log(`[DOWNLOAD] Arquivo existe, enviando... MimeType: ${mimeType}, Caminho: ${filePath}`);
-
       // Configurar headers - inline para visualização, attachment para download
       const disposition = inline ? 'inline' : 'attachment';
       res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'}"`);
       res.setHeader('Content-Type', mimeType);
-
-      // Adicionar headers CORS para permitir visualização
-      res.setHeader('Access-Control-Allow-Origin', '*');
-      res.setHeader('Access-Control-Allow-Methods', 'GET');
 
       // Stream do arquivo
       const fileStream = fs.createReadStream(filePath);
@@ -411,8 +454,7 @@ router.get(
       console.error('[DOWNLOAD] Erro ao fazer download do documento:', error);
       return res.status(500).json({
         success: false,
-        error: 'Erro ao fazer download do documento',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        error: 'Erro ao fazer download do documento'
         });
     }
   }
@@ -424,6 +466,9 @@ router.get(
  */
 router.delete(
   '/:protocolId/documents/:documentId',
+  // adminAuthMiddleware faltava: sem ele req.user nunca era populado e o
+  // requireRole respondia 401 sempre — a rota estava inoperante.
+  adminAuthMiddleware,
   requireRole(UserRole.ADMIN),
   async (req, res) => {
     try {

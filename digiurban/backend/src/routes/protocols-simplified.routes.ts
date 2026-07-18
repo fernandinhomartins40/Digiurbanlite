@@ -24,11 +24,46 @@ import type { WorkflowStage } from '../types/workflow.types';
 import * as protocolAssignmentService from '../services/protocolAssignmentService';
 import { runRevertExpiredDelegationsManually } from '../jobs/revertExpiredDelegations.job';
 import { normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
+import {
+  assertProtocolAccess,
+  canAccessDepartment,
+  canAccessProtocol
+} from '../services/protocol-access.service';
+import { escapeHtml } from '../utils/escape-html';
+import { renderPdfFromHtml } from '../utils/render-pdf';
 
 const router = Router();
 
 // Aplicar middlewares
 router.use(adminAuthMiddleware);
+
+/**
+ * Valida acesso do usuário logado ao protocolo (escopo por role) e já responde
+ * 403/404 quando negado. Retorna null quando a resposta já foi enviada.
+ */
+async function ensureAccess(
+  req: Request,
+  res: Response,
+  protocolId: string
+): Promise<Awaited<ReturnType<typeof assertProtocolAccess>> | null> {
+  const authReq = req as AuthenticatedRequest;
+  try {
+    return await assertProtocolAccess(
+      {
+        id: authReq.userId!,
+        role: authReq.user.role,
+        departmentId: authReq.user.departmentId
+      },
+      protocolId
+    );
+  } catch (error: any) {
+    res.status(error?.statusCode || 403).json({
+      success: false,
+      error: error?.message || 'Você não tem permissão para acessar este protocolo'
+    });
+    return null;
+  }
+}
 
 // ========================================
 // ⚠️ ROTAS ESPECÍFICAS - DEVEM VIR ANTES DAS ROTAS PARAMETRIZADAS
@@ -40,24 +75,25 @@ router.use(adminAuthMiddleware);
  * GET /api/protocols/workload-stats
  * Obter métricas de carga de trabalho dos servidores
  */
-router.get('/workload-stats', async (req: Request, res: Response) => {
+router.get('/workload-stats', requireMinRole(UserRole.MANAGER), async (req: Request, res: Response) => {
   try {
-    console.log('🔍 [WORKLOAD-STATS] Rota acessada!');
-    console.log('🔍 [WORKLOAD-STATS] Query params:', req.query);
-    console.log('🔍 [WORKLOAD-STATS] User:', (req as any).user?.id);
-
+    const authReq = req as AuthenticatedRequest;
     const { departmentId, protocolId, stageId } = req.query;
 
-    console.log('🔍 [WORKLOAD-STATS] Buscando stats para departmentId:', departmentId);
+    // Escopo: gestor só enxerga métricas do próprio departamento
+    const scopedDepartmentId =
+      authReq.user.role === UserRole.ADMIN || authReq.user.role === UserRole.SUPER_ADMIN
+        ? (departmentId as string | undefined)
+        : authReq.user.departmentId || undefined;
+
     const stats = await protocolAssignmentService.getWorkloadStats(
-      departmentId as string | undefined,
+      scopedDepartmentId,
       {
         protocolId: protocolId as string | undefined,
         stageId: stageId as string | undefined
       }
     );
 
-    console.log('🔍 [WORKLOAD-STATS] Stats obtidas:', stats);
     return res.json({
       success: true,
       data: stats
@@ -74,42 +110,36 @@ router.get('/workload-stats', async (req: Request, res: Response) => {
 /**
  * GET /api/protocols/department/:departmentId
  * Lista protocolos por departamento
+ * Escopo: gestor/coordenador apenas do próprio departamento; ADMIN+ qualquer um.
  */
-router.get('/department/:departmentId', async (req: Request, res: Response) => {
+router.get('/department/:departmentId', requireMinRole(UserRole.COORDINATOR), async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { departmentId } = req.params;
-    const filters = req.query as any;
 
+    if (!canAccessDepartment(
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      departmentId
+    )) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você não tem permissão para ver protocolos deste departamento'
+      });
+    }
+
+    // Filtros passam por whitelist dentro do service
+    const q = req.query as Record<string, any>;
     const protocols = await protocolServiceSimplified.listByDepartment(
       departmentId,
-      filters
-    );
-
-    return res.json({
-      success: true,
-      data: protocols,
-      count: protocols.length
-    });
-  } catch (error: any) {
-    console.error('Erro ao listar protocolos:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Erro ao listar protocolos'
-    });
-  }
-});
-
-/**
- * GET /api/protocols/module/:departmentId/:moduleType
- * Lista protocolos por módulo
- */
-router.get('/module/:departmentId/:moduleType', async (req: Request, res: Response) => {
-  try {
-    const { departmentId, moduleType } = req.params;
-
-    const protocols = await protocolServiceSimplified.listByModule(
-      departmentId,
-      moduleType
+      {
+        status: q.status,
+        moduleType: q.moduleType,
+        citizenId: q.citizenId,
+        assignedUserId: q.assignedUserId,
+        createdAt: q.startDate || q.endDate
+          ? { gte: q.startDate, lte: q.endDate }
+          : undefined
+      } as any
     );
 
     return res.json({
@@ -129,13 +159,14 @@ router.get('/module/:departmentId/:moduleType', async (req: Request, res: Respon
 /**
  * GET /api/protocols/module/:moduleType/pending
  * Listar protocolos pendentes de um módulo específico
+ * ⚠️ DEVE vir ANTES de /module/:departmentId/:moduleType — registrada depois,
+ * era sombreada e nunca alcançada (departmentId="<module>", moduleType="pending").
  */
 router.get(
   '/module/:moduleType/pending',
-  requireMinRole(UserRole.USER),
+  requireMinRole(UserRole.MANAGER),
   async (req, res) => {
     try {
-      const authReq = req as AuthenticatedRequest;
       const { moduleType } = req.params;
       const { page = 1, limit = 20 } = req.query;
 
@@ -160,19 +191,72 @@ router.get(
 );
 
 /**
- * GET /api/protocols/citizen/:citizenId
- * Lista protocolos do cidadão
+ * GET /api/protocols/module/:departmentId/:moduleType
+ * Lista protocolos por módulo
  */
-router.get('/citizen/:citizenId', async (req: Request, res: Response) => {
+router.get('/module/:departmentId/:moduleType', requireMinRole(UserRole.COORDINATOR), async (req: Request, res: Response) => {
   try {
-    const { citizenId } = req.params;
+    const authReq = req as AuthenticatedRequest;
+    const { departmentId, moduleType } = req.params;
 
-    const protocols = await protocolServiceSimplified.listByCitizen(citizenId);
+    if (!canAccessDepartment(
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      departmentId
+    )) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você não tem permissão para ver protocolos deste departamento'
+      });
+    }
+
+    const protocols = await protocolServiceSimplified.listByModule(
+      departmentId,
+      moduleType
+    );
 
     return res.json({
       success: true,
       data: protocols,
       count: protocols.length
+    });
+  } catch (error: any) {
+    console.error('Erro ao listar protocolos:', error);
+    return res.status(500).json({
+      success: false,
+      error: error.message || 'Erro ao listar protocolos'
+    });
+  }
+});
+
+/**
+ * GET /api/protocols/citizen/:citizenId
+ * Lista protocolos do cidadão
+ * Escopo: ADMIN+ vê todos; gestor/coordenador vê apenas os do seu departamento.
+ */
+router.get('/citizen/:citizenId', requireMinRole(UserRole.COORDINATOR), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const { citizenId } = req.params;
+
+    const isAdmin =
+      authReq.user.role === UserRole.ADMIN || authReq.user.role === UserRole.SUPER_ADMIN;
+
+    if (!isAdmin && !authReq.user.departmentId) {
+      return res.status(403).json({
+        success: false,
+        error: 'Usuário sem departamento vinculado'
+      });
+    }
+
+    const protocols = await protocolServiceSimplified.listByCitizen(citizenId);
+    const scoped = isAdmin
+      ? protocols
+      : protocols.filter((p: any) => p.departmentId === authReq.user.departmentId);
+
+    return res.json({
+      success: true,
+      data: scoped,
+      count: scoped.length
     });
   } catch (error: any) {
     console.error('Erro ao listar protocolos:', error);
@@ -333,9 +417,11 @@ router.get('/incoming-calls', requireMinRole(UserRole.MANAGER), async (req, res)
       limit = '50'
     } = req.query;
 
-    // Filtro base: protocolos criados por usuários (chamados)
+    // Filtro base: chamados criados por gestão (ADMIN/MANAGER) — filtrar pelo
+    // role do criador, não por "tem createdById" (USER também preenche o campo)
     const where: any = {
-      createdById: { not: null } // Marca que foi criado por admin/manager
+      createdById: { not: null },
+      createdBy: { role: { in: [UserRole.ADMIN, UserRole.MANAGER] } }
     };
 
     // MANAGER vê apenas chamados do seu departamento
@@ -422,16 +508,12 @@ router.get('/incoming-calls', requireMinRole(UserRole.MANAGER), async (req, res)
       prisma.protocolSimplified.count({ where })
     ]);
 
-    // Estatísticas adicionais
-    const stats = {
-      total,
-      unassigned: await prisma.protocolSimplified.count({
-        where: { ...where, assignedUserId: null }
-      }),
-      assigned: await prisma.protocolSimplified.count({
-        where: { ...where, assignedUserId: { not: null } }
-      })
-    };
+    // Estatísticas adicionais (em paralelo)
+    const [unassigned, assigned] = await Promise.all([
+      prisma.protocolSimplified.count({ where: { ...where, assignedUserId: null } }),
+      prisma.protocolSimplified.count({ where: { ...where, assignedUserId: { not: null } } })
+    ]);
+    const stats = { total, unassigned, assigned };
 
     return res.json({
       success: true,
@@ -509,30 +591,53 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       }
     }
 
+    // Filtro por servidor: considerar os DOIS campos de atribuição
+    // (assignedUserId legado + currentAssignedUserId de delegação/encaminhamento)
+    const andConditions: any[] = [];
     if (assignedUserId) {
-      where.assignedUserId = assignedUserId;
+      andConditions.push({
+        OR: [
+          { assignedUserId: assignedUserId },
+          { currentAssignedUserId: assignedUserId }
+        ]
+      });
     }
 
     // Busca por número, título ou nome do cidadão
     if (search) {
-      where.OR = [
-        { number: { contains: search as string, mode: 'insensitive' } },
-        { title: { contains: search as string, mode: 'insensitive' } },
-        { citizen: { name: { contains: search as string, mode: 'insensitive' } } },
-      ];
+      andConditions.push({
+        OR: [
+          { number: { contains: search as string, mode: 'insensitive' } },
+          { title: { contains: search as string, mode: 'insensitive' } },
+          { citizen: { name: { contains: search as string, mode: 'insensitive' } } },
+        ]
+      });
     }
 
     // Restrição de acesso baseado no role
     if (user.role === 'USER') {
       // Usuários comuns veem apenas protocolos atribuídos a eles
-      where.assignedUserId = userId;
-    } else if (user.role === 'MANAGER') {
-      // Gerentes veem protocolos do seu departamento
+      // (inclui protocolos delegados/encaminhados — currentAssignedUserId)
+      andConditions.push({
+        OR: [
+          { assignedUserId: userId },
+          { currentAssignedUserId: userId }
+        ]
+      });
+    } else if (user.role === 'MANAGER' || user.role === 'COORDINATOR') {
+      // Gestão/coordenação vê protocolos do seu departamento.
+      // Sem departamento vinculado → não vê nada (erro de cadastro, não acesso total)
       if (user.departmentId) {
         where.departmentId = user.departmentId;
+      } else {
+        where.id = '__no_department__';
       }
     }
     // ADMIN vê todos os protocolos
+
+    if (andConditions.length > 0) {
+      where.AND = andConditions;
+    }
 
     // Paginação
     const pageNum = parseInt(page as string);
@@ -747,18 +852,14 @@ router.get('/:id', requireMinRole(UserRole.USER), async (req, res) => {
       });
     }
 
-    // Verificar permissões
-    if (user.role === 'USER' && protocol.assignedUserId !== userId) {
+    // Verificar permissões (regra única de escopo por role)
+    if (!canAccessProtocol(
+      { id: userId!, role: user.role, departmentId: user.departmentId },
+      protocol
+    )) {
       return res.status(403).json({
         success: false,
         error: 'Você não tem permissão para ver este protocolo'
-      });
-    }
-
-    if (user.role === 'MANAGER' && protocol.departmentId !== user.departmentId) {
-      return res.status(403).json({
-        success: false,
-        error: 'Você não tem permissão para ver protocolos de outros departamentos'
       });
     }
 
@@ -790,9 +891,13 @@ router.put('/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) =>
     const { id } = req.params;
     const { comment, additionalData } = req.body;
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
     const protocol = await protocolModuleService.approveProtocol({
       protocolId: id,
       userId,
+      actorRole: authReq.user.role,
       comment,
       additionalData
         });
@@ -804,7 +909,9 @@ router.put('/:id/approve', requireMinRole(UserRole.MANAGER), async (req, res) =>
         });
   } catch (error: any) {
     console.error('Approve protocol error:', error);
-    return res.status(500).json({
+    const isValidationError =
+      error?.name === 'InvalidTransitionError' || error?.name === 'PermissionDeniedError';
+    return res.status(isValidationError ? 400 : 500).json({
       success: false,
       error: error.message || 'Erro ao aprovar protocolo'
         });
@@ -829,9 +936,13 @@ router.put('/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => 
         });
     }
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
     const protocol = await protocolModuleService.rejectProtocol({
       protocolId: id,
       userId,
+      actorRole: authReq.user.role,
       reason
         });
 
@@ -842,7 +953,9 @@ router.put('/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => 
         });
   } catch (error: any) {
     console.error('Reject protocol error:', error);
-    return res.status(500).json({
+    const isValidationError =
+      error?.name === 'InvalidTransitionError' || error?.name === 'PermissionDeniedError';
+    return res.status(isValidationError ? 400 : 500).json({
       success: false,
       error: error.message || 'Erro ao rejeitar protocolo'
         });
@@ -857,10 +970,10 @@ router.put('/:id/reject', requireMinRole(UserRole.MANAGER), async (req, res) => 
  * PATCH /api/protocols-simplified/:id/status
  * Atualiza status do protocolo
  */
-router.patch('/:id/status', async (req: Request, res: Response) => {
+router.patch('/:id/status', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    const { status, comment, userId } = req.body;
+    const { status, comment } = req.body;
     const authReq = req as AuthenticatedRequest;
 
     if (!status || !Object.values(ProtocolStatus).includes(status)) {
@@ -870,25 +983,23 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
         });
     }
 
-    // Usar motor centralizado de status
+    // Escopo: só quem tem acesso ao protocolo pode mudar status
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
-
-
-
+    // Usar motor centralizado de status.
+    // ⚠️ actorId é SEMPRE o usuário autenticado — nunca aceitar do body
+    // (permitia registrar outro usuário como autor no histórico).
     const result = await protocolStatusEngine.updateStatus({
       protocolId: id,
       newStatus: status,
-      actorId: userId || authReq.user.id,
+      actorId: authReq.userId!,
       actorRole: authReq.user.role,
       comment,
       metadata: {
         source: 'protocols-simplified-routes'
       }
     });
-
-
-
-
 
     return res.json({
       success: true,
@@ -897,7 +1008,9 @@ router.patch('/:id/status', async (req: Request, res: Response) => {
         });
   } catch (error: any) {
     console.error('Erro ao atualizar status:', error);
-    return res.status(500).json({
+    const isValidationError =
+      error?.name === 'InvalidTransitionError' || error?.name === 'PermissionDeniedError';
+    return res.status(isValidationError ? 400 : 500).json({
       success: false,
       error: error.message || 'Erro ao atualizar status'
         });
@@ -1000,10 +1113,11 @@ router.post('/:id/request-update', requireMinRole(UserRole.ADMIN), async (req: R
   }
 });
 
-router.post('/:id/comments', async (req: Request, res: Response) => {
+router.post('/:id/comments', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { id } = req.params;
-    const { comment, userId } = req.body;
+    const { comment } = req.body;
 
     if (!comment) {
       return res.status(400).json({
@@ -1012,7 +1126,11 @@ router.post('/:id/comments', async (req: Request, res: Response) => {
         });
     }
 
-    await protocolServiceSimplified.addComment(id, comment, userId);
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
+    // Autor é SEMPRE o usuário autenticado (nunca do body)
+    await protocolServiceSimplified.addComment(id, comment, authReq.userId);
 
     return res.json({
       success: true,
@@ -1048,6 +1166,9 @@ router.patch('/:id/assign', requireMinRole(UserRole.MANAGER), async (req: Reques
         error: 'assignedUserId é obrigatório'
       });
     }
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
     // ✅ NOVO: Usar serviço de atribuição integrado
     const result = await protocolAssignmentService.assignProtocolToServer({
@@ -1108,6 +1229,9 @@ router.post('/:id/delegate', requireMinRole(UserRole.MANAGER), async (req: Reque
       });
     }
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
     const assignment = await protocolAssignmentService.delegateProtocol({
       protocolId: id,
       delegadoParaUserId,
@@ -1167,6 +1291,9 @@ router.post('/:id/forward', requireMinRole(UserRole.MANAGER), async (req: Reques
       });
     }
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
     const assignment = await protocolAssignmentService.forwardProtocol({
       protocolId: id,
       forwardToUserId,
@@ -1214,6 +1341,9 @@ router.post('/:id/assign-team', requireMinRole(UserRole.MANAGER), async (req: Re
       });
     }
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
     const result = await protocolAssignmentService.assignProtocolToTeam({
       protocolId: id,
       teamId,
@@ -1244,9 +1374,12 @@ router.post('/:id/assign-team', requireMinRole(UserRole.MANAGER), async (req: Re
  * GET /api/protocols-simplified/:id/assignments
  * Listar histórico de atribuições de um protocolo
  */
-router.get('/:id/assignments', async (req: Request, res: Response) => {
+router.get('/:id/assignments', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
     const result = await protocolAssignmentService.getProtocolAssignments(id);
 
@@ -1281,6 +1414,9 @@ router.get('/:id/suggest-assignee', requireMinRole(UserRole.MANAGER), async (req
     const { id } = req.params;
     const { departmentId, stageId } = req.query;
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
     const suggestions = await protocolAssignmentService.suggestAssignee(
       id,
       departmentId as string | undefined,
@@ -1313,9 +1449,12 @@ router.get('/:id/suggest-assignee', requireMinRole(UserRole.MANAGER), async (req
  * GET /api/protocols-simplified/:id/history
  * Obtém histórico completo do protocolo
  */
-router.get('/:id/history', async (req: Request, res: Response) => {
+router.get('/:id/history', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
     const history = await protocolServiceSimplified.getHistory(id);
 
@@ -1335,43 +1474,9 @@ router.get('/:id/history', async (req: Request, res: Response) => {
 // ========================================
 // AVALIAÇÃO
 // ========================================
-
-/**
- * POST /api/protocols-simplified/:id/evaluate
- * Avalia protocolo
- */
-router.post('/:id/evaluate', async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    const { rating, comment, wouldRecommend } = req.body;
-
-    if (!rating || rating < 1 || rating > 5) {
-      return res.status(400).json({
-        success: false,
-        error: 'Rating deve ser entre 1 e 5'
-        });
-    }
-
-    const evaluation = await protocolServiceSimplified.evaluateProtocol(
-      id,
-      rating,
-      comment,
-      wouldRecommend
-    );
-
-    return res.status(201).json({
-      success: true,
-      data: evaluation,
-      message: 'Avaliação registrada com sucesso'
-        });
-  } catch (error: any) {
-    console.error('Erro ao avaliar protocolo:', error);
-    return res.status(500).json({
-      success: false,
-      error: error.message || 'Erro ao avaliar protocolo'
-        });
-  }
-});
+// ⚠️ REMOVIDO: POST /:id/evaluate (rota admin). Avaliação é ATO DO CIDADÃO —
+// o caminho legítimo é POST /api/internal/evaluations (bot/portal), que valida
+// posse do protocolo e deduplica. Servidores não avaliam protocolos.
 
 // ========================================
 // ESTATÍSTICAS
@@ -1381,10 +1486,21 @@ router.post('/:id/evaluate', async (req: Request, res: Response) => {
  * GET /api/protocols-simplified/stats/:departmentId
  * Obtém estatísticas de protocolos por departamento
  */
-router.get('/stats/:departmentId', async (req: Request, res: Response) => {
+router.get('/stats/:departmentId', requireMinRole(UserRole.COORDINATOR), async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { departmentId } = req.params;
     const { startDate, endDate } = req.query;
+
+    if (!canAccessDepartment(
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      departmentId
+    )) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você não tem permissão para ver estatísticas deste departamento'
+      });
+    }
 
     const stats = await protocolServiceSimplified.getDepartmentStats(
       departmentId,
@@ -1414,8 +1530,9 @@ router.get('/stats/:departmentId', async (req: Request, res: Response) => {
  * Busca protocolo por número
  * Rota específica para evitar conflito com /:id
  */
-router.get('/by-number/:number', async (req: Request, res: Response) => {
+router.get('/by-number/:number', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
   try {
+    const authReq = req as AuthenticatedRequest;
     const { number } = req.params;
 
     const protocol = await protocolServiceSimplified.findByNumber(number);
@@ -1425,6 +1542,17 @@ router.get('/by-number/:number', async (req: Request, res: Response) => {
         success: false,
         error: 'Protocolo não encontrado'
         });
+    }
+
+    // Mesmo escopo por role das demais rotas de leitura
+    if (!canAccessProtocol(
+      { id: authReq.userId!, role: authReq.user.role, departmentId: authReq.user.departmentId },
+      protocol as any
+    )) {
+      return res.status(403).json({
+        success: false,
+        error: 'Você não tem permissão para ver este protocolo'
+      });
     }
 
     return res.json({
@@ -1452,38 +1580,30 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
   try {
     const { id } = req.params;
     const { finalNotes, documentUrl } = req.body;
-
-    // Buscar protocolo
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id },
-      include: {
-        citizen: true,
-        service: true
-      }
-    });
-
-    if (!protocol) {
-      return res.status(404).json({
-        success: false,
-        error: 'Protocolo não encontrado'
-      });
-    }
-
-    // Atualizar protocolo para COMPLETED
-    const updatedProtocol = await prisma.protocolSimplified.update({
-      where: { id },
-      data: {
-        status: ProtocolStatus.CONCLUIDO,
-        concludedAt: new Date()
-      },
-      include: {
-        citizen: true,
-        service: true
-      }
-    });
-
-    // Registrar interação
     const authReq = req as AuthenticatedRequest;
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
+    // ✅ Conclusão passa pelo MOTOR de status: validação de transição,
+    // histórico, SLA e notificações. (Antes era update direto no Prisma —
+    // concluía COM_DADOS em VINCULADO, sem histórico e sem SLA.)
+    const result = await protocolStatusEngine.updateStatus({
+      protocolId: id,
+      newStatus: ProtocolStatus.CONCLUIDO,
+      actorId: authReq.userId!,
+      actorRole: authReq.user.role,
+      comment: finalNotes || undefined,
+      metadata: {
+        source: 'protocols-simplified-routes:complete',
+        documentUrl: documentUrl || null,
+        finalNotes: finalNotes || null
+      }
+    });
+
+    const updatedProtocol = result.protocol;
+
+    // Registrar interação visível ao cidadão
     await prisma.protocolInteraction.create({
       data: {
         protocolId: id,
@@ -1494,7 +1614,7 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
         authorName: authReq.user?.name || 'Sistema',
         isInternal: false,
         metadata: {
-          oldStatus: protocol.status,
+          oldStatus: result.previousStatus,
           newStatus: 'CONCLUIDO',
           documentUrl: documentUrl || null,
           finalNotes: finalNotes || null
@@ -1524,11 +1644,13 @@ router.post('/:id/complete', requireMinRole(UserRole.USER), async (req, res) => 
     return res.json({
       success: true,
       data: updatedProtocol,
-      message: `Protocolo ${protocol.number} concluído com sucesso`
+      message: `Protocolo ${updatedProtocol.number} concluído com sucesso`
     });
   } catch (error: any) {
     console.error('Erro ao concluir protocolo:', error);
-    return res.status(500).json({
+    const isValidationError =
+      error?.name === 'InvalidTransitionError' || error?.name === 'PermissionDeniedError';
+    return res.status(isValidationError ? 400 : 500).json({
       success: false,
       error: error.message || 'Erro ao concluir protocolo'
     });
@@ -1580,9 +1702,12 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     if (!mode || (mode !== 'restart' && mode !== 'append')) {
       return res.status(400).json({
         success: false,
-        error: 'Modo inv?lido. Use "restart" ou "append".'
+        error: 'Modo inválido. Use "restart" ou "append".'
       });
     }
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
     if (mode === 'append' && normalizedDocuments.length === 0 && selectedDataFieldIds.length === 0 && customDataFieldItems.length === 0 && !normalizedOtherDescription) {
       return res.status(400).json({
@@ -1630,28 +1755,34 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       0
     );
 
-    if (protocol.stages.some(stage => stage.status === 'IN_PROGRESS')) {
-      await prisma.protocolStage.updateMany({
-        where: {
-          protocolId: id,
-          status: 'IN_PROGRESS'
-        },
-        data: {
-          status: 'COMPLETED',
-          completedAt: now,
-          result: 'REOPENED',
-          notes: 'Encerrada automaticamente na reabertura'
-        }
-      });
-    }
+    const reopenStatus = mode === 'append' ? ProtocolStatus.PENDENCIA : ProtocolStatus.PROGRESSO;
+    const reopenLabel = mode === 'restart' ? 'workflow reiniciado' : 'pendencia criada';
 
-    let createdStages: any[] = [];
+    // ⚠️ ATÔMICO: encerramento de stages abertas, criação das novas stages,
+    // transição de status (engine — que também limpa concludedAt) e o ponteiro
+    // currentStageId rodam numa única transação.
+    const createdStages: any[] = await prisma.$transaction(async (tx) => {
+      if (protocol.stages.some(stage => stage.status === 'IN_PROGRESS')) {
+        await tx.protocolStage.updateMany({
+          where: {
+            protocolId: id,
+            status: 'IN_PROGRESS'
+          },
+          data: {
+            status: 'COMPLETED',
+            completedAt: now,
+            result: 'REOPENED',
+            notes: 'Encerrada automaticamente na reabertura'
+          }
+        });
+      }
 
-    if (mode === 'restart') {
-      createdStages = await prisma.$transaction(
-        sortedWorkflowStages.map((stage, index) => {
+      let stages: any[] = [];
+
+      if (mode === 'restart') {
+        for (const [index, stage] of sortedWorkflowStages.entries()) {
           const isFirstStage = index === 0;
-          return prisma.protocolStage.create({
+          stages.push(await tx.protocolStage.create({
             data: {
               protocolId: id,
               stageName: stage.name,
@@ -1663,49 +1794,61 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
                 : undefined,
               metadata: buildProtocolStageMetadataFromWorkflowStage(stage)
             }
-          });
-        })
-      );
-    } else {
-      const reopenMetadata = {
-        description: 'Reabertura do protocolo (pendência)',
-        availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
-        primaryTab: 'pendencias',
-        requiredDocumentTypes: [],
-        requiredInputFieldIds: [],
-        requiredStageOutputs: [],
-        allowedActions: ['REQUEST_INFO', 'CREATE_PENDING', 'APPROVE', 'REJECT'],
-        canSkip: false
-      };
+          }));
+        }
+      } else {
+        const reopenMetadata = {
+          description: 'Reabertura do protocolo (pendência)',
+          availableTabs: ['resumo', 'documentos', 'dados', 'pendencias', 'comunicacao'],
+          primaryTab: 'pendencias',
+          requiredDocumentTypes: [],
+          requiredInputFieldIds: [],
+          requiredStageOutputs: [],
+          allowedActions: ['REQUEST_INFO', 'CREATE_PENDING', 'APPROVE', 'REJECT'],
+          canSkip: false
+        };
 
-      const metadata = reopenMetadata;
-      const stage = await prisma.protocolStage.create({
-        data: {
+        const stage = await tx.protocolStage.create({
+          data: {
+            protocolId: id,
+            stageName: 'Reabertura (Pendência)',
+            stageOrder: maxStageOrder + 1,
+            status: 'IN_PROGRESS',
+            startedAt: now,
+            metadata: reopenMetadata
+          }
+        });
+        stages = [stage];
+      }
+
+      // Transição via engine (registra histórico ÚNICO de reabertura e limpa
+      // concludedAt) — dentro da mesma transação
+      await protocolStatusEngine.updateStatus(
+        {
           protocolId: id,
-          stageName: 'Reabertura (Pendência)',
-          stageOrder: maxStageOrder + 1,
-          status: 'IN_PROGRESS',
-          startedAt: now,
-          metadata
+          newStatus: reopenStatus,
+          actorId: authReq.userId,
+          actorRole: authReq.user.role,
+          comment: `Protocolo reaberto (${reopenLabel})`,
+          metadata: {
+            action: 'reopen',
+            mode,
+            previousStatus: protocol.status,
+            previousConcludedAt: protocol.concludedAt
+          }
+        },
+        tx
+      );
+
+      await tx.protocolSimplified.update({
+        where: { id },
+        data: {
+          currentStageId: stages[0]?.id
         }
       });
-      createdStages = [stage];
-    }
 
-    const reopenStatus = mode === 'append' ? ProtocolStatus.PENDENCIA : ProtocolStatus.PROGRESSO;
-    const reopenLabel = mode === 'restart' ? 'workflow reiniciado' : 'pendencia criada';
-
-    await protocolStatusEngine.updateStatus({
-      protocolId: id,
-      newStatus: reopenStatus,
-      actorId: authReq.userId,
-      actorRole: authReq.user.role,
-      comment: 'Protocolo reaberto',
-      metadata: {
-        action: 'reopen',
-        mode
-      }
-    });
+      return stages;
+    }, { timeout: 15000 });
 
     if (mode === 'append') {
       const dataFields = selectedDataFieldIds.length > 0
@@ -1793,12 +1936,9 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     }
 
 
-    const updatedProtocol = await prisma.protocolSimplified.update({
+    // Status, concludedAt e currentStageId já foram atualizados na transação
+    const updatedProtocol = await prisma.protocolSimplified.findUnique({
       where: { id },
-      data: {
-        currentStageId: createdStages[0]?.id,
-        concludedAt: null
-      },
       include: {
         citizen: true,
         service: true
@@ -1823,21 +1963,8 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
       }
     }
 
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId: id,
-        action: 'REABERTURA',
-        oldStatus: protocol.status,
-        newStatus: reopenStatus,
-        comment: `Protocolo reaberto (${reopenLabel})`,
-        userId: authReq.userId,
-        metadata: {
-          mode,
-          previousConcludedAt: protocol.concludedAt,
-          previousStatus: protocol.status
-        }
-      }
-    });
+    // Histórico de reabertura já é registrado pelo engine (entrada única,
+    // com previousStatus/previousConcludedAt no metadata).
 
     await prisma.protocolInteraction.create({
       data: {
@@ -1883,6 +2010,9 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
   try {
     const { id } = req.params;
     const format = req.query.format as string || 'pdf';
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
     // Buscar todos os dados do protocolo
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -2026,12 +2156,12 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
       return res.json(report);
     }
 
-    // Se formato for PDF, gerar com Playwright
+    // Se formato for PDF, gerar com Playwright (util com fila + rede bloqueada)
     if (format === 'pdf') {
-      const { chromium } = require('playwright');
-
-      const browser = await chromium.launch({ headless: true });
-      const page = await browser.newPage();
+      // ⚠️ TODO conteúdo dinâmico é escapado — mensagens/títulos digitados por
+      // usuários não podem virar HTML executável no Chromium do servidor.
+      const e = escapeHtml;
+      const concludedLabel = protocol.status === 'CANCELADO' ? 'Data de Encerramento' : 'Data de Conclusão';
 
       // Gerar HTML do relatório
       const html = `
@@ -2061,11 +2191,11 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
           <h1>Relatório Completo do Protocolo</h1>
 
           <div class="header">
-            <h2 style="margin-top: 0;">Protocolo #${protocol.number}</h2>
-            <p><strong>Título:</strong> ${protocol.title || 'N/A'}</p>
-            <p><strong>Status:</strong> <span class="status status-${protocol.status.toLowerCase()}">${protocol.status}</span></p>
+            <h2 style="margin-top: 0;">Protocolo #${e(protocol.number)}</h2>
+            <p><strong>Título:</strong> ${e(protocol.title) || 'N/A'}</p>
+            <p><strong>Status:</strong> <span class="status status-${e(protocol.status.toLowerCase())}">${e(protocol.status)}</span></p>
             <p><strong>Data de Criação:</strong> ${new Date(protocol.createdAt).toLocaleString('pt-BR')}</p>
-            ${protocol.concludedAt ? `<p><strong>Data de Conclusão:</strong> ${new Date(protocol.concludedAt).toLocaleString('pt-BR')}</p>` : ''}
+            ${protocol.concludedAt ? `<p><strong>${concludedLabel}:</strong> ${new Date(protocol.concludedAt).toLocaleString('pt-BR')}</p>` : ''}
           </div>
 
           <h2>Estatísticas</h2>
@@ -2098,16 +2228,16 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
 
           <h2>Informações do Cidadão</h2>
           <table>
-            <tr><td><strong>Nome:</strong></td><td>${protocol.citizen?.name || 'N/A'}</td></tr>
-            <tr><td><strong>CPF:</strong></td><td>${protocol.citizen?.cpf || 'N/A'}</td></tr>
-            <tr><td><strong>Email:</strong></td><td>${protocol.citizen?.email || 'N/A'}</td></tr>
-            <tr><td><strong>Telefone:</strong></td><td>${protocol.citizen?.phone || 'N/A'}</td></tr>
+            <tr><td><strong>Nome:</strong></td><td>${e(protocol.citizen?.name) || 'N/A'}</td></tr>
+            <tr><td><strong>CPF:</strong></td><td>${e(protocol.citizen?.cpf) || 'N/A'}</td></tr>
+            <tr><td><strong>Email:</strong></td><td>${e(protocol.citizen?.email) || 'N/A'}</td></tr>
+            <tr><td><strong>Telefone:</strong></td><td>${e(protocol.citizen?.phone) || 'N/A'}</td></tr>
           </table>
 
           <h2>Serviço Solicitado</h2>
           <table>
-            <tr><td><strong>Serviço:</strong></td><td>${protocol.service?.name || 'N/A'}</td></tr>
-            <tr><td><strong>Departamento:</strong></td><td>${protocol.service?.department?.name || protocol.department?.name || 'N/A'}</td></tr>
+            <tr><td><strong>Serviço:</strong></td><td>${e(protocol.service?.name) || 'N/A'}</td></tr>
+            <tr><td><strong>Departamento:</strong></td><td>${e(protocol.service?.department?.name || protocol.department?.name) || 'N/A'}</td></tr>
           </table>
 
           ${protocol.documentFiles.length > 0 ? `
@@ -2117,8 +2247,8 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
             <tbody>
             ${protocol.documentFiles.map(doc => `
               <tr>
-                <td>${doc.documentType}</td>
-                <td>${doc.status}</td>
+                <td>${e(doc.documentType)}</td>
+                <td>${e(doc.status)}</td>
                 <td>${doc.uploadedAt ? new Date(doc.uploadedAt).toLocaleString('pt-BR') : 'N/A'}</td>
               </tr>
             `).join('')}
@@ -2133,8 +2263,8 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
             <tbody>
             ${protocol.stages.map(stage => `
               <tr>
-                <td>${stage.stageName}</td>
-                <td>${stage.status}</td>
+                <td>${e(stage.stageName)}</td>
+                <td>${e(stage.status)}</td>
                 <td>${stage.startedAt ? new Date(stage.startedAt).toLocaleString('pt-BR') : 'N/A'}</td>
                 <td>${stage.completedAt ? new Date(stage.completedAt).toLocaleString('pt-BR') : '-'}</td>
               </tr>
@@ -2151,14 +2281,7 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
         </html>
       `;
 
-      await page.setContent(html);
-      const pdfBuffer = await page.pdf({
-        format: 'A4',
-        printBackground: true,
-        margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }
-      });
-
-      await browser.close();
+      const pdfBuffer = await renderPdfFromHtml(html);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="protocolo_${protocol.number}_relatorio.pdf"`);
@@ -2183,9 +2306,12 @@ router.get('/:id/report', requireMinRole(UserRole.USER), async (req, res) => {
  * GET /api/protocols/:id/timeline/export
  * Exportar timeline do protocolo em PDF
  */
-router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: any) => {
+router.get('/:id/timeline/export', requireMinRole(UserRole.USER), async (req: any, res: any) => {
   try {
     const { id } = req.params;
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
 
     // Buscar protocolo completo
     const protocol = await prisma.protocolSimplified.findUnique({
@@ -2304,10 +2430,9 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
     // Ordenar eventos por data
     timelineEvents.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-    // Gerar PDF com Playwright
-    const { chromium } = require('playwright');
-    const browser = await chromium.launch({ headless: true });
-    const page = await browser.newPage();
+    // Gerar PDF (util com fila + rede bloqueada). Todo conteúdo dinâmico
+    // (títulos, mensagens de cidadão, notas) é escapado.
+    const e = escapeHtml;
 
     const html = `
       <!DOCTYPE html>
@@ -2345,11 +2470,11 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
         </style>
       </head>
       <body>
-        <h1>Timeline do Protocolo ${protocol.number}</h1>
+        <h1>Timeline do Protocolo ${e(protocol.number)}</h1>
 
         <div class="header">
-          <p><strong>Protocolo:</strong> ${protocol.number}</p>
-          <p><strong>Status Atual:</strong> ${protocol.status}</p>
+          <p><strong>Protocolo:</strong> ${e(protocol.number)}</p>
+          <p><strong>Status Atual:</strong> ${e(protocol.status)}</p>
           <p><strong>Criado em:</strong> ${new Date(protocol.createdAt).toLocaleString('pt-BR')}</p>
         </div>
 
@@ -2373,12 +2498,12 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
         <div class="timeline">
           ${timelineEvents.map(event => `
             <div class="timeline-item">
-              <div class="timeline-dot ${event.status.toLowerCase()}"></div>
+              <div class="timeline-dot ${e(event.status.toLowerCase())}"></div>
               <div class="timeline-content">
-                <div class="timeline-title">${event.title}</div>
+                <div class="timeline-title">${e(event.title)}</div>
                 <div class="timeline-time">${new Date(event.timestamp).toLocaleString('pt-BR')}</div>
-                ${event.description ? `<div class="timeline-description">${event.description}</div>` : ''}
-                <span class="status-badge status-${event.status.toLowerCase()}">${event.type.toUpperCase()}</span>
+                ${event.description ? `<div class="timeline-description">${e(event.description)}</div>` : ''}
+                <span class="status-badge status-${e(event.status.toLowerCase())}">${e(event.type.toUpperCase())}</span>
               </div>
             </div>
           `).join('')}
@@ -2392,14 +2517,7 @@ router.get('/:id/timeline/export', adminAuthMiddleware, async (req: any, res: an
       </html>
     `;
 
-    await page.setContent(html);
-    const pdfBuffer = await page.pdf({
-      format: 'A4',
-      printBackground: true,
-      margin: { top: '20mm', right: '15mm', bottom: '20mm', left: '15mm' }
-    });
-
-    await browser.close();
+    const pdfBuffer = await renderPdfFromHtml(html);
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="timeline_protocolo_${protocol.number}_${Date.now()}.pdf"`);
@@ -2450,6 +2568,11 @@ router.post('/:id/send-payment-info', requireMinRole(UserRole.USER), async (req,
       });
     }
 
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
+    const authReq = req as AuthenticatedRequest;
+
     // Buscar protocolo
     const protocol = await prisma.protocolSimplified.findUnique({
       where: { id },
@@ -2466,50 +2589,60 @@ router.post('/:id/send-payment-info', requireMinRole(UserRole.USER), async (req,
       });
     }
 
-    // Construir corpo do email
-    let emailBody = message || '';
-    emailBody += '\n\n---\n\n';
-
+    // Montar mensagem de pagamento para o cidadão
+    let paymentMessage = message ? `${message}\n\n` : '';
     if (paymentFileUrl) {
-      emailBody += `📄 **Guia de Pagamento:** ${paymentFileUrl}\n\n`;
+      paymentMessage += `📄 Guia de Pagamento: ${paymentFileUrl}\n`;
     }
-
     if (pixKey) {
-      emailBody += `💳 **Chave PIX:** ${pixKey}\n\n`;
+      paymentMessage += `💳 Chave PIX: ${pixKey}\n`;
     }
-
     if (pixQRCode) {
-      emailBody += `📱 **QR Code PIX (Copie e cole no app do banco):**\n${pixQRCode}\n\n`;
+      paymentMessage += `📱 QR Code PIX (copie e cole no app do banco):\n${pixQRCode}\n`;
     }
 
-    emailBody += `\nAtenciosamente,\nPrefeitura Municipal`;
-
-    // TODO: Integrar com serviço de email real (SendGrid, AWS SES, etc)
-    // Por enquanto, apenas registrar no histórico
-    console.log('📧 Email de pagamento a ser enviado:');
-    console.log(`   Para: ${recipientEmail}`);
-    console.log(`   Assunto: ${subject}`);
-    console.log(`   Guia: ${paymentFileUrl || 'N/A'}`);
-    console.log(`   PIX: ${pixKey || 'N/A'}`);
-
-    // Registrar no histórico do protocolo
-    await prisma.protocolHistorySimplified.create({
-      data: {
-        protocolId: id,
-        action: 'PAYMENT_INFO_SENT',
-        comment: `Informações de pagamento enviadas para ${recipientEmail}`,
-        metadata: {
-          recipientEmail,
-          paymentFileUrl,
-          pixKey: pixKey ? '***' : undefined, // Não armazenar chave completa
-          hasQRCode: !!pixQRCode
-        } as any
-      }
-    });
+    // ✅ Canal REAL de entrega: interação do protocolo visível ao cidadão
+    // (portal + bot). E-mail permanece pendente de integração — a resposta
+    // não pode alegar envio de e-mail que não acontece.
+    await prisma.$transaction([
+      prisma.protocolInteraction.create({
+        data: {
+          protocolId: id,
+          type: 'MESSAGE',
+          authorType: 'SERVER',
+          authorId: authReq.userId,
+          authorName: authReq.user?.name || 'Servidor',
+          message: `Informações de pagamento:\n\n${paymentMessage}`,
+          isInternal: false,
+          isRead: false,
+          metadata: {
+            kind: 'PAYMENT_INFO',
+            subject: subject || null,
+            hasPaymentFile: !!paymentFileUrl,
+            hasPixKey: !!pixKey,
+            hasQRCode: !!pixQRCode
+          } as any
+        }
+      }),
+      prisma.protocolHistorySimplified.create({
+        data: {
+          protocolId: id,
+          action: 'PAYMENT_INFO_SENT',
+          comment: `Informações de pagamento registradas no protocolo (destinatário informado: ${recipientEmail})`,
+          userId: authReq.userId,
+          metadata: {
+            recipientEmail,
+            paymentFileUrl,
+            pixKey: pixKey ? '***' : undefined, // Não armazenar chave completa
+            hasQRCode: !!pixQRCode
+          } as any
+        }
+      })
+    ]);
 
     return res.json({
       success: true,
-      message: 'Informações de pagamento enviadas com sucesso',
+      message: 'Informações de pagamento registradas no protocolo e enviadas ao cidadão pela central de mensagens',
       data: {
         recipientEmail,
         sentAt: new Date().toISOString()
@@ -2577,8 +2710,11 @@ router.get('/secretaria/:departmentId', requireMinRole(UserRole.USER), async (re
     const where: any = { departmentId };
 
     // Escopo: meus vs secretaria. USER nunca vê além dos seus (mesmo em department).
+    // Gestor/coordenador só enxerga a PRÓPRIA secretaria em scope=department.
     const wantDepartment = scope === 'department';
-    const canSeeDepartment = user.role !== 'USER';
+    const isAdminRole = user.role === 'ADMIN' || user.role === 'SUPER_ADMIN';
+    const canSeeDepartment =
+      user.role !== 'USER' && (isAdminRole || user.departmentId === departmentId);
     if (!wantDepartment || !canSeeDepartment) {
       where.OR = [{ assignedUserId: userId }, { currentAssignedUserId: userId }];
     }
