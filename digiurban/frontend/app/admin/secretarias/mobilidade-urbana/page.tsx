@@ -269,6 +269,37 @@ export default function SecretariaMobilidadeUrbanaPage() {
         )}
       </div>
 
+      {/* Apps de Mobilidade Urbana — sistemas especializados com tabelas próprias */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Mobilidade Urbana</h2>
+          <p className="text-sm text-muted-foreground">
+            Sistemas especializados completos da secretaria
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/mobilidade-urbana')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-emerald-700 transition-colors">
+                Carteiras & Gratuidades
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Cartão de estudante, gratuidades de idoso e PcD, passe livre e vaga especial —
+                emissão com número e validade, renovação, 2ª via e validação pública por QR
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-emerald-600 hover:bg-emerald-700">
+                Acessar Sistema
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+
       <ServiceSelectorModal
         open={showServiceSelectorModal}
         onOpenChange={setShowServiceSelectorModal}

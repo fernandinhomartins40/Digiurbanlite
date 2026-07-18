@@ -403,6 +403,7 @@ loadRoute('/api/apps/esportes', './routes/esportes', requireFeature('esportes'))
 // Fase 3: apps leves
 loadRoute('/api/apps/cultura', './routes/cultura', requireFeature('cultura'));
 loadRoute('/api/apps/transportes-transito', './routes/transito', requireFeature('transportes-transito'));
+loadRoute('/api/apps/mobilidade-urbana', './routes/mobilidade', requireFeature('mobilidade-urbana'));
 
 // Sistema Unificado de Vinculação de Servidores V2.0
 try {

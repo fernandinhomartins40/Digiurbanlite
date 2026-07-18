@@ -84,6 +84,15 @@ const CREDENCIAL_MODULE_TYPES: Record<string, string> = {
   CREDENCIAMENTO_TRANSPORTE_ESCOLAR: 'TRANSPORTE_ESCOLAR',
 };
 
+/** moduleType → tipo de carteira/gratuidade (Mobilidade Urbana, na CRIAÇÃO). */
+const CARTEIRA_MODULE_TYPES: Record<string, string> = {
+  CARTAO_ESTUDANTE: 'ESTUDANTE',
+  CARTAO_TRANSPORTE: 'TRANSPORTE',
+  ISENCAO_IDOSO: 'IDOSO',
+  PASSE_LIVRE_INTERESTADUAL: 'PASSE_LIVRE',
+  VAGA_ESPECIAL_PCD: 'VAGA_ESPECIAL',
+};
+
 /** moduleType → tipo de OS (Serviços Públicos, convertidos na CRIAÇÃO). */
 const OS_MODULE_TYPES: Record<string, string> = {
   ILUMINACAO_PUBLICA: 'Iluminação Pública',
@@ -306,6 +315,38 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
       dados,
     });
     logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → empréstimo de material esportivo`);
+    return;
+  }
+
+  // ---- Mobilidade Urbana → carteira/gratuidade ----
+  if (CARTEIRA_MODULE_TYPES[moduleType]) {
+    const existente = await prisma.carteiraGratuidade.findFirst({
+      where: { protocolId: protocol.id },
+    });
+    if (existente) return;
+    const mobilidadeService = (await import('../mobilidade/mobilidade.service')).default;
+    let titularNome = pickField(customData, /^nome|titular/i);
+    let cpfTitular = pickField(customData, /^cpf$/i);
+    if ((!titularNome || !cpfTitular) && protocol.citizenId) {
+      const citizen = await prisma.citizen.findFirst({
+        where: { id: protocol.citizenId },
+        select: { name: true, cpf: true },
+      });
+      titularNome = titularNome || citizen?.name || undefined;
+      cpfTitular = cpfTitular || citizen?.cpf || undefined;
+    }
+    await mobilidadeService.createCarteira({
+      protocolId: protocol.id,
+      tipo: CARTEIRA_MODULE_TYPES[moduleType],
+      citizenId: protocol.citizenId,
+      titularNome,
+      cpf: cpfTitular,
+      dataNascimento: pickField(customData, /nascimento/i),
+      telefone: pickField(customData, /telefone|celular|contato/i),
+      instituicao: pickField(customData, /instituicao|instituição|escola|faculdade|curso/i),
+      dados: customData && typeof customData === 'object' ? { formulario: customData } : undefined,
+    });
+    logger.info(`[protocol-to-app] Protocolo ${protocol.number || protocol.id} → carteira/gratuidade`);
     return;
   }
 

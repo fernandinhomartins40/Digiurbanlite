@@ -10998,3 +10998,39 @@ model DefesaAutuacao {
   @@index([tenantId])
   @@map("defesas_autuacao")
 }
+
+// ============================================================================
+// CARTEIRAS & GRATUIDADES — App de Mobilidade Urbana (Fase 3 do plano de
+// apps, blueprint carteirinha). Emissão/renovação/2ª via de cartões
+// (estudante, idoso, PcD, passe livre, vaga especial) com número, validade
+// e código de validação pública (QR).
+// ============================================================================
+
+model CarteiraGratuidade {
+  id              String    @id @default(cuid())
+  tenantId        String?
+  protocolId      String?   @unique // quando nasce de protocolo
+  tipo            String // ESTUDANTE | IDOSO | PCD | TRANSPORTE | PASSE_LIVRE | VAGA_ESPECIAL
+  titularNome     String?
+  cpf             String?
+  dataNascimento  DateTime?
+  citizenId       String? // join manual com Citizen
+  telefone        String?
+  instituicao     String? // escola/faculdade (estudante)
+  status          String    @default("SOLICITADA") // SOLICITADA | EM_ANALISE | ATIVA | INDEFERIDA | SUSPENSA | CANCELADA
+  numeroCarteira  String? // CTR-ano-seq, gerado na emissão
+  codigoValidacao String?   @unique // token do QR de validação pública
+  validade        DateTime?
+  emitidaEm       DateTime?
+  viasEmitidas    Int       @default(0)
+  observacoes     String?
+  dados           Json? // formulário de origem
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([tipo, status])
+  @@index([cpf])
+  @@index([citizenId])
+  @@index([tenantId])
+  @@map("carteiras_gratuidade")
+}
