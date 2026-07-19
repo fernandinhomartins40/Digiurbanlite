@@ -1,3 +1,18 @@
+####################################################################################################
+# ⚠️  RELATÓRIO OBSOLETO — NÃO USAR COMO FONTE DE VERDADE (2026-07-18)
+#
+# Este relatório foi gerado ANTES de várias correções nos seeds e da camada
+# `ensureWorkflowCoverageForService` (service-workflows.seed.ts). Medição atual:
+#   - moduleTypes de serviço SEM workflow: 0 (não 39)
+#   - workflows sem serviço (mortos/inertes): apenas 3
+#       ENCAMINHAMENTOS_TFD, INSCRICAO_ESCOLINHA, RECLAMACAO_TRANSPORTE
+#   - documentos do workflow ausentes no serviço: 14 de 241 (~6%, não 85%)
+#
+# Além disso, os requiredDocumentTypes das etapas agora derivam EXCLUSIVAMENTE
+# do requiredDocuments do serviço (fonte única) — os "document mismatches"
+# abaixo não afetam mais o runtime. Mantido apenas como registro histórico.
+####################################################################################################
+
 ====================================================================================================
 WORKFLOW <-> SERVICE DOCUMENT MISMATCH REPORT
 ====================================================================================================

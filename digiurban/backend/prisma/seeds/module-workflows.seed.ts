@@ -193,8 +193,6 @@ const moduleWorkflows = [
 
   // SEGURANÇA PÚBLICA
   { moduleType: 'REGISTRO_OCORRENCIA', name: 'Registro de Ocorrências', description: 'Registro de ocorrências', defaultSLA: 1 },
-  { moduleType: 'PATROLHAMENTO', name: 'Patrolhamento', description: 'Gestão de patrolhamento', defaultSLA: 1 },
-  { moduleType: 'AUTORIZACAO_EVENTO_SEG', name: 'Autorização de Eventos', description: 'Autorização de eventos com segurança', defaultSLA: 10 },
   { moduleType: 'ATENDIMENTOS_SEGURANCA', name: 'Atendimentos Segurança', description: 'Atendimentos de segurança pública', defaultSLA: 1 },
   { moduleType: 'SOLICITACAO_RONDA', name: 'Solicitação de Ronda', description: 'Solicitação de ronda', defaultSLA: 1 },
   { moduleType: 'SOLICITACAO_CAMERA_SEGURANCA', name: 'Câmeras de Segurança', description: 'Solicitação de câmeras de segurança', defaultSLA: 15 },

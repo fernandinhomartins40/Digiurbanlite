@@ -203,10 +203,19 @@ export function generateWorkflowFromService(service: ServiceSimplified): CreateW
   }
 
   const requiredDocuments = Array.isArray(docsRaw)
-    ? (docsRaw as any[]).map(doc => ({
-        type: typeof doc === 'string' ? doc : doc.type,
-        name: typeof doc === 'string' ? doc : doc.name
-      }))
+    ? (docsRaw as any[])
+        .map(doc => {
+          if (typeof doc === 'string') {
+            return { type: doc, name: doc };
+          }
+          // Fallback cruzado: serviços podem declarar só `name` (formato dos
+          // seeds services/*.seed.ts) ou só `type`. Nunca deixar `undefined`,
+          // senão a etapa passa a exigir um documento "undefined".
+          const type = doc?.type || doc?.name || '';
+          const name = doc?.name || doc?.type || '';
+          return { type, name };
+        })
+        .filter(doc => doc.type)
     : [];
 
   // Extrair campos do formulário do formSchema - fazer parse se for string JSON

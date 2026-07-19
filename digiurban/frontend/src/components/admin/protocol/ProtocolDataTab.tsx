@@ -60,8 +60,57 @@ interface ProtocolDataTabProps {
   onRefresh?: () => void
 }
 
+// Campos técnicos/metadados que nunca devem aparecer na aba de dados.
+// Espelha EXCLUDED_FIELDS/EXCLUDED_PREFIXES do backend (createDataFieldsFromCustomData).
+const EXCLUDED_FIELD_KEYS = new Set([
+  'id', 'citizenId', 'serviceId', 'protocolId', 'createdAt', 'updatedAt',
+  'createdBy', 'updatedBy', 'deletedAt', 'userId', 'departmentId'
+])
+const EXCLUDED_FIELD_PREFIXES = ['_', 'citizen', 'user', 'service', 'protocol']
+
+function formatFieldLabel(key: string): string {
+  return key
+    .replace(/([A-Z])/g, ' $1')
+    .replace(/_/g, ' ')
+    .replace(/^./, (c) => c.toUpperCase())
+    .trim()
+}
+
+function isDisplayableCustomKey(key: string): boolean {
+  if (EXCLUDED_FIELD_KEYS.has(key)) return false
+  const lower = key.toLowerCase()
+  return !EXCLUDED_FIELD_PREFIXES.some((prefix) => lower.startsWith(prefix))
+}
+
+/**
+ * Constrói campos somente-leitura a partir do customData quando o protocolo
+ * ainda não tem ProtocolDataField materializado (protocolos antigos ou cuja
+ * criação de campos falhou). Não permite aprovação granular — para isso é
+ * preciso rodar o backfill no backend —, mas garante que os dados apareçam.
+ */
+function buildReadOnlyFieldsFromFormData(formData: Record<string, any>): DataField[] {
+  return Object.entries(formData)
+    .filter(([key, value]) => isDisplayableCustomKey(key) && value !== null && value !== undefined && String(value) !== '')
+    .map(([key, value], index) => ({
+      id: `readonly-${key}-${index}`,
+      fieldKey: key,
+      fieldLabel: formatFieldLabel(key),
+      fieldValue: String(value),
+      isRequired: false,
+      fieldType: null,
+      status: 'APPROVED' as const,
+      validatedBy: null,
+      validatedAt: null,
+      rejectedAt: null,
+      rejectionReason: null,
+      version: 1,
+      previousValue: null,
+    }))
+}
+
 export function ProtocolDataTab({
   protocolId,
+  formData,
   onRefresh
 }: ProtocolDataTabProps) {
   const { apiRequest } = useAdminAuth()
@@ -69,6 +118,7 @@ export function ProtocolDataTab({
 
   const [fields, setFields] = useState<DataField[]>([])
   const [stats, setStats] = useState<FieldsStats | null>(null)
+  const [isReadOnlyFallback, setIsReadOnlyFallback] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
   const [rejectingFieldId, setRejectingFieldId] = useState<string | null>(null)
   const [rejectionReason, setRejectionReason] = useState('')
@@ -87,7 +137,8 @@ export function ProtocolDataTab({
   // Carregar campos de dados
   useEffect(() => {
     loadDataFields()
-  }, [protocolId])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [protocolId, formData])
 
   const loadDataFields = async () => {
     try {
@@ -103,11 +154,39 @@ export function ProtocolDataTab({
 
       const result = await response.json()
       if (result.success) {
-        setFields(result.data.fields || [])
+        const loadedFields: DataField[] = result.data.fields || []
+
+        // Fallback: se não há campos materializados mas o protocolo tem
+        // customData, exibe os dados em modo somente-leitura para não deixar
+        // a aba vazia (resolve protocolos antigos/sem materialização).
+        if (loadedFields.length === 0 && formData && Object.keys(formData).length > 0) {
+          const readOnlyFields = buildReadOnlyFieldsFromFormData(formData)
+          if (readOnlyFields.length > 0) {
+            setFields(readOnlyFields)
+            setStats(null)
+            setIsReadOnlyFallback(true)
+            return
+          }
+        }
+
+        setFields(loadedFields)
         setStats(result.data.stats || null)
+        setIsReadOnlyFallback(false)
       }
     } catch (error) {
       console.error('Error loading data fields:', error)
+
+      // Mesmo em erro do endpoint, tenta exibir o customData que já temos.
+      if (formData && Object.keys(formData).length > 0) {
+        const readOnlyFields = buildReadOnlyFieldsFromFormData(formData)
+        if (readOnlyFields.length > 0) {
+          setFields(readOnlyFields)
+          setStats(null)
+          setIsReadOnlyFallback(true)
+          return
+        }
+      }
+
       toast({
         title: 'Erro ao carregar campos',
         description: error instanceof Error ? error.message : 'Erro desconhecido',
@@ -507,6 +586,18 @@ export function ProtocolDataTab({
 
   return (
     <div className="space-y-4">
+      {/* Aviso de modo somente-leitura (dados vindos do customData) */}
+      {isReadOnlyFallback && (
+        <Alert>
+          <Info className="h-4 w-4" />
+          <AlertDescription>
+            Exibindo os dados informados na solicitação. Este protocolo ainda não
+            possui campos preparados para validação individual — os valores abaixo
+            são somente para consulta.
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Estatísticas com Barra de Progresso */}
       {stats && (
         <Card>

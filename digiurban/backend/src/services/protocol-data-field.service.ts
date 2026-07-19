@@ -168,6 +168,95 @@ export async function createDataFieldsFromCustomData(input: CreateDataFieldsInpu
 }
 
 /**
+ * Extrai os IDs de campos obrigatórios a partir do formSchema/formFieldsConfig
+ * de um serviço. Espelha a lógica de extractRequiredInputFieldsFromService do
+ * protocol-module.service para reuso no backfill.
+ */
+function extractRequiredFieldIdsFromService(service: {
+  formSchema?: unknown;
+  formFieldsConfig?: unknown;
+} | null | undefined): string[] {
+  if (!service) return [];
+
+  const requiredFieldIds = new Set<string>();
+
+  let formSchema: Record<string, any> | null = null;
+  if (typeof service.formSchema === 'string') {
+    try {
+      const parsed = JSON.parse(service.formSchema);
+      formSchema = parsed && typeof parsed === 'object' ? parsed : null;
+    } catch {
+      formSchema = null;
+    }
+  } else if (service.formSchema && typeof service.formSchema === 'object') {
+    formSchema = service.formSchema as Record<string, any>;
+  }
+
+  if (Array.isArray(formSchema?.required)) {
+    for (const fieldId of formSchema.required) {
+      if (typeof fieldId === 'string' && fieldId.trim()) {
+        requiredFieldIds.add(fieldId.trim());
+      }
+    }
+  }
+
+  const formFieldsConfig = Array.isArray(service.formFieldsConfig) ? service.formFieldsConfig : [];
+  for (const field of formFieldsConfig) {
+    if (!field || typeof field !== 'object') continue;
+    const fieldRecord = field as Record<string, any>;
+    const rawId = fieldRecord.id ?? fieldRecord.key ?? fieldRecord.name;
+    const fieldId = typeof rawId === 'string' ? rawId.trim() : '';
+    if (fieldId && fieldRecord.required) {
+      requiredFieldIds.add(fieldId);
+    }
+  }
+
+  return Array.from(requiredFieldIds);
+}
+
+/**
+ * Reconcilia (backfill) os ProtocolDataField de UM protocolo a partir do seu
+ * customData. Idempotente: se o protocolo já possui campos, não faz nada;
+ * caso contrário, materializa os campos (mesma lógica da criação original).
+ *
+ * Resolve o sintoma da aba de Dados vazia em protocolos criados antes do
+ * sistema granular, ou cuja criação de campos falhou (é não-fatal na criação).
+ *
+ * @returns quantidade de campos criados (0 se já havia campos ou não há dados).
+ */
+export async function backfillDataFieldsForProtocol(protocolId: string): Promise<number> {
+  const existingCount = await prisma.protocolDataField.count({ where: { protocolId } });
+  if (existingCount > 0) {
+    return 0;
+  }
+
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: {
+      customData: true,
+      service: { select: { formSchema: true, formFieldsConfig: true } },
+    },
+  });
+
+  if (!protocol) return 0;
+
+  const customData = coerceCustomData(protocol.customData);
+  if (Object.keys(customData).length === 0) {
+    return 0;
+  }
+
+  const requiredFields = extractRequiredFieldIdsFromService(protocol.service);
+
+  const created = await createDataFieldsFromCustomData({
+    protocolId,
+    customData,
+    requiredFields,
+  });
+
+  return Array.isArray(created) ? created.length : 0;
+}
+
+/**
  * Buscar todos os campos de um protocolo
  */
 export async function getProtocolDataFields(protocolId: string) {

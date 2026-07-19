@@ -14,6 +14,7 @@
  */
 
 import { PrismaClient, Prisma } from '@prisma/client';
+import { resolveCanonicalDocumentType } from '../../src/utils/document-mapping';
 
 const prisma = new PrismaClient();
 
@@ -26631,12 +26632,55 @@ function shouldTreatAsDocumentGenerationStage(stage: Record<string, any> | null 
   return hasGenerationName;
 }
 
+/**
+ * Reconcilia os documentos exigidos por uma etapa (definidos de forma hardcoded
+ * em specificWorkflows) com os documentos realmente declarados no serviço
+ * (service.requiredDocuments) — a fonte única de verdade.
+ *
+ * - Documento da etapa que casa (por similaridade) com um documento do serviço:
+ *   é substituído pelo NOME CANÔNICO do serviço (alinhamento).
+ * - Documento da etapa que NÃO existe no serviço (órfão / typo): é DESCARTADO,
+ *   pois o servidor não pode cobrar um documento que o cidadão nunca viu no
+ *   catálogo do serviço.
+ *
+ * Isso elimina os "document mismatches" reportados em
+ * WORKFLOW_SERVICE_MISMATCHES_REPORT.txt na raiz, sem editar 27k linhas à mão.
+ */
+function reconcileStageDocumentsWithService(
+  stageDocuments: string[],
+  serviceDocuments: string[]
+): { aligned: string[]; dropped: string[] } {
+  const aligned: string[] = [];
+  const dropped: string[] = [];
+  const seen = new Set<string>();
+
+  if (serviceDocuments.length === 0) {
+    // Serviço não declara documentos → etapa não pode exigir nenhum.
+    return { aligned: [], dropped: [...stageDocuments] };
+  }
+
+  for (const stageDocument of stageDocuments) {
+    const canonical = resolveCanonicalDocumentType(stageDocument, serviceDocuments);
+    if (!canonical) {
+      dropped.push(stageDocument);
+      continue;
+    }
+    if (seen.has(canonical)) continue;
+    seen.add(canonical);
+    aligned.push(canonical);
+  }
+
+  return { aligned, dropped };
+}
+
 function sanitizeStageRequirementsForService(service: any, stages: any[]) {
   const fieldCatalog = buildServiceFieldCatalog(service);
+  const serviceDocuments = parseServiceRequiredDocuments(service);
   let unresolvedInputCount = 0;
   let movedOutputCount = 0;
+  let droppedDocumentCount = 0;
 
-  const sanitizedStages = stages.map((stage) => {
+  const sanitizedStages: any[] = stages.map((stage): any => {
     const stageRecord = stage && typeof stage === 'object' ? (stage as Record<string, any>) : {};
     if (isReceptionStage(stageRecord)) {
       const {
@@ -26686,9 +26730,17 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
       ...stageWithoutRequirements
     } = stageRecord;
 
+    // Fonte única de verdade: os documentos da etapa são reconciliados com os
+    // documentos declarados no serviço. Documentos órfãos (typos/hardcoded que
+    // não existem no serviço) são descartados; os demais recebem o nome canônico.
+    const stageDocuments = normalizeStringArray(stageRecord.requiredDocumentTypes ?? []);
+    const { aligned: alignedDocuments, dropped: droppedDocuments } =
+      reconcileStageDocumentsWithService(stageDocuments, serviceDocuments);
+    droppedDocumentCount += droppedDocuments.length;
+
     return {
       ...stageWithoutRequirements,
-      requiredDocumentTypes: normalizeStringArray(stageRecord.requiredDocumentTypes ?? []),
+      requiredDocumentTypes: alignedDocuments,
       requiredInputFieldIds: resolvedRequiredInputs,
       requiredStageOutputs: normalizedRequiredOutputs
     };
@@ -26697,7 +26749,8 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
   return {
     sanitizedStages,
     unresolvedInputCount,
-    movedOutputCount
+    movedOutputCount,
+    droppedDocumentCount
   };
 }
 
@@ -26991,14 +27044,24 @@ function ensureWorkflowCoverageForService(service: any, stages: any[]) {
     dataStageIndex = insertIndex;
   }
 
-  if (documentStageIndex >= 0 && requiredDocuments.length > 0) {
-    normalizedStages[documentStageIndex] = {
-      ...normalizedStages[documentStageIndex],
-      requiredDocumentTypes: mergeUniqueStrings(
-        normalizedStages[documentStageIndex].requiredDocumentTypes,
-        requiredDocuments
-      )
-    };
+  // FONTE ÚNICA DE VERDADE: os documentos exigidos derivam EXCLUSIVAMENTE do
+  // requiredDocuments do serviço. Concentramos todos na etapa de análise
+  // documental e zeramos requiredDocumentTypes de qualquer outra etapa. Assim,
+  // nomes hardcoded do specificWorkflow que não existem no catálogo do serviço
+  // (documentos-fantasma que o cidadão nunca poderia enviar) são descartados.
+  const serviceDocumentTypes = normalizeStringArray(requiredDocuments);
+  for (let index = 0; index < normalizedStages.length; index += 1) {
+    if (index === documentStageIndex) {
+      normalizedStages[index] = {
+        ...normalizedStages[index],
+        requiredDocumentTypes: serviceDocumentTypes
+      };
+    } else if (normalizeStringArray(normalizedStages[index].requiredDocumentTypes).length > 0) {
+      normalizedStages[index] = {
+        ...normalizedStages[index],
+        requiredDocumentTypes: []
+      };
+    }
   }
 
   if (dataStageIndex >= 0 && requiredFieldIds.length > 0) {
@@ -27025,13 +27088,14 @@ export function buildSeedWorkflowStagesForService(service: any) {
 
   const normalizedStages = normalizeWorkflowStages(workflowTemplate as any[]);
   const coveredStages = ensureWorkflowCoverageForService(service, normalizedStages);
-  const { sanitizedStages, unresolvedInputCount, movedOutputCount } =
+  const { sanitizedStages, unresolvedInputCount, movedOutputCount, droppedDocumentCount } =
     sanitizeStageRequirementsForService(service, coveredStages as any[]);
 
   return {
     stages: sanitizedStages,
     unresolvedInputCount,
     movedOutputCount,
+    droppedDocumentCount,
     source: service.moduleType && specificWorkflows[service.moduleType] ? 'specific' : 'generated'
   };
 }
@@ -27079,12 +27143,18 @@ export async function seedServiceWorkflows() {
         defaultSLA = service.estimatedDays || 10;
       }
 
-      const { stages: workflowStages, unresolvedInputCount, movedOutputCount, source } =
+      const { stages: workflowStages, unresolvedInputCount, movedOutputCount, droppedDocumentCount, source } =
         buildSeedWorkflowStagesForService(service);
 
       if (unresolvedInputCount > 0) {
         console.warn(
           `   Aviso: ${service.name}: ${unresolvedInputCount} campo(s) de entrada não mapeado(s) movido(s) para requiredStageOutputs (${movedOutputCount} novo(s)).`
+        );
+      }
+
+      if (droppedDocumentCount > 0) {
+        console.warn(
+          `   Aviso: ${service.name}: ${droppedDocumentCount} documento(s) da etapa descartado(s) por não existir(em) no serviço (alinhamento com fonte única).`
         );
       }
 
