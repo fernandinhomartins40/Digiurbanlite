@@ -26677,7 +26677,6 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
   const fieldCatalog = buildServiceFieldCatalog(service);
   const serviceDocuments = parseServiceRequiredDocuments(service);
   let unresolvedInputCount = 0;
-  let movedOutputCount = 0;
   let droppedDocumentCount = 0;
 
   const sanitizedStages: any[] = stages.map((stage): any => {
@@ -26700,7 +26699,6 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
     }
 
     const rawRequiredInputs = normalizeStringArray(stageRecord.requiredInputFieldIds ?? []);
-    const existingRequiredOutputs = normalizeStringArray(stageRecord.requiredStageOutputs ?? []);
 
     const resolvedRequiredInputs: string[] = [];
     const unresolvedRequiredInputs: string[] = [];
@@ -26719,11 +26717,15 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
 
     unresolvedInputCount += unresolvedRequiredInputs.length;
 
-    const normalizedRequiredOutputs = Array.from(
-      new Set([...existingRequiredOutputs, ...unresolvedRequiredInputs])
-    );
-    movedOutputCount += Math.max(normalizedRequiredOutputs.length - existingRequiredOutputs.length, 0);
-
+    // Fonte única de verdade (campos): a etapa só pode exigir campos que EXISTEM
+    // no formSchema do serviço (o que o cidadão realmente preenche). Campos
+    // "de análise do servidor" que o seed hardcodeou (parecer_tecnico, pontuacao,
+    // nivel_atleta, data_vistoria...) NÃO existem no formulário e são DESCARTADOS.
+    //
+    // Antes, esses campos órfãos eram movidos para requiredStageOutputs — mas não
+    // existe UI nem API que grave stageOutputs, o que travava a etapa para sempre
+    // ("Saídas obrigatórias da etapa pendentes"). Enquanto não houver esse fluxo,
+    // requiredStageOutputs fica SEMPRE vazio para não criar bloqueios impossíveis.
     const {
       requiredInputFieldIds,
       requiredStageOutputs,
@@ -26742,14 +26744,16 @@ function sanitizeStageRequirementsForService(service: any, stages: any[]) {
       ...stageWithoutRequirements,
       requiredDocumentTypes: alignedDocuments,
       requiredInputFieldIds: resolvedRequiredInputs,
-      requiredStageOutputs: normalizedRequiredOutputs
+      // Sem exigência de saída de etapa enquanto não houver fluxo para preenchê-la.
+      requiredStageOutputs: []
     };
   });
 
   return {
     sanitizedStages,
     unresolvedInputCount,
-    movedOutputCount,
+    // Campos órfãos agora são descartados (não viram mais stageOutputs bloqueantes).
+    droppedInputCount: unresolvedInputCount,
     droppedDocumentCount
   };
 }
@@ -27088,13 +27092,13 @@ export function buildSeedWorkflowStagesForService(service: any) {
 
   const normalizedStages = normalizeWorkflowStages(workflowTemplate as any[]);
   const coveredStages = ensureWorkflowCoverageForService(service, normalizedStages);
-  const { sanitizedStages, unresolvedInputCount, movedOutputCount, droppedDocumentCount } =
+  const { sanitizedStages, unresolvedInputCount, droppedInputCount, droppedDocumentCount } =
     sanitizeStageRequirementsForService(service, coveredStages as any[]);
 
   return {
     stages: sanitizedStages,
     unresolvedInputCount,
-    movedOutputCount,
+    droppedInputCount,
     droppedDocumentCount,
     source: service.moduleType && specificWorkflows[service.moduleType] ? 'specific' : 'generated'
   };
@@ -27143,12 +27147,12 @@ export async function seedServiceWorkflows() {
         defaultSLA = service.estimatedDays || 10;
       }
 
-      const { stages: workflowStages, unresolvedInputCount, movedOutputCount, droppedDocumentCount, source } =
+      const { stages: workflowStages, droppedInputCount, droppedDocumentCount, source } =
         buildSeedWorkflowStagesForService(service);
 
-      if (unresolvedInputCount > 0) {
+      if (droppedInputCount > 0) {
         console.warn(
-          `   Aviso: ${service.name}: ${unresolvedInputCount} campo(s) de entrada não mapeado(s) movido(s) para requiredStageOutputs (${movedOutputCount} novo(s)).`
+          `   Aviso: ${service.name}: ${droppedInputCount} campo(s) de entrada descartado(s) por não existir(em) no formSchema do serviço (alinhamento com fonte única).`
         );
       }
 

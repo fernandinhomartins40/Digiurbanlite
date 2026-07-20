@@ -1301,6 +1301,7 @@ export interface RealignProtocolWorkflowResult {
   protocolId: string;
   stagesUpdated: number;
   stagesUnmatched: number;
+  dataFieldsCreated?: number;
   skipped?: 'no_workflow' | 'no_stages';
 }
 
@@ -1346,6 +1347,10 @@ export async function realignProtocolWorkflow(
     return { protocolId, stagesUpdated: 0, stagesUnmatched: 0, skipped: 'no_stages' };
   }
 
+  // Catálogo de campos do formulário do serviço (fonte única) para sanitizar as
+  // exigências de campo das etapas.
+  const serviceFieldCatalog = extractServiceFormFields(protocol.service || {});
+
   let stagesUpdated = 0;
   let stagesUnmatched = 0;
 
@@ -1363,11 +1368,32 @@ export async function realignProtocolWorkflow(
     const currentMetadata = (protocolStage.metadata as Record<string, any>) || {};
     const rebuiltMetadata = buildProtocolStageMetadataFromWorkflowStage(templateStage);
 
+    // Sanitiza contra a fonte única (serviço), tornando o realign autossuficiente
+    // mesmo que o ServiceWorkflow no banco ainda não tenha sido re-seedado:
+    //  - requiredInputFieldIds: só campos que EXISTEM no formSchema do serviço;
+    //  - requiredStageOutputs: sempre vazio (não há fluxo para preenchê-lo — evita
+    //    o bloqueio "Saídas obrigatórias da etapa pendentes").
+    const isReception = isReceptionStage({
+      name: protocolStage.stageName,
+      stageType: (rebuiltMetadata as any).stageType,
+    });
+    const resolvedInputFieldIds = isReception
+      ? []
+      : normalizeStringArray((rebuiltMetadata as any).requiredInputFieldIds)
+          .map((fieldId) => resolveServiceFormFieldId(fieldId, serviceFieldCatalog))
+          .filter((fieldId): fieldId is string => Boolean(fieldId));
+
+    const sanitizedRebuilt = {
+      ...rebuiltMetadata,
+      requiredInputFieldIds: resolvedInputFieldIds,
+      requiredStageOutputs: [],
+    };
+
     // Preserva chaves específicas do protocolo que não vêm do template
     // (ex.: dados operacionais gravados durante o atendimento).
     const mergedMetadata = {
       ...currentMetadata,
-      ...rebuiltMetadata,
+      ...sanitizedRebuilt,
     };
 
     await prisma.protocolStage.update({
@@ -1390,11 +1416,27 @@ export async function realignProtocolWorkflow(
     );
   }
 
+  // Materializa os ProtocolDataField a partir do customData, caso o protocolo
+  // seja antigo e nunca os tenha criado. Sem isso, as etapas que exigem campos do
+  // formulário (requiredInputFieldIds) ficam bloqueadas por "campos não aprovados"
+  // — os campos existem no customData mas não há registro para aprovar.
+  let dataFieldsCreated = 0;
+  try {
+    const { backfillDataFieldsForProtocol } = await import('./protocol-data-field.service');
+    dataFieldsCreated = await backfillDataFieldsForProtocol(protocolId);
+  } catch (error) {
+    console.error(
+      '[service-workflow.service] Falha ao materializar campos de dados no realign:',
+      error instanceof Error ? error.message : error
+    );
+  }
+
   console.log(
-    `✅ Protocolo ${protocol.number} re-alinhado: ${stagesUpdated} etapa(s) atualizada(s), ${stagesUnmatched} sem correspondência`
+    `✅ Protocolo ${protocol.number} re-alinhado: ${stagesUpdated} etapa(s) atualizada(s), ` +
+    `${stagesUnmatched} sem correspondência, ${dataFieldsCreated} campo(s) de dados materializado(s)`
   );
 
-  return { protocolId, stagesUpdated, stagesUnmatched };
+  return { protocolId, stagesUpdated, stagesUnmatched, dataFieldsCreated };
 }
 
 /**
