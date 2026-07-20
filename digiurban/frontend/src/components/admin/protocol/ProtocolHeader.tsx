@@ -29,7 +29,8 @@ import {
   UserPlus,
   UserCheck,
   ArrowRightLeft,
-  Users
+  Users,
+  RefreshCw
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -64,6 +65,7 @@ interface ProtocolHeaderProps {
   onActionComplete: () => void
   onBack: () => void
   onAssignAction?: (action: 'assign' | 'delegate' | 'forward' | 'team') => void
+  onRealignWorkflow?: () => void
   onCreatePendingRequest?: (context: PendingCreationContext) => void
 }
 
@@ -78,6 +80,7 @@ export function ProtocolHeader({
   onActionComplete,
   onBack,
   onAssignAction,
+  onRealignWorkflow,
   onCreatePendingRequest
 }: ProtocolHeaderProps) {
   const { apiRequest } = useAdminAuth()
@@ -483,6 +486,15 @@ export function ProtocolHeader({
                     <Users className="mr-2 h-4 w-4" />
                     <span>Atribuir Equipe</span>
                   </DropdownMenuItem>
+                  {onRealignWorkflow && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onClick={onRealignWorkflow}>
+                        <RefreshCw className="mr-2 h-4 w-4" />
+                        <span>Re-alinhar fluxo</span>
+                      </DropdownMenuItem>
+                    </>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}

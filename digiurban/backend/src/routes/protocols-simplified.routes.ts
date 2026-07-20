@@ -1998,6 +1998,66 @@ router.post('/:id/reopen', requireMinRole(UserRole.USER), async (req, res) => {
     });
   }
 });
+
+/**
+ * POST /api/protocols/:id/realign-workflow
+ * Re-alinha um protocolo existente com o workflow atualizado do serviço, de forma
+ * NÃO-DESTRUTIVA: reescreve a metadata das etapas (documentos exigidos, campos,
+ * abas, ações) a partir do ServiceWorkflow atual — que já traz os documentos
+ * reconciliados com a fonte única (serviço) — e reconcilia os ProtocolDocument.
+ *
+ * Resolve protocolos criados antes da correção de alinhamento, que ficavam presos
+ * exigindo documentos que não existiam no formulário do serviço (não-aprováveis).
+ */
+router.post('/:id/realign-workflow', requireMinRole(UserRole.ADMIN), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const authReq = req as AuthenticatedRequest;
+
+    const access = await ensureAccess(req, res, id);
+    if (!access) return;
+
+    const { realignProtocolWorkflow } = await import('../services/service-workflow.service');
+    const result = await realignProtocolWorkflow(id);
+
+    if (result.skipped === 'no_workflow') {
+      return res.status(400).json({
+        success: false,
+        error: 'O serviço deste protocolo não possui workflow configurado.'
+      });
+    }
+
+    if (result.skipped === 'no_stages') {
+      return res.status(400).json({
+        success: false,
+        error: 'Este protocolo não possui etapas para re-alinhar.'
+      });
+    }
+
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId: id,
+        action: 'FLUXO_REALINHADO',
+        comment: `Fluxo re-alinhado com o serviço: ${result.stagesUpdated} etapa(s) atualizada(s)` +
+          (result.stagesUnmatched > 0 ? `, ${result.stagesUnmatched} sem correspondência` : ''),
+        userId: authReq.userId!
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Fluxo re-alinhado com sucesso. As exigências de documentos foram atualizadas conforme o serviço.',
+      data: result
+    });
+  } catch (error) {
+    console.error('Erro ao re-alinhar fluxo do protocolo:', error);
+    return res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Erro ao re-alinhar fluxo do protocolo'
+    });
+  }
+});
+
 // ========================================
 // RELATÓRIO COMPLETO DO PROTOCOLO
 // ========================================

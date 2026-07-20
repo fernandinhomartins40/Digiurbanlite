@@ -1297,6 +1297,106 @@ export async function applyWorkflowToProtocol(protocolId: string) {
   return createdStages;
 }
 
+export interface RealignProtocolWorkflowResult {
+  protocolId: string;
+  stagesUpdated: number;
+  stagesUnmatched: number;
+  skipped?: 'no_workflow' | 'no_stages';
+}
+
+/**
+ * Re-alinha um protocolo EXISTENTE com o workflow atualizado do serviço, de forma
+ * NÃO-DESTRUTIVA: preserva etapas, progresso, atribuições e documentos já enviados.
+ *
+ * O que faz:
+ *   1. Reescreve a metadata de cada ProtocolStage (requiredDocumentTypes,
+ *      requiredInputFieldIds, tabs, ações...) a partir do ServiceWorkflow atual —
+ *      que já traz os documentos reconciliados com a fonte única (serviço).
+ *   2. Reconcilia os ProtocolDocument (nomes canônicos, remove exigências-fantasma,
+ *      cria as que faltam) via syncProtocolRequiredDocuments.
+ *
+ * Resolve protocolos criados antes da correção de alinhamento de documentos, que
+ * ficavam presos exigindo documentos inexistentes no formulário do serviço.
+ */
+export async function realignProtocolWorkflow(
+  protocolId: string
+): Promise<RealignProtocolWorkflowResult> {
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    include: {
+      service: { include: { workflow: true } },
+      stages: true,
+    },
+  });
+
+  if (!protocol) {
+    throw new Error('Protocolo não encontrado');
+  }
+
+  const workflow = protocol.service?.workflow;
+  if (!workflow) {
+    return { protocolId, stagesUpdated: 0, stagesUnmatched: 0, skipped: 'no_workflow' };
+  }
+
+  const workflowStages = sortWorkflowStages(
+    (workflow.stages || []) as unknown as WorkflowStage[]
+  );
+
+  if (workflowStages.length === 0 || protocol.stages.length === 0) {
+    return { protocolId, stagesUpdated: 0, stagesUnmatched: 0, skipped: 'no_stages' };
+  }
+
+  let stagesUpdated = 0;
+  let stagesUnmatched = 0;
+
+  for (const protocolStage of protocol.stages) {
+    // Casa a etapa do protocolo com a do workflow por ordem (preferencial) ou nome.
+    const templateStage =
+      workflowStages.find((ws) => ws.order === protocolStage.stageOrder) ||
+      workflowStages.find((ws) => ws.name === protocolStage.stageName);
+
+    if (!templateStage) {
+      stagesUnmatched++;
+      continue;
+    }
+
+    const currentMetadata = (protocolStage.metadata as Record<string, any>) || {};
+    const rebuiltMetadata = buildProtocolStageMetadataFromWorkflowStage(templateStage);
+
+    // Preserva chaves específicas do protocolo que não vêm do template
+    // (ex.: dados operacionais gravados durante o atendimento).
+    const mergedMetadata = {
+      ...currentMetadata,
+      ...rebuiltMetadata,
+    };
+
+    await prisma.protocolStage.update({
+      where: { id: protocolStage.id },
+      data: { metadata: mergedMetadata },
+    });
+    stagesUpdated++;
+  }
+
+  // Reconcilia os documentos do protocolo com a exigência atual (fonte única).
+  try {
+    const { syncProtocolRequiredDocuments } = await import(
+      './required-protocol-documents.service'
+    );
+    await syncProtocolRequiredDocuments(protocolId);
+  } catch (error) {
+    console.error(
+      '[service-workflow.service] Falha ao reconciliar documentos no realign:',
+      error instanceof Error ? error.message : error
+    );
+  }
+
+  console.log(
+    `✅ Protocolo ${protocol.number} re-alinhado: ${stagesUpdated} etapa(s) atualizada(s), ${stagesUnmatched} sem correspondência`
+  );
+
+  return { protocolId, stagesUpdated, stagesUnmatched };
+}
+
 /**
  * Valida se todas as condições de uma etapa foram atendidas
  */

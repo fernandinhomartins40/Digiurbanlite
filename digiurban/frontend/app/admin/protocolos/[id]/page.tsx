@@ -241,6 +241,35 @@ export default function ProtocolDetailPage() {
     router.push(buildPendingCreationHref(protocolId, context))
   }
 
+  const handleRealignWorkflow = async () => {
+    const confirmed = window.confirm(
+      'Re-alinhar o fluxo deste protocolo com o serviço?\n\n' +
+      'As exigências de documentos das etapas serão atualizadas conforme o formulário ' +
+      'do serviço. Nenhuma etapa, progresso ou documento enviado é perdido. ' +
+      'Use isto para protocolos antigos que estão exigindo documentos incorretos.'
+    )
+    if (!confirmed) return
+
+    try {
+      const result = await apiRequest(`/protocols/${protocolId}/realign-workflow`, {
+        method: 'POST',
+      })
+      toast({
+        title: 'Fluxo re-alinhado',
+        description:
+          result?.message ||
+          'As exigências de documentos foram atualizadas conforme o serviço.',
+      })
+      await loadProtocolData()
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao re-alinhar fluxo',
+        description: error?.message || 'Não foi possível re-alinhar o fluxo do protocolo.',
+        variant: 'destructive',
+      })
+    }
+  }
+
   // Loading state
   if (isLoading) {
     return (
@@ -370,6 +399,7 @@ export default function ProtocolDetailPage() {
         onActionComplete={loadProtocolData}
         onBack={() => router.push('/admin/protocolos')}
         onAssignAction={handleAssignAction}
+        onRealignWorkflow={handleRealignWorkflow}
         onCreatePendingRequest={handleCreatePendingRequest}
       />
 
