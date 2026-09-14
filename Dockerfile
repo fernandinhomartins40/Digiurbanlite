@@ -105,6 +105,10 @@ RUN npm install --legacy-peer-deps --prefer-offline --no-audit
 # Copiar código do frontend
 COPY digiurban/frontend ./
 
+# Heap do Node para o build. O App Router tem ~280 páginas / 28 layouts e o
+# heap padrão do Node em container (~2GB) estoura com OOM no `next build`.
+ENV NODE_OPTIONS=--max-old-space-size=6144
+
 # Build Next.js com validação integrada
 RUN npm run build && \
     test -d ".next" && echo "✅ .next directory exists" || { echo "❌ ERRO: .next não existe!"; exit 1; } && \

@@ -82,9 +82,13 @@ RUN echo "Frontend cache buster: ${BUILD_TIMESTAMP:-$(date +%s)}" && \
 ARG NEXT_PUBLIC_API_URL=/api
 ARG NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
 ARG NEXT_PUBLIC_MESSAGES_WS_URL=
+# Domínio base dos subdomínios de município ({slug}.digiurban.com.br). Lido em
+# BUILD TIME pelo Next.js — o workflow já passa este build-arg.
+ARG NEXT_PUBLIC_TENANT_BASE_DOMAIN=
 ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
 ENV NEXT_PUBLIC_MESSAGES_API_URL=$NEXT_PUBLIC_MESSAGES_API_URL
 ENV NEXT_PUBLIC_MESSAGES_WS_URL=$NEXT_PUBLIC_MESSAGES_WS_URL
+ENV NEXT_PUBLIC_TENANT_BASE_DOMAIN=$NEXT_PUBLIC_TENANT_BASE_DOMAIN
 
 # Copiar package files do frontend
 COPY digiurban/frontend/package.json digiurban/frontend/package-lock.json ./
@@ -92,6 +96,10 @@ RUN sh -c 'n=0; until npm install --legacy-peer-deps; do n=$((n+1)); if [ $n -ge
 
 # Copiar código do frontend
 COPY digiurban/frontend ./
+
+# Heap do Node para o build. O App Router tem ~280 páginas / 28 layouts e o
+# heap padrão do Node em container (~2GB) estoura com OOM no `next build`.
+ENV NODE_OPTIONS=--max-old-space-size=6144
 
 # Build Next.js com validação integrada
 RUN npm run build && \
