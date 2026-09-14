@@ -99,6 +99,7 @@ jobs:
     steps:
       - name: Deploy to VPS (pull only, sem build)
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GHCR_USER: ${{ github.actor }}
           RELEASE: ${{ github.sha }}
@@ -109,7 +110,11 @@ jobs:
 
           echo "=== Sincronizando codigo (compose, scripts, sql) ==="
           if [ -f ".env" ]; then cp .env .env.backup; fi
-          git fetch origin main --prune --force
+          # O clone em /opt/digiurban nao tem credencial valida (o GitHub removeu
+          # auth por senha). Buscamos via URL autenticada com o GITHUB_TOKEN desta
+          # execucao, passada inline para NAO ficar gravada no .git/config.
+          REMOTE_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --prune --force "$REMOTE_URL" "+refs/heads/main:refs/remotes/origin/main"
           git reset --hard origin/main
           git clean -fdx -e .env -e .env.backup
           if [ ! -f ".env" ] && [ -f ".env.backup" ]; then cp .env.backup .env; fi
