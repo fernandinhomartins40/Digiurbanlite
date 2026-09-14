@@ -2,6 +2,13 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: digiurban-postgres
+    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
+    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (198 MiB) em produção, com folga para cache do banco (3.4 GB de dados).
@@ -27,6 +34,13 @@ services:
   redis:
     image: redis:7-alpine
     container_name: digiurban-redis
+    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
+    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (~20 MiB) em produção, com folga para as filas BullMQ.
@@ -56,6 +70,13 @@ services:
       context: ./ultrazend-smtp-server
       dockerfile: Dockerfile
     container_name: ultrazend-smtp
+    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
+    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo NÃO MEDIDO (container em crash-loop) — revisar após o fix do P0-2.
@@ -86,53 +107,6 @@ services:
       retries: 3
       start_period: 60s
 
-  llamacpp:
-    image: ghcr.io/ggml-org/llama.cpp:server
-    container_name: digiurban-llamacpp
-    restart: unless-stopped
-    ports:
-      - "127.0.0.1:18080:8080"
-    volumes:
-      - llamacpp_models:/models
-    command:
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8080"
-      - --model
-      - /models/digibot-q4_k_m.gguf
-      - --jinja
-      - -c
-      - "2048"
-      - -n
-      - "120"
-      - --parallel
-      - "${LLAMACPP_PARALLEL:-1}"
-      - --batch-size
-      - "${LLAMACPP_BATCH_SIZE:-512}"
-      - --ubatch-size
-      - "${LLAMACPP_UBATCH_SIZE:-512}"
-      - --threads
-      - "${LLAMACPP_THREADS:-4}"
-      - --threads-batch
-      - "${LLAMACPP_THREADS_BATCH:-4}"
-      - -fa
-      - "on"
-    networks:
-      - digiurban_network
-    healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/health || exit 1"]
-      interval: 15s
-      timeout: 10s
-      retries: 10
-      start_period: 120s
-    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): `deploy.resources` só é
-    # aplicado em Swarm — com `docker-compose` (usado no deploy) era IGNORADO, ou seja
-    # este container estava SEM limite real. mem_limit funciona em ambos.
-    # Medido: 98.61 MiB e ZERO requisições em 7 dias; 2G dá folga larga para o modelo
-    # GGUF quando o DigiBot voltar a ser usado, sem reservar 2G ociosos.
-    mem_limit: 2g
-
   ultrazend-messages:
     # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
     # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
@@ -142,6 +116,13 @@ services:
       context: ./ultrazend-messages-server
       dockerfile: Dockerfile
     container_name: ultrazend-messages
+    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
+    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (60 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
@@ -169,7 +150,11 @@ services:
       # 'tenant-default' criada pela migration add_tenants_table).
       - DEFAULT_TENANT_ID=${DEFAULT_TENANT_ID:-tenant-default}
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
-      - CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
+      # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose.
+      # A IA passa a ser externa (API DeepSeek, com creditos por municipio).
+      # Enquanto a integracao nao entra, o chat com IA fica INDISPONIVEL --
+      # estas URLs apontam para um servico que nao existe mais.
+      # - CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
       - CITIZEN_AI_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
       - DIGIBOT_INACTIVITY_TIMEOUT_MS=${DIGIBOT_INACTIVITY_TIMEOUT_MS:-600000}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
@@ -213,6 +198,13 @@ services:
       context: ./ultrazend-face-server
       dockerfile: Dockerfile
     container_name: ultrazend-face
+    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
+    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (37 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
@@ -260,104 +252,6 @@ services:
       retries: 3
       start_period: 60s
 
-  # digiurban-opensearch: disabled (Pesquisa de Preços)
-  # digiurban-prices: disabled (Pesquisa de Preços)
-  # digiurban-flow: disabled (Processos Internos)
-
-  # ─────────────────────────────────────────────────────────────
-  # MÓDULO: digiurban-ai — Plataforma de IA Centralizada (llama.cpp + Qwen3 1.7B)
-  # ─────────────────────────────────────────────────────────────
-  digiurban-ai:
-    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
-    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
-    # permanece apenas como fallback manual (docker compose build) em emergencia.
-    image: ghcr.io/fernandinhomartins40/digiurban-ai:${RELEASE:-latest}
-    build:
-      context: ./digiurban-ai
-      dockerfile: Dockerfile
-    container_name: digiurban-ai
-    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
-    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
-    # consumo MEDIDO (59 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
-    mem_limit: 384m
-    ports:
-      - "9004:9004"
-    environment:
-      - NODE_ENV=production
-      - PORT=9004
-      # Otimização VPS (P1-2): heap do V8 ABAIXO do mem_limit, deixando margem para
-      # memória fora do heap (Sharp, buffers, Chromium). Sem isto o V8 cresce até
-      # bater no limite do container e morrer por OOM em vez de fazer GC.
-      - NODE_OPTIONS=--max-old-space-size=256
-      - HOST=0.0.0.0
-      - DATABASE_URL=${DATABASE_URL}
-      - CORS_ORIGIN=${CORS_ORIGIN:-*}
-      - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
-      - AI_DEFAULT_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
-      - AI_LLAMACPP_BASE_URL=http://llamacpp:8080
-      - AI_LLAMACPP_MODEL=${AI_LLAMACPP_MODEL:-digibot-q4_k_m.gguf}
-      - AI_LLAMACPP_TIMEOUT_MS=60000
-      - AI_LLAMACPP_FAST_TIMEOUT_MS=30000
-      - AI_LLAMACPP_TEMPERATURE=0.1
-      - AI_LLAMACPP_TOP_P=0.9
-      - AI_LLAMACPP_NUM_CTX=2048
-      - AI_LLAMACPP_RAG_NUM_CTX=2048
-      - AI_LLAMACPP_MAX_TOKENS=120
-      - AI_LLAMACPP_RAG_MAX_TOKENS=80
-      - AI_LLAMACPP_FAST_MAX_TOKENS=80
-      - AI_LLAMACPP_TOOL_LOOP_MAX_STEPS=3
-      - AI_LLAMACPP_WARMUP_ENABLED=true
-      - "AI_LLAMACPP_WARMUP_PROMPT=Responda apenas: ok"
-      - AI_LLAMACPP_THINKING_DEFAULT=${AI_LLAMACPP_THINKING_DEFAULT:-false}
-      - AI_LLAMACPP_NO_THINK_PROMPT_SWITCH=${AI_LLAMACPP_NO_THINK_PROMPT_SWITCH:-true}
-      - AI_WEB_SEARCH_ENABLED=true
-      - AI_WEB_SEARCH_DEFAULT=false
-      - AI_WEB_SEARCH_PROVIDER=duckduckgo
-      - AI_WEB_SEARCH_TIMEOUT_MS=12000
-      - AI_WEB_SEARCH_MAX_RESULTS=5
-      - AI_WEB_SEARCH_CACHE_TTL_MS=300000
-      - AI_MAX_CONTEXT_CHUNKS=3
-      - AI_MAX_CONVERSATION_MESSAGES_CONTEXT=6
-      - AI_MAX_CHUNK_SIZE_CHARS=1200
-      - AI_CHUNK_OVERLAP_CHARS=120
-      - AI_MAX_CONTEXT_CHARS_IN_PROMPT=1200
-      - AI_MAX_MODEL_MESSAGE_CHARS=900
-      - AI_RAG_CANDIDATE_LIMIT=120
-      - AI_RAG_SEMANTIC_WEIGHT=0.65
-      - AI_RAG_LEXICAL_WEIGHT=0.35
-      - AI_RAG_QUERY_CACHE_TTL_MS=120000
-      - AI_EMBEDDINGS_ENABLED=${AI_EMBEDDINGS_ENABLED:-true}
-      - AI_EMBEDDINGS_BASE_URL=${AI_EMBEDDINGS_BASE_URL:-http://llamacpp:8080}
-      - AI_EMBEDDINGS_MODEL=${AI_EMBEDDINGS_MODEL:-nomic-embed-text-v1.5}
-      - AI_EMBEDDINGS_TIMEOUT_MS=15000
-      - AI_EMBEDDINGS_BATCH_SIZE=12
-      - AI_EMBEDDINGS_QUERY_CACHE_TTL_MS=300000
-      - AI_SEMANTIC_CACHE_ENABLED=${AI_SEMANTIC_CACHE_ENABLED:-true}
-      - AI_SEMANTIC_CACHE_SIMILARITY_THRESHOLD=${AI_SEMANTIC_CACHE_SIMILARITY_THRESHOLD:-0.82}
-      - AI_SEMANTIC_CACHE_MAX_CANDIDATES=${AI_SEMANTIC_CACHE_MAX_CANDIDATES:-240}
-      - AI_SEMANTIC_CACHE_TTL_DAYS=${AI_SEMANTIC_CACHE_TTL_DAYS:-30}
-      - AI_SEMANTIC_CACHE_MAX_RESPONSE_CHARS=${AI_SEMANTIC_CACHE_MAX_RESPONSE_CHARS:-1800}
-      - RATE_LIMIT_WINDOW_MS=60000
-      - RATE_LIMIT_MAX_REQUESTS=150
-      - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
-      - DIGIURBAN_SERVICE_TOKEN=${MESSAGES_SERVICE_TOKEN:-ultrazend-messages-service-token}
-    volumes:
-      - ai_logs:/app/logs
-    restart: unless-stopped
-    depends_on:
-      postgres:
-        condition: service_healthy
-      llamacpp:
-        condition: service_started
-    networks:
-      - digiurban_network
-    healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:9004/health', (res) => process.exit(res.statusCode === 200 ? 0 : 1))"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 90s
-
   digiurban:
     # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
     # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
@@ -377,6 +271,13 @@ services:
         # Domínio base p/ a troca de município (MunicipioSwitcher) montar subdomínios
         - NEXT_PUBLIC_TENANT_BASE_DOMAIN=${NEXT_PUBLIC_TENANT_BASE_DOMAIN:-digiurban.com.br}
     container_name: digiurban-vps
+    # Otimizacao VPS (2026-09-14): SEM isto o driver json-file cresce ILIMITADO
+    # ate encher o disco (a VPS esta a 84%). 3 arquivos x 10MB = teto de 30MB/container.
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (250 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
@@ -466,7 +367,11 @@ services:
       - PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
       # Módulo de IA Centralizada (proxy interno)
-      - AI_API_URL=http://digiurban-ai:9004/api/v1
+      # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose.
+      # A IA passa a ser externa (API DeepSeek, com creditos por municipio).
+      # Enquanto a integracao nao entra, o chat com IA fica INDISPONIVEL --
+      # estas URLs apontam para um servico que nao existe mais.
+      # - AI_API_URL=http://digiurban-ai:9004/api/v1
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - AI_PROXY_TIMEOUT_MS=90000
 
@@ -485,8 +390,6 @@ services:
       ultrazend-messages:
         condition: service_healthy
       ultrazend-face:
-        condition: service_started
-      digiurban-ai:
         condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
@@ -526,7 +429,7 @@ volumes:
   # prices_uploads: removed (Pesquisa de Preços)
   # flow_uploads: removed (Processos Internos)
   # flow_logs: removed (Processos Internos)
-  ai_logs:
+  # ai_logs:  # orfao: digiurban-ai removido (IA local -> API DeepSeek)
     driver: local
 
 networks:

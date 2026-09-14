@@ -49,9 +49,6 @@ jobs:
           - name: digiurban-face
             context: ./ultrazend-face-server
             dockerfile: ./ultrazend-face-server/Dockerfile
-          - name: digiurban-ai
-            context: ./digiurban-ai
-            dockerfile: ./digiurban-ai/Dockerfile
 
     steps:
       - name: Checkout
@@ -130,11 +127,20 @@ jobs:
 
           echo "=== Baixando imagens prontas (a VPS NAO compila) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
-            digiurban ultrazend-messages ultrazend-smtp ultrazend-face digiurban-ai
+            digiurban ultrazend-messages ultrazend-smtp ultrazend-face
+
+          # IA LOCAL REMOVIDA (2026-09-14): llamacpp e digiurban-ai sairam do compose
+          # (a IA passa a ser externa). Containers de servicos removidos NAO somem
+          # sozinhos: `up -d` com lista de servicos ignora orfaos. Sem esta limpeza
+          # explicita eles ficariam rodando para sempre segurando ~2.4 GB de RAM numa
+          # VPS compartilhada. Idempotente: nao falha se ja nao existirem.
+          # O volume llamacpp_models e PRESERVADO de proposito (modelo GGUF).
+          echo "=== Removendo containers da IA local (descontinuada) ==="
+          docker rm -f digiurban-llamacpp digiurban-ai 2>/dev/null || true
 
           echo "=== Subindo infraestrutura ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
-            postgres redis ultrazend-smtp llamacpp ultrazend-messages digiurban-ai
+            postgres redis ultrazend-smtp ultrazend-messages
 
           wait_for_container_health digiurban-postgres 30 5
           wait_for_container_health digiurban-redis 30 5
