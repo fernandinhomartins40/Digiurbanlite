@@ -1,5 +1,6 @@
 import Ajv from 'ajv';
 import addFormats from 'ajv-formats';
+import { prisma } from './prisma';
 
 /**
  * Validador de JSON Schema para formulários de serviços
@@ -272,10 +273,11 @@ export async function validateServiceFormMiddleware(req: any, res: any, next: an
       return next();
     }
 
-    // Buscar serviço do banco (assumindo Prisma)
-    const { PrismaClient } = await import('@prisma/client');
-    const prisma = new PrismaClient();
-
+    // Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, C2): este middleware criava um
+    // `new PrismaClient()` A CADA REQUISIÇÃO com customFormData, abrindo um pool novo
+    // (~9-13 conexões) que nunca era desconectado, contra um max_connections=100.
+    // Era também furo de isolamento multi-tenant: o cliente avulso não carrega a
+    // tenantExtension, então esta query não era escopada por tenantId.
     const service = await prisma.serviceSimplified.findUnique({
       where: { id: serviceId }
     });

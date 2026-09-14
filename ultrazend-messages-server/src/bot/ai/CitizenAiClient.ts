@@ -51,14 +51,22 @@ export class CitizenAiClient {
   private readonly isConfigured: boolean;
 
   constructor() {
-    const baseURL =
+    // Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, M4): a URL do serviço de IA precisa
+    // ser EXPLÍCITA. Antes, sem variável definida, caía no DEFAULT_AI_URL (localhost:9004)
+    // — que dentro do container não é ninguém — e o cliente ainda assim se considerava
+    // configurado, tentando chamar host morto a cada turno de conversa.
+    const explicitBaseURL =
       process.env.CITIZEN_AI_COMPLETIONS_URL ||
       process.env.DIGIURBAN_AI_COMPLETIONS_URL ||
-      DEFAULT_AI_URL;
+      '';
+    const baseURL = explicitBaseURL || DEFAULT_AI_URL;
 
     this.serviceToken = process.env.AI_SERVICE_TOKEN || '';
     this.tenantId = process.env.CITIZEN_AI_TENANT_ID || process.env.AI_DEFAULT_TENANT_ID || 'default';
-    this.isConfigured = Boolean(this.serviceToken);
+    // Exige token E URL explícita. Com a IA local removida (llama.cpp/digiurban-ai) e a
+    // externa (DeepSeek) ainda não integrada, isto faz o bot usar o caminho determinístico
+    // em vez de degradar por timeout. Quando a IA voltar, basta definir a variável.
+    this.isConfigured = Boolean(this.serviceToken) && Boolean(explicitBaseURL);
 
     this.httpClient = axios.create({
       baseURL,

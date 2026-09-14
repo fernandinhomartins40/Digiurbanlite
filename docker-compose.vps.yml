@@ -13,6 +13,32 @@ services:
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (198 MiB) em produção, com folga para cache do banco (3.4 GB de dados).
     mem_limit: 512m
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
+    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
+    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
+    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
+    # Justificativa deste valor: banco; CPU medido 0.00% — teto protege contra query descontrolada.
+    # `pids_limit` barra fork bomb / vazamento de processos.
+    cpus: 1.0
+    pids_limit: 256
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1c): o `mem_limit: 512m` acima foi
+    # definido SEM tuning do Postgres, que continuava nos defaults. Isso e perigoso: se
+    # shared_buffers + (work_mem x max_connections) ultrapassar o mem_limit, o OOM killer
+    # derruba o banco sob carga. Valores abaixo dimensionados PARA o limite de 512m:
+    #   shared_buffers 128m  = 25% do mem_limit (regra usual)
+    #   max_connections 50   = teto real; o backend usa 1 pool (apos o fix C2) e os 3
+    #                          satelites usam pools pequenos. O default 100 nunca foi
+    #                          atingido por uso legitimo — foi atingido pelo VAZAMENTO.
+    #   work_mem 4m          = (512-128) / (50 x ~2) com folga
+    #   effective_cache_size 256m = metade do limite (o cache do SO e compartilhado)
+    # MEDIDO: consumo real era 198 MiB. Estes valores mantem folga sobre isso.
+    command: >
+      postgres
+      -c shared_buffers=128MB
+      -c effective_cache_size=256MB
+      -c work_mem=4MB
+      -c maintenance_work_mem=32MB
+      -c max_connections=50
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-digiurban}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-digiurban2024}
@@ -45,6 +71,14 @@ services:
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (~20 MiB) em produção, com folga para as filas BullMQ.
     mem_limit: 192m
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
+    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
+    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
+    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
+    # Justificativa deste valor: cache/filas; consumo irrisorio (~20 MiB).
+    # `pids_limit` barra fork bomb / vazamento de processos.
+    cpus: 0.5
+    pids_limit: 128
     # Otimização VPS (P1-4): Redis NÃO precisa de porta pública — só é acessado pelo
     # backend e pelo messages-server dentro da rede digiurban_network. Expor 6379 numa
     # VPS compartilhada era superfície de ataque desnecessária.
@@ -81,11 +115,24 @@ services:
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo NÃO MEDIDO (container em crash-loop) — revisar após o fix do P0-2.
     mem_limit: 384m
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
+    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
+    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
+    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
+    # Justificativa deste valor: SMTP e I/O-bound; CPU NAO MEDIDO (estava em crash-loop).
+    # `pids_limit` barra fork bomb / vazamento de processos.
+    cpus: 0.5
+    pids_limit: 128
     ports:
       - "25:25"     # MX Server (receber emails externos)
       - "587:587"   # Submission Server (enviar emails autenticados)
     environment:
       - NODE_ENV=production
+      # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1b): este era o UNICO servico Node
+      # sem teto de heap do V8 — lacuna encontrada ao conferir o dimensionamento contra a
+      # pratica corrente (heap = 60-75% do mem_limit). Sem isto o V8 cresce ate bater no
+      # mem_limit e o container morre por OOM em vez de fazer GC. 256m / 384m = 66%.
+      - NODE_OPTIONS=--max-old-space-size=256
       - DATABASE_URL=${DATABASE_URL}
       - SMTP_HOSTNAME=mail.digiurban.com.br
       - MX_PORT=25
@@ -127,6 +174,14 @@ services:
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (60 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
     mem_limit: 384m
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
+    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
+    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
+    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
+    # Justificativa deste valor: WebSocket + Sharp; CPU medido 0.00%.
+    # `pids_limit` barra fork bomb / vazamento de processos.
+    cpus: 1.0
+    pids_limit: 256
     ports:
       - "9001:9001"  # WebSocket + HTTP API
     environment:
@@ -209,6 +264,14 @@ services:
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (37 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
     mem_limit: 384m
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
+    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
+    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
+    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
+    # Justificativa deste valor: MAIOR consumidor medido (11.75%) — teto e essencial aqui.
+    # `pids_limit` barra fork bomb / vazamento de processos.
+    cpus: 1.0
+    pids_limit: 256
     ports:
       - "9006:9006"
     environment:
@@ -282,6 +345,14 @@ services:
     # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
     # consumo MEDIDO (250 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
     mem_limit: 1g
+    # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A1): `mem_limit` impedia que a app
+    # comesse toda a RAM, mas NADA impedia que consumisse os 4 vCPU da VPS compartilhada
+    # — que foi o incidente que motivou esta auditoria. `cpus` e TETO, nao reserva: a soma
+    # dos tetos (6.0) excede os 4 vCPU de proposito, para nao particionar a maquina.
+    # Justificativa deste valor: 3 processos (nginx+backend+frontend) + picos de Chromium/PDF.
+    # `pids_limit` barra fork bomb / vazamento de processos.
+    cpus: 2.0
+    pids_limit: 512
     ports:
       - "3060:80"   # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
     environment:
@@ -430,7 +501,6 @@ volumes:
   # flow_uploads: removed (Processos Internos)
   # flow_logs: removed (Processos Internos)
   # ai_logs:  # orfao: digiurban-ai removido (IA local -> API DeepSeek)
-    driver: local
 
 networks:
   digiurban_network:

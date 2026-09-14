@@ -9,9 +9,17 @@ import { AuthenticatedRequest } from '../types/middleware';
 
 const router = Router();
 
-const AI_API_URL = process.env.AI_API_URL ?? 'http://digiurban-ai:9004/api/v1';
+// Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, A2): o serviço digiurban-ai foi removido
+// do compose (IA local → API externa), mas ESTA ROTA TEM CONSUMIDOR VIVO:
+// frontend/lib/services/ai-platform.service.ts + página /super-admin/ia.
+// Sem AI_API_URL explícita, o destino não existe — responder 503 IMEDIATO em vez de
+// pendurar a requisição (e prender conexão + worker) por 150 s até o timeout.
+const AI_API_URL = process.env.AI_API_URL ?? '';
+const AI_CONFIGURED = AI_API_URL.length > 0;
 const AI_SERVICE_TOKEN = process.env.AI_SERVICE_TOKEN ?? '';
-const AI_PROXY_TIMEOUT_MS = Number.parseInt(process.env.AI_PROXY_TIMEOUT_MS || '150000', 10);
+// Timeout reduzido de 150 s para 15 s: nenhuma resposta de chat legítima justifica
+// segurar um worker por 2,5 minutos numa VPS compartilhada.
+const AI_PROXY_TIMEOUT_MS = Number.parseInt(process.env.AI_PROXY_TIMEOUT_MS || '15000', 10);
 const superAdminOnly = requireMinRole(UserRole.SUPER_ADMIN);
 
 const aiClient: AxiosInstance = axios.create({
@@ -60,6 +68,18 @@ async function proxyRequest(
   next: NextFunction,
   path?: string,
 ): Promise<void> {
+  // Otimização VPS (A2): serviço de IA não configurado → falha rápida e explícita.
+  if (!AI_CONFIGURED) {
+    res.status(503).json({
+      error: 'Serviço de IA indisponível',
+      detail:
+        'O módulo de IA não está configurado neste ambiente (AI_API_URL ausente). ' +
+        'A IA local foi descontinuada e a integração externa ainda não foi ativada.',
+      code: 'AI_SERVICE_NOT_CONFIGURED',
+    });
+    return;
+  }
+
   try {
     const upstream = await aiClient.request({
       method: req.method as 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE',
@@ -189,6 +209,12 @@ async function proxyStreamRequest(
 
 // Health route sem autenticação (monitoramento)
 router.get('/health', (_req, res) => {
+  // Otimização VPS (A2): sem destino configurado, responder na hora — não esperar timeout.
+  if (!AI_CONFIGURED) {
+    res.status(503).json({ status: 'unavailable', code: 'AI_SERVICE_NOT_CONFIGURED' });
+    return;
+  }
+
   aiClient
     .get('/health')
     .then((response) => res.json(response.data))

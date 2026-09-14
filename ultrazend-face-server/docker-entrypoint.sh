@@ -33,8 +33,10 @@ if [ $attempt -eq $max_attempts ]; then
   exit 1
 fi
 
-echo "Gerando cliente Prisma..."
-$PRISMA_BIN generate
-
+# Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, M3): `prisma generate` era executado
+# A CADA BOOT do container — trabalho de BUILD sendo feito em produção, gastando CPU
+# numa VPS compartilhada a cada restart. O Dockerfile já roda `prisma generate` no
+# estágio builder e copia node_modules/.prisma + node_modules/@prisma para a imagem
+# final, então esta chamada era redundante.
 echo "Iniciando servidor..."
 exec node dist/index.js

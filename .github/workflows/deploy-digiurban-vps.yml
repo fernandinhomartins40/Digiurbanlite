@@ -104,7 +104,10 @@ jobs:
             fi
 
             . "$APP_DIR/scripts/vps-deploy-lib.sh"
-            ensure_vm_max_map_count 262144
+            # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, B2): ensure_vm_max_map_count
+            # ajustava vm.max_map_count=262144 NO HOST (sysctl compartilhado por todas as
+            # ~30 aplicacoes da VPS) por causa do OpenSearch — servico ja removido. Alterar
+            # sysctl do host por um servico inexistente e efeito colateral indesejado.
 
             # Criar arquivo .env
             echo "Criando arquivo .env..."

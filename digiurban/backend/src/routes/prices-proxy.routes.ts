@@ -13,7 +13,11 @@ import { AuthenticatedRequest } from '../types/middleware';
 
 const router = Router();
 
-const PRICES_API_URL = process.env.PRICES_API_URL ?? 'http://digiurban-prices:9002/api/v1';
+// Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, A2): o serviço digiurban-prices não está
+// no compose nem no CI, mas ESTA ROTA TEM CONSUMIDOR VIVO (frontend/lib/prices-client.ts).
+// Sem PRICES_API_URL explícita, responder 503 imediato em vez de pendurar 30 s.
+const PRICES_API_URL = process.env.PRICES_API_URL ?? '';
+const PRICES_CONFIGURED = PRICES_API_URL.length > 0;
 const PRICES_API_KEY = process.env.DIGIURBAN_API_KEY ?? '';
 
 // Cliente HTTP para o módulo de preços
@@ -51,6 +55,16 @@ async function proxyRequest(
   next: NextFunction,
   path: string,
 ): Promise<void> {
+  // Otimização VPS (A2): módulo de preços não configurado → falha rápida e explícita.
+  if (!PRICES_CONFIGURED) {
+    res.status(503).json({
+      error: 'Módulo de Pesquisa de Preços indisponível',
+      detail: 'O serviço digiurban-prices não está configurado neste ambiente (PRICES_API_URL ausente).',
+      code: 'PRICES_SERVICE_NOT_CONFIGURED',
+    });
+    return;
+  }
+
   try {
     const userId = (req as AuthenticatedRequest).userId;
     const upstream = await pricesClient.request({

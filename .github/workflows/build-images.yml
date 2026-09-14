@@ -79,6 +79,13 @@ jobs:
           # destruido a cada deploy na VPS.
           cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:buildcache
           cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:buildcache,mode=max
+          # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, A5): o buildx anexa por padrao
+          # manifestos de provenance/SBOM a cada imagem. Isso vira manifest-list com
+          # camadas extras de attestation — peso e tempo de pull que a VPS paga em TODO
+          # deploy, sem uso operacional aqui (nao ha verificacao de assinatura no fluxo).
+          # Confirmado local: o build gera "exporting attestation manifest" por imagem.
+          provenance: false
+          sbom: false
           # NEXT_PUBLIC_* sao lidos em BUILD TIME pelo Next.js (ver digiurban/Dockerfile),
           # por isso precisam estar aqui e nao apenas no compose.
           build-args: |
@@ -123,6 +130,10 @@ jobs:
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
           # RELEASE fixa a versao exata deste commit — permite rollback trocando o valor.
+          # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, M2): remover a linha anterior antes
+          # de anexar. Com `>>` puro, cada deploy acrescentava mais um `RELEASE=` ao arquivo;
+          # o deploy passa a ser idempotente (sempre exatamente uma linha RELEASE=).
+          sed -i '/^RELEASE=/d' .env
           echo "RELEASE=${RELEASE}" >> .env
 
           echo "=== Baixando imagens prontas (a VPS NAO compila) ==="

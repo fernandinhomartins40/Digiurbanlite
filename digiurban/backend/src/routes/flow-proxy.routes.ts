@@ -12,7 +12,11 @@ import { prisma } from '../lib/prisma';
 
 const router = Router();
 
-const FLOW_API_URL = process.env.FLOW_API_URL ?? 'http://digiurban-flow:9003/api/v1';
+// Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, A2): o serviço digiurban-flow não está no
+// compose nem no CI, mas ESTA ROTA TEM CONSUMIDOR VIVO (frontend/lib/flow-client.ts).
+// Sem FLOW_API_URL explícita, responder 503 imediato em vez de pendurar 30 s por requisição.
+const FLOW_API_URL = process.env.FLOW_API_URL ?? '';
+const FLOW_CONFIGURED = FLOW_API_URL.length > 0;
 const FLOW_SERVICE_TOKEN = process.env.FLOW_SERVICE_TOKEN ?? '';
 const ACTIVE_ASSIGNMENT_STATUSES: SituacaoVinculo[] = [
   SituacaoVinculo.ATIVO,
@@ -216,6 +220,19 @@ function buildProxyHeaders(context: FlowProxyAuthContext, tenantId?: string): Re
 }
 
 function ensureFlowServiceToken(res: Response): boolean {
+  // Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, A2): o serviço digiurban-flow não está
+  // no compose nem no CI. Sem FLOW_API_URL explícita, falhar AQUI (503 imediato) em vez de
+  // deixar o axios pendurar 30 s por requisição contra um host inexistente.
+  // Este guard fica no ponto único por onde as 3 chamadas do proxy passam.
+  if (!FLOW_CONFIGURED) {
+    res.status(503).json({
+      error: 'Módulo de Processos Internos indisponível',
+      detail: 'O serviço digiurban-flow não está configurado neste ambiente (FLOW_API_URL ausente).',
+      code: 'FLOW_SERVICE_NOT_CONFIGURED',
+    });
+    return false;
+  }
+
   if (FLOW_SERVICE_TOKEN) {
     return true;
   }

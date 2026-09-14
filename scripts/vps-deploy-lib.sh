@@ -254,31 +254,22 @@ TENANT_STRICT=${tenant_strict}
 LOG_LEVEL=info
 BUILD_TIMESTAMP=$(date +%s)
 
-# AI Platform (digiurban-ai)
-AI_API_URL=http://digiurban-ai:9004/api/v1
-AI_DEFAULT_TENANT_ID=default
-CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
-CITIZEN_AI_TENANT_ID=default
+# ── IA ────────────────────────────────────────────────────────────────────
+# Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, C3): este arquivo é REGENERADO DO ZERO
+# a cada deploy. Enquanto ele escrevia AI_API_URL / CITIZEN_AI_COMPLETIONS_URL /
+# AI_LLAMACPP_* apontando para os containers digiurban-ai e llamacpp (removidos do
+# compose em 043e290b), a configuração morta era REINTRODUZIDA em todo deploy — e os
+# serviços tentavam falar com hosts inexistentes.
+#
+# As URLs foram removidas de propósito. Com elas ausentes:
+#   - o proxy /api/ai responde 503 imediato em vez de pendurar por 15 s (A2);
+#   - o CitizenAiClient do bot degrada limpo para o fluxo determinístico (M4).
+# Para ATIVAR a IA externa (API DeepSeek), basta definir AI_API_URL e
+# CITIZEN_AI_COMPLETIONS_URL no .env da VPS — nada mais precisa mudar.
+#
+# AI_SERVICE_TOKEN NÃO é repetido aqui: já é escrito no bloco "Service tokens (internos)"
+# acima, porque serve à autenticação interna entre serviços, não apenas à IA.
+# DIGIBOT_INACTIVITY_TIMEOUT_MS é do bot (timeout de inatividade), sem relação com IA.
 DIGIBOT_INACTIVITY_TIMEOUT_MS=600000
-AI_LLAMACPP_BASE_URL=http://llamacpp:8080
-AI_LLAMACPP_MODEL=qwen3-1.7b-instruct-q4_k_m
-AI_LLAMACPP_TIMEOUT_MS=90000
-AI_LLAMACPP_FAST_TIMEOUT_MS=45000
-AI_LLAMACPP_NUM_CTX=3072
-AI_LLAMACPP_RAG_NUM_CTX=2304
-AI_LLAMACPP_MAX_TOKENS=180
-AI_LLAMACPP_RAG_MAX_TOKENS=110
-AI_LLAMACPP_FAST_MAX_TOKENS=64
-AI_LLAMACPP_THINKING_DEFAULT=false
-AI_LLAMACPP_NO_THINK_PROMPT_SWITCH=true
-AI_EMBEDDINGS_ENABLED=false
-AI_EMBEDDINGS_BASE_URL=http://llamacpp:8080
-AI_EMBEDDINGS_MODEL=nomic-embed-text-v1.5
-AI_WEB_SEARCH_ENABLED=true
-AI_WEB_SEARCH_DEFAULT=false
-AI_WEB_SEARCH_PROVIDER=duckduckgo
-AI_WEB_SEARCH_TIMEOUT_MS=12000
-AI_WEB_SEARCH_MAX_RESULTS=5
-AI_WEB_SEARCH_CACHE_TTL_MS=300000
 EOF
 }

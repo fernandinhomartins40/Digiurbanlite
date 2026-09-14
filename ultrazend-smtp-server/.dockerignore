@@ -1,0 +1,17 @@
+node_modules
+dist
+dist-prisma
+npm-debug.log
+.env
+.env.local
+.git
+.gitignore
+README.md
+.vscode
+.idea
+coverage
+.nyc_output
+logs
+*.log
+data/*
+!data/.gitkeep

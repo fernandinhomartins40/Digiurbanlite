@@ -86,6 +86,46 @@ ultrazend-smtp-server/logs/
 *.db-shm
 *.db-wal
 
+# ── Diretórios e artefatos fora do escopo do build (Otimização VPS, A3) ──────
+# A imagem principal usa `context: .` (raiz do monorepo), então TUDO que não estiver
+# aqui é enviado ao daemon Docker a cada build. Nenhum dos itens abaixo é usado pelo
+# digiurban/Dockerfile, que só precisa de digiurban/backend, digiurban/frontend,
+# digiurban/shared e docker/.
+
+# Serviços que NÃO são construídos por este Dockerfile (têm contexto próprio no CI)
+digiurban-ai/
+digiurban-prices/
+digiurban-flow/
+ultrazend-messages-server/
+ultrazend-smtp-server/
+ultrazend-face-server/
+
+# Diretórios legados na raiz (a aplicação real está em digiurban/)
+backend/
+frontend/
+generator/
+src/
+
+# Material não-código
+anjoinovador/
+apresentacao/
+ai-training/
+
+# Artefatos grandes de geração/depuração (~1.9 MB)
+WORKFLOWS_COMPLETOS.ts
+WORKFLOWS_GERADOS.ts
+WORKFLOWS_FALTANTES_LISTA.txt
+workflows_faltantes_manual.ts
+workflows_para_adicionar.txt
+workflows_restantes.txt
+workflows_output.ts
+deploy-log-templates.txt
+deploy-log.txt
+backend-errors.txt
+frontend-errors.txt
+relatorio-comparacao-seeds.txt
+com_dados_section.txt
+
 # Outros
 **/.DS_Store
 **/Thumbs.db
