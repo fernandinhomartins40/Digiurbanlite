@@ -2,6 +2,10 @@ services:
   postgres:
     image: postgres:15-alpine
     container_name: digiurban-postgres
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo MEDIDO (198 MiB) em produção, com folga para cache do banco (3.4 GB de dados).
+    mem_limit: 512m
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-digiurban}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-digiurban2024}
@@ -16,15 +20,22 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-digiurban}"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 5
 
   redis:
     image: redis:7-alpine
     container_name: digiurban-redis
-    ports:
-      - "6379:6379"
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo MEDIDO (~20 MiB) em produção, com folga para as filas BullMQ.
+    mem_limit: 192m
+    # Otimização VPS (P1-4): Redis NÃO precisa de porta pública — só é acessado pelo
+    # backend e pelo messages-server dentro da rede digiurban_network. Expor 6379 numa
+    # VPS compartilhada era superfície de ataque desnecessária.
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     networks:
@@ -32,15 +43,23 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
+      interval: 30s
       timeout: 5s
       retries: 5
 
   ultrazend-smtp:
+    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
+    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
+    # permanece apenas como fallback manual (docker compose build) em emergencia.
+    image: ghcr.io/fernandinhomartins40/digiurban-smtp:${RELEASE:-latest}
     build:
       context: ./ultrazend-smtp-server
       dockerfile: Dockerfile
     container_name: ultrazend-smtp
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo NÃO MEDIDO (container em crash-loop) — revisar após o fix do P0-2.
+    mem_limit: 384m
     ports:
       - "25:25"     # MX Server (receber emails externos)
       - "587:587"   # Submission Server (enviar emails autenticados)
@@ -107,23 +126,35 @@ services:
       timeout: 10s
       retries: 10
       start_period: 120s
-    deploy:
-      resources:
-        limits:
-          memory: 4G
-        reservations:
-          memory: 2G
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): `deploy.resources` só é
+    # aplicado em Swarm — com `docker-compose` (usado no deploy) era IGNORADO, ou seja
+    # este container estava SEM limite real. mem_limit funciona em ambos.
+    # Medido: 98.61 MiB e ZERO requisições em 7 dias; 2G dá folga larga para o modelo
+    # GGUF quando o DigiBot voltar a ser usado, sem reservar 2G ociosos.
+    mem_limit: 2g
 
   ultrazend-messages:
+    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
+    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
+    # permanece apenas como fallback manual (docker compose build) em emergencia.
+    image: ghcr.io/fernandinhomartins40/digiurban-messages:${RELEASE:-latest}
     build:
       context: ./ultrazend-messages-server
       dockerfile: Dockerfile
     container_name: ultrazend-messages
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo MEDIDO (60 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
+    mem_limit: 384m
     ports:
       - "9001:9001"  # WebSocket + HTTP API
     environment:
       - NODE_ENV=production
       - PORT=9001
+      # Otimização VPS (P1-2): heap do V8 ABAIXO do mem_limit, deixando margem para
+      # memória fora do heap (Sharp, buffers, Chromium). Sem isto o V8 cresce até
+      # bater no limite do container e morrer por OOM em vez de fazer GC.
+      - NODE_OPTIONS=--max-old-space-size=256
       - HOST=0.0.0.0
       - DATABASE_URL=${DATABASE_URL}
       - REDIS_URL=redis://redis:6379
@@ -174,15 +205,27 @@ services:
   # + cosine similarity no PostgreSQL. Não há chamadas ao CompreFace no código.
 
   ultrazend-face:
+    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
+    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
+    # permanece apenas como fallback manual (docker compose build) em emergencia.
+    image: ghcr.io/fernandinhomartins40/digiurban-face:${RELEASE:-latest}
     build:
       context: ./ultrazend-face-server
       dockerfile: Dockerfile
     container_name: ultrazend-face
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo MEDIDO (37 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
+    mem_limit: 384m
     ports:
       - "9006:9006"
     environment:
       - NODE_ENV=production
       - PORT=9006
+      # Otimização VPS (P1-2): heap do V8 ABAIXO do mem_limit, deixando margem para
+      # memória fora do heap (Sharp, buffers, Chromium). Sem isto o V8 cresce até
+      # bater no limite do container e morrer por OOM em vez de fazer GC.
+      - NODE_OPTIONS=--max-old-space-size=256
       - HOST=0.0.0.0
       - DATABASE_URL=${DATABASE_URL}
       - DIGIURBAN_API_URL=http://digiurban-vps:3001/api
@@ -225,15 +268,27 @@ services:
   # MÓDULO: digiurban-ai — Plataforma de IA Centralizada (llama.cpp + Qwen3 1.7B)
   # ─────────────────────────────────────────────────────────────
   digiurban-ai:
+    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
+    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
+    # permanece apenas como fallback manual (docker compose build) em emergencia.
+    image: ghcr.io/fernandinhomartins40/digiurban-ai:${RELEASE:-latest}
     build:
       context: ./digiurban-ai
       dockerfile: Dockerfile
     container_name: digiurban-ai
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo MEDIDO (59 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
+    mem_limit: 384m
     ports:
       - "9004:9004"
     environment:
       - NODE_ENV=production
       - PORT=9004
+      # Otimização VPS (P1-2): heap do V8 ABAIXO do mem_limit, deixando margem para
+      # memória fora do heap (Sharp, buffers, Chromium). Sem isto o V8 cresce até
+      # bater no limite do container e morrer por OOM em vez de fazer GC.
+      - NODE_OPTIONS=--max-old-space-size=256
       - HOST=0.0.0.0
       - DATABASE_URL=${DATABASE_URL}
       - CORS_ORIGIN=${CORS_ORIGIN:-*}
@@ -304,6 +359,10 @@ services:
       start_period: 90s
 
   digiurban:
+    # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4): a imagem vem PRONTA do
+    # GHCR, construida pelo GitHub Actions. A VPS so faz `pull`. O bloco `build`
+    # permanece apenas como fallback manual (docker compose build) em emergencia.
+    image: ghcr.io/fernandinhomartins40/digiurban-app:${RELEASE:-latest}
     build:
       context: .
       dockerfile: digiurban/Dockerfile
@@ -318,6 +377,10 @@ services:
         # Domínio base p/ a troca de município (MunicipioSwitcher) montar subdomínios
         - NEXT_PUBLIC_TENANT_BASE_DOMAIN=${NEXT_PUBLIC_TENANT_BASE_DOMAIN:-digiurban.com.br}
     container_name: digiurban-vps
+    # Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P1-1): VPS COMPARTILHADA com ~30
+    # aplicações — sem mem_limit um vazamento aqui derruba as outras. Valor = ~3x o
+    # consumo MEDIDO (250 MiB) em produção, com folga para picos fora do heap (Sharp/Chromium).
+    mem_limit: 1g
     ports:
       - "3060:80"   # Porta EXTERNA 3060 -> Porta INTERNA 80 (Nginx)
     environment:
@@ -327,6 +390,10 @@ services:
       # Backend (porta interna 3001)
       - PORT=3001
       - BACKEND_PORT=3001
+      # Otimização VPS (P1-2): este container roda backend+frontend sob supervisord,
+      # que repassa apenas as variáveis da sua allowlist `environment=`. O limite de
+      # heap de CADA processo é definido em docker/supervisord.conf (384m backend +
+      # 256m frontend), não aqui — declarar NODE_OPTIONS neste ponto não teria efeito.
 
       # Frontend (porta interna 3000)
       - FRONTEND_PORT=3000

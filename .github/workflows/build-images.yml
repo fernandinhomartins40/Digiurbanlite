@@ -1,0 +1,162 @@
+name: Build and Push Images (GHCR)
+
+# Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4)
+# ====================================================
+# Antes: o deploy rodava em `runs-on: self-hosted` (a PROPRIA VPS de producao) e
+# executava `docker-compose build --no-cache --pull`, ou seja: npm install do
+# backend + do frontend, tsc, next build e download de 968 MB de Chromium em 4
+# vCPU compartilhados por 93 containers (load medido 6.5, steal time 13.8%).
+#
+# Agora: este workflow constroi as imagens em runners GitHub-hosted e publica no
+# GHCR. A VPS apenas autentica, faz `pull` e sobe os containers.
+#
+# As 5 imagens sao construidas EM PARALELO (matrix), cada uma com cache de
+# camadas no proprio GHCR (`cache-from`/`cache-to`), entao builds seguintes
+# reaproveitam as dependencias em vez de recompilar do zero.
+
+"on":
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  OWNER: fernandinhomartins40
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      # Uma imagem quebrada nao deve impedir a publicacao das outras: o deploy
+      # valida a presenca das tags antes de subir.
+      fail-fast: false
+      matrix:
+        include:
+          - name: digiurban-app
+            context: .
+            dockerfile: digiurban/Dockerfile
+          - name: digiurban-messages
+            context: ./ultrazend-messages-server
+            dockerfile: ./ultrazend-messages-server/Dockerfile
+          - name: digiurban-smtp
+            context: ./ultrazend-smtp-server
+            dockerfile: ./ultrazend-smtp-server/Dockerfile
+          - name: digiurban-face
+            context: ./ultrazend-face-server
+            dockerfile: ./ultrazend-face-server/Dockerfile
+          - name: digiurban-ai
+            context: ./digiurban-ai
+            dockerfile: ./digiurban-ai/Dockerfile
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push ${{ matrix.name }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          file: ${{ matrix.dockerfile }}
+          push: true
+          # Duas tags: `latest` (usada pelo compose por padrao) e o SHA do commit,
+          # que permite rollback para uma versao exata (RELEASE=<sha>).
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:latest
+            ${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:${{ github.sha }}
+          # Cache de camadas no proprio registry — substitui o cache local que era
+          # destruido a cada deploy na VPS.
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.OWNER }}/${{ matrix.name }}:buildcache,mode=max
+          # NEXT_PUBLIC_* sao lidos em BUILD TIME pelo Next.js (ver digiurban/Dockerfile),
+          # por isso precisam estar aqui e nao apenas no compose.
+          build-args: |
+            BUILD_TIMESTAMP=${{ github.run_id }}
+            CACHE_BUST=${{ github.sha }}
+            NEXT_PUBLIC_API_URL=/api
+            NEXT_PUBLIC_MESSAGES_API_URL=/messages-api
+            NEXT_PUBLIC_MESSAGES_WS_URL=wss://digiurban.com.br
+            NEXT_PUBLIC_TENANT_BASE_DOMAIN=digiurban.com.br
+
+  deploy:
+    # Só implanta se TODAS as imagens foram publicadas com sucesso.
+    needs: build
+    runs-on: self-hosted
+    steps:
+      - name: Deploy to VPS (pull only, sem build)
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          RELEASE: ${{ github.sha }}
+        run: |
+          set -e
+          APP_DIR="/opt/digiurban"
+          cd "$APP_DIR"
+
+          echo "=== Sincronizando codigo (compose, scripts, sql) ==="
+          if [ -f ".env" ]; then cp .env .env.backup; fi
+          git fetch origin main --prune --force
+          git reset --hard origin/main
+          git clean -fdx -e .env -e .env.backup
+          if [ ! -f ".env" ] && [ -f ".env.backup" ]; then cp .env.backup .env; fi
+
+          . "$APP_DIR/scripts/vps-deploy-lib.sh"
+          write_vps_env_file ".env" ".env.backup"
+
+          echo "=== Autenticando no GHCR ==="
+          echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+
+          # RELEASE fixa a versao exata deste commit — permite rollback trocando o valor.
+          echo "RELEASE=${RELEASE}" >> .env
+
+          echo "=== Baixando imagens prontas (a VPS NAO compila) ==="
+          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml pull \
+            digiurban ultrazend-messages ultrazend-smtp ultrazend-face digiurban-ai
+
+          echo "=== Subindo infraestrutura ==="
+          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
+            postgres redis ultrazend-smtp llamacpp ultrazend-messages digiurban-ai
+
+          wait_for_container_health digiurban-postgres 30 5
+          wait_for_container_health digiurban-redis 30 5
+          wait_for_container_health ultrazend-messages 30 5
+
+          echo "=== Subindo aplicacao principal (migrations rodam no startup.sh) ==="
+          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d digiurban ultrazend-face
+          wait_for_container_health digiurban-vps 36 10
+
+          echo "=== Seeds ==="
+          docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed:deploy-safe" \
+            || echo "AVISO: seed seguro falhou, deploy continua"
+          docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js \
+            || echo "AVISO: seed de fluxos falhou, deploy continua"
+
+          echo "=== Validacao de seguranca: endpoints legados de plataforma = 410 ==="
+          LEGACY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3060/api/super-admin/tenants || echo "000")
+          echo "GET /api/super-admin/tenants -> HTTP ${LEGACY_STATUS}"
+          if [ "${LEGACY_STATUS}" = "200" ]; then
+            echo "ERRO DE SEGURANCA: endpoint legado respondeu 200 (deveria ser 410)"
+            exit 1
+          fi
+
+          echo "=== Healthcheck final ==="
+          curl -fsS http://localhost:3060/health >/dev/null && echo "OK: aplicacao respondendo"
+
+          # Limpeza restrita ao proprio projeto: apenas imagens dangling.
+          docker image prune -f || true
+
+          echo "=== Deploy concluido (RELEASE=${RELEASE}) ==="

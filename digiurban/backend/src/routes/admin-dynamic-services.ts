@@ -4,7 +4,6 @@
 // API para admins editarem serviços com invalidação de cache e WebSocket
 
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken, requireAdmin } from '../middleware/auth';
 import { invalidateServiceCache } from './dynamic-services';
 import { emitServiceUpdate } from '../socket';
@@ -18,7 +17,10 @@ import {
 } from '../services/service-creation-policy.service';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 // ============================================================
 // HELPER: Get department slug from name

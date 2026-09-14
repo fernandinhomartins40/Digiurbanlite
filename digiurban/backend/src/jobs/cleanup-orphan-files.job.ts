@@ -21,12 +21,14 @@
  *   node -r ts-node/register src/jobs/cleanup-orphan-files.job.ts [--dry-run]
  */
 
-import { PrismaClient } from '@prisma/client';
 import * as fs from 'fs';
 import * as path from 'path';
 import { runAsPlatform } from '../lib/tenant-context';
 
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 // Parse argumentos
 const args = process.argv.slice(2);

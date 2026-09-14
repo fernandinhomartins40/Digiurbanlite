@@ -36,7 +36,13 @@ const prismaBase = new PrismaClient({
       url: getDatabaseUrl()
     }
   },
-  log: ['query', 'error', 'warn']
+  // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-3): logar TODA query em
+  // produção custa CPU, I/O e faz o volume de logs crescer sem valor operacional
+  // (digiurban_digiurban_logs estava em 118 MB). Em dev o log de query continua.
+  log:
+    process.env.NODE_ENV === 'production'
+      ? ['error', 'warn']
+      : ['query', 'error', 'warn']
 });
 
 const isAuditStorageUnavailable = (error: unknown): boolean => {

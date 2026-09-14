@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateAdmin, authenticateCitizen } from '../middleware/auth';
 import multer from 'multer';
 import * as crypto from 'crypto';
@@ -8,7 +7,10 @@ import * as path from 'path';
 import { resolveUploadTenantId, getTenantUploadDir } from '../config/upload';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 // Configurar multer para upload de arquivos
 const upload = multer({

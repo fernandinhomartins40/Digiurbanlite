@@ -7,7 +7,7 @@
 import { Router } from 'express';
 import { authenticateToken, requireAdmin, requireSuperAdmin } from '../middleware/auth';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
-import { PrismaClient, UserRole } from '@prisma/client';
+import { UserRole } from '@prisma/client';
 import * as documentGenerator from '../services/document-generator.service';
 import {
   ensureTemplateAllowedForProtocol,
@@ -23,7 +23,10 @@ import path from 'path';
 import fs from 'fs/promises';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 // ============================================================================
 // CRUD DE TEMPLATES (ADMIN+)

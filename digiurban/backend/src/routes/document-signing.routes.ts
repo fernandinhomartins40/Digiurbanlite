@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { PrismaClient, Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import * as forge from 'node-forge';
 import * as crypto from 'crypto';
@@ -9,7 +9,10 @@ import { decryptPrivateKey } from '../services/encryption.service';
 import { addVisualSignatureToPdf, saveSignedPdf } from '../services/pdf-signature.service';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 interface SignDocumentRequest {
   documentId?: string; // ID do GeneratedDocument

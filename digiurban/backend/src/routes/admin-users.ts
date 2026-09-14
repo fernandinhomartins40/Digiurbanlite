@@ -1,9 +1,12 @@
 import { Router } from 'express';
-import { Prisma, PrismaClient, SituacaoVinculo } from '@prisma/client';
+import { Prisma, SituacaoVinculo } from '@prisma/client';
 import { authenticateAdmin } from '../middleware/auth';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 console.log('🔧 [ADMIN-USERS] Rota admin-users carregada!');
 

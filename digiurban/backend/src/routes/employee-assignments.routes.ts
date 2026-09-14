@@ -1,5 +1,4 @@
 import { Router, Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateAdmin } from '../middleware/auth';
 import { syncUserDepartmentsFromAssignments, syncAllUserDepartments } from '../services/assignment-sync.service';
 import {
@@ -9,7 +8,10 @@ import {
 import { safeCreateAssignmentAudit, safeFindAssignmentAudits } from '../utils/assignment-audit-safe';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 // ============================================
 // CRUD DE VÍNCULOS FUNCIONAIS (EMPLOYEE ASSIGNMENTS)

@@ -51,3 +51,6 @@ coverage/
 .cache/
 .temp/
 *.tsbuildinfo
+
+# Ferramenta de indexacao local (Serena MCP) - nao versionar
+.serena/

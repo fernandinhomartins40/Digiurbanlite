@@ -1,9 +1,18 @@
 name: Deploy DigiUrban to VPS
 
+# DESATIVADO (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4)
+# ================================================
+# Este workflow compilava a aplicacao na PROPRIA VPS de producao. Foi substituido
+# por .github/workflows/build-images.yml, que constroi as imagens no GitHub
+# Actions, publica no GHCR e faz a VPS apenas `pull`.
+#
+# O gatilho automatico (push na main) foi REMOVIDO de proposito: se os dois
+# workflows disparassem no mesmo push, haveria dois deploys concorrentes no mesmo
+# /opt/digiurban (git reset --hard + docker-compose up simultaneos).
+#
+# Mantido apenas como `workflow_dispatch` para emergencia — se o GHCR estiver
+# indisponivel, ainda e possivel acionar o build local na VPS manualmente.
 "on":
-  push:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -128,31 +137,33 @@ jobs:
             echo "Y1 Removendo containers parados..."
             docker container prune -f || true
 
-            # ===== LIMPEZA NUCLEAR DE CACHE =====
-            echo "=== Y LIMPEZA NUCLEAR DE CACHE DOCKER ==="
+            # ===== LIMPEZA DE CACHE (otimizada) =====
+            # Otimizacao VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-4):
+            # O bloco anterior era uma "limpeza nuclear" que a cada deploy:
+            #   - apagava a imagem BASE node:20-bookworm-slim para forcar re-download
+            #   - rodava `docker builder prune -af` e `docker image prune -af`
+            # Dois problemas graves medidos nesta VPS:
+            #   1) `docker image prune -af` NAO e filtrado por projeto: removia imagens
+            #      sem container de TODAS as ~30 aplicacoes da VPS, forcando rebuild
+            #      delas tambem.
+            #   2) Destruir o cache obrigava recompilar backend + Next.js e rebaixar
+            #      Chromium (968 MB) do zero, em 4 vCPU compartilhados por 93 containers
+            #      (load medido: 6.5, steal time 13.8%).
+            # O cache-busting REAL continua garantido por BUILD_TIMESTAMP/CACHE_BUST,
+            # que ja invalidam as camadas de codigo no Dockerfile.
+            echo "=== Limpeza de cache (escopo DigiUrban apenas) ==="
 
-            # 1. Remover TODAS as imagens relacionadas ao DigiUrban
-            echo "Yi  Removendo TODAS as imagens do DigiUrban..."
-            docker images | grep -i digiurban | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
-            docker images | grep -i backend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
-            docker images | grep -i frontend-builder | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
-            docker images | grep -i runner | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            # Remover apenas imagens DANGLING (<none>) - nao afeta outras aplicacoes
+            echo "Removendo imagens dangling (sem tag)..."
+            docker image prune -f || true
 
-            # 2. Remover imagens base do Node.js (forAa download novo)
-            echo "Yi  Removendo imagens base do Node.js..."
-            docker images | grep "node.*20-bookworm-slim" | awk '{print $3}' | xargs -r docker rmi -f 2>/dev/null || true
+            # Limitar o crescimento do build cache sem zera-lo (12.99 GB medidos)
+            echo "Aparando build cache antigo (mantendo cache util)..."
+            docker builder prune -f --filter "until=168h" || true
 
-            # 3. Limpar build cache do Docker
-            echo "Yi  Limpando build cache do Docker..."
-            docker builder prune -af --filter "until=1h" || true
-
-            # 4. Remover imagens A3rfAs (dangling)
-            echo "Yi  Removendo imagens A3rfAs..."
-            docker image prune -af || true
-
-            # 5. Verificar que volumes AINDA existem apA3s limpeza
-            echo "a... Verificando integridade dos volumes apA3s limpeza:"
-            docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "as i  AVISO: Alguns volumes nAo foram encontrados!"
+            # Verificar que volumes de dados seguem intactos
+            echo "Verificando integridade dos volumes:"
+            docker volume ls | grep -E "postgres_data|digiurban_uploads|messages_uploads|smtp_data|digiurban_backups" || echo "AVISO: Alguns volumes nao foram encontrados!"
 
             # 6. Gerar BUILD_TIMESTAMP Aonico
             export BUILD_TIMESTAMP=$(date +%s%N)
@@ -160,9 +171,9 @@ jobs:
             echo "BUILD_TIMESTAMP=${BUILD_TIMESTAMP}"
             echo "CACHE_BUST=${CACHE_BUST}"
 
-            # 7. ForAar pull das imagens base
-            echo "Y ForAando pull de imagens base..."
-            docker pull node:20-bookworm-slim
+            # Otimizacao VPS (P0-4): o pull forcado da base existia porque o bloco acima
+            # apagava node:20-bookworm-slim a cada deploy. Sem essa remocao o Docker
+            # reaproveita a base ja presente na maquina.
 
             # ===== VALIDAAAO PRA-BUILD: Verificar arquivos crAticos =====
             echo "=== Validando arquivos crAticos antes do build ==="
@@ -243,16 +254,19 @@ jobs:
             fi
 
             # ===== BUILD SEM CACHE COM MAsLTIPLAS GARANTIAS =====
-            echo "=== Y  CONSTRUINDO IMAGEM (BUILD COMPLETO SEM CACHE) ==="
+            echo "=== CONSTRUINDO IMAGEM (cache de dependencias reaproveitado) ==="
 
             # Adicionar CACHE_BUST como build arg adicional
+            # Otimizacao VPS (P0-4): `--no-cache --pull` recompilava TUDO (npm install
+            # do backend e do frontend, tsc, next build, download do Chromium) a cada
+            # deploy, na propria maquina de producao. BUILD_TIMESTAMP/CACHE_BUST ja
+            # invalidam as camadas de codigo, entao o cache de dependencias pode ser
+            # reaproveitado com seguranca.
             docker-compose -f docker-compose.vps.yml build \
-              --no-cache \
-              --pull \
               --progress=plain \
               --build-arg BUILD_TIMESTAMP=${BUILD_TIMESTAMP} \
               --build-arg CACHE_BUST=${CACHE_BUST} \
-              --build-arg BUILDKIT_INLINE_CACHE=0
+              --build-arg BUILDKIT_INLINE_CACHE=1
 
             # Parar containers existentes antes de iniciar
             echo "Parando containers existentes..."

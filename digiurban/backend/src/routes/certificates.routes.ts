@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { issueServerCertificate, revokeCertificate } from '../services/certificate-authority.service';
 import { signDocument, verifySignature } from '../services/document-signing.service';
-import { PrismaClient } from '@prisma/client';
 
 const router = Router();
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 // Listar todos os certificados
 router.get('/', async (req, res) => {

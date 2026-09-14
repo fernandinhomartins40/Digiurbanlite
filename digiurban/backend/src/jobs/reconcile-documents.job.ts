@@ -14,7 +14,6 @@
  *   node -r ts-node/register src/jobs/reconcile-documents.job.ts
  */
 
-import { PrismaClient } from '@prisma/client';
 import {
   validateDocumentIntegrity,
   reconcileDocument,
@@ -22,7 +21,10 @@ import {
 } from '../services/document-integrity.service';
 import { runAsPlatform } from '../lib/tenant-context';
 
-const prisma = new PrismaClient();
+// Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
+// src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
+// PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
+import { prisma } from '../lib/prisma';
 
 interface ReconciliationReport {
   timestamp: Date;

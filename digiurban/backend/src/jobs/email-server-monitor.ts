@@ -6,7 +6,7 @@ import { runAsPlatform } from '../lib/tenant-context';
 // Fase A Multi-Tenant: monitor de e-mail é operação de PLATAFORMA (infra
 // compartilhada) — contexto explícito evita o fail-soft para o tenant default.
 const emailServerMonitorJob = cron.schedule(
-  process.env.EMAIL_SERVER_MONITOR_CRON || '*/2 * * * *',
+  process.env.EMAIL_SERVER_MONITOR_CRON || '*/10 * * * *',
   () => runAsPlatform(async () => {
     try {
       const snapshot = await emailServerHealthService.checkHealth({
@@ -39,7 +39,7 @@ export function startEmailServerMonitoring() {
   emailServerMonitorJob.start();
 
   logger.info('Monitor do servidor de email iniciado', {
-    cron: process.env.EMAIL_SERVER_MONITOR_CRON || '*/2 * * * *'
+    cron: process.env.EMAIL_SERVER_MONITOR_CRON || '*/10 * * * *'
   });
 
   runAsPlatform(() =>
