@@ -863,3 +863,34 @@ RAM por container sob os novos `mem_limit`, CPU após o fim do log de queries, t
 imagens após rebuild, tempo de deploy sem compilação na VPS, e o fim do crash-loop do
 `ultrazend-smtp` (261 restarts). Todos permanecem **NÃO MEDIDOS** até lá — nenhum número
 foi estimado nesta auditoria.
+
+## Status do primeiro deploy pelo novo pipeline (registro honesto)
+
+O commit `3dfb9fa1` foi enviado para a `main`, o que dispara `build-images.yml`.
+No momento em que esta auditoria foi encerrada:
+
+| Verificação | Resultado |
+|---|---|
+| Push para `origin/main` | ✅ `688ab90e..3dfb9fa1` |
+| Runner self-hosted da VPS | ✅ ativo (`actions.runner...digiurban-vps.service`, running) |
+| Job `deploy` iniciado | ❌ ainda não — nenhum `Runner.Worker` em execução |
+| `/opt/digiurban` | ainda em `688ab90e` (commit anterior) |
+| Imagens no GHCR | **NÃO VERIFICÁVEL daqui** |
+
+Isto é o **comportamento esperado**: o job `deploy` declara `needs: build`, então só entra
+na fila depois que as 5 imagens forem construídas e publicadas pelos runners
+`ubuntu-latest`. Na primeira execução o cache do GHCR está frio, então o build é o mais
+lento de todos (compila backend, Next.js e baixa o Chromium) — os seguintes reaproveitam
+as camadas.
+
+Sobre o GHCR: as consultas ao registry retornaram `401` e não foi possível obter token
+anônimo, o que **não distingue** "imagem privada já publicada" de "imagem ainda não
+existe". Sem credencial de leitura do GHCR, **não afirmo** que a publicação ocorreu.
+
+**Conferir em:** `https://github.com/fernandinhomartins40/Digiurbanlite/actions`
+e `https://github.com/fernandinhomartins40?tab=packages`.
+
+**Se o build falhar**, nada é implantado (o `deploy` não roda) e a produção segue
+exatamente como está — as imagens atuais continuam servindo. Para voltar ao pipeline
+antigo em emergência, basta acionar `deploy-digiurban-vps.yml` manualmente
+(`workflow_dispatch`), que foi preservado justamente para isso.
