@@ -8285,3 +8285,48 @@ enum SituacaoAtribuicao {
   SUBSTITUIDA // Foi substituído por outro servidor
   PENDENTE // Aguardando aceite do servidor
 }
+
+// ============================================
+// ASSISTÊNCIA REMOTA (2026-09-15)
+// CÓPIA SINCRONIZADA do model em digiurban/backend/prisma/schema.prisma.
+// Regra do projeto (CLAUDE.md): o schema deste serviço é uma cópia — ao mudar
+// o model no backend, sincronizar aqui.
+//
+// Diferença proposital em relação ao backend: SEM as relations `tenant` e
+// `assistedUser`. Este schema reduzido não declara o model Tenant e o User local
+// não tem tenantId; como aponta para a MESMA tabela física
+// (@@map("remote_assist_sessions")), os campos escalares bastam para ler e
+// escrever. As FKs continuam garantidas pelo banco, criadas na migration do
+// backend.
+// ============================================
+model RemoteAssistSession {
+  id       String  @id @default(cuid())
+  tenantId String?
+
+  operatorId    String
+  operatorName  String
+  operatorEmail String
+
+  assistedUserId String
+
+  status String @default("PENDENTE")
+
+  motivo        String?
+  paginaInicial String?
+
+  solicitadaEm DateTime  @default(now())
+  aceitaEm     DateTime?
+  encerradaEm  DateTime?
+  encerradaPor String?
+
+  eventosEnviados Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([assistedUserId, status])
+  @@index([operatorId])
+  @@index([status, solicitadaEm])
+  @@map("remote_assist_sessions")
+}

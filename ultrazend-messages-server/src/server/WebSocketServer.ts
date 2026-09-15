@@ -6,6 +6,10 @@ import logger from '../utils/logger';
 import { verifyToken, JwtPayload } from '../utils/jwt';
 import prisma from '../utils/prisma';
 import type { ParticipantType } from '@prisma/client';
+import {
+  registerRemoteAssistHandlers,
+  endSessionsOnDisconnect,
+} from './RemoteAssistHandler';
 
 export interface AuthenticatedSocket extends Socket {
   userId: string;
@@ -166,6 +170,11 @@ export class WebSocketServer {
         await this.handleLeaveConversation(authSocket, data, callback);
       });
 
+      // Assistência remota (co-browsing somente-visualização, 2026-09-15).
+      // Handlers em módulo próprio para não inchar esta classe — ver
+      // RemoteAssistHandler.ts para as regras de consentimento e privacidade.
+      registerRemoteAssistHandlers(this.io, authSocket);
+
       // Event: ping (manter conexão viva)
       socket.on('ping', async () => {
         await prisma.webSocketSession.updateMany({
@@ -184,6 +193,11 @@ export class WebSocketServer {
         });
 
         await this.handleDisconnect(authSocket, reason);
+
+        // Encerra sessões de assistência remota deste usuário. Sem isto, fechar
+        // a aba deixaria a sessão ATIVA para sempre e bloquearia novos convites
+        // (há no máximo uma sessão viva por assistido).
+        await endSessionsOnDisconnect(this.io, authSocket.userId);
       });
 
       // Error

@@ -1,0 +1,54 @@
+/**
+ * Cliente Socket.IO do MESSAGES-SERVER (porta 9001).
+ *
+ * ⚠️ NÃO confundir com `lib/socket-manager.ts`: aquele conecta no BACKEND
+ * (:3001, path `/api/socket`). São dois servidores Socket.IO distintos, com
+ * paths diferentes — misturá-los foi armadilha documentada no CLAUDE.md.
+ *
+ * Aqui vivem os eventos de chat/bot e, desde 2026-09-15, os de assistência
+ * remota (`assist:*`), cujos handlers estão em
+ * ultrazend-messages-server/src/server/RemoteAssistHandler.ts.
+ *
+ * Autenticação: o handshake aceita o cookie httpOnly `digiurban_admin_token`
+ * (ver WebSocketServer.ts), por isso `withCredentials: true` — não é preciso
+ * passar token no cliente.
+ */
+
+import { io, Socket } from 'socket.io-client'
+
+let instance: Socket | null = null
+
+export function getMessagesSocket(): Socket {
+  if (!instance || instance.disconnected) {
+    // Em produção o Nginx expõe o messages-server em /messages-api; o WebSocket
+    // usa a origem atual. Em desenvolvimento aponta direto para a porta 9001.
+    const url =
+      process.env.NEXT_PUBLIC_MESSAGES_WS_URL ||
+      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001')
+
+    instance = io(url, {
+      // Path default do Socket.IO — o messages-server NÃO usa /api/socket.
+      transports: ['polling', 'websocket'],
+      reconnection: true,
+      reconnectionDelay: 1000,
+      reconnectionDelayMax: 10000,
+      reconnectionAttempts: 5,
+      timeout: 10000,
+      autoConnect: true,
+      withCredentials: true, // envia o cookie httpOnly no handshake
+    })
+
+    instance.on('connect_error', (err) => {
+      console.warn('[messages-socket] falha ao conectar:', err.message)
+    })
+  }
+
+  return instance
+}
+
+export function disconnectMessagesSocket(): void {
+  if (instance) {
+    instance.disconnect()
+    instance = null
+  }
+}

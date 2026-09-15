@@ -176,6 +176,8 @@ model Tenant {
   entityRelationList  EntityRelation[]  @relation("TenantEntityRelation")
   dataWidgetList      DataWidget[]      @relation("TenantDataWidget")
 
+  remoteAssistSessions RemoteAssistSession[] @relation("TenantRemoteAssistSession")
+
   @@map("tenants")
 }
 
@@ -387,6 +389,10 @@ model User {
   // existir em municípios diferentes. NOT NULL em tenantId chega em onda futura;
   // até lá, linhas com tenantId NULL (plataforma) escapam da unicidade (NULLs
   // são distintos no Postgres) — aceitável na transição.
+  // Sessões de assistência remota em que este usuário foi o ASSISTIDO
+  // (quem teve a tela acompanhada). Ver model RemoteAssistSession.
+  remoteAssistSessions RemoteAssistSession[] @relation("RemoteAssistAssisted")
+
   @@unique([tenantId, email])
   @@unique([tenantId, cpf])
   @@unique([tenantId, matricula])
@@ -11036,4 +11042,63 @@ model CarteiraGratuidade {
   @@index([citizenId])
   @@index([tenantId])
   @@map("carteiras_gratuidade")
+}
+
+// ============================================
+// ASSISTÊNCIA REMOTA (2026-09-15)
+// Co-browsing somente-visualização: o operador de plataforma acompanha ao vivo
+// a tela de um servidor municipal para dar suporte. NÃO há controle remoto —
+// o operador vê e aponta, quem clica é sempre o usuário assistido.
+//
+// Esta tabela é a TRILHA DE AUDITORIA: como a tela assistida pode exibir dado
+// pessoal de cidadão (CPF, prontuário, assistência social), é obrigatório poder
+// responder depois "quem viu a tela de quem, quando, e com qual consentimento".
+// Por isso o registro nasce em PENDENTE e só vira ATIVA com aceite explícito.
+// ============================================
+model RemoteAssistSession {
+  id       String  @id @default(cuid())
+  tenantId String?
+  tenant   Tenant? @relation("TenantRemoteAssistSession", fields: [tenantId], references: [id])
+
+  // Quem observa: PlatformUser (operador da plataforma). Sem FK porque
+  // PlatformUser vive fora do espaço de tenant (global por design).
+  operatorId    String
+  operatorName  String
+  operatorEmail String
+
+  // Quem é assistido: User (servidor municipal).
+  assistedUserId String
+  assistedUser   User   @relation("RemoteAssistAssisted", fields: [assistedUserId], references: [id])
+
+  // PENDENTE  → aguardando aceite do assistido
+  // ATIVA     → aceita, transmitindo
+  // ENCERRADA → finalizada por qualquer um dos lados
+  // RECUSADA  → o assistido negou
+  // EXPIRADA  → ninguém respondeu ao convite
+  status String @default("PENDENTE")
+
+  // Motivo informado pelo operador ao solicitar — aparece para o assistido,
+  // para ele decidir com contexto em vez de aceitar às cegas.
+  motivo String?
+
+  // Página em que o assistido estava ao aceitar (diagnóstico de suporte).
+  paginaInicial String?
+
+  solicitadaEm DateTime  @default(now())
+  aceitaEm     DateTime?
+  encerradaEm  DateTime?
+  encerradaPor String? // 'OPERADOR' | 'ASSISTIDO' | 'SISTEMA'
+
+  // Contagem de eventos transmitidos — métrica de volume, não conteúdo.
+  // O conteúdo da tela NUNCA é persistido: trafega só em memória via WebSocket.
+  eventosEnviados Int @default(0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([assistedUserId, status])
+  @@index([operatorId])
+  @@index([status, solicitadaEm])
+  @@map("remote_assist_sessions")
 }
