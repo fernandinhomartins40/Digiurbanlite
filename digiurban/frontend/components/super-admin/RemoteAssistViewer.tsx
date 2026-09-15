@@ -20,7 +20,7 @@ import { getMessagesSocket } from '@/lib/messages-socket'
 import { Button } from '@/components/ui/button'
 import { Loader2, MonitorOff, MousePointer2 } from 'lucide-react'
 
-type Status = 'idle' | 'aguardando' | 'ativa' | 'recusada' | 'encerrada'
+type Status = 'idle' | 'solicitando' | 'aguardando' | 'ativa' | 'recusada' | 'encerrada'
 
 interface Props {
   /** Id do User (servidor municipal) a ser assistido. */
@@ -35,6 +35,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   const [motivo, setMotivo] = useState('')
   const [erro, setErro] = useState<string | null>(null)
   const [apontando, setApontando] = useState(false)
+  const [conectado, setConectado] = useState(false)
 
   const containerRef = useRef<HTMLDivElement>(null)
   const replayerRef = useRef<any>(null)
@@ -43,11 +44,37 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   const solicitar = () => {
     const socket = getMessagesSocket()
     setErro(null)
+
+    // Sem conexão o `emit` é enfileirado silenciosamente e o callback NUNCA
+    // roda — a tela ficaria parada sem explicação (foi o sintoma relatado).
+    // Avisamos e tentamos reconectar.
+    if (!socket.connected) {
+      setErro(
+        'Sem conexão com o servidor de mensagens. Tentando reconectar — aguarde alguns segundos e tente de novo.'
+      )
+      socket.connect()
+      return
+    }
+
+    setStatus('solicitando')
+
+    // Timeout explícito: se o servidor não responder, o operador precisa saber.
+    // `emitWithAck` não é usado para manter compatibilidade com o callback.
+    let respondido = false
+    const timer = setTimeout(() => {
+      if (respondido) return
+      setStatus('idle')
+      setErro('O servidor não respondeu ao pedido. Verifique a conexão e tente novamente.')
+    }, 10000)
+
     socket.emit(
       'assist:request',
       { assistedUserId, motivo: motivo.trim() || undefined },
       (res: { success: boolean; sessionId?: string; error?: string }) => {
+        respondido = true
+        clearTimeout(timer)
         if (!res?.success) {
+          setStatus('idle')
           setErro(res?.error ?? 'Não foi possível solicitar')
           return
         }
@@ -66,6 +93,14 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
 
   useEffect(() => {
     const socket = getMessagesSocket()
+
+    // Estado da conexão visível na tela: sem isso o operador só descobria que o
+    // socket estava fora ao clicar e nada acontecer.
+    setConectado(socket.connected)
+    const onConnect = () => setConectado(true)
+    const onDisconnect = () => setConectado(false)
+    socket.on('connect', onConnect)
+    socket.on('disconnect', onDisconnect)
 
     const onStarted = () => setStatus('ativa')
     const onDeclined = () => setStatus('recusada')
@@ -101,6 +136,8 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
     socket.on('assist:events', onEvents)
 
     return () => {
+      socket.off('connect', onConnect)
+      socket.off('disconnect', onDisconnect)
       socket.off('assist:started', onStarted)
       socket.off('assist:declined', onDeclined)
       socket.off('assist:ended', onEnded)
@@ -151,7 +188,26 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
             maxLength={200}
           />
           {erro && <p className="mb-3 text-sm text-red-600">{erro}</p>}
-          <Button onClick={solicitar}>Solicitar assistência</Button>
+          <div className="flex items-center gap-3">
+            <Button onClick={solicitar} disabled={!conectado}>
+              Solicitar assistência
+            </Button>
+            {/* Estado da conexão explícito — o operador vê antes de clicar. */}
+            <span className="flex items-center gap-1.5 text-xs text-gray-500">
+              <span
+                className={`h-2 w-2 rounded-full ${conectado ? 'bg-green-500' : 'bg-gray-300'}`}
+              />
+              {conectado ? 'Conectado ao servidor' : 'Conectando...'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {status === 'solicitando' && (
+        <div className="flex flex-col items-center justify-center rounded-lg border border-gray-200 bg-white p-10 text-center">
+          <Loader2 className="mb-3 animate-spin text-indigo-600" size={28} />
+          <p className="font-medium text-gray-900">Enviando pedido...</p>
+          <p className="mt-1 text-sm text-gray-500">Falando com o servidor de mensagens.</p>
         </div>
       )}
 

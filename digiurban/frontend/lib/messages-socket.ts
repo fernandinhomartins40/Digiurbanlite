@@ -20,11 +20,19 @@ let instance: Socket | null = null
 
 export function getMessagesSocket(): Socket {
   if (!instance || instance.disconnected) {
-    // Em produção o Nginx expõe o messages-server em /messages-api; o WebSocket
-    // usa a origem atual. Em desenvolvimento aponta direto para a porta 9001.
-    const url =
+    // ⚠️ ESQUEMA DA URL (corrigido 2026-09-15): NEXT_PUBLIC_MESSAGES_WS_URL vale
+    // `wss://digiurban.com.br` no build. Usá-la crua quebrava a conexão: o
+    // Socket.IO começa por `polling`, que é uma requisição HTTP — e `wss://` não
+    // é esquema válido para ela. Resultado: ZERO conexões chegavam ao
+    // messages-server e o botão de assistência não dava retorno algum.
+    //
+    // Convertemos wss->https e ws->http. O Socket.IO faz o upgrade para
+    // WebSocket sozinho depois do handshake.
+    const raw =
       process.env.NEXT_PUBLIC_MESSAGES_WS_URL ||
       (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001')
+
+    const url = raw.replace(/^wss:\/\//, 'https://').replace(/^ws:\/\//, 'http://')
 
     instance = io(url, {
       // Path default do Socket.IO — o messages-server NÃO usa /api/socket.
