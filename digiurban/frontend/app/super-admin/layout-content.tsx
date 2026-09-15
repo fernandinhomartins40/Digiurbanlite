@@ -10,6 +10,7 @@ import {
   UserCog,
   Users,
   Activity,
+  Monitor,
   FileText,
   Settings,
   LogOut,
@@ -81,6 +82,11 @@ const menuItems: MenuItem[] = [
     title: 'Usuários',
     href: '/super-admin/usuarios',
     icon: Users
+  },
+  {
+    title: 'Assistência Remota',
+    href: '/super-admin/assistencia-remota',
+    icon: Monitor
   },
   {
     title: 'Monitoramento',

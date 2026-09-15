@@ -181,6 +181,39 @@ router.post('/tenants/:id/admins', PLATFORM_ADMIN, async (req: Request, res: Res
   }
 });
 
+// GET /api/platform/tenants/:id/users — servidores do município
+//
+// Criado 2026-09-15 para a ASSISTÊNCIA REMOTA: o operador precisa escolher QUEM
+// vai assistir. Já existiam endpoints para resetar senha e ativar/desativar um
+// usuário, mas nenhum que os LISTASSE.
+//
+// `runAsPlatform` é necessário porque o operador não pertence a tenant algum —
+// sem ele a Prisma extension escoparia a busca e não retornaria nada.
+router.get('/tenants/:id/users', async (req: Request, res: Response) => {
+  try {
+    const users = await runAsPlatform(async () =>
+      prisma.user.findMany({
+        where: { tenantId: req.params.id },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          role: true,
+          isActive: true,
+          lastLogin: true,
+          department: { select: { name: true } },
+        },
+        orderBy: [{ isActive: 'desc' }, { name: 'asc' }],
+        take: 500,
+      })
+    );
+    res.json({ success: true, users });
+  } catch (error) {
+    console.error('Erro ao listar usuários do município:', error);
+    res.status(500).json({ error: 'Erro ao listar usuários' });
+  }
+});
+
 // POST /api/platform/tenants/:id/users/:userId/reset-password
 router.post('/tenants/:id/users/:userId/reset-password', PLATFORM_ADMIN, async (req: Request, res: Response) => {
   try {
