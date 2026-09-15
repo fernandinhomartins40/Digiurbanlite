@@ -172,7 +172,10 @@ jobs:
           # Com banco ja povoado o bug ficava invisivel, porque as tabelas existiam.
           echo "=== Subindo aplicacao principal (migrations rodam no startup.sh) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d digiurban
-          wait_for_container_health digiurban-vps 36 10
+          # 90x10s = 15 min. O valor anterior (36x10s = 6 min) era suficiente para um
+          # banco ja povoado, mas NAO para o primeiro boot em banco ZERADO, onde este
+          # container cria as ~213 tabelas do zero antes de responder ao healthcheck.
+          wait_for_container_health digiurban-vps 90 10
 
           echo "=== Subindo satelites (schema ja criado pelo backend) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \

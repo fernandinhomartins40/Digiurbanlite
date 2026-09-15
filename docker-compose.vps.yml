@@ -224,10 +224,19 @@ services:
       - messages_uploads:/app/uploads
       - messages_logs:/app/logs
     restart: unless-stopped
+    # ORDEM DE BOOT (corrigido 2026-09-15): este servico e um SATELITE do schema.
+    # Suas 5 migrations fazem `ALTER TABLE "conversations"` e o codigo consulta
+    # `message_servers` no boot — tabelas criadas pelas migrations do BACKEND
+    # (digiurban-vps, docker/startup.sh). Sem esperar o `digiurban` ficar healthy,
+    # em banco vazio ele quebra com 42P01 e o Prisma trava tudo com P3009.
+    # Esta e a direcao CORRETA da dependencia: antes era o `digiurban` que
+    # esperava por este container, o que formava um deadlock circular.
     depends_on:
       postgres:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      digiurban:
         condition: service_healthy
     networks:
       - digiurban_network
@@ -303,8 +312,13 @@ services:
       - face_uploads:/app/uploads
       - face_logs:/app/logs
     restart: unless-stopped
+    # ORDEM DE BOOT (corrigido 2026-09-15): satelite do schema, como o
+    # ultrazend-messages — le tabelas criadas pelas migrations do backend.
+    # Espera o `digiurban` para nao consultar um banco ainda sem schema.
     depends_on:
       postgres:
+        condition: service_healthy
+      digiurban:
         condition: service_healthy
     networks:
       - digiurban_network
@@ -451,6 +465,22 @@ services:
       - digiurban_logs:/app/logs
       - digiurban_backups:/app/backups
     restart: unless-stopped
+    # ORDEM DE BOOT (corrigido 2026-09-15): o `digiurban` NAO pode depender dos
+    # satelites. Ele e o DONO do schema — suas migrations (docker/startup.sh)
+    # criam `conversations`, `message_servers` e as demais ~213 tabelas que o
+    # ultrazend-messages precisa para ficar healthy.
+    #
+    # A declaracao anterior (`ultrazend-messages: service_healthy`) era um
+    # deadlock circular que so aparecia com banco VAZIO — o caso do reset da VPS
+    # em 2026-09-14:
+    #   digiurban espera messages ficar healthy
+    #   -> messages roda migrate deploy num banco sem `conversations` (42P01)
+    #   -> Prisma marca a migration como falha (P3009) e o container nunca fica healthy
+    #   -> digiurban fica preso em `Created` e as tabelas nunca sao criadas
+    # Com banco ja povoado o bug era invisivel, porque as tabelas ja existiam.
+    #
+    # A dependencia correta e a INVERSA, declarada em `ultrazend-messages`:
+    # o satelite espera o dono do schema.
     depends_on:
       postgres:
         condition: service_healthy
@@ -458,10 +488,6 @@ services:
         condition: service_healthy
       ultrazend-smtp:
         condition: service_healthy
-      ultrazend-messages:
-        condition: service_healthy
-      ultrazend-face:
-        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1/health"]
       interval: 30s
