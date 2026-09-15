@@ -400,7 +400,10 @@ export async function seedCitizenCategoriesExpanded() {
 
   // Primeira passagem: criar/atualizar categorias
   for (const category of categoriesExpanded) {
-    const existing = await prisma.citizenCategory.findUnique({
+    // ⚠️ MULTI-TENANT (2026-09-15): a unique é composta (`tenantId_code`), então
+    // findUnique por `code` não valida. findFirst aceita campo simples e a
+    // tenant extension já escopa a busca.
+    const existing = await prisma.citizenCategory.findFirst({
       where: { code: category.code },
     });
 

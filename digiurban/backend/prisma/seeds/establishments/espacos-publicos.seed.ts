@@ -109,12 +109,21 @@ export const espacosPublicosData = [
 export async function seedEspacosPublicos() {
   console.log('🏛️  Criando Espaços Públicos...');
 
+  // ⚠️ (corrigido 2026-09-15) EspacoPublico não tem NENHUMA unique além de `id`
+  // (nem simples, nem composta), então `where: { nome }` não valida:
+  //   Argument `where` of type EspacoPublicoWhereUniqueInput needs `id`
+  // findFirst (escopado pela tenant extension) + create/update por id.
   for (const espaco of espacosPublicosData) {
-    await prisma.espacoPublico.upsert({
+    const existente = await prisma.espacoPublico.findFirst({
       where: { nome: espaco.nome },
-      update: espaco,
-      create: espaco
+      select: { id: true },
     });
+
+    if (existente) {
+      await prisma.espacoPublico.update({ where: { id: existente.id }, data: espaco });
+    } else {
+      await prisma.espacoPublico.create({ data: espaco });
+    }
     console.log(`   ✅ ${espaco.nome}`);
   }
 

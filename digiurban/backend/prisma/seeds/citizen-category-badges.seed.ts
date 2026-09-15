@@ -181,7 +181,9 @@ export async function seedCitizenCategoryBadges() {
 
   for (const badge of badges) {
     // Buscar categoria
-    const category = await prisma.citizenCategory.findUnique({
+    // ⚠️ MULTI-TENANT (2026-09-15): unique composta (`tenantId_code`) —
+    // findFirst em vez de findUnique (a extension escopa por tenant).
+    const category = await prisma.citizenCategory.findFirst({
       where: { code: badge.categoryCode },
     });
 
