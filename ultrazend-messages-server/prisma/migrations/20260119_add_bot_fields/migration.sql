@@ -27,9 +27,24 @@ ON "conversations"("isBotConversation", "status");
 
 -- Migrate existing BotConversation data (if any exists in legacy table)
 -- Note: This assumes legacy tables exist. If not, these statements will be ignored.
+-- ⚠️ MIGRACAO DE DADOS LEGADOS (corrigido 2026-09-15)
+-- A guarda original checava apenas se a TABELA `bot_conversations` existia, mas o
+-- SELECT abaixo referencia a coluna "context" — que nao existe no schema atual
+-- (a coluna equivalente chama-se "intent"). Resultado em banco novo:
+--   ERROR: column "context" does not exist  (SQLSTATE 42703)
+-- A migration falhava, o Prisma travava a cadeia com P3009 e o messages-server
+-- entrava em crash-loop.
+--
+-- A guarda agora exige tambem a COLUNA, nao so a tabela. Em bancos novos (onde
+-- `bot_conversations` nasce sem "context") este bloco simplesmente nao roda —
+-- correto, porque nao ha dado legado a migrar. Em bancos antigos que realmente
+-- tenham a coluna, a migracao de dados ocorre como antes.
 DO $$
 BEGIN
-  IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'bot_conversations') THEN
+  IF EXISTS (
+    SELECT FROM information_schema.columns
+    WHERE table_name = 'bot_conversations' AND column_name = 'context'
+  ) THEN
     INSERT INTO "conversations" (
       "messageServerId",
       "participant1Id",

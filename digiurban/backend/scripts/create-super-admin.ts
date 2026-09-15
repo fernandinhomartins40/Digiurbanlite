@@ -5,6 +5,7 @@
 
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { runAsPlatform, DEFAULT_TENANT_ID } from '../src/lib/tenant-context';
 
 const prisma = new PrismaClient();
 
@@ -17,40 +18,70 @@ async function createSuperAdmin() {
     const password = 'DigiUrban@2024!';
     const name = 'Super Administrador';
 
-    // Verificar se já existe
-    const existing = await prisma.user.findUnique({
-      where: { email }
-    });
+    // ⚠️ MULTI-TENANT (corrigido 2026-09-15): este script usava
+    // `findUnique({ where: { email } })` e criava o usuário SEM tenantId — padrão
+    // pré-multi-tenant. Desde o plano 2026-07-13 a unique de User é COMPOSTA
+    // (`users_tenantId_email_key`), então `findUnique` por email sozinho nem
+    // compila no Prisma e o seed falhava em TODO deploy com
+    // PrismaClientValidationError. O deploy seguia (o passo é não-fatal), mas o
+    // banco ficava SEM nenhum super-admin — impossível logar no painel.
+    //
+    // Correção: `findFirst` (a tenant extension escopa) + tenantId explícito.
+    // `runAsPlatform` roda fora do escopo de tenant, necessário para criar/ler
+    // o próprio tenant default.
+    await runAsPlatform(async () => {
+      // O tenant default precisa existir antes do usuário (FK + unique composta).
+      // Idempotente: em banco já provisionado o upsert não altera nada.
+      await prisma.tenant.upsert({
+        where: { id: DEFAULT_TENANT_ID },
+        update: {},
+        create: {
+          id: DEFAULT_TENANT_ID,
+          slug: 'default',
+          nome: 'Município Padrão',
+          cnpj: '00000000000000',
+          nomeMunicipio: 'Município Padrão',
+          ufMunicipio: 'SP',
+          status: 'ACTIVE',
+        } as any,
+      });
 
-    if (existing) {
-      console.log('⚠️  Super Admin já existe!');
-      console.log('\n📧 Email:', email);
-      console.log('🔑 Senha: (não alterada)\n');
+      // Verificar se já existe — findFirst, não findUnique (unique é composta)
+      const existing = await prisma.user.findFirst({
+        where: { email, tenantId: DEFAULT_TENANT_ID },
+      });
 
-      // Garantir que tem role SUPER_ADMIN
-      if (existing.role !== 'SUPER_ADMIN') {
-        await prisma.user.update({
-          where: { email },
-          data: { role: 'SUPER_ADMIN' }
-        });
-        console.log('✅ Role atualizado para SUPER_ADMIN\n');
+      if (existing) {
+        console.log('⚠️  Super Admin já existe!');
+        console.log('\n📧 Email:', email);
+        console.log('🔑 Senha: (não alterada)\n');
+
+        // Garantir que tem role SUPER_ADMIN
+        if (existing.role !== 'SUPER_ADMIN') {
+          await prisma.user.update({
+            where: { id: existing.id },
+            data: { role: 'SUPER_ADMIN' },
+          });
+          console.log('✅ Role atualizado para SUPER_ADMIN\n');
+        }
+
+        return;
       }
 
-      return;
-    }
+      // Hash da senha
+      const hashedPassword = await bcrypt.hash(password, 12);
 
-    // Hash da senha
-    const hashedPassword = await bcrypt.hash(password, 12);
-
-    // Criar usuário
-    const user = await prisma.user.create({
-      data: {
-        email,
-        password: hashedPassword, // Campo password já armazena o hash
-        name,
-        role: 'SUPER_ADMIN',
-        isActive: true
-      }
+      // Criar usuário
+      await prisma.user.create({
+        data: {
+          tenantId: DEFAULT_TENANT_ID,
+          email,
+          password: hashedPassword, // Campo password já armazena o hash
+          name,
+          role: 'SUPER_ADMIN',
+          isActive: true,
+        } as any,
+      });
     });
 
     console.log('✅ Super Admin criado com sucesso!\n');
