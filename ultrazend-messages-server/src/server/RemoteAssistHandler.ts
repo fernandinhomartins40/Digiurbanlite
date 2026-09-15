@@ -73,6 +73,62 @@ const reply = (cb: Ack | undefined, res: Parameters<Ack>[0]) => {
 
 export function registerRemoteAssistHandlers(io: Server, socket: AuthedSocket) {
   /**
+   * QUALQUER LADO → reentra na sala de uma sessão ativa.
+   *
+   * ⚠️ POR QUE ISTO EXISTE (corrigido 2026-09-15 — causa da "tela preta"):
+   * as salas do Socket.IO vivem no SOCKET, não no usuário. Numa reconexão
+   * (queda de rede, wifi trocando, aba suspensa pelo navegador) o cliente
+   * ganha um socket NOVO, com id novo e ZERO salas — mas a sessão continua
+   * ATIVA no banco e o React continua gravando com o rrweb.
+   *
+   * Sem este handler, o assistido seguia emitindo `assist:events` por um
+   * socket que não estava mais em `assist:<id>`, e o guard de sala descartava
+   * TUDO em silêncio: nenhum frame chegava ao operador (tela preta), nenhum
+   * erro aparecia, e `eventosEnviados` ficava em 0 no banco.
+   *
+   * Revalidamos no banco em vez de confiar no cliente: só reentra quem é de
+   * fato o operador ou o assistido de uma sessão ATIVA.
+   */
+  socket.on('assist:rejoin', async (data: { sessionId: string }, cb: Ack) => {
+    try {
+      if (!data?.sessionId) {
+        return reply(cb, { success: false, error: 'sessionId obrigatório' });
+      }
+
+      const session = await prisma.remoteAssistSession.findUnique({
+        where: { id: data.sessionId },
+      });
+
+      if (!session || session.status !== 'ATIVA') {
+        return reply(cb, { success: false, error: 'Sessão não está ativa' });
+      }
+
+      const participa =
+        session.assistedUserId === socket.userId || session.operatorId === socket.userId;
+      if (!participa) {
+        logger.warn('assist:rejoin negado — usuário não participa da sessão', {
+          sessionId: data.sessionId,
+          socketUserId: socket.userId,
+        });
+        return reply(cb, { success: false, error: 'Sem permissão nesta sessão' });
+      }
+
+      socket.join(roomOf(session.id));
+
+      logger.info('Assistência remota — reentrada na sala após reconexão', {
+        sessionId: session.id,
+        userId: socket.userId,
+        papel: session.assistedUserId === socket.userId ? 'ASSISTIDO' : 'OPERADOR',
+      });
+
+      reply(cb, { success: true, modo: modoDaSala.get(session.id) ?? session.modo });
+    } catch (error) {
+      logger.error('Erro em assist:rejoin', { error });
+      reply(cb, { success: false, error: 'Erro ao reentrar na sessão' });
+    }
+  });
+
+  /**
    * OPERADOR → solicita acompanhar a tela de um servidor.
    * Cria a sessão PENDENTE e avisa o assistido na sala pessoal dele.
    */
@@ -242,7 +298,23 @@ export function registerRemoteAssistHandlers(io: Server, socket: AuthedSocket) {
     if (!data?.sessionId || !Array.isArray(data.events) || data.events.length === 0) return;
 
     const room = roomOf(data.sessionId);
-    if (!socket.rooms.has(room)) return; // não participa desta sessão
+    if (!socket.rooms.has(room)) {
+      // ⚠️ Este descarte era SILENCIOSO e foi o que escondeu a "tela preta"
+      // (2026-09-15): após uma reconexão o socket perde as salas e todos os
+      // frames morriam aqui sem log nenhum. Agora avisamos o cliente, que
+      // responde com `assist:rejoin` e volta para a sala.
+      //
+      // Amostrado: este é caminho quente (várias vezes por segundo) e um log
+      // por frame inundaria o disco durante uma falha.
+      if (Math.random() < 0.05) {
+        logger.warn('assist:events descartado — socket fora da sala (reconexão?)', {
+          sessionId: data.sessionId,
+          socketUserId: socket.userId,
+        });
+      }
+      socket.emit('assist:rejoin-needed', { sessionId: data.sessionId });
+      return;
+    }
 
     // `socket.to` exclui o próprio remetente: o assistido não recebe de volta.
     socket.to(room).emit('assist:events', { sessionId: data.sessionId, events: data.events });

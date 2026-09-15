@@ -100,14 +100,18 @@ export function RemoteAssistConsent() {
   }, [])
 
   const startCapture = useCallback((sessionId: string) => {
-    const socket = getMessagesSocket()
-    if (!socket) return
-
     // Lote por tempo: emitir evento a evento inundaria o socket em páginas
     // com muita animação. 300 ms mantém a sensação de "ao vivo" com ~3 envios/s.
     let buffer: unknown[] = []
     const flush = () => {
       if (buffer.length === 0) return
+      // ⚠️ Resolver o socket A CADA envio (corrigido 2026-09-15). Antes
+      // capturávamos a instância uma vez, na closure. Como
+      // `getMessagesSocket()` devolve uma instância NOVA quando a anterior
+      // caiu, a closure podia ficar segurando um socket morto para sempre —
+      // e os frames iam para o vazio sem erro nenhum.
+      const socket = getMessagesSocket()
+      if (!socket?.connected) return // reconectando: descarta o lote, o próximo snapshot recupera
       socket.emit('assist:events', { sessionId, events: buffer })
       buffer = []
     }
@@ -120,6 +124,10 @@ export function RemoteAssistConsent() {
         // montar a tela inicial sem esperar o próximo lote.
         if ((event as { type?: number }).type === 2) flush()
       },
+      // Sem isto o rrweb só emite um full snapshot no início. Se o operador
+      // entra depois (ou o primeiro perde-se), não haveria outro type 2 nunca
+      // mais — e `assist:resync` dependeria só do takeFullSnapshot manual.
+      checkoutEveryNms: 30000,
       maskAllInputs: true,
       maskTextClass: 'mask-remote-assist',
       blockClass: 'dado-sensivel',
@@ -270,6 +278,39 @@ export function RemoteAssistConsent() {
 
     const onInput = (input: RemoteInput) => aplicarInput(input)
 
+    /**
+     * RECONEXÃO (corrigido 2026-09-15 — causa da "tela preta").
+     *
+     * As salas do Socket.IO pertencem ao SOCKET, não ao usuário: numa queda de
+     * rede o cliente volta com um socket novo e SEM sala. A sessão continua
+     * ativa e o rrweb continua gravando, mas o servidor passa a descartar todo
+     * frame — nada chega ao operador e nada aparece no console.
+     *
+     * Pedimos a reentrada em dois gatilhos, de propósito: `connect` cobre o
+     * caso normal, e `assist:rejoin-needed` (emitido pelo servidor ao descartar
+     * um lote) cobre o caso em que perdemos o evento de reconexão.
+     */
+    const rejoin = () => {
+      const sessionId = sessionRef.current
+      if (!sessionId) return
+      socket.emit('assist:rejoin', { sessionId }, (res?: { success?: boolean }) => {
+        if (!res?.success) {
+          console.warn('[assist] falha ao reentrar na sessão', sessionId)
+          return
+        }
+        // De volta à sala: o operador está com a tela congelada no último frame
+        // pré-queda, então mandamos um snapshot completo em vez de esperar o
+        // próximo checkout.
+        try {
+          record.takeFullSnapshot(true)
+        } catch {
+          /* captura não está ativa */
+        }
+      })
+    }
+
+    const onRejoinNeeded = () => rejoin()
+
     const onChat = (msg: ChatMsg) => {
       setMsgs((prev) => [...prev, msg])
       // Só conta como não lida a mensagem do OUTRO lado e com o chat fechado.
@@ -287,6 +328,8 @@ export function RemoteAssistConsent() {
     socket.on('assist:mode', onMode)
     socket.on('assist:input', onInput)
     socket.on('assist:chat', onChat)
+    socket.on('assist:rejoin-needed', onRejoinNeeded)
+    socket.on('connect', rejoin)
 
     return () => {
       socket.off('assist:invite', onInvite)
@@ -297,6 +340,8 @@ export function RemoteAssistConsent() {
       socket.off('assist:mode', onMode)
       socket.off('assist:input', onInput)
       socket.off('assist:chat', onChat)
+      socket.off('assist:rejoin-needed', onRejoinNeeded)
+      socket.off('connect', rejoin)
       stopCapture()
     }
   }, [aplicarInput, startCapture, stopCapture])
@@ -314,6 +359,14 @@ export function RemoteAssistConsent() {
 
     const retomar = (e: Event) => {
       if (!e.isTrusted) return
+      // ⚠️ NÃO retomar por causa da PRÓPRIA interface de assistência (corrigido
+      // 2026-09-15): abrir a conversa ou digitar uma mensagem são cliques e
+      // teclas legítimos do assistido, mas não são "ele voltou a trabalhar na
+      // tela" — são ele falando com o suporte. Sem esta exclusão, clicar no
+      // ícone de conversa revogava o controle na hora, e cada tecla digitada no
+      // chat revogava de novo (foi o sintoma relatado: controleRetomadas=4).
+      const alvo = e.target as HTMLElement | null
+      if (alvo?.closest?.('[data-remote-assist-ui]')) return
       definirControle(false)
     }
 
