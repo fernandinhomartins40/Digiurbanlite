@@ -680,6 +680,26 @@ export async function seed03VinculosProfissionais() {
       continue;
     }
 
+    // ⚠️ IDEMPOTÊNCIA (corrigido 2026-09-15): era `create` puro, então rodar o
+    // seed duas vezes quebrava com
+    //   Unique constraint failed on the fields:
+    //   (`userId`,`organizationalUnitId`,`positionId`,`dataInicio`)
+    // Seed tem de poder rodar novamente sem erro — pulamos o que já existe.
+    const vinculoExistente = await prisma.employeeAssignment.findFirst({
+      where: {
+        userId: user.id,
+        organizationalUnitId: vinculoData.unidadeOrgId,
+        positionId: vinculoData.cargoId,
+        dataInicio: vinculoData.dataInicio,
+      },
+      select: { id: true },
+    });
+
+    if (vinculoExistente) {
+      console.log(`   ↩️  Vínculo já existe para ${vinculoData.userEmail}, pulando`);
+      continue;
+    }
+
     // Criar vínculo
     const vinculo = await prisma.employeeAssignment.create({
       data: {

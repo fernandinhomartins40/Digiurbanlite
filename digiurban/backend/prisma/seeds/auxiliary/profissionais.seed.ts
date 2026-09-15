@@ -129,8 +129,35 @@ export const profissionaisSaudeData = [
 export async function seedProfissionaisSaude() {
   console.log('   👨‍⚕️  Profissionais de Saúde...');
 
+  // 🔴 FUNCIONALIDADE QUEBRADA (detectado 2026-09-15) — NÃO é código morto.
+  //
+  // O model `ProfissionalSaude` NÃO existe mais: não está no schema.prisma e a
+  // tabela não existe no banco (há apenas profissionais_equipes e
+  // profissionais_atividades). Este seed quebrava com
+  //   TypeError: Cannot read properties of undefined (reading 'upsert')
+  // e derrubava TODO o bloco de dados auxiliares junto (categorias, tipos,
+  // entidades municipais), que rodam depois dele.
+  //
+  // ⚠️ O problema é MAIOR que este seed: `src/apps/saude/integracao/
+  // ledi-converter.service.ts` (linhas 150 e 279) também chama
+  // `prisma.profissionalSaude.findUnique` — código de PRODUÇÃO da integração
+  // e-SUS/LEDI, que falha em runtime pelo mesmo motivo. O `tsc` não acusa
+  // porque o projeto roda com ignoreBuildErrors.
+  //
+  // DECISÃO PENDENTE (restaurar o model, migrar para HealthProfessionalData, ou
+  // descontinuar de vez). Até lá, este seed AVISA e segue, em vez de derrubar os
+  // demais dados auxiliares. Os dados de origem foram preservados acima.
+  if (!(prisma as any).profissionalSaude) {
+    console.warn(
+      '   ⚠️  PULADO: o model ProfissionalSaude não existe no schema.\n' +
+        '      Os dados continuam em profissionaisSaudeData, aguardando decisão.\n' +
+        '      Ver também: src/apps/saude/integracao/ledi-converter.service.ts'
+    );
+    return;
+  }
+
   for (const data of profissionaisSaudeData) {
-    await prisma.profissionalSaude.upsert({
+    await (prisma as any).profissionalSaude.upsert({
       where: { cpf: data.cpf },
       update: data,
       create: data,

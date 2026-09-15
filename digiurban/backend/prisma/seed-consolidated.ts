@@ -419,7 +419,10 @@ async function main() {
     console.log('   📦 Importando sistema unificado...');
 
     try {
-      const { default: seedUnifiedSystem } = await import('./seeds/unified-system.seed');
+      // ⚠️ (corrigido 2026-09-15) era `{ default: seedUnifiedSystem }`, mas o
+      // arquivo exporta a função de forma NOMEADA (`export async function`) e
+      // não tem default — daí `seedUnifiedSystem is not a function` em runtime.
+      const { seedUnifiedSystem } = await import('./seeds/unified-system.seed');
       await seedUnifiedSystem();
       console.log('   ✅ Sistema Unificado criado com sucesso\n');
     } catch (error: any) {
