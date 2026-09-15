@@ -77,6 +77,8 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   const [rascunho, setRascunho] = useState('')
 
   const containerRef = useRef<HTMLDivElement>(null)
+  /** Tela real do assistido, lida do evento Meta (type 4) do rrweb. */
+  const telaRef = useRef<{ width: number; height: number } | null>(null)
   const replayerRef = useRef<any>(null)
   const sessionRef = useRef<string | null>(null)
   /** Eventos incrementais que chegaram ANTES do primeiro snapshot. */
@@ -135,6 +137,43 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
       }
     )
   }
+
+  /**
+   * Encaixa a tela do assistido na caixa do operador, SEM distorcer.
+   *
+   * ⚠️ POR QUE ISTO EXISTE (corrigido 2026-09-15 — "so renderiza parte da
+   * tela"): o rrweb desenha o conteudo dentro do iframe usando as dimensoes
+   * ORIGINAIS do assistido (ex.: 1920x1080). Nos criavamos o Replayer sem
+   * passar width/height, entao ele assumia o default 1024x576, e o CSS ainda
+   * esticava o iframe com `h-full w-full`. Resultado: o iframe ocupava a caixa
+   * toda, mas o conteudo era pintado numa regiao menor no canto — o resto
+   * ficava preto.
+   *
+   * A correcao e manter o iframe no tamanho REAL e aplicar um `scale` no
+   * wrapper, que e como o rrweb-player faz. Assim a proporcao se mantem e a
+   * tela inteira aparece.
+   */
+  const ajustarEscala = useCallback(() => {
+    const caixa = containerRef.current?.parentElement
+    const tela = telaRef.current
+    const wrapper = containerRef.current?.querySelector('.replayer-wrapper') as HTMLElement | null
+    if (!caixa || !tela || !wrapper || !tela.width || !tela.height) return
+
+    const escala = Math.min(caixa.clientWidth / tela.width, caixa.clientHeight / tela.height)
+    wrapper.style.transform = `scale(${escala})`
+    wrapper.style.transformOrigin = 'top left'
+    // Centraliza a sobra no eixo em que a proporcao nao bate.
+    wrapper.style.position = 'absolute'
+    wrapper.style.left = `${Math.max(0, (caixa.clientWidth - tela.width * escala) / 2)}px`
+    wrapper.style.top = `${Math.max(0, (caixa.clientHeight - tela.height * escala) / 2)}px`
+  }, [])
+
+  /** A caixa do operador muda de tamanho (resize, sidebar, chat): reencaixar. */
+  useEffect(() => {
+    const onResize = () => ajustarEscala()
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [ajustarEscala])
 
   const encerrar = useCallback(() => {
     const socket = getMessagesSocket()
@@ -198,6 +237,13 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
         const doSnapshot = events.slice(idx)
         pendentesRef.current = []
 
+        // O evento Meta (type 4) carrega a tela REAL do assistido. Sem ele o
+        // Replayer cai no default 1024x576 e a imagem sai cortada.
+        const meta = doSnapshot.find((e: any) => e?.type === 4) as any
+        if (meta?.data?.width && meta?.data?.height) {
+          telaRef.current = { width: meta.data.width, height: meta.data.height }
+        }
+
         const { Replayer } = await import('rrweb')
         replayerRef.current = new Replayer(doSnapshot, {
           root: containerRef.current,
@@ -208,10 +254,19 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
         })
         replayerRef.current.startLive()
         setMontandoTela(false)
+        // Depois do startLive o wrapper ja existe no DOM: da para escalar.
+        requestAnimationFrame(ajustarEscala)
         return
       }
 
-      for (const ev of events) replayerRef.current.addEvent(ev)
+      for (const ev of events) {
+        // O assistido pode redimensionar a janela no meio da sessao.
+        if ((ev as any)?.type === 4 && (ev as any)?.data?.width) {
+          telaRef.current = { width: (ev as any).data.width, height: (ev as any).data.height }
+          requestAnimationFrame(ajustarEscala)
+        }
+        replayerRef.current.addEvent(ev)
+      }
     }
 
     socket.on('assist:started', onStarted)
@@ -241,14 +296,29 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
     if (status === 'ativa') resync()
   }, [status, resync])
 
-  /** Encerra a sessão se o operador fechar a aba no meio. */
+  /**
+   * Encerra a sessão se o operador FECHAR A ABA no meio.
+   *
+   * ⚠️ POR QUE `beforeunload` E NÃO O CLEANUP (corrigido 2026-09-15):
+   * antes isto era o cleanup de um effect com dep `[status]`. Um cleanup roda
+   * a cada mudança da dep e em QUALQUER desmontagem — nao apenas ao fechar a
+   * aba. Na pratica, bastava o operador navegar para outra pagina (ou abrir um
+   * cadastro que desmontasse este componente) para dispararmos `assist:end` e
+   * derrubar a sessao sozinhos. Era o sintoma "a conexao cai quando mudo de
+   * pagina".
+   *
+   * `beforeunload` dispara SO no fechamento/recarregamento real da aba, que e
+   * exatamente a intencao original.
+   */
   useEffect(() => {
-    return () => {
-      if (sessionRef.current && status === 'ativa') {
+    const aoFechar = () => {
+      if (sessionRef.current) {
         getMessagesSocket().emit('assist:end', { sessionId: sessionRef.current })
       }
     }
-  }, [status])
+    window.addEventListener('beforeunload', aoFechar)
+    return () => window.removeEventListener('beforeunload', aoFechar)
+  }, [])
 
   /**
    * Teclado do operador → assistido.
@@ -292,6 +362,24 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
    */
   const normalizar = (e: React.MouseEvent<HTMLDivElement>) => {
     const rect = e.currentTarget.getBoundingClientRect()
+    const tela = telaRef.current
+
+    // ⚠️ Descontar a MOLDURA (corrigido 2026-09-15). Com o encaixe por escala,
+    // a tela do assistido quase nunca preenche a caixa toda: sobra uma faixa
+    // vazia num dos eixos. Normalizar pela caixa inteira faria o operador
+    // clicar num ponto e acertar outro — o erro cresce quanto maior a sobra.
+    if (tela?.width && tela?.height) {
+      const escala = Math.min(rect.width / tela.width, rect.height / tela.height)
+      const larguraReal = tela.width * escala
+      const alturaReal = tela.height * escala
+      const offsetX = Math.max(0, (rect.width - larguraReal) / 2)
+      const offsetY = Math.max(0, (rect.height - alturaReal) / 2)
+      return {
+        x: (e.clientX - rect.left - offsetX) / larguraReal,
+        y: (e.clientY - rect.top - offsetY) / alturaReal,
+      }
+    }
+
     return {
       x: (e.clientX - rect.left) / rect.width,
       y: (e.clientY - rect.top) / rect.height,
@@ -318,11 +406,14 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   /** Ponteiro: converte a posição do mouse para coordenadas da tela assistida. */
   const onMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!apontando || status !== 'ativa' || !sessionRef.current) return
-    const rect = e.currentTarget.getBoundingClientRect()
+    // Mesma correcao de moldura do `normalizar`: mandamos a coordenada JA na
+    // escala da tela do assistido, senao o ponteiro aparece deslocado para ele.
+    const { x, y } = normalizar(e)
+    const tela = telaRef.current
     getMessagesSocket().emit('assist:pointer', {
       sessionId: sessionRef.current,
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+      x: x * (tela?.width ?? e.currentTarget.clientWidth),
+      y: y * (tela?.height ?? e.currentTarget.clientHeight),
     })
   }
 
@@ -528,7 +619,14 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
             >
               <div
                 ref={containerRef}
-                className="pointer-events-none h-full w-full [&_iframe]:h-full [&_iframe]:w-full [&_iframe]:border-0"
+                /*
+                  ⚠️ NAO forcar `h-full w-full` no iframe (corrigido
+                  2026-09-15). O rrweb pinta o conteudo no tamanho real do
+                  assistido; esticar o iframe por CSS desalinhava a imagem e
+                  deixava o resto da area preto. O encaixe agora e feito por
+                  `transform: scale()` em `ajustarEscala`.
+                */
+                className="pointer-events-none h-full w-full [&_iframe]:border-0"
               />
 
               {/* Enquanto o snapshot não chega, a área ficaria preta sem explicação */}

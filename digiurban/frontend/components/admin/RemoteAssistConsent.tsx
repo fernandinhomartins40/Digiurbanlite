@@ -70,6 +70,8 @@ export function RemoteAssistConsent() {
   const [activeSession, setActiveSession] = useState<string | null>(null)
   const [modo, setModo] = useState<Modo>('VER')
   const [pointer, setPointer] = useState<{ x: number; y: number } | null>(null)
+  /** Aviso de acao que o controle remoto nao consegue executar (select/upload). */
+  const [avisoLimite, setAvisoLimite] = useState<string | null>(null)
 
   const [chatAberto, setChatAberto] = useState(false)
   const [msgs, setMsgs] = useState<ChatMsg[]>([])
@@ -185,6 +187,36 @@ export function RemoteAssistConsent() {
 
       if (input.tipo === 'text') {
         if (!editavel) return
+        const texto = String(input.valor ?? '')
+
+        if (alvo.isContentEditable) {
+          document.execCommand('insertText', false, texto)
+          return
+        }
+
+        // ⚠️ INSERIR NO CURSOR, nao substituir o campo (corrigido 2026-09-15).
+        // O operador envia UMA tecla por vez. Antes faziamos
+        // `setter(campo, input.valor)`, o que trocava o conteudo inteiro pela
+        // ultima tecla: digitar "ana" deixava so "a" — o campo nunca passava de
+        // um caractere. Agora respeitamos cursor e selecao, como digitacao real.
+        const atual = String(campo.value ?? '')
+
+        // ⚠️ Tipos "sem cursor" (verificado em Chromium 2026-09-15):
+        // number, date, time, datetime-local, month, email e color NAO expoem
+        // selectionStart (retorna null) e LANCAM em setSelectionRange. Para
+        // eles a unica operacao valida e ANEXAR no fim — tentar posicionar o
+        // cursor so geraria excecao.
+        let inicio: number
+        let fim: number
+        try {
+          inicio = campo.selectionStart ?? atual.length
+          fim = campo.selectionEnd ?? atual.length
+        } catch {
+          inicio = atual.length
+          fim = atual.length
+        }
+        const novo = atual.slice(0, inicio) + texto + atual.slice(fim)
+
         // Setter nativo + evento: é o caminho que o React reconhece. Atribuir
         // `.value` direto não dispara o onChange e o formulário ficaria com o
         // valor visualmente certo mas vazio no state.
@@ -193,7 +225,15 @@ export function RemoteAssistConsent() {
             ? window.HTMLTextAreaElement.prototype
             : window.HTMLInputElement.prototype
         const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
-        setter?.call(campo, input.valor)
+        setter?.call(campo, novo)
+        // Reposiciona o cursor DEPOIS do que foi inserido: sem isto ele pularia
+        // para o fim e digitar no meio do texto ficaria embaralhado.
+        const cursor = inicio + texto.length
+        try {
+          campo.setSelectionRange(cursor, cursor)
+        } catch {
+          /* input type=email/number nao suporta setSelectionRange */
+        }
         campo.dispatchEvent(new Event('input', { bubbles: true }))
         return
       }
@@ -203,13 +243,33 @@ export function RemoteAssistConsent() {
         new KeyboardEvent('keydown', { key: input.key, bubbles: true, cancelable: true })
       )
       if (input.key === 'Backspace' && editavel) {
-        const proto =
-          campo.tagName === 'TEXTAREA'
-            ? window.HTMLTextAreaElement.prototype
-            : window.HTMLInputElement.prototype
-        const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
-        setter?.call(campo, String(campo.value ?? '').slice(0, -1))
-        campo.dispatchEvent(new Event('input', { bubbles: true }))
+        if (alvo.isContentEditable) {
+          document.execCommand('delete')
+        } else {
+          // Mesma logica do insert: apagar NO CURSOR. Antes era
+          // `slice(0, -1)`, que removia sempre o ultimo caractere do campo
+          // mesmo com o cursor no meio — e ignorava texto selecionado.
+          const atual = String(campo.value ?? '')
+          const inicio = campo.selectionStart ?? atual.length
+          const fim = campo.selectionEnd ?? atual.length
+          // Com selecao, Backspace apaga a selecao; sem selecao, o caractere
+          // anterior ao cursor.
+          const de = inicio === fim ? Math.max(0, inicio - 1) : inicio
+          const novo = atual.slice(0, de) + atual.slice(fim)
+
+          const proto =
+            campo.tagName === 'TEXTAREA'
+              ? window.HTMLTextAreaElement.prototype
+              : window.HTMLInputElement.prototype
+          const setter = Object.getOwnPropertyDescriptor(proto, 'value')?.set
+          setter?.call(campo, novo)
+          try {
+            campo.setSelectionRange(de, de)
+          } catch {
+            /* input type=email/number nao suporta setSelectionRange */
+          }
+          campo.dispatchEvent(new Event('input', { bubbles: true }))
+        }
       }
       alvo.dispatchEvent(
         new KeyboardEvent('keyup', { key: input.key, bubbles: true, cancelable: true })
@@ -229,6 +289,39 @@ export function RemoteAssistConsent() {
 
     // Foca antes de clicar — para campos, é o que permite digitar em seguida.
     if (typeof alvo.focus === 'function') alvo.focus()
+
+    // ⚠️ LIMITE REAL DO CONTROLE REMOTO (auditado 2026-09-15).
+    //
+    // `<select>` nativo e `<input type="file">` abrem interface do SISTEMA
+    // OPERACIONAL, nao do documento. Ela nao aparece no rrweb (o operador
+    // continuaria vendo a tela "congelada" atras do dialogo) e nao pode ser
+    // fechada nem escolhida por evento sintetico — por seguranca, o navegador
+    // so aceita gesto real do usuario.
+    //
+    // Antes o clique simplesmente nao fazia nada visivel e o operador ficava
+    // repetindo sem entender. Agora avisamos os dois lados, que e o unico
+    // desfecho honesto: quem escolhe o arquivo/opcao tem de ser o assistido.
+    //
+    // A maior parte do sistema usa Radix Select (166 arquivos), que e HTML e
+    // funciona normalmente por clique sintetico — isto afeta so os nativos.
+    const ehSelectNativo = alvo.tagName === 'SELECT'
+    const ehUpload = alvo.tagName === 'INPUT' && (alvo as HTMLInputElement).type === 'file'
+    if (ehSelectNativo || ehUpload) {
+      const aviso = ehUpload
+        ? 'O suporte tentou abrir a selecao de arquivo. Por seguranca do navegador, so voce pode escolher o arquivo — clique no botao e selecione.'
+        : 'O suporte tentou abrir esta lista. Por seguranca do navegador, so voce pode escolher a opcao — clique na lista e selecione.'
+      setAvisoLimite(aviso)
+      const socket = getMessagesSocket()
+      if (socket && sessionRef.current) {
+        socket.emit('assist:chat', {
+          sessionId: sessionRef.current,
+          texto: ehUpload
+            ? '[sistema] Nao consigo abrir a selecao de arquivo daqui — peca para a pessoa escolher.'
+            : '[sistema] Nao consigo abrir esta lista suspensa daqui — peca para a pessoa escolher.',
+        })
+      }
+      return
+    }
 
     const comum = { bubbles: true, cancelable: true, clientX: x, clientY: y, view: window }
     alvo.dispatchEvent(new MouseEvent('mousedown', comum))
@@ -346,39 +439,31 @@ export function RemoteAssistConsent() {
     }
   }, [aplicarInput, startCapture, stopCapture])
 
-  /**
-   * PRECEDÊNCIA DO ASSISTIDO: mexer no mouse ou no teclado retoma o controle.
-   *
-   * Escutamos na fase de CAPTURA (`true`) para ver o evento antes de qualquer
-   * handler da aplicação. Os inputs sintéticos que nós mesmos despachamos em
-   * `aplicarInput` não têm `isTrusted`, então não disparam a retomada — é essa
-   * distinção que separa "o operador clicou" de "a pessoa clicou".
-   */
+  /** O aviso de limite some sozinho: e informativo, nao exige acao. */
   useEffect(() => {
-    if (!activeSession || modo !== 'CONTROLAR') return
+    if (!avisoLimite) return
+    const t = setTimeout(() => setAvisoLimite(null), 8000)
+    return () => clearTimeout(t)
+  }, [avisoLimite])
 
-    const retomar = (e: Event) => {
-      if (!e.isTrusted) return
-      // ⚠️ NÃO retomar por causa da PRÓPRIA interface de assistência (corrigido
-      // 2026-09-15): abrir a conversa ou digitar uma mensagem são cliques e
-      // teclas legítimos do assistido, mas não são "ele voltou a trabalhar na
-      // tela" — são ele falando com o suporte. Sem esta exclusão, clicar no
-      // ícone de conversa revogava o controle na hora, e cada tecla digitada no
-      // chat revogava de novo (foi o sintoma relatado: controleRetomadas=4).
-      const alvo = e.target as HTMLElement | null
-      if (alvo?.closest?.('[data-remote-assist-ui]')) return
-      definirControle(false)
-    }
-
-    window.addEventListener('mousedown', retomar, true)
-    window.addEventListener('keydown', retomar, true)
-    window.addEventListener('wheel', retomar, true)
-    return () => {
-      window.removeEventListener('mousedown', retomar, true)
-      window.removeEventListener('keydown', retomar, true)
-      window.removeEventListener('wheel', retomar, true)
-    }
-  }, [activeSession, modo, definirControle])
+  /**
+   * PRECEDENCIA DO ASSISTIDO: apenas pelo BOTAO "Retomar controle".
+   *
+   * ⚠️ DECISAO DE PRODUTO (2026-09-15). Antes existia aqui um listener global
+   * que revogava o controle a QUALQUER mousedown/keydown/wheel confiavel do
+   * assistido. A intencao era protege-lo, mas o efeito pratico foi o oposto:
+   *
+   *   - clicar no icone de conversa revogava o controle;
+   *   - digitar no chat revogava a cada tecla;
+   *   - ROLAR a tela para mostrar algo ao suporte revogava tambem.
+   *
+   * Ou seja: era impossivel falar com o suporte ou apontar o problema sem
+   * derrubar a sessao. Adotamos o modelo do AnyDesk/TeamViewer — os dois lados
+   * podem mexer ao mesmo tempo e o controle so volta por acao explicita, pelo
+   * botao "Retomar controle", que fica sempre visivel na barra.
+   *
+   * Nao recolocar o listener global sem resolver os tres casos acima.
+   */
 
   const respond = (aceitar: boolean, modoAceito: Modo = 'VER') => {
     const socket = getMessagesSocket()
@@ -599,6 +684,30 @@ export function RemoteAssistConsent() {
               title="Enviar"
             >
               <Send size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/*
+        Aviso do que o controle remoto NAO consegue fazer (lista nativa, upload).
+        Fica sobre a tela porque a acao trava ali: sem ele, o operador clica e
+        nada acontece, e ninguem entende o motivo.
+      */}
+      {activeSession && avisoLimite && (
+        <div
+          data-remote-assist-ui
+          className="fixed bottom-24 left-1/2 z-[9998] w-[min(92vw,420px)] -translate-x-1/2 rounded-lg bg-amber-50 p-3 text-sm text-amber-900 shadow-lg ring-1 ring-amber-200"
+        >
+          <div className="flex items-start gap-2">
+            <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-600" />
+            <p className="flex-1">{avisoLimite}</p>
+            <button
+              onClick={() => setAvisoLimite(null)}
+              className="shrink-0 rounded p-0.5 hover:bg-amber-100"
+              aria-label="Fechar aviso"
+            >
+              <X size={16} />
             </button>
           </div>
         </div>
