@@ -22,6 +22,61 @@ import { seedServiceWorkflows } from './seeds/service-workflows.seed';
 
 const prisma = new PrismaClient();
 
+/**
+ * ⚠️ MULTI-TENANT (corrigido 2026-09-15)
+ *
+ * Este seed usava `upsert({ where: { email } })` para criar os usuários. Desde o
+ * plano multi-tenant 2026-07-13 a unique de User é COMPOSTA
+ * (`users_tenantId_email_key`), então `where: { email }` nem valida no Prisma:
+ *   PrismaClientValidationError: Invalid `prisma.user.upsert()` invocation
+ *
+ * O seed morria na seção 2 — por isso o banco ficava com o Município
+ * Demonstração criado (seção 1, que usa `id: 'singleton'`) mas SEM usuários,
+ * secretarias, serviços ou cidadãos.
+ *
+ * Este helper faz o upsert respeitando a unique composta: `findFirst` escopado
+ * por tenant + create/update por `id`. Mesma correção já aplicada em
+ * scripts/create-super-admin.ts.
+ */
+const DEFAULT_TENANT_ID = process.env.DEFAULT_TENANT_ID || 'tenant-default';
+
+async function upsertUserPorTenant(params: {
+  email: string;
+  name: string;
+  hashedPassword: string;
+  role: 'SUPER_ADMIN' | 'ADMIN' | 'MANAGER' | 'USER';
+  departmentId?: string | null;
+}) {
+  const existente = await prisma.user.findFirst({
+    where: { email: params.email, tenantId: DEFAULT_TENANT_ID },
+    select: { id: true },
+  });
+
+  const dadosComuns = {
+    password: params.hashedPassword,
+    isActive: true,
+    role: params.role,
+    mustChangePassword: false,
+  };
+
+  if (existente) {
+    return prisma.user.update({
+      where: { id: existente.id },
+      data: dadosComuns,
+    });
+  }
+
+  return prisma.user.create({
+    data: {
+      tenantId: DEFAULT_TENANT_ID,
+      email: params.email,
+      name: params.name,
+      ...(params.departmentId ? { departmentId: params.departmentId } : {}),
+      ...dadosComuns,
+    } as any,
+  });
+}
+
 async function main() {
   const shouldSeedServiceWorkflows =
     process.env.SEED_SERVICE_WORKFLOWS === 'true' || process.env.NODE_ENV !== 'production';
@@ -35,6 +90,26 @@ async function main() {
     // ========================================================================
     console.log('1️⃣  Configuração do Município');
     console.log('   ─────────────────────────────');
+
+    // ⚠️ MULTI-TENANT (2026-09-15): o seed criava apenas `municipioConfig`
+    // (singleton, modelo pré-multi-tenant) e NUNCA a linha em `tenants`. Como
+    // agora usuários, cidadãos e demais registros nascem com
+    // `tenantId = tenant-default`, sem esta linha todos os creates falhariam
+    // por violação de chave estrangeira. Idempotente.
+    await prisma.tenant.upsert({
+      where: { id: DEFAULT_TENANT_ID },
+      update: {},
+      create: {
+        id: DEFAULT_TENANT_ID,
+        slug: 'default',
+        nome: 'Município Demonstração',
+        cnpj: '00000000000191',
+        nomeMunicipio: 'Demonstração',
+        ufMunicipio: 'SP',
+        status: 'ACTIVE',
+      } as any,
+    });
+    console.log(`   ✅ Tenant: ${DEFAULT_TENANT_ID}`);
 
     const municipioConfig = await prisma.municipioConfig.upsert({
       where: { id: 'singleton' },
@@ -94,22 +169,11 @@ async function main() {
     const superAdminPassword = 'SuperAdmin@2025';
     const hashedSuperAdminPassword = await bcrypt.hash(superAdminPassword, 12);
 
-    await prisma.user.upsert({
-      where: { email: superAdminEmail },
-      update: {
-        password: hashedSuperAdminPassword,
-        isActive: true,
-        role: 'SUPER_ADMIN',
-        mustChangePassword: false
-      },
-      create: {
-        email: superAdminEmail,
-        name: 'Super Administrador DigiUrban',
-        password: hashedSuperAdminPassword,
-        role: 'SUPER_ADMIN',
-        isActive: true,
-        mustChangePassword: false
-      }
+    await upsertUserPorTenant({
+      email: superAdminEmail,
+      name: 'Super Administrador DigiUrban',
+      hashedPassword: hashedSuperAdminPassword,
+      role: 'SUPER_ADMIN',
     });
     console.log(`   ✅ Super Admin: ${superAdminEmail}`);
 
@@ -118,22 +182,11 @@ async function main() {
     const adminPassword = 'Admin@123';
     const hashedAdminPassword = await bcrypt.hash(adminPassword, 12);
 
-    await prisma.user.upsert({
-      where: { email: adminEmail },
-      update: {
-        password: hashedAdminPassword,
-        isActive: true,
-        role: 'ADMIN',
-        mustChangePassword: false
-      },
-      create: {
-        email: adminEmail,
-        name: 'Administrador Municipal',
-        password: hashedAdminPassword,
-        role: 'ADMIN',
-        isActive: true,
-        mustChangePassword: false
-      }
+    await upsertUserPorTenant({
+      email: adminEmail,
+      name: 'Administrador Municipal',
+      hashedPassword: hashedAdminPassword,
+      role: 'ADMIN',
     });
     console.log(`   ✅ Admin: ${adminEmail}`);
 
@@ -142,22 +195,11 @@ async function main() {
     const managerPassword = 'Gerente@123';
     const hashedManagerPassword = await bcrypt.hash(managerPassword, 12);
 
-    await prisma.user.upsert({
-      where: { email: managerEmail },
-      update: {
-        password: hashedManagerPassword,
-        isActive: true,
-        role: 'MANAGER',
-        mustChangePassword: false
-      },
-      create: {
-        email: managerEmail,
-        name: 'Gerente Municipal',
-        password: hashedManagerPassword,
-        role: 'MANAGER',
-        isActive: true,
-        mustChangePassword: false
-      }
+    await upsertUserPorTenant({
+      email: managerEmail,
+      name: 'Gerente Municipal',
+      hashedPassword: hashedManagerPassword,
+      role: 'MANAGER',
     });
     console.log(`   ✅ Gerente: ${managerEmail}`);
 
@@ -166,22 +208,11 @@ async function main() {
     const userPassword = 'User@123';
     const hashedUserPassword = await bcrypt.hash(userPassword, 12);
 
-    await prisma.user.upsert({
-      where: { email: userEmail },
-      update: {
-        password: hashedUserPassword,
-        isActive: true,
-        role: 'USER',
-        mustChangePassword: false
-      },
-      create: {
-        email: userEmail,
-        name: 'Usuário Teste',
-        password: hashedUserPassword,
-        role: 'USER',
-        isActive: true,
-        mustChangePassword: false
-      }
+    await upsertUserPorTenant({
+      email: userEmail,
+      name: 'Usuário Teste',
+      hashedPassword: hashedUserPassword,
+      role: 'USER',
     });
     console.log(`   ✅ Usuário: ${userEmail}\n`);
 
@@ -242,8 +273,19 @@ async function main() {
     const citizenPassword = 'Cidadao@123';
     const hashedCitizenPassword = await bcrypt.hash(citizenPassword, 12);
 
+    // ⚠️ MULTI-TENANT: a unique de Citizen também é composta
+    // (`citizens_tenantId_cpf_key`), então `where: { cpf }` não valida no
+    // Prisma — mesmo problema dos usuários acima. Resolvemos o id primeiro e
+    // then usamos update/create por id.
+    const cidadaoExistente = await prisma.citizen.findFirst({
+      where: { cpf: citizenCPF, tenantId: DEFAULT_TENANT_ID },
+      select: { id: true },
+    });
+
     await prisma.citizen.upsert({
-      where: { cpf: citizenCPF },
+      where: cidadaoExistente
+        ? { id: cidadaoExistente.id }
+        : { id: '__nao_existe__' }, // força o caminho de `create`
       update: {
         password: hashedCitizenPassword,
         phoneSecondary: '11988888888',
@@ -265,6 +307,7 @@ async function main() {
         isActive: true
       },
       create: {
+        tenantId: DEFAULT_TENANT_ID,
         cpf: citizenCPF,
         name: 'José Silva',
         email: 'jose.silva@example.com',
