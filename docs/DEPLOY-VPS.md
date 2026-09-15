@@ -222,3 +222,81 @@ primeiro teste funcional real.
 - [ ] Rollback pronto: anotar o SHA anterior **antes** de começar
 
 Se algo falhar: `RELEASE=<sha-anterior> docker compose up -d`.
+
+---
+
+## Subdomínios de município (multi-tenant) — nginx do HOST
+
+> Corrigido em 2026-09-15 após `palmital.digiurban.com.br` servir a aplicação
+> **errada** (Aprender IA, outra app do mesmo host).
+
+### O que aconteceu
+
+A VPS hospeda mais de uma aplicação. O vhost do DigiUrban declarava:
+
+```nginx
+server_name digiurban.com.br www.digiurban.com.br 72.60.10.108 _;
+```
+
+Faltava `*.digiurban.com.br`. Quando chegava `palmital.digiurban.com.br`, o Host
+não casava com **nenhum** `server_name` do host, e o nginx caiu no primeiro vhost
+em ordem alfabética — `aprenderia` — servindo a aplicação de outro projeto.
+
+⚠️ **`_` NÃO é curinga no nginx.** É apenas um nome inválido que nunca casa com
+Host algum. Quem define o vhost padrão é a diretiva `default_server` no `listen`.
+
+### Configuração correta (`/etc/nginx/sites-available/digiurban`)
+
+```nginx
+listen 80 default_server;
+listen [::]:80 default_server;
+listen 443 ssl http2 default_server;
+listen [::]:443 ssl http2 default_server;
+server_name digiurban.com.br www.digiurban.com.br *.digiurban.com.br 72.60.10.108 _;
+```
+
+- `*.digiurban.com.br` cobre todo subdomínio de município.
+- `default_server` garante que Host desconhecido caia no DigiUrban, e não em
+  outra aplicação do host.
+
+### Certificado TLS
+
+O Let's Encrypt via HTTP-01 **não emite curinga** — cada subdomínio precisa ser
+listado. Ao provisionar um município novo:
+
+```bash
+certbot certonly --webroot -w /var/www/html \
+  -d digiurban.com.br -d www.digiurban.com.br \
+  -d <novo>.digiurban.com.br \
+  --cert-name digiurban.com.br --expand \
+  --non-interactive --agree-tos --email <seu-email>
+systemctl reload nginx
+```
+
+> Para evitar essa etapa a cada município, a alternativa é um certificado
+> **curinga** via DNS-01 (requer token da API do Cloudflare) ou o **Origin
+> Certificate** do próprio Cloudflare, que cobre `*.digiurban.com.br` por 15 anos.
+> Enquanto o Cloudflare estiver em modo **Full** (não-strict) o subdomínio
+> funciona mesmo sem o certificado cobrir — mas quebra em **Full (strict)**.
+
+### Cloudflare
+
+`palmital.digiurban.com.br` já resolve (registro curinga ou por subdomínio). Ao
+criar município novo, confirme que existe registro DNS apontando para a origem.
+
+### Verificação rápida
+
+```bash
+# Na VPS — qual app responde para cada Host:
+for h in palmital.digiurban.com.br digiurban.com.br aprenderia.site; do
+  printf "%-32s -> " "$h"
+  curl -sk -H "Host: $h" https://127.0.0.1/ | grep -oiE "<title>[^<]*" | head -1
+done
+
+# Tenant resolvido pelo subdomínio (deve diferir do default):
+curl -s https://palmital.digiurban.com.br/api/citizen/services | head -c 150
+```
+
+**Estado validado em 2026-09-15:** `palmital` → tenant
+`cmu27fktu0002qd5hwexfxxug` com 416 serviços; domínio raiz → `tenant-default`
+com 404. Isolamento correto.
