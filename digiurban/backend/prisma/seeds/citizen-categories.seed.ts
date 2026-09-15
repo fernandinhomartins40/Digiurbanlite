@@ -259,14 +259,22 @@ export async function seedCitizenCategories() {
   let created = 0;
   let updated = 0;
 
+  // ⚠️ MULTI-TENANT (corrigido 2026-09-15): CitizenCategory tem
+  // `@@unique([tenantId, code])`, então `where: { code }` não valida no Prisma:
+  //   Argument `where` needs at least one of `id` or `tenantId_code`
+  // Usamos findFirst (a tenant extension escopa) + update/create por id — assim
+  // o seed funciona tanto no tenant default quanto em qualquer outro.
+  const TENANT_ID = process.env.DEFAULT_TENANT_ID || 'tenant-default';
+
   for (const category of categories) {
-    const existing = await prisma.citizenCategory.findUnique({
-      where: { code: category.code },
+    const existing = await prisma.citizenCategory.findFirst({
+      where: { code: category.code, tenantId: TENANT_ID },
+      select: { id: true },
     });
 
     if (existing) {
       await prisma.citizenCategory.update({
-        where: { code: category.code },
+        where: { id: existing.id },
         data: {
           name: category.name,
           description: category.description,
@@ -280,7 +288,7 @@ export async function seedCitizenCategories() {
       updated++;
     } else {
       await prisma.citizenCategory.create({
-        data: category,
+        data: { ...category, tenantId: TENANT_ID } as any,
       });
       created++;
     }
