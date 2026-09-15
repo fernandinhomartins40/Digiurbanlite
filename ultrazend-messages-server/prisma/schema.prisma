@@ -8321,6 +8321,18 @@ model RemoteAssistSession {
 
   eventosEnviados Int @default(0)
 
+  // Modo CONCEDIDO pelo assistido: 'VER' (observar+apontar) ou 'CONTROLAR'.
+  // Nasce com o que o operador pediu, mas quem decide é quem aceita.
+  modo String @default("VER")
+
+  // Janela de controle — base da auditoria. As acoes em si continuam sendo do
+  // usuario assistido (mesma sessao/cookies); o que registramos aqui e' QUANDO
+  // o operador esteve no comando, para cruzar com o log de protocolos.
+  controleConcedidoEm DateTime?
+  controleRetomadoEm  DateTime?
+  // Quantas vezes o assistido retomou o controle durante a sessao.
+  controleRetomadas   Int       @default(0)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

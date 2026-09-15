@@ -181,9 +181,9 @@ export default function AssistenciaRemotaPage() {
           Assistência Remota
         </h1>
         <p className="mt-1 text-sm text-gray-600">
-          Acompanhe ao vivo a tela de um servidor para dar suporte. A pessoa precisa{' '}
-          <strong>autorizar</strong> antes de qualquer transmissão, e você pode ver e apontar —
-          mas não clicar nem digitar.
+          Acompanhe ao vivo a tela de um servidor para dar suporte — e, se ele autorizar, use o
+          painel por ele. A pessoa precisa <strong>autorizar</strong> antes de qualquer
+          transmissão e retoma o controle quando quiser.
         </p>
       </div>
 
