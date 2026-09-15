@@ -7,6 +7,7 @@ import { useTenant } from '@/components/providers/TenantProvider';
 import { ChevronRight, Search, X } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext';
+import { usePlatformIdentity } from '@/hooks/usePlatformIdentity';
 import { cn } from '@/lib/utils';
 import {
   getAdminMainNavigation,
@@ -152,6 +153,8 @@ function normalizeText(value: string) {
 export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
   const pathname = usePathname();
   const { stats, user } = useAdminAuth();
+  // Identidade de plataforma — NÃO o role de User (ver comentário em allSections).
+  const { isPlatformOperator } = usePlatformIdentity();
   const { hasPermission, hasMinRole } = useAdminPermissions();
   const { isFeatureEnabled } = useTenant();
   const [query, setQuery] = useState('');
@@ -168,9 +171,20 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
 
   const allSections = useMemo(() => {
     const sections = [mayorPortalNavigation, ...mainNavigation, secretariaNavigation];
-    if (user?.role === 'SUPER_ADMIN') sections.push(superAdminNavigation);
+    // SEPARAÇÃO DE PAPÉIS (corrigido 2026-09-15 — achado A6 da auditoria):
+    //
+    // Antes: `if (user?.role === 'SUPER_ADMIN') sections.push(superAdminNavigation)`.
+    // O painel MUNICIPAL decidia mostrar links de PLATAFORMA (Tenants, Analytics
+    // Global, Config. Sistema) olhando só o role de `User` — que é o gestor do
+    // próprio município. Isso misturava as duas identidades na interface: quem
+    // administra um município via atalho para o console da plataforma.
+    //
+    // Agora a seção só aparece para quem tem identidade de PLATAFORMA de fato
+    // (sessão válida em /api/platform/auth/me, cookie digiurban_platform_token).
+    // O backend já recusava o acesso — isto alinha a UI ao que a API faz.
+    if (isPlatformOperator) sections.push(superAdminNavigation);
     return sections;
-  }, [mainNavigation, user?.role]);
+  }, [mainNavigation, isPlatformOperator]);
 
   const buildInitialCollapsed = () => {
     const state: Record<string, boolean> = {};

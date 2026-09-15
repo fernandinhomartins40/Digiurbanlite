@@ -3,15 +3,35 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react'
 import { useRouter } from 'next/navigation'
 
-export interface SuperAdminUser {
+/**
+ * IDENTIDADE DE PLATAFORMA (corrigido 2026-09-15 — achado A6 da auditoria)
+ *
+ * Este painel é o console da PLATAFORMA: gerencia municípios, billing e planos.
+ * Antes ele validava a sessão em `/super-admin/auth/me`, rota guardada por
+ * `adminAuthMiddleware` — ou seja, pelo cookie MUNICIPAL (digiurban_admin_token)
+ * e pelo role SUPER_ADMIN de `User`, que por definição pertence a UM município.
+ * Resultado: o operador entrava no console da plataforma com identidade de
+ * administrador de município — a confusão de papel relatada.
+ *
+ * Agora a sessão é validada contra `/api/platform/auth/me` (PlatformUser, cookie
+ * digiurban_platform_token). O PlatformUser é "sem tenantId por design"
+ * (schema.prisma, model PlatformUser) e é quem de fato controla todos os
+ * municípios. As páginas do painel já consumiam `/api/platform/*` — só a guarda
+ * de sessão continuava no caminho antigo.
+ *
+ * A ponte de identidade do login (super-admin.ts) permanece: o operador faz UM
+ * login e recebe os dois cookies. Nada de segundo login.
+ */
+export interface PlatformUser {
   id: string
   name: string
   email: string
-  role: 'SUPER_ADMIN'
-  isActive: boolean
-  createdAt: string
-  lastLogin?: string
+  role: 'PLATFORM_ADMIN' | 'PLATFORM_SUPPORT'
+  mustChangePassword?: boolean
 }
+
+/** @deprecated Use PlatformUser — mantido para não quebrar imports existentes. */
+export type SuperAdminUser = PlatformUser
 
 export interface SuperAdminStats {
   totalTenants: number
@@ -159,12 +179,22 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
       console.log('[SuperAdminAuth] Cookies após login:', document.cookie ? 'EXISTEM' : 'VAZIO')
 
       // ✅ SEGURANÇA: Token agora vem em cookie httpOnly, não em JSON
-      // Atualizar estado com dados do login (já vêm na resposta)
-      setUser(data.user)
-      setStats(data.stats || null)
-
-      // Não chamar refreshUserData() aqui - dados já vieram no login
-      // O refreshUserData() será chamado pelo checkAuth() ao montar o dashboard
+      //
+      // IDENTIDADE (corrigido 2026-09-15): `data.user` é o User MUNICIPAL
+      // (role SUPER_ADMIN, preso a um tenant) devolvido por /super-admin/login.
+      // Guardá-lo aqui reintroduziria a confusão de papel logo após o login.
+      // O mesmo login já emite o cookie digiurban_platform_token (ponte de
+      // identidade em super-admin.ts), então buscamos a identidade de PLATAFORMA
+      // — a que este painel de fato representa.
+      const okPlatform = await refreshUserData()
+      if (!okPlatform) {
+        // Sem identidade de plataforma o painel não deve abrir: seria um
+        // SUPER_ADMIN municipal entrando no console da plataforma (achado R2).
+        throw new Error(
+          'Login válido, mas sem identidade de operador de plataforma. ' +
+            'Verifique se este usuário é PlatformUser.'
+        )
+      }
 
       console.log('[SuperAdminAuth] 🔄 Redirecionando para dashboard...')
       router.push('/super-admin')
@@ -202,9 +232,15 @@ export function SuperAdminAuthProvider({ children }: SuperAdminAuthProviderProps
   const refreshUserData = async (): Promise<boolean> => {
     try {
       console.log('[SuperAdminAuth] ====== REFRESH USER DATA ======')
-      const response = await apiRequest('/super-admin/auth/me')
-      console.log('[SuperAdminAuth] Dados atualizados:', response.user?.email)
-      setUser(response.user)
+      // Identidade de PLATAFORMA (ver comentário no topo do arquivo). A resposta
+      // vem como { success, platformUser } — formato de /api/platform/auth/me,
+      // diferente do { user, stats } da rota municipal antiga.
+      const response = await apiRequest('/platform/auth/me')
+      const platformUser = response.platformUser ?? response.user ?? null
+      console.log('[SuperAdminAuth] Operador de plataforma:', platformUser?.email)
+      setUser(platformUser)
+      // `stats` não existe em /api/platform/auth/me — as páginas do painel
+      // buscam seus próprios dados em /api/platform/*.
       setStats(response.stats || null)
       return true
     } catch (err) {

@@ -350,6 +350,16 @@ function SuperAdminLayoutContent({
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
                 <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                {/* PAPEL EXPLÍCITO (2026-09-15): antes a sidebar mostrava só nome
+                    e email, sem dizer em qual identidade o usuário estava — parte
+                    da confusão de papel. Este painel é SEMPRE o console da
+                    plataforma (identidade PlatformUser, sem município). */}
+                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
+                  <Globe size={11} />
+                  {user.role === 'PLATFORM_SUPPORT'
+                    ? 'Suporte da Plataforma'
+                    : 'Operador da Plataforma'}
+                </p>
               </div>
             </div>
             <button
