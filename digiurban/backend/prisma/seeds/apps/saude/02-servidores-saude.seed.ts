@@ -661,17 +661,28 @@ export async function seed02ServidoresSaude() {
 
   for (const servidor of servidores) {
     // Criar User
-    const user = await prisma.user.upsert({
-      where: { email: servidor.email },
-      update: {},
-      create: {
-        name: servidor.name,
-        email: servidor.email,
-        password: senhaHash,
-        role: 'USER',
-        isActive: true,
-      }
+    // ⚠️ MULTI-TENANT (corrigido 2026-09-15): `where: { email }` não valida —
+    // a unique de User é composta (`users_tenantId_email_key`) — e `tenantId` é
+    // NOT NULL no banco, então o create também falhava. findFirst escopado +
+    // create/update por id resolve os dois.
+    const tenantId = process.env.DEFAULT_TENANT_ID || 'tenant-default';
+    const existente = await prisma.user.findFirst({
+      where: { email: servidor.email, tenantId },
+      select: { id: true },
     });
+
+    const user = existente
+      ? await prisma.user.update({ where: { id: existente.id }, data: {} })
+      : await prisma.user.create({
+          data: {
+            tenantId,
+            name: servidor.name,
+            email: servidor.email,
+            password: senhaHash,
+            role: 'USER',
+            isActive: true,
+          } as any,
+        });
 
     // Criar HealthProfessionalData
     const healthData = await prisma.healthProfessionalData.upsert({

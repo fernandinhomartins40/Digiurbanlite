@@ -348,7 +348,14 @@ async function main() {
 
     try {
       const { seedServices } = await import('./seeds/services/index');
-      const servicesCreated = await seedServices();
+      // ⚠️ MULTI-TENANT (corrigido 2026-09-15): `seedServices` aceita o tenant
+      // como 2º parâmetro e injeta em cada serviço criado, mas era chamado SEM
+      // ele — os 404 serviços falhavam um a um com:
+      //   Null constraint violation on the fields: (`tenantId`)
+      // (a coluna é NOT NULL no banco, embora o schema Prisma ainda a declare
+      // como `String?` — drift conhecido). Como o erro era capturado por serviço,
+      // o seed terminava "com sucesso" e o catálogo ficava vazio.
+      const servicesCreated = await seedServices(prisma, DEFAULT_TENANT_ID);
       console.log(`   ✅ ${servicesCreated} serviços criados/atualizados\n`);
     } catch (error: any) {
       console.error('   ⚠️  Erro ao importar serviços:', error.message);
