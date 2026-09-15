@@ -6,6 +6,7 @@ import {
   CheckCircle2,
   Clock,
   Shield,
+  Building2,
   Smartphone,
   FileText,
   Users,
@@ -715,13 +716,30 @@ export default function LandingPage() {
               <p className="text-xs sm:text-sm text-white/40 text-center sm:text-left">
                 © 2024 DigiUrban. Todos os direitos reservados.
               </p>
-              <Link
-                href="/super-admin/login"
-                className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg text-xs text-white/60 hover:text-white/90 transition-all backdrop-blur-sm"
-              >
-                <Shield className="w-3 h-3" />
-                Painel Super Admin
-              </Link>
+              <div className="flex flex-wrap items-center justify-center gap-2 sm:justify-end">
+                {/*
+                  Acesso administrativo do MUNICÍPIO (2026-09-15): antes existia
+                  apenas como item de lista em "Acesso", com o mesmo peso visual
+                  de "Termos de Uso" — enquanto o Super Admin tinha botão
+                  próprio. Num subdomínio de município (palmital.digiurban.com.br)
+                  é este o acesso que importa: o servidor precisava saber a URL
+                  de cor. Agora tem botão em destaque, ao lado do outro.
+                */}
+                <Link
+                  href="/admin/login"
+                  className="inline-flex items-center gap-2 rounded-lg border border-[#0fffbf]/30 bg-[#0fffbf]/10 px-4 py-2 text-xs text-[#0fffbf] backdrop-blur-sm transition-all hover:bg-[#0fffbf]/20"
+                >
+                  <Building2 className="h-3 w-3" />
+                  Painel da Prefeitura
+                </Link>
+                <Link
+                  href="/super-admin/login"
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/20 rounded-lg text-xs text-white/60 hover:text-white/90 transition-all backdrop-blur-sm"
+                >
+                  <Shield className="w-3 h-3" />
+                  Painel Super Admin
+                </Link>
+              </div>
             </div>
           </div>
         </div>
