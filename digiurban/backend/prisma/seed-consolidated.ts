@@ -248,15 +248,19 @@ async function main() {
 
     let deptCount = 0;
     for (const dept of departments) {
+      // ⚠️ MULTI-TENANT: Department tem `@@unique([tenantId, name])`, então
+      // `where: { name }` não valida. Aqui dá para usar a chave composta
+      // diretamente (diferente de User/Citizen, onde precisei do findFirst).
       await prisma.department.upsert({
-        where: { name: dept.name },
+        where: { tenantId_name: { tenantId: DEFAULT_TENANT_ID, name: dept.name } },
         update: { code: dept.code, description: dept.description, isActive: true },
         create: {
+          tenantId: DEFAULT_TENANT_ID,
           name: dept.name,
           code: dept.code,
           description: dept.description,
           isActive: true
-        }
+        } as any
       });
       deptCount++;
       console.log(`   ✅ ${dept.code}`);

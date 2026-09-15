@@ -24,6 +24,18 @@ permissions:
   contents: read
   packages: write
 
+# CONCORRENCIA (2026-09-15): sem isto, pushes em sequencia disparavam deploys
+# EMPILHADOS — dois jobs recriando os mesmos containers ao mesmo tempo, cada um
+# puxando ~5 GB de imagens e disputando os 4 vCPU da VPS. Foi uma das causas do
+# acumulo de lixo e da lentidao observados.
+#
+# Agora so ha um deploy por vez. `cancel-in-progress: true` porque em deploy o
+# que importa e o ULTIMO commit: se chegou codigo novo, terminar o anterior e
+# desperdicio — o estado final seria sobrescrito de qualquer forma.
+concurrency:
+  group: deploy-vps
+  cancel-in-progress: true
+
 env:
   REGISTRY: ghcr.io
   OWNER: fernandinhomartins40
@@ -133,6 +145,12 @@ jobs:
           # Otimizacao VPS (docs/PLANO-OTIMIZACAO-VPS.md, M2): remover a linha anterior antes
           # de anexar. Com `>>` puro, cada deploy acrescentava mais um `RELEASE=` ao arquivo;
           # o deploy passa a ser idempotente (sempre exatamente uma linha RELEASE=).
+          # Guarda a release que estava no ar ANTES de sobrescrever: e ela que a
+          # limpeza do fim preserva como rede de rollback (ver secao de limpeza).
+          RELEASE_ANTERIOR=$(grep -E '^RELEASE=' .env 2>/dev/null | tail -1 | cut -d= -f2- || true)
+          export RELEASE_ANTERIOR
+          echo "Release anterior: ${RELEASE_ANTERIOR:-<nenhuma>}"
+
           sed -i '/^RELEASE=/d' .env
           echo "RELEASE=${RELEASE}" >> .env
 
@@ -199,7 +217,37 @@ jobs:
           echo "=== Healthcheck final ==="
           curl -fsS http://localhost:3060/health >/dev/null && echo "OK: aplicacao respondendo"
 
-          # Limpeza restrita ao proprio projeto: apenas imagens dangling.
+          # LIMPEZA (corrigido 2026-09-15): `docker image prune -f` sozinho so
+          # remove imagens DANGLING (sem tag). Como cada build publica tags com o
+          # SHA do commit, nenhuma versao antiga era removida: em um unico dia de
+          # trabalho acumularam-se 31 imagens / 10 GB (app 3 GB + messages 1 GB +
+          # smtp 836 MB + face por deploy).
+          #
+          # Agora removemos tambem as versoes antigas DESTE projeto, preservando
+          # a release atual. Escopo RESTRITO ao prefixo ghcr.io/<owner>/ — numa
+          # VPS compartilhada, `prune -a` apagaria imagens de outras aplicacoes.
+          # Preserva a release ATUAL e a ANTERIOR (a que os containers ainda
+          # usavam antes deste deploy). A anterior e a rede de rollback: com ela
+          # em disco, voltar e trocar RELEASE no .env e subir — sem rebuild e sem
+          # depender do GHCR. So da terceira versao para tras e lixo de fato.
+          echo "=== Limpando versoes antigas das imagens do projeto ==="
+          PRESERVAR="${RELEASE} ${RELEASE_ANTERIOR:-}"
+          docker images --format '{{.Repository}}:{{.Tag}}' \
+            | grep "^ghcr.io/${OWNER}/" \
+            | grep -v ":latest$" \
+            | grep -v ":buildcache$" \
+            | while read -r img; do
+                tag="${img##*:}"
+                manter=0
+                for p in ${PRESERVAR}; do
+                  [ -n "$p" ] && [ "$tag" = "$p" ] && manter=1
+                done
+                [ "$manter" = "0" ] && echo "$img"
+              done \
+            | xargs -r docker rmi 2>/dev/null || true
+
           docker image prune -f || true
+          echo "=== Uso de disco apos limpeza ==="
+          docker system df | head -3
 
           echo "=== Deploy concluido (RELEASE=${RELEASE}) ==="
