@@ -149,12 +149,20 @@ export const viaturasSegurancaData = [
 export async function seedViaturasSeguranca() {
   console.log('   🚔 Viaturas de Segurança...');
 
+  // ⚠️ MULTI-TENANT (corrigido 2026-09-15): ViaturaSeguranca tem
+  // `@@unique([tenantId, codigo])`, então `where: { codigo }` não valida.
+  // findFirst escopado + create/update por id.
   for (const data of viaturasSegurancaData) {
-    await prisma.viaturaSeguranca.upsert({
+    const existente = await prisma.viaturaSeguranca.findFirst({
       where: { codigo: data.codigo },
-      update: data,
-      create: data,
+      select: { id: true },
     });
+
+    if (existente) {
+      await prisma.viaturaSeguranca.update({ where: { id: existente.id }, data });
+    } else {
+      await prisma.viaturaSeguranca.create({ data });
+    }
   }
 
   console.log(`   ✅ ${viaturasSegurancaData.length} viaturas de segurança criadas`);

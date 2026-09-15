@@ -57,12 +57,20 @@ export const unidadesCRASData = [
 export async function seedUnidadesCRAS() {
   console.log('🤝 Criando Unidades CRAS/CREAS...');
 
+  // ⚠️ (corrigido 2026-09-15) `where: { nome }` não valida: a unique de
+  // UnidadeCRAS aceita apenas `id` ou `organizationalUnitId`. Resolvemos o id
+  // com findFirst (a tenant extension escopa) e então criamos/atualizamos.
   for (const unidade of unidadesCRASData) {
-    await prisma.unidadeCRAS.upsert({
+    const existente = await prisma.unidadeCRAS.findFirst({
       where: { nome: unidade.nome },
-      update: unidade,
-      create: unidade
+      select: { id: true },
     });
+
+    if (existente) {
+      await prisma.unidadeCRAS.update({ where: { id: existente.id }, data: unidade });
+    } else {
+      await prisma.unidadeCRAS.create({ data: unidade });
+    }
     console.log(`   ✅ ${unidade.nome}`);
   }
 

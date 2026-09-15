@@ -238,12 +238,19 @@ export async function seedTiposDocumento() {
   console.log('\n═══ TIPOS DE DOCUMENTOS ═══\n');
   console.log('   📄 Tipos de Documentos...');
 
+  // ⚠️ MULTI-TENANT (2026-09-15): TipoDocumento tem unique composta com
+  // tenantId, então `where: { nome }` não valida. findFirst escopado.
   for (const data of tiposDocumentoData) {
-    await prisma.tipoDocumento.upsert({
+    const existente = await prisma.tipoDocumento.findFirst({
       where: { nome: data.nome },
-      update: data,
-      create: data,
+      select: { id: true },
     });
+
+    if (existente) {
+      await prisma.tipoDocumento.update({ where: { id: existente.id }, data });
+    } else {
+      await prisma.tipoDocumento.create({ data });
+    }
   }
 
   console.log(`   ✅ ${tiposDocumentoData.length} tipos de documentos criados`);

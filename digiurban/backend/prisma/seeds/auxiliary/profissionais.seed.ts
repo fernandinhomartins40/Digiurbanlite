@@ -242,12 +242,19 @@ export const professoresData = [
 export async function seedProfessores() {
   console.log('   👨‍🏫 Professores e Instrutores...');
 
+  // ⚠️ MULTI-TENANT (2026-09-15): Professor tem unique composta com tenantId,
+  // então `where: { cpf }` não valida. findFirst escopado + create/update por id.
   for (const data of professoresData) {
-    await prisma.professor.upsert({
+    const existente = await prisma.professor.findFirst({
       where: { cpf: data.cpf },
-      update: data,
-      create: data,
+      select: { id: true },
     });
+
+    if (existente) {
+      await prisma.professor.update({ where: { id: existente.id }, data });
+    } else {
+      await prisma.professor.create({ data });
+    }
   }
 
   console.log(`   ✅ ${professoresData.length} professores e instrutores criados`);
@@ -331,12 +338,19 @@ export const guiasTuristicosData = [
 export async function seedGuiasTuristicos() {
   console.log('   🌍 Guias Turísticos...');
 
+  // ⚠️ MULTI-TENANT (2026-09-15): GuiaTuristico tem unique composta com
+  // tenantId — mesmo tratamento do Professor acima.
   for (const data of guiasTuristicosData) {
-    await prisma.guiaTuristico.upsert({
+    const existente = await prisma.guiaTuristico.findFirst({
       where: { cpf: data.cpf },
-      update: data,
-      create: data,
+      select: { id: true },
     });
+
+    if (existente) {
+      await prisma.guiaTuristico.update({ where: { id: existente.id }, data });
+    } else {
+      await prisma.guiaTuristico.create({ data });
+    }
   }
 
   console.log(`   ✅ ${guiasTuristicosData.length} guias turísticos criados`);
