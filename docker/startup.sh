@@ -30,11 +30,32 @@ fi
 
 echo "✅ PostgreSQL está pronto!"
 
-# Criar enums PostgreSQL ANTES das migrations
-echo "🔧 Criando enums PostgreSQL..."
-PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -f /app/create-enums.sql || {
-  echo "⚠️ Aviso: Erro ao criar enums (pode ser que já existam)"
-}
+# ⚠️ ORDEM DOS ENUMS (corrigido 2026-09-15): este script criava "EmailPlan" e
+# "SubscriptionStatus" INCONDICIONALMENTE, antes do `migrate deploy`. Num banco
+# VAZIO isso fazia a migration 20260106023614_consolidated_with_messages morrer:
+#   ERROR: type "EmailPlan" already exists  (SQLSTATE 42710)
+# O `DO $$ ... EXCEPTION WHEN duplicate_object` protege este script, mas NAO
+# protege a migration, que faz `CREATE TYPE` puro. Com o migrate deploy falhando,
+# o startup caia no fallback `db push` — a origem documentada do drift (achado B7).
+#
+# Agora os enums so sao criados em banco LEGADO (pre-migrations): se a migration
+# consolidada ainda NAO foi aplicada mas ja existem tabelas, e um banco antigo que
+# depende deste script. Em banco NOVO (sem tabelas) quem cria os tipos e a propria
+# migration, entao aqui nao fazemos nada.
+echo "🔧 Verificando necessidade de criar enums PostgreSQL..."
+MIGRATION_APLICADA=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -t -A \
+  -c "SELECT 1 FROM _prisma_migrations WHERE migration_name='20260106023614_consolidated_with_messages' AND finished_at IS NOT NULL LIMIT 1;" 2>/dev/null || echo "")
+BANCO_TEM_TABELAS=$(PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -t -A \
+  -c "SELECT 1 FROM information_schema.tables WHERE table_schema='public' AND table_name NOT LIKE '\_prisma%' LIMIT 1;" 2>/dev/null || echo "")
+
+if [ -z "$MIGRATION_APLICADA" ] && [ -n "$BANCO_TEM_TABELAS" ]; then
+  echo "   Banco legado detectado — criando enums..."
+  PGPASSWORD=${POSTGRES_PASSWORD:-digiurban2024} psql -h postgres -U ${POSTGRES_USER:-digiurban} -d ${POSTGRES_DB:-digiurban} -f /app/create-enums.sql || {
+    echo "⚠️ Aviso: Erro ao criar enums (pode ser que já existam)"
+  }
+else
+  echo "   Banco novo ou ja migrado — os enums vem das migrations."
+fi
 
 # Corrigir enum SubscriptionStatus (adicionar valores faltantes)
 echo "🔧 Corrigindo enum SubscriptionStatus..."
