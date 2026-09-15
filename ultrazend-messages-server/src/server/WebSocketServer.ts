@@ -91,8 +91,32 @@ export class WebSocketServer {
         // Verificar token JWT
         const payload = verifyToken(token);
 
+        // ⚠️ COMPATIBILIDADE DE PAYLOAD (corrigido 2026-09-15)
+        //
+        // O backend emite tokens com `type` ('admin' | 'citizen'), NÃO com
+        // `userType`. Como a validação abaixo exigia `userType`, TODA conexão
+        // vinda de um admin era rejeitada em silêncio — o erro ocorre antes do
+        // log de "authenticated", então nem aparecia nos logs. Foi o que impedia
+        // a assistência remota de funcionar (zero conexões no servidor), e afeta
+        // igualmente qualquer uso do chat por administradores.
+        //
+        // Mapeamos aqui, sem mexer no emissor do token: 'admin' é um SERVER
+        // (servidor público) na taxonomia do messages-server; 'citizen' é
+        // CITIZEN. Tokens que já trazem `userType` seguem valendo.
+        if (!payload.userType && (payload as any).type) {
+          const tipo = (payload as any).type;
+          payload.userType = (tipo === 'citizen' ? 'CITIZEN' : 'SERVER') as ParticipantType;
+        }
+
         // Validar tipo de participante
         if (!payload.userId || !payload.userType) {
+          // Log explícito: esta rejeição era SILENCIOSA e custou horas de
+          // diagnóstico. Sem os valores, "zero conexões" não diz o porquê.
+          logger.warn('WebSocket rejeitado: payload sem userId/userType', {
+            temUserId: Boolean(payload.userId),
+            temUserType: Boolean(payload.userType),
+            type: (payload as any).type ?? null,
+          });
           return next(new Error('Invalid token payload'));
         }
 
