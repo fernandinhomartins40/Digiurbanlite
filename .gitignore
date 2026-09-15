@@ -54,3 +54,8 @@ coverage/
 
 # Ferramenta de indexacao local (Serena MCP) - nao versionar
 .serena/
+
+# Documento de credenciais de acesso (senhas em texto puro).
+# Fica APENAS na maquina local — nunca no repositorio. Ver docs/DEPLOY-VPS.md
+# para como recuperar/redefinir credenciais quando necessario.
+docs/CREDENCIAIS-ACESSO.md
