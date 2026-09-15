@@ -149,17 +149,35 @@ jobs:
           echo "=== Removendo containers da IA local (descontinuada) ==="
           docker rm -f digiurban-llamacpp digiurban-ai 2>/dev/null || true
 
-          echo "=== Subindo infraestrutura ==="
+          echo "=== Subindo infraestrutura (banco, cache, SMTP) ==="
           RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
-            postgres redis ultrazend-smtp ultrazend-messages
+            postgres redis ultrazend-smtp
 
           wait_for_container_health digiurban-postgres 30 5
           wait_for_container_health digiurban-redis 30 5
-          wait_for_container_health ultrazend-messages 30 5
 
+          # ORDEM DE BOOT (corrigido 2026-09-15): o `digiurban` sobe ANTES do
+          # `ultrazend-messages`, e nao depois. Motivo: o messages-server e um
+          # SATELITE do schema — suas 5 migrations fazem `ALTER TABLE "conversations"`,
+          # mas quem CRIA `conversations` (e as demais ~213 tabelas) sao as migrations
+          # do backend, dentro do digiurban-vps (docker/startup.sh).
+          #
+          # Na ordem anterior isso era um deadlock circular que so aparecia com banco
+          # VAZIO (foi o caso apos o reset da VPS em 2026-09-14):
+          #   1. ultrazend-messages sobe primeiro e roda migrate deploy
+          #   2. banco sem `conversations` -> erro 42P01
+          #   3. Prisma marca a migration como falha -> trava tudo com P3009
+          #   4. wait_for_container_health ultrazend-messages estoura -> job MORRE
+          #   5. o digiurban, que criaria as tabelas, NUNCA subia
+          # Com banco ja povoado o bug ficava invisivel, porque as tabelas existiam.
           echo "=== Subindo aplicacao principal (migrations rodam no startup.sh) ==="
-          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d digiurban ultrazend-face
+          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d digiurban
           wait_for_container_health digiurban-vps 36 10
+
+          echo "=== Subindo satelites (schema ja criado pelo backend) ==="
+          RELEASE="${RELEASE}" docker-compose -f docker-compose.vps.yml up -d \
+            ultrazend-messages ultrazend-face
+          wait_for_container_health ultrazend-messages 30 5
 
           echo "=== Seeds ==="
           docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed:deploy-safe" \
