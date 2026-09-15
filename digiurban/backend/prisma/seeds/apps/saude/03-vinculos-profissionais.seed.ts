@@ -724,22 +724,32 @@ export async function seed03VinculosProfissionais() {
     });
 
     // Criar registro de auditoria
+    // ⚠️ (corrigido 2026-09-15) O model AssignmentAudit foi reestruturado e o
+    // seed ficou para trás: passava `tipoOperacao`/`executadoPor`/`aprovadoPor`,
+    // campos que não existem mais. Erro em runtime:
+    //   Argument `tipo` is missing.
+    // Os obrigatórios hoje são `tipo` (enum TipoOperacaoVinculo), `userId` e
+    // `userName` (denormalizado). Os dados descritivos que não têm mais coluna
+    // própria (aprovador, documento legal) foram preservados em `detalhes`,
+    // para não perder a informação que o seed pretendia registrar.
     await prisma.assignmentAudit.create({
       data: {
         assignmentId: vinculo.id,
-        tipoOperacao: 'CRIACAO',
-        executadoPor: 'sistema-seed',
-        aprovadoPor: 'Secretário Municipal de Saúde',
+        tipo: 'CRIACAO',
+        userId: user.id,
+        userName: user.name,
+        departmentId: departamentoSaude.id,
         motivo: 'Lotação inicial - Implantação do sistema',
-        documentoLegal: vinculoData.documentoVinculo,
-        dataEfetivacao: vinculoData.dataInicio,
         detalhes: {
           servidor: user.name,
           cargo: vinculo.position?.nome,
           unidade: vinculo.organizationalUnit?.nome,
           cargaHoraria: vinculoData.cargaHoraria,
+          aprovadoPor: 'Secretário Municipal de Saúde',
+          documentoLegal: vinculoData.documentoVinculo,
+          dataEfetivacao: vinculoData.dataInicio,
         },
-      }
+      } as any
     });
 
     vinculosCriados.push(vinculo);
