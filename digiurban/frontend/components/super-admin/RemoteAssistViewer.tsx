@@ -32,7 +32,9 @@ import { getMessagesSocket } from '@/lib/messages-socket'
 import { Button } from '@/components/ui/button'
 import {
   Loader2,
+  Maximize2,
   MessageSquare,
+  Minimize2,
   MonitorOff,
   MousePointer2,
   RefreshCw,
@@ -79,6 +81,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   const [conectado, setConectado] = useState(false)
   const [montandoTela, setMontandoTela] = useState(true)
 
+  const [telaCheia, setTelaCheia] = useState(false)
   const [chatAberto, setChatAberto] = useState(false)
   const [msgs, setMsgs] = useState<ChatMsg[]>([])
   const [naoLidas, setNaoLidas] = useState(0)
@@ -207,12 +210,56 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
     return () => window.removeEventListener('resize', onResize)
   }, [ajustarEscala])
 
+  /**
+   * Tela cheia muda o tamanho da caixa sem disparar `resize` na janela, então
+   * o `scale` precisa ser recalculado na mão. Em rAF duplo: o primeiro quadro
+   * ainda tem o layout antigo, e escalar com ele deixaria a imagem cortada.
+   */
+  useEffect(() => {
+    if (status !== 'ativa') return
+    const id = requestAnimationFrame(() => requestAnimationFrame(ajustarEscala))
+    return () => cancelAnimationFrame(id)
+  }, [telaCheia, chatAberto, status, ajustarEscala])
+
+  /**
+   * Em tela cheia o painel cobre a página inteira; deixar o body rolando por
+   * trás faz a barra de rolagem aparecer sobre a imagem e permite "rolar para
+   * fora" do que se está vendo.
+   */
+  useEffect(() => {
+    if (!telaCheia) return
+    const anterior = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = anterior
+    }
+  }, [telaCheia])
+
+  /**
+   * Sair da tela cheia com Esc — MAS só quando o operador não está no
+   * controle. Em modo CONTROLAR o Esc é uma tecla enviada para a tela da
+   * pessoa (veja o listener de teclado abaixo), e sequestrá-lo aqui tiraria do
+   * operador a capacidade de fechar um modal no lado dela. Por isso o botão de
+   * sair fica sempre visível na barra: ele é o caminho que nunca falha.
+   */
+  useEffect(() => {
+    if (!telaCheia || podeControlar) return
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setTelaCheia(false)
+    }
+    window.addEventListener('keydown', onEsc)
+    return () => window.removeEventListener('keydown', onEsc)
+  }, [telaCheia, podeControlar])
+
   const encerrar = useCallback(() => {
     const socket = getMessagesSocket()
     if (sessionRef.current) socket.emit('assist:end', { sessionId: sessionRef.current })
     replayerRef.current = null
     pendentesRef.current = []
     montandoRef.current = false
+    // Sem isto o operador ficaria preso num overlay `fixed` exibindo o painel
+    // de "Sessão encerrada" sobre a página inteira, sem botão de tela cheia.
+    setTelaCheia(false)
     setStatus('encerrada')
   }, [])
 
@@ -237,6 +284,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
       replayerRef.current = null
       pendentesRef.current = []
       montandoRef.current = false
+      setTelaCheia(false)
       setStatus('encerrada')
     }
     const onMode = ({ modo: m }: { modo: Modo }) => setModo(m)
@@ -505,7 +553,16 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   }
 
   return (
-    <div className="flex h-full flex-col gap-4">
+    <div
+      className={
+        telaCheia
+          ? // `fixed inset-0` tira o painel do fluxo da página e o põe sobre
+            // tudo, inclusive a sidebar do super-admin. z-50 fica acima do
+            // conteúdo mas abaixo de toasts/modais do sistema.
+            'fixed inset-0 z-50 flex flex-col gap-3 bg-gray-100 p-3'
+          : 'flex h-full flex-col gap-4'
+      }
+    >
       {/* Antes de começar: modo + motivo + pedido */}
       {status === 'idle' && (
         <div className="rounded-lg border border-gray-200 bg-white p-5">
@@ -640,6 +697,23 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
             </div>
 
             <div className="flex items-center gap-2">
+              {/*
+                Sempre visível: em modo CONTROLAR o Esc é enviado para a tela da
+                pessoa, então este botão é o único jeito garantido de sair.
+              */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setTelaCheia((v) => !v)}
+                title={telaCheia ? 'Sair da tela cheia' : 'Expandir para tela cheia'}
+              >
+                {telaCheia ? (
+                  <Minimize2 size={15} className="mr-1.5" />
+                ) : (
+                  <Maximize2 size={15} className="mr-1.5" />
+                )}
+                {telaCheia ? 'Reduzir' : 'Tela cheia'}
+              </Button>
               <Button variant="outline" size="sm" onClick={() => resync({ imediato: true })} title="Recarregar a tela">
                 <RefreshCw size={15} className="mr-1.5" />
                 Recarregar
