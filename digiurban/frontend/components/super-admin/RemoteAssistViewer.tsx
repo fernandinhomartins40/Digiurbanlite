@@ -60,6 +60,14 @@ interface Props {
 /** Evento de snapshot completo do rrweb. Sem ele o Replayer não monta nada. */
 const EH_FULL_SNAPSHOT = (ev: unknown) => (ev as { type?: number })?.type === 2
 
+/**
+ * Intervalo mínimo entre dois pedidos de snapshot ao assistido.
+ *
+ * Reconstruir a árvore inteira do DOM é caro para ele; pedir em rajada só
+ * atrasa a primeira tela. 2 s é curto para o operador e folgado para o rrweb.
+ */
+const RESYNC_INTERVALO_MS = 2000
+
 export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }: Props) {
   const [status, setStatus] = useState<Status>('idle')
   const [sessionId, setSessionId] = useState<string | null>(null)
@@ -83,13 +91,37 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
   const sessionRef = useRef<string | null>(null)
   /** Eventos incrementais que chegaram ANTES do primeiro snapshot. */
   const pendentesRef = useRef<any[]>([])
+  /**
+   * `true` entre decidir montar o player e o `new Replayer` existir de fato.
+   *
+   * O `import('rrweb')` é assíncrono e leva centenas de ms. Nesse intervalo
+   * chegam outros lotes, `replayerRef` ainda é null, e sem esta trava o mesmo
+   * snapshot montava um SEGUNDO player no mesmo root — dois iframes empilhados.
+   */
+  const montandoRef = useRef(false)
+  /** Momento do último `assist:resync`, para não inundar o assistido. */
+  const ultimoResyncRef = useRef(0)
 
   const podeControlar = status === 'ativa' && modo === 'CONTROLAR'
 
-  /** Pede ao assistido que reemita o snapshot completo da tela. */
-  const resync = useCallback(() => {
+  /**
+   * Pede ao assistido que reemita o snapshot completo da tela.
+   *
+   * Com intervalo mínimo (corrigido 2026-09-16): o caminho de "lote sem
+   * snapshot" chamava isto a CADA lote, ~3x/s. Do outro lado, `onResync` faz
+   * `takeFullSnapshot(true)`, que reinicia o checkout e reconstrói a árvore
+   * inteira — ou seja, pedíamos 3 reconstruções por segundo e o assistido
+   * nunca terminava nenhuma. A tela ficava em "Carregando" para sempre.
+   */
+  const resync = useCallback((opts?: { imediato?: boolean }) => {
     const id = sessionRef.current
     if (!id) return
+    const agora = Date.now()
+    // O clique no botão "Recarregar" é um pedido consciente do operador e não
+    // pode ser engolido pelo intervalo; o limite existe para o caminho
+    // automático, que dispara sozinho a cada lote.
+    if (!opts?.imediato && agora - ultimoResyncRef.current < RESYNC_INTERVALO_MS) return
+    ultimoResyncRef.current = agora
     setMontandoTela(true)
     getMessagesSocket().emit('assist:resync', { sessionId: id })
   }, [])
@@ -180,6 +212,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
     if (sessionRef.current) socket.emit('assist:end', { sessionId: sessionRef.current })
     replayerRef.current = null
     pendentesRef.current = []
+    montandoRef.current = false
     setStatus('encerrada')
   }, [])
 
@@ -203,6 +236,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
     const onEnded = () => {
       replayerRef.current = null
       pendentesRef.current = []
+      montandoRef.current = false
       setStatus('encerrada')
     }
     const onMode = ({ modo: m }: { modo: Modo }) => setModo(m)
@@ -220,6 +254,13 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
 
       // ── Ainda não há player: ele SÓ pode nascer de um full snapshot ──
       if (!replayerRef.current) {
+        // Já existe um `new Replayer` a caminho (esperando o import do rrweb):
+        // guardamos o lote para aplicar depois em vez de montar um player novo.
+        if (montandoRef.current) {
+          pendentesRef.current.push(...events)
+          return
+        }
+
         const idx = events.findIndex(EH_FULL_SNAPSHOT)
 
         if (idx === -1) {
@@ -244,18 +285,57 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
           telaRef.current = { width: meta.data.width, height: meta.data.height }
         }
 
-        const { Replayer } = await import('rrweb')
-        replayerRef.current = new Replayer(doSnapshot, {
-          root: containerRef.current,
-          liveMode: true,
-          // Sem controles de linha do tempo: isto é ao vivo, não gravação.
-          skipInactive: false,
-          mouseTail: false,
-        })
-        replayerRef.current.startLive()
-        setMontandoTela(false)
-        // Depois do startLive o wrapper ja existe no DOM: da para escalar.
-        requestAnimationFrame(ajustarEscala)
+        /**
+         * A partir daqui é assíncrono. Sem o try/catch (corrigido 2026-09-16)
+         * qualquer falha do `import('rrweb')` — chunk 404 de build velho, rede
+         * caindo no meio — rejeitava a promise dentro de um handler de socket,
+         * onde ninguém a observa. O resultado era o spinner "Carregando a
+         * tela..." para sempre, sem UMA linha no console. O erro agora aparece
+         * escrito na tela do operador.
+         */
+        montandoRef.current = true
+        try {
+          const { Replayer } = await import('rrweb')
+
+          // O componente pode ter sido desmontado ou a sessão encerrada
+          // durante o import.
+          if (!containerRef.current) return
+
+          replayerRef.current = new Replayer(doSnapshot, {
+            root: containerRef.current,
+            liveMode: true,
+            // Sem controles de linha do tempo: isto é ao vivo, não gravação.
+            skipInactive: false,
+            mouseTail: false,
+          })
+          replayerRef.current.startLive()
+
+          // Lotes que chegaram enquanto o import rodava. Eles são POSTERIORES
+          // ao snapshot, então aplicá-los é o que mantém a tela em dia — antes
+          // eram silenciosamente descartados e a imagem nascia atrasada.
+          const atrasados = pendentesRef.current
+          pendentesRef.current = []
+          for (const ev of atrasados) {
+            try {
+              replayerRef.current.addEvent(ev)
+            } catch {
+              /* evento de um estado que o player não viu: ignorar é melhor que quebrar */
+            }
+          }
+
+          setErro(null)
+          setMontandoTela(false)
+          // Depois do startLive o wrapper ja existe no DOM: da para escalar.
+          requestAnimationFrame(ajustarEscala)
+        } catch (e) {
+          console.error('[assist] falha ao montar o player rrweb', e)
+          replayerRef.current = null
+          pendentesRef.current = []
+          setErro('Não foi possível carregar o visualizador da tela. Atualize a página (Ctrl+F5) e tente de novo.')
+          setMontandoTela(false)
+        } finally {
+          montandoRef.current = false
+        }
         return
       }
 
@@ -293,7 +373,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
    * começado a capturar antes de entrarmos na sala.
    */
   useEffect(() => {
-    if (status === 'ativa') resync()
+    if (status === 'ativa') resync({ imediato: true })
   }, [status, resync])
 
   /**
@@ -560,7 +640,7 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
             </div>
 
             <div className="flex items-center gap-2">
-              <Button variant="outline" size="sm" onClick={resync} title="Recarregar a tela">
+              <Button variant="outline" size="sm" onClick={() => resync({ imediato: true })} title="Recarregar a tela">
                 <RefreshCw size={15} className="mr-1.5" />
                 Recarregar
               </Button>
@@ -629,8 +709,19 @@ export function RemoteAssistViewer({ assistedUserId, assistedUserName, onClose }
                 className="pointer-events-none h-full w-full [&_iframe]:border-0"
               />
 
+              {/*
+                Falha ao montar o player. Precisa vir ANTES do spinner: sem
+                isto o erro caía no `{erro}` do formulário de solicitação, que
+                nem está montado nesta altura — e o operador só via o spinner.
+              */}
+              {erro && !replayerRef.current && (
+                <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 px-6 text-center">
+                  <p className="text-sm font-medium text-red-400">{erro}</p>
+                </div>
+              )}
+
               {/* Enquanto o snapshot não chega, a área ficaria preta sem explicação */}
-              {montandoTela && (
+              {montandoTela && !erro && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-center text-gray-300">
                   <Loader2 className="mb-3 animate-spin" size={26} />
                   <p className="text-sm font-medium">Carregando a tela...</p>
