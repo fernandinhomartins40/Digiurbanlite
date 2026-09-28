@@ -5,7 +5,7 @@
 import { Router, Request, Response } from 'express';
 import { EstoqueService, DispensacaoService } from '../services/farmacia';
 import MedicamentoService from '../services/medicamento/medicamento.service';
-import { authenticateToken } from '../middleware/auth';
+import { requireDepartmentAccess } from '../middleware/department-access';
 import { prisma } from '../lib/prisma';
 
 const router = Router();
@@ -89,7 +89,9 @@ function mapAlertaItem(item: any) {
 }
 
 // Middleware de autenticação para todas as rotas de farmácia
-router.use(authenticateToken);
+// Equipe da Saúde + ADMIN. Antes: authenticateToken aceitava token de CIDADÃO
+// (um cidadão logado lia solicitações de TFD e o estoque de outros).
+router.use(...requireDepartmentAccess('SAUDE'));
 
 // ============================================================================
 // MEDICAMENTOS RENAME

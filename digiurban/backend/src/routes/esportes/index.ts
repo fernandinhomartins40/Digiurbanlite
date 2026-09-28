@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import esportesService from '../../services/esportes/esportes.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Escolinhas & Espaços Esportivos (Fase 2) — Esportes
  * Prefixo: /api/apps/esportes
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('ESPORTES'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

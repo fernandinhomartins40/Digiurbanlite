@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchSecretariaProtocolStats } from '@/lib/secretaria-protocol-stats';
 
 interface ServicosPublicosStats {
   publicServiceAttendances: { total: number };
@@ -39,33 +39,26 @@ export function useServicosPublicosStats() {
       try {
         setLoading(true);
 
-        const token = localStorage.getItem('adminToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        // Protocolos reais da secretaria (antes: endpoints inexistentes -> zeros).
+        // Indicadores de dominio sem fonte de dados no backend seguem zerados.
+        const protocols = await fetchSecretariaProtocolStats('servicos-publicos');
 
-        const statsResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/servicos-publicos/stats`,
-          { headers }
-        );
-
-        const statsData = statsResponse.data;
-
-        if (statsData) {
-          setStats({
-            publicServiceAttendances: { total: 0 },
-            streetLighting: { total: 0 },
-            urbanCleanings: { total: 0 },
-            specialCollections: { total: statsData.collectionRoutes?.total || 0 },
-            weedingRequests: { total: 0 },
-            drainageRequests: { total: 0 },
-            treePruningRequests: { total: statsData.pruningRequests?.total || 0 },
-            serviceTeams: { total: 0 },
-            publicServiceRequests: { total: statsData.maintenanceRequests?.total || 0 },
-            cleaningSchedules: { total: 0 },
-            teamSchedules: { total: 0 },
-            protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 },
-            moduleStats: {}
-          });
-        }
+        const zero = { total: 0 };
+        setStats({
+          publicServiceAttendances: zero,
+          streetLighting: zero,
+          urbanCleanings: zero,
+          specialCollections: zero,
+          weedingRequests: zero,
+          drainageRequests: zero,
+          treePruningRequests: zero,
+          serviceTeams: zero,
+          publicServiceRequests: zero,
+          cleaningSchedules: zero,
+          teamSchedules: zero,
+          protocols,
+          moduleStats: {}
+        });
 
         setError(null);
       } catch (err: any) {

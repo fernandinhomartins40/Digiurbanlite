@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import culturaService from '../../services/cultura/cultura.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Espaços & Oficinas Culturais (Fase 3) — Cultura
  * Prefixo: /api/apps/cultura
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('CULTURA'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

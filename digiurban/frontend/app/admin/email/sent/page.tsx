@@ -99,8 +99,8 @@ export default function SentEmailsPage() {
 
       if (error.message?.includes('404')) {
         toast({
-          title: 'Funcionalidade em desenvolvimento',
-          description: 'A API de emails enviados está sendo implementada',
+          title: 'E-mail institucional não configurado',
+          description: 'O serviço de e-mail do município ainda não foi ativado. Fale com o administrador.',
           variant: 'default'
         });
         setEmails([]);

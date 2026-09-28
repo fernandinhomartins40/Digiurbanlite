@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import ordemServicoService from '../../services/servicos-publicos/ordem-servico.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Ordens de Serviço — Serviços Públicos (Fase 1D)
  * Prefixo: /api/apps/servicos-publicos
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('SERVICOS_PUBLICOS'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

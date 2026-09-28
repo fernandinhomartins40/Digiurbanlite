@@ -420,7 +420,7 @@ export default function SecretariaSaudePage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/admin/protocolos?departamento=saude&status=pending')}
+              onClick={() => router.push('/admin/protocolos?departamento=saude')}
             >
               <FileText className="h-6 w-6 mb-2" />
               <span>Protocolos Pendentes</span>

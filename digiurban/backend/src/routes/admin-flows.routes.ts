@@ -5,7 +5,8 @@
 
 import express, { Request, Response } from 'express';
 
-import { authenticateToken } from '../middleware/auth';
+import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
+import { UserRole } from '@prisma/client';
 
 const router = express.Router();
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
@@ -13,8 +14,9 @@ const router = express.Router();
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
 import { prisma } from '../lib/prisma';
 
-// Todas as rotas exigem autenticação de admin
-router.use(authenticateToken);
+// Fluxos do bot: só ADMIN (mesma regra do menu). Antes, authenticateToken
+// aceitava token de cidadão — um cidadão logado listava/editava os fluxos.
+router.use(adminAuthMiddleware, requireMinRole(UserRole.ADMIN));
 
 const isPlainObject = (value: unknown): value is Record<string, any> =>
   !!value && typeof value === 'object' && !Array.isArray(value);

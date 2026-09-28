@@ -1,9 +1,10 @@
 import { Router } from 'express';
 import equipeService from '../../services/saude/equipe-saude.service';
-import { authenticateAdmin } from '../../middleware/auth';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('SAUDE'));
 
 // POST /api/saude/equipes - Criar equipe
 router.post('/', async (req, res) => {

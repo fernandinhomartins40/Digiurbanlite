@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import transitoService from '../../services/transito/transito.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Credenciamentos & Vistorias (Fase 3) — Transportes e Trânsito
  * Prefixo: /api/apps/transportes-transito
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('TRANSPORTES_TRANSITO'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

@@ -43,6 +43,7 @@ export function AddFamilyMemberDialog({
 }: AddFamilyMemberDialogProps) {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState('')
+  const [notFound, setNotFound] = useState(false)
   const [searchResults, setSearchResults] = useState<CitizenOption[]>([])
   const [searching, setSearching] = useState(false)
   const [selectedCitizen, setSelectedCitizen] = useState<CitizenOption | null>(null)
@@ -77,13 +78,18 @@ export function AddFamilyMemberDialog({
       setSelectedCitizen(null)
       setSearchTerm('')
       setSearchResults([])
+      setNotFound(false)
       setWarnings([])
     }
   }, [open])
 
   // Buscar cidadãos
+  // Privacidade: busca só pelo CPF completo do familiar (nunca por nome); o
+  // backend devolve nome e CPF mascarados, apenas para confirmação.
   const searchCitizens = useCallback(async (term: string) => {
-    if (!term || term.trim().length < 2) {
+    const cpf = term.replace(/\D/g, '')
+    setNotFound(false)
+    if (cpf.length !== 11) {
       setSearchResults([])
       setSearching(false)
       return
@@ -91,13 +97,14 @@ export function AddFamilyMemberDialog({
 
     setSearching(true)
     try {
-      const response = await api.get(`/citizen/family/search?q=${encodeURIComponent(term.trim())}`)
+      const response = await api.get(`/citizen/family/search?cpf=${cpf}`)
 
       if (response.data.success && response.data.data) {
         const results = Array.isArray(response.data.data)
           ? response.data.data
           : (response.data.data.citizens || [])
         setSearchResults(results)
+        setNotFound(results.length === 0)
       } else {
         setSearchResults([])
       }
@@ -107,7 +114,7 @@ export function AddFamilyMemberDialog({
       toast({
         variant: 'destructive',
         title: 'Erro ao buscar',
-        description: error.message || 'Não foi possível buscar cidadãos'
+        description: error.response?.data?.error?.message || error.response?.data?.error || error.message || 'Não foi possível buscar o familiar'
       })
     } finally {
       setSearching(false)
@@ -294,7 +301,7 @@ export function AddFamilyMemberDialog({
         <div className="space-y-4">
           {/* Buscar Cidadão */}
           <div>
-            <Label htmlFor="searchCitizen">Buscar Cidadão *</Label>
+            <Label htmlFor="searchCitizen">CPF do familiar *</Label>
             <div className="relative mt-1">
               <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
               <Input
@@ -305,11 +312,18 @@ export function AddFamilyMemberDialog({
                   setSearchTerm(value)
                   debouncedSearch(value)
                 }}
-                placeholder="Digite nome ou CPF (mínimo 2 caracteres)"
+                placeholder="Digite o CPF completo (11 dígitos)"
+                inputMode="numeric"
+                maxLength={14}
                 className="pl-10"
                 disabled={submitting}
               />
             </div>
+            {notFound && !searching && (
+              <p className="text-sm text-amber-700 mt-1">
+                Nenhum cidadão cadastrado com este CPF. Use &quot;Convidar por e-mail&quot; para chamar essa pessoa.
+              </p>
+            )}
             {searching && (
               <p className="text-sm text-gray-500 mt-1 flex items-center gap-2">
                 <Loader2 className="h-3 w-3 animate-spin" />

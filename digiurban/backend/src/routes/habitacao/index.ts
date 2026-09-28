@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import habitacaoService from '../../services/habitacao/habitacao.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Programas Habitacionais (Fase 2) — Habitação
  * Prefixo: /api/apps/habitacao
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('HABITACAO'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

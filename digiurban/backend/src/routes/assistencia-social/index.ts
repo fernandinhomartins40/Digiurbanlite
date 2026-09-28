@@ -1,11 +1,12 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import unidadesRoutes from './unidades.routes';
 import familiasRoutes from './familias.routes';
 import programasRoutes from './programas.routes';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('ASSISTENCIA_SOCIAL'));
 
 // App Assistência Social — /api/apps/assistencia-social/*
 router.use('/unidades', unidadesRoutes);

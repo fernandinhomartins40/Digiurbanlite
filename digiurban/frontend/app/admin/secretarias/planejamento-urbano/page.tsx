@@ -35,6 +35,7 @@ import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
+import { SecretariaKpiCards } from '@/components/admin/secretaria/SecretariaKpiCards';
 
 export default function SecretariaPlanejamentoUrbanoPage() {
   const { user } = useAdminAuth();
@@ -98,84 +99,8 @@ export default function SecretariaPlanejamentoUrbanoPage() {
       {/* Chamados Pendentes do Prefeito */}
       <PendingTicketsSection />
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alvarás Emitidos</CardTitle>
-            <Hammer className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.permits.thisMonth || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.permits.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Processos em Análise</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.inAnalysis.total || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Aguardando aprovação
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Projetos Aprovados</CardTitle>
-            <FileCheck className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.approved.thisMonth || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.approved.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.protocols.pending || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.protocols.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Indicadores reais do app da secretaria + protocolos em aberto */}
+      <SecretariaKpiCards slug="planejamento-urbano" />
 
       {/* Ações Rápidas */}
       <Card>
@@ -199,7 +124,7 @@ export default function SecretariaPlanejamentoUrbanoPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/admin/protocolos?departamento=planejamento-urbano&status=pending')}
+              onClick={() => router.push('/admin/protocolos?departamento=planejamento-urbano')}
             >
               <FileText className="h-6 w-6 mb-2" />
               <span>Protocolos Pendentes</span>

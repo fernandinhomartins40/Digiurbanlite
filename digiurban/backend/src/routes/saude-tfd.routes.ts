@@ -9,7 +9,7 @@ import {
   ViagensTFDService,
   TFDService,
 } from '../services/tfd';
-import { authenticateToken } from '../middleware/auth';
+import { requireDepartmentAccess } from '../middleware/department-access';
 import { createDocumentPending } from '../services/protocol-pending.service';
 import { prisma } from '../lib/prisma';
 
@@ -43,7 +43,9 @@ function parseDateParam(value: unknown): Date | undefined {
 }
 
 // Middleware de autenticação para todas as rotas de TFD
-router.use(authenticateToken);
+// Equipe da Saúde + ADMIN. Antes: authenticateToken aceitava token de CIDADÃO
+// (um cidadão logado lia solicitações de TFD e o estoque de outros).
+router.use(...requireDepartmentAccess('SAUDE'));
 
 /**
  * Período das estatísticas: datas vindas da query ou, se ausentes, os últimos

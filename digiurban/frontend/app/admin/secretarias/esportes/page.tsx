@@ -34,6 +34,7 @@ import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
+import { SecretariaKpiCards } from '@/components/admin/secretaria/SecretariaKpiCards';
 
 export default function SecretariaEsportesPage() {
   const { user } = useAdminAuth();
@@ -96,85 +97,8 @@ export default function SecretariaEsportesPage() {
       {/* Chamados Pendentes do Prefeito */}
       <PendingTicketsSection />
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Atletas Cadastrados</CardTitle>
-            <Award className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.athletes.active || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.athletes.total || 0} total cadastrados
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Equipes Esportivas</CardTitle>
-            <Trophy className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.teams.active || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.teams.total || 0} equipes cadastradas
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Eventos Esportivos</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.competitions.upcoming || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  neste mês
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.protocols.pending || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.protocols.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-      </div>
+      {/* Indicadores reais do app da secretaria + protocolos em aberto */}
+      <SecretariaKpiCards slug="esportes" />
 
       {/* Ações Rápidas */}
       <Card>
@@ -198,7 +122,7 @@ export default function SecretariaEsportesPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/admin/protocolos?departamento=esportes&status=pending')}
+              onClick={() => router.push('/admin/protocolos?departamento=esportes')}
             >
               <FileText className="h-6 w-6 mb-2" />
               <span>Protocolos Pendentes</span>

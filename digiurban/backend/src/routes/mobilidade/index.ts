@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import mobilidadeService from '../../services/mobilidade/mobilidade.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Carteiras & Gratuidades (Fase 3) — Mobilidade Urbana
@@ -23,7 +23,8 @@ router.get(
   handle(async (req, res) => res.json(await mobilidadeService.validarPorCodigo(req.params.codigo)))
 );
 
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('MOBILIDADE_URBANA'));
 
 router.get(
   '/stats',

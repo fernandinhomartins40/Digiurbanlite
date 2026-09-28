@@ -7,11 +7,12 @@
 
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { authenticateAdmin } from '../middleware/auth';
 import { safeCreateAssignmentAudit } from '../utils/assignment-audit-safe';
+import { requireDepartmentAccess } from '../middleware/department-access';
 
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('SAUDE'));
 
 // ============================================================
 // ROTAS DE SERVIDORES DE SAÚDE (HealthProfessionalData)
@@ -22,7 +23,7 @@ router.use(authenticateAdmin);
  * Listar todos os servidores com dados de saúde (HealthProfessionalData)
  * Query params: categoria, status, search
  */
-router.get('/servidores', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/servidores', async (req: Request, res: Response) => {
   try {
     const { categoria, status, search } = req.query;
 
@@ -103,7 +104,7 @@ router.get('/servidores', authenticateAdmin, async (req: Request, res: Response)
  * GET /api/saude/servidores/:userId
  * Buscar dados completos de um servidor de saúde
  */
-router.get('/servidores/:userId', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/servidores/:userId', async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
@@ -161,7 +162,6 @@ router.get('/servidores/:userId', authenticateAdmin, async (req: Request, res: R
  */
 router.post(
   '/servidores/:userId/vincular-unidade',
-  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
@@ -292,7 +292,6 @@ router.post(
  */
 router.put(
   '/servidores/:userId/vinculos/:assignmentId',
-  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId, assignmentId } = req.params;
@@ -352,7 +351,6 @@ router.put(
  */
 router.delete(
   '/servidores/:userId/vinculos/:assignmentId',
-  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId, assignmentId } = req.params;
@@ -411,7 +409,6 @@ router.delete(
  */
 router.post(
   '/servidores/:userId/vincular-equipe',
-  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId } = req.params;
@@ -487,7 +484,6 @@ router.post(
  */
 router.delete(
   '/servidores/:userId/equipes/:memberId',
-  authenticateAdmin,
   async (req: Request, res: Response) => {
     try {
       const { userId, memberId } = req.params;
@@ -530,7 +526,7 @@ router.delete(
  * GET /api/saude/stats
  * Estatísticas gerais dos servidores de saúde
  */
-router.get('/stats', authenticateAdmin, async (req: Request, res: Response) => {
+router.get('/stats', async (req: Request, res: Response) => {
   try {
     const [
       totalServidores,

@@ -85,3 +85,78 @@ Nenhum.
 
 - Aplicar o mesmo padrão (visões, prazo, URL) às listas de protocolos dos módulos de secretaria (`useProtocols`, `useServiceProtocols` e as telas de TFD). As telas de TFD enviam um parâmetro `moduleType` que o backend ignora hoje, o que é um bug preexistente fora deste escopo.
 - Adicionar `@types/jest` e um `jest.config` ao backend. Hoje não havia nenhum teste unitário configurado, então usei `@jest/globals` e `--preset ts-jest`.
+
+---
+
+# Rodada 2 — varredura da aplicação inteira
+
+## Resumo
+
+A primeira rodada cobriu só o fluxo de protocolos. Esta cobriu a aplicação toda com varreduras automáticas:
+- contrato frontend × backend: 969 chamadas contra 1.630 rotas;
+- alcance das 281 páginas pelo grafo de imports;
+- autenticação de todas as rotas;
+- rotas sombreadas pela ordem de declaração;
+- tokens de cidadão aceitos em rotas administrativas.
+
+Cada achado foi confirmado no **backend real**, rodando sobre Postgres e Redis efêmeros, antes de ser corrigido. As três decisões de negócio (acesso aos apps, busca de familiar, indicadores das secretarias) foram tomadas por você.
+
+## Segurança (P0)
+
+| Antes | Depois |
+|---|---|
+| Qualquer pessoa sem login lia dados clínicos em `/api/saude/*` | só a equipe da Saúde e ADMIN |
+| Certificados digitais listados, emitidos, revogados e usados para assinar sem login | exigem login; emitir e revogar exige ADMIN |
+| Cidadão logado lia solicitações de TFD de outros pacientes e o estoque da farmácia | só a equipe da Saúde |
+| Cidadão lia os dados do formulário do protocolo de outro cidadão | só o próprio (servidor, pelo escopo do perfil) |
+| Documento externo devolvia CPF e e-mail do cidadão e o arquivo sem login | exige login; cidadão só o próprio |
+| Templates de e-mail da plataforma e fluxos do bot sem proteção adequada | SUPER_ADMIN / ADMIN |
+| Erros do banco (consulta, tabelas, tenant) enviados ao navegador | mensagem genérica em produção; detalhe só no log |
+
+## Permissões (decisão sua)
+
+Os apps das secretarias passaram de "só ADMIN" para **equipe do próprio departamento + ADMIN**. Contam o departamento principal e os vínculos ativos em `UserDepartment`. O menu segue a mesma regra, mostrando ao servidor apenas as suas secretarias.
+
+## Funcionalidades que não funcionavam
+
+- **24 endpoints inalcançáveis** por ordem de rotas: sugestões de serviço do cidadão, exportação dos módulos das secretarias, agenda do gabinete, checagens de protocolo, filas e estatísticas do TFD, logs do sistema.
+- **TFD**:
+  - o painel e as filas de análise documental, regulação e gestão estavam ligados a rotas inexistentes;
+  - agora a decisão é gravada, com responsável, parecer, prioridade e valor;
+  - quando o analista devolve por documento faltante, o cidadão recebe a pendência no portal.
+- **Painéis das 11 secretarias**:
+  - antes mostravam zeros e indicadores sem fonte de dados;
+  - agora mostram os indicadores reais do app de cada uma e os protocolos em aberto, com link para a fila já filtrada.
+- **Links da fila**: 22 botões "Protocolos Pendentes" e os links vindos do gabinete e da ficha do cidadão usavam filtros que a fila não entendia. Agora são reconhecidos.
+- **Vínculos de cidadão** no detalhe do protocolo apontavam para uma rota inexistente.
+- **"Adicionar membro da família"**:
+  - só aceita CPF completo;
+  - o nome e o CPF aparecem mascarados;
+  - há limite de 20 buscas por hora;
+  - quando o CPF não é encontrado, a tela sugere o convite por e-mail.
+
+## Testes executados (rodada 2)
+
+| Verificação | Resultado |
+|---|---|
+| `tsc -p tsconfig.docker.json` (backend) | ✅ |
+| `tsc --noEmit` (frontend) | ✅ exceto 1 erro preexistente (`DocumentScanner.tsx`) |
+| `jest __tests__/unit` | ✅ 17/17 (escopo de protocolo, sanitização de erro, acesso por departamento) |
+| Rotas sensíveis sem login | ✅ todas → 401; rotas públicas seguem abertas |
+| Matriz de acesso: ADMIN, médico, secretário e servidor de Cultura, servidor com 2 secretarias, cidadão × 10 rotas | ✅ |
+| Fluxo TFD ponta a ponta | ✅ |
+| Busca de familiar (nome, CPF inválido, CPF de outro, o próprio CPF, limite de uso) | ✅ |
+| Varredura de rotas sombreadas | ✅ 0 restantes |
+| `next build` | ✅ exit 0 |
+
+## Riscos restantes
+
+- Os indicadores dos apps de secretaria dependem de cada app ter dados cadastrados. Se o carregamento falhar, o cartão mostra "—" em vez de 0.
+- Criar uma pendência enfileira uma notificação no Redis; se o Redis cair, a requisição fica presa até ele voltar.
+- A aprovação da gestão no TFD aceita qualquer servidor da Saúde. Definir quem é o "gestor" é decisão de negócio.
+
+## Próximas melhorias
+
+- Revisar, caso a caso, os ~300 arquivos do frontend sem uso aparente.
+- Montar ou remover as rotas de `routes/index.ts`, que nunca é carregado (inclui categorias de cidadão).
+- Continuar a varredura por fluxo em e-mail, bot, super-admin e portal do cidadão.

@@ -281,27 +281,27 @@ export const secretariaNavigation: AdminNavSection = {
   collapsible: true,
   defaultCollapsed: true,
   items: [
-    { title: 'Administração', href: '/admin/secretarias/administracao', icon: Building2, minRole: 'COORDINATOR' },
-    { title: 'Agricultura', href: '/admin/secretarias/agricultura', icon: Sprout, minRole: 'COORDINATOR' },
-    { title: 'Assistência Social', href: '/admin/secretarias/assistencia-social', icon: HandHeart, minRole: 'COORDINATOR' },
-    { title: 'Cultura', href: '/admin/secretarias/cultura', icon: Palette, minRole: 'COORDINATOR' },
-    { title: 'Defesa Civil', href: '/admin/secretarias/defesa-civil', icon: ShieldAlert, minRole: 'COORDINATOR' },
-    { title: 'Desenv. Econômico', href: '/admin/secretarias/desenvolvimento-economico', icon: TrendingUp, minRole: 'COORDINATOR' },
-    { title: 'Educação', href: '/admin/secretarias/educacao', icon: GraduationCap, minRole: 'COORDINATOR' },
-    { title: 'Esportes', href: '/admin/secretarias/esportes', icon: Trophy, minRole: 'COORDINATOR' },
-    { title: 'Finanças', href: '/admin/secretarias/financas', icon: DollarSign, minRole: 'COORDINATOR' },
-    { title: 'Habitação', href: '/admin/secretarias/habitacao', icon: Home, minRole: 'COORDINATOR' },
-    { title: 'Meio Ambiente', href: '/admin/secretarias/meio-ambiente', icon: TreePine, minRole: 'COORDINATOR' },
-    { title: 'Mobilidade Urbana', href: '/admin/secretarias/mobilidade-urbana', icon: Bus, minRole: 'COORDINATOR' },
-    { title: 'Obras Públicas', href: '/admin/secretarias/obras-publicas', icon: Truck, minRole: 'COORDINATOR' },
-    { title: 'Planejamento Urbano', href: '/admin/secretarias/planejamento-urbano', icon: MapPin, minRole: 'COORDINATOR' },
-    { title: 'Políticas p/ Mulheres', href: '/admin/secretarias/politicas-mulheres', icon: Users, minRole: 'COORDINATOR' },
-    { title: 'Saúde', href: '/admin/secretarias/saude', icon: Heart, minRole: 'COORDINATOR' },
-    { title: 'Segurança Pública', href: '/admin/secretarias/seguranca-publica', icon: Shield, minRole: 'COORDINATOR' },
-    { title: 'Serviços Públicos', href: '/admin/secretarias/servicos-publicos', icon: Settings, minRole: 'COORDINATOR' },
-    { title: 'Tecnologia e Inovação', href: '/admin/secretarias/tecnologia-inovacao', icon: Cpu, minRole: 'COORDINATOR' },
-    { title: 'Transportes e Trânsito', href: '/admin/secretarias/transportes-transito', icon: Car, minRole: 'COORDINATOR' },
-    { title: 'Turismo', href: '/admin/secretarias/turismo', icon: Camera, minRole: 'COORDINATOR' },
+    { title: 'Administração', href: '/admin/secretarias/administracao', icon: Building2, minRole: 'USER' },
+    { title: 'Agricultura', href: '/admin/secretarias/agricultura', icon: Sprout, minRole: 'USER' },
+    { title: 'Assistência Social', href: '/admin/secretarias/assistencia-social', icon: HandHeart, minRole: 'USER' },
+    { title: 'Cultura', href: '/admin/secretarias/cultura', icon: Palette, minRole: 'USER' },
+    { title: 'Defesa Civil', href: '/admin/secretarias/defesa-civil', icon: ShieldAlert, minRole: 'USER' },
+    { title: 'Desenv. Econômico', href: '/admin/secretarias/desenvolvimento-economico', icon: TrendingUp, minRole: 'USER' },
+    { title: 'Educação', href: '/admin/secretarias/educacao', icon: GraduationCap, minRole: 'USER' },
+    { title: 'Esportes', href: '/admin/secretarias/esportes', icon: Trophy, minRole: 'USER' },
+    { title: 'Finanças', href: '/admin/secretarias/financas', icon: DollarSign, minRole: 'USER' },
+    { title: 'Habitação', href: '/admin/secretarias/habitacao', icon: Home, minRole: 'USER' },
+    { title: 'Meio Ambiente', href: '/admin/secretarias/meio-ambiente', icon: TreePine, minRole: 'USER' },
+    { title: 'Mobilidade Urbana', href: '/admin/secretarias/mobilidade-urbana', icon: Bus, minRole: 'USER' },
+    { title: 'Obras Públicas', href: '/admin/secretarias/obras-publicas', icon: Truck, minRole: 'USER' },
+    { title: 'Planejamento Urbano', href: '/admin/secretarias/planejamento-urbano', icon: MapPin, minRole: 'USER' },
+    { title: 'Políticas p/ Mulheres', href: '/admin/secretarias/politicas-mulheres', icon: Users, minRole: 'USER' },
+    { title: 'Saúde', href: '/admin/secretarias/saude', icon: Heart, minRole: 'USER' },
+    { title: 'Segurança Pública', href: '/admin/secretarias/seguranca-publica', icon: Shield, minRole: 'USER' },
+    { title: 'Serviços Públicos', href: '/admin/secretarias/servicos-publicos', icon: Settings, minRole: 'USER' },
+    { title: 'Tecnologia e Inovação', href: '/admin/secretarias/tecnologia-inovacao', icon: Cpu, minRole: 'USER' },
+    { title: 'Transportes e Trânsito', href: '/admin/secretarias/transportes-transito', icon: Car, minRole: 'USER' },
+    { title: 'Turismo', href: '/admin/secretarias/turismo', icon: Camera, minRole: 'USER' },
   ],
 };
 
@@ -323,6 +323,28 @@ export function shouldShowNavItem(
   if (item.permissions && !item.permissions.some(hasPermission)) return false;
   if (item.minRole && !hasMinRole(item.minRole)) return false;
   return true;
+}
+
+/** Code canônico da secretaria a partir do link /admin/secretarias/<slug> */
+export function secretariaCodeFromHref(href: string): string | null {
+  const m = href.match(/^\/admin\/secretarias\/([a-z0-9-]+)/);
+  return m ? m[1].toUpperCase().replace(/-/g, '_') : null;
+}
+
+/**
+ * Secretarias visíveis: ADMIN/SUPER_ADMIN veem todas; a equipe (USER,
+ * COORDINATOR, MANAGER) vê só as suas — mesma regra do backend
+ * (middleware/department-access.ts).
+ */
+export function canSeeSecretaria(
+  href: string,
+  role: string | undefined,
+  userDepartmentCodes: string[]
+): boolean {
+  const code = secretariaCodeFromHref(href);
+  if (!code) return true;
+  if (role === 'ADMIN' || role === 'SUPER_ADMIN') return true;
+  return userDepartmentCodes.includes(code);
 }
 
 export function isNavItemActive(pathname: string, href: string) {

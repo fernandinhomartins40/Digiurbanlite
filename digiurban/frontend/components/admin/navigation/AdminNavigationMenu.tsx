@@ -14,6 +14,7 @@ import {
   isNavItemActive,
   mayorPortalNavigation,
   secretariaNavigation,
+  canSeeSecretaria,
   shouldShowNavItem,
   superAdminNavigation,
   type AdminNavItem,
@@ -213,6 +214,17 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
     });
   }, [allSections, pathname]);
 
+  // Secretarias do servidor: principal + vínculos ativos
+  const userDepartmentCodes = useMemo(() => {
+    const codes = new Set<string>();
+    const add = (code?: string | null) => code && codes.add(code.toUpperCase());
+    add(user?.department?.code);
+    add(user?.primaryDepartment?.code);
+    user?.departments?.forEach((d) => add(d.code));
+    user?.userDepartments?.filter((ud) => ud.isActive).forEach((ud) => add(ud.department?.code));
+    return [...codes];
+  }, [user]);
+
   const visibleSections = useMemo(
     () =>
       allSections
@@ -226,11 +238,13 @@ export function AdminNavigationMenu({ onNavigate }: AdminNavigationMenuProps) {
             .filter((item) => {
               const m = item.href.match(/^\/admin\/secretarias\/([a-z0-9-]+)/);
               return m ? isFeatureEnabled(m[1]) : true;
-            }),
+            })
+            // Equipe vê só a(s) própria(s) secretaria(s) — o backend nega as demais
+            .filter((item) => canSeeSecretaria(item.href, user?.role, userDepartmentCodes)),
         }))
         .filter((section) => section.title !== mayorPortalNavigation.title)
         .filter((section) => section.items.length > 0),
-    [allSections, hasMinRole, hasPermission, isFeatureEnabled]
+    [allSections, hasMinRole, hasPermission, isFeatureEnabled, user?.role, userDepartmentCodes]
   );
 
   const visibleMayorPortalItems = useMemo(

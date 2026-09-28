@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth';
+import { adminAuthMiddleware } from '../middleware/admin-auth';
 
 const router = Router();
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
@@ -46,12 +46,8 @@ function departmentSlugToName(slug: string): string {
   return mapping[slug] || slug;
 }
 
-// DEBUG: Rota de teste SEM auth
-router.get('/:department/test', async (req, res) => {
-  res.json({ message: 'Rota department-stats funcionando!', department: req.params.department });
-});
-
-router.get('/:department/stats', authenticateToken, async (req, res) => {
+// Só servidores (antes aceitava token de cidadão)
+router.get('/:department/stats', adminAuthMiddleware, async (req, res) => {
   try {
     const { department: departmentSlug } = req.params;
 
@@ -62,10 +58,16 @@ router.get('/:department/stats', authenticateToken, async (req, res) => {
     const departmentName = departmentSlugToName(departmentSlug);
     console.log(`   Nome convertido: ${departmentName}`);
 
-    // Busca o departamento
-    const department = await prisma.department.findFirst({
-      where: { name: departmentName },
-    });
+    // Busca o departamento: primeiro pelo code canônico (MAIÚSCULO_UNDERSCORE),
+    // que não varia entre municípios; o nome ("Secretaria de Cultura" vs
+    // "Secretaria Municipal de Cultura") fica como fallback.
+    const departmentCode = departmentSlug.toUpperCase().replace(/-/g, '_');
+    const department =
+      (await prisma.department.findFirst({ where: { code: departmentCode } })) ||
+      (await prisma.department.findFirst({ where: { name: departmentName } })) ||
+      (await prisma.department.findFirst({
+        where: { name: { contains: departmentName.replace(/^Secretaria (de |da |do )?/i, ''), mode: 'insensitive' } },
+      }));
 
     if (!department) {
       console.log(`   ❌ Departamento não encontrado!`);
@@ -143,32 +145,23 @@ router.get('/:department/stats', authenticateToken, async (req, res) => {
     // Busca IDs de todos os serviços do departamento
     const serviceIds = services.map(s => s.id);
 
-    const totalProtocols = await prisma.protocolSimplified.count({
-      where: {
-        serviceId: { in: serviceIds },
-      },
+    // Contagem pelo departamento dono do protocolo (inclui encaminhados para cá
+    // e serviços inativos), agrupada em uma única consulta
+    const byStatus = await prisma.protocolSimplified.groupBy({
+      by: ['status'],
+      where: { departmentId: department.id },
+      _count: { _all: true },
     });
+    const count = (statuses: string[]) =>
+      byStatus
+        .filter((g: any) => statuses.includes(g.status))
+        .reduce((acc: number, g: any) => acc + g._count._all, 0);
 
-    const pendingProtocols = await prisma.protocolSimplified.count({
-      where: {
-        serviceId: { in: serviceIds },
-        status: 'PENDENCIA',
-      },
-    });
-
-    const approvedProtocols = await prisma.protocolSimplified.count({
-      where: {
-        serviceId: { in: serviceIds },
-        status: 'CONCLUIDO',
-      },
-    });
-
-    const inProgressProtocols = await prisma.protocolSimplified.count({
-      where: {
-        serviceId: { in: serviceIds },
-        status: 'PROGRESSO',
-      },
-    });
+    const totalProtocols = byStatus.reduce((acc: number, g: any) => acc + g._count._all, 0);
+    const pendingProtocols = count(['PENDENCIA']);
+    const approvedProtocols = count(['CONCLUIDO']);
+    const inProgressProtocols = count(['PROGRESSO']);
+    const openProtocols = count(['VINCULADO', 'PROGRESSO', 'ATUALIZACAO', 'PENDENCIA']);
 
     res.json({
       department: departmentSlug,
@@ -177,6 +170,7 @@ router.get('/:department/stats', authenticateToken, async (req, res) => {
         pending: pendingProtocols,
         approved: approvedProtocols,
         inProgress: inProgressProtocols,
+        open: openProtocols,
       },
       services: servicesWithStats,
     });

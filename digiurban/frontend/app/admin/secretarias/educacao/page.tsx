@@ -39,6 +39,7 @@ import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
+import { SecretariaKpiCards } from '@/components/admin/secretaria/SecretariaKpiCards';
 
 export default function SecretariaEducacaoPage() {
   useAdminAuth();
@@ -99,85 +100,8 @@ export default function SecretariaEducacaoPage() {
       {/* Chamados Pendentes do Prefeito */}
       <PendingTicketsSection />
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Alunos Matriculados</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.students.enrolled || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.students.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Escolas</CardTitle>
-            <Building className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.schools || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  ativas
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Professores</CardTitle>
-            <GraduationCap className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.teachers.active || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  ativos
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.protocols.pending || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.protocols.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-      </div>
+      {/* Indicadores reais do app da secretaria + protocolos em aberto */}
+      <SecretariaKpiCards slug="educacao" />
 
       {/* Ações Rápidas */}
       <Card>
@@ -201,7 +125,7 @@ export default function SecretariaEducacaoPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/admin/protocolos?departamento=educacao&status=pending')}
+              onClick={() => router.push('/admin/protocolos?departamento=educacao')}
             >
               <FileText className="h-6 w-6 mb-2" />
               <span>Protocolos Pendentes</span>

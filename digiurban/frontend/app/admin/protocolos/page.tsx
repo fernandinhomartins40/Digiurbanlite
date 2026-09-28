@@ -82,6 +82,7 @@ const SORT_OPTIONS = [
 ]
 
 const PAGE_SIZE = 20
+const VALID_STATUSES = new Set(['VINCULADO', 'PROGRESSO', 'ATUALIZACAO', 'PENDENCIA', 'CONCLUIDO', 'CANCELADO'])
 
 function ProtocolsQueue() {
   const router = useRouter()
@@ -97,6 +98,34 @@ function ProtocolsQueue() {
   const sort = searchParams.get('sort') || 'due'
   const page = Math.max(1, Number(searchParams.get('page')) || 1)
   const search = searchParams.get('search') || ''
+  // Filtros de contexto vindos de outras telas (secretaria, cidadão)
+  const departmentCode = searchParams.get('departamento') || ''
+  const departmentId = searchParams.get('department') || ''
+  const citizenId = searchParams.get('citizenId') || ''
+
+  // Links antigos pelo sistema usam outras convenções (status=pending,
+  // overdue=true, unassigned=true, priority=high|urgent). Traduz para os
+  // filtros atuais em vez de mostrar erro/lista sem filtro.
+  useEffect(() => {
+    const legacyStatus = searchParams.get('status')
+    const changes: Record<string, string | null> = {}
+    if (legacyStatus && !VALID_STATUSES.has(legacyStatus)) {
+      changes.status = null
+      if (!searchParams.get('view')) changes.view = null // "Em aberto" é o padrão
+    }
+    if (searchParams.get('overdue') === 'true') { changes.overdue = null; changes.view = 'overdue' }
+    if (searchParams.get('unassigned') === 'true') { changes.unassigned = null; changes.view = 'unassigned' }
+    const legacyPriority = searchParams.get('priority')
+    if (legacyPriority && !/^[1-5]$/.test(legacyPriority)) {
+      changes.priority = legacyPriority === 'urgent' ? '5' : legacyPriority === 'high' ? '4' : null
+    }
+    if (Object.keys(changes).length > 0) {
+      const params = new URLSearchParams(searchParams.toString())
+      Object.entries(changes).forEach(([k, v]) => (v === null ? params.delete(k) : params.set(k, v)))
+      router.replace(`${pathname}?${params.toString()}`, { scroll: false })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const [searchInput, setSearchInput] = useState(search)
   const [protocols, setProtocols] = useState<Protocol[]>([])
@@ -148,9 +177,12 @@ function ProtocolsQueue() {
       setDataLoading(true)
       setLoadError(null)
       const params = new URLSearchParams({ view, sort, page: String(page), limit: String(PAGE_SIZE) })
-      if (statusFilter !== 'all') params.set('status', statusFilter)
-      if (priorityFilter !== 'all') params.set('priority', priorityFilter)
+      if (statusFilter !== 'all' && VALID_STATUSES.has(statusFilter)) params.set('status', statusFilter)
+      if (/^[1-5]$/.test(priorityFilter)) params.set('priority', priorityFilter)
       if (search) params.set('search', search)
+      if (departmentCode) params.set('departmentCode', departmentCode)
+      if (departmentId) params.set('departmentId', departmentId)
+      if (citizenId) params.set('citizenId', citizenId)
 
       const response = await apiRequest(`/api/protocols?${params.toString()}`)
       setProtocols(response.protocols || [])
@@ -165,7 +197,7 @@ function ProtocolsQueue() {
     }
     // apiRequest é recriado a cada render pelo contexto
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, sort, page, statusFilter, priorityFilter, search])
+  }, [view, sort, page, statusFilter, priorityFilter, search, departmentCode, departmentId, citizenId])
 
   const loadSummary = useCallback(async () => {
     try {
@@ -211,7 +243,15 @@ function ProtocolsQueue() {
   }
 
   const visibleViews = QUEUE_VIEWS.filter((v) => !v.managersOnly || canAssign)
-  const hasExtraFilters = statusFilter !== 'all' || priorityFilter !== 'all' || !!search
+  const hasContextFilter = !!(departmentCode || departmentId || citizenId)
+  const hasExtraFilters = statusFilter !== 'all' || priorityFilter !== 'all' || !!search || hasContextFilter
+  const contextLabel = departmentCode
+    ? `Secretaria: ${departmentCode.replace(/[-_]/g, ' ')}`
+    : departmentId
+      ? 'Filtrando por secretaria'
+      : citizenId
+        ? 'Protocolos deste cidadão'
+        : ''
   const currentView = QUEUE_VIEWS.find((v) => v.id === view)
 
   return (
@@ -335,9 +375,14 @@ function ProtocolsQueue() {
           </div>
 
           <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-sm text-gray-600">
-            <span>
+            <span className="flex flex-wrap items-center gap-2">
               {dataLoading ? 'Carregando...' : `${total} protocolo${total === 1 ? '' : 's'}`}
               {currentView && currentView.id !== 'all' && ` · ${currentView.hint.toLowerCase()}`}
+              {contextLabel && (
+                <Badge variant="secondary" className="capitalize">
+                  {contextLabel.toLowerCase()}
+                </Badge>
+              )}
             </span>
             {hasExtraFilters && (
               <Button
@@ -345,7 +390,7 @@ function ProtocolsQueue() {
                 size="sm"
                 onClick={() => {
                   setSearchInput('')
-                  updateParams({ status: null, priority: null, search: null })
+                  updateParams({ status: null, priority: null, search: null, departamento: null, department: null, citizenId: null })
                 }}
               >
                 <X className="h-4 w-4 mr-1" />

@@ -65,39 +65,15 @@ export default function DraftsPage() {
     } catch (error: any) {
       console.error('Error fetching drafts:', error);
 
-      // Mock data para demonstração
+      // Nunca exibir rascunhos inventados: antes, em 404 (ex.: servidor sem
+      // conta de e-mail), a tela mostrava e-mails fictícios como se fossem reais.
+      setDrafts([]);
       if (error.message?.includes('404')) {
         toast({
-          title: 'Funcionalidade em desenvolvimento',
-          description: 'Os rascunhos estão sendo configurados',
+          title: 'E-mail institucional não configurado',
+          description: 'O serviço de e-mail do município ainda não foi ativado. Fale com o administrador.',
           variant: 'default'
         });
-
-        // Dados mockados
-        const mockDrafts: Draft[] = [
-          {
-            id: '1',
-            to: 'secretaria.educacao@cidade.gov.br',
-            subject: 'Aprovação de Verba para Merenda Escolar',
-            message: 'Prezados,\n\nVenho solicitar a aprovação da verba destinada ao programa de merenda escolar para o próximo trimestre...',
-            accountId: 'account-1',
-            priority: 3,
-            createdAt: new Date(Date.now() - 3600000).toISOString(),
-            updatedAt: new Date(Date.now() - 3600000).toISOString()
-          },
-          {
-            id: '2',
-            to: 'cidadao@email.com',
-            cc: 'secretaria.obras@cidade.gov.br',
-            subject: 'Re: Solicitação de Reparo em Via Pública',
-            message: 'Prezado João,\n\nEm resposta à sua solicitação de reparo da Rua das Palmeiras...',
-            accountId: 'account-1',
-            priority: 3,
-            createdAt: new Date(Date.now() - 86400000).toISOString(),
-            updatedAt: new Date(Date.now() - 7200000).toISOString()
-          }
-        ];
-        setDrafts(mockDrafts);
       } else {
         toast({
           title: 'Erro',

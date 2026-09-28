@@ -1,11 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { authenticateAdmin } from '../middleware/auth';
 import { isPrismaMissingTableError } from '../utils/prisma-missing-table';
 import { centralCalendarService } from '../services/central-calendar.service';
+import { requireDepartmentAccess } from '../middleware/department-access';
 
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('SAUDE'));
 
 async function syncAgendaMedicaWithCentral(agendaId: string) {
   try {

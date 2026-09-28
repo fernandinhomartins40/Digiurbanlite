@@ -58,35 +58,15 @@ export default function TrashPage() {
     } catch (error: any) {
       console.error('Error fetching trash:', error);
 
-      // Mock data
+      // Nunca exibir e-mails inventados (antes, em 404, a lixeira mostrava
+      // mensagens fictícias como se fossem reais)
+      setTrashedEmails([]);
       if (error.message?.includes('404')) {
         toast({
-          title: 'Funcionalidade em desenvolvimento',
-          description: 'A lixeira está sendo configurada',
+          title: 'E-mail institucional não configurado',
+          description: 'O serviço de e-mail do município ainda não foi ativado. Fale com o administrador.',
           variant: 'default'
         });
-
-        const mockTrash: TrashedEmail[] = [
-          {
-            id: '1',
-            messageId: 'msg-trash-001',
-            fromEmail: 'spam@exemplo.com',
-            toEmail: 'admin@digiurban.com.br',
-            subject: 'Promoção Imperdível!',
-            deletedAt: new Date(Date.now() - 3600000).toISOString(),
-            type: 'received'
-          },
-          {
-            id: '2',
-            messageId: 'msg-trash-002',
-            fromEmail: 'admin@digiurban.com.br',
-            toEmail: 'destinatario-errado@exemplo.com',
-            subject: 'Email Enviado por Engano',
-            deletedAt: new Date(Date.now() - 86400000).toISOString(),
-            type: 'sent'
-          }
-        ];
-        setTrashedEmails(mockTrash);
       } else {
         toast({
           title: 'Erro',

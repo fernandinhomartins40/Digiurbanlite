@@ -607,6 +607,8 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       serviceIds,  // ✅ NOVO: suporte para múltiplos serviceIds
       assignedUserId,
       include,     // ✅ NOVO: incluir dados adicionais (stages,documents,pendings)
+      departmentCode, // secretaria pelo code canônico (links das páginas de secretaria)
+      citizenId,      // protocolos de um cidadão (link da ficha do cidadão)
       view = 'all', // visão da fila: all|active|mine|unassigned|overdue|due_soon
       sort = 'recent', // recent|oldest|due
       page = '1',
@@ -636,6 +638,14 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
 
     if (departmentId) {
       where.departmentId = departmentId;
+    }
+
+    if (departmentCode) {
+      where.department = { code: String(departmentCode).toUpperCase().replace(/-/g, '_') };
+    }
+
+    if (citizenId) {
+      where.citizenId = String(citizenId);
     }
 
     // ✅ FILTRO POR SERVIÇO (para módulos específicos)

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchSecretariaProtocolStats } from '@/lib/secretaria-protocol-stats';
 
 interface ObrasPublicasStats {
   projects: {
@@ -34,65 +34,16 @@ export function useObrasPublicasStats() {
       try {
         setLoading(true);
 
-        const token = localStorage.getItem('adminToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
-
-        // Buscar estatísticas de obras públicas
-        const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/obras-publicas/stats`,
-          { headers }
-        );
-
-        const statsData = statsRes.data;
-
-        if (statsData) {
-          setStats({
-            projects: {
-              total: statsData.projects?.total || 0,
-              inProgress: statsData.projects?.ongoing || 0
-            },
-            repairs: {
-              total: statsData.requests?.total || 0,
-              completed: 0
-            },
-            inspections: {
-              total: 0,
-              pending: statsData.requests?.pending || 0
-            },
-            protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 }
-          });
-          setLoading(false);
-          return;
-        }
-
-        // Buscar protocolos
-        const protocolsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'}/protocolos?department=obras_publicas`,
-          { headers }
-        );
-
-        const protocols = protocolsRes.data?.data || [];
+        // Protocolos reais da secretaria (antes: endpoints inexistentes -> zeros).
+        // Indicadores de dominio sem fonte de dados no backend seguem zerados.
+        const protocols = await fetchSecretariaProtocolStats('obras-publicas');
 
         setStats({
-          projects: {
-            total: 0,
-            inProgress: 0
-          },
-          repairs: {
-            total: 0,
-            completed: 0
-          },
-          inspections: {
-            total: 0,
-            pending: 0
-          },
-          protocols: {
-            total: protocols.length,
-            pending: protocols.filter((p: any) => p.status === 'PENDENCIA').length,
-            inProgress: protocols.filter((p: any) => p.status === 'PROGRESSO').length,
-            completed: protocols.filter((p: any) => p.status === 'CONCLUIDO').length
-          }
-        });
+          projects: { total: 0, inProgress: 0 },
+          repairs: { total: 0, completed: 0 },
+          inspections: { total: 0, pending: 0 },
+          protocols
+        } as any);
 
         setError(null);
       } catch (err: any) {

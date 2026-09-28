@@ -7,8 +7,29 @@
 import { Router } from 'express';
 import { authenticateToken } from '../middleware/auth';
 import * as dataFieldService from '../services/protocol-data-field.service';
+import { prisma } from '../lib/prisma';
+import { canAccessProtocol } from '../services/protocol-access.service';
 
 const router = Router();
+
+/**
+ * Leitura dos campos de um protocolo: servidor pela regra de escopo por role;
+ * cidadão só do próprio protocolo. Antes qualquer token (inclusive de outro
+ * cidadão) lia os dados do formulário de qualquer protocolo.
+ */
+async function canReadProtocolFields(req: any, protocolId: string): Promise<boolean> {
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: protocolId },
+    select: { citizenId: true, departmentId: true, assignedUserId: true, currentAssignedUserId: true },
+  });
+  if (!protocol) return false;
+  if (req.userType === 'citizen') return !!req.citizenId && protocol.citizenId === req.citizenId;
+  if (!req.user) return false;
+  return canAccessProtocol(
+    { id: req.userId, role: String(req.user.role), departmentId: req.user.departmentId },
+    protocol
+  );
+}
 
 // ============================================================================
 // GET - Buscar campos de um protocolo
@@ -17,6 +38,10 @@ const router = Router();
 router.get('/protocols/:protocolId/data-fields', authenticateToken, async (req, res) => {
   try {
     const { protocolId } = req.params;
+
+    if (!(await canReadProtocolFields(req, protocolId))) {
+      return res.status(404).json({ success: false, error: 'Protocolo não encontrado' });
+    }
 
     const fields = await dataFieldService.getProtocolDataFields(protocolId);
     const stats = await dataFieldService.getFieldsStatsByProtocol(protocolId);
@@ -43,11 +68,15 @@ router.get('/protocols/:protocolId/data-fields', authenticateToken, async (req, 
 
 router.get('/protocols/:protocolId/data-fields/:fieldId', authenticateToken, async (req, res) => {
   try {
-    const { fieldId } = req.params;
+    const { protocolId, fieldId } = req.params;
+
+    if (!(await canReadProtocolFields(req, protocolId))) {
+      return res.status(404).json({ success: false, error: 'Campo não encontrado' });
+    }
 
     const field = await dataFieldService.getDataFieldById(fieldId);
 
-    if (!field) {
+    if (!field || (field as any).protocolId !== protocolId) {
       return res.status(404).json({
         success: false,
         error: 'Campo não encontrado'
@@ -74,6 +103,10 @@ router.get('/protocols/:protocolId/data-fields/:fieldId', authenticateToken, asy
 router.get('/protocols/:protocolId/data-fields-stats', authenticateToken, async (req, res) => {
   try {
     const { protocolId } = req.params;
+
+    if (!(await canReadProtocolFields(req, protocolId))) {
+      return res.status(404).json({ success: false, error: 'Protocolo não encontrado' });
+    }
 
     const stats = await dataFieldService.getFieldsStatsByProtocol(protocolId);
 

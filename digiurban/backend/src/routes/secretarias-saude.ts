@@ -1,13 +1,14 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { authenticateAdmin } from '../middleware/auth';
 import {
   autoMapDomainUnits,
   listDomainUnits,
 } from '../services/organizational-unit-mapping.service';
+import { requireDepartmentAccess } from '../middleware/department-access';
 
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('SAUDE'));
 
 /**
  * GET /api/secretarias/saude/dashboard

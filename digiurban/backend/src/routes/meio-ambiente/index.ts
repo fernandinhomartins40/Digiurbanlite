@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import meioAmbienteService from '../../services/meio-ambiente/meio-ambiente.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Licenciamento & Fiscalização Ambiental (Fase 2) — Meio Ambiente
  * Prefixo: /api/apps/meio-ambiente
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('MEIO_AMBIENTE'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

@@ -37,6 +37,7 @@ import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
+import { SecretariaKpiCards } from '@/components/admin/secretaria/SecretariaKpiCards';
 
 export default function SecretariaServicosPublicosPage() {
   const router = useRouter();
@@ -99,86 +100,8 @@ export default function SecretariaServicosPublicosPage() {
       {/* Chamados Pendentes do Prefeito */}
       <PendingTicketsSection />
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Solicitações Atendidas</CardTitle>
-            <Wrench className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.publicServiceAttendances?.total || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total de atendimentos
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Serviços Ativos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {(stats?.publicServiceRequests?.total || 0) + (stats?.publicServiceAttendances?.total || 0)}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  Serviços registrados
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Tempo Médio de Resposta</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">2.5 dias</div>
-                <p className="text-xs text-muted-foreground">
-                  Média estimada
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.protocols?.pending || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.protocols?.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Indicadores reais do app da secretaria + protocolos em aberto */}
+      <SecretariaKpiCards slug="servicos-publicos" />
 
       {/* Ações Rápidas */}
       <Card>
@@ -202,7 +125,7 @@ export default function SecretariaServicosPublicosPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/admin/protocolos?departamento=servicos-publicos&status=pending')}
+              onClick={() => router.push('/admin/protocolos?departamento=servicos-publicos')}
             >
               <FileText className="h-6 w-6 mb-2" />
               <span>Protocolos Pendentes</span>

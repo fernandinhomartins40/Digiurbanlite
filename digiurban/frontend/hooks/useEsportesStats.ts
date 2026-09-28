@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchSecretariaProtocolStats } from '@/lib/secretaria-protocol-stats';
 
 interface EsportesStats {
   athletes: {
@@ -42,56 +42,18 @@ export function useEsportesStats() {
       try {
         setLoading(true);
 
-        const token = localStorage.getItem('adminToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        // Protocolos reais da secretaria (antes: endpoints inexistentes -> zeros).
+        // Indicadores de dominio sem fonte de dados no backend seguem zerados.
+        const protocols = await fetchSecretariaProtocolStats('esportes');
 
-        // Buscar estatísticas da rota /stats
-        const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/esportes/stats`,
-          { headers }
-        );
-
-        const statsData = statsRes.data;
-
-        if (statsData) {
-          setStats({
-            athletes: {
-              total: statsData.athletes?.total || 0,
-              active: statsData.athletes?.active || 0
-            },
-            teams: {
-              total: 0,
-              active: 0
-            },
-            schools: {
-              total: statsData.schools?.total || 0,
-              active: statsData.schools?.total || 0
-            },
-            infrastructures: {
-              total: statsData.equipment?.total || 0,
-              active: statsData.equipment?.available || 0
-            },
-            competitions: {
-              total: statsData.championships?.total || 0,
-              upcoming: statsData.championships?.active || 0
-            },
-            protocols: {
-              total: 0,
-              pending: 0,
-              inProgress: 0,
-              completed: 0
-            }
-          });
-        } else {
-          setStats({
-            athletes: { total: 0, active: 0 },
-            teams: { total: 0, active: 0 },
-            schools: { total: 0, active: 0 },
-            infrastructures: { total: 0, active: 0 },
-            competitions: { total: 0, upcoming: 0 },
-            protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 }
-          });
-        }
+        setStats({
+          athletes: { total: 0, active: 0 },
+          teams: { total: 0, active: 0 },
+          schools: { total: 0, active: 0 },
+          infrastructures: { total: 0, active: 0 },
+          competitions: { total: 0, upcoming: 0 },
+          protocols
+        });
 
         setError(null);
       } catch (err: any) {

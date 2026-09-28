@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../middleware/auth';
 import agriculturaService from '../services/agricultura/agricultura.service';
+import { requireDepartmentAccess } from '../middleware/department-access';
 
 /**
  * App Agricultura (Fase 1C) — rotas no contrato exato da UI existente
  * (frontend lib/hooks/use-agricultura-api.ts). Prefixo: /api/agricultura
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('AGRICULTURA'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import unidadesRoutes from './unidades.routes';
 import turmasRoutes from './turmas.routes';
 import matriculasRoutes from './matriculas.routes';
 import transporteRoutes from './transporte.routes';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('EDUCACAO'));
 
 // App Educação — /api/apps/educacao/*
 router.use('/unidades', unidadesRoutes);

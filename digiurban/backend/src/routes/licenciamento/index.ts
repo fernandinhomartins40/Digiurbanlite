@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import licenciamentoService from '../../services/licenciamento/licenciamento.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Licenciamento Urbano (Fase 2) — Obras Públicas + Planejamento Urbano
  * Prefixo: /api/apps/licenciamento
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('OBRAS_PUBLICAS', 'PLANEJAMENTO_URBANO'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

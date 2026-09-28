@@ -37,6 +37,7 @@ import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
+import { SecretariaKpiCards } from '@/components/admin/secretaria/SecretariaKpiCards';
 
 export default function SecretariaSegurancaPublicaPage() {
   useAdminAuth();
@@ -100,84 +101,8 @@ export default function SecretariaSegurancaPublicaPage() {
       {/* Chamados Pendentes do Prefeito */}
       <PendingTicketsSection />
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ocorrências Registradas</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.modules.occurrences || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.highlights.openOccurrences || 0} em andamento
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Guarda Municipal</CardTitle>
-            <Shield className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.modules.guards || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.highlights.activePatrols || 0} patrulhas ativas
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Câmeras de Monitoramento</CardTitle>
-            <Camera className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.modules.surveillanceSystems || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  sistemas ativos
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.protocols.pending || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.protocols.total || 0} no total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      {/* Indicadores reais do app da secretaria + protocolos em aberto */}
+      <SecretariaKpiCards slug="seguranca-publica" />
 
       {/* Ações Rápidas */}
       <Card>
@@ -201,7 +126,7 @@ export default function SecretariaSegurancaPublicaPage() {
             <Button
               className="h-20 flex flex-col"
               variant="outline"
-              onClick={() => router.push('/admin/protocolos?departamento=seguranca-publica&status=pending')}
+              onClick={() => router.push('/admin/protocolos?departamento=seguranca-publica')}
             >
               <AlertTriangle className="h-6 w-6 mb-2" />
               <span>Ocorrências Pendentes</span>

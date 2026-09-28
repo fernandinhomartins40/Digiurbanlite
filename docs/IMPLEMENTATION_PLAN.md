@@ -4,7 +4,15 @@
 
 DigiUrban é uma plataforma de governo digital municipal multi-tenant (monorepo): backend Express 5 + Prisma/PostgreSQL (`digiurban/backend`), frontend Next.js 14 App Router (`digiurban/frontend`), Messages Server (Socket.IO + bot), SMTP. O fluxo central do produto é o **protocolo**: o cidadão solicita um serviço (portal `/cidadao` ou bot), o protocolo cai na fila da secretaria, servidores (`USER`/`COORDINATOR`/`MANAGER`/`ADMIN`) tratam etapas, pendências, documentos e concluem. SLA por protocolo (`ProtocolSLA`) é mantido por serviço e por um job diário.
 
-Esta rodada concentrou-se nos dois lados desse fluxo principal: a **fila de trabalho do servidor** e o **acompanhamento pelo cidadão**. Os 220+ outros módulos (apps de secretaria, saúde, e-mail, bot etc.) não foram alterados.
+**Rodada 1** concentrou-se nos dois lados do fluxo principal: a fila de trabalho do servidor e o acompanhamento pelo cidadão.
+
+**Rodada 2** (seção "Varredura da aplicação inteira" no fim deste documento) cobriu a aplicação toda com varreduras automáticas:
+- rotas do backend × chamadas do frontend (1.455 rotas, 969 chamadas);
+- alcance das 281 páginas pelo grafo de imports;
+- rotas sem autenticação;
+- rotas sombreadas por ordem de declaração;
+- tokens de cidadão aceitos em rotas administrativas;
+- vazamento de erro interno.
 
 ## Principais problemas encontrados
 
@@ -65,3 +73,48 @@ Esta rodada concentrou-se nos dois lados desse fluxo principal: a **fila de trab
 ## Bloqueios reais
 
 Nenhum.
+
+---
+
+# Varredura da aplicação inteira (rodada 2)
+
+## Método
+
+| Varredura | Cobertura | Ferramenta |
+|---|---|---|
+| Contrato frontend → backend | 969 chamadas × 1.630 rotas (backend + rotas Next + Messages Server) | script sobre `index.ts`, sub-roteadores e chamadas `fetch`/`apiRequest`/`axios` |
+| Alcance de código | 983 arquivos do frontend, a partir das 281 páginas | grafo de imports |
+| Autenticação | todas as rotas montadas | middleware no arquivo, no pai e em cada rota |
+| Rotas sombreadas | 115 arquivos de rota | `/:param` declarado antes de rota literal equivalente |
+| Token de cidadão em rota administrativa | rotas com `authenticateToken` | teste real com token de cidadão |
+| Validação | backend real + Postgres 16 + Redis 7 efêmeros | `curl` com JWT de cada perfil |
+
+## Problemas encontrados e tratados
+
+| ID | PRIORIDADE | PROBLEMA | SOLUÇÃO | ARQUIVOS/ÁREAS | TESTE | STATUS |
+|---|---|---|---|---|---|---|
+| S-01 | P0 | `/api/saude/*` (consulta, prescrições, vacinas, fila, triagem) respondia **sem login** | exige login; depois restrito à equipe da Saúde (S-08) | `routes/saude/index.ts` | anônimo → 401 | DONE |
+| S-02 | P0 | `/api/certificates` listava, emitia, revogava e assinava **sem login** | login obrigatório; emitir/revogar/aprovar exige ADMIN | `certificates.routes.ts` | USER → 403 ao emitir | DONE |
+| S-03 | P0 | `/api/email-templates` sem autenticação | `superAdminAuth` | `email-templates.ts` | 401 | DONE |
+| S-04 | P0 | documento externo devolvia CPF/e-mail e o arquivo sem login | login; cidadão só o próprio documento | `external-documents.routes.ts` | outro cidadão → 404 | DONE |
+| S-05 | P0 | **token de cidadão** lia TFD de outros pacientes e o estoque da farmácia | `requireDepartmentAccess('SAUDE')` | `saude-tfd`, `saude-farmacia` | cidadão → 401 | DONE |
+| S-06 | P0 | cidadão lia os campos do formulário do protocolo de outro | verificação de acesso (servidor por escopo, cidadão só o próprio) | `protocol-data-fields.ts` | outro cidadão → 404 | DONE |
+| S-07 | P1 | cidadão listava e editava os fluxos do bot | ADMIN | `admin-flows.routes.ts` | 401/403 | DONE |
+| S-08 | P1 | apps das secretarias só aceitavam ADMIN (a equipe da secretaria recebia 403); menu mostrava todas as secretarias | **decisão:** equipe do próprio departamento (principal + `UserDepartment`) + ADMIN; menu filtrado igual | `middleware/department-access.ts`, 19 roteadores, `AdminNavigationMenu` | matriz 5 perfis × 10 rotas; 5 testes unitários | DONE |
+| S-09 | P1 | erros do Prisma (consulta, tabelas, tenantId) iam ao cliente em cerca de 490 pontos | middleware que oculta o detalhe em produção e registra no log; `errorFormat: minimal` | `sanitize-error-response.ts`, `lib/prisma.ts` | produção → mensagem genérica; 3 testes | DONE |
+| S-10 | P2 | `analytics/realtime`, `signatures/document/:id` e `department-stats` sem login ou aceitando cidadão | login de servidor | rotas citadas | 401 | DONE |
+| F-10 | P1 | 24 endpoints nunca alcançados (rota com `:param` declarada antes) | reordenação via AST do TypeScript (só movimentação) | 11 roteadores | varredura → 0; endpoints respondem | DONE |
+| F-11 | P1 | TFD: painel e 3 filas ligados a rota inexistente/filtro ignorado; nenhuma decisão gravada | religadas ao fluxo `SolicitacaoTFD`; devolução cria pendência para o cidadão | TFD (backend + 6 telas) | fluxo ponta a ponta | DONE |
+| F-12 | P1 | estatísticas de TFD sem período → "Invalid Date" | padrão de 30 dias | `saude-tfd.routes.ts` | 200 | DONE |
+| F-13 | P1 | vínculos de cidadão no detalhe do protocolo → rota inexistente | `/api/protocols/:id/citizen-links` | `useCitizenLinks.ts` | — | DONE |
+| F-14 | P1 | 11 painéis de secretaria mostravam 0 (endpoints inexistentes) e cartões sem fonte de dados | **decisão:** indicadores reais do app de cada secretaria + protocolos em aberto (`SecretariaKpiCards`) | 11 páginas, 7 hooks, `department-stats.ts` (busca pelo `code`) | endpoints reais | DONE |
+| F-15 | P1 | 22 links "Protocolos Pendentes" das secretarias usavam `status=pending` (inexistente) | fila entende filtros de contexto (`departamento`, `department`, `citizenId`) e traduz convenções antigas (`overdue`, `unassigned`, `priority=high`) | `admin/protocolos/page.tsx`, filtros `departmentCode`/`citizenId` no backend | escopo não vaza entre secretarias | DONE |
+| F-16 | P1 | "Adicionar membro da família" nunca funcionou (busca inexistente) | **decisão:** só CPF completo e válido; devolve nome e CPF mascarados; 20 buscas/hora por cidadão; nunca por nome | `citizen-family.ts`, `AddFamilyMemberDialog.tsx` | nome → 400; CPF → mascarado; 21ª → 429 | DONE |
+| F-17 | P3 | `syncTFDStatusToProtocol` (dormente) gravava status inexistentes e apagava `customData` | mapeia para `ProtocolStatus` e preserva os dados | `protocol-to-tfd.service.ts` | type-check | DONE |
+
+## Itens registrados e não alterados
+
+- **~300 arquivos do frontend sem import a partir das páginas.** A lista inclui falsos positivos (`robots.ts`, `sitemap.ts`, arquivos carregados dinamicamente), então nada foi apagado. Remover exige revisão caso a caso.
+- **`routes/index.ts` nunca é carregado.** Por isso as rotas de categorias de cidadão (`/api/admin/categories`) não existem. A tela que as usa também não é alcançável; fica registrado.
+- **Criar pendência depende do Redis (notificação via BullMQ).** Sem Redis a requisição fica pendurada. Em produção o Redis existe, mas vale colocar um timeout na fila.
+- **Aprovação da gestão no TFD** aceita qualquer servidor da Saúde. Definir quem é "gestor" é decisão de negócio.

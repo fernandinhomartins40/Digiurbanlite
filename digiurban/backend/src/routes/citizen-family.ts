@@ -10,6 +10,8 @@ import { Router, Response } from 'express'
 import { z } from 'zod'
 import { familyService } from '../services/family.service'
 import { citizenAuthMiddleware } from '../middleware/citizen-auth'
+import rateLimit from 'express-rate-limit'
+import { prisma } from '../lib/prisma'
 import {
   TenantCitizenAuthenticatedRequest,
   createSuccessResponse,
@@ -75,6 +77,71 @@ const updateMemberSchema = z.object({
 // ============================================================================
 // ROTAS - COMPOSIÇÃO FAMILIAR
 // ============================================================================
+
+// ============================================================================
+// BUSCA DE FAMILIAR POR CPF (privacidade: decisão do produto 2026-09-28)
+// ============================================================================
+
+function isValidCpf(cpf: string): boolean {
+  if (!/^\d{11}$/.test(cpf) || /^(\d)\1{10}$/.test(cpf)) return false
+  const digit = (len: number) => {
+    let sum = 0
+    for (let i = 0; i < len; i++) sum += Number(cpf[i]) * (len + 1 - i)
+    const rest = (sum * 10) % 11
+    return rest === 10 ? 0 : rest
+  }
+  return digit(9) === Number(cpf[9]) && digit(10) === Number(cpf[10])
+}
+
+/** "Maria Souza Lima" → "Maria S. L." — só o suficiente para o cidadão confirmar */
+function maskName(name: string): string {
+  const [first, ...rest] = name.trim().split(/\s+/)
+  return [first, ...rest.map((p) => `${p[0]?.toUpperCase() ?? ''}.`)].join(' ')
+}
+
+function maskCpf(cpf: string): string {
+  return `***.${cpf.slice(3, 6)}.${cpf.slice(6, 9)}-**`
+}
+
+// Limite por cidadão: impede varrer CPFs para descobrir quem é cadastrado
+const familySearchLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000,
+  max: 20,
+  keyGenerator: (req: any) => `family-search:${req.citizen?.id || req.ip}`,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: 'Muitas buscas. Tente novamente em 1 hora.' }
+})
+
+/**
+ * GET /api/citizen/family/search?cpf=00000000000
+ * Só CPF completo e válido; nunca busca por nome; devolve nome e CPF
+ * mascarados (sem data de nascimento, e-mail ou telefone).
+ */
+router.get('/search', familySearchLimiter, async (req, res) => {
+  try {
+    const { citizen } = req as TenantCitizenAuthenticatedRequest
+    const cpf = String(req.query.cpf ?? req.query.q ?? '').replace(/\D/g, '')
+
+    if (!isValidCpf(cpf)) {
+      return res.status(400).json(createErrorResponse('INVALID_CPF', 'Informe o CPF completo e válido do familiar'))
+    }
+
+    const found = await prisma.citizen.findFirst({
+      where: { cpf, isActive: true, NOT: { id: citizen.id } },
+      select: { id: true, name: true, cpf: true }
+    })
+
+    const citizens = found
+      ? [{ id: found.id, name: maskName(found.name), cpf: maskCpf(found.cpf) }]
+      : []
+
+    return res.json(createSuccessResponse({ citizens }))
+  } catch (error: any) {
+    console.error('Erro ao buscar familiar por CPF:', error)
+    return res.status(500).json(createErrorResponse('INTERNAL_ERROR', 'Erro ao buscar familiar'))
+  }
+})
 
 /**
  * GET /api/citizen/family

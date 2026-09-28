@@ -1,13 +1,14 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import defesaCivilService from '../../services/defesa-civil/defesa-civil.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Ocorrências & Áreas de Risco (Fase 2) — Defesa Civil
  * Prefixo: /api/apps/defesa-civil
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('DEFESA_CIVIL'));
 
 const handle = (fn: (req: any, res: any) => Promise<any>) => async (req: any, res: any) => {
   try {

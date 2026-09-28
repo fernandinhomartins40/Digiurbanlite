@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import { fetchSecretariaProtocolStats } from '@/lib/secretaria-protocol-stats';
 
 interface HabitacaoStats {
   families: {
@@ -34,46 +34,16 @@ export function useHabitacaoStats() {
       try {
         setLoading(true);
 
-        const token = localStorage.getItem('adminToken');
-        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        // Protocolos reais da secretaria (antes: endpoints inexistentes -> zeros).
+        // Indicadores de dominio sem fonte de dados no backend seguem zerados.
+        const protocols = await fetchSecretariaProtocolStats('habitacao');
 
-        // Buscar estatísticas da rota /stats
-        const statsRes = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/secretarias/habitacao/stats`,
-          { headers }
-        );
-
-        const statsData = statsRes.data;
-
-        if (statsData) {
-          setStats({
-            families: {
-              total: statsData.applications?.total || 0,
-              active: statsData.applications?.approved || 0
-            },
-            units: {
-              total: statsData.housing?.total || 0,
-              available: statsData.housing?.units || 0
-            },
-            programs: {
-              total: statsData.construction?.total || 0,
-              active: statsData.construction?.ongoing || 0
-            },
-            protocols: {
-              total: 0,
-              pending: 0,
-              inProgress: 0,
-              completed: 0
-            }
-          });
-        } else {
-          setStats({
-            families: { total: 0, active: 0 },
-            units: { total: 0, available: 0 },
-            programs: { total: 0, active: 0 },
-            protocols: { total: 0, pending: 0, inProgress: 0, completed: 0 }
-          });
-        }
+        setStats({
+          families: { total: 0, active: 0 },
+          units: { total: 0, available: 0 },
+          programs: { total: 0, active: 0 },
+          protocols
+        });
 
         setError(null);
       } catch (err: any) {

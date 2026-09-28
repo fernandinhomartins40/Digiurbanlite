@@ -1,6 +1,6 @@
 import { Router } from 'express';
-import { authenticateAdmin } from '../../middleware/auth';
 import casoMulherService from '../../services/politicas-mulheres/caso-mulher.service';
+import { requireDepartmentAccess } from '../../middleware/department-access';
 
 /**
  * App Rede de Atendimento à Mulher (Fase 2, B7 — sigilo máximo)
@@ -10,7 +10,8 @@ import casoMulherService from '../../services/politicas-mulheres/caso-mulher.ser
  * ou outro). Ficha completa só para a equipe do caso; leituras auditadas.
  */
 const router = Router();
-router.use(authenticateAdmin);
+// Equipe da secretaria + ADMIN (antes: só ADMIN)
+router.use(...requireDepartmentAccess('POLITICAS_MULHERES'));
 
 const ctx = (req: any) => ({ userId: req.userId as string, role: req.userRole as string });
 
