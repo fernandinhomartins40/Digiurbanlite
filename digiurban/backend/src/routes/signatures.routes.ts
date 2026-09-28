@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateAdmin, authenticateCitizen } from '../middleware/auth';
+import { authenticateAdmin, authenticateCitizen, authenticateToken } from '../middleware/auth';
 
 const router = Router();
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
@@ -175,7 +175,8 @@ router.get('/my-signatures-citizen', authenticateCitizen, async (req, res) => {
  * GET /api/signatures/document/:documentId
  * Buscar assinaturas de um documento específico
  */
-router.get('/document/:documentId', async (req, res) => {
+// Exige login (antes: aberto — expunha nome/e-mail dos signatários)
+router.get('/document/:documentId', authenticateToken, async (req, res) => {
   try {
     const { documentId } = req.params;
 

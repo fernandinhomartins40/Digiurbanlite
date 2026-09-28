@@ -128,6 +128,7 @@ const customReportSchema = z.object({
 // GET /api/analytics/realtime - KPIs tempo real
 router.get(
   '/realtime',
+  adminAuthMiddleware,
   async (req, res) => {
     try {
       const authReq = req as any;

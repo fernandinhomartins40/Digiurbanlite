@@ -1,8 +1,14 @@
 import { Router } from 'express';
 import { issueServerCertificate, revokeCertificate } from '../services/certificate-authority.service';
 import { signDocument, verifySignature } from '../services/document-signing.service';
+import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
+import { UserRole } from '@prisma/client';
 
 const router = Router();
+
+// Antes: nenhuma autenticação — qualquer um podia listar, emitir, revogar e
+// assinar. Agora exige servidor autenticado; emitir/revogar/aprovar exige ADMIN.
+router.use(adminAuthMiddleware);
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
@@ -62,7 +68,7 @@ router.get('/', async (req, res) => {
   }
 });
 
-router.post('/issue', async (req, res) => {
+router.post('/issue', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const result = await issueServerCertificate({
       userId: req.body.userId,
@@ -80,7 +86,7 @@ router.post('/issue', async (req, res) => {
   }
 });
 
-router.post('/revoke', async (req, res) => {
+router.post('/revoke', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { serialNumber, reason, revokedBy, comments } = req.body;
 
@@ -230,7 +236,7 @@ router.get('/requests', async (req, res) => {
 });
 
 // Aprovar solicitação e emitir certificado
-router.post('/requests/:id/approve', async (req, res) => {
+router.post('/requests/:id/approve', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { id } = req.params;
     const { reviewerId, comments } = req.body;
@@ -292,7 +298,7 @@ router.post('/requests/:id/approve', async (req, res) => {
 });
 
 // Rejeitar solicitação
-router.post('/requests/:id/reject', async (req, res) => {
+router.post('/requests/:id/reject', requireMinRole(UserRole.ADMIN), async (req, res) => {
   try {
     const { id } = req.params;
     const { reviewerId, comments } = req.body;

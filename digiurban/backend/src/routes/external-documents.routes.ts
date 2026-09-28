@@ -1,5 +1,15 @@
 import { Router } from 'express';
-import { authenticateAdmin, authenticateCitizen } from '../middleware/auth';
+import { authenticateAdmin, authenticateCitizen, authenticateToken } from '../middleware/auth';
+
+/**
+ * Leitura de documento externo: servidor autenticado vê qualquer um (tela de
+ * assinaturas); cidadão só o próprio. Antes estas rotas respondiam sem login
+ * (inclusive CPF/e-mail do cidadão e o arquivo).
+ */
+function canReadExternalDocument(req: any, doc: { citizenId: string | null }): boolean {
+  if (req.userType === 'citizen') return !!doc.citizenId && doc.citizenId === req.citizenId;
+  return !!req.userId;
+}
 import multer from 'multer';
 import * as crypto from 'crypto';
 import * as fs from 'fs/promises';
@@ -244,7 +254,7 @@ router.post('/upload-external-citizen', authenticateCitizen, upload.single('file
  * GET /api/documents/external/:id
  * Buscar documento externo por ID
  */
-router.get('/external/:id', async (req, res) => {
+router.get('/external/:id', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -283,7 +293,7 @@ router.get('/external/:id', async (req, res) => {
       },
     });
 
-    if (!document) {
+    if (!document || !canReadExternalDocument(req, document)) {
       return res.status(404).json({
         success: false,
         message: 'Documento não encontrado',
@@ -482,7 +492,7 @@ router.get('/my-external-documents-citizen', authenticateCitizen, async (req, re
  * GET /api/external-documents/:id/view
  * Visualizar documento externo (serve o PDF inline)
  */
-router.get('/:id/view', async (req, res) => {
+router.get('/:id/view', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -491,10 +501,11 @@ router.get('/:id/view', async (req, res) => {
       select: {
         fileName: true,
         filePath: true,
+        citizenId: true,
       },
     });
 
-    if (!document) {
+    if (!document || !canReadExternalDocument(req, document)) {
       return res.status(404).json({
         success: false,
         message: 'Documento não encontrado',
@@ -529,7 +540,7 @@ router.get('/:id/view', async (req, res) => {
  * GET /api/documents/external/:id/download
  * Download de documento externo
  */
-router.get('/external/:id/download', async (req, res) => {
+router.get('/external/:id/download', authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
 
@@ -538,10 +549,11 @@ router.get('/external/:id/download', async (req, res) => {
       select: {
         fileName: true,
         filePath: true,
+        citizenId: true,
       },
     });
 
-    if (!document) {
+    if (!document || !canReadExternalDocument(req, document)) {
       return res.status(404).json({
         success: false,
         message: 'Documento não encontrado',

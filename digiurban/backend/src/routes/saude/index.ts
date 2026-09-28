@@ -9,8 +9,14 @@ import consultaMedicaRoutes from './consulta-medica.routes';
 import painelRoutes from './painel.routes';
 import imunizacaoRoutes from './imunizacao.routes';
 import agendamentoRoutes from './agendamento.routes';
+import { adminAuthMiddleware } from '../../middleware/admin-auth';
 
 const router = Router();
+
+// Dados clínicos (LGPD: dado sensível) — exige servidor autenticado.
+// adminAuthMiddleware aceita qualquer servidor (USER..SUPER_ADMIN): médicos e
+// enfermeiros são USER. Antes estas rotas respondiam sem autenticação alguma.
+router.use(adminAuthMiddleware);
 
 // Rotas de Saúde PEC e-SUS
 router.use('/fila-atendimento', filaAtendimentoRoutes);
