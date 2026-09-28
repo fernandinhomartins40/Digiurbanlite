@@ -65,10 +65,18 @@ export function CitizenProtocolHeader({
         return (
           <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
             <Clock className="h-3 w-3 mr-1" />
-            Pendente
+            Recebido
+          </Badge>
+        )
+      case 'PENDENCIA':
+        return (
+          <Badge variant="outline" className="bg-orange-50 text-orange-700 border-orange-200">
+            <AlertCircle className="h-3 w-3 mr-1" />
+            Com Pendência
           </Badge>
         )
       case 'PROGRESSO':
+      case 'ATUALIZACAO':
       case 'EM_ANDAMENTO':
         return (
           <Badge variant="outline" className="bg-yellow-50 text-yellow-700 border-yellow-200">

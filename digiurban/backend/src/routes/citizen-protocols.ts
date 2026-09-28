@@ -11,7 +11,7 @@ import { citizenAuthMiddleware } from '../middleware/citizen-auth';
 import { upload, getProtocolFileUrl, ensureProtocolDir, moveUploadedFileSync } from '../config/upload';
 import { protocolStatusEngine } from '../services/protocol-status.engine';
 import { protocolModuleService } from '../services/protocol-module.service';
-import { DocumentStatus } from '@prisma/client';
+import { DocumentStatus, ProtocolStatus } from '@prisma/client';
 import { createProtocolSLA } from '../services/protocol-sla.service';
 import { sanitizeDocumentId, mapUploadedFilesToDocuments } from '../utils/document-mapping';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
@@ -633,17 +633,58 @@ router.get('/', async (req, res) => {
       return res.status(401).json({ error: 'Cidadão não autenticado' });
     }
 
-    const { page = 1, limit = 100, status } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const { page = 1, limit = 100, status, awaiting } = req.query;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(100, Math.max(1, Number(limit) || 100));
+    const skip = (pageNum - 1) * limitNum;
+
+    // Pendências que dependem de uma ação do cidadão
+    const citizenPendingWhere = {
+      status: { in: ['OPEN', 'IN_PROGRESS'] as any[] },
+      type: { in: ['DOCUMENT', 'INFORMATION', 'CORRECTION', 'VALIDATION', 'PAYMENT'] as any[] }
+    };
 
     // Construir filtros
     const where: any = {
       citizenId
         };
 
+    // status aceita lista separada por vírgula; valores fora do enum são
+    // rejeitados (antes o Prisma respondia 500)
     if (status) {
-      where.status = status;
+      const statuses = String(status)
+        .split(',')
+        .map(s => s.trim().toUpperCase())
+        .filter(s => (Object.values(ProtocolStatus) as string[]).includes(s));
+      if (statuses.length === 0) {
+        return res.status(400).json({ error: 'Status inválido' });
+      }
+      where.status = { in: statuses };
     }
+
+    if (awaiting === 'true') {
+      where.pendings = { some: citizenPendingWhere };
+    }
+
+    // Resumo SEM filtros (contadores não mudam ao filtrar a lista)
+    const [statusGroups, awaitingCount] = await Promise.all([
+      prisma.protocolSimplified.groupBy({
+        by: ['status'],
+        where: { citizenId },
+        _count: { _all: true }
+      }),
+      prisma.protocolSimplified.count({
+        where: { citizenId, pendings: { some: citizenPendingWhere } }
+      })
+    ]);
+    const byStatus = Object.fromEntries(
+      statusGroups.map((g: any) => [g.status, g._count._all])
+    ) as Record<string, number>;
+    const summary = {
+      total: statusGroups.reduce((acc: number, g: any) => acc + g._count._all, 0),
+      byStatus,
+      awaitingCitizen: awaitingCount
+    };
 
     // Buscar protocolos do cidadão
     const [protocols, total] = await Promise.all([
@@ -667,10 +708,7 @@ router.get('/', async (req, res) => {
           _count: {
             select: {
               pendings: {
-                where: {
-                  status: { in: ['OPEN', 'IN_PROGRESS'] },
-                  type: { in: ['DOCUMENT', 'INFORMATION', 'CORRECTION', 'VALIDATION', 'PAYMENT'] }
-                }
+                where: citizenPendingWhere
               }
             }
           }
@@ -679,7 +717,7 @@ router.get('/', async (req, res) => {
           createdAt: 'desc'
         },
         skip,
-        take: Number(limit)
+        take: limitNum
         }),
       prisma.protocolSimplified.count({ where }),
     ]);
@@ -691,11 +729,12 @@ router.get('/', async (req, res) => {
 
     return res.json({
       protocols: normalizedProtocols,
+      summary,
       pagination: {
-        page: Number(page),
-        limit: Number(limit),
+        page: pageNum,
+        limit: limitNum,
         total,
-        pages: Math.ceil(total / Number(limit))
+        pages: Math.ceil(total / limitNum)
         }
         });
   } catch (error) {

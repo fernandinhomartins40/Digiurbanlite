@@ -53,12 +53,19 @@ interface PaginationInfo {
   pages: number;
 }
 
+export interface CitizenProtocolsSummary {
+  total: number;
+  byStatus: Record<string, number>;
+  awaitingCitizen: number;
+}
+
 interface UseProtocolsResult {
   protocols: Protocol[];
   loading: boolean;
   error: string | null;
   pagination: PaginationInfo | null;
   refetch: () => void;
+  summary: CitizenProtocolsSummary | null;
   stats: {
     total: number;
     pendente: number;
@@ -72,6 +79,8 @@ interface FetchProtocolsParams {
   page?: number;
   limit?: number;
   includeFamily?: boolean;
+  /** Somente protocolos com pendência aguardando o cidadão */
+  awaiting?: boolean;
 }
 
 export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocolsResult {
@@ -79,6 +88,7 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
+  const [summary, setSummary] = useState<CitizenProtocolsSummary | null>(null);
 
   const { citizen, apiRequest } = useCitizenAuth();
 
@@ -102,6 +112,9 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
       if (params?.limit) {
         queryParams.append('limit', params.limit.toString());
       }
+      if (params?.awaiting) {
+        queryParams.append('awaiting', 'true');
+      }
       if (params?.includeFamily) {
         queryParams.append('include_family', 'true');
       }
@@ -115,6 +128,7 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
       if (data.protocols) {
         setProtocols(data.protocols);
         setPagination(data.pagination);
+        setSummary(data.summary || null);
       } else {
         throw new Error('Erro ao buscar protocolos');
       }
@@ -129,14 +143,20 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
 
   useEffect(() => {
     fetchProtocols();
-  }, [citizen, params?.status, params?.page, params?.limit, params?.includeFamily]);
+  }, [citizen, params?.status, params?.page, params?.limit, params?.includeFamily, params?.awaiting]);
 
-  // Calcular estatísticas baseadas nos protocolos carregados
+  // Estatísticas: preferir o resumo do servidor (não muda ao filtrar a lista);
+  // fallback para os protocolos carregados. Status reais do enum ProtocolStatus.
+  const countStatus = (statuses: string[]) =>
+    summary
+      ? statuses.reduce((acc, s) => acc + (summary.byStatus[s] || 0), 0)
+      : protocols.filter(p => statuses.includes(p.status)).length;
+
   const stats = {
-    total: protocols.length,
-    pendente: protocols.filter(p => p.status === 'VINCULADO').length,
-    em_andamento: protocols.filter(p => ['EM_ANDAMENTO', 'AGUARDANDO_DOCUMENTOS'].includes(p.status)).length,
-    concluido: protocols.filter(p => p.status === 'CONCLUIDO').length,
+    total: summary ? summary.total : protocols.length,
+    pendente: countStatus(['VINCULADO']),
+    em_andamento: countStatus(['PROGRESSO', 'ATUALIZACAO', 'PENDENCIA']),
+    concluido: countStatus(['CONCLUIDO']),
   };
 
   return {
@@ -145,6 +165,7 @@ export function useCitizenProtocols(params?: FetchProtocolsParams): UseProtocols
     error,
     pagination,
     refetch: fetchProtocols,
+    summary,
     stats,
   };
 }

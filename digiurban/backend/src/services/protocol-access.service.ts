@@ -14,6 +14,7 @@
  * assertProtocolAccess (ou canAccessProtocol) em vez de reimplementar a regra.
  */
 
+import { ProtocolStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 export interface ProtocolAccessActor {
@@ -73,6 +74,81 @@ export function canAccessDepartment(
     return true;
   }
   return !!actor.departmentId && actor.departmentId === departmentId;
+}
+
+/**
+ * Filtro Prisma equivalente a canAccessProtocol, para listagens e contagens.
+ * Retorna condições a serem combinadas via AND. Role desconhecido não vê nada.
+ */
+export function buildProtocolScopeWhere(actor: ProtocolAccessActor): Record<string, any>[] {
+  const role = String(actor.role);
+
+  if (role === 'ADMIN' || role === 'SUPER_ADMIN') {
+    return [];
+  }
+
+  if (role === 'MANAGER' || role === 'COORDINATOR') {
+    // Sem departamento vinculado → não vê nada (erro de cadastro, não acesso total)
+    return [{ departmentId: actor.departmentId || '__no_department__' }];
+  }
+
+  if (role === 'USER') {
+    return [{ OR: [{ assignedUserId: actor.id }, { currentAssignedUserId: actor.id }] }];
+  }
+
+  return [{ id: '__no_access__' }];
+}
+
+// ========================================
+// FILA DE TRABALHO — visões prontas (em aberto, minha fila, atrasados...)
+// ========================================
+
+export const ACTIVE_PROTOCOL_STATUSES: ProtocolStatus[] = [
+  ProtocolStatus.VINCULADO,
+  ProtocolStatus.PROGRESSO,
+  ProtocolStatus.ATUALIZACAO,
+  ProtocolStatus.PENDENCIA
+];
+const DUE_SOON_HOURS = 48;
+
+export type ProtocolQueueView = 'all' | 'active' | 'mine' | 'unassigned' | 'overdue' | 'due_soon';
+
+/**
+ * Condições Prisma de cada visão (combinar via AND com buildProtocolScopeWhere).
+ * Atraso é calculado na hora pelo SLA (não depende do job diário).
+ */
+export function buildQueueViewConditions(
+  view: ProtocolQueueView,
+  userId: string,
+  now = new Date()
+): Record<string, any>[] {
+  if (view === 'all') return [];
+
+  const active = { status: { in: ACTIVE_PROTOCOL_STATUSES } };
+  const runningSla = { actualEndDate: null, isPaused: false };
+
+  switch (view) {
+    case 'mine':
+      return [active, { OR: [{ assignedUserId: userId }, { currentAssignedUserId: userId }] }];
+    case 'unassigned':
+      return [active, { assignedUserId: null, currentAssignedUserId: null }];
+    case 'overdue':
+      return [active, { sla: { is: { ...runningSla, expectedEndDate: { lt: now } } } }];
+    case 'due_soon':
+      return [
+        active,
+        {
+          sla: {
+            is: {
+              ...runningSla,
+              expectedEndDate: { gte: now, lte: new Date(now.getTime() + DUE_SOON_HOURS * 3600 * 1000) }
+            }
+          }
+        }
+      ];
+    default:
+      return [active];
+  }
 }
 
 /**

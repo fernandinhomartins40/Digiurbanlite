@@ -26,8 +26,11 @@ import { runRevertExpiredDelegationsManually } from '../jobs/revertExpiredDelega
 import { normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import {
   assertProtocolAccess,
+  buildProtocolScopeWhere,
+  buildQueueViewConditions,
   canAccessDepartment,
-  canAccessProtocol
+  canAccessProtocol,
+  ProtocolQueueView
 } from '../services/protocol-access.service';
 import { escapeHtml } from '../utils/escape-html';
 import { renderPdfFromHtml } from '../utils/render-pdf';
@@ -66,10 +69,56 @@ async function ensureAccess(
 }
 
 // ========================================
+// FILA DE TRABALHO — visões prontas (em aberto, minha fila, atrasados...)
+// ========================================
+
+const VALID_PROTOCOL_STATUSES = new Set<string>(Object.values(ProtocolStatus));
+const MAX_LIST_LIMIT = 100;
+const QUEUE_VIEWS = new Set<ProtocolQueueView>(['all', 'active', 'mine', 'unassigned', 'overdue', 'due_soon']);
+
+function getActorScope(req: Request) {
+  const authReq = req as AuthenticatedRequest;
+  return buildProtocolScopeWhere({
+    id: authReq.userId!,
+    role: authReq.user.role,
+    departmentId: authReq.user.departmentId
+  });
+}
+
+// ========================================
 // ⚠️ ROTAS ESPECÍFICAS - DEVEM VIR ANTES DAS ROTAS PARAMETRIZADAS
 // ========================================
 // IMPORTANTE: Estas rotas devem estar ANTES de qualquer rota com /:id
 // para evitar que "workload-stats", "department", etc sejam tratados como IDs
+
+/**
+ * GET /api/protocols/queue-summary
+ * Contadores das visões da fila, no escopo do usuário logado.
+ */
+router.get('/queue-summary', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
+  try {
+    const userId = (req as AuthenticatedRequest).userId!;
+    const scope = getActorScope(req);
+    const now = new Date();
+    const views: ProtocolQueueView[] = ['active', 'mine', 'unassigned', 'overdue', 'due_soon', 'all'];
+
+    const counts = await Promise.all(
+      views.map(view =>
+        prisma.protocolSimplified.count({
+          where: { AND: [...scope, ...buildQueueViewConditions(view, userId, now)] }
+        })
+      )
+    );
+
+    return res.json({
+      success: true,
+      data: Object.fromEntries(views.map((view, i) => [view, counts[i]]))
+    });
+  } catch (error: any) {
+    console.error('Erro ao contar fila de protocolos:', error);
+    return res.status(500).json({ success: false, error: 'Erro ao carregar resumo da fila' });
+  }
+});
 
 /**
  * GET /api/protocols/workload-stats
@@ -558,6 +607,8 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       serviceIds,  // ✅ NOVO: suporte para múltiplos serviceIds
       assignedUserId,
       include,     // ✅ NOVO: incluir dados adicionais (stages,documents,pendings)
+      view = 'all', // visão da fila: all|active|mine|unassigned|overdue|due_soon
+      sort = 'recent', // recent|oldest|due
       page = '1',
       limit = '50'
     } = req.query;
@@ -565,13 +616,22 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
     // Montar filtros baseado no role do usuário
     const where: any = {};
 
-    // Filtros opcionais
+    // Filtros opcionais — status aceita lista separada por vírgula; valores
+    // fora do enum são ignorados (antes geravam erro 500 do Prisma)
     if (status && status !== 'all') {
-      where.status = status;
+      const statuses = String(status)
+        .split(',')
+        .map(s => s.trim().toUpperCase())
+        .filter(s => VALID_PROTOCOL_STATUSES.has(s));
+      if (statuses.length === 0) {
+        return res.status(400).json({ success: false, error: 'Status inválido' });
+      }
+      where.status = statuses.length === 1 ? statuses[0] : { in: statuses };
     }
 
     if (priority && priority !== 'all') {
-      where.priority = parseInt(priority as string);
+      const priorityNum = parseInt(priority as string);
+      if (!Number.isNaN(priorityNum)) where.priority = priorityNum;
     }
 
     if (departmentId) {
@@ -614,35 +674,30 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
       });
     }
 
-    // Restrição de acesso baseado no role
-    if (user.role === 'USER') {
-      // Usuários comuns veem apenas protocolos atribuídos a eles
-      // (inclui protocolos delegados/encaminhados — currentAssignedUserId)
-      andConditions.push({
-        OR: [
-          { assignedUserId: userId },
-          { currentAssignedUserId: userId }
-        ]
-      });
-    } else if (user.role === 'MANAGER' || user.role === 'COORDINATOR') {
-      // Gestão/coordenação vê protocolos do seu departamento.
-      // Sem departamento vinculado → não vê nada (erro de cadastro, não acesso total)
-      if (user.departmentId) {
-        where.departmentId = user.departmentId;
-      } else {
-        where.id = '__no_department__';
-      }
-    }
-    // ADMIN vê todos os protocolos
+    // Visão da fila (atrasados, minha fila, sem responsável...)
+    const queueView = QUEUE_VIEWS.has(view as ProtocolQueueView) ? (view as ProtocolQueueView) : 'all';
+    andConditions.push(...buildQueueViewConditions(queueView, userId!));
+
+    // Restrição de acesso baseado no role (regra única: protocol-access.service)
+    // USER → atribuídos a ele; MANAGER/COORDINATOR → seu departamento; ADMIN → todos
+    andConditions.push(...getActorScope(req));
 
     if (andConditions.length > 0) {
       where.AND = andConditions;
     }
 
-    // Paginação
-    const pageNum = parseInt(page as string);
-    const limitNum = parseInt(limit as string);
+    // Paginação (limite com teto para evitar consultas gigantes)
+    const pageNum = Math.max(1, parseInt(page as string) || 1);
+    const limitNum = Math.min(MAX_LIST_LIMIT, Math.max(1, parseInt(limit as string) || 50));
     const skip = (pageNum - 1) * limitNum;
+
+    // Ordenação: prazo mais próximo primeiro é a ordem natural de uma fila de trabalho
+    const orderBy: any[] =
+      sort === 'due'
+        ? [{ sla: { expectedEndDate: 'asc' } }, { createdAt: 'asc' }]
+        : sort === 'oldest'
+          ? [{ createdAt: 'asc' }]
+          : [{ createdAt: 'desc' }];
 
     // ✅ NOVO: Montar includes dinamicamente baseado no parâmetro 'include'
     const includeArray = include ? (include as string).split(',').map(i => i.trim()) : [];
@@ -726,15 +781,23 @@ router.get('/', requireMinRole(UserRole.USER), async (req, res) => {
               }
             }
           }),
+          // Prazo para a fila sinalizar atrasados / vencendo sem abrir o protocolo
+          sla: {
+            select: {
+              expectedEndDate: true,
+              actualEndDate: true,
+              isPaused: true,
+              isOverdue: true,
+              daysOverdue: true
+            }
+          },
           _count: {
             select: {
               history: true
         }
       }
         },
-        orderBy: {
-          createdAt: 'desc'
-        },
+        orderBy,
         skip,
         take: limitNum
         }),

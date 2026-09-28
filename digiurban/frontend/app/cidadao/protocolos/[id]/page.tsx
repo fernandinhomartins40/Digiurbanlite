@@ -288,7 +288,7 @@ export default function ProtocolDetailsPage() {
 
   const canCancelProtocol = () => {
     if (!protocol) return false;
-    return protocol.status === 'VINCULADO' || protocol.status === 'EM_ANDAMENTO';
+    return protocol.status === 'VINCULADO' || protocol.status === 'PROGRESSO';
   };
 
   // Contadores para badges

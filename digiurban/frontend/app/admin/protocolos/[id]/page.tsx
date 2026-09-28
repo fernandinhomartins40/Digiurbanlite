@@ -116,56 +116,58 @@ export default function ProtocolDetailPage() {
   }, [protocolId])
 
   const loadProtocolData = async () => {
+    // Spinner de página inteira só no primeiro carregamento: recargas após
+    // ações (upload, pendência, etapa) atualizam em segundo plano, sem
+    // desmontar as abas nem perder a posição do servidor na tela
+    const isFirstLoad = !protocol || protocol.id !== protocolId
     try {
-      setIsLoading(true)
+      if (isFirstLoad) setIsLoading(true)
 
-      // Carregar protocolo
-      const protocolData = await apiRequest(`/protocols/${protocolId}`)
-      if (protocolData.success) {
-        setProtocol(protocolData.data)
+      // Requisições independentes em paralelo (antes: 8 em série)
+      const [
+        protocolResult,
+        slaResult,
+        docsResult,
+        genDocsResult,
+        pendsResult,
+        stagesResult,
+        interactionsResult,
+        linksResult,
+      ] = await Promise.allSettled([
+        apiRequest(`/protocols/${protocolId}`),
+        apiRequest(`/protocols/${protocolId}/sla`),
+        getProtocolDocuments(protocolId),
+        apiRequest(`/protocols/${protocolId}/generated-documents`),
+        getProtocolPendings(protocolId),
+        getProtocolStages(protocolId),
+        getProtocolInteractions(protocolId),
+        apiRequest(`/protocols/${protocolId}/citizen-links`),
+      ])
+
+      if (protocolResult.status === 'rejected') throw protocolResult.reason
+      if (protocolResult.value?.success) {
+        setProtocol(protocolResult.value.data)
       }
 
-      // Carregar SLA (opcional)
-      try {
-        const slaData = await apiRequest(`/protocols/${protocolId}/sla`)
-        if (slaData.success) setSLA(slaData.data)
-      } catch (err) {
-        console.log('SLA not available')
+      if (slaResult.status === 'fulfilled' && slaResult.value?.success) {
+        setSLA(slaResult.value.data)
       }
 
-      // Carregar documentos
-      try {
-        const docs = await getProtocolDocuments(protocolId)
-        setDocuments(ensureArray(docs))
-      } catch (err) {
-        console.error('Error loading documents:', err)
-        setDocuments([])
-      }
+      if (docsResult.status === 'rejected') console.error('Error loading documents:', docsResult.reason)
+      setDocuments(docsResult.status === 'fulfilled' ? ensureArray(docsResult.value) : [])
 
-      // Carregar documentos gerados
-      try {
-        const genDocs = await apiRequest(`/protocols/${protocolId}/generated-documents`)
-        if (genDocs.success) {
-          setGeneratedDocuments(ensureArray(genDocs.data))
-        }
-      } catch (err) {
-        console.error('Error loading generated documents:', err)
+      if (genDocsResult.status === 'fulfilled') {
+        if (genDocsResult.value?.success) setGeneratedDocuments(ensureArray(genDocsResult.value.data))
+      } else {
+        console.error('Error loading generated documents:', genDocsResult.reason)
         setGeneratedDocuments([])
       }
 
-      // Carregar pendências
-      try {
-        const pends = await getProtocolPendings(protocolId)
-        setPendings(ensureArray(pends))
-      } catch (err) {
-        console.error('Error loading pendings:', err)
-        setPendings([])
-      }
+      if (pendsResult.status === 'rejected') console.error('Error loading pendings:', pendsResult.reason)
+      setPendings(pendsResult.status === 'fulfilled' ? ensureArray(pendsResult.value) : [])
 
-      // Carregar etapas
-      try {
-        const stgs = await getProtocolStages(protocolId)
-        const normalizedStages = ensureArray<any>(stgs)
+      if (stagesResult.status === 'fulfilled') {
+        const normalizedStages = ensureArray<any>(stagesResult.value)
         setStages(normalizedStages)
 
         // Se há etapa em progresso, carregar validação
@@ -173,31 +175,19 @@ export default function ProtocolDetailPage() {
         if (currentStage) {
           loadValidation(currentStage.id)
         }
-      } catch (err) {
-        console.error('Error loading stages:', err)
+      } else {
+        console.error('Error loading stages:', stagesResult.reason)
         setStages([])
       }
 
-      // Carregar interações
-      try {
-        const ints = await getProtocolInteractions(protocolId)
-        setInteractions(ensureArray(ints))
-      } catch (err) {
-        console.error('Error loading interactions:', err)
-        setInteractions([])
-      }
+      if (interactionsResult.status === 'rejected') console.error('Error loading interactions:', interactionsResult.reason)
+      setInteractions(interactionsResult.status === 'fulfilled' ? ensureArray(interactionsResult.value) : [])
 
-      // Carregar vínculos de cidadãos
-      try {
-        const linksData = await apiRequest(`/protocols/${protocolId}/citizen-links`)
-        if (linksData.success) {
-          setCitizenLinks(ensureArray(linksData.data?.links ?? linksData.data))
-        }
-      } catch (err) {
-        console.log('No citizen links')
+      if (linksResult.status === 'fulfilled' && linksResult.value?.success) {
+        setCitizenLinks(ensureArray(linksResult.value.data?.links ?? linksResult.value.data))
+      } else {
         setCitizenLinks([])
       }
-
     } catch (error) {
       toast({
         title: 'Erro ao carregar dados',
@@ -205,7 +195,7 @@ export default function ProtocolDetailPage() {
         variant: 'destructive',
       })
     } finally {
-      setIsLoading(false)
+      if (isFirstLoad) setIsLoading(false)
     }
   }
 

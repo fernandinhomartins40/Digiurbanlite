@@ -11,6 +11,12 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import {
+  getProtocolStatusClass,
+  getProtocolStatusLabel,
+  getSlaInfo,
+  ProtocolSlaSnapshot,
+} from '@/lib/protocol-helpers'
+import {
   AlertCircle,
   Award,
   BarChart3,
@@ -52,22 +58,6 @@ const roleLabels = {
   GUEST: 'Visitante',
 }
 
-const statusLabels: Record<string, string> = {
-  VINCULADO: 'Vinculado',
-  PROGRESSO: 'Em progresso',
-  ATUALIZACAO: 'Atualizacao',
-  CONCLUIDO: 'Concluido',
-  PENDENCIA: 'Pendencia',
-}
-
-const statusColors: Record<string, string> = {
-  VINCULADO: 'bg-blue-100 text-blue-800',
-  PROGRESSO: 'bg-yellow-100 text-yellow-800',
-  ATUALIZACAO: 'bg-orange-100 text-orange-800',
-  CONCLUIDO: 'bg-green-100 text-green-800',
-  PENDENCIA: 'bg-red-100 text-red-800',
-}
-
 interface PendingProtocol {
   id: string
   number: string
@@ -78,7 +68,10 @@ interface PendingProtocol {
   citizen?: { name?: string }
   department?: { name?: string }
   assignedUser?: { name?: string }
+  sla?: ProtocolSlaSnapshot | null
 }
+
+type QueueSummary = Partial<Record<'active' | 'mine' | 'unassigned' | 'overdue' | 'due_soon', number>>
 
 interface ShortcutUsage {
   title: string
@@ -180,6 +173,7 @@ export default function AdminPage() {
   const [mounted, setMounted] = useState(false)
   const [pendingProtocols, setPendingProtocols] = useState<PendingProtocol[]>([])
   const [loadingProtocols, setLoadingProtocols] = useState(false)
+  const [queueSummary, setQueueSummary] = useState<QueueSummary | null>(null)
   const [shortcutUsage, setShortcutUsage] = useState<ShortcutUsage[]>([])
   const [loadingShortcuts, setLoadingShortcuts] = useState(false)
   const [secretaryUsage, setSecretaryUsage] = useState<ShortcutUsage[]>([])
@@ -192,21 +186,25 @@ export default function AdminPage() {
   }, [])
 
   useEffect(() => {
-    if (loading || user?.role !== 'ADMIN' || !hasPermission('protocols:read')) return
+    if (loading || !user || !hasPermission('protocols:read')) return
 
     let active = true
 
+    // "Sua fila hoje": contadores + os 5 em aberto com prazo mais próximo,
+    // no escopo do servidor (o backend aplica a regra de acesso por role)
     async function loadPendingProtocols() {
       try {
         setLoadingProtocols(true)
-        const response = await apiRequest('/protocols?limit=5')
-        const protocols = response?.protocols || response?.data?.protocols || []
+        const [listResponse, summaryResponse] = await Promise.all([
+          apiRequest('/protocols?view=active&sort=due&limit=5'),
+          apiRequest('/protocols/queue-summary').catch(() => null),
+        ])
+        const protocols = listResponse?.protocols || listResponse?.data?.protocols || []
 
-        if (!active || !Array.isArray(protocols)) return
+        if (!active) return
 
-        setPendingProtocols(
-          protocols.filter((protocol: PendingProtocol) => protocol.status !== 'CONCLUIDO')
-        )
+        setPendingProtocols(Array.isArray(protocols) ? protocols : [])
+        if (summaryResponse?.success) setQueueSummary(summaryResponse.data || null)
       } catch (error: any) {
         if (!error?.message?.includes('autenticado')) {
           console.error('Erro ao carregar protocolos pendentes:', error)
@@ -224,7 +222,7 @@ export default function AdminPage() {
     }
     // apiRequest is intentionally omitted because the auth context exposes it as a new function each render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [loading, user?.role])
+  }, [loading, user?.id, user?.role])
 
   useEffect(() => {
     if (loading || !user) return
@@ -645,7 +643,7 @@ export default function AdminPage() {
           value={safeStats.pendingProtocols}
           description="Requerem atencao"
           icon={Clock}
-          href="/admin/protocolos"
+          href="/admin/protocolos?view=active"
           accent="text-orange-600"
         />
         <MetricCard
@@ -653,7 +651,7 @@ export default function AdminPage() {
           value={safeStats.completedProtocols}
           description={`Taxa de conclusao: ${completionRate}%`}
           icon={CheckCircle2}
-          href="/admin/protocolos"
+          href="/admin/protocolos?view=all&status=CONCLUIDO"
           accent="text-green-600"
         />
         <MetricCard
@@ -710,8 +708,8 @@ export default function AdminPage() {
                     <div key={item.status} className="space-y-1.5">
                       <div className="flex items-center justify-between gap-3 text-sm">
                         <div className="flex min-w-0 items-center gap-2">
-                          <Badge variant="secondary" className={statusColors[item.status] || ''}>
-                            {statusLabels[item.status] || item.status}
+                          <Badge variant="secondary" className={getProtocolStatusClass(item.status)}>
+                            {getProtocolStatusLabel(item.status)}
                           </Badge>
                           <span className="text-muted-foreground">{count}</span>
                         </div>
@@ -731,24 +729,45 @@ export default function AdminPage() {
         </Card>
       </section>
 
-      {user.role === 'ADMIN' && hasPermission('protocols:read') && (
+      {hasPermission('protocols:read') && (
         <Card>
           <CardHeader>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <AlertCircle className="h-5 w-5 text-red-600" />
-                  Protocolos que pedem atencao
+                  Sua fila hoje
                 </CardTitle>
-                <CardDescription>Fila recente de protocolos ainda nao concluidos.</CardDescription>
+                <CardDescription>Protocolos em aberto com o prazo mais próximo primeiro.</CardDescription>
               </div>
               <Button asChild variant="outline" size="sm">
                 <Link href="/admin/protocolos">
-                  Ver todos
+                  Abrir fila
                   <ExternalLink className="ml-2 h-4 w-4" />
                 </Link>
               </Button>
             </div>
+            {queueSummary && (
+              <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4">
+                {[
+                  { key: 'overdue', label: 'Atrasados', className: 'border-red-200 bg-red-50 text-red-800' },
+                  { key: 'due_soon', label: 'Vencem em 48h', className: 'border-amber-200 bg-amber-50 text-amber-800' },
+                  { key: 'mine', label: 'Comigo', className: 'border-blue-200 bg-blue-50 text-blue-800' },
+                  hasPermission('protocols:assign')
+                    ? { key: 'unassigned', label: 'Sem responsável', className: 'border-slate-200 bg-slate-50 text-slate-800' }
+                    : { key: 'active', label: 'Em aberto', className: 'border-slate-200 bg-slate-50 text-slate-800' },
+                ].map((item) => (
+                  <Link
+                    key={item.key}
+                    href={`/admin/protocolos?view=${item.key}`}
+                    className={`rounded-md border px-3 py-2 transition-opacity hover:opacity-80 ${item.className}`}
+                  >
+                    <div className="text-2xl font-bold">{queueSummary[item.key as keyof QueueSummary] ?? 0}</div>
+                    <div className="text-xs font-medium">{item.label}</div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </CardHeader>
           <CardContent>
             {loadingProtocols ? (
@@ -758,31 +777,39 @@ export default function AdminPage() {
             ) : pendingProtocols.length === 0 ? (
               <div className="rounded-md border border-dashed p-8 text-center text-sm text-muted-foreground">
                 <CheckCircle2 className="mx-auto mb-2 h-10 w-10 text-green-500" />
-                Nenhum protocolo pendente no momento.
+                Nenhum protocolo em aberto no momento.
               </div>
             ) : (
               <div className="space-y-3">
-                {pendingProtocols.map((protocol) => (
-                  <Link
-                    key={protocol.id}
-                    href={`/admin/protocolos?search=${protocol.number}`}
-                    className="flex flex-col gap-2 rounded-md border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
-                  >
-                    <div className="min-w-0">
-                      <div className="mb-1 flex flex-wrap items-center gap-2">
-                        <span className="font-semibold text-primary">#{protocol.number}</span>
-                        <Badge variant="secondary" className={statusColors[protocol.status] || ''}>
-                          {statusLabels[protocol.status] || protocol.status}
-                        </Badge>
+                {pendingProtocols.map((protocol) => {
+                  const slaInfo = getSlaInfo(protocol.sla, protocol.status)
+                  return (
+                    <Link
+                      key={protocol.id}
+                      href={`/admin/protocolos/${protocol.id}`}
+                      className="flex flex-col gap-2 rounded-md border p-3 transition-colors hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="min-w-0">
+                        <div className="mb-1 flex flex-wrap items-center gap-2">
+                          <span className="font-semibold text-primary">#{protocol.number}</span>
+                          <Badge variant="secondary" className={getProtocolStatusClass(protocol.status)}>
+                            {getProtocolStatusLabel(protocol.status)}
+                          </Badge>
+                          {slaInfo && (
+                            <Badge variant="outline" className={`border ${slaInfo.className}`}>
+                              {slaInfo.label}
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="truncate text-sm font-medium">{protocol.title}</p>
+                        <p className="truncate text-xs text-muted-foreground">
+                          {protocol.citizen?.name || 'Cidadao nao informado'} - {protocol.department?.name || 'Setor nao definido'}
+                        </p>
                       </div>
-                      <p className="truncate text-sm font-medium">{protocol.title}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {protocol.citizen?.name || 'Cidadao nao informado'} - {protocol.department?.name || 'Setor nao definido'}
-                      </p>
-                    </div>
-                    <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  </Link>
-                ))}
+                      <ExternalLink className="h-4 w-4 shrink-0 text-muted-foreground" />
+                    </Link>
+                  )
+                })}
               </div>
             )}
           </CardContent>

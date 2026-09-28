@@ -47,19 +47,25 @@ export default function ProtocolosPage() {
     });
   };
 
+  // Filtros pelos status reais do backend (enum ProtocolStatus).
+  // "Aguardando você" = protocolos com pendência que depende do cidadão.
   const statusTypes = [
-    { id: 'todos', name: 'Todos', color: 'gray', apiValue: undefined },
-    { id: 'VINCULADO', name: 'Pendente', color: 'yellow', apiValue: 'VINCULADO' },
-    { id: 'EM_ANDAMENTO', name: 'Em Andamento', color: 'blue', apiValue: 'EM_ANDAMENTO' },
-    { id: 'CONCLUIDO', name: 'Concluído', color: 'green', apiValue: 'CONCLUIDO' },
-    { id: 'CANCELADO', name: 'Cancelado', color: 'red', apiValue: 'CANCELADO' }
+    { id: 'todos', name: 'Todos', apiValue: undefined },
+    { id: 'AGUARDANDO_VOCE', name: 'Aguardando você', apiValue: undefined },
+    { id: 'RECEBIDO', name: 'Recebido', apiValue: 'VINCULADO' },
+    { id: 'EM_ANDAMENTO', name: 'Em Andamento', apiValue: 'PROGRESSO,ATUALIZACAO,PENDENCIA' },
+    { id: 'CONCLUIDO', name: 'Concluído', apiValue: 'CONCLUIDO' },
+    { id: 'CANCELADO', name: 'Cancelado', apiValue: 'CANCELADO' }
   ];
+  const selectedStatusType = statusTypes.find(s => s.id === statusFilter) || statusTypes[0];
 
   // Buscar protocolos reais da API
-  const { protocols, loading, error, stats, refetch } = useCitizenProtocols({
-    status: statusFilter !== 'todos' ? statusFilter : undefined,
+  const { protocols, loading, error, stats, summary, refetch } = useCitizenProtocols({
+    status: selectedStatusType.apiValue,
+    awaiting: statusFilter === 'AGUARDANDO_VOCE',
     limit: 100,
   });
+  const awaitingCount = summary?.awaitingCitizen || 0;
 
   const handleCancelClick = (protocolId: string, protocolNumber: string) => {
     setSelectedProtocol({ id: protocolId, number: protocolNumber });
@@ -71,17 +77,20 @@ export default function ProtocolosPage() {
   };
 
   const canCancelProtocol = (protocol: any) => {
-    // Só pode cancelar se estiver VINCULADO ou EM_ANDAMENTO (sem interações de servidor)
-    return protocol.status === 'VINCULADO' || protocol.status === 'EM_ANDAMENTO';
+    // Oferece cancelar enquanto não encerrado; o backend ainda bloqueia se já
+    // houver interação da secretaria ou pendência aberta
+    return protocol.status === 'VINCULADO' || protocol.status === 'PROGRESSO';
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'VINCULADO':
         return <Clock className="h-5 w-5 text-yellow-600" />;
-      case 'EM_ANDAMENTO':
-      case 'AGUARDANDO_DOCUMENTOS':
+      case 'PROGRESSO':
+      case 'ATUALIZACAO':
         return <AlertCircle className="h-5 w-5 text-blue-600" />;
+      case 'PENDENCIA':
+        return <AlertCircle className="h-5 w-5 text-orange-600" />;
       case 'CONCLUIDO':
         return <CheckCircle2 className="h-5 w-5 text-green-600" />;
       case 'CANCELADO':
@@ -93,9 +102,10 @@ export default function ProtocolosPage() {
 
   const getStatusBadge = (status: string) => {
     const statusConfig: Record<string, { bg: string; text: string; label: string }> = {
-      VINCULADO: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Pendente' },
-      EM_ANDAMENTO: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Em Andamento' },
-      AGUARDANDO_DOCUMENTOS: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Aguardando Docs' },
+      VINCULADO: { bg: 'bg-yellow-100', text: 'text-yellow-700', label: 'Recebido' },
+      PROGRESSO: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Em Andamento' },
+      ATUALIZACAO: { bg: 'bg-blue-100', text: 'text-blue-700', label: 'Em Andamento' },
+      PENDENCIA: { bg: 'bg-orange-100', text: 'text-orange-700', label: 'Com Pendência' },
       CONCLUIDO: { bg: 'bg-green-100', text: 'text-green-700', label: 'Concluído' },
       CANCELADO: { bg: 'bg-red-100', text: 'text-red-700', label: 'Cancelado' }
     };
@@ -131,6 +141,26 @@ export default function ProtocolosPage() {
           <p className="text-sm text-gray-600 mt-0.5">Acompanhe o status das suas solicitações</p>
         </div>
 
+        {/* Ação necessária: o cidadão não precisa abrir protocolo por protocolo */}
+        {awaitingCount > 0 && statusFilter !== 'AGUARDANDO_VOCE' && (
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-600 mt-0.5 flex-shrink-0" />
+              <p className="text-sm text-orange-900">
+                <strong>{awaitingCount} {awaitingCount === 1 ? 'solicitação aguarda' : 'solicitações aguardam'} uma ação sua</strong>
+                {' '}(enviar documento, informação ou correção). Sem isso o atendimento não avança.
+              </p>
+            </div>
+            <Button
+              size="sm"
+              className="bg-orange-600 hover:bg-orange-700 text-white flex-shrink-0"
+              onClick={() => setStatusFilter('AGUARDANDO_VOCE')}
+            >
+              Ver agora
+            </Button>
+          </div>
+        )}
+
         {/* Estatísticas */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
           <Card className="border-gray-200">
@@ -149,7 +179,7 @@ export default function ProtocolosPage() {
             <CardContent className="p-3 sm:p-4">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-0">
                 <div className="flex-1">
-                  <p className="text-xs sm:text-sm text-gray-600">Pendente</p>
+                  <p className="text-xs sm:text-sm text-gray-600">Recebidos</p>
                   <p className="text-xl sm:text-2xl font-bold text-yellow-600">{stats.pendente}</p>
                 </div>
                 <Clock className="h-6 w-6 sm:h-8 sm:w-8 text-yellow-600 self-end sm:self-auto" />
@@ -238,6 +268,11 @@ export default function ProtocolosPage() {
                   )}
                 >
                   {status.name}
+                  {status.id === 'AGUARDANDO_VOCE' && awaitingCount > 0 && (
+                    <span className="ml-1.5 rounded-full bg-orange-500 px-1.5 text-xs font-semibold text-white">
+                      {awaitingCount}
+                    </span>
+                  )}
                 </Button>
               ))}
             </div>
