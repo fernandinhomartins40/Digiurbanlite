@@ -1972,6 +1972,141 @@ router.get('/system-logs', adminAuthMiddleware, superAdminOnly, async (req: Requ
   }
 });
 
+// GET /api/super-admin/system-logs/stats - Estatísticas agregadas
+router.get('/system-logs/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+  try {
+    const { dateRange = '24h' } = req.query;
+
+    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
+
+    // Calcular período
+    const now = new Date();
+    let startDate: Date;
+
+    switch (dateRange) {
+      case '1h':
+        startDate = new Date(now.getTime() - 60 * 60 * 1000);
+        break;
+      case '24h':
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+        break;
+      case '7d':
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      default:
+        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    }
+
+    // Ler arquivo combined do dia atual
+    const today = now.toISOString().split('T')[0];
+    const combinedFile = `combined-${today}.log`;
+    const errorFile = `error-${today}.log`;
+    const httpFile = `http-${today}.log`;
+
+    const stats = {
+      errors: 0,
+      warnings: 0,
+      info: 0,
+      debug: 0,
+      httpRequests: 0,
+      totalLogs: 0,
+      avgResponseTime: 0,
+      timeRange: {
+        start: startDate.toISOString(),
+        end: now.toISOString()
+      }
+    };
+
+    // Ler arquivo combined para estatísticas gerais
+    try {
+      const combinedPath = path.join(logsDir, combinedFile);
+      const content = await fs.readFile(combinedPath, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+
+      let responseTimes: number[] = [];
+
+      lines.forEach(line => {
+        try {
+          const log = JSON.parse(line);
+          const logDate = new Date(log.timestamp);
+
+          if (logDate >= startDate && logDate <= now) {
+            stats.totalLogs++;
+
+            switch (log.level) {
+              case 'error':
+                stats.errors++;
+                break;
+              case 'warn':
+                stats.warnings++;
+                break;
+              case 'info':
+                stats.info++;
+                break;
+              case 'debug':
+                stats.debug++;
+                break;
+            }
+
+            // Extrair tempo de resposta se disponível
+            if (log.responseTime) {
+              const time = parseInt(log.responseTime.replace('ms', ''), 10);
+              if (!isNaN(time)) {
+                responseTimes.push(time);
+              }
+            }
+          }
+        } catch {
+          // Ignorar linhas inválidas
+        }
+      });
+
+      // Calcular média de tempo de resposta
+      if (responseTimes.length > 0) {
+        stats.avgResponseTime = Math.round(
+          responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length
+        );
+      }
+    } catch {
+      // Arquivo não existe ou erro ao ler
+    }
+
+    // Ler arquivo HTTP para contagem de requisições
+    try {
+      const httpPath = path.join(logsDir, httpFile);
+      const content = await fs.readFile(httpPath, 'utf-8');
+      const lines = content.split('\n').filter(line => line.trim());
+
+      lines.forEach(line => {
+        try {
+          const log = JSON.parse(line);
+          const logDate = new Date(log.timestamp);
+
+          if (logDate >= startDate && logDate <= now) {
+            stats.httpRequests++;
+          }
+        } catch {
+          // Ignorar linhas inválidas
+        }
+      });
+    } catch {
+      // Arquivo não existe ou erro ao ler
+    }
+
+    return res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error: any) {
+    console.error('[SYSTEM-LOGS] Erro ao calcular estatísticas:', error);
+    return res.status(500).json({
+      success: false,
+      error: 'Erro ao calcular estatísticas',
+      details: error.message
+    });
+  }
+});
+
 // GET /api/super-admin/system-logs/:fileName - Ler conteúdo de um arquivo de log
 router.get('/system-logs/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
   try {
@@ -2121,141 +2256,6 @@ router.get('/system-logs/:fileName/download', adminAuthMiddleware, superAdminOnl
     return res.status(500).json({
       success: false,
       error: 'Erro ao fazer download do arquivo',
-      details: error.message
-    });
-  }
-});
-
-// GET /api/super-admin/system-logs/stats - Estatísticas agregadas
-router.get('/system-logs/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
-  try {
-    const { dateRange = '24h' } = req.query;
-
-    const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
-
-    // Calcular período
-    const now = new Date();
-    let startDate: Date;
-
-    switch (dateRange) {
-      case '1h':
-        startDate = new Date(now.getTime() - 60 * 60 * 1000);
-        break;
-      case '24h':
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-        break;
-      case '7d':
-        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        break;
-      default:
-        startDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    }
-
-    // Ler arquivo combined do dia atual
-    const today = now.toISOString().split('T')[0];
-    const combinedFile = `combined-${today}.log`;
-    const errorFile = `error-${today}.log`;
-    const httpFile = `http-${today}.log`;
-
-    const stats = {
-      errors: 0,
-      warnings: 0,
-      info: 0,
-      debug: 0,
-      httpRequests: 0,
-      totalLogs: 0,
-      avgResponseTime: 0,
-      timeRange: {
-        start: startDate.toISOString(),
-        end: now.toISOString()
-      }
-    };
-
-    // Ler arquivo combined para estatísticas gerais
-    try {
-      const combinedPath = path.join(logsDir, combinedFile);
-      const content = await fs.readFile(combinedPath, 'utf-8');
-      const lines = content.split('\n').filter(line => line.trim());
-
-      let responseTimes: number[] = [];
-
-      lines.forEach(line => {
-        try {
-          const log = JSON.parse(line);
-          const logDate = new Date(log.timestamp);
-
-          if (logDate >= startDate && logDate <= now) {
-            stats.totalLogs++;
-
-            switch (log.level) {
-              case 'error':
-                stats.errors++;
-                break;
-              case 'warn':
-                stats.warnings++;
-                break;
-              case 'info':
-                stats.info++;
-                break;
-              case 'debug':
-                stats.debug++;
-                break;
-            }
-
-            // Extrair tempo de resposta se disponível
-            if (log.responseTime) {
-              const time = parseInt(log.responseTime.replace('ms', ''), 10);
-              if (!isNaN(time)) {
-                responseTimes.push(time);
-              }
-            }
-          }
-        } catch {
-          // Ignorar linhas inválidas
-        }
-      });
-
-      // Calcular média de tempo de resposta
-      if (responseTimes.length > 0) {
-        stats.avgResponseTime = Math.round(
-          responseTimes.reduce((sum, t) => sum + t, 0) / responseTimes.length
-        );
-      }
-    } catch {
-      // Arquivo não existe ou erro ao ler
-    }
-
-    // Ler arquivo HTTP para contagem de requisições
-    try {
-      const httpPath = path.join(logsDir, httpFile);
-      const content = await fs.readFile(httpPath, 'utf-8');
-      const lines = content.split('\n').filter(line => line.trim());
-
-      lines.forEach(line => {
-        try {
-          const log = JSON.parse(line);
-          const logDate = new Date(log.timestamp);
-
-          if (logDate >= startDate && logDate <= now) {
-            stats.httpRequests++;
-          }
-        } catch {
-          // Ignorar linhas inválidas
-        }
-      });
-    } catch {
-      // Arquivo não existe ou erro ao ler
-    }
-
-    return res.json({
-      success: true,
-      data: stats
-    });
-  } catch (error: any) {
-    console.error('[SYSTEM-LOGS] Erro ao calcular estatísticas:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Erro ao calcular estatísticas',
       details: error.message
     });
   }

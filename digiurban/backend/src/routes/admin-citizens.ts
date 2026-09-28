@@ -408,6 +408,72 @@ router.get(
   })
 );
 
+// GET /api/admin/citizens/vulnerable - Listar famílias vulneráveis
+router.get(
+  '/vulnerable',
+  requirePermission('social-assistance:read'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    // Funcionalidade de vulnerabilidade foi removida do schema
+    res.status(501).json({
+      success: false,
+      error: 'Funcionalidade de vulnerabilidade não implementada'
+    });
+    return;
+
+    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
+    const authReq = req as AuthenticatedRequest;
+    const { riskLevel, status } = authReq.query;
+
+    const where: any = {};
+    if (riskLevel) where.riskLevel = riskLevel;
+    if (status) where.status = status;
+
+    const vulnerableFamilies = await prisma.vulnerableFamily.findMany({
+      where,
+      include: {
+        citizen: {
+          select: {
+            id: true,
+            name: true,
+            cpf: true,
+            email: true,
+            phone: true,
+            address: true,
+            familyAsHead: {
+              select: {
+                relationship: true,
+                isDependent: true,
+                member: {
+                  select: {
+                    name: true
+        }
+      }
+        }
+        }
+        }
+        },
+        benefitRequests: {
+          where: { status: { in: ['PENDING', 'APPROVED'] } }
+        },
+        homeVisits: {
+          orderBy: { visitDate: 'desc' },
+          take: 1
+        }
+        },
+      orderBy: [{ riskLevel: 'desc' }, { updatedAt: 'desc' }]
+        });
+
+    res.json({
+      success: true,
+      data: {
+        families: vulnerableFamilies,
+        total: vulnerableFamilies.length
+        }
+        });
+    */
+  })
+);
+
 // GET /api/admin/citizens/:id - Buscar cidadão por ID
 router.get(
   '/:id',
@@ -1287,70 +1353,6 @@ router.put(
   })
 );
 
-// GET /api/admin/citizens/vulnerable - Listar famílias vulneráveis
-router.get(
-  '/vulnerable',
-  requirePermission('social-assistance:read'),
-  asyncHandler(async (req, res: Response): Promise<void> => {
-    // Funcionalidade de vulnerabilidade foi removida do schema
-    res.status(501).json({
-      success: false,
-      error: 'Funcionalidade de vulnerabilidade não implementada'
-    });
-    return;
 
-    /* CÓDIGO COMENTADO - MODELO vulnerableFamily REMOVIDO DO SCHEMA
-    const authReq = req as AuthenticatedRequest;
-    const { riskLevel, status } = authReq.query;
-
-    const where: any = {};
-    if (riskLevel) where.riskLevel = riskLevel;
-    if (status) where.status = status;
-
-    const vulnerableFamilies = await prisma.vulnerableFamily.findMany({
-      where,
-      include: {
-        citizen: {
-          select: {
-            id: true,
-            name: true,
-            cpf: true,
-            email: true,
-            phone: true,
-            address: true,
-            familyAsHead: {
-              select: {
-                relationship: true,
-                isDependent: true,
-                member: {
-                  select: {
-                    name: true
-        }
-      }
-        }
-        }
-        }
-        },
-        benefitRequests: {
-          where: { status: { in: ['PENDING', 'APPROVED'] } }
-        },
-        homeVisits: {
-          orderBy: { visitDate: 'desc' },
-          take: 1
-        }
-        },
-      orderBy: [{ riskLevel: 'desc' }, { updatedAt: 'desc' }]
-        });
-
-    res.json({
-      success: true,
-      data: {
-        families: vulnerableFamilies,
-        total: vulnerableFamilies.length
-        }
-        });
-    */
-  })
-);
 
 export default router;

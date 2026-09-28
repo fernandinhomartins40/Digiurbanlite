@@ -1151,6 +1151,147 @@ router.post(
   }
 );
 
+// GET /api/:department/:module/export - Exportar lista
+router.get(
+  '/:department/:module/export',
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const { department, module } = req.params;
+      const format = req.query.format as string || 'csv';
+      const search = req.query.search as string;
+      const status = req.query.status as string;
+
+      console.log(`\n[TAB-MODULES] GET /${department}/${module}/export (${format})`);
+
+      // Buscar departamento
+      const dept = await prisma.department.findFirst({
+        where: { code: department.toUpperCase() }
+      });
+
+      if (!dept) {
+        return res.status(404).json({
+          success: false,
+          error: 'Departamento não encontrado'
+        });
+      }
+
+      // Construir filtro
+      const where: any = {
+        departmentId: dept.id,
+        moduleType: module.toUpperCase()
+      };
+
+      if (status && status !== 'all') {
+        where.status = status;
+      }
+
+      if (search) {
+        where.OR = [
+          { number: { contains: search, mode: 'insensitive' } },
+          { title: { contains: search, mode: 'insensitive' } },
+        ];
+      }
+
+      // Buscar dados
+      const protocols = await prisma.protocolSimplified.findMany({
+        where,
+        include: {
+          citizen: {
+            select: {
+              name: true,
+              cpf: true,
+              email: true,
+              phone: true,
+            }
+          },
+          service: {
+            select: {
+              name: true,
+            }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 10000, // Limite de segurança
+      });
+
+      // Gerar CSV
+      if (format === 'csv') {
+        const rows: string[] = [];
+
+        // Identificar colunas de customData (pegar as chaves do primeiro protocolo)
+        const customDataKeys: string[] = [];
+        if (protocols.length > 0 && protocols[0].customData) {
+          const customData = protocols[0].customData as any;
+          Object.keys(customData).forEach(key => {
+            if (!['id', 'createdAt', 'updatedAt'].includes(key)) {
+              customDataKeys.push(key);
+            }
+          });
+        }
+
+        // Cabeçalho
+        const headers = [
+          'Protocolo',
+          'Título',
+          'Status',
+          'Serviço',
+          'Cidadão',
+          'CPF',
+          'Email',
+          'Telefone',
+          'Criado em',
+          'Atualizado em',
+          ...customDataKeys.map(key => key.replace(/_/g, ' ').toUpperCase())
+        ];
+        rows.push(headers.join(';'));
+
+        // Dados
+        protocols.forEach(p => {
+          const customData = (p.customData as any) || {};
+          const row = [
+            p.number || '',
+            `"${(p.title || '').replace(/"/g, '""')}"`, // Escapar aspas
+            p.status || '',
+            `"${(p.service?.name || '').replace(/"/g, '""')}"`,
+            `"${(p.citizen?.name || '').replace(/"/g, '""')}"`,
+            p.citizen?.cpf || '',
+            p.citizen?.email || '',
+            p.citizen?.phone || '',
+            new Date(p.createdAt).toLocaleString('pt-BR'),
+            new Date(p.updatedAt).toLocaleString('pt-BR'),
+            ...customDataKeys.map(key => {
+              const value = customData[key];
+              if (value === null || value === undefined) return '';
+              if (typeof value === 'object') return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
+              return `"${String(value).replace(/"/g, '""')}"`;
+            })
+          ];
+          rows.push(row.join(';'));
+        });
+
+        const csv = rows.join('\n');
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${module}_${Date.now()}.csv"`);
+        return res.send('\ufeff' + csv); // BOM para Excel
+      }
+
+      return res.status(400).json({
+        success: false,
+        error: 'Formato não suportado'
+      });
+
+    } catch (error) {
+      console.error('[TAB-MODULES] Export error:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Internal server error'
+      });
+    }
+  }
+);
+
 // ============================================================================
 // DETALHES DE UM PROTOCOLO - GET /api/:department/:module/:id
 // ============================================================================
@@ -1532,147 +1673,6 @@ router.put(
 
     } catch (error) {
       console.error('[TAB-MODULES] Update error:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Internal server error'
-      });
-    }
-  }
-);
-
-// GET /api/:department/:module/export - Exportar lista
-router.get(
-  '/:department/:module/export',
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const { department, module } = req.params;
-      const format = req.query.format as string || 'csv';
-      const search = req.query.search as string;
-      const status = req.query.status as string;
-
-      console.log(`\n[TAB-MODULES] GET /${department}/${module}/export (${format})`);
-
-      // Buscar departamento
-      const dept = await prisma.department.findFirst({
-        where: { code: department.toUpperCase() }
-      });
-
-      if (!dept) {
-        return res.status(404).json({
-          success: false,
-          error: 'Departamento não encontrado'
-        });
-      }
-
-      // Construir filtro
-      const where: any = {
-        departmentId: dept.id,
-        moduleType: module.toUpperCase()
-      };
-
-      if (status && status !== 'all') {
-        where.status = status;
-      }
-
-      if (search) {
-        where.OR = [
-          { number: { contains: search, mode: 'insensitive' } },
-          { title: { contains: search, mode: 'insensitive' } },
-        ];
-      }
-
-      // Buscar dados
-      const protocols = await prisma.protocolSimplified.findMany({
-        where,
-        include: {
-          citizen: {
-            select: {
-              name: true,
-              cpf: true,
-              email: true,
-              phone: true,
-            }
-          },
-          service: {
-            select: {
-              name: true,
-            }
-          }
-        },
-        orderBy: { createdAt: 'desc' },
-        take: 10000, // Limite de segurança
-      });
-
-      // Gerar CSV
-      if (format === 'csv') {
-        const rows: string[] = [];
-
-        // Identificar colunas de customData (pegar as chaves do primeiro protocolo)
-        const customDataKeys: string[] = [];
-        if (protocols.length > 0 && protocols[0].customData) {
-          const customData = protocols[0].customData as any;
-          Object.keys(customData).forEach(key => {
-            if (!['id', 'createdAt', 'updatedAt'].includes(key)) {
-              customDataKeys.push(key);
-            }
-          });
-        }
-
-        // Cabeçalho
-        const headers = [
-          'Protocolo',
-          'Título',
-          'Status',
-          'Serviço',
-          'Cidadão',
-          'CPF',
-          'Email',
-          'Telefone',
-          'Criado em',
-          'Atualizado em',
-          ...customDataKeys.map(key => key.replace(/_/g, ' ').toUpperCase())
-        ];
-        rows.push(headers.join(';'));
-
-        // Dados
-        protocols.forEach(p => {
-          const customData = (p.customData as any) || {};
-          const row = [
-            p.number || '',
-            `"${(p.title || '').replace(/"/g, '""')}"`, // Escapar aspas
-            p.status || '',
-            `"${(p.service?.name || '').replace(/"/g, '""')}"`,
-            `"${(p.citizen?.name || '').replace(/"/g, '""')}"`,
-            p.citizen?.cpf || '',
-            p.citizen?.email || '',
-            p.citizen?.phone || '',
-            new Date(p.createdAt).toLocaleString('pt-BR'),
-            new Date(p.updatedAt).toLocaleString('pt-BR'),
-            ...customDataKeys.map(key => {
-              const value = customData[key];
-              if (value === null || value === undefined) return '';
-              if (typeof value === 'object') return `"${JSON.stringify(value).replace(/"/g, '""')}"`;
-              return `"${String(value).replace(/"/g, '""')}"`;
-            })
-          ];
-          rows.push(row.join(';'));
-        });
-
-        const csv = rows.join('\n');
-
-        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
-        res.setHeader('Content-Disposition', `attachment; filename="${module}_${Date.now()}.csv"`);
-        return res.send('\ufeff' + csv); // BOM para Excel
-      }
-
-      return res.status(400).json({
-        success: false,
-        error: 'Formato não suportado'
-      });
-
-    } catch (error) {
-      console.error('[TAB-MODULES] Export error:', error);
       return res.status(500).json({
         success: false,
         error: 'Internal server error'

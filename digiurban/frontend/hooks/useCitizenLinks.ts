@@ -46,7 +46,8 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
     if (readonly) {
       return `/api/citizen/protocols/${pId}/citizen-links`
     }
-    return `/api/admin/protocols/${pId}/citizen-links`
+    // Rota real do backend: /api/protocols/:id/citizen-links (antes /api/admin/... → 404)
+    return `/api/protocols/${pId}/citizen-links`
   }
 
   /**
@@ -64,9 +65,7 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
       setError(null)
 
       const response = await fetch(getEndpointBase(id), {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        credentials: 'include'
       })
 
       const data = await response.json()
@@ -115,11 +114,10 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/admin/protocols/${id}/citizen-links`, {
+      const response = await fetch(`/api/protocols/${id}/citizen-links`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(link)
       })
@@ -174,11 +172,10 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/admin/protocols/${id}/citizen-links/${linkId}`, {
+      const response = await fetch(`/api/protocols/${id}/citizen-links/${linkId}`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify(updates)
       })
@@ -230,12 +227,10 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
       setError(null)
 
       const response = await fetch(
-        `/api/admin/protocols/${id}/citizen-links/${linkId}/verify`,
+        `/api/protocols/${id}/citizen-links/${linkId}/verify`,
         {
           method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-          }
+          credentials: 'include'
         }
       )
 
@@ -285,11 +280,9 @@ export function useCitizenLinks(options: UseCitizenLinksOptions = {}) {
       setLoading(true)
       setError(null)
 
-      const response = await fetch(`/api/admin/protocols/${id}/citizen-links/${linkId}`, {
+      const response = await fetch(`/api/protocols/${id}/citizen-links/${linkId}`, {
         method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
+        credentials: 'include'
       })
 
       const data = await response.json()

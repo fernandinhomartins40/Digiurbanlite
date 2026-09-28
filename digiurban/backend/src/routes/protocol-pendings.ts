@@ -106,6 +106,62 @@ router.get(
 );
 
 /**
+ * GET /api/protocols/:protocolId/pendings/check-blocking
+ * Verificar se há pendências bloqueantes
+ */
+router.get(
+  '/:protocolId/pendings/check-blocking',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const hasBlocking = await pendingService.hasBlockingPendings(protocolId);
+
+      return res.json({
+        success: true,
+        data: { hasBlocking }
+        });
+    } catch (error) {
+      console.error('Erro ao verificar pendências bloqueantes:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar pendências bloqueantes',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/:protocolId/pendings/count-by-status
+ * Contar pendências por status
+ */
+router.get(
+  '/:protocolId/pendings/count-by-status',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const counts = await pendingService.countPendingsByStatus(protocolId);
+
+      return res.json({
+        success: true,
+        data: counts
+        });
+    } catch (error) {
+      console.error('Erro ao contar pendências por status:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao contar pendências por status',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
  * GET /api/protocols/:protocolId/pendings/:pendingId
  * Obter uma pendência específica
  */
@@ -134,6 +190,38 @@ router.get(
       return res.status(500).json({
         success: false,
         error: 'Erro ao obter pendência',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
+ * PUT /api/protocols/:protocolId/pendings/check-expired
+ * Verificar e marcar pendências expiradas
+ */
+router.put(
+  '/:protocolId/pendings/check-expired',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const expired = await pendingService.checkExpiredPendings(protocolId);
+
+      return res.json({
+        success: true,
+        data: {
+          count: expired.length,
+          expired
+        }
+        });
+    } catch (error) {
+      console.error('Erro ao verificar pendências expiradas:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar pendências expiradas',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
     }
@@ -323,94 +411,6 @@ router.put(
       return res.status(500).json({
         success: false,
         error: 'Erro ao cancelar pendência',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/protocols/:protocolId/pendings/check-blocking
- * Verificar se há pendências bloqueantes
- */
-router.get(
-  '/:protocolId/pendings/check-blocking',
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const hasBlocking = await pendingService.hasBlockingPendings(protocolId);
-
-      return res.json({
-        success: true,
-        data: { hasBlocking }
-        });
-    } catch (error) {
-      console.error('Erro ao verificar pendências bloqueantes:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao verificar pendências bloqueantes',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/protocols/:protocolId/pendings/count-by-status
- * Contar pendências por status
- */
-router.get(
-  '/:protocolId/pendings/count-by-status',
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const counts = await pendingService.countPendingsByStatus(protocolId);
-
-      return res.json({
-        success: true,
-        data: counts
-        });
-    } catch (error) {
-      console.error('Erro ao contar pendências por status:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao contar pendências por status',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
-  }
-);
-
-/**
- * PUT /api/protocols/:protocolId/pendings/check-expired
- * Verificar e marcar pendências expiradas
- */
-router.put(
-  '/:protocolId/pendings/check-expired',
-  adminAuthMiddleware,
-  requireMinRole(UserRole.USER),
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const expired = await pendingService.checkExpiredPendings(protocolId);
-
-      return res.json({
-        success: true,
-        data: {
-          count: expired.length,
-          expired
-        }
-        });
-    } catch (error) {
-      console.error('Erro ao verificar pendências expiradas:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao verificar pendências expiradas',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
     }

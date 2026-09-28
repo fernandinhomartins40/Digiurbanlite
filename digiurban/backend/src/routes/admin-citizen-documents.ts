@@ -165,6 +165,23 @@ router.get(
 );
 
 /**
+ * GET /api/admin/citizen-documents/stats
+ * Obtém estatísticas de documentos
+ */
+router.get(
+  '/stats',
+  requirePermission('citizens:read'),
+  asyncHandler(async (req, res: Response): Promise<void> => {
+    const stats = await getDocumentStats();
+
+    res.json({
+      success: true,
+      data: { stats }
+    });
+  })
+);
+
+/**
  * GET /api/admin/citizen-documents/:documentId
  * Obtém detalhes de um documento específico
  */
@@ -560,21 +577,6 @@ router.put(
   })
 );
 
-/**
- * GET /api/admin/citizen-documents/stats
- * Obtém estatísticas de documentos
- */
-router.get(
-  '/stats',
-  requirePermission('citizens:read'),
-  asyncHandler(async (req, res: Response): Promise<void> => {
-    const stats = await getDocumentStats();
 
-    res.json({
-      success: true,
-      data: { stats }
-    });
-  })
-);
 
 export default router;

@@ -303,6 +303,62 @@ router.get(
 );
 
 /**
+ * GET /api/protocols/:protocolId/stages/check-completion
+ * Verificar se todas as etapas foram completadas
+ */
+router.get(
+  '/:protocolId/stages/check-completion',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const allCompleted = await stageService.allStagesCompleted(protocolId);
+
+      return res.json({
+        success: true,
+        data: { allCompleted }
+        });
+    } catch (error) {
+      console.error('Erro ao verificar completude das etapas:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar completude das etapas',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/:protocolId/stages/count-by-status
+ * Contar etapas por status
+ */
+router.get(
+  '/:protocolId/stages/count-by-status',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const counts = await stageService.countStagesByStatus(protocolId);
+
+      return res.json({
+        success: true,
+        data: counts
+        });
+    } catch (error) {
+      console.error('Erro ao contar etapas por status:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao contar etapas por status',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
  * GET /api/protocols/:protocolId/stages/:stageId
  * Obter uma etapa específica
  */
@@ -580,62 +636,6 @@ router.put(
         success: false,
         error: isAuthorization ? message : 'Erro ao marcar etapa como falha',
         details: message
-        });
-    }
-  }
-);
-
-/**
- * GET /api/protocols/:protocolId/stages/check-completion
- * Verificar se todas as etapas foram completadas
- */
-router.get(
-  '/:protocolId/stages/check-completion',
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const allCompleted = await stageService.allStagesCompleted(protocolId);
-
-      return res.json({
-        success: true,
-        data: { allCompleted }
-        });
-    } catch (error) {
-      console.error('Erro ao verificar completude das etapas:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao verificar completude das etapas',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/protocols/:protocolId/stages/count-by-status
- * Contar etapas por status
- */
-router.get(
-  '/:protocolId/stages/count-by-status',
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const counts = await stageService.countStagesByStatus(protocolId);
-
-      return res.json({
-        success: true,
-        data: counts
-        });
-    } catch (error) {
-      console.error('Erro ao contar etapas por status:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao contar etapas por status',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
     }
   }

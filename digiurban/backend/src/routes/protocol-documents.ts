@@ -115,6 +115,96 @@ router.get(
 );
 
 /**
+ * GET /api/protocols/:protocolId/documents/check-required
+ * Verificar documentos obrigatórios
+ */
+router.get(
+  '/:protocolId/documents/check-required',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const check = await documentService.checkRequiredDocuments(protocolId);
+
+      return res.json({
+        success: true,
+        data: check
+        });
+    } catch (error) {
+      console.error('Erro ao verificar documentos obrigatórios:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar documentos obrigatórios',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+/**
+ * GET /api/protocols/:protocolId/documents/check-approved
+ * Verificar se todos documentos estão aprovados
+ */
+router.get(
+  '/:protocolId/documents/check-approved',
+  adminAuthMiddleware,
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+
+      const check = await documentService.checkAllDocumentsApproved(protocolId);
+
+      return res.json({
+        success: true,
+        data: check
+        });
+    } catch (error) {
+      console.error('Erro ao verificar documentos aprovados:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao verificar documentos aprovados',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+        });
+    }
+  }
+);
+
+// ============================================================================
+// FASE 2: ROTAS DE AUDITORIA E INTEGRIDADE
+// ============================================================================
+
+/**
+ * GET /api/protocols/:protocolId/documents/audit
+ * Auditoria de integridade dos documentos de um protocolo
+ */
+router.get(
+  '/:protocolId/documents/audit',
+  adminAuthMiddleware,
+  requireMinRole(UserRole.MANAGER),
+  async (req, res) => {
+    try {
+      const { protocolId } = req.params;
+      const { validateProtocolIntegrity } = await import('../services/document-integrity.service');
+
+      const result = await validateProtocolIntegrity(protocolId);
+
+      return res.json({
+        success: true,
+        data: result
+      });
+    } catch (error) {
+      console.error('Erro na auditoria de documentos:', error);
+      return res.status(500).json({
+        success: false,
+        error: 'Erro ao auditar documentos',
+        details: error instanceof Error ? error.message : 'Erro desconhecido'
+      });
+    }
+  }
+);
+
+/**
  * GET /api/protocols/:protocolId/documents/:documentId
  * Obter um documento específico
  */
@@ -299,62 +389,6 @@ router.put(
 );
 
 /**
- * GET /api/protocols/:protocolId/documents/check-required
- * Verificar documentos obrigatórios
- */
-router.get(
-  '/:protocolId/documents/check-required',
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const check = await documentService.checkRequiredDocuments(protocolId);
-
-      return res.json({
-        success: true,
-        data: check
-        });
-    } catch (error) {
-      console.error('Erro ao verificar documentos obrigatórios:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao verificar documentos obrigatórios',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
-  }
-);
-
-/**
- * GET /api/protocols/:protocolId/documents/check-approved
- * Verificar se todos documentos estão aprovados
- */
-router.get(
-  '/:protocolId/documents/check-approved',
-  adminAuthMiddleware,
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-
-      const check = await documentService.checkAllDocumentsApproved(protocolId);
-
-      return res.json({
-        success: true,
-        data: check
-        });
-    } catch (error) {
-      console.error('Erro ao verificar documentos aprovados:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao verificar documentos aprovados',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
-    }
-  }
-);
-
-/**
  * GET /api/protocols/:protocolId/documents/:documentId/download
  * Download/Visualização de um documento
  * Query params: ?inline=true para visualização, sem parâmetro para download
@@ -487,40 +521,6 @@ router.delete(
         error: 'Erro ao deletar documento',
         details: error instanceof Error ? error.message : 'Erro desconhecido'
         });
-    }
-  }
-);
-
-// ============================================================================
-// FASE 2: ROTAS DE AUDITORIA E INTEGRIDADE
-// ============================================================================
-
-/**
- * GET /api/protocols/:protocolId/documents/audit
- * Auditoria de integridade dos documentos de um protocolo
- */
-router.get(
-  '/:protocolId/documents/audit',
-  adminAuthMiddleware,
-  requireMinRole(UserRole.MANAGER),
-  async (req, res) => {
-    try {
-      const { protocolId } = req.params;
-      const { validateProtocolIntegrity } = await import('../services/document-integrity.service');
-
-      const result = await validateProtocolIntegrity(protocolId);
-
-      return res.json({
-        success: true,
-        data: result
-      });
-    } catch (error) {
-      console.error('Erro na auditoria de documentos:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao auditar documentos',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
     }
   }
 );

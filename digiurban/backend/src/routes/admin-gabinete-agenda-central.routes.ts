@@ -119,6 +119,77 @@ router.get('/', adminAuthMiddleware, requireAdmin, async (req: Request, res: Res
   }
 })
 
+router.get('/upcoming', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const hoursRaw = Number(req.query.hours || 24)
+    const hours = Number.isFinite(hoursRaw) && hoursRaw > 0 ? hoursRaw : 24
+    const now = new Date()
+    const future = new Date(now.getTime() + hours * 60 * 60 * 1000)
+
+    const events = await centralCalendarService.listVisibleEvents({
+      userId: req.user!.id,
+      includeAll: true,
+      startAt: now,
+      endAt: future,
+      status: [CentralCalendarEventStatus.SCHEDULED, CentralCalendarEventStatus.CONFIRMED],
+      sourceType: GABINETE_SOURCE_TYPES
+    })
+
+    res.json({ success: true, data: events.map(toLegacyEvent) })
+  } catch (error) {
+    console.error('Erro ao buscar eventos próximos da agenda centralizada:', error)
+    res.status(500).json({ error: 'Erro ao buscar eventos próximos' })
+  }
+})
+
+router.get('/conflicts', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
+  try {
+    const events = await centralCalendarService.listVisibleEvents({
+      userId: req.user!.id,
+      includeAll: true,
+      sourceType: GABINETE_SOURCE_TYPES
+    })
+
+    const normalizedEvents = events
+      .filter((event) => event.status !== CentralCalendarEventStatus.CANCELED)
+      .map(toLegacyEvent)
+
+    const conflicts: Array<{
+      event1: any
+      event2: any
+      overlap: { start: Date; end: Date }
+    }> = []
+
+    for (let i = 0; i < normalizedEvents.length; i++) {
+      for (let j = i + 1; j < normalizedEvents.length; j++) {
+        const event1 = normalizedEvents[i]
+        const event2 = normalizedEvents[j]
+
+        const start1 = new Date(event1.dataHoraInicio)
+        const end1 = new Date(event1.dataHoraFim)
+        const start2 = new Date(event2.dataHoraInicio)
+        const end2 = new Date(event2.dataHoraFim)
+
+        if (start1 < end2 && start2 < end1) {
+          conflicts.push({
+            event1,
+            event2,
+            overlap: {
+              start: new Date(Math.max(start1.getTime(), start2.getTime())),
+              end: new Date(Math.min(end1.getTime(), end2.getTime()))
+            }
+          })
+        }
+      }
+    }
+
+    res.json({ success: true, data: conflicts })
+  } catch (error) {
+    console.error('Erro ao buscar conflitos da agenda centralizada:', error)
+    res.status(500).json({ error: 'Erro ao buscar conflitos' })
+  }
+})
+
 router.get('/:id', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
   try {
     const event = await centralCalendarService.getVisibleEventById(req.user!.id, req.params.id, true)
@@ -278,75 +349,8 @@ router.patch('/:id/realize', adminAuthMiddleware, requireAdmin, async (req: Requ
   }
 })
 
-router.get('/upcoming', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
-  try {
-    const hoursRaw = Number(req.query.hours || 24)
-    const hours = Number.isFinite(hoursRaw) && hoursRaw > 0 ? hoursRaw : 24
-    const now = new Date()
-    const future = new Date(now.getTime() + hours * 60 * 60 * 1000)
 
-    const events = await centralCalendarService.listVisibleEvents({
-      userId: req.user!.id,
-      includeAll: true,
-      startAt: now,
-      endAt: future,
-      status: [CentralCalendarEventStatus.SCHEDULED, CentralCalendarEventStatus.CONFIRMED],
-      sourceType: GABINETE_SOURCE_TYPES
-    })
 
-    res.json({ success: true, data: events.map(toLegacyEvent) })
-  } catch (error) {
-    console.error('Erro ao buscar eventos próximos da agenda centralizada:', error)
-    res.status(500).json({ error: 'Erro ao buscar eventos próximos' })
-  }
-})
 
-router.get('/conflicts', adminAuthMiddleware, requireAdmin, async (req: Request, res: Response): Promise<void> => {
-  try {
-    const events = await centralCalendarService.listVisibleEvents({
-      userId: req.user!.id,
-      includeAll: true,
-      sourceType: GABINETE_SOURCE_TYPES
-    })
-
-    const normalizedEvents = events
-      .filter((event) => event.status !== CentralCalendarEventStatus.CANCELED)
-      .map(toLegacyEvent)
-
-    const conflicts: Array<{
-      event1: any
-      event2: any
-      overlap: { start: Date; end: Date }
-    }> = []
-
-    for (let i = 0; i < normalizedEvents.length; i++) {
-      for (let j = i + 1; j < normalizedEvents.length; j++) {
-        const event1 = normalizedEvents[i]
-        const event2 = normalizedEvents[j]
-
-        const start1 = new Date(event1.dataHoraInicio)
-        const end1 = new Date(event1.dataHoraFim)
-        const start2 = new Date(event2.dataHoraInicio)
-        const end2 = new Date(event2.dataHoraFim)
-
-        if (start1 < end2 && start2 < end1) {
-          conflicts.push({
-            event1,
-            event2,
-            overlap: {
-              start: new Date(Math.max(start1.getTime(), start2.getTime())),
-              end: new Date(Math.min(end1.getTime(), end2.getTime()))
-            }
-          })
-        }
-      }
-    }
-
-    res.json({ success: true, data: conflicts })
-  } catch (error) {
-    console.error('Erro ao buscar conflitos da agenda centralizada:', error)
-    res.status(500).json({ error: 'Erro ao buscar conflitos' })
-  }
-})
 
 export default router

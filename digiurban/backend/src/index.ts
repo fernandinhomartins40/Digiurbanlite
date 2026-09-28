@@ -115,6 +115,10 @@ const conditionalBodyParser = (req: express.Request, res: express.Response, next
 app.use(conditionalBodyParser);
 app.use(cookieParser()); // Parser de cookies para httpOnly tokens
 
+// Produção: não devolver consulta/estrutura interna do Prisma em mensagens de erro
+import { sanitizeErrorResponse } from './middleware/sanitize-error-response';
+app.use(sanitizeErrorResponse);
+
 // Contexto de tenant (Fase 1 Multi-Tenant): popula AsyncLocalStorage + req.tenant
 import { tenantContextMiddleware } from './middleware/tenant-context';
 app.use(tenantContextMiddleware);

@@ -30,8 +30,9 @@ export function useSearchCitizen() {
     setError(null)
 
     try {
+      // /api/citizens é placeholder vazio no backend — busca real fica em /api/admin/citizens
       const response = await fetch(
-        `/api/citizens/search?cpf=${encodeURIComponent(cpf)}`,
+        `/api/admin/citizens/search?q=${encodeURIComponent(cpf.replace(/\D/g, ''))}`,
         {
           headers: {
             'X-Tenant-ID': tenantId || '',
@@ -48,7 +49,9 @@ export function useSearchCitizen() {
       }
 
       const data = await response.json()
-      return data.citizen || null
+      const cleanCpf = cpf.replace(/\D/g, '')
+      const list: Citizen[] = Array.isArray(data.data) ? data.data : data.data?.citizens || []
+      return list.find((c) => (c.cpf || '').replace(/\D/g, '') === cleanCpf) || null
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
       setError(errorMessage)
@@ -107,7 +110,7 @@ export function useSearchCitizen() {
     setError(null)
 
     try {
-      const response = await fetch('/api/citizens', {
+      const response = await fetch('/api/admin/citizens', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -123,7 +126,7 @@ export function useSearchCitizen() {
       }
 
       const data = await response.json()
-      return data.citizen
+      return data.data?.citizen || data.citizen
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido'
       setError(errorMessage)

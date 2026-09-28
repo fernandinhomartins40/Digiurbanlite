@@ -43,6 +43,22 @@ function parseDateParam(value: unknown): Date | undefined {
 // Middleware de autenticação para todas as rotas de TFD
 router.use(authenticateToken);
 
+/**
+ * Período das estatísticas: datas vindas da query ou, se ausentes, os últimos
+ * 30 dias. Antes, sem datas, `new Date(undefined)` gerava "Invalid Date" e a
+ * consulta falhava (400) — as estatísticas nunca carregavam sem filtro.
+ */
+function parseDateRange(req: Request): { dataInicio: Date; dataFim: Date } {
+  const fim = req.query.dataFim ? new Date(req.query.dataFim as string) : new Date();
+  const inicio = req.query.dataInicio
+    ? new Date(req.query.dataInicio as string)
+    : new Date(fim.getTime() - 30 * 24 * 60 * 60 * 1000);
+  if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
+    throw Object.assign(new Error('Período inválido: use datas no formato AAAA-MM-DD'), { statusCode: 400 });
+  }
+  return { dataInicio: inicio, dataFim: fim };
+}
+
 // ============================================================================
 // SOLICITAÇÕES TFD
 // ============================================================================
@@ -57,6 +73,36 @@ router.post('/solicitacao', async (req: Request, res: Response) => {
       normalizeSolicitacaoPayload(req) as any
     );
     res.status(201).json(solicitacao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/tfd/solicitacao/urgentes
+ * Listar solicitações urgentes
+ */
+router.get('/solicitacao/urgentes', async (req: Request, res: Response) => {
+  try {
+    const solicitacoes = await SolicitacoesTFDService.listarSolicitacoesUrgentes();
+    res.json(solicitacoes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/tfd/solicitacao/estatisticas
+ * Obter estatísticas de solicitações
+ */
+router.get('/solicitacao/estatisticas', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      unidadeOrigemId: req.query.unidadeOrigemId as string,
+      ...parseDateRange(req),
+    };
+    const estatisticas = await SolicitacoesTFDService.obterEstatisticas(filtros);
+    res.json(estatisticas);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -239,18 +285,6 @@ router.put('/solicitacao/:id/reabrir', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/saude/tfd/solicitacao/urgentes
- * Listar solicitações urgentes
- */
-router.get('/solicitacao/urgentes', async (req: Request, res: Response) => {
-  try {
-    const solicitacoes = await SolicitacoesTFDService.listarSolicitacoesUrgentes();
-    res.json(solicitacoes);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 /**
  * GET /api/saude/tfd/solicitacao/cidadao/:citizenId/historico
@@ -265,23 +299,6 @@ router.get('/solicitacao/cidadao/:citizenId/historico', async (req: Request, res
   }
 });
 
-/**
- * GET /api/saude/tfd/solicitacao/estatisticas
- * Obter estatísticas de solicitações
- */
-router.get('/solicitacao/estatisticas', async (req: Request, res: Response) => {
-  try {
-    const filtros = {
-      unidadeOrigemId: req.query.unidadeOrigemId as string,
-      dataInicio: new Date(req.query.dataInicio as string),
-      dataFim: new Date(req.query.dataFim as string),
-    };
-    const estatisticas = await SolicitacoesTFDService.obterEstatisticas(filtros);
-    res.json(estatisticas);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // ============================================================================
 // DOCUMENTOS TFD
@@ -443,8 +460,7 @@ router.get('/regulacao/fila', async (req: Request, res: Response) => {
 router.get('/regulacao/estatisticas', async (req: Request, res: Response) => {
   try {
     const filtros = {
-      dataInicio: new Date(req.query.dataInicio as string),
-      dataFim: new Date(req.query.dataFim as string),
+      ...parseDateRange(req),
     };
     const estatisticas = await RegulacaoTFDService.obterEstatisticasRegulacao(filtros);
     res.json(estatisticas);
@@ -498,6 +514,19 @@ router.post('/regulacao/aprovacao-gestao', async (req: Request, res: Response) =
 });
 
 /**
+ * GET /api/saude/tfd/aprovacao-gestao/aguardando
+ * Listar solicitações aguardando aprovação da gestão
+ */
+router.get('/aprovacao-gestao/aguardando', async (req: Request, res: Response) => {
+  try {
+    const solicitacoes = await RegulacaoTFDService.listarAguardandoAprovacaoGestao();
+    res.json(solicitacoes);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
  * GET /api/saude/tfd/aprovacao-gestao/:id
  * Buscar aprovação
  */
@@ -523,18 +552,6 @@ router.get('/aprovacao-gestao/solicitacao/:solicitacaoId', async (req: Request, 
   }
 });
 
-/**
- * GET /api/saude/tfd/aprovacao-gestao/aguardando
- * Listar solicitações aguardando aprovação da gestão
- */
-router.get('/aprovacao-gestao/aguardando', async (req: Request, res: Response) => {
-  try {
-    const solicitacoes = await RegulacaoTFDService.listarAguardandoAprovacaoGestao();
-    res.json(solicitacoes);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // ============================================================================
 // AGENDAMENTOS EXTERNOS
@@ -565,6 +582,39 @@ router.post('/regulacao/agendamento-externo', async (req: Request, res: Response
 
     const agendamento = await RegulacaoTFDService.criarAgendamentoExterno(req.body, req.userId);
     res.status(201).json(agendamento);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/tfd/agendamento-externo/proximos
+ * Listar próximos agendamentos
+ */
+router.get('/agendamento-externo/proximos', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      diasProximos: req.query.dias ? parseInt(req.query.dias as string) : 30,
+      status: req.query.status as any,
+    };
+    const agendamentos = await RegulacaoTFDService.listarProximosAgendamentos(filtros);
+    res.json(agendamentos);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/tfd/agendamento-externo/estatisticas
+ * Obter estatísticas de agendamentos
+ */
+router.get('/agendamento-externo/estatisticas', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      ...parseDateRange(req),
+    };
+    const estatisticas = await RegulacaoTFDService.obterEstatisticasAgendamentos(filtros);
+    res.json(estatisticas);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -657,39 +707,7 @@ router.get('/agendamento-externo/solicitacao/:solicitacaoId', async (req: Reques
   }
 });
 
-/**
- * GET /api/saude/tfd/agendamento-externo/proximos
- * Listar próximos agendamentos
- */
-router.get('/agendamento-externo/proximos', async (req: Request, res: Response) => {
-  try {
-    const filtros = {
-      diasProximos: req.query.dias ? parseInt(req.query.dias as string) : 30,
-      status: req.query.status as any,
-    };
-    const agendamentos = await RegulacaoTFDService.listarProximosAgendamentos(filtros);
-    res.json(agendamentos);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
-/**
- * GET /api/saude/tfd/agendamento-externo/estatisticas
- * Obter estatísticas de agendamentos
- */
-router.get('/agendamento-externo/estatisticas', async (req: Request, res: Response) => {
-  try {
-    const filtros = {
-      dataInicio: new Date(req.query.dataInicio as string),
-      dataFim: new Date(req.query.dataFim as string),
-    };
-    const estatisticas = await RegulacaoTFDService.obterEstatisticasAgendamentos(filtros);
-    res.json(estatisticas);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // ============================================================================
 // VIAGENS
@@ -703,6 +721,36 @@ router.post('/viagem', async (req: Request, res: Response) => {
   try {
     const viagem = await ViagensTFDService.criarViagem(req.body);
     res.status(201).json(viagem);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/tfd/viagem/proximas
+ * Listar próximas viagens
+ */
+router.get('/viagem/proximas', async (req: Request, res: Response) => {
+  try {
+    const dias = req.query.dias ? parseInt(req.query.dias as string) : 7;
+    const viagens = await ViagensTFDService.listarProximasViagens(dias);
+    res.json(viagens);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * GET /api/saude/tfd/viagem/estatisticas
+ * Obter estatísticas de viagens
+ */
+router.get('/viagem/estatisticas', async (req: Request, res: Response) => {
+  try {
+    const filtros = {
+      ...parseDateRange(req),
+    };
+    const estatisticas = await ViagensTFDService.obterEstatisticas(filtros);
+    res.json(estatisticas);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -842,36 +890,7 @@ router.put('/viagem/:id/cancelar', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * GET /api/saude/tfd/viagem/proximas
- * Listar próximas viagens
- */
-router.get('/viagem/proximas', async (req: Request, res: Response) => {
-  try {
-    const dias = req.query.dias ? parseInt(req.query.dias as string) : 7;
-    const viagens = await ViagensTFDService.listarProximasViagens(dias);
-    res.json(viagens);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
-/**
- * GET /api/saude/tfd/viagem/estatisticas
- * Obter estatísticas de viagens
- */
-router.get('/viagem/estatisticas', async (req: Request, res: Response) => {
-  try {
-    const filtros = {
-      dataInicio: new Date(req.query.dataInicio as string),
-      dataFim: new Date(req.query.dataFim as string),
-    };
-    const estatisticas = await ViagensTFDService.obterEstatisticas(filtros);
-    res.json(estatisticas);
-  } catch (error: any) {
-    res.status(400).json({ error: error.message });
-  }
-});
 
 // ============================================================================
 // PASSAGEIROS

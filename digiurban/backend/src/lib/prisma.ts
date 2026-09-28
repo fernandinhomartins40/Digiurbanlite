@@ -42,7 +42,11 @@ const prismaBase = new PrismaClient({
   log:
     process.env.NODE_ENV === 'production'
       ? ['error', 'warn']
-      : ['query', 'error', 'warn']
+      : ['query', 'error', 'warn'],
+  // Centenas de rotas devolvem `error.message` ao cliente; no formato padrão o
+  // Prisma inclui caminho do arquivo no servidor e a consulta montada. Em
+  // produção, mensagem mínima (sem code frame); em dev, completa para depurar.
+  errorFormat: process.env.NODE_ENV === 'production' ? 'minimal' : 'pretty'
 });
 
 const isAuditStorageUnavailable = (error: unknown): boolean => {
