@@ -138,7 +138,8 @@ export async function listarFilaRegulacao(filtros?: {
 
 export async function aprovarGestao(data: {
   solicitacaoId: string;
-  gestorId?: string;
+  /** false = negar. O aprovador é sempre o usuário logado (definido no backend). */
+  aprovado?: boolean;
   valorAprovado?: number;
   observacoes?: string;
 }) {
@@ -147,13 +148,41 @@ export async function aprovarGestao(data: {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       solicitacaoId: data.solicitacaoId,
-      aprovadoPorId: data.gestorId,
-      aprovado: true,
+      aprovado: data.aprovado !== false,
       valorAprovado: data.valorAprovado,
       justificativa: data.observacoes,
       observacoes: data.observacoes,
     }),
   });
+}
+
+export async function listarAguardandoAprovacaoGestao() {
+  return requestJson<any[]>('/aprovacao-gestao/aguardando');
+}
+
+/** Fila da análise documental: aguardando análise + devolvidas ao cidadão */
+export async function listarFilaAnaliseDocumental() {
+  return requestJson<any[]>(
+    `/solicitacao${buildQuery({ status: 'AGUARDANDO_ANALISE_DOCUMENTAL,DOCUMENTACAO_PENDENTE' })}`
+  );
+}
+
+/**
+ * Decisão da análise documental. Ao recusar, o backend cria uma pendência de
+ * documento no protocolo para cada item — o cidadão é avisado no portal.
+ */
+export async function registrarAnaliseDocumental(
+  solicitacaoId: string,
+  data: { aprovado: boolean; documentosPendentes?: string[]; observacoes?: string }
+) {
+  return requestJson<{ solicitacao: any; pendenciasCriadas: number }>(
+    `/solicitacao/${solicitacaoId}/analise-documental`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    }
+  );
 }
 
 export async function criarAgendamentoExterno(data: {
@@ -303,6 +332,8 @@ export async function aprovarSolicitacao(
   data: {
     parecerMedico: string;
     recomendacoes?: string;
+    /** Prioridade reclassificada pelo regulador (EMERGENCIA | ALTA | MEDIA | ROTINA) */
+    prioridade?: string;
   }
 ) {
   return requestJson(`/solicitacao/${solicitacaoId}/aprovar`, {
@@ -311,6 +342,7 @@ export async function aprovarSolicitacao(
     body: JSON.stringify({
       parecerMedico: data.parecerMedico,
       recomendacoes: data.recomendacoes,
+      prioridade: data.prioridade,
     }),
   });
 }

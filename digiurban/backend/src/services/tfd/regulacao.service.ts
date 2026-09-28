@@ -47,6 +47,12 @@ export class RegulacaoTFDService {
       throw new Error('Solicitação TFD não encontrada');
     }
 
+    // Parecer só faz sentido na etapa de regulação (evita reabrir/indeferir
+    // solicitação já aprovada, agendada ou em viagem)
+    if (solicitacao.status !== 'AGUARDANDO_REGULACAO_MEDICA') {
+      throw new Error('Solicitação não está aguardando regulação médica');
+    }
+
     // Criar parecer
     const parecer = await prisma.parecerRegulacaoTFD.create({
       data: {
@@ -58,22 +64,22 @@ export class RegulacaoTFDService {
       },
     });
 
-    // Atualizar status da solicitação
-    if (data.aprovado) {
-      await prisma.solicitacaoTFD.update({
-        where: { id: data.solicitacaoId },
-        data: {
-          status: 'AGUARDANDO_APROVACAO_GESTAO',
-        },
-      });
-    } else {
-      await prisma.solicitacaoTFD.update({
-        where: { id: data.solicitacaoId },
-        data: {
-          status: 'INDEFERIDO',
-        },
-      });
-    }
+    // Atualizar a solicitação: status, quem regulou, quando, parecer e — se o
+    // regulador reclassificou — a prioridade (antes só o status era gravado)
+    const prioridadesValidas = ['EMERGENCIA', 'ALTA', 'MEDIA', 'ROTINA'];
+    const prioridade = prioridadesValidas.includes(String(data.prioridade)) ? data.prioridade : undefined;
+
+    await prisma.solicitacaoTFD.update({
+      where: { id: data.solicitacaoId },
+      data: {
+        status: data.aprovado ? 'AGUARDANDO_APROVACAO_GESTAO' : 'INDEFERIDO',
+        reguladoPor: data.reguladorId,
+        dataRegulacao: new Date(),
+        parecerRegulador: data.justificativa || null,
+        ...(data.aprovado && prioridade && { prioridade: prioridade as any }),
+        ...(!data.aprovado && data.justificativa && { motivoRecusa: data.justificativa }),
+      },
+    });
 
     return parecer;
   }
@@ -150,6 +156,14 @@ export class RegulacaoTFDService {
         ...(filtros?.especialidade && { especialidade: filtros.especialidade }),
       },
       include: {
+        // Número do protocolo e nome do cidadão para as filas exibirem quem é quem
+        protocol: {
+          select: {
+            id: true,
+            number: true,
+            citizen: { select: { id: true, name: true } },
+          },
+        },
         documentos: {
           select: {
             id: true,
@@ -209,6 +223,8 @@ export class RegulacaoTFDService {
         data: {
           status: 'APROVADO_PARA_AGENDAMENTO',
           dataAprovacao: new Date(),
+          aprovadoPor: data.aprovadoPorId,
+          ...(typeof data.valorAprovado === 'number' && { valorEstimado: data.valorAprovado }),
         },
       });
     } else {
@@ -216,6 +232,8 @@ export class RegulacaoTFDService {
         where: { id: data.solicitacaoId },
         data: {
           status: 'INDEFERIDO',
+          aprovadoPor: data.aprovadoPorId,
+          ...(data.justificativa && { motivoRecusa: data.justificativa }),
         },
       });
     }
@@ -268,6 +286,14 @@ export class RegulacaoTFDService {
         status: 'AGUARDANDO_APROVACAO_GESTAO',
       },
       include: {
+        // Número do protocolo e nome do cidadão para as filas exibirem quem é quem
+        protocol: {
+          select: {
+            id: true,
+            number: true,
+            citizen: { select: { id: true, name: true } },
+          },
+        },
         pareceresRegulacao: {
           where: { status: 'APROVADO' },
           take: 1,

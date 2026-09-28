@@ -132,22 +132,32 @@ export class SolicitacoesTFDService {
    */
   async listarSolicitacoes(filtros: {
     citizenId?: string;
-    status?: StatusSolicitacaoTFD;
+    status?: StatusSolicitacaoTFD | StatusSolicitacaoTFD[];
     dataInicio?: Date;
     dataFim?: Date;
   }) {
+    const statuses = filtros.status ? ([] as StatusSolicitacaoTFD[]).concat(filtros.status) : [];
     return await prisma.solicitacaoTFD.findMany({
       where: {
         ...(filtros.citizenId && { citizenId: filtros.citizenId }),
-        ...(filtros.status && { status: filtros.status }),
-        ...(filtros.dataInicio && {
-          createdAt: { gte: filtros.dataInicio },
-        }),
-        ...(filtros.dataFim && {
-          createdAt: { lte: filtros.dataFim },
+        ...(statuses.length > 0 && { status: { in: statuses as any } }),
+        // Período: antes o filtro de fim sobrescrevia o de início
+        ...((filtros.dataInicio || filtros.dataFim) && {
+          createdAt: {
+            ...(filtros.dataInicio && { gte: filtros.dataInicio }),
+            ...(filtros.dataFim && { lte: filtros.dataFim }),
+          },
         }),
       },
       include: {
+        // Número do protocolo e nome do cidadão para as filas exibirem quem é quem
+        protocol: {
+          select: {
+            id: true,
+            number: true,
+            citizen: { select: { id: true, name: true, cpf: true } },
+          },
+        },
         documentos: {
           select: {
             id: true,
@@ -174,15 +184,26 @@ export class SolicitacoesTFDService {
   /**
    * Atualizar status da solicitação
    */
-  async atualizarStatus(solicitacaoId: string, status: StatusSolicitacaoTFD, observacoes?: string) {
+  async atualizarStatus(
+    solicitacaoId: string,
+    status: StatusSolicitacaoTFD,
+    observacoes?: string,
+    usuarioId?: string
+  ) {
     const dataUpdate: any = { status };
 
     if (status === 'APROVADO_PARA_AGENDAMENTO') {
       dataUpdate.dataAprovacao = new Date();
-    } else if (status === 'CANCELADO' || status === 'INDEFERIDO') {
+    } else if (status === 'CANCELADO' || status === 'INDEFERIDO' || status === ('DOCUMENTACAO_PENDENTE' as any)) {
       if (observacoes) {
         dataUpdate.observacoes = observacoes;
       }
+    }
+
+    // Saída da análise documental: registrar responsável e data
+    if (status === ('AGUARDANDO_REGULACAO_MEDICA' as any) || status === ('DOCUMENTACAO_PENDENTE' as any)) {
+      dataUpdate.dataAnalise = new Date();
+      if (usuarioId) dataUpdate.analisadoPor = usuarioId;
     }
 
     return await prisma.solicitacaoTFD.update({

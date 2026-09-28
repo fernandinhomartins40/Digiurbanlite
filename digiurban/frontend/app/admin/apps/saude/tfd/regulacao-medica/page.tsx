@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { CheckCircle, XCircle, Stethoscope } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { aprovarSolicitacao, listarFilaRegulacao, negarSolicitacao } from '@/lib/api/tfd-api';
 
 interface Solicitacao {
   id: string;
@@ -19,7 +20,7 @@ interface Solicitacao {
   justificativa: string;
   prioridade: string;
   createdAt: string;
-  stageId?: string;
+  citizenName?: string;
 }
 
 export default function FilaRegulacaoMedicaPage() {
@@ -34,57 +35,24 @@ export default function FilaRegulacaoMedicaPage() {
     loadFila();
   }, []);
 
+  // Fila real: solicitações TFD em AGUARDANDO_REGULACAO_MEDICA (documentação já aprovada)
   const loadFila = async () => {
     try {
       setLoading(true);
-
-      // ✅ Buscar protocolos TFD em progresso
-      const response = await fetch('/api/protocols?moduleType=ENCAMINHAMENTOS_TFD&status=PROGRESSO');
-
-      if (!response.ok) {
-        throw new Error('Erro ao carregar fila');
-      }
-
-      const data = await response.json();
-      const protocols = data.protocols || data.data || [];
-
-      // ✅ Filtrar apenas protocolos na etapa de Regulação Médica
-      const protocolsComStages = await Promise.all(
-        protocols.map(async (protocol: any) => {
-          const stagesRes = await fetch(`/api/protocol-stages/${protocol.id}`);
-          if (stagesRes.ok) {
-            const stages = await stagesRes.json();
-            return { ...protocol, stages };
-          }
-          return { ...protocol, stages: [] };
-        })
+      const data = await listarFilaRegulacao();
+      setSolicitacoes(
+        (Array.isArray(data) ? data : []).map((s: any) => ({
+          id: s.id,
+          protocolId: s.protocol?.number || '—',
+          citizenId: s.citizenId,
+          citizenName: s.protocol?.citizen?.name || 'Cidadão',
+          especialidade: s.especialidade || 'Não informado',
+          procedimento: s.procedimento || 'Não informado',
+          justificativa: s.justificativa || 'Não informada',
+          prioridade: s.prioridade || 'ROTINA',
+          createdAt: s.createdAt,
+        }))
       );
-
-      // Filtrar apenas protocolos na etapa "Regulação Médica" com status PENDING ou IN_PROGRESS
-      const protocolsNaEtapa = protocolsComStages.filter((protocol: any) => {
-        const stageRegulacao = protocol.stages?.find(
-          (s: any) => s.stageName === 'Regulação Médica'
-        );
-        return stageRegulacao && ['PENDING', 'IN_PROGRESS'].includes(stageRegulacao.status);
-      });
-
-      // ✅ Mapear protocolos para formato de solicitações
-      const solicitacoesMapeadas = protocolsNaEtapa.map((protocol: any) => {
-        const customData = protocol.customData || {};
-        return {
-          id: protocol.id,
-          protocolId: protocol.number,
-          citizenId: protocol.citizenId,
-          especialidade: customData.especialidade || 'Não informado',
-          procedimento: customData.procedimento || customData.motivoEncaminhamento || 'Não informado',
-          justificativa: customData.justificativaClinica || 'Não informada',
-          prioridade: customData.prioridade || 'ROTINA',
-          createdAt: protocol.createdAt,
-          stageId: protocol.stages?.find((s: any) => s.stageName === 'Regulação Médica')?.id,
-        };
-      });
-
-      setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
       toast({
@@ -119,48 +87,17 @@ export default function FilaRegulacaoMedicaPage() {
 
     setLoading(true);
     try {
-      // ✅ Atualizar a stage de Regulação Médica
-      const stageId = selectedSolicitacao.stageId;
-
-      if (!stageId) {
-        throw new Error('Stage ID não encontrado');
-      }
-
-      const response = await fetch(`/api/protocol-stages/${stageId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: aprovado ? 'COMPLETED' : 'FAILED',
-          completedBy: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
-          result: aprovado ? 'APROVADO' : 'NEGADO',
-          notes: parecer,
-          metadata: {
-            prioridade: aprovado ? prioridade : undefined,
-            dataRegulacao: new Date().toISOString(),
-          },
-        }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao processar regulação');
-      }
-
-      // Se negado, atualizar status do protocolo para CANCELADO
-      if (!aprovado) {
-        await fetch(`/api/protocols/${selectedSolicitacao.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'CANCELADO',
-          }),
-        });
+      // Regulador = usuário logado (definido no backend)
+      if (aprovado) {
+        await aprovarSolicitacao(selectedSolicitacao.id, { parecerMedico: parecer.trim(), prioridade });
+      } else {
+        await negarSolicitacao(selectedSolicitacao.id, { motivoNegacao: parecer.trim() });
       }
 
       toast({
         title: aprovado ? 'Regulação Aprovada' : 'Regulação Negada',
         description: `Protocolo ${selectedSolicitacao.protocolId} foi ${
-          aprovado ? 'aprovado e encaminhado para Aprovação da Gestão' : 'negado e cancelado'
+          aprovado ? 'aprovado e encaminhado para Aprovação da Gestão' : 'indeferido'
         }.`,
       });
 
@@ -223,6 +160,7 @@ export default function FilaRegulacaoMedicaPage() {
                       <Badge>{sol.prioridade}</Badge>
                     </div>
                     <div className="space-y-1 text-sm">
+                      <div><strong>Cidadão:</strong> {sol.citizenName}</div>
                       <div><strong>Especialidade:</strong> {sol.especialidade}</div>
                       <div><strong>Procedimento:</strong> {sol.procedimento}</div>
                       <div><strong>Justificativa:</strong> {sol.justificativa}</div>
@@ -230,7 +168,10 @@ export default function FilaRegulacaoMedicaPage() {
                     </div>
                   </div>
 
-                  <Dialog>
+                  <Dialog
+                    open={selectedSolicitacao?.id === sol.id}
+                    onOpenChange={(open) => !open && setSelectedSolicitacao(null)}
+                  >
                     <DialogTrigger asChild>
                       <Button onClick={() => handleOpenDialog(sol)} className="bg-blue-600">
                         <Stethoscope className="h-4 w-4 mr-2" />

@@ -10,6 +10,8 @@ import {
   TFDService,
 } from '../services/tfd';
 import { authenticateToken } from '../middleware/auth';
+import { createDocumentPending } from '../services/protocol-pending.service';
+import { prisma } from '../lib/prisma';
 
 const router = Router();
 
@@ -143,7 +145,10 @@ router.get('/solicitacao', async (req: Request, res: Response) => {
     const filtros = {
       citizenId: req.query.citizenId as string,
       unidadeOrigemId: req.query.unidadeOrigemId as string,
-      status: req.query.status as any,
+      // aceita lista separada por vírgula (ex.: fila documental + pendentes)
+      status: req.query.status
+        ? (String(req.query.status).split(',').map(s => s.trim()).filter(Boolean) as any)
+        : undefined,
       urgente: req.query.urgente === 'true' ? true : req.query.urgente === 'false' ? false : undefined,
       dataInicio: parseDateParam(req.query.dataInicio),
       dataFim: parseDateParam(req.query.dataFim),
@@ -201,9 +206,72 @@ router.put('/solicitacao/:id/status', async (req: Request, res: Response) => {
     const solicitacao = await SolicitacoesTFDService.atualizarStatus(
       req.params.id,
       status,
-      observacoes
+      observacoes,
+      req.userId || (req.user as any)?.id
     );
     res.json(solicitacao);
+  } catch (error: any) {
+    res.status(400).json({ error: error.message });
+  }
+});
+
+/**
+ * POST /api/saude/tfd/solicitacao/:id/analise-documental
+ * Decisão da análise documental.
+ * - aprovado: avança para a regulação médica;
+ * - recusado: DOCUMENTACAO_PENDENTE e cria uma pendência de documento no
+ *   protocolo para cada item — o cidadão vê em "Aguardando você" e envia pelo portal.
+ */
+router.post('/solicitacao/:id/analise-documental', async (req: Request, res: Response) => {
+  try {
+    const usuarioId = req.userId || (req.user as any)?.id;
+    if (!usuarioId) {
+      return res.status(401).json({ error: 'Usuario autenticado e obrigatorio' });
+    }
+
+    const aprovado = req.body?.aprovado === true;
+    const observacoes: string | undefined = req.body?.observacoes?.trim() || undefined;
+    const documentosPendentes: string[] = Array.isArray(req.body?.documentosPendentes)
+      ? req.body.documentosPendentes.map((d: unknown) => String(d).trim()).filter(Boolean)
+      : [];
+
+    if (!aprovado && documentosPendentes.length === 0) {
+      return res.status(400).json({ error: 'Informe ao menos um documento pendente' });
+    }
+
+    const atual = await prisma.solicitacaoTFD.findUnique({
+      where: { id: req.params.id },
+      select: { id: true, status: true, protocolId: true },
+    });
+    if (!atual) {
+      return res.status(404).json({ error: 'Solicitação TFD não encontrada' });
+    }
+    if (!['AGUARDANDO_ANALISE_DOCUMENTAL', 'DOCUMENTACAO_PENDENTE'].includes(atual.status)) {
+      return res.status(409).json({ error: 'Solicitação não está na etapa de análise documental' });
+    }
+
+    const resumo = aprovado
+      ? observacoes
+      : [`Documentos pendentes: ${documentosPendentes.join(', ')}`, observacoes].filter(Boolean).join('. ');
+
+    const solicitacao = await SolicitacoesTFDService.atualizarStatus(
+      atual.id,
+      (aprovado ? 'AGUARDANDO_REGULACAO_MEDICA' : 'DOCUMENTACAO_PENDENTE') as any,
+      resumo,
+      usuarioId
+    );
+
+    let pendenciasCriadas = 0;
+    if (!aprovado) {
+      for (const documento of documentosPendentes) {
+        await createDocumentPending(atual.protocolId, documento, usuarioId, undefined, {
+          sourceType: 'TFD_ANALISE_DOCUMENTAL',
+        });
+        pendenciasCriadas++;
+      }
+    }
+
+    res.json({ solicitacao, pendenciasCriadas });
   } catch (error: any) {
     res.status(400).json({ error: error.message });
   }
@@ -220,7 +288,8 @@ router.post('/solicitacao/:id/aprovar', async (req: Request, res: Response) => {
       solicitacaoId: req.params.id,
       reguladorId,
       aprovado: true,
-      prioridade: 'MEDIA' as any,
+      // prioridade reclassificada pelo regulador (validada no serviço)
+      prioridade: (req.body?.prioridade || 'MEDIA') as any,
       justificativa: req.body?.parecerMedico || req.body?.parecer,
       observacoes: req.body?.recomendacoes || req.body?.observacoes,
     } as any);
@@ -497,7 +566,11 @@ router.post('/regulacao/relatorio', async (req: Request, res: Response) => {
  */
 router.post('/aprovacao-gestao', async (req: Request, res: Response) => {
   try {
-    const aprovacao = await RegulacaoTFDService.criarAprovacaoGestao(req.body);
+    const aprovadoPorId = req.userId || (req.user as any)?.id;
+    if (!aprovadoPorId) {
+      return res.status(401).json({ error: 'Usuario autenticado e obrigatorio' });
+    }
+    const aprovacao = await RegulacaoTFDService.criarAprovacaoGestao({ ...req.body, aprovadoPorId });
     res.status(201).json(aprovacao);
   } catch (error: any) {
     res.status(400).json({ error: error.message });
@@ -506,7 +579,11 @@ router.post('/aprovacao-gestao', async (req: Request, res: Response) => {
 
 router.post('/regulacao/aprovacao-gestao', async (req: Request, res: Response) => {
   try {
-    const aprovacao = await RegulacaoTFDService.criarAprovacaoGestao(req.body);
+    const aprovadoPorId = req.userId || (req.user as any)?.id;
+    if (!aprovadoPorId) {
+      return res.status(401).json({ error: 'Usuario autenticado e obrigatorio' });
+    }
+    const aprovacao = await RegulacaoTFDService.criarAprovacaoGestao({ ...req.body, aprovadoPorId });
     res.status(201).json(aprovacao);
   } catch (error: any) {
     res.status(400).json({ error: error.message });

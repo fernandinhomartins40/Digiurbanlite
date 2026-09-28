@@ -22,6 +22,7 @@ import {
   DollarSign,
   Truck,
 } from 'lucide-react';
+import { obterEstatisticas } from '@/lib/api/tfd-api';
 
 interface TFDStats {
   totalSolicitacoes: number;
@@ -51,37 +52,10 @@ export default function DashboardTFDPage() {
     try {
       setLoading(true);
 
-      // ✅ Buscar protocolos TFD diretamente
-      const response = await fetch('/api/protocols?moduleType=ENCAMINHAMENTOS_TFD');
-
-      if (!response.ok) {
-        throw new Error('Erro ao carregar estatísticas');
-      }
-
-      const data = await response.json();
-      const protocols = data.protocols || data.data || [];
-
-      // Calcular estatísticas dos protocolos
-      const total = protocols.length;
-      const porStatus = protocols.reduce((acc: any, p: any) => {
-        acc[p.status] = (acc[p.status] || 0) + 1;
-        return acc;
-      }, {});
-
-      setStats({
-        totalSolicitacoes: total,
-        aguardandoAnalise: porStatus['VINCULADO'] || 0,
-        aguardandoRegulacao: porStatus['EM_ANALISE'] || 0,
-        aguardandoGestao: porStatus['PENDENCIA'] || 0,
-        agendados: 0,
-        emViagem: 0,
-        realizados: porStatus['CONCLUIDO'] || 0,
-        cancelados: porStatus['CANCELADO'] || 0,
-        viagensHoje: 0,
-        despesasMes: 0,
-        veiculosDisponiveis: 0,
-        motoristasDisponiveis: 0,
-      });
+      // Estatísticas reais do TFD (antes: contagem de protocolos genéricos do
+      // município, com status inexistentes como EM_ANALISE)
+      const data = await obterEstatisticas();
+      setStats(data as TFDStats);
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
 

@@ -22,9 +22,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Plus, Search, Filter, Eye, Download } from 'lucide-react';
+import { listarSolicitacoes } from '@/lib/api/tfd-api';
 
 interface Solicitacao {
   id: string;
+  protocolDbId: string;
   protocolId: string;
   citizenName: string;
   citizenCpf: string;
@@ -52,35 +54,22 @@ export default function SolicitacoesPage() {
     try {
       setLoading(true);
 
-      // ✅ Buscar protocolos TFD diretamente
-      let url = '/api/protocols?moduleType=ENCAMINHAMENTOS_TFD';
-      if (statusFilter !== 'all') url += `&status=${statusFilter}`;
-      if (searchTerm) url += `&search=${encodeURIComponent(searchTerm)}`;
+      // Fonte real: solicitações TFD (antes: /api/protocols com filtro ignorado → todos os protocolos)
+      const data = await listarSolicitacoes(statusFilter !== 'all' ? { status: statusFilter } : undefined);
 
-      const response = await fetch(url);
-
-      if (!response.ok) {
-        throw new Error('Erro ao carregar solicitações');
-      }
-
-      const data = await response.json();
-
-      // Mapear protocolos para formato de solicitações
-      const solicitacoesMapeadas = (data.protocols || data.data || []).map((protocol: any) => {
-        const customData = protocol.customData || {};
-        return {
-          id: protocol.id,
-          protocolId: protocol.number,
-          citizenName: protocol.citizen?.name || 'Não informado',
-          citizenCpf: protocol.citizen?.cpf || '',
-          especialidade: customData.especialidade || customData.especialidadeOutra || 'Não informado',
-          cidadeDestino: customData.cidadeDestino || 'Não informado',
-          status: protocol.status,
-          prioridade: customData.prioridade || 'ROTINA',
-          dataConsulta: customData.dataPreferencialConsulta || null,
-          createdAt: protocol.createdAt,
-        };
-      });
+      const solicitacoesMapeadas = (Array.isArray(data) ? data : []).map((s: any) => ({
+        id: s.id,
+        protocolDbId: s.protocol?.id || s.protocolId,
+        protocolId: s.protocol?.number || '—',
+        citizenName: s.protocol?.citizen?.name || 'Não informado',
+        citizenCpf: s.protocol?.citizen?.cpf || '',
+        especialidade: s.especialidade || 'Não informado',
+        cidadeDestino: s.cidadeDestino || 'Não informado',
+        status: s.status,
+        prioridade: s.prioridade || 'ROTINA',
+        dataConsulta: s.dataConsulta || null,
+        createdAt: s.createdAt,
+      }));
 
       setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
@@ -271,7 +260,7 @@ export default function SolicitacoesPage() {
                         variant="ghost"
                         size="sm"
                         onClick={() =>
-                          router.push(`/admin/apps/saude/tfd/solicitacoes/${sol.id}`)
+                          router.push(`/admin/protocolos/${sol.protocolDbId}`)
                         }
                       >
                         <Eye className="h-4 w-4" />

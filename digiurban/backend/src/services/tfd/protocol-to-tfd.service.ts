@@ -111,39 +111,43 @@ export class ProtocolToTFDService {
       throw new Error('Solicitação TFD não encontrada');
     }
 
-    // Mapear status TFD para status de protocolo
-    let protocolStatus = 'under_review';
+    // Mapear status TFD → enum ProtocolStatus real. Antes gravava valores
+    // inexistentes ('under_review', 'pending'...) — a atualização falhava — e
+    // sobrescrevia TODO o customData (apagaria os dados do formulário do cidadão).
+    let protocolStatus: 'PROGRESSO' | 'PENDENCIA' | 'CONCLUIDO' | 'CANCELADO' = 'PROGRESSO';
 
     switch (solicitacao.status) {
-      case 'AGUARDANDO_ANALISE_DOCUMENTAL':
-      case 'AGUARDANDO_REGULACAO_MEDICA':
-      case 'AGUARDANDO_APROVACAO_GESTAO':
-        protocolStatus = 'under_review';
-        break;
       case 'DOCUMENTACAO_PENDENTE':
-        protocolStatus = 'pending';
-        break;
-      case 'AGENDADO':
-      case 'AGUARDANDO_VIAGEM':
-      case 'EM_VIAGEM':
-        protocolStatus = 'in_progress';
+      case 'AGUARDANDO_COMPLEMENTACAO':
+        protocolStatus = 'PENDENCIA';
         break;
       case 'REALIZADO':
-        protocolStatus = 'completed';
+        protocolStatus = 'CONCLUIDO';
         break;
       case 'CANCELADO':
-        protocolStatus = 'cancelled';
+      case 'INDEFERIDO':
+        protocolStatus = 'CANCELADO';
         break;
     }
+
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: solicitacao.protocolId },
+      select: { customData: true },
+    });
+    const customData =
+      protocol?.customData && typeof protocol.customData === 'object' && !Array.isArray(protocol.customData)
+        ? (protocol.customData as Record<string, unknown>)
+        : {};
 
     await prisma.protocolSimplified.update({
       where: { id: solicitacao.protocolId },
       data: {
-        status: protocolStatus as any,
+        status: protocolStatus,
         customData: {
+          ...customData,
           tfdStatus: solicitacao.status,
           lastSyncAt: new Date().toISOString(),
-        },
+        } as any,
       },
     });
 

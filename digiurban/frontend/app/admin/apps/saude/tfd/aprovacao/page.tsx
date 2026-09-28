@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { CheckCircle, XCircle, DollarSign } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { aprovarGestao, listarAguardandoAprovacaoGestao } from '@/lib/api/tfd-api';
 
 interface Solicitacao {
   id: string;
@@ -36,59 +37,25 @@ export default function FilaAprovacaoGestaoPage() {
     loadFila();
   }, []);
 
+  // Fila real: solicitações TFD com parecer médico aprovado aguardando a gestão
   const loadFila = async () => {
     try {
       setLoading(true);
-
-      // ✅ Buscar protocolos TFD em progresso
-      const response = await fetch('/api/protocols?moduleType=ENCAMINHAMENTOS_TFD&status=PROGRESSO');
-
-      if (!response.ok) {
-        throw new Error('Erro ao carregar fila');
-      }
-
-      const data = await response.json();
-      const protocols = data.protocols || data.data || [];
-
-      // ✅ Filtrar apenas protocolos na etapa de Aprovação Gestão
-      const protocolsComStages = await Promise.all(
-        protocols.map(async (protocol: any) => {
-          const stagesRes = await fetch(`/api/protocol-stages/${protocol.id}`);
-          if (stagesRes.ok) {
-            const stages = await stagesRes.json();
-            return { ...protocol, stages };
-          }
-          return { ...protocol, stages: [] };
-        })
+      const data = await listarAguardandoAprovacaoGestao();
+      setSolicitacoes(
+        (Array.isArray(data) ? data : []).map((s: any) => ({
+          id: s.id,
+          protocolId: s.protocol?.number || '—',
+          citizenId: s.citizenId,
+          especialidade: s.especialidade || 'Não informado',
+          procedimento: s.procedimento || 'Não informado',
+          cidadeDestino: s.cidadeDestino || 'Não informado',
+          estadoDestino: s.estadoDestino || '',
+          hospitalDestino: s.hospitalDestino,
+          prioridade: s.prioridade || 'ROTINA',
+          createdAt: s.createdAt,
+        }))
       );
-
-      // Filtrar apenas protocolos na etapa "Aprovação Gestão" com status PENDING ou IN_PROGRESS
-      const protocolsNaEtapa = protocolsComStages.filter((protocol: any) => {
-        const stageAprovacao = protocol.stages?.find(
-          (s: any) => s.stageName === 'Aprovação Gestão'
-        );
-        return stageAprovacao && ['PENDING', 'IN_PROGRESS'].includes(stageAprovacao.status);
-      });
-
-      // ✅ Mapear protocolos para formato de solicitações
-      const solicitacoesMapeadas = protocolsNaEtapa.map((protocol: any) => {
-        const customData = protocol.customData || {};
-        return {
-          id: protocol.id,
-          protocolId: protocol.number,
-          citizenId: protocol.citizenId,
-          especialidade: customData.especialidade || 'Não informado',
-          procedimento: customData.procedimento || customData.motivoEncaminhamento || 'Não informado',
-          cidadeDestino: customData.cidadeDestino || 'Não informado',
-          estadoDestino: customData.estadoDestino || '',
-          hospitalDestino: customData.hospitalDestino,
-          prioridade: customData.prioridade || 'ROTINA',
-          createdAt: protocol.createdAt,
-          stageId: protocol.stages?.find((s: any) => s.stageName === 'Aprovação Gestão')?.id,
-        };
-      });
-
-      setSolicitacoes(solicitacoesMapeadas);
     } catch (error) {
       console.error('Erro ao carregar fila:', error);
       toast({
@@ -133,49 +100,18 @@ export default function FilaAprovacaoGestaoPage() {
 
     setLoading(true);
     try {
-      // ✅ Atualizar a stage de Aprovação Gestão
-      const stageId = selectedSolicitacao.stageId;
-
-      if (!stageId) {
-        throw new Error('Stage ID não encontrado');
-      }
-
-      const response = await fetch(`/api/protocol-stages/${stageId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          status: aprovado ? 'COMPLETED' : 'FAILED',
-          completedBy: 'CURRENT_USER_ID', // TODO: Pegar do contexto de autenticação
-          result: aprovado ? 'APROVADO' : 'NEGADO',
-          notes: justificativa,
-          metadata: {
-            valorEstimado: aprovado ? parseFloat(valorEstimado) : undefined,
-            dataAprovacao: new Date().toISOString(),
-          },
-        }),
+      // Aprovador = usuário logado (definido no backend); valor aprovado fica registrado
+      await aprovarGestao({
+        solicitacaoId: selectedSolicitacao.id,
+        aprovado,
+        valorAprovado: aprovado ? parseFloat(valorEstimado) : undefined,
+        observacoes: justificativa.trim(),
       });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao processar aprovação');
-      }
-
-      // Atualizar status do protocolo
-      if (!aprovado) {
-        // Se negado, protocolo é CANCELADO
-        await fetch(`/api/protocols/${selectedSolicitacao.id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            status: 'CANCELADO',
-          }),
-        });
-      }
 
       toast({
         title: aprovado ? 'Aprovado pela Gestão' : 'Negado pela Gestão',
         description: `Solicitação ${selectedSolicitacao.protocolId} foi ${
-          aprovado ? 'aprovada e está pronta para agendamento' : 'negada e cancelada'
+          aprovado ? 'aprovada e está pronta para agendamento' : 'indeferida'
         }.`,
       });
 
@@ -257,7 +193,10 @@ export default function FilaAprovacaoGestaoPage() {
                     </div>
                   </div>
 
-                  <Dialog>
+                  <Dialog
+                    open={selectedSolicitacao?.id === sol.id}
+                    onOpenChange={(open) => !open && setSelectedSolicitacao(null)}
+                  >
                     <DialogTrigger asChild>
                       <Button onClick={() => handleOpenDialog(sol)} className="bg-purple-600">
                         <DollarSign className="h-4 w-4 mr-2" />
