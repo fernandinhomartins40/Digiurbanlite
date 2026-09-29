@@ -288,7 +288,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 | **3. Destino explícito do Serviço** ✅ | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
 | **4. Balcão** ✅ | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
 | **5. Espaço da secretaria** ✅ | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
-| **6. Portal do cidadão** | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
+| **6. Portal do cidadão** ✅ | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
 | **7. Consolidações e limpeza** | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
 
 **Como medir:**
@@ -519,3 +519,32 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
   - **Gestora:** vê a aba Configurar com o destino de cada serviço e as sugestões. "Ver todas" abre a página de sugestões e volta para Configurar.
   - **Administrador:** a Saúde mostra os indicadores reais e os 3 apps mais Cadastros. Finanças mostra o aviso de secretaria sem app. Um endereço inválido mostra "Secretaria não encontrada". A URL antiga de módulo continua redirecionando.
 - 26 testes unitários passam, e o build de produção passa.
+
+### 10.6 Status da implementação (Fase 6 — concluída)
+
+**Nova tela inicial do cidadão** (`/cidadao`). Antes o portal abria direto no chat. Agora mostra, de cima para baixo:
+1. **"Do que você precisa?"**: busca nos serviços enquanto a pessoa digita. Cada resultado leva direto a pedir. Sem resultado, sugere perguntar ao assistente ou ver todos os serviços.
+2. **"Aguardando você"**: só aparece quando há pendências (documento, informação, correção…). Cada pedido tem o botão "Responder".
+3. **"Seus pedidos"**: os 5 mais recentes, com número, data e situação em palavras simples (Recebido, Em andamento, Aguardando você, Concluído).
+4. **"Prefere conversar?"**: atalho para o assistente.
+
+**O chat virou o Assistente** (`/cidadao/assistente`), acessível de todas as telas:
+- no computador, pelo botão flutuante "Assistente" (que antes aparecia até na tela de login);
+- no celular, pelo botão central da barra inferior.
+
+`/cidadao/mensagens` e `/cidadao/super-app` levam ao assistente.
+
+**Menus**
+- Barra inferior do celular: Início · Serviços · Assistente · Pedidos · Mais. O defeito que deixava o "Chat" marcado em todas as telas foi corrigido.
+- Menu lateral: Início e Assistente no lugar de "Chat".
+- A tela "Mais" ganhou "Meu perfil" e "Minha família".
+
+**Validação**
+- Playwright no computador, no celular e sem login, 11 passos, sem erros no navegador nem na API:
+  - saudação, "Aguardando você (1)" com a pendência criada e os 2 pedidos;
+  - busca com e sem resultado;
+  - "Responder" abre o pedido;
+  - o botão do assistente aparece nas telas, some dentro do assistente e na tela de login;
+  - os endereços antigos redirecionam;
+  - barra inferior com o item certo marcado;
+  - tela "Mais" completa.

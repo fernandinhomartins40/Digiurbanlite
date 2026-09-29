@@ -5,9 +5,9 @@ import { cn } from '@/lib/utils';
 import {
   Folder,
   FileText,
-  User,
+  Home,
+  Menu,
   MessageCircle,
-  FileCheck,
 } from 'lucide-react';
 
 interface NavItem {
@@ -18,12 +18,26 @@ interface NavItem {
   isFAB?: boolean;
 }
 
+// Início · Serviços · Assistente (centro) · Pedidos · Mais — ARQUITETURA-DE-PRODUTO.md 5.3
 const navItems: NavItem[] = [
+  {
+    id: 'home',
+    label: 'Início',
+    icon: Home,
+    href: '/cidadao',
+  },
   {
     id: 'services',
     label: 'Serviços',
     icon: FileText,
     href: '/cidadao/servicos',
+  },
+  {
+    id: 'assistant',
+    label: 'Assistente',
+    icon: MessageCircle,
+    href: '/cidadao/assistente',
+    isFAB: true,
   },
   {
     id: 'protocols',
@@ -32,23 +46,10 @@ const navItems: NavItem[] = [
     href: '/cidadao/protocolos',
   },
   {
-    id: 'chat',
-    label: 'Chat',
-    icon: MessageCircle,
-    href: '/cidadao',
-    isFAB: true,
-  },
-  {
-    id: 'documents',
-    label: 'Docs',
-    icon: FileCheck,
-    href: '/cidadao/documentos',
-  },
-  {
-    id: 'profile',
-    label: 'Perfil',
-    icon: User,
-    href: '/cidadao/perfil',
+    id: 'more',
+    label: 'Mais',
+    icon: Menu,
+    href: '/cidadao/mais',
   },
 ];
 
@@ -67,7 +68,7 @@ export function BottomNavigation() {
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
       >
         {navItems.map((item) => {
-          const isActive = pathname === item.href || pathname?.startsWith(item.href + '/');
+          const isActive = pathname === item.href || (item.href !== '/cidadao' && pathname?.startsWith(item.href + '/'));
           const Icon = item.icon;
 
           // Renderizar FAB Central (Chat no centro)

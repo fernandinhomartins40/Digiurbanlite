@@ -13,6 +13,7 @@ import {
   ChevronRight,
   ScanFace,
   User,
+  Users,
   Shield,
   MessageSquare
 } from 'lucide-react';
@@ -41,6 +42,20 @@ export default function MaisPage() {
   };
 
   const menuItems: MenuItem[] = [
+    {
+      id: 'profile',
+      label: 'Meu perfil',
+      description: 'Dados pessoais, endereço e contato',
+      icon: User,
+      href: '/cidadao/perfil',
+    },
+    {
+      id: 'family',
+      label: 'Minha família',
+      description: 'Pessoas da sua casa e pedidos em nome delas',
+      icon: Users,
+      href: '/cidadao/familia',
+    },
     {
       id: 'documents',
       label: 'Meus documentos',

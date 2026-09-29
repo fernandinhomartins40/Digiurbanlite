@@ -48,8 +48,13 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
 
   const navigationItems: Array<{ name: string; href: string; icon: any; badge?: string | number }> = [
     {
-      name: 'Chat',
+      name: 'Início',
       href: '/cidadao',
+      icon: LayoutDashboard
+    },
+    {
+      name: 'Assistente',
+      href: '/cidadao/assistente',
       icon: MessageCircle
     },
     {
