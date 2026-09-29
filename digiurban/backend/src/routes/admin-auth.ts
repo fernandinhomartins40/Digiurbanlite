@@ -9,6 +9,8 @@ import { loginRateLimiter } from '../middleware/rate-limit';
 import { accountLockoutMiddleware, recordFailedLogin, resetFailedAttempts } from '../middleware/account-lockout';
 import { logLoginSuccess, logLoginFailed, AUDIT_EVENTS, logAuditEvent } from '../utils/audit-logger';
 import { sanitizeForLog } from '../utils/logger';
+import { getRolePermissions as getEnforcedRolePermissions } from '../middleware/admin-auth';
+import { UserRole } from '@prisma/client';
 
 // ===== TIPOS LOCAIS ISOLADOS - COMPATÍVEIS COM PRISMA REAL =====
 
@@ -618,7 +620,11 @@ function getRolePermissions(role: string): string[] {
     ]
         };
 
-  return rolePermissions[role as keyof RolePermissions] || [];
+  // O frontend decide o que mostrar por esta lista; somamos as permissões que o
+  // middleware realmente aplica (ex.: cadastro de cidadão para todo servidor)
+  // para a interface não esconder o que o servidor pode fazer.
+  const own = rolePermissions[role as keyof RolePermissions] || [];
+  return Array.from(new Set([...own, ...getEnforcedRolePermissions(role as UserRole)]));
 }
 
 // Função tipada para obter estatísticas do usuário

@@ -306,9 +306,10 @@ function ProtocolsQueue() {
             <span className="hidden sm:inline">Atualizar</span>
           </Button>
           {hasPermission('protocols:create') && (
-            <Button onClick={() => setShowServiceSelectorModal(true)}>
+            // Novo pedido em nome de um cidadão = Balcão (identificar → serviço → concluir)
+            <Button onClick={() => router.push('/admin/balcao')}>
               <AlertCircle className="h-4 w-4 mr-2" />
-              Novo Protocolo
+              Novo atendimento
             </Button>
           )}
         </div>

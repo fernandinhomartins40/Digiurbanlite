@@ -286,7 +286,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 | **1. Gestão de Protocolos única** ✅ | Filtros por secretaria e serviço + **vista Dados** por serviço; módulos redirecionam para ela; "Módulo" sai da interface | É a maior fonte de confusão e é tecnicamente a mais madura (seção 10) | **concluída** (ver 10.1) |
 | **2. Fundamentos do contrato** ✅ | Protocolo com *canal*; TFD presencial gerando protocolo; ponte única App→Protocolo; Agricultura em `/apps`; portal sem links quebrados e com uma só tela de documentos | Corrige defeitos reais e fixa a regra | baixo |
 | **3. Destino explícito do Serviço** ✅ | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
-| **4. Balcão** | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
+| **4. Balcão** ✅ | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
 | **5. Espaço da secretaria** | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
 | **6. Portal do cidadão** | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
 | **7. Consolidações e limpeza** | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
@@ -472,3 +472,24 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
   - app de outra secretaria recusado;
   - destino efetivo de serviço sem destino gravado.
 - Playwright: catálogo, edição e assistente. Nenhum erro.
+
+### 10.4 Status da implementação (Fase 4 — concluída)
+
+**Balcão** (`/admin/balcao`, no menu Atendimento e no botão "Novo atendimento" da Gestão de Protocolos). O atendimento presencial tem 3 passos:
+1. **Quem está sendo atendido?** Busca por nome ou CPF (CPF mascarado), com atalhos para cadastrar a pessoa ou identificá-la por biometria.
+2. **Qual serviço?** O servidor vê os serviços das suas secretarias (ADMIN vê todos). Cada serviço mostra para onde o pedido vai ("Vai para: App X" ou "Analisado no protocolo").
+3. **Preencher e concluir.** Usa o formulário do serviço com a pessoa já escolhida. Ao concluir, aparece o **número do pedido** em destaque, com três botões: "Imprimir comprovante", "Outro serviço para esta pessoa" e "Atender outra pessoa".
+
+**Regras**
+- Todo atendimento de balcão gera protocolo com canal `BALCAO` e registra o servidor que atendeu (`createdById`). Se o destino do serviço for um app, o caso aparece nele, como nos pedidos do portal.
+- **Permissões de interface unificadas.** O `/me` devolvia um mapa de permissões antigo e diferente do que o backend aplica, e escondia de quem atende o cadastro de cidadão e o próprio Balcão. Agora ele devolve a união com o mapa do middleware. Além disso, `protocols:create` passou a valer para USER, COORDINATOR e MANAGER, como já estava no mapa canônico `types/roles.ts`. O backend não checa essa permissão, que só libera telas.
+
+**Validação**
+- Playwright com uma coordenadora de Mobilidade, cobrindo o fluxo inteiro:
+  - o menu e o botão "Novo atendimento" abrem o Balcão;
+  - a busca "Maria" encontra a cidadã;
+  - só aparece o serviço da secretaria dela, com o destino;
+  - o formulário é preenchido e enviado, e aparece o número;
+  - "Outro serviço para esta pessoa" volta ao Balcão com a pessoa já escolhida.
+- Nenhum erro no navegador nem na API.
+- No banco: protocolo `2026-000001`, canal `BALCAO`, `createdById` = atendente e carteira criada no app de Carteiras & Gratuidades.

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { ArrowLeft, Send, Loader2, CheckCircle, FileText, Clock, UserCheck, Upload, Search, User } from 'lucide-react';
+import { ArrowLeft, Send, Loader2, CheckCircle, FileText, Clock, UserCheck, Upload, Search, User, Printer, UserPlus, RotateCcw } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAdminAuth } from '@/contexts/AdminAuthContext';
 import { api } from '@/lib/services/api';
@@ -71,6 +71,27 @@ export default function AdminSolicitarServicoPage() {
   const [nameSearch, setNameSearch] = useState('');
   const [searchingCitizen, setSearchingCitizen] = useState(false);
   const [citizenResults, setCitizenResults] = useState<any[]>([]);
+
+  // Balcão: cidadão já escolhido no passo 1 e tela de conclusão com o número
+  const [fromBalcao, setFromBalcao] = useState(false);
+  const [concluded, setConcluded] = useState<{ number: string; citizenName: string; citizenId: string } | null>(null);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    setFromBalcao(params.get('origem') === 'balcao');
+    const citizenId = params.get('cidadao');
+    if (!citizenId) return;
+    apiRequest(`/api/admin/citizens/${citizenId}`)
+      .then((res: any) => {
+        const c = res?.data?.citizen;
+        if (c) {
+          setSelectedCitizen(c);
+          setNameSearch(c.name);
+        }
+      })
+      .catch(() => undefined);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Determinar quais campos usar: do programa selecionado ou do serviço
   const activeFormFields = useMemo(() => {
@@ -317,7 +338,10 @@ export default function AdminSolicitarServicoPage() {
         description: `Protocolo ${data.protocol.number} gerado para ${selectedCitizen.name}`,
       });
 
-      router.push('/admin/protocolos');
+      // Tela de conclusão com o número em destaque (antes: ia para a lista de
+      // protocolos e o número ficava só num aviso passageiro)
+      setConcluded({ number: data.protocol.number, citizenName: selectedCitizen.name, citizenId: selectedCitizen.id });
+      window.scrollTo({ top: 0 });
     } catch (error) {
       console.error('Erro ao solicitar serviço:', error);
       toast.error(
@@ -354,6 +378,45 @@ export default function AdminSolicitarServicoPage() {
     );
   }
 
+  if (concluded) {
+    return (
+      <div className="container mx-auto p-6">
+        <div className="max-w-xl mx-auto">
+          <Card className="border-green-200">
+            <CardContent className="pt-8 pb-8 text-center space-y-5">
+              <CheckCircle className="h-14 w-14 text-green-600 mx-auto" />
+              <div>
+                <p className="text-sm text-gray-600">Pedido registrado para {concluded.citizenName}</p>
+                <p className="text-sm text-gray-600">{service.name}</p>
+              </div>
+              <div className="rounded-lg bg-gray-50 border py-4">
+                <p className="text-xs uppercase tracking-wide text-gray-500">Número do pedido</p>
+                <p className="text-3xl font-bold tracking-wider text-gray-900">{concluded.number}</p>
+              </div>
+              <p className="text-sm text-gray-600">
+                Entregue este número à pessoa. Ela acompanha em &quot;Meus pedidos&quot; no portal do cidadão ou pelo atendimento.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-2 justify-center print:hidden">
+                <Button variant="outline" onClick={() => window.print()}>
+                  <Printer className="h-4 w-4 mr-2" />
+                  Imprimir comprovante
+                </Button>
+                <Button variant="outline" onClick={() => router.push(`/admin/balcao?cidadao=${concluded.citizenId}`)}>
+                  <RotateCcw className="h-4 w-4 mr-2" />
+                  Outro serviço para esta pessoa
+                </Button>
+                <Button onClick={() => router.push('/admin/balcao')}>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Atender outra pessoa
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
   const isProgramEnrollment = service?.moduleType && MODULE_TO_API_TYPE[service.moduleType];
   const programApiType = isProgramEnrollment && service?.moduleType ? MODULE_TO_API_TYPE[service.moduleType] : null;
 
@@ -366,11 +429,18 @@ export default function AdminSolicitarServicoPage() {
             variant="ghost"
             size="sm"
             className="mb-4"
-            onClick={() => router.back()}
+            onClick={() =>
+              fromBalcao && selectedCitizen
+                ? router.push(`/admin/balcao?cidadao=${selectedCitizen.id}`)
+                : router.back()
+            }
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar
+            {fromBalcao ? 'Trocar serviço' : 'Voltar'}
           </Button>
+          {fromBalcao && (
+            <p className="mb-2 text-sm font-medium text-primary">Balcão · Passo 3 de 3 — preencher e concluir</p>
+          )}
 
           {/* Badge indicando modo admin */}
           {user && (

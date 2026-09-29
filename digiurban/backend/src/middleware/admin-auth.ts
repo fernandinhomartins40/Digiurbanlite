@@ -306,11 +306,12 @@ export const addDataFilter = (req: Request, res: Response, next: NextFunction): 
 /**
  * Função para obter permissões baseadas na função
  */
-function getRolePermissions(role: UserRole): string[] {
+export function getRolePermissions(role: UserRole): string[] {
   const rolePermissions: Record<UserRole, string[]> = {
     [UserRole.GUEST]: [],
     [UserRole.USER]: [
       'protocols:read',
+      'protocols:create',
       'protocols:update',
       'protocols:comment',
       'department:read',
@@ -325,6 +326,7 @@ function getRolePermissions(role: UserRole): string[] {
     ],
     [UserRole.COORDINATOR]: [
       'protocols:read',
+      'protocols:create',
       'protocols:update',
       'protocols:assign',
       'protocols:comment',
@@ -342,6 +344,7 @@ function getRolePermissions(role: UserRole): string[] {
     ],
     [UserRole.MANAGER]: [
       'protocols:read',
+      'protocols:create',
       'protocols:update',
       'protocols:assign',
       'protocols:comment',

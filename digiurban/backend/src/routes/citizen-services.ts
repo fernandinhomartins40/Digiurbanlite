@@ -904,7 +904,8 @@ router.post('/:id/request', (req, res, next) => {
       serviceId,
       formData: moduleFormData,
       description, // Descri+º+úo fornecida pelo cidad+úo
-      createdById: undefined, // Cidad+úo criando
+      // No balcão, registra o servidor que atendeu (rastreabilidade)
+      createdById: adminCitizenId && (req as any).user ? (req as any).user.id : undefined,
       latitude: locationData?.latitude,
       longitude: locationData?.longitude,
       address: locationData?.address,

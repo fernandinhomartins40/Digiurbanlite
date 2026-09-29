@@ -1,5 +1,6 @@
 import type { LucideIcon } from 'lucide-react';
 import {
+  Store,
   AlertCircle,
   Award,
   BarChart3,
@@ -103,6 +104,14 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           icon: FileText,
           permissions: ['protocols:read'],
           badge: numberBadge(stats?.pendingProtocols),
+        },
+        {
+          // Atendimento presencial em 3 passos (sempre gera protocolo)
+          title: 'Balcão',
+          href: '/admin/balcao',
+          icon: Store,
+          permissions: ['protocols:create'],
+          badge: 'NOVO',
         },
         {
           title: 'Cidadãos',
