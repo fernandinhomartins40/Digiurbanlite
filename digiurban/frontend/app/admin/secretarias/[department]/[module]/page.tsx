@@ -1,33 +1,18 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { DynamicModuleView } from '@/components/core/DynamicModuleView';
+import { LegacyModuleRedirect } from '@/components/protocols/LegacyModuleRedirect';
 
 /**
- * 🎯 ROTA CATCH-ALL DINÂMICA PARA TODOS OS MÓDULOS
- *
- * Esta página única substitui 91 arquivos hardcoded de módulos.
- * Funciona para TODAS as secretarias e TODOS os módulos automaticamente.
- *
- * Exemplos de rotas suportadas:
- * - /admin/secretarias/agricultura/cadastro-produtor
- * - /admin/secretarias/saude/agendamento-consultas
- * - /admin/secretarias/educacao/matriculas
- *
- * O DynamicModuleView busca o service do backend via:
- * GET /api/services/:department/:module
- *
- * E renderiza automaticamente:
- * - Tabela com colunas do formSchema
- * - Modal de criar protocolo com DynamicForm
- * - Modal de detalhes com ApprovalActions
- * - Features condicionais (calendário, mapa, documentos)
+ * Antiga página de "módulo" por serviço. Os módulos deixaram de existir
+ * (ARQUITETURA-DE-PRODUTO.md, seção 10): tudo o que ela mostrava — fila do
+ * serviço e dados dos formulários — está na Gestão de Protocolos, filtrada
+ * pelo serviço, na vista "Dados dos formulários".
  */
-export default function ModulePage() {
+export default function LegacyModulePage() {
   const params = useParams();
-
   return (
-    <DynamicModuleView
+    <LegacyModuleRedirect
       department={params.department as string}
       module={params.module as string}
     />

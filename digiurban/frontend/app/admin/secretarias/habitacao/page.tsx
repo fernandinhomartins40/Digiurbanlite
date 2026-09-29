@@ -143,7 +143,7 @@ export default function SecretariaHabitacaoPage() {
       <div>
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-semibold">Sugestões de Serviços com Dados</h2>
+            <h2 className="text-2xl font-semibold">Sugestões de novos serviços</h2>
             <p className="text-sm text-muted-foreground">
               Crie serviços com formulários dinâmicos baseados em sugestões inteligentes
             </p>
@@ -261,7 +261,7 @@ export default function SecretariaHabitacaoPage() {
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
               <Info className="h-5 w-5 text-blue-600" />
-              Como funcionam os Serviços COM_DADOS?
+              Como funcionam os serviços com formulário?
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -271,8 +271,8 @@ export default function SecretariaHabitacaoPage() {
                 <ul className="space-y-1 text-muted-foreground">
                   <li>✅ Formulários dinâmicos e customizáveis</li>
                   <li>✅ Validação automática de campos</li>
-                  <li>✅ Dados armazenados em JSON estruturado</li>
-                  <li>✅ Workflows e SLA configuráveis</li>
+                  <li>✅ Dados do formulário guardados em cada pedido</li>
+                  <li>✅ Etapas e prazos configuráveis</li>
                   <li>✅ Aprovação/Rejeição integrada</li>
                 </ul>
               </div>

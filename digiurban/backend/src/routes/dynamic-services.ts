@@ -13,6 +13,7 @@ const router = Router();
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
 import { prisma } from '../lib/prisma';
+import { tryGetTenantId } from '../lib/tenant-context';
 
 // ============================================================
 // REDIS CONFIGURATION
@@ -117,7 +118,7 @@ function slugToDepartmentName(slug: string): string {
 // ============================================================
 router.get('/services/:department/:module', authenticateToken, async (req: Request, res: Response) => {
   const { department, module } = req.params;
-  const cacheKey = `service:${department}:${module}`;
+  const cacheKey = `t:${tryGetTenantId() || 'default'}:service:${department}:${module}`;
 
   try {
     // 1️⃣ Tenta buscar do cache Redis
@@ -226,7 +227,7 @@ router.get('/services/list', authenticateToken, async (req: Request, res: Respon
 // HELPER: Invalidar cache (usado internamente)
 // ============================================================
 export async function invalidateServiceCache(department: string, module: string): Promise<void> {
-  const cacheKey = `service:${department}:${module}`;
+  const cacheKey = `t:${tryGetTenantId() || 'default'}:service:${department}:${module}`;
   await deleteCache(cacheKey);
   console.log(`🗑️  Cache invalidado: ${cacheKey}`);
 }

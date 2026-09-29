@@ -44,6 +44,7 @@ import { AssignProtocolDialog } from '@/components/protocols/AssignProtocolDialo
 import { DelegateProtocolDialog } from '@/components/protocols/DelegateProtocolDialog'
 import { ForwardProtocolDialog } from '@/components/protocols/ForwardProtocolDialog'
 import { AssignTeamDialog } from '@/components/protocols/AssignTeamDialog'
+import { ServiceDataView } from '@/components/protocols/ServiceDataView'
 
 interface Protocol {
   id: string
@@ -102,6 +103,10 @@ function ProtocolsQueue() {
   const departmentCode = searchParams.get('departamento') || ''
   const departmentId = searchParams.get('department') || ''
   const citizenId = searchParams.get('citizenId') || ''
+  // Serviço escolhido e vista (fila | dados) — substituem as antigas páginas de "módulo"
+  const serviceId = searchParams.get('servico') || ''
+  const wantsDataView = searchParams.get('vista') === 'dados'
+  const departmentCodeNorm = departmentCode ? departmentCode.toUpperCase().replace(/-/g, '_') : ''
 
   // Links antigos pelo sistema usam outras convenções (status=pending,
   // overdue=true, unassigned=true, priority=high|urgent). Traduz para os
@@ -144,6 +149,30 @@ function ProtocolsQueue() {
 
   const canAssign = hasPermission('protocols:assign')
 
+  // Opções dos filtros: secretarias do usuário e serviços da secretaria escolhida
+  const [filterOptions, setFilterOptions] = useState<{
+    departments: { code: string; name: string }[]
+    services: { id: string; name: string; hasForm: boolean; isActive: boolean }[]
+  }>({ departments: [], services: [] })
+
+  useEffect(() => {
+    if (authLoading || !user) return
+    let active = true
+    const qs = departmentCodeNorm ? `?departmentCode=${departmentCodeNorm}` : ''
+    apiRequest(`/api/protocols/filter-options${qs}`)
+      .then((response: any) => {
+        if (active && response?.success) setFilterOptions(response.data)
+      })
+      .catch((error: unknown) => console.error('Erro ao carregar filtros:', error))
+    return () => {
+      active = false
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [authLoading, user, departmentCodeNorm])
+
+  const selectedService = filterOptions.services.find((s) => s.id === serviceId)
+  const showDataView = !!serviceId && wantsDataView && !!selectedService?.hasForm
+
   const updateParams = useCallback(
     (changes: Record<string, string | null>, resetPage = true) => {
       const params = new URLSearchParams(searchParams.toString())
@@ -183,6 +212,7 @@ function ProtocolsQueue() {
       if (departmentCode) params.set('departmentCode', departmentCode)
       if (departmentId) params.set('departmentId', departmentId)
       if (citizenId) params.set('citizenId', citizenId)
+      if (serviceId) params.set('serviceId', serviceId)
 
       const response = await apiRequest(`/api/protocols?${params.toString()}`)
       setProtocols(response.protocols || [])
@@ -197,17 +227,22 @@ function ProtocolsQueue() {
     }
     // apiRequest é recriado a cada render pelo contexto
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [view, sort, page, statusFilter, priorityFilter, search, departmentCode, departmentId, citizenId])
+  }, [view, sort, page, statusFilter, priorityFilter, search, departmentCode, departmentId, citizenId, serviceId])
 
   const loadSummary = useCallback(async () => {
     try {
-      const response = await apiRequest('/api/protocols/queue-summary')
+      // Contadores respeitam a secretaria/serviço escolhidos
+      const params = new URLSearchParams()
+      if (departmentCodeNorm) params.set('departmentCode', departmentCodeNorm)
+      if (serviceId) params.set('serviceId', serviceId)
+      const qs = params.toString()
+      const response = await apiRequest(`/api/protocols/queue-summary${qs ? `?${qs}` : ''}`)
       if (response?.success) setSummary(response.data || {})
     } catch (error) {
       console.error('Erro ao carregar resumo da fila:', error)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [departmentCodeNorm, serviceId])
 
   useEffect(() => {
     if (!authLoading && user) loadProtocols()
@@ -243,11 +278,10 @@ function ProtocolsQueue() {
   }
 
   const visibleViews = QUEUE_VIEWS.filter((v) => !v.managersOnly || canAssign)
-  const hasContextFilter = !!(departmentCode || departmentId || citizenId)
+  const hasContextFilter = !!(departmentCode || departmentId || citizenId || serviceId)
   const hasExtraFilters = statusFilter !== 'all' || priorityFilter !== 'all' || !!search || hasContextFilter
-  const contextLabel = departmentCode
-    ? `Secretaria: ${departmentCode.replace(/[-_]/g, ' ')}`
-    : departmentId
+  // Secretaria e serviço aparecem nos seletores; o selo fica para os demais contextos
+  const contextLabel = departmentId
       ? 'Filtrando por secretaria'
       : citizenId
         ? 'Protocolos deste cidadão'
@@ -259,7 +293,7 @@ function ProtocolsQueue() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gerenciador de Protocolos</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gestão de Protocolos</h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
             {user?.role === 'USER' ? 'Seus protocolos atribuídos' :
              user?.role === 'ADMIN' ? 'Todos os protocolos municipais' :
@@ -319,6 +353,77 @@ function ProtocolsQueue() {
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
+          {/* Onde: secretaria e serviço (substituem as antigas páginas de módulo) */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-3 sm:mb-4">
+            <Select
+              value={departmentCodeNorm || 'all'}
+              onValueChange={(value) =>
+                updateParams({
+                  departamento: value === 'all' ? null : value.toLowerCase().replace(/_/g, '-'),
+                  servico: null,
+                  vista: null,
+                })
+              }
+            >
+              <SelectTrigger aria-label="Filtrar por secretaria">
+                <SelectValue placeholder="Todas as secretarias" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as secretarias</SelectItem>
+                {filterOptions.departments.map((d) => (
+                  <SelectItem key={d.code} value={d.code}>{d.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={serviceId || 'all'}
+              onValueChange={(value) => updateParams({ servico: value === 'all' ? null : value, vista: null })}
+              disabled={!departmentCodeNorm}
+            >
+              <SelectTrigger aria-label="Filtrar por serviço">
+                <SelectValue placeholder={departmentCodeNorm ? 'Todos os serviços' : 'Escolha a secretaria para filtrar por serviço'} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os serviços</SelectItem>
+                {filterOptions.services.map((svc) => (
+                  <SelectItem key={svc.id} value={svc.id}>
+                    {svc.name}{svc.isActive ? '' : ' (inativo)'}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {selectedService?.hasForm && (
+            <div className="mb-3 sm:mb-4 flex flex-wrap items-center gap-2" role="tablist" aria-label="Forma de visualizar">
+              <span className="text-sm text-gray-600">Ver como:</span>
+              {[
+                { id: 'fila', label: 'Fila de pedidos' },
+                { id: 'dados', label: 'Dados dos formulários' },
+              ].map((opt) => {
+                const selected = (opt.id === 'dados') === wantsDataView
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={selected}
+                    onClick={() => updateParams({ vista: opt.id === 'dados' ? 'dados' : null }, false)}
+                    className={`rounded-full border px-3 py-1 text-sm transition-colors ${
+                      selected ? 'border-primary bg-primary text-primary-foreground' : 'bg-white hover:bg-gray-50 text-gray-700'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
+          {/* Filtros da fila (não se aplicam à vista Dados) */}
+          {!showDataView && (
+          <>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
             <div className="relative">
               <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
@@ -390,7 +495,7 @@ function ProtocolsQueue() {
                 size="sm"
                 onClick={() => {
                   setSearchInput('')
-                  updateParams({ status: null, priority: null, search: null, departamento: null, department: null, citizenId: null })
+                  updateParams({ status: null, priority: null, search: null, departamento: null, department: null, citizenId: null, servico: null, vista: null })
                 }}
               >
                 <X className="h-4 w-4 mr-1" />
@@ -398,11 +503,15 @@ function ProtocolsQueue() {
               </Button>
             )}
           </div>
+          </>
+          )}
         </CardContent>
       </Card>
 
-      {/* Lista de Protocolos */}
-      {loadError ? (
+      {/* Lista de Protocolos (ou os dados dos formulários do serviço escolhido) */}
+      {showDataView ? (
+        <ServiceDataView serviceId={serviceId} />
+      ) : loadError ? (
         <Card>
           <CardContent className="py-8 text-center space-y-3">
             <p className="text-red-600">{loadError}</p>

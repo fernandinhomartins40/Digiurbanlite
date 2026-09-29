@@ -261,7 +261,6 @@ Ver seção 10.
 | `/secretarias/[dept]/servicos-gerais` (serviços sem dados) | Gestão de Protocolos, filtrada pela secretaria | idem |
 | "Dados consolidados" (6 vistas) + módulo "Dados" do Registry (widgets) | **vista Dados** da Gestão de Protocolos (uma implementação só) | seção 10 |
 | "Nova solicitação" dentro do módulo | **Balcão** / "Novo protocolo" | |
-| `/admin/secretaria-modulos` (piloto) | removida | |
 | Sugestões de serviços na página da secretaria | Secretaria › Configurar | |
 | Cards de apps no fim da página | Secretaria › Apps + menu Apps | |
 | `/admin/agricultura/*` | `/admin/apps/agricultura/*` | hoje inalcançável |
@@ -284,7 +283,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 
 | Fase | Entrega | Por que primeiro | Esforço |
 |---|---|---|---|
-| **1. Gestão de Protocolos única** | Filtros por secretaria e serviço (já quase prontos) + **vista Dados** por serviço; módulos redirecionam para ela; "Módulo" sai da interface | É a maior fonte de confusão e é tecnicamente a mais madura (seção 10) | médio |
+| **1. Gestão de Protocolos única** ✅ | Filtros por secretaria e serviço + **vista Dados** por serviço; módulos redirecionam para ela; "Módulo" sai da interface | É a maior fonte de confusão e é tecnicamente a mais madura (seção 10) | **concluída** (ver 10.1) |
 | **2. Fundamentos do contrato** | Protocolo com *canal*; TFD presencial gerando protocolo; ponte única App→Protocolo; Agricultura em `/apps`; portal sem links quebrados e com uma só tela de documentos | Corrige defeitos reais e fixa a regra | baixo |
 | **3. Destino explícito do Serviço** | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
 | **4. Balcão** | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
@@ -374,3 +373,37 @@ Secretaria: [Todas ▾]   Serviço: [Todos ▾]   Busca...   Status ▾   Ordena
 - **Backend:** filtro `serviceId` na fila (já existe); endpoint de colunas do serviço (a partir do `formSchema`); paginação e filtro por campo via Registry.
 - **Frontend:** seletores Secretaria/Serviço na fila; alternância Fila/Dados; porte das 6 vistas; redirecionamentos.
 - Da ordem de alguns dias de trabalho, entregável em partes: primeiro filtros e redirecionamentos (os módulos somem da interface), depois a vista Dados.
+
+### 10.1 Status da implementação (Fase 1 — concluída)
+
+**Backend**
+- `GET /api/protocols/filter-options`: secretarias visíveis ao usuário (ADMIN: todas; equipe: as suas) e serviços da secretaria escolhida, indicando se têm formulário. Também resolve URLs antigas de módulo, tanto pelo `moduleType` quanto pelo nome em slug.
+- `GET /api/protocols/service-data`: dados dos formulários de **todos** os pedidos do serviço, no escopo do usuário, até 2.000. Os antigos módulos só viam os 50 mais recentes.
+- A fila e os contadores (`queue-summary`) respeitam secretaria e serviço.
+- Correção: o cache Redis da busca de serviço por módulo não incluía o município (risco de vazamento entre municípios).
+
+**Frontend**
+- `/admin/protocolos` passou a se chamar "Gestão de Protocolos":
+  - seletores Secretaria e Serviço;
+  - alternância "Fila de pedidos / Dados dos formulários";
+  - os filtros da fila ficam ocultos na vista Dados.
+- `ServiceDataView`: reaproveita as 6 vistas automáticas e, quando o serviço tem tipo de dado no Registry, oferece o **Painel personalizável** (widgets). Nada do antigo módulo "Dados" se perdeu.
+- `/secretarias/[dept]/[module]` e `/secretarias/[dept]/servicos-gerais` redirecionam para a Gestão de Protocolos já filtrada.
+- O bloco "Protocolos e Dados" das 21 secretarias virou a entrada "Pedidos da secretaria", com atalhos para os dados de cada serviço.
+- Termos técnicos ("COM_DADOS", "Módulos de Gestão") saíram das páginas das secretarias.
+
+**Validação**
+- Endpoints testados com perfis reais: ADMIN, secretário da própria secretaria e de outra secretaria. O escopo não vaza.
+- Navegador (Playwright, build de produção):
+  - fila da secretaria;
+  - redirecionamento da URL antiga para a vista Dados;
+  - alternância entre fila e dados;
+  - redirecionamento de "Serviços Gerais";
+  - entrada na página da secretaria;
+  - celular com 390 px sem rolagem lateral;
+  - nenhum erro de console ou de API.
+
+**Pendente para as próximas fases**
+- Remover fisicamente `DynamicModuleView`, `NoDataServicesView`, `tab-modules.ts` e a heurística duplicada (fase 7, após validação em produção).
+- Ativar o Registry em produção, para que o Painel personalizável apareça.
+- Indicadores da página de Agricultura (junto com a mudança do app para `/apps`, fase 2).

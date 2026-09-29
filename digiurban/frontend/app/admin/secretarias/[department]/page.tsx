@@ -173,7 +173,7 @@ export default function DepartmentPage() {
       {modules.length > 0 && (
         <div>
           <div className="mb-6">
-            <h2 className="text-2xl font-semibold">Módulos de Gestão</h2>
+            <h2 className="text-2xl font-semibold">Pedidos por serviço</h2>
             <p className="text-sm text-muted-foreground">
               Gestão de dados estruturados e cadastros do departamento
             </p>

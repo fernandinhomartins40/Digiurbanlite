@@ -33,6 +33,7 @@ import {
   ProtocolQueueView
 } from '../services/protocol-access.service';
 import { escapeHtml } from '../utils/escape-html';
+import { getUserDepartmentCodes } from '../middleware/department-access';
 import { renderPdfFromHtml } from '../utils/render-pdf';
 
 const router = Router();
@@ -76,6 +77,23 @@ const VALID_PROTOCOL_STATUSES = new Set<string>(Object.values(ProtocolStatus));
 const MAX_LIST_LIMIT = 100;
 const QUEUE_VIEWS = new Set<ProtocolQueueView>(['all', 'active', 'mine', 'unassigned', 'overdue', 'due_soon']);
 
+
+/** Filtros de contexto (secretaria, serviço) aplicados à fila, aos contadores e à vista Dados */
+function buildContextFilters(query: any): any[] {
+  const conditions: any[] = [];
+  if (query.departmentCode) {
+    conditions.push({ department: { code: String(query.departmentCode).toUpperCase().replace(/-/g, '_') } });
+  }
+  if (query.serviceId) conditions.push({ serviceId: String(query.serviceId) });
+  return conditions;
+}
+
+function serviceHasForm(service: { formSchema?: any; serviceType?: any }): boolean {
+  const schema = service.formSchema as any;
+  const props = schema?.properties || schema?.fields;
+  return String(service.serviceType) === 'COM_DADOS' || (!!props && Object.keys(props).length > 0);
+}
+
 function getActorScope(req: Request) {
   const authReq = req as AuthenticatedRequest;
   return buildProtocolScopeWhere({
@@ -105,7 +123,7 @@ router.get('/queue-summary', requireMinRole(UserRole.USER), async (req: Request,
     const counts = await Promise.all(
       views.map(view =>
         prisma.protocolSimplified.count({
-          where: { AND: [...scope, ...buildQueueViewConditions(view, userId, now)] }
+          where: { AND: [...scope, ...buildContextFilters(req.query), ...buildQueueViewConditions(view, userId, now)] }
         })
       )
     );
@@ -117,6 +135,131 @@ router.get('/queue-summary', requireMinRole(UserRole.USER), async (req: Request,
   } catch (error: any) {
     console.error('Erro ao contar fila de protocolos:', error);
     return res.status(500).json({ success: false, error: 'Erro ao carregar resumo da fila' });
+  }
+});
+
+/**
+ * GET /api/protocols/filter-options?departmentCode=&moduleType=
+ * Opções dos filtros da Gestão de Protocolos: secretarias que o usuário
+ * pode ver e serviços da secretaria escolhida (indicando se têm formulário).
+ * `moduleType` resolve URLs antigas de "módulo" para o serviço correspondente.
+ */
+router.get('/filter-options', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
+  try {
+    const authReq = req as AuthenticatedRequest;
+    const role = String(authReq.user.role);
+    const fullAccess = role === 'ADMIN' || role === 'SUPER_ADMIN';
+    const userCodes = fullAccess ? [] : await getUserDepartmentCodes(authReq.user as any);
+
+    const departments = await prisma.department.findMany({
+      where: {
+        code: fullAccess ? { not: null } : { in: userCodes.length ? userCodes : ['__none__'] },
+      },
+      select: { id: true, code: true, name: true },
+      orderBy: { name: 'asc' },
+    });
+
+    const departmentCode = req.query.departmentCode
+      ? String(req.query.departmentCode).toUpperCase().replace(/-/g, '_')
+      : null;
+    const department = departmentCode ? departments.find(d => d.code === departmentCode) : null;
+
+    const services = department
+      ? await prisma.serviceSimplified.findMany({
+          where: { departmentId: department.id },
+          select: { id: true, name: true, moduleType: true, serviceType: true, formSchema: true, isActive: true },
+          orderBy: { name: 'asc' },
+        })
+      : [];
+
+    // URLs antigas de "módulo" usavam ora o moduleType, ora o nome do serviço
+    // em slug (department-stats) — resolve os dois formatos
+    const slugify = (value: string) =>
+      value
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[̀-ͯ]/g, '')
+        .replace(/[^a-z0-9\s_-]/g, '')
+        .trim()
+        .replace(/[\s_]+/g, '-');
+    const moduleType = req.query.moduleType ? String(req.query.moduleType) : null;
+    const resolved = moduleType
+      ? services.find(s => s.moduleType === moduleType) ||
+        services.find(s => s.moduleType && slugify(s.moduleType) === slugify(moduleType)) ||
+        services.find(s => slugify(s.name) === slugify(moduleType))
+      : null;
+
+    return res.json({
+      success: true,
+      data: {
+        departments: departments.map(d => ({ code: d.code, name: d.name })),
+        services: services.map(s => ({
+          id: s.id,
+          name: s.name,
+          isActive: s.isActive,
+          hasForm: serviceHasForm(s),
+        })),
+        resolvedServiceId: resolved?.id ?? null,
+      },
+    });
+  } catch (error: any) {
+    console.error('Erro ao carregar opções de filtro:', error);
+    return res.status(500).json({ success: false, error: 'Erro ao carregar filtros' });
+  }
+});
+
+/**
+ * GET /api/protocols/service-data?serviceId=
+ * Vista Dados da Gestão de Protocolos: os dados do formulário de TODOS os
+ * protocolos do serviço (no escopo do usuário). Substitui a aba "Dados
+ * consolidados" dos antigos módulos, que via só os 50 mais recentes.
+ */
+const SERVICE_DATA_LIMIT = 2000;
+router.get('/service-data', requireMinRole(UserRole.USER), async (req: Request, res: Response) => {
+  try {
+    const serviceId = req.query.serviceId ? String(req.query.serviceId) : '';
+    if (!serviceId) {
+      return res.status(400).json({ success: false, error: 'Informe o serviço' });
+    }
+
+    const service = await prisma.serviceSimplified.findFirst({
+      where: { id: serviceId },
+      select: {
+        id: true, name: true, description: true, moduleType: true, serviceType: true, formSchema: true,
+        department: { select: { id: true, name: true, code: true } },
+      },
+    });
+    if (!service) {
+      return res.status(404).json({ success: false, error: 'Serviço não encontrado' });
+    }
+
+    const where = { AND: [...getActorScope(req), { serviceId }] };
+    const [protocols, total] = await Promise.all([
+      prisma.protocolSimplified.findMany({
+        where,
+        select: {
+          id: true, number: true, status: true, createdAt: true, updatedAt: true, concludedAt: true,
+          customData: true, latitude: true, longitude: true, address: true,
+          citizen: { select: { id: true, name: true, cpf: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: SERVICE_DATA_LIMIT,
+      }),
+      prisma.protocolSimplified.count({ where }),
+    ]);
+
+    return res.json({
+      success: true,
+      data: {
+        service: { ...service, hasForm: serviceHasForm(service) },
+        protocols,
+        total,
+        truncated: total > protocols.length,
+      },
+    });
+  } catch (error: any) {
+    console.error('Erro ao carregar dados do serviço:', error);
+    return res.status(500).json({ success: false, error: 'Erro ao carregar os dados do serviço' });
   }
 });
 
