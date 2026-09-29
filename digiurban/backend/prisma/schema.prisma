@@ -1036,6 +1036,8 @@ model ProtocolSimplified {
   // Gestão
   assignedUserId String?
   createdById    String?
+  // Porta de entrada do pedido: PORTAL | BOT | BALCAO (null = anterior à Fase 2)
+  channel        String?
 
   // ✅ FASE 1: Workflow tracking
   currentStageId String? // Stage atual em execução

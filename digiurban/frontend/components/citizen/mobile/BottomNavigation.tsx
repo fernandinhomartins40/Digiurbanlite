@@ -27,7 +27,7 @@ const navItems: NavItem[] = [
   },
   {
     id: 'protocols',
-    label: 'Protocolos',
+    label: 'Pedidos',
     icon: Folder,
     href: '/cidadao/protocolos',
   },

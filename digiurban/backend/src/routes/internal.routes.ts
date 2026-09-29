@@ -563,6 +563,7 @@ router.post(
         formData: moduleFormData,
         description: description || '',
         createdById: undefined,
+        channel: 'BOT',
       });
 
       const uploadedFiles = ((req as any).files || []) as Express.Multer.File[];

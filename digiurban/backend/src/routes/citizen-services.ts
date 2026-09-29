@@ -908,7 +908,9 @@ router.post('/:id/request', (req, res, next) => {
       latitude: locationData?.latitude,
       longitude: locationData?.longitude,
       address: locationData?.address,
-      attachments: attachments as any
+      attachments: attachments as any,
+      // Servidor pedindo em nome do cidadão = balcão; senão, o próprio cidadão no portal
+      channel: adminCitizenId && (req as any).user ? 'BALCAO' : 'PORTAL'
         });
 
     console.log(`Ô£à Protocolo ${result.protocol.number} criado ${result.hasModule ? 'COM m+¦dulo' : 'SEM m+¦dulo'}`);

@@ -13,6 +13,7 @@ import {
   StatusViagemTFD,
   StatusPrestacaoContas,
 } from '../../types/saude-tfd.types';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 
 export class ViagensTFDService {
@@ -257,7 +258,32 @@ export class ViagensTFDService {
    * Concluir viagem
    */
   async concluirViagem(viagemId: string, observacoes?: string) {
-    return await this.atualizarStatus(viagemId, 'CONCLUIDA', observacoes);
+    const viagem = await this.atualizarStatus(viagemId, 'CONCLUIDA', observacoes);
+
+    // Retorno registrado: o tratamento foi realizado para o paciente da viagem e
+    // para cada passageiro com solicitação própria. Antes esta rota só mudava a
+    // viagem — as solicitações e os protocolos ficavam abertos para sempre.
+    const completa = await prisma.viagemTFD.findUnique({
+      where: { id: viagemId },
+      select: { solicitacaoTFDId: true, passageiros: { select: { solicitacaoId: true } } },
+    });
+    const ids = [...new Set([completa?.solicitacaoTFDId, ...(completa?.passageiros || []).map((p) => p.solicitacaoId)])]
+      .filter(Boolean) as string[];
+    const abertas = await prisma.solicitacaoTFD.findMany({
+      where: { id: { in: ids }, status: { notIn: ['REALIZADO', 'CANCELADO', 'INDEFERIDO'] as any } },
+      select: { id: true, protocolId: true },
+    });
+    for (const sol of abertas) {
+      await prisma.solicitacaoTFD.update({ where: { id: sol.id }, data: { status: 'REALIZADO' as any } });
+      await concludeProtocolFromApp({
+        protocolId: sol.protocolId,
+        app: 'TFD',
+        message: 'Tratamento realizado — retorno da viagem registrado',
+        outcome: 'DEFERIDO',
+      });
+    }
+
+    return viagem;
   }
 
   /**

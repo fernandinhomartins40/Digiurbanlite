@@ -284,7 +284,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 | Fase | Entrega | Por que primeiro | Esforço |
 |---|---|---|---|
 | **1. Gestão de Protocolos única** ✅ | Filtros por secretaria e serviço + **vista Dados** por serviço; módulos redirecionam para ela; "Módulo" sai da interface | É a maior fonte de confusão e é tecnicamente a mais madura (seção 10) | **concluída** (ver 10.1) |
-| **2. Fundamentos do contrato** | Protocolo com *canal*; TFD presencial gerando protocolo; ponte única App→Protocolo; Agricultura em `/apps`; portal sem links quebrados e com uma só tela de documentos | Corrige defeitos reais e fixa a regra | baixo |
+| **2. Fundamentos do contrato** ✅ | Protocolo com *canal*; TFD presencial gerando protocolo; ponte única App→Protocolo; Agricultura em `/apps`; portal sem links quebrados e com uma só tela de documentos | Corrige defeitos reais e fixa a regra | baixo |
 | **3. Destino explícito do Serviço** | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
 | **4. Balcão** | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
 | **5. Espaço da secretaria** | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
@@ -407,3 +407,40 @@ Secretaria: [Todas ▾]   Serviço: [Todos ▾]   Busca...   Status ▾   Ordena
 - Remover fisicamente `DynamicModuleView`, `NoDataServicesView`, `tab-modules.ts` e a heurística duplicada (fase 7, após validação em produção).
 - Ativar o Registry em produção, para que o Painel personalizável apareça.
 - Indicadores da página de Agricultura (junto com a mudança do app para `/apps`, fase 2).
+
+### 10.2 Status da implementação (Fase 2 — concluída)
+
+**Canal do pedido.** O protocolo ganhou `channel` (PORTAL | BOT | BALCAO), gravado em cada porta de entrada:
+- portal do cidadão = PORTAL;
+- bot = BOT;
+- servidor pedindo em nome do cidadão = BALCAO.
+
+A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada em banco com e sem a coluna.
+
+**TFD: dois defeitos graves corrigidos.**
+- **Pedido digital nunca chegava ao app.** A conversão protocolo→TFD gravava `protocolId` = id do fluxo (chave estrangeira inválida), omitia campos obrigatórios e usava a prioridade `NORMAL`, que não existe no enum. Falhava sempre, em silêncio. Agora a solicitação nasce vinculada ao protocolo real, com todos os campos.
+- **Atendimento presencial inventava protocolo** (`TFD-<hora>`). Agora gera o protocolo pelo serviço de TFD do município (canal BALCAO, em nome do cidadão), e a tela mostra ao servidor o número a entregar ao cidadão.
+- Concluir uma viagem agora marca como realizadas as solicitações do paciente e dos passageiros. Antes, elas ficavam abertas para sempre.
+
+**Ponte única App → Protocolo** (`services/apps/app-protocol-bridge.service.ts`).
+- Substitui 10 cópias de `concluirProtocolo`: licenciamento, meio ambiente, habitação, defesa civil, mulheres, esportes, cultura, trânsito, mobilidade e OS de serviços públicos. Essas cópias gravavam o status direto no banco.
+- Agora tudo passa pelo **motor de status**: histórico com o motivo que o cidadão vê, SLA encerrado e notificação.
+- No TFD, a documentação aprovada coloca o pedido em "Em progresso", e o indeferimento (regulação ou gestão) e a realização concluem o pedido com o motivo.
+- No caso de Políticas para Mulheres, que é sigiloso, a mensagem ao cidadão não expõe detalhes.
+
+**Agricultura.** O app foi para `/admin/apps/agricultura`:
+- tem tela inicial com as 5 áreas;
+- as URLs antigas redirecionam;
+- a página da secretaria ganhou o card do app e indicadores reais de produtores;
+- "ver produtor" abre o pedido de origem ou a ficha do cidadão. Antes levava a páginas que não existiam.
+
+**Portal do cidadão.**
+- "Meus pedidos" no menu lateral, no menu inferior, no início e no título.
+- Uma só tela "Meus documentos", com as abas "Documentos pessoais" e "Assinaturas digitais". A antiga `/meus-documentos` abre a aba certa.
+- "Mais" perdeu os 5 links para páginas inexistentes e o contador fixo "3" de notificações.
+
+**Validação.**
+- Backend real: pedido digital de TFD (PORTAL, caso criado com prioridade e destino); pedido presencial (BALCAO, criador = médico); ciclo documentação → regulação → gestão → viagem, com histórico `CRIACAO → INICIO_EXECUCAO → CONCLUSAO` e os motivos; indeferimento com motivo.
+- Playwright no build de produção: redirecionamento e tela inicial da Agricultura; card e indicadores da secretaria; "Meus pedidos"; abas de documentos; redirecionamento de `/meus-documentos`; "Mais" sem links quebrados. Nenhum erro.
+
+**Registrado para depois.** A atribuição de servidor e o início de fluxo de etapas ainda gravam `PROGRESSO` direto no protocolo (são fluxos internos do protocolo, não de apps).

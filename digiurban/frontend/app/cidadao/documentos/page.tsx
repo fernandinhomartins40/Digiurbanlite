@@ -9,6 +9,7 @@ import { FileText, Download, Trash2, Upload, Calendar, CheckCircle, AlertCircle,
 import { apiClient } from '@/lib/api-client';
 import { DocumentScanner } from '@/components/common/DocumentScanner';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import { AssinaturasDigitaisPanel } from '@/components/citizen/AssinaturasDigitaisPanel';
 
 // Componente para carregar imagem de forma assíncrona
 function DocumentImage({ documentId, fileName, className }: { documentId: string; fileName: string; className?: string }) {
@@ -99,7 +100,20 @@ const DOCUMENT_TYPES = [
   { value: 'outro', label: 'Outro Documento' }
 ];
 
+type AbaDocumentos = 'pessoais' | 'assinaturas';
+
 export default function DocumentosPage() {
+  // Uma só tela "Meus documentos" com duas abas (antes: duas páginas com o
+  // mesmo título; a de assinaturas não tinha link no portal)
+  const [aba, setAba] = useState<AbaDocumentos>('pessoais');
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('aba') === 'assinaturas') setAba('assinaturas');
+  }, []);
+  const trocarAba = (nova: AbaDocumentos) => {
+    setAba(nova);
+    const url = nova === 'assinaturas' ? '/cidadao/documentos?aba=assinaturas' : '/cidadao/documentos';
+    window.history.replaceState(null, '', url);
+  };
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploadingType, setUploadingType] = useState<string | null>(null);
@@ -316,11 +330,36 @@ export default function DocumentosPage() {
     <CitizenLayout>
       <div className="space-y-6 animate-fade-in">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Meus Documentos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Meus documentos</h1>
           <p className="text-sm text-gray-600 mt-0.5">
-            Gerencie seus documentos digitalizados. Utilize a câmera para melhor qualidade de digitalização.
+            Seus documentos pessoais e os documentos para assinatura digital, num só lugar.
           </p>
         </div>
+
+        <div className="flex gap-2 border-b" role="tablist" aria-label="Tipo de documento">
+          {([
+            { id: 'pessoais', label: 'Documentos pessoais' },
+            { id: 'assinaturas', label: 'Assinaturas digitais' },
+          ] as { id: AbaDocumentos; label: string }[]).map((opt) => (
+            <button
+              key={opt.id}
+              type="button"
+              role="tab"
+              aria-selected={aba === opt.id}
+              onClick={() => trocarAba(opt.id)}
+              className={`-mb-px border-b-2 px-3 py-2 text-sm font-medium transition-colors ${
+                aba === opt.id ? 'border-blue-600 text-blue-700' : 'border-transparent text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
+        </div>
+
+        {aba === 'assinaturas' ? (
+          <AssinaturasDigitaisPanel />
+        ) : (
+        <>
 
 
       {/* Upload de Novos Documentos */}
@@ -809,6 +848,8 @@ export default function DocumentosPage() {
           }}
         />
       )}
+        </>
+        )}
       </div>
     </CitizenLayout>
   );

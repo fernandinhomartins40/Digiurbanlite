@@ -123,7 +123,8 @@ export default function NovaSolicitacaoTFDPage() {
       });
 
       if (!response.ok) {
-        throw new Error(await response.text());
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Não foi possível registrar a solicitação');
       }
 
       const solicitacao = await response.json();
@@ -153,7 +154,13 @@ export default function NovaSolicitacaoTFDPage() {
         );
       }
 
-      alert('Solicitação TFD criada com sucesso!');
+      // Atendimento presencial também gera protocolo: o cidadão acompanha por ele
+      const numero = solicitacao?.protocol?.number;
+      alert(
+        numero
+          ? `Solicitação registrada. Protocolo nº ${numero} — entregue este número ao cidadão para acompanhar em "Meus pedidos".`
+          : 'Solicitação TFD registrada com sucesso!'
+      );
       router.push('/admin/apps/saude/tfd/solicitacoes');
     } catch (error: any) {
       console.error('Erro ao criar solicitação:', error);

@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Ordens de Serviço — Serviços Públicos (Fase 1D do plano de apps).
@@ -190,16 +191,12 @@ class OrdemServicoService {
     });
 
     // Retroalimenta o protocolo de origem (NÃO-FATAL, padrão materializeOnApproval)
-    if (ordem.protocolId) {
-      try {
-        await prisma.protocolSimplified.update({
-          where: { id: ordem.protocolId },
-          data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-        });
-      } catch (error) {
-        logger.warn(`OS ${ordem.numero}: falha ao concluir protocolo ${ordem.protocolId} (não-fatal)`, error);
-      }
-    }
+    await concludeProtocolFromApp({
+      protocolId: ordem.protocolId,
+      app: 'Serviços Públicos',
+      message: `Ordem de serviço ${ordem.numero} concluída`,
+      actorId: data?.userId,
+    });
     return atualizada;
   }
 

@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Escolinhas & Espaços Esportivos (Fase 2, blueprints B5 + B6 + B3-lite)
@@ -498,15 +499,8 @@ class EsportesService {
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */
   private async concluirProtocolo(protocolId: string | null | undefined, motivo: string) {
-    if (!protocolId) return;
-    try {
-      await prisma.protocolSimplified.update({
-        where: { id: protocolId },
-        data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-      });
-    } catch (error) {
-      logger.warn(`Esportes: falha ao concluir protocolo ${protocolId} (não-fatal) — ${motivo}`, error);
-    }
+    // Ponte única: motor de status, histórico com motivo, SLA e notificação (não-fatal)
+    await concludeProtocolFromApp({ protocolId: protocolId, app: 'Esportes', message: motivo });
   }
 
   async getStatistics() {

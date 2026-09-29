@@ -137,7 +137,7 @@ export default function ProtocolosPage() {
       <div className="space-y-6 animate-fade-in">
         {/* Header */}
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Meus Protocolos</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Meus pedidos</h1>
           <p className="text-sm text-gray-600 mt-0.5">Acompanhe o status das suas solicitações</p>
         </div>
 

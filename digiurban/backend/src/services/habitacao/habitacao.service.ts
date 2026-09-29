@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Programas Habitacionais (Fase 2, blueprint B6 + fila) — Habitação.
@@ -345,18 +346,8 @@ class HabitacaoService {
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */
   private async concluirProtocolo(inscricao: { protocolId: string | null; id: string }, motivo: string) {
-    if (!inscricao.protocolId) return;
-    try {
-      await prisma.protocolSimplified.update({
-        where: { id: inscricao.protocolId },
-        data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-      });
-    } catch (error) {
-      logger.warn(
-        `Habitação: falha ao concluir protocolo ${inscricao.protocolId} (não-fatal) — ${motivo}`,
-        error
-      );
-    }
+    // Ponte única: motor de status, histórico com motivo, SLA e notificação (não-fatal)
+    await concludeProtocolFromApp({ protocolId: inscricao.protocolId, app: 'Habitação', message: motivo });
   }
 
   async getStatistics() {

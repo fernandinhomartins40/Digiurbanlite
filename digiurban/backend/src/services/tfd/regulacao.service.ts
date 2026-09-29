@@ -13,6 +13,7 @@ import {
   StatusAgendamentoExterno,
 } from '../../types/saude-tfd.types';
 import { centralCalendarService } from '../central-calendar.service';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../apps/app-protocol-bridge.service';
 
 
 export class RegulacaoTFDService {
@@ -80,6 +81,16 @@ export class RegulacaoTFDService {
         ...(!data.aprovado && data.justificativa && { motivoRecusa: data.justificativa }),
       },
     });
+
+    if (!data.aprovado) {
+      await concludeProtocolFromApp({
+        protocolId: solicitacao.protocolId,
+        app: 'TFD',
+        message: `Solicitação indeferida pela regulação médica${data.justificativa ? ` — ${data.justificativa}` : ''}`,
+        outcome: 'INDEFERIDO',
+        actorId: data.reguladorId,
+      });
+    }
 
     return parecer;
   }
@@ -235,6 +246,16 @@ export class RegulacaoTFDService {
           aprovadoPor: data.aprovadoPorId,
           ...(data.justificativa && { motivoRecusa: data.justificativa }),
         },
+      });
+    }
+
+    if (!data.aprovado) {
+      await concludeProtocolFromApp({
+        protocolId: solicitacao.protocolId,
+        app: 'TFD',
+        message: `Solicitação não aprovada pela gestão${data.justificativa ? ` — ${data.justificativa}` : ''}`,
+        outcome: 'INDEFERIDO',
+        actorId: data.aprovadoPorId,
       });
     }
 

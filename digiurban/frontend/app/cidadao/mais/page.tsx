@@ -43,18 +43,10 @@ export default function MaisPage() {
   const menuItems: MenuItem[] = [
     {
       id: 'documents',
-      label: 'Meus Documentos',
-      description: 'Gerenciar documentos digitalizados',
+      label: 'Meus documentos',
+      description: 'Documentos pessoais e assinaturas digitais',
       icon: FileCheck,
       href: '/cidadao/documentos',
-    },
-    {
-      id: 'notifications',
-      label: 'Notificações',
-      description: 'Central de notificações',
-      icon: Bell,
-      badge: 3,
-      href: '/cidadao/notificacoes',
     },
     {
       id: 'face-read',
@@ -69,34 +61,6 @@ export default function MaisPage() {
       description: 'Cadastrar a biometria facial ao vivo pela primeira vez',
       icon: Shield,
       href: '/cidadao/biometria-facial',
-    },
-    {
-      id: 'settings',
-      label: 'Configurações',
-      description: 'Preferências e ajustes do app',
-      icon: Settings,
-      href: '/cidadao/configuracoes',
-    },
-    {
-      id: 'help',
-      label: 'Ajuda e Suporte',
-      description: 'Dúvidas frequentes e tutoriais',
-      icon: HelpCircle,
-      href: '/cidadao/ajuda',
-    },
-    {
-      id: 'feedback',
-      label: 'Enviar Feedback',
-      description: 'Ajude-nos a melhorar o app',
-      icon: MessageSquare,
-      href: '/cidadao/feedback',
-    },
-    {
-      id: 'about',
-      label: 'Sobre o App',
-      description: 'Versão 1.0.0',
-      icon: Info,
-      href: '/cidadao/sobre',
     },
   ];
 

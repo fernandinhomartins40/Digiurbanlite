@@ -31,6 +31,8 @@ export interface CreateProtocolWithModuleInput {
   longitude?: number;
   address?: string;
   attachments?: any[];
+  /** Porta de entrada: portal do cidadão, bot ou balcão presencial */
+  channel?: 'PORTAL' | 'BOT' | 'BALCAO';
 }
 
 export interface ApproveProtocolInput {
@@ -105,7 +107,7 @@ export class ProtocolModuleService {
    * ou SEM_DADOS apenas com protocolo de acompanhamento
    */
   async createProtocolWithModule(input: CreateProtocolWithModuleInput) {
-    const { citizenId, serviceId, formData, description, createdById, latitude, longitude, address, attachments } = input;
+    const { citizenId, serviceId, formData, description, createdById, latitude, longitude, address, attachments, channel } = input;
 
     // 1. Buscar serviço
     const service = await prisma.serviceSimplified.findUnique({
@@ -201,6 +203,7 @@ export class ProtocolModuleService {
           moduleType: service.moduleType || 'GENERICO',
           customData: customDataPayload as Prisma.JsonObject,
           createdById,
+          channel: channel ?? null,
           latitude: geoResult.latitude,
           longitude: geoResult.longitude,
           address: geoResult.address,

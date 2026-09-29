@@ -17,48 +17,75 @@ export class SolicitacoesTFDService {
   /**
    * Criar solicitação de TFD
    */
-  async criarSolicitacao(data: CreateSolicitacaoTFDDTO): Promise<SolicitacaoTFDCompletoResponse> {
-    // Verificar se o cidadão existe
-    const citizen = await prisma.citizen.findUnique({
-      where: { id: data.citizenId },
-    });
-
+  /**
+   * Registro presencial de TFD (Balcão).
+   *
+   * Decisão do produto: todo atendimento gera protocolo. Antes esta função
+   * gravava protocolId = "TFD-<hora>" (inexistente): a FK recusava e o
+   * atendimento presencial não funcionava; o cidadão também não recebia
+   * número nem acompanhamento. Agora abre o protocolo pelo serviço de TFD do
+   * município (canal BALCAO, em nome do cidadão) e a conversão padrão
+   * protocolo → app cria o caso aqui.
+   */
+  async criarSolicitacao(
+    data: CreateSolicitacaoTFDDTO,
+    operadorId?: string
+  ): Promise<SolicitacaoTFDCompletoResponse> {
+    const citizen = await prisma.citizen.findUnique({ where: { id: data.citizenId } });
     if (!citizen) {
       throw new Error('Cidadão não encontrado');
     }
 
-    // Gerar IDs únicos
-    const workflowId = `WF-${Date.now()}`;
-    const protocolId = `TFD-${Date.now()}`;
+    const servicoTFD =
+      (await prisma.serviceSimplified.findFirst({ where: { moduleType: 'ENCAMINHAMENTOS_TFD', isActive: true } })) ||
+      (await prisma.serviceSimplified.findFirst({ where: { moduleType: { contains: 'TFD' }, isActive: true } }));
+    if (!servicoTFD) {
+      throw new Error(
+        'O serviço de TFD não está ativo no catálogo deste município. Ative-o em Serviços para registrar atendimentos.'
+      );
+    }
 
-    // Criar solicitação
-    const solicitacao = await prisma.solicitacaoTFD.create({
-      data: {
-        workflowId,
-        protocolId,
-        citizenId: data.citizenId,
-        acompanhanteId: data.acompanhanteId,
+    // Import dinâmico: evita ciclo protocol-module → conversor TFD → este serviço
+    const { protocolModuleService } = await import('../protocol-module.service');
+    const { protocol } = await protocolModuleService.createProtocolWithModule({
+      citizenId: data.citizenId,
+      serviceId: servicoTFD.id,
+      createdById: operadorId,
+      channel: 'BALCAO',
+      description: `Atendimento presencial de TFD — ${data.especialidade}`,
+      formData: {
         especialidade: data.especialidade,
         procedimento: data.procedimento,
-        cid10: data.cid10,
         justificativa: data.justificativa,
-        encaminhamentoMedicoUrl: data.encaminhamentoMedicoUrl,
-        examesUrls: data.examesUrls,
+        cid10: data.cid10,
         prioridade: data.prioridade,
         cidadeDestino: data.cidadeDestino,
         estadoDestino: data.estadoDestino,
         hospitalDestino: data.hospitalDestino,
+        acompanhanteId: data.acompanhanteId,
         observacoes: data.observacoes,
-        status: 'AGUARDANDO_ANALISE_DOCUMENTAL',
-      },
-      include: {
-        documentos: true,
-        pareceresRegulacao: true,
-        aprovacoesGestao: true,
       },
     });
 
-    return solicitacao as any;
+    // A conversão roda como gancho não-fatal na criação; garante aqui o caso
+    let solicitacao = await prisma.solicitacaoTFD.findUnique({ where: { protocolId: protocol.id } });
+    if (!solicitacao) {
+      const { default: protocolToTFDService } = await import('./protocol-to-tfd.service');
+      solicitacao = await protocolToTFDService.convertProtocolToTFD(protocol.id);
+    }
+
+    // Documentos já anexados no balcão
+    if (data.encaminhamentoMedicoUrl || (Array.isArray(data.examesUrls) && data.examesUrls.length)) {
+      await prisma.solicitacaoTFD.update({
+        where: { id: solicitacao.id },
+        data: {
+          ...(data.encaminhamentoMedicoUrl && { encaminhamentoMedicoUrl: data.encaminhamentoMedicoUrl }),
+          ...(Array.isArray(data.examesUrls) && data.examesUrls.length && { examesUrls: data.examesUrls as any }),
+        },
+      });
+    }
+
+    return this.buscarSolicitacao(solicitacao.id);
   }
 
   /**
@@ -78,6 +105,8 @@ export class SolicitacoesTFDService {
     const solicitacao = await prisma.solicitacaoTFD.findUnique({
       where: { id },
       include: {
+        // Número do protocolo: é o que o cidadão usa para acompanhar
+        protocol: { select: { id: true, number: true, channel: true } },
         documentos: {
           orderBy: {
             dataUpload: 'desc',

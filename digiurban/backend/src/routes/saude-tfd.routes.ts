@@ -74,7 +74,8 @@ function parseDateRange(req: Request): { dataInicio: Date; dataFim: Date } {
 router.post('/solicitacao', async (req: Request, res: Response) => {
   try {
     const solicitacao = await SolicitacoesTFDService.criarSolicitacao(
-      normalizeSolicitacaoPayload(req) as any
+      normalizeSolicitacaoPayload(req) as any,
+      req.userId || (req.user as any)?.id
     );
     res.status(201).json(solicitacao);
   } catch (error: any) {
@@ -166,7 +167,8 @@ router.get('/solicitacao', async (req: Request, res: Response) => {
 router.post('/solicitacoes', async (req: Request, res: Response) => {
   try {
     const solicitacao = await SolicitacoesTFDService.criarSolicitacao(
-      normalizeSolicitacaoPayload(req) as any
+      normalizeSolicitacaoPayload(req) as any,
+      req.userId || (req.user as any)?.id
     );
     res.status(201).json(solicitacao);
   } catch (error: any) {
@@ -262,6 +264,15 @@ router.post('/solicitacao/:id/analise-documental', async (req: Request, res: Res
       resumo,
       usuarioId
     );
+
+    if (aprovado) {
+      await markProtocolInProgressFromApp({
+        protocolId: atual.protocolId,
+        app: 'TFD',
+        message: 'Documentação aprovada; solicitação encaminhada à regulação médica',
+        actorId: usuarioId,
+      });
+    }
 
     let pendenciasCriadas = 0;
     if (!aprovado) {
@@ -1430,6 +1441,7 @@ router.get('/configuracoes/destinos', async (req: Request, res: Response) => {
 import { uploadSingle, resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
 import path from 'path';
 import fs from 'fs/promises';
+import { concludeProtocolFromApp, markProtocolInProgressFromApp } from '../services/apps/app-protocol-bridge.service';
 
 /**
  * POST /api/saude/tfd/solicitacao/:id/upload-documento

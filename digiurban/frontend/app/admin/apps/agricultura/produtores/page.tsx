@@ -370,8 +370,11 @@ export default function CadastroProdutoresPage() {
             data={produtores}
             columns={columns}
             searchPlaceholder="Buscar por nome, CPF, DAP..."
-            onView={(item) => router.push(`/admin/agricultura/produtores/${item.id}`)}
-            onEdit={(item) => router.push(`/admin/agricultura/produtores/${item.id}/editar`)}
+            // Não há ficha própria de produtor: abre o pedido de origem ou a ficha do
+            // cidadão (antes levava a /produtores/:id e /editar, páginas inexistentes)
+            onView={(item: any) =>
+              router.push(item.protocolId ? `/admin/protocolos/${item.protocolId}` : item.citizenId ? `/admin/cidadaos/${item.citizenId}` : '/admin/apps/agricultura/produtores')
+            }
           />
         </CardContent>
       </Card>

@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Licenciamento & Fiscalização Ambiental (Fase 2, blueprint B4 + mapa) —
@@ -457,18 +458,8 @@ class MeioAmbienteService {
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */
   private async concluirProtocolo(processo: { protocolId: string | null; numero: string }, motivo: string) {
-    if (!processo.protocolId) return;
-    try {
-      await prisma.protocolSimplified.update({
-        where: { id: processo.protocolId },
-        data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-      });
-    } catch (error) {
-      logger.warn(
-        `Meio Ambiente ${processo.numero}: falha ao concluir protocolo ${processo.protocolId} (não-fatal) — ${motivo}`,
-        error
-      );
-    }
+    // Ponte única: motor de status, histórico com motivo, SLA e notificação (não-fatal)
+    await concludeProtocolFromApp({ protocolId: processo.protocolId, app: 'Meio Ambiente', message: motivo });
   }
 
   async getStatistics() {

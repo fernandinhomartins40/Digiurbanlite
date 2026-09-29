@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Rede de Atendimento à Mulher (Fase 2, blueprint B7 — SIGILO MÁXIMO).
@@ -297,18 +298,9 @@ class CasoMulherService {
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */
   private async concluirProtocolo(caso: { protocolId: string | null; numero: string }) {
-    if (!caso.protocolId) return;
-    try {
-      await prisma.protocolSimplified.update({
-        where: { id: caso.protocolId },
-        data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-      });
-    } catch (error) {
-      logger.warn(
-        `Caso ${caso.numero}: falha ao concluir protocolo ${caso.protocolId} (não-fatal)`,
-        error
-      );
-    }
+    // Caso sigiloso: a mensagem ao cidadão não expõe detalhes do atendimento
+    // Ponte única: motor de status, histórico com motivo, SLA e notificação (não-fatal)
+    await concludeProtocolFromApp({ protocolId: caso.protocolId, app: 'Rede de Atendimento à Mulher', message: 'Atendimento do caso encerrado pela equipe' });
   }
 
   /** Estatísticas agregadas — nunca expõem PII. */

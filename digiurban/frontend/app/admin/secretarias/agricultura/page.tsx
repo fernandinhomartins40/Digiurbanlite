@@ -40,6 +40,7 @@ import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 import { PendingTicketsSection } from '@/components/departments/PendingTicketsSection';
 import { SecretariaModulosSection } from '@/components/modules/secretaria/SecretariaModulosSection';
+import { SecretariaKpiCards } from '@/components/admin/secretaria/SecretariaKpiCards';
 
 export default function SecretariaAgriculturaPage() {
   const { user } = useAdminAuth();
@@ -112,87 +113,8 @@ export default function SecretariaAgriculturaPage() {
       {/* Chamados Pendentes do Prefeito */}
       <PendingTicketsSection />
 
-      {/* Estatísticas Gerais */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Produtores Ativos</CardTitle>
-            <Users className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.producers?.active || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.producers?.total || 0} cadastrados
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Propriedades</CardTitle>
-            <MapPin className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.properties?.total || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.properties?.totalArea || 0} hectares totais
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Assistências Ativas</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">
-                  {stats?.technicalAssistance?.totalActive || 0}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.technicalAssistance?.completedThisMonth || 0} concluídas este mês
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Protocolos Pendentes</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            {statsLoading ? (
-              <Skeleton className="h-8 w-20" />
-            ) : (
-              <>
-                <div className="text-2xl font-bold">{stats?.protocols?.pending || 0}</div>
-                <p className="text-xs text-muted-foreground">
-                  {stats?.protocols?.total || 0} total
-                </p>
-              </>
-            )}
-          </CardContent>
-        </Card>
-
-      </div>
+      {/* Indicadores reais do app da secretaria + protocolos em aberto */}
+      <SecretariaKpiCards slug="agricultura" />
 
       {/* Ações Rápidas */}
       <Card>
@@ -383,6 +305,32 @@ export default function SecretariaAgriculturaPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* App de Agricultura — antes inalcançável (ficava fora de /admin/apps e sem link) */}
+      <div>
+        <div className="mb-4">
+          <h2 className="text-2xl font-semibold">Apps de Agricultura</h2>
+          <p className="text-sm text-muted-foreground">Sistemas especializados completos da secretaria</p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card
+            className="border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 hover:shadow-xl transition-all cursor-pointer group"
+            onClick={() => router.push('/admin/apps/agricultura')}
+          >
+            <CardHeader>
+              <CardTitle className="text-lg group-hover:text-green-700 transition-colors">
+                Produtores, Propriedades & Assistência Técnica
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Cadastro e carteirinha do produtor, propriedades rurais, visitas técnicas e distribuição de sementes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full bg-green-600 hover:bg-green-700">Acessar Sistema</Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
       {/* Modal de Seleção de Serviços */}

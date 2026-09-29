@@ -563,7 +563,8 @@ router.post('/', requireMinRole(UserRole.USER), async (req, res) => {
       latitude,
       longitude,
       address,
-      attachments
+      attachments,
+      channel: 'BALCAO'
         });
 
     return res.status(201).json({

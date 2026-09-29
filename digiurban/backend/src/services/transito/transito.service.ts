@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Credenciamentos & Vistorias (Fase 3, blueprint B4-lite + carteirinha)
@@ -360,15 +361,8 @@ class TransitoService {
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */
   private async concluirProtocolo(protocolId: string | null | undefined, motivo: string) {
-    if (!protocolId) return;
-    try {
-      await prisma.protocolSimplified.update({
-        where: { id: protocolId },
-        data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-      });
-    } catch (error) {
-      logger.warn(`Trânsito: falha ao concluir protocolo ${protocolId} (não-fatal) — ${motivo}`, error);
-    }
+    // Ponte única: motor de status, histórico com motivo, SLA e notificação (não-fatal)
+    await concludeProtocolFromApp({ protocolId: protocolId, app: 'Transportes e Trânsito', message: motivo });
   }
 
   async getStatistics() {

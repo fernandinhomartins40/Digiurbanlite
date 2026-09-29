@@ -58,7 +58,7 @@ export function CitizenLayout({ children, title }: CitizenLayoutProps) {
       icon: FileText
     },
     {
-      name: 'Protocolos',
+      name: 'Meus pedidos',
       href: '/cidadao/protocolos',
       icon: Folder
     },

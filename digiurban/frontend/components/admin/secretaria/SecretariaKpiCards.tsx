@@ -106,6 +106,14 @@ const CONFIG: Record<string, SecretariaKpiConfig> = {
       { label: 'Licenças vencendo', hint: 'nos próximos 60 dias', icon: Timer, value: (d) => d.licencasVencendo60Dias },
     ],
   },
+  agricultura: {
+    endpoint: '/api/agricultura/produtores/statistics',
+    kpis: [
+      { label: 'Produtores cadastrados', hint: 'no app de Agricultura', icon: Users, value: (d) => d.total },
+      { label: 'Produtores ativos', hint: 'com cadastro em dia', icon: FileCheck2, value: (d) => d.ativos },
+      { label: 'Com documentação pendente', hint: 'precisam de atenção', icon: AlertTriangle, value: (d) => d.comPendencias },
+    ],
+  },
   educacao: {
     endpoint: '/api/secretarias/educacao/stats',
     kpis: [

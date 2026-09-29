@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { concludeProtocolFromApp } from '../apps/app-protocol-bridge.service';
 
 /**
  * App Ocorrências & Áreas de Risco (Fase 2, blueprint B2 + mapa) — Defesa
@@ -371,18 +372,8 @@ class DefesaCivilService {
 
   /** Retroalimenta o protocolo de origem (NÃO-FATAL). */
   private async concluirProtocolo(ocorrencia: { protocolId: string | null; numero: string }, motivo: string) {
-    if (!ocorrencia.protocolId) return;
-    try {
-      await prisma.protocolSimplified.update({
-        where: { id: ocorrencia.protocolId },
-        data: { status: 'CONCLUIDO' as any, concludedAt: new Date() },
-      });
-    } catch (error) {
-      logger.warn(
-        `Defesa Civil ${ocorrencia.numero}: falha ao concluir protocolo ${ocorrencia.protocolId} (não-fatal) — ${motivo}`,
-        error
-      );
-    }
+    // Ponte única: motor de status, histórico com motivo, SLA e notificação (não-fatal)
+    await concludeProtocolFromApp({ protocolId: ocorrencia.protocolId, app: 'Defesa Civil', message: motivo });
   }
 
   async getStatistics() {

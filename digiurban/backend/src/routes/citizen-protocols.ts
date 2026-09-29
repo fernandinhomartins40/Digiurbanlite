@@ -542,6 +542,7 @@ router.post('/', upload.any(), async (req, res) => {
     const result = await protocolModuleService.createProtocolWithModule({
       citizenId,
       serviceId,
+      channel: 'PORTAL',
       formData: {
         ...formData,
         ...(programId !== undefined && { programId }),

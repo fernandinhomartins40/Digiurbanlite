@@ -1,5 +1,4 @@
 import { prisma } from '../../lib/prisma';
-import tfdService from './tfd.service';
 
 
 /**
@@ -75,7 +74,31 @@ export class ProtocolToTFDService {
       examesUrls: this.extractExamesUrls(protocol),
     };
 
-    const solicitacao = await tfdService.createSolicitacao(solicitacaoData);
+    // Cria a solicitação VINCULADA ao protocolo real. Antes usava
+    // tfdService.createSolicitacao, que gravava protocolId = id do workflow
+    // (FK inválida), omitia campos obrigatórios e usava prioridade 'NORMAL'
+    // (fora do enum): a conversão falhava sempre e o erro era engolido —
+    // nenhum pedido de TFD feito pelo portal chegava ao app.
+    const solicitacao = await prisma.solicitacaoTFD.create({
+      data: {
+        protocolId: protocol.id,
+        workflowId: `WF-${protocol.id}`,
+        citizenId: solicitacaoData.citizenId,
+        acompanhanteId: solicitacaoData.acompanhanteId || null,
+        especialidade: solicitacaoData.especialidade,
+        procedimento: solicitacaoData.procedimento,
+        cid10: solicitacaoData.cid10 || null,
+        justificativa: solicitacaoData.justificativaMedica,
+        encaminhamentoMedicoUrl: solicitacaoData.encaminhamentoMedicoUrl || '',
+        examesUrls: solicitacaoData.examesUrls?.length ? solicitacaoData.examesUrls : undefined,
+        prioridade: solicitacaoData.prioridade,
+        cidadeDestino: solicitacaoData.cidadeDestino,
+        estadoDestino: solicitacaoData.estadoDestino,
+        hospitalDestino: solicitacaoData.hospitalDestino || null,
+        observacoes: solicitacaoData.observacoes || null,
+        status: 'AGUARDANDO_ANALISE_DOCUMENTAL',
+      },
+    });
 
     if (!solicitacao) {
       throw new Error('Erro ao criar solicitação TFD');

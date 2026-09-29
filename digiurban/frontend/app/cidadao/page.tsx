@@ -143,7 +143,7 @@ export default function CitizenDashboard() {
   const menuItems = [
     { name: 'Chat', href: '/cidadao', icon: MessageCircle },
     { name: 'Serviços', href: '/cidadao/servicos', icon: FileText },
-    { name: 'Protocolos', href: '/cidadao/protocolos', icon: Folder },
+    { name: 'Meus pedidos', href: '/cidadao/protocolos', icon: Folder },
     { name: 'Documentos', href: '/cidadao/documentos', icon: FileCheck },
     { name: 'Minha Família', href: '/cidadao/familia', icon: Users },
     { name: 'Perfil', href: '/cidadao/perfil', icon: User },
