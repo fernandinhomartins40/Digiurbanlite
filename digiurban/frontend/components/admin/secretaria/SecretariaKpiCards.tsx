@@ -23,8 +23,10 @@ import {
   FileText,
   GraduationCap,
   Home,
+  IdCard,
   Megaphone,
   School,
+  Stethoscope,
   Timer,
   Users,
   Wrench,
@@ -120,6 +122,46 @@ const CONFIG: Record<string, SecretariaKpiConfig> = {
       { label: 'Matrículas ativas', hint: 'na rede municipal', icon: GraduationCap, value: (d) => d.totalMatriculas },
       { label: 'Unidades de ensino', hint: 'ativas', icon: School, value: (d) => d.totalUnidades },
       { label: 'Turmas ativas', hint: 'no ano letivo', icon: Users, value: (d) => d.totalTurmas },
+    ],
+  },
+  saude: {
+    endpoint: '/api/secretarias/saude/stats',
+    kpis: [
+      { label: 'Unidades de saúde', hint: 'ativas', icon: Building2, value: (d) => d.totalUnidades },
+      { label: 'Atendimentos no mês', hint: 'na fila de atendimento', icon: Stethoscope, value: (d) => d.atendimentosMes },
+      { label: 'Profissionais ativos', hint: 'cadastrados na rede', icon: Users, value: (d) => d.totalProfissionais },
+    ],
+  },
+  'mobilidade-urbana': {
+    endpoint: '/api/apps/mobilidade-urbana/stats',
+    kpis: [
+      { label: 'Carteiras ativas', hint: 'estudante, idoso, PcD e passe livre', icon: IdCard, value: (d) => d.carteirasAtivas },
+      { label: 'Solicitações em análise', hint: 'aguardando a secretaria', icon: ClipboardList, value: (d) => d.solicitacoesEmAnalise },
+      { label: 'Vencendo em 30 dias', hint: 'precisam de renovação', icon: Timer, value: (d) => d.carteirasVencendo30d },
+    ],
+  },
+  'transportes-transito': {
+    endpoint: '/api/apps/transportes-transito/stats',
+    kpis: [
+      { label: 'Credenciais ativas', hint: 'estacionamento e credenciamentos', icon: IdCard, value: (d) => d.credenciaisAtivas },
+      { label: 'Vistorias pendentes', hint: 'a realizar', icon: ClipboardList, value: (d) => d.vistoriasPendentes },
+      { label: 'Defesas pendentes', hint: 'de autuação, a julgar', icon: Timer, value: (d) => d.defesasPendentes },
+    ],
+  },
+  'defesa-civil': {
+    endpoint: '/api/apps/defesa-civil/ocorrencias/stats',
+    kpis: [
+      { label: 'Ocorrências abertas', hint: 'em atendimento', icon: AlertTriangle, value: (d) => sum(d.abertasPorTipo) },
+      { label: 'Áreas interditadas', hint: 'risco atual', icon: Home, value: (d) => d.areasInterditadas },
+      { label: 'Famílias em abrigo', hint: 'acolhidas agora', icon: Users, value: (d) => d.familiasEmAbrigo },
+    ],
+  },
+  'politicas-mulheres': {
+    endpoint: '/api/apps/politicas-mulheres/casos/stats',
+    kpis: [
+      { label: 'Casos ativos', hint: 'em acompanhamento', icon: Users, value: (d) => sum(d.ativosPorTipo) },
+      { label: 'Encaminhamentos abertos', hint: 'à rede de proteção', icon: ClipboardList, value: (d) => d.encaminhamentosAbertos },
+      { label: 'Casos no ano', hint: 'atendimentos iniciados', icon: CalendarClock, value: (d) => d.casosNoAno },
     ],
   },
   'assistencia-social': {

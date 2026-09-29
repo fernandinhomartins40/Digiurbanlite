@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
+import { getDepartmentConfig } from '@/lib/department-config';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,9 +18,12 @@ import {
 import { useServiceSuggestions } from '@/hooks/useServiceSuggestions';
 import { buildServiceCreationUrl } from '@/utils/service-prefill';
 
-export default function DefesaCivilSugestoesPage() {
+/** Todas as sugestões de serviços de uma secretaria (antes: 21 cópias desta página). */
+export default function SecretariaSugestoesPage() {
   const router = useRouter();
-  const { suggestions, isLoading } = useServiceSuggestions('defesa-civil');
+  const slug = String(useParams().department);
+  const departmentName = getDepartmentConfig(slug)?.name || 'a secretaria';
+  const { suggestions, isLoading } = useServiceSuggestions(slug);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState<string>('all');
 
@@ -40,18 +44,18 @@ export default function DefesaCivilSugestoesPage() {
       <div className="mb-8">
         <Button
           variant="ghost"
-          onClick={() => router.push('/admin/secretarias/defesa-civil')}
+          onClick={() => router.push(`/admin/secretarias/${slug}?aba=configurar`)}
           className="mb-4"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
-          Voltar para Defesa Civil
+          Voltar para Configurar
         </Button>
 
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-3xl font-bold">Todas as Sugestões de Serviços</h1>
             <p className="text-muted-foreground mt-2">
-              Explore todas as {suggestions.length} sugestões disponíveis para Defesa Civil
+              Explore todas as {suggestions.length} sugestões disponíveis para {departmentName}
             </p>
           </div>
         </div>
@@ -111,10 +115,10 @@ export default function DefesaCivilSugestoesPage() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredSuggestions.map((suggestion) => (
-            <Card key={suggestion.id} className="border-orange-200 bg-orange-50/50 hover:shadow-lg transition-shadow">
+            <Card key={suggestion.id} className="hover:shadow-lg transition-shadow">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <FileCheck className="h-5 w-5 text-orange-600" />
+                  <FileCheck className="h-5 w-5 text-primary" />
                   {suggestion.name}
                 </CardTitle>
                 <CardDescription>{suggestion.description}</CardDescription>
@@ -143,7 +147,7 @@ export default function DefesaCivilSugestoesPage() {
                         <li key={idx}>• {field.label}</li>
                       ))}
                       {suggestion.suggestedFields.length > 4 && (
-                        <li className="text-orange-600">
+                        <li className="text-primary">
                           + {suggestion.suggestedFields.length - 4} campos adicionais
                         </li>
                       )}
@@ -152,8 +156,8 @@ export default function DefesaCivilSugestoesPage() {
 
                   <Button
                     variant="default"
-                    className="w-full bg-orange-600 hover:bg-orange-700"
-                    onClick={() => router.push(buildServiceCreationUrl('defesa-civil', suggestion))}
+                    className="w-full"
+                    onClick={() => router.push(buildServiceCreationUrl(slug, suggestion))}
                   >
                     <Plus className="h-4 w-4 mr-2" />
                     Criar este Serviço

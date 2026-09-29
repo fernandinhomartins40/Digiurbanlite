@@ -40,6 +40,17 @@ export interface ButtonProps
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
   ({ className, variant, size, asChild = false, ...props }, ref) => {
+    // asChild: o filho (ex.: <Link>) recebe o visual do botão, em vez de ficar
+    // aninhado num <button> (HTML inválido; clicar fora do texto não navegava)
+    if (asChild && React.isValidElement(props.children)) {
+      const child = props.children as React.ReactElement<any>
+      const { children: _children, ...rest } = props
+      return React.cloneElement(child, {
+        ...rest,
+        ...child.props,
+        className: cn(buttonVariants({ variant, size, className }), child.props.className),
+      })
+    }
     return (
       <button
         className={cn(buttonVariants({ variant, size, className }))}

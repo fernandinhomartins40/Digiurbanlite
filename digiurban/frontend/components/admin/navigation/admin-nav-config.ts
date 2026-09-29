@@ -1,6 +1,7 @@
 import type { LucideIcon } from 'lucide-react';
 import {
   Store,
+  LayoutGrid,
   AlertCircle,
   Award,
   BarChart3,
@@ -112,6 +113,13 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
           icon: Store,
           permissions: ['protocols:create'],
           badge: 'NOVO',
+        },
+        {
+          // Atalho para as mesas de trabalho (apps) a que o servidor tem acesso
+          title: 'Apps',
+          href: '/admin/apps',
+          icon: LayoutGrid,
+          minRole: 'USER',
         },
         {
           title: 'Cidadãos',

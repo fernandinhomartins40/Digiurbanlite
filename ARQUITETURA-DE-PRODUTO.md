@@ -287,7 +287,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 | **2. Fundamentos do contrato** ✅ | Protocolo com *canal*; TFD presencial gerando protocolo; ponte única App→Protocolo; Agricultura em `/apps`; portal sem links quebrados e com uma só tela de documentos | Corrige defeitos reais e fixa a regra | baixo |
 | **3. Destino explícito do Serviço** ✅ | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
 | **4. Balcão** ✅ | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
-| **5. Espaço da secretaria** | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
+| **5. Espaço da secretaria** ✅ | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
 | **6. Portal do cidadão** | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
 | **7. Consolidações e limpeza** | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
 
@@ -447,7 +447,7 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
 
 ### 10.3 Status da implementação (Fase 3 — concluída)
 
-**Catálogo de Apps** (`backend/src/config/app-catalog.ts`): fonte única com os 17 apps (nome, secretarias, rota e **62 ações de entrada**). Os códigos das ações são os mesmos do conversor protocolo→app, então nada mudou de comportamento. `GET /api/app-catalog?departmentCode=…` alimenta o painel.
+**Catálogo de Apps** (`backend/src/config/app-catalog.ts`): fonte única com os 16 apps (nome, secretarias, rota e **62 ações de entrada**). Os códigos das ações são os mesmos do conversor protocolo→app, então nada mudou de comportamento. `GET /api/app-catalog?departmentCode=…` alimenta o painel.
 
 **Serviço com destino explícito**
 - Campos `destination` (FILA | APP) e `appAction` em `ServiceSimplified`.
@@ -493,3 +493,29 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
   - "Outro serviço para esta pessoa" volta ao Balcão com a pessoa já escolhida.
 - Nenhum erro no navegador nem na API.
 - No banco: protocolo `2026-000001`, canal `BALCAO`, `createdById` = atendente e carteira criada no app de Carteiras & Gratuidades.
+
+### 10.5 Status da implementação (Fase 5 — concluída)
+
+**Espaço da secretaria.** Um modelo (`SecretariaWorkspace`) e uma rota (`/admin/secretarias/[department]`) substituem as 21 páginas escritas à mão e as 21 cópias da página de sugestões (−11 mil linhas). As URLs continuam as mesmas. A aba ativa fica na URL (`?aba=protocolos`), então dá para compartilhar o link.
+
+| Aba | Conteúdo |
+|---|---|
+| **Visão geral** | Indicadores reais (`SecretariaKpiCards`), atalhos para Novo atendimento (Balcão), Pedidos e Apps, e as demandas do gabinete |
+| **Protocolos** | Contadores da fila da secretaria (em aberto, atrasados, vencendo, sem responsável, comigo). Cada contador abre a Gestão de Protocolos já filtrada. Também tem os atalhos para os dados dos formulários por serviço |
+| **Apps** | Apps do catálogo e as telas de apoio da secretaria. Se a secretaria não tiver app, a aba diz isso claramente |
+| **Configurar** | Só para gestores (`services:create`). Mostra os serviços com o destino ("Depois do pedido: App X" ou "Analisado no protocolo"), as sugestões de novos serviços e a equipe |
+
+**Outras mudanças**
+- **Indicadores reais para mais 5 secretarias:** Saúde, Mobilidade, Trânsito, Defesa Civil e Políticas para Mulheres. A página antiga da Saúde lia campos que o backend não devolve e mostrava sempre 0.
+- **Menu "Apps"** (`/admin/apps`): mostra os apps que o servidor pode abrir, agrupados por secretaria. `GET /api/app-catalog?mine=true` usa a mesma regra do `requireDepartmentAccess`.
+- **Telas de apoio fora do catálogo** (Cadastros da Saúde, Transporte e Segurança Escolar, Famílias, Benefícios e Unidades da Assistência Social) ficam listadas em `lib/app-catalog-client.ts`.
+- **Correções em componentes compartilhados:**
+  - `Button asChild` passou a funcionar. Antes ele renderizava `<button><a>`, que é HTML inválido, e clicar fora do texto não navegava; afetava 15 telas.
+  - `Tabs` ganhou `role=tab/tablist/tabpanel`, `aria-selected` e `data-state`. Por isso, os estilos de aba ativa já escritos no login e nas abas de protocolo do cidadão passaram a funcionar.
+
+**Validação**
+- Playwright com três papéis, 13 passos, sem erros no navegador nem na API:
+  - **Coordenadora:** vê as 3 abas, sem Configurar. Os contadores batem com os 2 pedidos em aberto. Nas abas Protocolos e Apps, a URL acompanha a aba. `?aba=configurar` sem permissão volta para a Visão geral. O menu Apps mostra só o app de Mobilidade.
+  - **Gestora:** vê a aba Configurar com o destino de cada serviço e as sugestões. "Ver todas" abre a página de sugestões e volta para Configurar.
+  - **Administrador:** a Saúde mostra os indicadores reais e os 3 apps mais Cadastros. Finanças mostra o aviso de secretaria sem app. Um endereço inválido mostra "Secretaria não encontrada". A URL antiga de módulo continua redirecionando.
+- 26 testes unitários passam, e o build de produção passa.
