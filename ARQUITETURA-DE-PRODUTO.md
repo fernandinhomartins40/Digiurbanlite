@@ -285,7 +285,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 |---|---|---|---|
 | **1. Gestão de Protocolos única** ✅ | Filtros por secretaria e serviço + **vista Dados** por serviço; módulos redirecionam para ela; "Módulo" sai da interface | É a maior fonte de confusão e é tecnicamente a mais madura (seção 10) | **concluída** (ver 10.1) |
 | **2. Fundamentos do contrato** ✅ | Protocolo com *canal*; TFD presencial gerando protocolo; ponte única App→Protocolo; Agricultura em `/apps`; portal sem links quebrados e com uma só tela de documentos | Corrige defeitos reais e fixa a regra | baixo |
-| **3. Destino explícito do Serviço** | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
+| **3. Destino explícito do Serviço** ✅ | Campo *destino* + catálogo de apps; migração dos 404 serviços; o assistente mostra o destino | Acaba com a ligação escondida; pré-requisito do Balcão | médio |
 | **4. Balcão** | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
 | **5. Espaço da secretaria** | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
 | **6. Portal do cidadão** | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
@@ -444,3 +444,31 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
 - Playwright no build de produção: redirecionamento e tela inicial da Agricultura; card e indicadores da secretaria; "Meus pedidos"; abas de documentos; redirecionamento de `/meus-documentos`; "Mais" sem links quebrados. Nenhum erro.
 
 **Registrado para depois.** A atribuição de servidor e o início de fluxo de etapas ainda gravam `PROGRESSO` direto no protocolo (são fluxos internos do protocolo, não de apps).
+
+### 10.3 Status da implementação (Fase 3 — concluída)
+
+**Catálogo de Apps** (`backend/src/config/app-catalog.ts`): fonte única com os 17 apps (nome, secretarias, rota e **62 ações de entrada**). Os códigos das ações são os mesmos do conversor protocolo→app, então nada mudou de comportamento. `GET /api/app-catalog?departmentCode=…` alimenta o painel.
+
+**Serviço com destino explícito**
+- Campos `destination` (FILA | APP) e `appAction` em `ServiceSimplified`.
+- A migration `20260929180000_service_destination` é aditiva e idempotente e preenche os serviços existentes com o mapeamento atual: código de app vai para APP; variações de TFD vão para o app de TFD; o resto vai para FILA.
+- O encaminhamento (criação e aprovação) passa a usar o destino declarado:
+  - **FILA nunca vai para app**, mesmo que o código "pareça" de app;
+  - **APP usa a ação escolhida, independente do nome do serviço**;
+  - serviço sem destino gravado mantém o comportamento legado.
+- A API de serviços valida o destino (a ação precisa existir e ser de um app da secretaria do serviço) e devolve o **destino efetivo**. Assim, serviços criados por seed ou provisionamento aparecem corretamente e não são rebaixados a FILA ao salvar.
+
+**Telas**
+- Assistente de criação: passo novo "Depois do pedido".
+- Edição: bloco "O que acontece depois do pedido?".
+- Catálogo: cada serviço mostra "Depois do pedido: App X" ou "Analisado no protocolo".
+
+**Validação**
+- 26 testes unitários, incluindo uma **trava de paridade**: o teste lê o conversor e falha se algum código tratado por ele não estiver no catálogo, ou se o catálogo tiver ação sem conversor.
+- Backend real:
+  - migration de preenchimento e idempotência;
+  - serviço de **nome livre** apontado para o app de Carteiras gerou a carteira;
+  - serviço com código de app, mas destino FILA, **não** gerou caso;
+  - app de outra secretaria recusado;
+  - destino efetivo de serviço sem destino gravado.
+- Playwright: catálogo, edição e assistente. Nenhum erro.

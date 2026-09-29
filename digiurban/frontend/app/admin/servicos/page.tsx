@@ -42,6 +42,9 @@ interface Service {
   }
   requiresDocuments: boolean
   requiredDocuments?: string[]
+  // Destino do pedido: FILA (protocolo) | APP (+ ação do catálogo)
+  destination?: string | null
+  appAction?: string | null
   estimatedDays: number | null
   priority: number
   isActive: boolean
@@ -84,6 +87,7 @@ export default function ServicesManagementPage() {
   const { toast } = useToast()
 
   const [services, setServices] = useState<Service[]>([])
+  const [appNameByAction, setAppNameByAction] = useState<Record<string, string>>({})
   const [departments, setDepartments] = useState<Department[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -100,6 +104,16 @@ export default function ServicesManagementPage() {
   const loadServices = useCallback(async () => {
     try {
       setLoading(true)
+      // Nome do app de cada ação (catálogo de apps) para mostrar o destino
+      apiRequest('/api/app-catalog?withActions=true')
+        .then((res: any) => {
+          const map: Record<string, string> = {}
+          for (const app of res?.data?.apps || []) {
+            for (const action of app.actions || []) map[action.code] = app.name
+          }
+          setAppNameByAction(map)
+        })
+        .catch(() => undefined)
       const response = await apiRequest('/api/services')
 
       // ✅ CORREÇÃO: Aceitar múltiplos formatos de resposta
@@ -388,6 +402,17 @@ export default function ServicesManagementPage() {
                   <div className="flex items-center justify-between text-xs sm:text-sm">
                     <span className="text-gray-600">Categoria:</span>
                     <Badge variant="outline" className="text-xs">{service.category || 'Sem categoria'}</Badge>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2 text-xs sm:text-sm">
+                    <span className="text-gray-600 shrink-0">Depois do pedido:</span>
+                    {service.destination === 'APP' ? (
+                      <Badge className="text-xs bg-indigo-100 text-indigo-800 hover:bg-indigo-100 line-clamp-1 max-w-[65%]">
+                        App: {appNameByAction[service.appAction || ''] || 'app da secretaria'}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs">Analisado no protocolo</Badge>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between text-xs sm:text-sm">

@@ -18,6 +18,7 @@ import {
   resolveServiceType,
   shouldAutoCreateWorkflow,
 } from '../services/service-creation-policy.service';
+import { effectiveDestination, validateServiceDestination } from '../config/app-catalog';
 
 // ====================== TIPOS LOCAIS ISOLADOS ======================
 
@@ -87,7 +88,7 @@ router.get(
 
       console.log('[GET /api/services] Services found:', services.length);
 
-      res.json({ data: services, success: true });
+      res.json({ data: services.map((svc) => ({ ...svc, ...effectiveDestination(svc) })), success: true });
     } catch (error) {
       console.error('List services error:', error);
       res.status(500).json({
@@ -145,6 +146,7 @@ router.get('/:id', async (req, res) => {
     res.json({
       service: {
         ...service,
+        ...effectiveDestination(service),
         requiredDocuments: normalizedRequiredDocuments
       }
     });
@@ -188,7 +190,21 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       allowMultipleActiveProtocols,
       uniquenessScope,
       uniquenessRules,
+
+      // Destino do pedido (FILA | APP + ação do catálogo de apps)
+      destination,
+      appAction,
     } = authReq.body;
+
+    if (destination !== undefined && destination !== null) {
+      const dept = departmentId
+        ? await prisma.department.findFirst({ where: { id: departmentId }, select: { code: true } })
+        : null;
+      const destinationError = validateServiceDestination(destination, appAction, dept?.code);
+      if (destinationError) {
+        return res.status(400).json({ success: false, error: 'Invalid destination', message: destinationError });
+      }
+    }
 
     const resolvedServiceType = resolveServiceType({
       serviceType,
@@ -377,7 +393,11 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
           // ✅ NOVO: Configuração de unicidade de protocolos (agora obrigatório)
           allowMultipleActiveProtocols: allowMultipleActiveProtocols,
           uniquenessScope: allowMultipleActiveProtocols === false ? uniquenessScope : null,
-          uniquenessRules: allowMultipleActiveProtocols === false && uniquenessRules ? uniquenessRules : null
+          uniquenessRules: allowMultipleActiveProtocols === false && uniquenessRules ? uniquenessRules : null,
+
+          // Destino explícito: sem informação, o pedido é analisado no protocolo
+          destination: destination === 'APP' ? 'APP' : 'FILA',
+          appAction: destination === 'APP' ? appAction : null
         },
         include: {
           department: {
@@ -592,7 +612,11 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       // Campos de unicidade
       allowMultipleActiveProtocols,
       uniquenessScope,
-      uniquenessRules
+      uniquenessRules,
+
+      // Destino do pedido (FILA | APP + ação do catálogo de apps)
+      destination,
+      appAction
         } = authReq.body;
 
     // DEBUG: Log dos campos de configuração recebidos
@@ -622,6 +646,14 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         error: 'Forbidden',
         message: 'Você só pode editar serviços do seu departamento'
         });
+    }
+
+    if (destination !== undefined && destination !== null) {
+      const dept = await prisma.department.findFirst({ where: { id: service.departmentId }, select: { code: true } });
+      const destinationError = validateServiceDestination(destination, appAction, dept?.code);
+      if (destinationError) {
+        return res.status(400).json({ success: false, error: 'Invalid destination', message: destinationError });
+      }
     }
 
     // ========== VALIDAÇÃO DE UNICIDADE DO moduleType ==========
@@ -685,6 +717,10 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
         // Campos avançados
         formSchema: formSchema !== undefined ? formSchema : service.formSchema,
         moduleType: moduleType !== undefined ? moduleType : service.moduleType,
+        ...(destination !== undefined && destination !== null && {
+          destination,
+          appAction: destination === 'APP' ? appAction : null,
+        }),
 
         // Configuração de campos do formulário
         // IMPORTANTE: Aceitar null explicitamente para permitir limpeza

@@ -30,6 +30,7 @@ import {
   Bell,
 } from 'lucide-react'
 import Link from 'next/link'
+import { DestinationStep } from '@/components/admin/services/steps/DestinationStep'
 
 interface Department {
   id: string
@@ -63,6 +64,9 @@ interface Service {
 }
 
 interface ServiceFormData {
+  // Destino do pedido: analisado no protocolo ou caso num app
+  destination: 'FILA' | 'APP'
+  appAction: string
   name: string
   description: string
   category: string
@@ -125,6 +129,8 @@ export default function EditServicePage() {
     hasNotifications: false,
     formSchema: null,
     moduleType: '',
+    destination: 'FILA',
+    appAction: '',
     enabledFields: [],
     formFieldsConfig: null,
   })
@@ -205,6 +211,8 @@ export default function EditServicePage() {
         hasNotifications: serviceData.hasNotifications || false,
         formSchema: serviceData.formSchema || null,
         moduleType: serviceData.moduleType || '',
+        destination: serviceData.destination === 'APP' ? 'APP' : 'FILA',
+        appAction: serviceData.appAction || '',
         enabledFields: serviceData.enabledFields || [],
         formFieldsConfig: serviceData.formFieldsConfig || null,
       })
@@ -278,6 +286,9 @@ export default function EditServicePage() {
         // Configurações avançadas
         formSchema: formData.formSchema || null,
         moduleType: formData.moduleType || null,
+        // Destino do pedido
+        destination: formData.destination === 'APP' && formData.appAction ? 'APP' : 'FILA',
+        appAction: formData.destination === 'APP' ? formData.appAction : null,
         // Configuração de campos do formulário
         enabledFields: formData.enabledFields || null,
         formFieldsConfig: formData.formFieldsConfig || null,
@@ -425,6 +436,16 @@ export default function EditServicePage() {
                 departments={departments}
                 onChange={handleFieldChange}
                 errors={errors}
+              />
+            </CardContent>
+          </Card>
+          <Card className="mt-4">
+            <CardContent className="pt-6">
+              <DestinationStep
+                departmentCode={departments.find((d: any) => d.id === formData.departmentId)?.code}
+                destination={formData.destination}
+                appAction={formData.appAction}
+                onChange={handleFieldChange}
               />
             </CardContent>
           </Card>

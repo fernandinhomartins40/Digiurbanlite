@@ -365,6 +365,9 @@ loadRoute('/api/apresentacao', './routes/apresentacao-export');
 // Workflows (fonte única: service-workflows)
 loadRoute('/api/service-workflows', './routes/service-workflows.routes');
 
+// Catálogo de Apps (ARQUITETURA-DE-PRODUTO.md 6.2)
+loadRoute('/api/app-catalog', './routes/app-catalog.routes');
+
 // Notificações
 loadRoute('/api/notifications', './routes/notifications.routes');
 loadRoute('/api/push', './routes/push-subscriptions.routes');

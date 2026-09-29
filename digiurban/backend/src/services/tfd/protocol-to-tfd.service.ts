@@ -35,6 +35,7 @@ export class ProtocolToTFDService {
 
     // 2. Verificar se é serviço TFD
     const isTFDService =
+      (protocol.service as any)?.appAction === 'ENCAMINHAMENTOS_TFD' ||
       protocol.moduleType?.includes('TFD') ||
       protocol.moduleType?.toLowerCase().includes('tfd');
 

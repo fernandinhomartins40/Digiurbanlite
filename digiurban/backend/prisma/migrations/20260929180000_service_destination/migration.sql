@@ -1,0 +1,87 @@
+-- Fase 3 (ARQUITETURA-DE-PRODUTO.md, 6.1): o Serviço declara o destino do pedido.
+--   destination = 'FILA' (analisado no protocolo) | 'APP' (vira caso num app)
+--   appAction   = código da ação de entrada do app (config/app-catalog.ts)
+-- Aditiva e idempotente. O backfill usa exatamente o mapeamento que o conversor
+-- protocolo→app já aplicava pelo moduleType: nenhum serviço muda de comportamento.
+
+ALTER TABLE "services_simplified" ADD COLUMN IF NOT EXISTS "destination" TEXT;
+ALTER TABLE "services_simplified" ADD COLUMN IF NOT EXISTS "appAction" TEXT;
+
+-- Serviços cujo moduleType é uma ação de app conhecida → APP
+UPDATE "services_simplified"
+SET "destination" = 'APP', "appAction" = "moduleType"
+WHERE "destination" IS NULL
+  AND "moduleType" IN (
+  'ENCAMINHAMENTOS_TFD',
+  'ILUMINACAO_PUBLICA',
+  'LIMPEZA_URBANA',
+  'COLETA_ESPECIAL',
+  'SOLICITACAO_CAPINA',
+  'SOLICITACAO_DESOBSTRUCAO',
+  'SOLICITACAO_PODA',
+  'ATENDIMENTOS_SERVICOS_PUBLICOS',
+  'APROVACAO_PROJETO',
+  'ALVARA_CONSTRUCAO',
+  'ALVARA_FUNCIONAMENTO',
+  'LICENCA_AMBIENTAL',
+  'AUTORIZACAO_PODA_CORTE',
+  'DENUNCIA_AMBIENTAL',
+  'VISTORIA_AMBIENTAL',
+  'INSCRICAO_PROGRAMA_HABITACIONAL',
+  'INSCRICAO_FILA_HABITACAO',
+  'SOLICITACAO_AUXILIO_ALUGUEL',
+  'VISTORIA_AREA_RISCO',
+  'DENUNCIA_AREA_RISCO',
+  'DENUNCIA_CONSTRUCAO',
+  'REMOCAO_PREVENTIVA',
+  'SOLICITACAO_ABRIGO',
+  'ALERTA_EMERGENCIA',
+  'DENUNCIA_VIOLENCIA',
+  'DENUNCIA_ASSEDIO',
+  'ACOLHIMENTO_CASA_ABRIGO',
+  'MEDIDA_PROTETIVA',
+  'ACOMPANHAMENTO_SOCIAL',
+  'INSCRICAO_ESCOLINHA_FUTEBOL',
+  'INSCRICAO_ESCOLINHA_BASQUETE',
+  'INSCRICAO_ESCOLINHA_VOLEI',
+  'INSCRICAO_ESCOLINHA_NATACAO',
+  'INSCRICAO_ESCOLINHA_JUDO',
+  'INSCRICAO_ESCOLINHA_CAPOEIRA',
+  'INSCRICAO_ESCOLINHA_GINASTICA',
+  'RESERVA_ESPACO_ESPORTIVO',
+  'USO_GINASIO',
+  'INSCRICAO_COMPETICAO',
+  'INSCRICAO_CORRIDA_RUA',
+  'EMPRESTIMO_MATERIAL_ESPORTIVO',
+  'INSCRICAO_OFICINA',
+  'INSCRICAO_OFICINA_CULTURAL',
+  'INSCRICAO_GRUPO_OFICINA',
+  'RESERVA_ESPACO_CULTURAL',
+  'INSCRICAO_EDITAL',
+  'PROJETO_CULTURAL',
+  'SUBMISSAO_PROJETO_CULTURAL',
+  'APOIO_CULTURAL',
+  'CREDENCIAMENTO_TAXI',
+  'CREDENCIAMENTO_MOTOTAXI',
+  'CREDENCIAMENTO_TRANSPORTE_ESCOLAR',
+  'VISTORIA_VEICULO',
+  'DEFESA_AUTUACAO',
+  'CARTAO_ESTUDANTE',
+  'CARTAO_TRANSPORTE',
+  'ISENCAO_IDOSO',
+  'PASSE_LIVRE_INTERESTADUAL',
+  'VAGA_ESPECIAL_PCD',
+  'ASSISTENCIA_TECNICA',
+  'CADASTRO_PRODUTOR',
+  'CADASTRO_PROPRIEDADE_RURAL'
+);
+
+-- Variações de TFD (o conversor aceitava qualquer moduleType contendo "TFD")
+UPDATE "services_simplified"
+SET "destination" = 'APP', "appAction" = 'ENCAMINHAMENTOS_TFD'
+WHERE "destination" IS NULL AND "moduleType" ILIKE '%TFD%';
+
+-- Demais serviços → FILA (analisados no próprio protocolo)
+UPDATE "services_simplified"
+SET "destination" = 'FILA'
+WHERE "destination" IS NULL;

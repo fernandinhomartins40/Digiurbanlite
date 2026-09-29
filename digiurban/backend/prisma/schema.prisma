@@ -959,6 +959,10 @@ model ServiceSimplified {
 
   // Para serviços COM_DADOS
   moduleType           String? // "ATENDIMENTOS_SAUDE", etc — unique composta [tenantId, moduleType]
+  // Destino do pedido (ARQUITETURA-DE-PRODUTO.md 6.1): FILA | APP
+  destination  String?
+  // Ação de entrada do app quando destination = APP (config/app-catalog.ts)
+  appAction    String?
   formSchema           Json? // Schema do formulário
   linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (alunos, dependentes, etc)
 

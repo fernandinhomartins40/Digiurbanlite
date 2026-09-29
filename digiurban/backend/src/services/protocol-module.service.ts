@@ -346,7 +346,12 @@ export class ProtocolModuleService {
     // ⭐ HOOK AUTOMÁTICO: CONVERTER PROTOCOLO TFD → SOLICITAÇÃO TFD
     // ============================================================================
 
-    if (result.protocol.moduleType === 'ENCAMINHAMENTOS_TFD') {
+    // Destino declarado no serviço (FILA | APP + ação). Serviço anterior à
+    // migração cai no comportamento legado pelo moduleType.
+    const { resolveAppRoutingKey } = await import('../config/app-catalog');
+    const routingKey = resolveAppRoutingKey(service);
+
+    if (routingKey === 'ENCAMINHAMENTOS_TFD' || (!service.destination && routingKey?.includes('TFD'))) {
       try {
         const protocolToTFDService = (await import('./tfd/protocol-to-tfd.service')).default;
         const solicitacaoTFD = await protocolToTFDService.convertProtocolToTFD(result.protocol.id);
@@ -366,7 +371,9 @@ export class ProtocolModuleService {
 
     try {
       const { convertProtocolToAppOnCreate } = await import('./apps/protocol-to-app.service');
-      await convertProtocolToAppOnCreate(result.protocol);
+      if (routingKey) {
+        await convertProtocolToAppOnCreate({ ...result.protocol, moduleType: routingKey });
+      }
     } catch (error) {
       console.error('❌ Erro ao converter protocolo para app de secretaria (não-fatal):', error);
     }

@@ -15,6 +15,7 @@ import { ServiceTypeStep } from '@/components/admin/services/steps/ServiceTypeSt
 import { DataCaptureStep } from '@/components/admin/services/steps/DataCaptureStep'
 import { DocumentsStep } from '@/components/admin/services/steps/DocumentsStep'
 import { UniquenessConfigStep } from '@/components/admin/services/steps/UniquenessConfigStep'
+import { DestinationStep, describeDestination } from '@/components/admin/services/steps/DestinationStep'
 import {
   FileText,
   Database,
@@ -55,6 +56,10 @@ interface ServiceFormData {
   moduleType: string // Gerado automaticamente baseado no nome
   formSchema: any // JSON Schema do formulário customizado
 
+  // Destino do pedido: analisado no protocolo ou caso num app
+  destination: 'FILA' | 'APP'
+  appAction: string
+
   // NOVO: Configuração de unicidade (obrigatório)
   allowMultipleActiveProtocols: boolean | null
   uniquenessScope: string
@@ -87,6 +92,8 @@ export default function NewServicePage() {
     requiredDocuments: [],
     moduleType: '', // Gerado automaticamente
     formSchema: null, // Vazio por padrão
+    destination: 'FILA',
+    appAction: '',
     // Unicidade
     allowMultipleActiveProtocols: null, // Obrigatório definir
     uniquenessScope: '',
@@ -148,6 +155,13 @@ export default function NewServicePage() {
       description: 'Documentação necessária',
       icon: <FileText className="h-5 w-5" />,
       isOptional: true,
+    },
+    {
+      id: 'destination',
+      title: 'Depois do pedido',
+      description: 'Protocolo ou app',
+      icon: <Layers className="h-5 w-5" />,
+      isValid: () => formData.destination === 'FILA' || !!formData.appAction,
     },
     {
       id: 'uniqueness',
@@ -379,6 +393,9 @@ export default function NewServicePage() {
       }
 
       // ✅ NOVO: Adicionar configuração de unicidade (obrigatória)
+      payload.destination = formData.destination === 'APP' && formData.appAction ? 'APP' : 'FILA'
+      payload.appAction = payload.destination === 'APP' ? formData.appAction : null
+
       payload.allowMultipleActiveProtocols = formData.allowMultipleActiveProtocols
       payload.uniquenessScope = formData.allowMultipleActiveProtocols === false ? formData.uniquenessScope : null
       payload.uniquenessRules = formData.allowMultipleActiveProtocols === false && formData.uniquenessRules
@@ -472,7 +489,15 @@ export default function NewServicePage() {
           onChange={handleFieldChange}
         />
 
-        {/* Step 5: Configuração de Unicidade */}
+        {/* Step 5: Depois do pedido (destino) */}
+        <DestinationStep
+          departmentCode={departments.find((d) => d.id === formData.departmentId)?.code}
+          destination={formData.destination}
+          appAction={formData.appAction}
+          onChange={handleFieldChange}
+        />
+
+        {/* Step 6: Configuração de Unicidade */}
         <UniquenessConfigStep
           formData={formData}
           onChange={handleFieldChange}
@@ -490,6 +515,10 @@ export default function NewServicePage() {
           </div>
 
           <div className="grid gap-4">
+            <div className="p-4 border rounded-lg">
+              <h3 className="font-semibold mb-2">Depois do pedido</h3>
+              <p className="text-sm">{describeDestination(formData.destination, formData.appAction || null)}</p>
+            </div>
             <div className="p-4 border rounded-lg">
               <h3 className="font-semibold mb-2">Informações Básicas</h3>
               <dl className="space-y-1 text-sm">

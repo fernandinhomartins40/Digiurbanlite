@@ -37,6 +37,7 @@ export class SolicitacoesTFDService {
     }
 
     const servicoTFD =
+      (await prisma.serviceSimplified.findFirst({ where: { appAction: 'ENCAMINHAMENTOS_TFD', isActive: true } })) ||
       (await prisma.serviceSimplified.findFirst({ where: { moduleType: 'ENCAMINHAMENTOS_TFD', isActive: true } })) ||
       (await prisma.serviceSimplified.findFirst({ where: { moduleType: { contains: 'TFD' }, isActive: true } }));
     if (!servicoTFD) {

@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma';
 import { logger } from '../../config/logger.config';
+import { resolveAppRoutingKey } from '../../config/app-catalog';
 
 /**
  * Conversores protocolo→app (Fase 1 do plano de apps).
@@ -639,10 +640,15 @@ export async function convertProtocolToAppOnCreate(protocol: ProtocolLike): Prom
 export async function convertProtocolToAppOnApproval(protocolId: string): Promise<void> {
   const protocol = await prisma.protocolSimplified.findFirst({
     where: { id: protocolId },
-    select: { id: true, number: true, moduleType: true, citizenId: true, customData: true },
+    select: {
+      id: true, number: true, moduleType: true, citizenId: true, customData: true,
+      service: { select: { destination: true, appAction: true, moduleType: true } },
+    },
   });
   if (!protocol) return;
-  const moduleType = protocol.moduleType || '';
+  // Destino declarado no serviço (legado: moduleType do protocolo)
+  const moduleType =
+    (protocol.service ? resolveAppRoutingKey(protocol.service) : protocol.moduleType) || '';
   const customData: any = protocol.customData || {};
 
   // ---- Agricultura: Cadastro de Produtor → ProdutorRural ----
