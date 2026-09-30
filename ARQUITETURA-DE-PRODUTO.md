@@ -581,5 +581,31 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
   - Backend: verificação de tipos e 26 testes unitários passam.
   - Build de produção sem erro novo.
 
-**Fica para uma próxima rodada**
-- Desmembrar o `moduleType`.
+**Terceira rodada — o `moduleType` (decisão registrada)**
+
+Análise: o campo tem cerca de 1.500 usos em 83 arquivos e hoje funciona como a **chave técnica estável** do tipo de serviço. Ele liga o serviço a:
+- o fluxo de etapas (ModuleWorkflow);
+- os dados indexados (Registry: `EntityType.code`);
+- as etiquetas automáticas do cidadão;
+- a regra de "um pedido em andamento" (escopo "por tipo de cadastro").
+
+A função perigosa, que era escolher o app pelo nome do serviço, **já saiu dele na Fase 3** (`destination`/`appAction`); ele só é usado como alternativa para serviços antigos sem destino gravado.
+
+**Decisão:** não renomear nem dividir o campo. O risco seria alto e o ganho, nenhum para quem usa. Em vez disso, foram corrigidos os três defeitos reais que a análise encontrou:
+1. **Multi-município:** `module_workflows.moduleType` era único na plataforma inteira, enquanto o serviço era único por município. Um município não conseguia criar um serviço com formulário que outro já tinha com o mesmo nome. A migração `20260929200000_module_workflow_tenant_unique` troca a regra por `[tenantId, moduleType]`, e as buscas por código passaram de `findUnique` para `findFirst`, escopado por município.
+2. **Erro 500 escondido:** a validação ignorava serviços desativados, mas a regra única do banco os considera. Recriar um serviço desativado quebrava ao salvar.
+3. **Código gerado na tela, a partir do nome:** o conflito aparecia ao gestor como "moduleType duplicado… escolha outro nome". Agora:
+   - o servidor gera o código (`services/service-module-type.service.ts`) sem repetir no município, considerando serviços desativados e fluxos, e acrescenta `_2`, `_3`… quando preciso;
+   - quando há um serviço **ativo** com o mesmo nome, o aviso é em português claro;
+   - a tela não gera nem mostra mais o código;
+   - a etapa de unicidade troca "CUSTOM / moduleType" por "Por cidadão", "Por tipo de cadastro" e "Por campo do formulário".
+   - Quem chama a API informando o código explicitamente (seeds, integrações) continua com o comportamento anterior.
+
+**Validação**
+- 4 testes unitários novos (30 no total).
+- A migração foi aplicada duas vezes num banco no estado antigo: a regra global sai, a nova entra e a segunda rodada não dá erro.
+- API com dois municípios:
+  - A cria "Cartão do Estudante";
+  - **B cria o mesmo serviço** (antes: bloqueado);
+  - A tenta de novo e recebe o aviso claro (409);
+  - com o antigo desativado, A cria de novo e recebe `CARTAO_DO_ESTUDANTE_2` (antes: erro 500).

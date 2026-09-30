@@ -1576,7 +1576,7 @@ model WorkflowStageSupportAssignment {
 model ModuleWorkflow {
   id          String  @id @default(cuid())
   tenantId    String? // Fase E Multi-Tenant (onda 7)
-  moduleType  String  @unique
+  moduleType  String // unique composta [tenantId, moduleType] (igual a services_simplified)
   name        String
   description String?
 
@@ -1592,6 +1592,7 @@ model ModuleWorkflow {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@unique([tenantId, moduleType])
   @@index([tenantId])
   @@map("module_workflows")
 }

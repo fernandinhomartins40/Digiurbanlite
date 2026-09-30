@@ -328,6 +328,7 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Messages Server: schema local é cópia — ao mudar Conversation/Message/FlowDefinition no backend, sincronizar `ultrazend-messages-server/prisma/schema.prisma`; escritas usam `resolveTenantId()` (`src/utils/tenant.ts`)
 - Deploy: RLS só vale com role não-superuser (`digiurban_app` + `MIGRATE_DATABASE_URL` p/ migrations); flags `TENANT_STRICT*` no compose
 - Smoke de isolamento: `npm run smoke:tenant:isolation` (2 tenants efêmeros, requer banco)
+- `moduleType` (código técnico do serviço) é gerado NO SERVIDOR a partir do nome, sem repetir no município (`services/service-module-type.service.ts`); a tela não envia nem exibe. `ModuleWorkflow` é único por `[tenantId, moduleType]` — buscar com `findFirst`, nunca `findUnique({ moduleType })`. Destino do pedido é `destination`/`appAction`, não o `moduleType`
 - ⚠️ A extension injeta `tenantId` no `data` de TOPO de create/update, mas **NÃO** em nested create (`{ fields: { create: [...] } }`) — propagar explícito com `tryGetTenantId()` (visto na F6 do Registry)
 
 ### Registry — Motor de Dados Orientado a Metadados (plano F0–F7)

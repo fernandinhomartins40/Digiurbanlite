@@ -1,5 +1,6 @@
 import { Router, Response } from 'express';
 import { prisma } from '../lib/prisma';
+import { generateUniqueModuleType } from '../services/service-module-type.service';
 import { Prisma, UserRole } from '@prisma/client';
 import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { ACTIVE_STATUSES } from '../config/protocol-status.config'; // ✅ FASE 2
@@ -182,8 +183,9 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       icon,
       color,
 
-      // NOVO: Campos para serviços COM_DADOS
-      moduleType, // Ex: "MATRICULA_ALUNO", "ATENDIMENTOS_SAUDE"
+      // Campos para serviços COM_DADOS. O código técnico (moduleType) é opcional:
+      // sem ele, o servidor gera um a partir do nome (service-module-type.service)
+      moduleType: requestedModuleType, // Ex: "MATRICULA_ALUNO", "ATENDIMENTOS_SAUDE"
       formSchema, // JSON Schema do formulário
 
       // ✅ NOVO: Campos de validação de unicidade de protocolos
@@ -209,7 +211,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
     const resolvedServiceType = resolveServiceType({
       serviceType,
       formSchema,
-      moduleType,
+      moduleType: requestedModuleType,
     });
     const resolvedServiceSubtype = resolveServiceSubtype({
       serviceType: resolvedServiceType,
@@ -220,7 +222,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       requiresDocuments,
       requiredDocuments,
       formSchema,
-      moduleType,
+      moduleType: requestedModuleType,
     });
 
     // ========== VALIDAÇÃO BÁSICA ==========
@@ -229,6 +231,26 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
         error: 'Bad request',
         message: 'Nome e departamento são obrigatórios'
         });
+    }
+
+    // Código técnico: o informado (API/seeds) ou gerado a partir do nome, sem repetir no município
+    let moduleType: string | undefined = requestedModuleType || undefined;
+    if (resolvedServiceType === 'COM_DADOS') {
+      // Serviço ativo com o mesmo nome: avisar em linguagem simples (antes o
+      // bloqueio vinha como "moduleType duplicado", incompreensível para o gestor)
+      const sameName = await prisma.serviceSimplified.findFirst({
+        where: { isActive: true, name: { equals: String(name).trim(), mode: 'insensitive' } },
+        select: { id: true, name: true }
+      });
+      if (sameName) {
+        return res.status(409).json({
+          success: false,
+          error: 'Duplicate service name',
+          message: `Já existe um serviço ativo chamado "${sameName.name}". Use outro nome ou edite o serviço existente.`,
+          existingService: sameName
+        });
+      }
+      if (!moduleType) moduleType = await generateUniqueModuleType(String(name));
     }
 
     // ========== VALIDAÇÃO OBRIGATÓRIA DE UNICIDADE ==========
@@ -326,11 +348,9 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
 
     // VALIDAÇÃO 1: moduleType único em serviços
     if (resolvedServiceType === 'COM_DADOS' && moduleType) {
+      // Inclui desativados: a unique [tenantId, moduleType] do banco também inclui
       const existingService = await prisma.serviceSimplified.findFirst({
-        where: {
-          moduleType,
-          isActive: true // Considerar apenas ativos
-        },
+        where: { moduleType },
         select: { id: true, name: true }
       });
 
@@ -347,7 +367,7 @@ router.post('/', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async (r
       }
 
       // VALIDAÇÃO 2: moduleType único em workflows
-      const existingWorkflow = await prisma.moduleWorkflow.findUnique({
+      const existingWorkflow = await prisma.moduleWorkflow.findFirst({
         where: { moduleType },
         select: { id: true, name: true }
       });
@@ -682,7 +702,7 @@ router.put('/:id', adminAuthMiddleware, requireMinRole(UserRole.MANAGER), async 
       }
 
       // VALIDAÇÃO 2: moduleType único em workflows
-      const existingWorkflow = await prisma.moduleWorkflow.findUnique({
+      const existingWorkflow = await prisma.moduleWorkflow.findFirst({
         where: { moduleType },
         select: { id: true, name: true }
       });

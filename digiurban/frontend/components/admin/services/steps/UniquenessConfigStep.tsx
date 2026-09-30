@@ -168,20 +168,20 @@ export function UniquenessConfigStep({ formData, onChange, errors }: UniquenessC
               <SelectContent>
                 <SelectItem value="CITIZEN">
                   <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">CITIZEN - Por Cidadão</span>
-                    <span className="text-xs text-gray-600">1 protocolo ativo por cidadão, validação simples por serviceId</span>
+                    <span className="font-medium">Por cidadão</span>
+                    <span className="text-xs text-gray-600">1 pedido em andamento por cidadão neste serviço</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="CUSTOM">
                   <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">CUSTOM - Por Módulo (Recomendado)</span>
-                    <span className="text-xs text-gray-600">1 protocolo ativo por cidadão, validação por moduleType</span>
+                    <span className="font-medium">Por tipo de cadastro (recomendado)</span>
+                    <span className="text-xs text-gray-600">1 pedido em andamento por cidadão para este tipo de cadastro</span>
                   </div>
                 </SelectItem>
                 <SelectItem value="CITIZEN_PER_FIELD">
                   <div className="flex flex-col items-start py-1">
-                    <span className="font-medium">CITIZEN_PER_FIELD - Por Campo Específico</span>
-                    <span className="text-xs text-gray-600">Validação por valor de campo (ex: CPF de dependente)</span>
+                    <span className="font-medium">Por campo do formulário</span>
+                    <span className="text-xs text-gray-600">1 pedido em andamento por valor de um campo (ex.: CPF do dependente)</span>
                   </div>
                 </SelectItem>
               </SelectContent>
@@ -195,8 +195,8 @@ export function UniquenessConfigStep({ formData, onChange, errors }: UniquenessC
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  <strong>Escopo CITIZEN:</strong> O sistema verificará se o cidadão já possui um protocolo ativo
-                  deste serviço específico. Não valida por moduleType.
+                  <strong>Por cidadão:</strong> antes de abrir um novo pedido, o sistema verifica se o cidadão
+                  já tem um pedido em andamento deste serviço.
                 </AlertDescription>
               </Alert>
             )}
@@ -204,9 +204,9 @@ export function UniquenessConfigStep({ formData, onChange, errors }: UniquenessC
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  <strong>Escopo CUSTOM (Recomendado):</strong> O sistema verificará se o cidadão já possui um protocolo ativo
-                  com o mesmo <strong>moduleType</strong> ({formData.moduleType || 'não definido'}).
-                  Este é o método mais robusto para cadastros de identidade.
+                  <strong>Por tipo de cadastro (recomendado):</strong> antes de abrir um novo pedido, o sistema verifica
+                  se o cidadão já tem um pedido em andamento para o mesmo tipo de cadastro. É o mais seguro para
+                  cadastros (ex.: produtor rural, matrícula).
                 </AlertDescription>
               </Alert>
             )}
@@ -214,8 +214,8 @@ export function UniquenessConfigStep({ formData, onChange, errors }: UniquenessC
               <Alert>
                 <Info className="h-4 w-4" />
                 <AlertDescription className="text-xs">
-                  <strong>Escopo CITIZEN_PER_FIELD:</strong> O sistema verificará se o cidadão já possui um protocolo ativo
-                  com o mesmo valor em um campo específico do formulário. Configure o campo abaixo.
+                  <strong>Por campo do formulário:</strong> antes de abrir um novo pedido, o sistema verifica se já existe
+                  um pedido em andamento com o mesmo valor no campo escolhido abaixo.
                 </AlertDescription>
               </Alert>
             )}
@@ -226,18 +226,7 @@ export function UniquenessConfigStep({ formData, onChange, errors }: UniquenessC
             <div className="space-y-3 p-3 bg-white border border-gray-200 rounded">
               <p className="text-xs font-medium text-gray-700">Regras de Validação Customizada</p>
 
-              <div className="space-y-2">
-                <Label htmlFor="rules-moduleType" className="text-xs">Module Type</Label>
-                <Input
-                  id="rules-moduleType"
-                  value={formData.uniquenessRules?.moduleType || formData.moduleType || ''}
-                  onChange={(e) => handleRulesFieldChange('moduleType', e.target.value)}
-                  placeholder="Ex: CADASTRO_PRODUTOR"
-                  className="text-sm"
-                  disabled
-                />
-                <p className="text-xs text-gray-500">Preenchido automaticamente com o moduleType do serviço</p>
-              </div>
+              {/* O código técnico do serviço é gerado pelo servidor; não é pedido nem exibido ao gestor */}
 
               <div className="space-y-2">
                 <Label htmlFor="rules-validationFunction" className="text-xs">Função de Validação</Label>

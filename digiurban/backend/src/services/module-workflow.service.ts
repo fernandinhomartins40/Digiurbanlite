@@ -47,7 +47,8 @@ export async function createWorkflow(data: CreateWorkflowData) {
  * Obtém um workflow por tipo de módulo
  */
 export async function getWorkflowByModuleType(moduleType: string) {
-  return await prisma.moduleWorkflow.findUnique({
+  // findFirst: a unique é [tenantId, moduleType]; a extension escopa pelo município
+  return await prisma.moduleWorkflow.findFirst({
     where: { moduleType }
   });
 }
@@ -87,8 +88,9 @@ export async function updateWorkflow(
     updateData.stages = sortedStages;
   }
 
+  const workflow = await prisma.moduleWorkflow.findFirstOrThrow({ where: { moduleType }, select: { id: true } });
   return await prisma.moduleWorkflow.update({
-    where: { moduleType },
+    where: { id: workflow.id },
     data: updateData
   });
 }
@@ -97,8 +99,9 @@ export async function updateWorkflow(
  * Deleta um workflow
  */
 export async function deleteWorkflow(moduleType: string) {
+  const workflow = await prisma.moduleWorkflow.findFirstOrThrow({ where: { moduleType }, select: { id: true } });
   return await prisma.moduleWorkflow.delete({
-    where: { moduleType }
+    where: { id: workflow.id }
   });
 }
 

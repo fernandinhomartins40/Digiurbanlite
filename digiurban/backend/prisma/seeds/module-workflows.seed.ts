@@ -267,13 +267,13 @@ export async function seedModuleWorkflows() {
   let updated = 0;
 
   for (const module of moduleWorkflows) {
-    const existing = await prisma.moduleWorkflow.findUnique({
+    const existing = await prisma.moduleWorkflow.findFirst({
       where: { moduleType: module.moduleType },
     });
 
     if (existing) {
       await prisma.moduleWorkflow.update({
-        where: { moduleType: module.moduleType },
+        where: { id: existing.id },
         data: {
           name: module.name,
           description: module.description,

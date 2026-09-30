@@ -379,16 +379,8 @@ export default function NewServicePage() {
 
       // Adicionar campos de captura de dados se COM_DADOS
       if (formData.serviceType === 'COM_DADOS') {
-        // Gerar moduleType automaticamente baseado no nome do serviço
-        const moduleType = formData.name
-          .toUpperCase()
-          .normalize('NFD')
-          .replace(/[\u0300-\u036f]/g, '') // Remove acentos
-          .replace(/[^A-Z0-9]/g, '_') // Substitui não alfanuméricos por underscore
-          .replace(/_+/g, '_') // Remove underscores duplicados
-          .replace(/^_|_$/g, '') // Remove underscores no início/fim
-
-        payload.moduleType = moduleType
+        // O código técnico (moduleType) é gerado pelo servidor a partir do nome,
+        // sem repetir no município — ver service-module-type.service.ts
         payload.formSchema = formData.formSchema
       }
 
@@ -579,23 +571,11 @@ export default function NewServicePage() {
                 {formData.allowMultipleActiveProtocols === false && (
                   <>
                     <div className="flex justify-between">
-                      <dt className="text-gray-600">Escopo de validação:</dt>
-                      <dd className="font-medium">{formData.uniquenessScope}</dd>
+                      <dt className="text-gray-600">Um pedido em andamento:</dt>
+                      <dd className="font-medium">
+                        {({ CITIZEN: 'Por cidadão', CUSTOM: 'Por tipo de cadastro', CITIZEN_PER_FIELD: 'Por campo do formulário' } as Record<string, string>)[formData.uniquenessScope || ''] || '—'}
+                      </dd>
                     </div>
-                    {formData.uniquenessScope === 'CUSTOM' && formData.moduleType && (
-                      <div className="flex justify-between">
-                        <dt className="text-gray-600">Valida por moduleType:</dt>
-                        <dd className="font-medium text-xs bg-purple-100 px-2 py-1 rounded">
-                          {formData.name
-                            .toUpperCase()
-                            .normalize('NFD')
-                            .replace(/[\u0300-\u036f]/g, '')
-                            .replace(/[^A-Z0-9]/g, '_')
-                            .replace(/_+/g, '_')
-                            .replace(/^_|_$/g, '')}
-                        </dd>
-                      </div>
-                    )}
                     {formData.uniquenessScope === 'CITIZEN_PER_FIELD' && formData.uniquenessRules?.field && (
                       <div className="flex justify-between">
                         <dt className="text-gray-600">Campo de validação:</dt>
