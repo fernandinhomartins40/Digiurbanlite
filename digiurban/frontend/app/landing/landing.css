@@ -1,0 +1,211 @@
+/* ==========================================================================
+   Landing institucional DigiUrban — fiel às referências do kit de marca,
+   com toques de Liquid Glass (barra do topo, selos, painel do hero, cartões,
+   botões contornados e o selo "Confiança").
+   ========================================================================== */
+
+.dl {
+  --dl-navy: #0b2a8c;
+  --dl-ink: #122f6e;
+  --dl-text: #4d5f80;
+  --dl-blue: #1673f0;
+  --dl-line: rgba(208, 224, 248, 0.95);
+  font-family: var(--font-outfit), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  color: var(--dl-text);
+  background: #f4f8ff;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: clip;
+}
+
+.dl-h {
+  color: var(--dl-navy);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+}
+
+.dl-script {
+  font-family: var(--font-kalam), 'Segoe Print', cursive;
+  font-weight: 700;
+  line-height: 1.05;
+}
+
+/* Texto em degradê turquesa ("modernos e acessíveis") */
+.dl-grad-text {
+  background: linear-gradient(90deg, #3ff5d9 0%, #20e3ea 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* ---------- Vidro ---------- */
+/* :where() = especificidade zero: "absolute"/"fixed" do Tailwind continuam valendo */
+:where(.dl-glass) { position: relative; }
+.dl-glass {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.64));
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    inset 0 -1px 0 rgba(150, 190, 240, 0.25),
+    0 14px 36px -18px rgba(18, 70, 170, 0.35);
+}
+
+/* Borda de luz (reflexo nas bordas, como no Liquid Glass) */
+.dl-rim::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(160, 205, 255, 0.35) 40%, rgba(120, 240, 230, 0.45) 75%, rgba(255, 255, 255, 0.9));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Barra do topo */
+.dl-nav {
+  background: linear-gradient(180deg, rgba(246, 250, 255, 0.86), rgba(236, 244, 255, 0.72));
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+  box-shadow: 0 1px 0 rgba(170, 200, 240, 0.35), 0 8px 24px -18px rgba(18, 70, 170, 0.4);
+}
+
+/* Cartões de conteúdo (material fino) */
+.dl-card {
+  background: rgba(255, 255, 255, 0.74);
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid var(--dl-line);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 10px 28px -20px rgba(18, 70, 170, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+a.dl-card:hover {
+  transform: translateY(-2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.95), 0 16px 34px -18px rgba(18, 70, 170, 0.45);
+}
+
+/* Selo de seção ("+ COMO FUNCIONA") */
+.dl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  border-radius: 999px;
+  padding: 0.35em 0.9em;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--dl-blue);
+  background: linear-gradient(180deg, rgba(232, 242, 255, 0.95), rgba(214, 232, 255, 0.8));
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 #fff, 0 4px 12px -8px rgba(22, 115, 240, 0.6);
+}
+
+/* Quadrado de ícone azul-claro */
+.dl-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--dl-blue);
+  background: linear-gradient(180deg, #f1f7ff, #e0edff);
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 #fff, 0 6px 14px -10px rgba(22, 115, 240, 0.55);
+}
+
+/* Número do passo */
+.dl-num {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 999px;
+  color: #fff;
+  font-weight: 700;
+  background: radial-gradient(circle at 35% 30%, #5fdcff, #0aa6ef 60%, #0a8fe0);
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.7), 0 6px 14px -6px rgba(10, 150, 230, 0.8);
+}
+
+/* ---------- Botões ---------- */
+/* :where() = especificidade zero: "hidden lg:inline-flex" do Tailwind continua valendo */
+:where(.dl-btn) { display: inline-flex; }
+.dl-btn {
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: transform 0.15s ease, filter 0.15s ease, box-shadow 0.15s ease;
+}
+.dl-btn:hover { transform: translateY(-1px); filter: brightness(1.04); }
+.dl-btn:active { transform: translateY(0); }
+
+.dl-btn-teal {
+  color: #06306e;
+  background: linear-gradient(90deg, #3af6d6, #13dbe7);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.65), 0 12px 26px -12px rgba(18, 220, 225, 0.85);
+}
+.dl-btn-blue {
+  color: #fff;
+  background: linear-gradient(180deg, #2489ff, #0f67e6);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 12px 24px -12px rgba(15, 103, 230, 0.8);
+}
+/* Contornado sobre fundo escuro — vidro */
+.dl-btn-ghost {
+  color: #fff;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04));
+  -webkit-backdrop-filter: blur(10px) saturate(160%);
+  backdrop-filter: blur(10px) saturate(160%);
+  border: 1.5px solid rgba(255, 255, 255, 0.85);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+/* Contornado sobre fundo claro (Entrar) */
+.dl-btn-line {
+  color: var(--dl-ink);
+  background: rgba(255, 255, 255, 0.55);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(160, 190, 235, 0.9);
+  box-shadow: inset 0 1px 0 #fff;
+}
+
+/* Tamanho relativo ao próprio bloco (tela do celular, painel do hero) */
+.dl-cq { container-type: inline-size; }
+
+/* Selo "Confiança" — vidro tingido */
+.dl-tinted {
+  color: #fff;
+  background: linear-gradient(160deg, rgba(40, 170, 255, 0.92), rgba(12, 110, 240, 0.9));
+  -webkit-backdrop-filter: blur(12px) saturate(180%);
+  backdrop-filter: blur(12px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 18px 34px -16px rgba(12, 110, 240, 0.8);
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .dl-glass, .dl-nav, .dl-card { background: #fff; -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dl-btn, .dl-card { transition: none; }
+}
+
+/* Painel "Olá, Cidadão!": vidro mais denso (legível sobre o mascote) */
+.dl-glass-solid {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(246, 250, 255, 0.88));
+  box-shadow:
+    0 0 0 2px rgba(24, 56, 150, 0.55),
+    inset 0 1px 0 #fff,
+    0 22px 40px -18px rgba(6, 30, 110, 0.6);
+}
+
+/* Menu aberto: vidro espesso (legível sobre o topo colorido) */
+.dl-sheet {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(244, 249, 255, 0.92));
+  -webkit-backdrop-filter: blur(28px) saturate(190%);
+  backdrop-filter: blur(28px) saturate(190%);
+}

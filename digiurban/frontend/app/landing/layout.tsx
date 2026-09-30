@@ -1,4 +1,11 @@
 import { Metadata } from 'next'
+import { Outfit, Kalam } from 'next/font/google'
+import './landing.css'
+
+// Tipografia da landing (referência do kit de marca): Outfit nos textos e
+// Kalam nas frases escritas à mão ("Tecnologia a serviço das pessoas!")
+const outfit = Outfit({ subsets: ['latin'], variable: '--font-outfit', display: 'swap' })
+const kalam = Kalam({ subsets: ['latin'], weight: ['700'], variable: '--font-kalam', display: 'swap' })
 
 export const metadata: Metadata = {
   title: 'DigiUrban - Plataforma Digital de Serviços Municipais',
@@ -63,5 +70,5 @@ export default function LandingLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <>{children}</>
+  return <div className={`${outfit.variable} ${kalam.variable}`}>{children}</div>
 }
