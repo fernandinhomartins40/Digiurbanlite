@@ -10,6 +10,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Loader2, Shield, Lock, Mail, Eye, EyeOff } from 'lucide-react'
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext'
 import Link from 'next/link'
+import { LgAuthBackdrop } from '@/components/liquid-glass/LgAuthBackdrop'
 
 export default function SuperAdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -59,23 +60,19 @@ export default function SuperAdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#193642] via-[#193642] to-[#0f6fbe] p-4 relative overflow-hidden">
-      {/* Decorative elements with darker theme */}
-      <div className="absolute inset-0 opacity-5">
-        <div className="absolute top-20 right-20 w-96 h-96 bg-[#0fffbf] rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-96 h-96 bg-[#a7dbc9] rounded-full blur-3xl"></div>
-      </div>
+    <div className="lg-root min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      <LgAuthBackdrop primary="#5856D6" secondary="#1E9BFF" withThemeScope />
 
-      <Card className="w-full max-w-md border-0 shadow-2xl relative z-10 backdrop-blur-sm bg-white/95">
+      <Card className="lg-glass lg-thick w-full max-w-md border-0 relative z-10 rounded-[32px]">
         <CardHeader className="space-y-4 pb-6">
           <div className="flex justify-center">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#193642] to-[#0f6fbe] flex items-center justify-center shadow-lg relative">
+            <div className="lg-tinted w-16 h-16 rounded-2xl flex items-center justify-center relative" style={{ ['--tint' as any]: '#5856D6' }}>
               <Shield className="h-8 w-8 text-white relative z-10" />
-              <div className="absolute inset-0 bg-gradient-to-br from-[#0fffbf]/20 to-transparent rounded-2xl"></div>
+              
             </div>
           </div>
           <div className="text-center">
-            <CardTitle className="text-3xl font-bold bg-gradient-to-r from-[#193642] to-[#0f6fbe] bg-clip-text text-transparent">
+            <CardTitle className="text-3xl font-bold text-[var(--lg-ink)]">
               Super Admin
             </CardTitle>
             <CardDescription className="text-base text-gray-600 mt-2">
@@ -92,18 +89,18 @@ export default function SuperAdminLoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <label htmlFor="email" className="text-sm font-medium text-[#193642]">
+              <label htmlFor="email" className="text-sm font-medium text-[var(--lg-ink)]">
                 Email do Super Admin
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-[#193642]" />
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-[var(--lg-ink)]" />
                 <Input
                   id="email"
                   type="email"
                   placeholder="superadmin@digiurban.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10 border-gray-200 focus:border-[#193642] focus:ring-[#193642]"
+                  className="pl-10 border-gray-200 focus:border-[#5856D6] focus:ring-[#5856D6]"
                   autoComplete="username"
                   required
                   disabled={loading}
@@ -112,18 +109,18 @@ export default function SuperAdminLoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="password" className="text-sm font-medium text-[#193642]">
+              <label htmlFor="password" className="text-sm font-medium text-[var(--lg-ink)]">
                 Senha Mestra
               </label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-[#193642]" />
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-[var(--lg-ink)]" />
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   placeholder="Digite sua senha mestra"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10 pr-10 border-gray-200 focus:border-[#193642] focus:ring-[#193642]"
+                  className="pl-10 pr-10 border-gray-200 focus:border-[#5856D6] focus:ring-[#5856D6]"
                   autoComplete="current-password"
                   required
                   disabled={loading}
@@ -131,7 +128,7 @@ export default function SuperAdminLoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[#193642]"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-[var(--lg-ink)]"
                 >
                   {showPassword ? (
                     <EyeOff className="h-4 w-4" />
@@ -149,7 +146,7 @@ export default function SuperAdminLoginPage() {
                   checked={rememberMe}
                   onCheckedChange={(checked) => setRememberMe(checked === true)}
                   disabled={loading}
-                  className="border-[#193642] data-[state=checked]:bg-[#193642]"
+                  className="border-[#5856D6] data-[state=checked]:bg-[#5856D6]"
                 />
                 <label
                   htmlFor="remember-superadmin"
@@ -161,7 +158,7 @@ export default function SuperAdminLoginPage() {
 
               <Link
                 href="/admin/forgot-password"
-                className="text-sm text-[#0f6fbe] hover:text-[#0d5fa0] font-medium"
+                className="text-sm text-[var(--lg-blue)] hover:opacity-80 font-medium"
               >
                 Esqueci minha senha
               </Link>
@@ -169,7 +166,7 @@ export default function SuperAdminLoginPage() {
 
             <Button
               type="submit"
-              className="w-full bg-gradient-to-r from-[#193642] to-[#0f6fbe] hover:from-[#0f2832] hover:to-[#0d5fa0] text-white font-bold py-6 text-base shadow-lg hover:shadow-xl transition-all"
+              className="lg-tinted w-full rounded-2xl text-white font-bold py-6 text-base transition-all hover:opacity-95" style={{ ['--tint' as any]: '#5856D6' }}
               disabled={loading || !email || !password}
             >
               {loading ? (
@@ -186,30 +183,30 @@ export default function SuperAdminLoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-[#193642]/5 rounded-lg border border-[#193642]/20">
-            <p className="text-xs text-[#193642] font-semibold mb-2 flex items-center">
+          <div className="mt-6 p-4 bg-[var(--lg-fill)] rounded-2xl border border-[var(--lg-sep)]">
+            <p className="text-xs text-[var(--lg-ink)] font-semibold mb-2 flex items-center">
               <Shield className="h-3 w-3 mr-1" />
               Acesso de Alto Privilégio
             </p>
             <ul className="text-xs text-gray-700 space-y-1">
               <li className="flex items-start gap-1">
-                <span className="text-[#0fffbf] mt-1">•</span>
+                <span className="text-[#5856D6] mt-1">•</span>
                 <span>Gerenciamento de todos os tenants (municípios)</span>
               </li>
               <li className="flex items-start gap-1">
-                <span className="text-[#0fffbf] mt-1">•</span>
+                <span className="text-[#5856D6] mt-1">•</span>
                 <span>Configuração global da plataforma SaaS</span>
               </li>
               <li className="flex items-start gap-1">
-                <span className="text-[#0fffbf] mt-1">•</span>
+                <span className="text-[#5856D6] mt-1">•</span>
                 <span>Monitoramento de infraestrutura e performance</span>
               </li>
               <li className="flex items-start gap-1">
-                <span className="text-[#0fffbf] mt-1">•</span>
+                <span className="text-[#5856D6] mt-1">•</span>
                 <span>Controle de billing e assinaturas</span>
               </li>
               <li className="flex items-start gap-1">
-                <span className="text-[#0fffbf] mt-1">•</span>
+                <span className="text-[#5856D6] mt-1">•</span>
                 <span>Analytics consolidados multi-tenant</span>
               </li>
             </ul>
@@ -218,7 +215,7 @@ export default function SuperAdminLoginPage() {
           <div className="mt-6 pt-4 border-t border-gray-200 text-center">
             <Link
               href="/landing"
-              className="text-sm text-[#0f6fbe] hover:text-[#0fffbf] font-medium hover:underline transition-colors"
+              className="text-sm text-[var(--lg-blue)] hover:opacity-80 font-medium hover:underline transition-colors"
             >
               ← Voltar para página inicial
             </Link>

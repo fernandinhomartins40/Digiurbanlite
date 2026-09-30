@@ -1,5 +1,6 @@
 'use client';
 
+import { LgAuthBackdrop } from '@/components/liquid-glass/LgAuthBackdrop'
 import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
@@ -92,8 +93,9 @@ function ResetPasswordForm() {
 
   if (validating) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+      <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+        <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Validando token...</p>
         </div>
@@ -103,8 +105,9 @@ function ResetPasswordForm() {
 
   if (!tokenValid) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+      <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+        <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
           </div>
@@ -130,8 +133,9 @@ function ResetPasswordForm() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+      <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+        <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
             <CheckCircle2 className="w-8 h-8 text-green-600" />
           </div>
@@ -149,8 +153,9 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+      <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <Lock className="w-8 h-8 text-blue-600" />
@@ -251,8 +256,9 @@ function ResetPasswordForm() {
 export default function CidadãoResetPasswordPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+      <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+        <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando...</p>
         </div>

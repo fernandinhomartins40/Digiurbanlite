@@ -186,6 +186,22 @@ const upload = multer({
 // ============================================================================
 
 /**
+ * Preferências do usuário, criando no primeiro acesso. A tela inicial pede
+ * várias seções em paralelo: mesmo o upsert do Prisma pode colidir na unique
+ * de userId (P2002) — nesse caso a outra requisição já criou; basta ler.
+ */
+async function getOrCreatePreferences(userId: string) {
+  try {
+    return await prisma.userPreferences.upsert({ where: { userId }, create: { userId }, update: {} });
+  } catch (error: any) {
+    if (error?.code !== 'P2002') throw error;
+    const existing = await prisma.userPreferences.findUnique({ where: { userId } });
+    if (!existing) throw error;
+    return existing;
+  }
+}
+
+/**
  * GET /api/admin/preferences
  * Buscar preferências do usuário autenticado
  */
@@ -193,13 +209,7 @@ router.get('/', adminAuthMiddleware, async (req, res) => {
   try {
     const userId = req.user!.id;
 
-    // upsert: a tela pede preferências em paralelo no primeiro acesso; com
-    // findUnique + create, a segunda requisição falhava na unique de userId
-    const preferences = await prisma.userPreferences.upsert({
-      where: { userId },
-      create: { userId },
-      update: {}
-    });
+    const preferences = await getOrCreatePreferences(userId);
 
     res.json({ success: true, data: preferences });
   } catch (error: any) {
@@ -275,13 +285,7 @@ router.get('/shortcuts', adminAuthMiddleware, async (req, res) => {
     const userId = req.user!.id;
     const query = ShortcutQuerySchema.parse(req.query);
 
-    // upsert: a tela pede preferências em paralelo no primeiro acesso; com
-    // findUnique + create, a segunda requisição falhava na unique de userId
-    const preferences = await prisma.userPreferences.upsert({
-      where: { userId },
-      create: { userId },
-      update: {}
-    });
+    const preferences = await getOrCreatePreferences(userId);
 
     const dashboardLayout = normalizeDashboardLayout(preferences.dashboardLayout);
     const normalizedUsage = normalizeQuickAccessUsage(dashboardLayout.quickAccessUsage);

@@ -17,7 +17,11 @@ import { cn } from '@/lib/utils';
 export interface GlassTab {
   key: string;
   label: string;
-  href: string;
+  /** Link da aba; sem href, a aba é um botão (ex.: "Mais" abre um painel) */
+  href?: string;
+  onClick?: () => void;
+  /** Força o estado ativo (ex.: "Mais" aberto ou página que mora no "Mais") */
+  active?: boolean;
   icon: LucideIcon;
   /** Número em vermelho sobre a aba (só para o que precisa de atenção) */
   badge?: number;
@@ -29,11 +33,15 @@ export interface GlassTab {
 
 export interface GlassTrailingAction {
   label: string;
-  href: string;
+  href?: string;
+  onClick?: () => void;
+  active?: boolean;
   icon: LucideIcon;
 }
 
-function isActive(pathname: string, tab: GlassTab) {
+export function isGlassTabActive(pathname: string, tab: GlassTab) {
+  if (typeof tab.active === 'boolean') return tab.active;
+  if (!tab.href) return false;
   const bases = [tab.href, ...(tab.alsoActiveOn || [])];
   if (tab.exact) return bases.includes(pathname);
   return bases.some((base) => pathname === base || pathname.startsWith(`${base}/`));
@@ -65,7 +73,13 @@ export function GlassTabBar({
   className?: string;
 }) {
   const pathname = usePathname() || '';
-  const trailingActive = trailing ? pathname === trailing.href || pathname.startsWith(`${trailing.href}/`) : false;
+  const trailingActive = trailing
+    ? typeof trailing.active === 'boolean'
+      ? trailing.active
+      : !!trailing.href && (pathname === trailing.href || pathname.startsWith(`${trailing.href}/`))
+    : false;
+
+  const TrailingTag: any = trailing?.href ? Link : 'button';
 
   return (
     <div
@@ -78,13 +92,14 @@ export function GlassTabBar({
       <div className="pointer-events-auto flex items-center gap-2.5 w-full max-w-md md:w-auto md:max-w-none">
         <nav aria-label={label} className="lg-glass lg-bar rounded-full p-1.5 flex flex-1 md:flex-none gap-0.5">
           {tabs.map((tab) => {
-            const active = !trailingActive && isActive(pathname, tab);
+            const active = !trailingActive && isGlassTabActive(pathname, tab);
             const Icon = tab.icon;
+            const Tag: any = tab.href ? Link : 'button';
             return (
-              <Link
+              <Tag
                 key={tab.key}
-                href={tab.href}
-                aria-current={active ? 'page' : undefined}
+                {...(tab.href ? { href: tab.href } : { type: 'button', onClick: tab.onClick, 'aria-expanded': active })}
+                aria-current={tab.href && active ? 'page' : undefined}
                 className={cn(
                   'lg-tab rounded-full flex flex-1 md:flex-none flex-col md:flex-row items-center justify-center',
                   'gap-0.5 md:gap-2 px-2 md:px-4 py-1.5 md:py-2.5',
@@ -98,23 +113,23 @@ export function GlassTabBar({
                 </span>
                 <span>{tab.label}</span>
                 <Badge value={tab.badge || 0} inline />
-              </Link>
+              </Tag>
             );
           })}
         </nav>
         {trailing && (
-          <Link
-            href={trailing.href}
+          <TrailingTag
+            {...(trailing.href ? { href: trailing.href } : { type: 'button', onClick: trailing.onClick, 'aria-expanded': trailingActive })}
             aria-label={trailing.label}
             title={trailing.label}
-            aria-current={trailingActive ? 'page' : undefined}
+            aria-current={trailing.href && trailingActive ? 'page' : undefined}
             className={cn(
               'lg-glass lg-bar lg-tab rounded-full h-14 w-14 shrink-0 flex items-center justify-center text-[var(--lg-blue)]',
               trailingActive && 'lg-tab-on'
             )}
           >
             <trailing.icon className="h-6 w-6" />
-          </Link>
+          </TrailingTag>
         )}
       </div>
     </div>

@@ -678,3 +678,22 @@ O protótipo aprovado pelo usuário está no canvas "DigiUrban Liquid Glass".
 - **Validação:** celular e computador, claro e escuro, nas telas Início, Serviços, Pedidos, Mais, Assistente e login. Sem erros no navegador nem na API.
 - **Próximas etapas:** painel do servidor, depois super-admin. O chat do Assistente ainda usa o cabeçalho antigo.
 
+**Etapa 2 — painel do servidor e telas de login (concluída)**
+- **Painel do servidor sem barra lateral:**
+  - barra inferior Início · Protocolos (com o número de pendentes) · Balcão · Apps · Mais, e a busca no círculo;
+  - "Mais" (`AdminMoreSheet`) abre, em vidro, o Portal do Prefeito e todas as seções do menu, com as mesmas regras de permissão da antiga barra lateral (agora em `useAdminNavigation`), e a busca "Ir para…";
+  - no topo: secretaria, sino com os pendentes, tema e conta.
+  - Saíram `AdminSidebar`, `AdminHeader`, `MobileSidebar` e `AdminNavigationMenu`.
+- **Telas de entrada no mesmo estilo:** login do cidadão, do servidor e do super-admin, e as 5 telas de recuperar ou redefinir senha (`LgAuthBackdrop`):
+  - fundo com a cor da prefeitura;
+  - formulário em folha de vidro;
+  - painel de identidade em vidro colorido;
+  - botão de tema.
+- **Conteúdo em material fino** (pedido do usuário): cartões e seções brancos ficam levemente translúcidos e desfocados (74% de opacidade e 14px de desfoque), deixando o fundo aparecer. Campos de formulário, menus e janelas continuam sólidos.
+- **Correções:**
+  - painéis de vidro com posição fixa não ficam mais atrás da barra;
+  - folhas grandes não têm o reflexo do topo;
+  - o primeiro acesso não dá mais erro nas preferências (colisão de requisições simultâneas tratada no servidor).
+- **Validação:** prints no computador e no celular, claro e escuro, em Início, Protocolos, Apps, Análises, Serviços, secretaria, "Mais", busca e todas as telas de login. Sem erros no navegador nem na API.
+- **Próxima etapa:** super-admin (o login dele já está no novo estilo).
+

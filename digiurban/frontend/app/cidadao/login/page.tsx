@@ -1,5 +1,6 @@
 'use client'
 
+import { LgAuthBackdrop } from '@/components/liquid-glass/LgAuthBackdrop'
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext'
@@ -303,11 +304,9 @@ function CitizenLoginForm() {
 
   if (success) {
     return (
-      <div
-        className="min-h-screen flex items-center justify-center p-4"
-        style={{ background: primary }}
-      >
-        <div className="w-full max-w-md rounded-3xl bg-white shadow-2xl p-8">
+      <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop primary={primary} secondary={secondary} />
+        <div className="lg-glass lg-thick relative z-10 w-full max-w-md rounded-[32px] p-8">
           <div className="text-center space-y-4">
             <div
               className="w-16 h-16 mx-auto rounded-full flex items-center justify-center"
@@ -384,16 +383,14 @@ function CitizenLoginForm() {
   ]
 
   return (
-    <div
-      className="min-h-screen w-full lg:grid lg:grid-cols-2"
-      style={{ background: `${primary}0a` }}
-    >
+    <div className="lg-root relative min-h-screen w-full lg:grid lg:grid-cols-2">
+      <LgAuthBackdrop primary={primary} secondary={secondary} />
       {/* ===================================================================== */}
       {/* PAINEL ESQUERDO — identidade visual do município (oculto no mobile) */}
       {/* ===================================================================== */}
       <aside
-        className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
-        style={{ background: primary, color: onPrimary }}
+        className="lg-tinted relative hidden lg:flex flex-col justify-between p-12 overflow-hidden m-5 rounded-[36px]"
+        style={{ ['--tint' as any]: primary, color: onPrimary }}
       >
         {/* Acento sutil da cor de destaque — barra fina no topo, sem gradiente */}
         <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: secondary }} />
@@ -464,8 +461,8 @@ function CitizenLoginForm() {
       {/* ===================================================================== */}
       {/* PAINEL DIREITO — formulário                                          */}
       {/* ===================================================================== */}
-      <main className="flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12">
-        <div className="w-full max-w-md">
+      <main className="relative z-10 flex flex-col items-center justify-center px-4 pt-16 pb-6 sm:p-8 lg:p-12 min-h-screen lg:min-h-0">
+        <div className="lg-glass lg-thick w-full max-w-md rounded-[32px] p-6 sm:p-8">
           {/* cabeçalho compacto (visível principalmente no mobile) */}
           <div className="flex flex-col items-center text-center mb-8">
             <div className="flex items-center gap-3 lg:hidden mb-4">

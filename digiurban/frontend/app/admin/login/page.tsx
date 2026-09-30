@@ -13,6 +13,7 @@ import {
 } from 'lucide-react'
 import { readableTextOn } from '@/lib/tenant'
 import Link from 'next/link'
+import { LgAuthBackdrop } from '@/components/liquid-glass/LgAuthBackdrop'
 
 export default function AdminLoginPage() {
   const [email, setEmail] = useState('')
@@ -84,13 +85,14 @@ export default function AdminLoginPage() {
   ]
 
   return (
-    <div className="min-h-screen w-full lg:grid lg:grid-cols-2" style={{ background: `${primary}0a` }}>
+    <div className="lg-root relative min-h-screen w-full lg:grid lg:grid-cols-2">
+      <LgAuthBackdrop primary={primary} secondary={secondary} />
       {/* ===================================================================== */}
       {/* PAINEL ESQUERDO — identidade visual do município (oculto no mobile)  */}
       {/* ===================================================================== */}
       <aside
-        className="relative hidden lg:flex flex-col justify-between p-12 overflow-hidden"
-        style={{ background: primary, color: onPrimary }}
+        className="lg-tinted relative hidden lg:flex flex-col justify-between p-12 overflow-hidden m-5 rounded-[36px]"
+        style={{ ['--tint' as any]: primary, color: onPrimary }}
       >
         {/* Acento sutil da cor de destaque — barra fina no topo, sem gradiente */}
         <div className="absolute top-0 left-0 right-0 h-1.5" style={{ background: secondary }} />
@@ -158,8 +160,8 @@ export default function AdminLoginPage() {
       {/* ===================================================================== */}
       {/* PAINEL DIREITO — formulário                                          */}
       {/* ===================================================================== */}
-      <main className="flex flex-col items-center justify-center p-4 sm:p-8 lg:p-12">
-        <div className="w-full max-w-md">
+      <main className="relative z-10 flex flex-col items-center justify-center px-4 pt-16 pb-6 sm:p-8 lg:p-12 min-h-screen lg:min-h-0">
+        <div className="lg-glass lg-thick w-full max-w-md rounded-[32px] p-6 sm:p-8">
           <div className="flex flex-col items-center text-center mb-8">
             <div className="flex items-center gap-3 lg:hidden mb-4">
               {logo ? (

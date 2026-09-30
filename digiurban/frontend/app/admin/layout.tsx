@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { AdminLayoutContent } from './layout-content'
 import './animations.css'
+import { THEME_BOOT_SCRIPT } from '@/lib/lg-theme-boot'
 
 /**
  * Configurações de rota para todo o /admin
@@ -40,5 +41,11 @@ export default function AdminRootLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <AdminLayoutContent>{children}</AdminLayoutContent>
+  return (
+    <>
+      {/* Aplica o tema antes da primeira pintura (evita piscar claro no modo escuro) */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      <AdminLayoutContent>{children}</AdminLayoutContent>
+    </>
+  )
 }

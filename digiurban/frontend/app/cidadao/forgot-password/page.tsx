@@ -1,5 +1,6 @@
 'use client';
 
+import { LgAuthBackdrop } from '@/components/liquid-glass/LgAuthBackdrop'
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -40,8 +41,9 @@ export default function CidadãoForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md text-center">
+      <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+        <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
@@ -71,8 +73,9 @@ export default function CidadãoForgotPasswordPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-xl p-8 w-full max-w-md">
+    <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
+        <LgAuthBackdrop />
+      <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
             <Mail className="w-8 h-8 text-blue-600" />

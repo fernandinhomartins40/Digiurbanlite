@@ -4,12 +4,16 @@ import { AdminAuthProvider } from '@/contexts/AdminAuthContext'
 import { AdminLayout } from '@/components/admin/AdminLayout'
 import { SidebarProvider } from '@/hooks/use-sidebar'
 import { RemoteAssistConsent } from '@/components/admin/RemoteAssistConsent'
+import { useLgThemeScope } from '@/lib/lg-theme'
 
 export function AdminLayoutContent({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Tema claro/escuro do DigiUrban Glass enquanto o painel está aberto
+  useLgThemeScope()
+
   return (
     <AdminAuthProvider>
       <SidebarProvider>
