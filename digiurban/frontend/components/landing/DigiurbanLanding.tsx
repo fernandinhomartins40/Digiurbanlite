@@ -458,12 +458,11 @@ function About() {
   return (
     <section id="sobre" className="relative overflow-hidden">
       <Bg name="fundo-sobre" />
-      <Container className="py-7 md:hidden">
+      <Container className="pb-4 pt-7 md:hidden">
         <Chip>Sobre o Digiurban</Chip>
         <h2 className="dl-h mt-3 text-[23px]">Tecnologia que aproxima a prefeitura das pessoas</h2>
         <p className="mt-2 text-[14px] leading-snug">Serviços da prefeitura em um só lugar, com o cidadão no centro de tudo.</p>
-        <AboutArt className="mx-auto mt-2 aspect-[1.2/1] max-w-[440px]" mobile />
-        <div className="mt-1 flex justify-center">
+        <div className="mt-4">
           <Link href="/apresentacao" className="dl-btn dl-btn-blue h-[46px] rounded-xl px-6 text-[15px]">
             Conheça nossa história
             <ArrowRight className="h-4 w-4" />
@@ -479,6 +478,8 @@ function About() {
             </li>
           ))}
         </ul>
+        {/* Por último: mascote e livros ficam no "chão" da foto de fundo */}
+        <AboutArt className="mx-auto mt-3 aspect-[1.2/1] max-w-[440px]" mobile />
       </Container>
       <Container className="hidden grid-cols-[1.08fr_1fr] items-center gap-6 py-9 md:grid">
         <div className="relative z-10">
