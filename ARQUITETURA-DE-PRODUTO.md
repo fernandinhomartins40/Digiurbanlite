@@ -609,3 +609,45 @@ A função perigosa, que era escolher o app pelo nome do serviço, **já saiu de
   - **B cria o mesmo serviço** (antes: bloqueado);
   - A tenta de novo e recebe o aviso claro (409);
   - com o antigo desativado, A cria de novo e recebe `CARTAO_DO_ESTUDANTE_2` (antes: erro 500).
+
+### 10.8 Painel do super-admin (auditoria de produto — concluída)
+
+A auditoria das fases anteriores cobriu o painel do servidor e o portal do cidadão; esta cobre o `/super-admin` (23 telas).
+
+**Diagnóstico**
+- Todas as telas chamam endereços que existem: nenhuma está quebrada.
+- **Problema central: telas de "um município só" num sistema com vários municípios.**
+  - O Dashboard, "Configurações › Sistema" e "Usuários" usavam `/api/super-admin/*`, que roda no contexto do município da requisição e mostrava/editava **só o município padrão**, como se fosse a plataforma.
+  - "Configurações › Sistema" ainda editava a tabela antiga `municipio_config`, sincronizada só com o município padrão.
+  - Tudo o que ela fazia (plano, limites, módulos, dados, suspensão, administradores) já existe, para qualquer município, na tela do município (`/super-admin/tenants/[id]`).
+- **Menu confuso:**
+  - 14 itens soltos e 10 filhos;
+  - "Usuários Admin" (super-admins) ao lado de "Usuários" (servidores do município padrão);
+  - "Planos", "Faturamento", "Dashboard" e "Configurações" repetidos dentro de E-mail;
+  - dentro de E-mail › Configurações, o item "Dashboard" do e-mail também ficava marcado.
+
+**Decisões (perguntadas ao usuário) e implementação**
+1. **Dashboard = visão da plataforma** (`GET /api/platform/overview`, `services/platform-overview.service.ts`, em `runAsPlatform`). A tela mostra:
+   - municípios ativos e suspensos;
+   - totais de servidores, cidadãos e pedidos;
+   - faturas em aberto e vencidas, e o recebido no mês;
+   - leads novos;
+   - saúde do sistema;
+   - **"Precisam de atenção"**: municípios suspensos, com fatura vencida, com plano vencendo em 30 dias ou com 90% ou mais do limite de usuários ou cidadãos. Cada um leva à tela do município.
+2. **Telas antigas aposentadas:** `/super-admin/settings` e `/super-admin/usuarios` redirecionam para a tela do município padrão, nas abas "Plano & Configuração" e "Administradores". A tela do município passou a aceitar `?aba=`. A tela "Banco de dados" (`settings/schema`) continua.
+3. **Menu por tarefa:**
+   - Visão da plataforma;
+   - **Municípios**: municípios, planos, faturas, leads;
+   - **Suporte**: assistência remota, super-admins;
+   - **Sistema**: monitoramento, backups e operações, banco de dados, auditoria, IA;
+   - **E-mail**: visão geral, domínios, servidor SMTP, logs de envio, modelos de e-mail, planos, assinaturas e faturamento de e-mail.
+   - O item marcado é sempre o mais específico da página, e o grupo da página atual abre sozinho.
+
+**Validação**
+- API: com 2 municípios, o resumo novo mostra 6 servidores (a tela antiga mostrava 4, só os do município padrão), 2 municípios (1 suspenso), R$ 2.400 em aberto (R$ 1.500 vencidos) e 2 leads. A "Cidade B" aparece em atenção com três motivos.
+- Playwright, 6 passos (Dashboard, clique em "atenção", menu, os dois redirecionamentos e o item ativo no E-mail), todos OK.
+- Varredura de 21 telas do painel: nenhum erro, fora a IA, que responde 503 porque o serviço de IA não roda no ambiente de teste.
+- Build de produção sem erro novo.
+
+**Fica como está:** as rotas antigas `/api/super-admin/stats`, `/settings/*` e `/users` continuam no backend, sem uso pelo painel, e podem ser removidas numa limpeza futura.
+

@@ -24,6 +24,7 @@ import os from 'os';
 import multer from 'multer';
 import { prisma } from '../lib/prisma';
 import { runAsPlatform } from '../lib/tenant-context';
+import { getPlatformOverview } from '../services/platform-overview.service';
 import { UPLOAD_BASE_DIR } from '../config/upload';
 import {
   platformAuthMiddleware,
@@ -492,6 +493,16 @@ async function getBackupDir(): Promise<string> {
 }
 
 // GET /api/platform/system/metrics — métricas de performance
+// GET /api/platform/overview — Dashboard do super-admin: todos os municípios
+router.get('/overview', async (_req: Request, res: Response) => {
+  try {
+    res.json({ success: true, overview: await getPlatformOverview() });
+  } catch (error) {
+    console.error('Erro ao montar resumo da plataforma:', error);
+    res.status(500).json({ error: 'Erro ao montar resumo da plataforma' });
+  }
+});
+
 router.get('/system/metrics', async (_req: Request, res: Response) => {
   try {
     const databaseStats = await prisma.$queryRaw<any[]>`

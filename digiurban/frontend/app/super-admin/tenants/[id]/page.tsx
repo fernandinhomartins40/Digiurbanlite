@@ -71,6 +71,12 @@ export default function TenantDetailPage() {
 
   // Estado editável
   const [plan, setPlan] = useState('basic');
+  // Aba inicial pela URL (?aba=admins), usada pelos redirecionamentos das telas antigas
+  const [tab, setTab] = useState('config');
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('aba');
+    if (requested && ['config', 'branding', 'address', 'modules', 'admins', 'billing'].includes(requested)) setTab(requested);
+  }, []);
   const [maxUsers, setMaxUsers] = useState(10);
   const [maxCitizens, setMaxCitizens] = useState(10000);
   const [planEndsAt, setPlanEndsAt] = useState('');
@@ -328,7 +334,7 @@ export default function TenantDetailPage() {
         </Card>
       </div>
 
-      <Tabs defaultValue="config">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
           <TabsTrigger value="config">Plano & Configuração</TabsTrigger>
           <TabsTrigger value="branding">Identidade Visual</TabsTrigger>

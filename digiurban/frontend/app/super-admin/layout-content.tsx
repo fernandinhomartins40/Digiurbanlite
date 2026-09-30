@@ -47,92 +47,71 @@ interface User {
   role: string;
 }
 
+// Menu por tarefa (auditoria de produto do super-admin, 2026-09-29):
+// antes eram 14 itens soltos + 10 filhos, com "Usuários"/"Usuários Admin" e
+// "Planos"/"Faturamento" repetidos dentro de E-mail.
 const menuItems: MenuItem[] = [
   {
-    title: 'Dashboard',
+    title: 'Visão da plataforma',
     href: '/super-admin',
     icon: LayoutDashboard
   },
   {
-    title: 'Municipios',
-    href: '/super-admin/tenants',
-    icon: Building2
+    title: 'Municípios',
+    href: '#municipios',
+    icon: Building2,
+    children: [
+      { title: 'Municípios', href: '/super-admin/tenants', icon: Building2 },
+      { title: 'Planos', href: '/super-admin/plans', icon: Package },
+      { title: 'Faturas', href: '/super-admin/billing', icon: CreditCard },
+      { title: 'Leads', href: '/super-admin/leads', icon: UserPlus },
+    ]
   },
   {
-    title: 'Planos',
-    href: '/super-admin/plans',
-    icon: Package
+    title: 'Suporte',
+    href: '#suporte',
+    icon: Monitor,
+    children: [
+      { title: 'Assistência remota', href: '/super-admin/assistencia-remota', icon: Monitor },
+      { title: 'Super-admins', href: '/super-admin/users', icon: UserCog },
+    ]
   },
   {
-    title: 'Faturamento',
-    href: '/super-admin/billing',
-    icon: CreditCard
+    title: 'Sistema',
+    href: '#sistema',
+    icon: Wrench,
+    children: [
+      { title: 'Monitoramento', href: '/super-admin/monitoring', icon: Activity },
+      { title: 'Backups e operações', href: '/super-admin/operations', icon: Wrench },
+      { title: 'Banco de dados', href: '/super-admin/settings/schema', icon: Database },
+      { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
+      { title: 'IA', href: '/super-admin/ia', icon: Bot },
+    ]
   },
   {
-    title: 'Leads',
-    href: '/super-admin/leads',
-    icon: UserPlus
-  },
-  {
-    title: 'Usuários Admin',
-    href: '/super-admin/users',
-    icon: UserCog
-  },
-  {
-    title: 'Usuários',
-    href: '/super-admin/usuarios',
-    icon: Users
-  },
-  {
-    title: 'Assistência Remota',
-    href: '/super-admin/assistencia-remota',
-    icon: Monitor
-  },
-  {
-    title: 'Monitoramento',
-    href: '/super-admin/monitoring',
-    icon: Activity
-  },
-  {
-    title: 'Auditoria',
-    href: '/super-admin/audit',
-    icon: FileText
-  },
-  {
-    title: 'Operações',
-    href: '/super-admin/operations',
-    icon: Wrench
-  },
-  {
-    title: 'IA',
-    href: '/super-admin/ia',
-    icon: Bot
-  },
-  {
-    title: 'Email',
+    title: 'E-mail',
     href: '#email',
     icon: Mail,
     children: [
-      { title: 'Dashboard', href: '/super-admin/email-server', icon: LayoutDashboard },
-      { title: 'Planos', href: '/super-admin/email-plans', icon: CreditCard },
-      { title: 'Assinaturas', href: '/super-admin/email-subscriptions', icon: Users },
-      { title: 'Configurações', href: '/super-admin/email-server/config', icon: Settings },
+      { title: 'Visão geral', href: '/super-admin/email-server', icon: LayoutDashboard },
       { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Globe },
-      { title: 'Logs', href: '/super-admin/email-server/logs', icon: FileText },
-      { title: 'Templates', href: '/super-admin/email-templates', icon: ScrollText },
-      { title: 'Faturamento', href: '/super-admin/email-billing', icon: CreditCard },
-    ]
-  },
-  {
-    title: 'Configurações',
-    href: '#settings',
-    icon: Settings,
-    children: [
-      { title: 'Sistema', href: '/super-admin/settings', icon: Settings },
-      { title: 'Database Schema', href: '/super-admin/settings/schema', icon: Database },
+      { title: 'Servidor SMTP', href: '/super-admin/email-server/config', icon: Settings },
+      { title: 'Logs de envio', href: '/super-admin/email-server/logs', icon: FileText },
+      { title: 'Modelos de e-mail', href: '/super-admin/email-templates', icon: ScrollText },
+      { title: 'Planos de e-mail', href: '/super-admin/email-plans', icon: Package },
+      { title: 'Assinaturas de e-mail', href: '/super-admin/email-subscriptions', icon: Users },
+      { title: 'Faturamento de e-mail', href: '/super-admin/email-billing', icon: CreditCard },
     ]
   },
 ];
+
+const ALL_HREFS = menuItems.flatMap((m) => [m.href, ...(m.children || []).map((c) => c.href)]).filter((h) => h.startsWith('/'));
+
+/** Item do menu mais específico para a página atual (ex.: Domínios, não Visão geral do e-mail) */
+function bestMenuMatch(pathname: string): string | undefined {
+  return ALL_HREFS.filter((h) => (h === '/super-admin' ? pathname === h : pathname === h || pathname.startsWith(`${h}/`)))
+    .sort((a, b) => b.length - a.length)[0];
+}
 
 function SuperAdminLayoutContent({
   children,
@@ -143,7 +122,14 @@ function SuperAdminLayoutContent({
   const pathname = usePathname();
   const { user, loading: authLoading, logout } = useSuperAdminAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['#settings', '#email']);
+  const [expandedMenus, setExpandedMenus] = useState<string[]>(['#municipios']);
+
+  // Abre o grupo da página atual (ex.: entrou em Domínios → abre E-mail)
+  useEffect(() => {
+    const match = bestMenuMatch(pathname || '');
+    const group = menuItems.find((m) => m.children?.some((c) => c.href === match));
+    if (group) setExpandedMenus((prev) => (prev.includes(group.href) ? prev : [...prev, group.href]));
+  }, [pathname]);
   const [notifications, setNotifications] = useState(0);
 
   // Auto-open sidebar on desktop
@@ -193,11 +179,12 @@ function SuperAdminLayoutContent({
     logout();
   };
 
+  const activeHref = bestMenuMatch(pathname || '');
   const isActiveRoute = (href: string) => {
-    if (href === '/super-admin') {
-      return pathname === href;
+    if (href.startsWith('#')) {
+      return !!menuItems.find((m) => m.href === href)?.children?.some((c) => c.href === activeHref);
     }
-    return pathname.startsWith(href) && href !== '#';
+    return href === activeHref;
   };
 
   if (isPublicPath) {
@@ -215,8 +202,8 @@ function SuperAdminLayoutContent({
     );
   }
 
-  const currentPageTitle = menuItems.find(m => m.href === pathname)?.title ||
-    menuItems.flatMap(m => m.children || []).find(c => c.href === pathname)?.title ||
+  const currentPageTitle = menuItems.find(m => m.href === activeHref)?.title ||
+    menuItems.flatMap(m => m.children || []).find(c => c.href === activeHref)?.title ||
     'Super Admin';
 
   return (
