@@ -420,7 +420,7 @@ function Hero() {
             alt="Mascote do Digiurban mostrando o aplicativo no celular"
             sizes="(max-width: 767px) 60vw, 40vw"
             eager
-            className="relative z-10 -mr-[8%] w-[60%] select-none md:absolute md:bottom-0 md:left-[-14%] md:mr-0 md:h-[84%] md:w-auto md:max-w-none lg:left-[-2%] lg:h-full"
+            className="relative z-30 -mr-[8%] w-[60%] select-none md:absolute md:z-10 md:bottom-0 md:left-[-14%] md:mr-0 md:h-[84%] md:w-auto md:max-w-none lg:left-[-2%] lg:h-full"
           />
           <HeroPanel className="relative z-20 mb-8 w-[48%] md:absolute md:right-0 md:top-[14%] md:mb-0 md:w-[228px] lg:right-[-1%] lg:top-[12%] lg:w-[300px]" />
         </div>
@@ -523,13 +523,16 @@ function AboutArt({ className = '', mobile }: { className?: string; mobile?: boo
         das pessoas!
         <span className="mx-auto mt-1 block h-[3px] w-[80%] rounded-full bg-gradient-to-r from-[#3af6d6] to-[#13dbe7]" />
       </p>
+      {/* Sombras de contato: mascote e livros apoiados no chão */}
+      <span aria-hidden className={`absolute bottom-0 z-0 h-[8%] translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(11,42,140,0.32),transparent)] ${mobile ? 'left-[8%] w-[50%]' : 'left-[8%] w-[54%]'}`} />
+      <span aria-hidden className={`absolute bottom-0 z-0 h-[6%] translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(11,42,140,0.28),transparent)] ${mobile ? 'left-[53%] w-[48%]' : 'left-[55%] w-[46%]'}`} />
       <Asset
         name="mascote-sobre"
         alt="Mascote do Digiurban com notebook"
         sizes="(max-width: 767px) 75vw, 30vw"
         className={`absolute bottom-0 z-10 ${mobile ? 'left-[-4%] w-[74%]' : 'left-[-6%] w-[80%]'}`}
       />
-      <div className={`dl-cq absolute bottom-[1%] ${mobile ? 'right-[-2%] w-[50%]' : 'right-[-3%] w-[48%]'}`}>
+      <div className={`dl-cq absolute bottom-[-5%] ${mobile ? 'right-[-2%] w-[50%]' : 'right-[-3%] w-[48%]'}`}>
         <Asset name="livros-planta" alt="" sizes="(max-width: 767px) 50vw, 20vw" className="w-full" />
         {/* Rótulos nas lombadas (a arte vem sem texto) */}
         <ul aria-label="Pilares" className="absolute inset-0">
