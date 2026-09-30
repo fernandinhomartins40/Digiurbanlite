@@ -11,22 +11,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, X } from 'lucide-react';
+import { Pin, Search, Settings2, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { isNavItemActive, type AdminNavItem, type AdminNavSection } from './admin-nav-config';
 import { useAdminNavigation } from './useAdminNavigation';
-
-const SECTION_COLORS: Record<string, string> = {
-  slate: '#8E8E93',
-  blue: '#0A7CFF',
-  emerald: '#2FB84F',
-  amber: '#FF9F0A',
-  violet: '#AF52DE',
-  rose: '#FF375F',
-  cyan: '#32ADE6',
-  indigo: '#5856D6',
-  orange: '#FF8A1F',
-};
+import { PIN_DRAG_TYPE, SECTION_COLORS, usePinnedShortcuts } from './PinnedShortcuts';
 
 const normalize = (text: string) => text.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
 
@@ -42,19 +31,30 @@ function MenuLink({
   onNavigate: () => void;
 }) {
   const pathname = usePathname() || '';
+  const { isPinned, canPin, toggle } = usePinnedShortcuts();
   const active = isNavItemActive(pathname, item.href);
   const Icon = item.icon;
   const isNumber = item.badge && item.badge !== 'NOVO';
+  const pinnable = canPin(item.href);
+  const pinned = pinnable && isPinned(item.href);
   return (
-    <Link
-      href={item.href}
-      onClick={onNavigate}
-      aria-current={active ? 'page' : undefined}
-      className={cn(
-        'flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors',
-        active ? 'bg-[var(--lg-fill2)] font-semibold' : 'hover:bg-[var(--lg-fill)]'
-      )}
-    >
+    <div className="group relative flex items-center">
+      <Link
+        href={item.href}
+        onClick={onNavigate}
+        aria-current={active ? 'page' : undefined}
+        draggable={pinnable}
+        onDragStart={(e) => {
+          // Arrastar para a barra inferior fixa o atalho (computador)
+          e.dataTransfer.setData(PIN_DRAG_TYPE, item.href);
+          e.dataTransfer.effectAllowed = 'copy';
+        }}
+        className={cn(
+          'flex min-w-0 flex-1 items-center gap-3 rounded-xl px-2.5 py-2 text-sm transition-colors',
+          pinnable && 'pr-10',
+          active ? 'bg-[var(--lg-fill2)] font-semibold' : 'hover:bg-[var(--lg-fill)]'
+        )}
+      >
       <span
         className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-white"
         style={{ background: SECTION_COLORS[color || 'blue'] || SECTION_COLORS.blue }}
@@ -75,7 +75,25 @@ function MenuLink({
             {item.badge}
           </span>
         ))}
-    </Link>
+      </Link>
+      {pinnable && (
+        <button
+          type="button"
+          onClick={() => toggle(item.href)}
+          aria-pressed={pinned}
+          aria-label={pinned ? `Tirar ${item.title} da barra` : `Fixar ${item.title} na barra`}
+          title={pinned ? 'Tirar da barra' : 'Fixar na barra'}
+          className={cn(
+            'absolute right-1.5 flex h-7 w-7 items-center justify-center rounded-full transition-opacity hover:bg-[var(--lg-fill2)]',
+            pinned
+              ? 'text-[var(--lg-blue)] opacity-100'
+              : 'text-[var(--lg-ink3)] opacity-100 md:opacity-0 md:focus-visible:opacity-100 md:group-hover:opacity-100'
+          )}
+        >
+          <Pin className="h-4 w-4" fill={pinned ? 'currentColor' : 'none'} />
+        </button>
+      )}
+    </div>
   );
 }
 
@@ -83,10 +101,13 @@ export function AdminMoreSheet({
   open,
   focusSearch,
   onClose,
+  onOrganize,
 }: {
   open: boolean;
   focusSearch: boolean;
   onClose: () => void;
+  /** Abre o modo "organizar atalhos" da barra inferior */
+  onOrganize: () => void;
 }) {
   const { visibleSections, visibleMayorPortalItems } = useAdminNavigation();
   const [query, setQuery] = useState('');
@@ -198,6 +219,21 @@ export function AdminMoreSheet({
               </div>
             </div>
           )}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-[var(--lg-sep)] pt-3 text-xs text-[var(--lg-ink2)]">
+          <span className="inline-flex items-center gap-1.5">
+            <Pin className="h-3.5 w-3.5" />
+            Toque no alfinete para fixar uma tela na barra inferior<span className="hidden md:inline"> — ou arraste-a até lá</span>
+          </span>
+          <button
+            type="button"
+            onClick={onOrganize}
+            className="inline-flex items-center gap-1.5 rounded-full bg-[var(--lg-fill)] px-3 py-1.5 font-semibold text-[var(--lg-ink)] hover:bg-[var(--lg-fill2)]"
+          >
+            <Settings2 className="h-3.5 w-3.5" />
+            Organizar atalhos
+          </button>
         </div>
       </div>
     </>

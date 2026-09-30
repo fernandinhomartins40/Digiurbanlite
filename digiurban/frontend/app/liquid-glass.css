@@ -615,3 +615,13 @@
 
 /* Vidro colorido azul (cabeçalhos e bolhas do Assistente, botões de ação) */
 .lg-tint-blue { --tint: #1e7bf0; }
+
+/* Modo "organizar atalhos" da barra (ícones tremem, como no iPhone/Mac) */
+@keyframes lg-jiggle {
+  0%, 100% { transform: rotate(-2.2deg); }
+  50% { transform: rotate(2.2deg); }
+}
+.lg-jiggle { animation: lg-jiggle 0.26s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .lg-jiggle { animation: none; }
+}

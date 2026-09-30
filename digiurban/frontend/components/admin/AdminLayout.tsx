@@ -3,23 +3,25 @@
 /**
  * Casca do painel do servidor — DigiUrban Glass (Liquid Glass).
  *
- * Sem barra lateral: barra inferior flutuante com as seções mais usadas
- * (Início · Protocolos · Balcão · Apps · Mais) e a busca no círculo. "Mais"
- * abre, em vidro, todo o resto do menu com as mesmas regras de permissão.
+ * Sem barra lateral: barra inferior flutuante no estilo Dock (AdminDock) —
+ * Início · atalhos fixados por cada servidor (salvos no banco) · Mais — e a
+ * busca no círculo. "Mais" abre, em vidro, todo o menu com as regras de
+ * permissão e o alfinete para fixar telas na barra.
  * No topo: secretaria, pendentes, tema e conta.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
-import { Bell, FileText, Home, LayoutGrid, Loader2, LogOut, Menu, Search, Settings, Store, User } from 'lucide-react'
+import { Bell, Loader2, LogOut, Settings, User } from 'lucide-react'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { useNotifications } from '@/hooks/useNotifications'
 import { ROLE_DISPLAY_NAMES } from '@/types/roles'
-import { GlassTabBar, isGlassTabActive, type GlassTab } from '@/components/liquid-glass/GlassTabBar'
 import { LgAmbient } from '@/components/liquid-glass/LgAmbient'
 import { ThemeToggleButton } from '@/components/liquid-glass/ThemeToggleButton'
 import { AdminMoreSheet } from './navigation/AdminMoreSheet'
+import { AdminDock } from './navigation/AdminDock'
+import { PinnedShortcutsProvider } from './navigation/PinnedShortcuts'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,6 +53,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const router = useRouter()
   const isRedirecting = useRef(false)
   const [more, setMore] = useState<{ open: boolean; search: boolean }>({ open: false, search: false })
+  const [organizeSignal, setOrganizeSignal] = useState(0)
 
   // Notificações em tempo real (SSE)
   useNotifications()
@@ -93,30 +96,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const pending = stats?.pendingProtocols || 0
   const roleLabel = ROLE_DISPLAY_NAMES[user.role as keyof typeof ROLE_DISPLAY_NAMES] ?? user.role
 
-  const primaryTabs: GlassTab[] = [
-    { key: 'inicio', label: 'Início', href: '/admin', icon: Home, exact: true },
-    ...(hasPermission('protocols:read')
-      ? [{ key: 'protocolos', label: 'Protocolos', href: '/admin/protocolos', icon: FileText, badge: pending }]
-      : []),
-    ...(hasPermission('protocols:create')
-      ? [{ key: 'balcao', label: 'Balcão', href: '/admin/balcao', icon: Store }]
-      : []),
-    ...(hasMinRole('USER') ? [{ key: 'apps', label: 'Apps', href: '/admin/apps', icon: LayoutGrid }] : []),
-  ]
-  // "Mais" fica ativo quando aberto ou quando a página atual mora nele
-  const onPrimary = primaryTabs.some((tab) => isGlassTabActive(pathname, tab))
-  const tabs: GlassTab[] = [
-    ...primaryTabs.map((tab) => ({ ...tab, active: more.open ? false : undefined })),
-    {
-      key: 'mais',
-      label: 'Mais',
-      icon: Menu,
-      onClick: () => setMore((m) => ({ open: !m.open || m.search, search: false })),
-      active: (more.open && !more.search) || (!more.open && !onPrimary),
-    },
-  ]
-
   return (
+    <PinnedShortcutsProvider>
     <div className="lg-root min-h-screen relative overflow-x-hidden">
       <LgAmbient />
 
@@ -187,18 +168,25 @@ export function AdminLayout({ children }: AdminLayoutProps) {
 
       <main className="relative z-10 mx-auto w-full max-w-[1440px] px-3 sm:px-5 lg:px-8 pt-20 pb-36">{children}</main>
 
-      <AdminMoreSheet open={more.open} focusSearch={more.search} onClose={closeMore} />
-
-      <GlassTabBar
-        label="Seções do painel"
-        tabs={tabs}
-        trailing={{
-          label: 'Buscar no painel',
-          icon: Search,
-          onClick: () => setMore((m) => ({ open: !(m.open && m.search), search: true })),
-          active: more.open && more.search,
+      <AdminMoreSheet
+        open={more.open}
+        focusSearch={more.search}
+        onClose={closeMore}
+        onOrganize={() => {
+          closeMore()
+          setOrganizeSignal((n) => n + 1)
         }}
       />
+
+      <AdminDock
+        badges={pending ? { '/admin/protocolos': pending } : {}}
+        moreOpen={more.open && !more.search}
+        searchOpen={more.open && more.search}
+        onToggleMore={() => setMore((m) => ({ open: !m.open || m.search, search: false }))}
+        onToggleSearch={() => setMore((m) => ({ open: !(m.open && m.search), search: true }))}
+        organizeSignal={organizeSignal}
+      />
     </div>
+    </PinnedShortcutsProvider>
   )
 }

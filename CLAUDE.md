@@ -351,6 +351,7 @@ Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_C
 
 ### Frontend
 - Visual DigiUrban Glass (Liquid Glass): classes `lg-*` em `app/liquid-glass.css`, componentes em `components/liquid-glass/`; vidro SÓ na navegação; tema via `useLgThemeScope()` no layout persistente do painel + `THEME_BOOT_SCRIPT`; modo escuro das cores fixas do Tailwind vem do tradutor no fim do CSS (não precisa de `dark:` por tela). Espaçamento da Inter só fora da Apple via `html:not([data-font="sf"])` (marcado pelo boot script). Fonte SF/SF Symbols da Apple NÃO podem ser embutidas
+- Barra inferior do servidor é um Dock personalizável (`components/admin/navigation/AdminDock.tsx` + `PinnedShortcuts.tsx`): atalhos por usuário em `user_preferences.pinnedShortcuts` (GET/PUT `/api/admin/preferences/pinned`); a lista salva é SEMPRE cruzada com o menu visível (permissão/plano) — tela nova no menu já pode ser fixada, sem código extra
 - TipTap requer custom Node extensions para preservar tags HTML (Node.create() com parseHTML/renderHTML)
 - `enableInputRules: false` e `enablePasteRules: false` obrigatórios no TipTap
 - `addGlobalAttributes()` para style/class em todos os node types

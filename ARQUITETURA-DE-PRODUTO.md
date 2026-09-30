@@ -723,3 +723,12 @@ O protótipo aprovado pelo usuário está no canvas "DigiUrban Liquid Glass".
 
 **Com isso, o DigiUrban Glass está completo nos três painéis.**
 
+### 11.5 Barra inferior personalizável — estilo Dock (2026-09-30)
+
+- Cada servidor escolhe os atalhos da barra inferior; a escolha fica no banco (`user_preferences.pinnedShortcuts`) e vale em qualquer aparelho.
+- Barra: **Início · atalhos fixados · Mais** + busca. Quem nunca personalizou vê o padrão antigo (Protocolos, Balcão, Apps).
+- Fixar: alfinete em cada tela do "Mais" (ou arrastar a tela até a barra, no computador). Até 12 atalhos.
+- Organizar: segurar um atalho (ou botão direito › Organizar) — os ícones tremem, arrastar muda a ordem, "−" tira da barra.
+- Computador: ícones coloridos com aumento ao passar o mouse, nome em cima e ponto na tela aberta. Celular: Início + 3 primeiros atalhos (rótulo curto) + Mais; o resto fica no painel "Organizar atalhos".
+- Segurança: a lista salva é sempre filtrada pelo que o servidor pode abrir agora (permissão, plano do município, secretarias) — perdeu acesso, o atalho some.
+

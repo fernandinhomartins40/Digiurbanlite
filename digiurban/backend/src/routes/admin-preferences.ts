@@ -276,6 +276,71 @@ router.delete('/', adminAuthMiddleware, async (req, res) => {
   }
 });
 
+// ============================================================================
+// ATALHOS FIXADOS NA BARRA INFERIOR (Dock)
+// ============================================================================
+
+export const MAX_PINNED_SHORTCUTS = 12;
+
+const PinnedShortcutsSchema = z.object({
+  items: z
+    .array(z.string().max(200).regex(/^\/admin(\/[A-Za-z0-9_-]+)*$/, 'Endereço inválido'))
+    .max(MAX_PINNED_SHORTCUTS, `No máximo ${MAX_PINNED_SHORTCUTS} atalhos`),
+});
+
+/** Lista salva → só hrefs válidos, sem repetição (null = nunca personalizou) */
+function readPinned(value: unknown): string[] | null {
+  if (!Array.isArray(value)) return null;
+  const out: string[] = [];
+  for (const href of value) {
+    if (typeof href === 'string' && href.startsWith('/admin') && !out.includes(href)) out.push(href);
+  }
+  return out.slice(0, MAX_PINNED_SHORTCUTS);
+}
+
+/**
+ * GET /api/admin/preferences/pinned
+ * Atalhos fixados do servidor autenticado (a tela filtra pelo acesso atual)
+ */
+router.get('/pinned', adminAuthMiddleware, async (req, res) => {
+  try {
+    const preferences = await prisma.userPreferences.findUnique({
+      where: { userId: req.user!.id },
+      select: { pinnedShortcuts: true },
+    });
+    res.json({ success: true, data: readPinned(preferences?.pinnedShortcuts) });
+  } catch (error: any) {
+    console.error('[PREFERENCES] Erro ao buscar atalhos fixados:', error);
+    res.status(500).json({ success: false, error: 'Erro ao buscar atalhos fixados' });
+  }
+});
+
+/**
+ * PUT /api/admin/preferences/pinned
+ * Salvar a lista ordenada de atalhos fixados
+ */
+router.put('/pinned', adminAuthMiddleware, async (req, res) => {
+  try {
+    const userId = req.user!.id;
+    const { items } = PinnedShortcutsSchema.parse(req.body);
+    const pinned = readPinned(items) || [];
+
+    await prisma.userPreferences.upsert({
+      where: { userId },
+      create: { userId, pinnedShortcuts: pinned },
+      update: { pinnedShortcuts: pinned },
+    });
+
+    res.json({ success: true, data: pinned });
+  } catch (error: any) {
+    if (error.name === 'ZodError') {
+      return res.status(400).json({ success: false, error: 'Atalhos inválidos', details: error.errors });
+    }
+    console.error('[PREFERENCES] Erro ao salvar atalhos fixados:', error);
+    res.status(500).json({ success: false, error: 'Erro ao salvar atalhos fixados' });
+  }
+});
+
 /**
  * GET /api/admin/preferences/shortcuts
  * Buscar atalhos mais utilizados do usuário autenticado

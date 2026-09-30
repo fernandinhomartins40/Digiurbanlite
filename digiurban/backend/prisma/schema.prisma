@@ -473,6 +473,10 @@ model UserPreferences {
   // Dashboard
   dashboardLayout Json? // Layout personalizado de widgets
 
+  // Atalhos fixados na barra inferior (estilo Dock): lista ordenada de hrefs
+  // do painel. null = nunca personalizou (a tela usa o conjunto padrão)
+  pinnedShortcuts Json?
+
   // Localização
   timezone   String @default("America/Sao_Paulo")
   language   String @default("pt-BR")
