@@ -11,7 +11,7 @@
  *   - Catálogo de módulos e info da plataforma (wizard de provisionamento)
  *   - Detalhe/branding/admins/usuários de um município
  *   - Billing (faturas) e leads
- *   - Infraestrutura: métricas, schema do banco, migrations, backups
+ *   - Infraestrutura: métricas, schema do banco (só leitura), backups (pg_dump)
  *
  * Os caminhos antigos em /api/super-admin respondem 410 Gone.
  */
@@ -54,6 +54,7 @@ import {
   removePlan,
 } from '../services/plan-config.service';
 import { logAuditEvent } from '../utils/audit-logger';
+import { BACKUP_EXTENSION, createDatabaseBackup, RESTORE_INSTRUCTIONS } from '../services/database-backup.service';
 
 const router = Router();
 
@@ -543,92 +544,29 @@ router.get('/system/metrics', async (_req: Request, res: Response) => {
   }
 });
 
-// POST /api/platform/system/backup — backup do banco (contexto de plataforma:
-// dump NÃO escopado, todos os tenants — por isso exige PLATFORM_ADMIN)
+// POST /api/platform/system/backup — backup REAL do banco inteiro (pg_dump,
+// todas as tabelas de todos os municípios — por isso exige PLATFORM_ADMIN)
 router.post('/system/backup', PLATFORM_ADMIN, async (req: Request, res: Response) => {
   try {
     const backupDir = await getBackupDir();
-    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
-    const backupFileName = `backup-${timestamp}.json`;
-    const backupPath = path.join(backupDir, backupFileName);
-
-    console.log(`[BACKUP] Iniciando backup do banco de dados...`);
-    console.log(`[BACKUP] Diretório: ${backupDir}`);
-
-    const backupData: any = {
-      metadata: {
-        timestamp: new Date().toISOString(),
-        version: '1.0',
-        database: process.env.DATABASE_URL?.split('@')[1]?.split('/')[0] || 'unknown',
-      },
-      data: {},
-    };
-
-    const models = [
-      'municipioConfig',
-      'user',
-      'citizen',
-      'department',
-      'protocolSimplified',
-      'service',
-      'auditLog',
-      'citizenDocument',
-      'protocolDocument',
-      'protocolInteraction',
-      'protocolStage',
-      'notification',
-    ];
-
-    let totalRecords = 0;
-
-    for (const modelName of models) {
-      try {
-        // @ts-ignore - Prisma models dinâmicos
-        if (prisma[modelName]) {
-          console.log(`[BACKUP] Fazendo backup de ${modelName}...`);
-          // @ts-ignore
-          const records = await prisma[modelName].findMany();
-          backupData.data[modelName] = records;
-          totalRecords += records.length;
-          console.log(`[BACKUP] ✓ ${modelName}: ${records.length} registros`);
-        }
-      } catch (modelError: any) {
-        console.warn(`[BACKUP] ⚠ Erro ao fazer backup de ${modelName}:`, modelError.message);
-      }
-    }
-
-    await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2), 'utf-8');
-    const stats = await fs.stat(backupPath);
-
-    console.log(`[BACKUP] ✅ Backup concluído: ${totalRecords} registros totais`);
+    const result = await createDatabaseBackup(backupDir);
 
     await logAuditEvent({
       action: 'platform_backup_created',
       resource: req.originalUrl,
       method: req.method,
-      details: { context: 'platform', platformUserId: platformUserId(req), fileName: backupFileName, totalRecords },
+      details: { context: 'platform', platformUserId: platformUserId(req), fileName: result.fileName, size: result.size },
       ip: req.ip, userAgent: req.headers['user-agent'], success: true,
     }).catch(() => undefined);
 
     return res.json({
       success: true,
-      message: `Backup criado com sucesso (${totalRecords} registros)`,
-      data: {
-        fileName: backupFileName,
-        path: backupPath,
-        size: stats.size,
-        timestamp: new Date().toISOString(),
-        totalRecords,
-        format: 'json',
-      },
+      message: `Backup completo criado (${(result.size / 1024 / 1024).toFixed(1)} MB em ${Math.round(result.durationMs / 1000)}s)`,
+      data: { fileName: result.fileName, size: result.size, timestamp: new Date().toISOString(), format: 'pg_dump' },
     });
   } catch (error: any) {
-    console.error('[BACKUP] ❌ Erro ao criar backup:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Erro ao criar backup do banco de dados',
-      details: error.message,
-    });
+    console.error('[BACKUP] Erro ao criar backup:', error?.message);
+    return res.status(500).json({ success: false, error: 'Não foi possível criar o backup', details: error?.message });
   }
 });
 
@@ -641,7 +579,7 @@ router.get('/system/backups', async (_req: Request, res: Response) => {
       const files = await fs.readdir(backupDir);
       const backups = await Promise.all(
         files
-          .filter(file => file.endsWith('.json') || file.endsWith('.db') || file.endsWith('.sql'))
+          .filter(file => file.endsWith(BACKUP_EXTENSION) || file.endsWith('.json') || file.endsWith('.sql'))
           .map(async (file) => {
             const filePath = path.join(backupDir, file);
             const stats = await fs.stat(filePath);
@@ -650,15 +588,17 @@ router.get('/system/backups', async (_req: Request, res: Response) => {
               size: stats.size,
               createdAt: stats.birthtime,
               modifiedAt: stats.mtime,
+              // .json = formato antigo (parcial, 12 tabelas) — só para consulta
+              complete: file.endsWith(BACKUP_EXTENSION),
             };
           })
       );
 
       backups.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
-      return res.json({ success: true, data: backups });
+      return res.json({ success: true, data: backups, restoreInstructions: RESTORE_INSTRUCTIONS });
     } catch {
-      return res.json({ success: true, data: [] });
+      return res.json({ success: true, data: [], restoreInstructions: RESTORE_INSTRUCTIONS });
     }
   } catch (error) {
     console.error('Erro ao listar backups:', error);
@@ -719,88 +659,15 @@ router.delete('/system/backup/:fileName', PLATFORM_ADMIN, async (req: Request, r
   }
 });
 
-// POST /api/platform/system/backup/:fileName/restore — restaurar backup
-router.post('/system/backup/:fileName/restore', PLATFORM_ADMIN, async (req: Request, res: Response) => {
-  try {
-    const { fileName } = req.params;
-    const backupDir = await getBackupDir();
-    const filePath = path.join(backupDir, fileName);
-
-    if (fileName.includes('..') || fileName.includes('/')) {
-      return res.status(400).json({ error: 'Nome de arquivo inválido' });
-    }
-
-    if (!fileName.endsWith('.json')) {
-      return res.status(400).json({ error: 'Apenas backups em formato JSON podem ser restaurados' });
-    }
-
-    const backupContent = await fs.readFile(filePath, 'utf-8');
-    const backupData = JSON.parse(backupContent);
-
-    console.log('[RESTORE] Iniciando restauração do backup...');
-
-    if (!backupData.metadata || !backupData.data) {
-      return res.status(400).json({ error: 'Formato de backup inválido' });
-    }
-
-    let restoredRecords = 0;
-    const errors: string[] = [];
-
-    for (const [modelName, records] of Object.entries(backupData.data)) {
-      try {
-        if (Array.isArray(records) && records.length > 0) {
-          // @ts-ignore
-          if (prisma[modelName]) {
-            console.log(`[RESTORE] Restaurando ${modelName}...`);
-
-            // Deletar registros existentes (cuidado!)
-            // @ts-ignore
-            await prisma[modelName].deleteMany({});
-
-            // Inserir registros do backup
-            // @ts-ignore
-            await prisma[modelName].createMany({
-              data: records,
-              skipDuplicates: true,
-            });
-
-            restoredRecords += records.length;
-            console.log(`[RESTORE] ✓ ${modelName}: ${records.length} registros restaurados`);
-          }
-        }
-      } catch (modelError: any) {
-        const errorMsg = `Erro ao restaurar ${modelName}: ${modelError.message}`;
-        console.error(`[RESTORE] ⚠ ${errorMsg}`);
-        errors.push(errorMsg);
-      }
-    }
-
-    console.log(`[RESTORE] ✅ Restauração concluída: ${restoredRecords} registros`);
-
-    await logAuditEvent({
-      action: 'platform_backup_restored',
-      resource: req.originalUrl,
-      method: req.method,
-      details: { context: 'platform', platformUserId: platformUserId(req), fileName, restoredRecords },
-      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
-    }).catch(() => undefined);
-
-    return res.json({
-      success: true,
-      message: `Backup restaurado com sucesso (${restoredRecords} registros)`,
-      data: {
-        restoredRecords,
-        backupMetadata: backupData.metadata,
-        errors: errors.length > 0 ? errors : undefined,
-      },
-    });
-  } catch (error: any) {
-    console.error('[RESTORE] ❌ Erro ao restaurar backup:', error);
-    return res.status(500).json({
-      error: 'Erro ao restaurar backup',
-      details: error.message,
-    });
-  }
+// POST /api/platform/system/backup/:fileName/restore — DESATIVADO.
+// O antigo "restaurar" apagava tabelas inteiras (de todos os municípios) e
+// regravava só o conteúdo do JSON. Restauração agora é procedimento de servidor.
+router.post('/system/backup/:fileName/restore', PLATFORM_ADMIN, (_req: Request, res: Response) => {
+  return res.status(410).json({
+    success: false,
+    error: 'Restauração pelo painel foi desativada por segurança',
+    restoreInstructions: RESTORE_INSTRUCTIONS,
+  });
 });
 
 // GET /api/platform/schema — informações do schema do banco (todas as tabelas)
@@ -910,7 +777,7 @@ router.get('/schema', async (_req: Request, res: Response) => {
       SELECT * FROM "_prisma_migrations"
       ORDER BY started_at DESC
       LIMIT 10
-    ` as any;
+    `.catch(() => [] as any[]) as any; // banco sem histórico (db push) não derruba a tela
 
     const migrations = migrationsResult.map((m: any) => ({
       id: m.migration_name,
@@ -975,60 +842,15 @@ router.get('/schema', async (_req: Request, res: Response) => {
   }
 });
 
-// POST /api/platform/schema/run-migrations — executar migrations pendentes
-router.post('/schema/run-migrations', PLATFORM_ADMIN, async (req: Request, res: Response) => {
-  try {
-    console.log('[SCHEMA] Executando migrations pendentes...');
-
-    const { exec } = require('child_process');
-    const util = require('util');
-    const execPromise = util.promisify(exec);
-
-    const backendPath = path.join(__dirname, '..', '..');
-
-    const { stdout, stderr } = await execPromise('npx prisma migrate deploy', {
-      cwd: backendPath,
-      env: { ...process.env },
-    });
-
-    console.log('[SCHEMA] stdout:', stdout);
-    if (stderr) {
-      console.log('[SCHEMA] stderr:', stderr);
-    }
-
-    const success = !stderr.includes('Error') && !stderr.includes('failed');
-
-    await logAuditEvent({
-      action: 'platform_migrations_run',
-      resource: req.originalUrl,
-      method: req.method,
-      details: { context: 'platform', platformUserId: platformUserId(req), success },
-      ip: req.ip, userAgent: req.headers['user-agent'], success,
-    }).catch(() => undefined);
-
-    if (success) {
-      console.log('[SCHEMA] ✅ Migrations executadas com sucesso');
-      return res.json({
-        success: true,
-        message: 'Migrations executadas com sucesso',
-        output: stdout,
-      });
-    } else {
-      console.error('[SCHEMA] ❌ Erro ao executar migrations:', stderr);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao executar migrations',
-        details: stderr,
-      });
-    }
-  } catch (error: any) {
-    console.error('[SCHEMA] ❌ Erro ao executar migrations:', error);
-    return res.status(500).json({
-      success: false,
-      error: 'Erro ao executar migrations',
-      details: error.message,
-    });
-  }
+// POST /api/platform/schema/run-migrations — DESATIVADO.
+// As migrations rodam sozinhas no startup de cada deploy (docker/startup.sh,
+// com MIGRATE_DATABASE_URL). Rodar pelo painel, em produção, era arriscado.
+router.post('/schema/run-migrations', PLATFORM_ADMIN, (_req: Request, res: Response) => {
+  return res.status(410).json({
+    success: false,
+    error: 'Migrations não são mais executadas pelo painel',
+    message: 'Elas rodam automaticamente a cada atualização do servidor.',
+  });
 });
 
 export default router;

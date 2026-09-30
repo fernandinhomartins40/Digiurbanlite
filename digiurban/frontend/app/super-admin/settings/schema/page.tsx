@@ -15,8 +15,7 @@ import {
   ChevronDown,
   ChevronRight,
   Lock,
-  Shield,
-  PlayCircle
+  Shield
 } from 'lucide-react';
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 
@@ -56,7 +55,7 @@ export default function SchemaManagementPage() {
   const [expandedTable, setExpandedTable] = useState<string | null>(null);
   const [requireAuth, setRequireAuth] = useState(false);
   const [authPassword, setAuthPassword] = useState('');
-  const [runningMigrations, setRunningMigrations] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   // Estados para dados reais da API
   const [databaseInfo, setDatabaseInfo] = useState<DatabaseInfo | null>(null);
@@ -69,21 +68,19 @@ export default function SchemaManagementPage() {
 
   const loadSchemaData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const response = await fetch('/api/platform/schema');
-
-      if (response.ok) {
-        const result = await response.json();
-        if (result.success && result.data) {
-          setDatabaseInfo(result.data.info);
-          setTables(result.data.tables);
-          setMigrations(result.data.migrations);
-        }
+      const result = await response.json().catch(() => ({}));
+      if (response.ok && result.success && result.data) {
+        setDatabaseInfo(result.data.info);
+        setTables(result.data.tables || []);
+        setMigrations(result.data.migrations || []);
       } else {
-        console.error('Erro ao carregar schema:', response.status);
+        setLoadError(result.error || `O servidor respondeu com erro (${response.status}).`);
       }
-    } catch (error) {
-      console.error('Erro ao carregar dados do schema:', error);
+    } catch {
+      setLoadError('Não foi possível falar com o servidor.');
     } finally {
       setLoading(false);
     }
@@ -104,33 +101,6 @@ export default function SchemaManagementPage() {
   const handleViewMigration = (migrationId: string) => {
     console.log('Visualizar detalhes da migration:', migrationId);
     // TODO: Abrir modal com detalhes completos da migration
-  };
-
-  const handleRunMigrations = async () => {
-    if (!confirm('⚠️ ATENÇÃO: Esta ação irá executar todas as migrations pendentes no banco de dados. Deseja continuar?')) {
-      return;
-    }
-
-    setRunningMigrations(true);
-    try {
-      const response = await fetch('/api/platform/schema/run-migrations', {
-        method: 'POST'
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        alert('✅ Migrations executadas com sucesso!\n\n' + (data.output || data.message));
-        // Recarregar dados
-        loadSchemaData();
-      } else {
-        const error = await response.json();
-        alert('❌ Erro ao executar migrations:\n\n' + (error.details || error.error));
-      }
-    } catch (error: any) {
-      alert('❌ Erro ao executar migrations:\n\n' + error.message);
-    } finally {
-      setRunningMigrations(false);
-    }
   };
 
   const filteredTables = tables.filter(table =>
@@ -157,10 +127,29 @@ export default function SchemaManagementPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-[50vh] items-center justify-center">
         <div className="text-center">
           <RefreshCw className="w-12 h-12 text-indigo-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600">Carregando schema do banco de dados...</p>
+          <p className="text-gray-600">Lendo a estrutura do banco (pode levar alguns segundos)…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <div className="max-w-md rounded-2xl border border-red-200 bg-red-50 p-6 text-center">
+          <AlertTriangle className="mx-auto mb-3 h-10 w-10 text-red-600" />
+          <p className="font-semibold text-red-900">Não foi possível ler o banco de dados</p>
+          <p className="mt-1 text-sm text-red-700">{loadError}</p>
+          <button
+            onClick={handleRefresh}
+            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-white hover:bg-indigo-700"
+          >
+            <RefreshCw className="h-4 w-4" />
+            Tentar de novo
+          </button>
         </div>
       </div>
     );
@@ -175,10 +164,10 @@ export default function SchemaManagementPage() {
             <div>
               <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
                 <Database className="w-8 h-8 text-indigo-600" />
-                Schema Management
+                Banco de dados
               </h1>
               <p className="text-gray-600 mt-2">
-                Explore e monitore a estrutura do banco de dados
+                Consulta da estrutura do banco (tabelas, tamanho e histórico de atualizações)
               </p>
             </div>
             <button
@@ -427,33 +416,9 @@ export default function SchemaManagementPage() {
         {/* Migrations Tab */}
         {selectedTab === 'migrations' && (
           <div className="space-y-4">
-            {/* Run Migrations Button */}
-            <div className="bg-white rounded-lg border border-gray-200 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Executar Migrations Pendentes</h3>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Execute o comando <code className="bg-gray-100 px-2 py-0.5 rounded text-xs">prisma migrate deploy</code> para aplicar migrations pendentes
-                  </p>
-                </div>
-                <button
-                  onClick={handleRunMigrations}
-                  disabled={runningMigrations}
-                  className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {runningMigrations ? (
-                    <>
-                      <RefreshCw className="w-4 h-4 animate-spin" />
-                      Executando...
-                    </>
-                  ) : (
-                    <>
-                      <PlayCircle className="w-4 h-4" />
-                      Executar Migrations
-                    </>
-                  )}
-                </button>
-              </div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 text-sm text-blue-800">
+              As atualizações do banco (migrations) rodam <strong>sozinhas</strong> a cada atualização do servidor. Esta lista é só
+              para conferência.
             </div>
 
             {/* Migrations List */}
