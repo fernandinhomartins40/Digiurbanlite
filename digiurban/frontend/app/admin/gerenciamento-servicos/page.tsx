@@ -8,6 +8,7 @@
  */
 
 import React, { useState, useEffect } from 'react'
+import { ServicosTabsNav } from '@/components/admin/services/ServicosTabsNav'
 import { useAdminAuth } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -120,10 +121,11 @@ export default function ServicesAnalyticsPage() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
+      <ServicosTabsNav />
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Estatísticas de Serviços</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Desempenho dos serviços</h1>
           <p className="text-gray-600 mt-2">
             Visão geral e análise dos serviços públicos cadastrados
           </p>

@@ -289,7 +289,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 | **4. Balcão** ✅ | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
 | **5. Espaço da secretaria** ✅ | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
 | **6. Portal do cidadão** ✅ | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
-| **7. Consolidações e limpeza** | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
+| **7. Consolidações e limpeza** ✅ (parcial) | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
 
 **Como medir:**
 - itens de menu do servidor: de ~30 para ~12;
@@ -548,3 +548,28 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
   - os endereços antigos redirecionam;
   - barra inferior com o item certo marcado;
   - tela "Mais" completa.
+
+### 10.7 Status da implementação (Fase 7 — primeira rodada concluída)
+
+**Consolidações**
+- **Demandas do Gabinete** (`/admin/chamados`): "Criar Chamado" e "Meus Chamados" viraram uma página com as abas **Nova demanda** e **Acompanhar**. Ao enviar uma demanda, a página abre "Acompanhar". O endereço `/admin/chamados/lista` leva a essa aba, e o menu e os atalhos passaram a se chamar "Demandas do Gabinete". A tela `/secretarias/[dept]/chamados-recebidos`, que não tinha nenhum link, leva ao espaço da secretaria, onde as demandas recebidas já aparecem na Visão geral.
+- **Serviços:** "Catálogo de Serviços" e "Gestão de Serviços" (cuja página se chamava "Estatísticas") viraram um item de menu, **Serviços**, com as abas **Catálogo** e **Desempenho**.
+- **Biometria:** passou a ter um endereço só, `/admin/cidadaos/biometria-facial`. `/admin/atendimento-presencial/biometria-facial` redireciona para ele.
+- **Aba Apps:** o card de Segurança Escolar só aparece quando a funcionalidade estiver ligada (`FEATURE_FLAGS.SEGURANCA_ESCOLAR`). Hoje ela está desligada e o link levava a "página não encontrada".
+
+**Limpeza**
+- **284 arquivos sem uso removidos do frontend (≈90 mil linhas).** Um mapa de imports que parte das páginas, layouts e rotas do Next mostrou que nenhuma tela chegava a eles. Depois da remoção, o mapa foi refeito e mostra zero órfãos.
+- Entre os removidos estão: páginas "old", "simple" e "enhanced"; os modelos de página por área, que a Fase 5 substituiu; o sistema antigo de módulos (`module-configs`, `components/modules`, `components/core`); os hooks de estatística das páginas de secretaria antigas; e serviços que ninguém chama.
+- A lista completa, com o comando para restaurar qualquer arquivo, está em `docs/LIMPEZA-FASE7-ARQUIVOS-REMOVIDOS.md`.
+- **Preservado de propósito:** as telas desligadas por `lib/feature-flags.ts` (Pesquisa de Preços, Processos Internos, Workflows, Segurança Escolar) e tudo o que elas usam.
+
+**Validação**
+- Verificação de tipos sem erro novo. Build de produção sem erro novo; os avisos da biblioteca `face-api.js` já existiam antes.
+- Playwright, 7 passos das consolidações, todos OK.
+- Varredura de 33 telas (servidor e cidadão), cada uma numa aba isolada: todas abrem sem erro no navegador nem na API.
+
+**Fica para uma próxima rodada**
+- Documentos em abas (Modelos · Assinaturas · Certificados · Meus documentos) e Relatórios em abas (Analytics · Relatórios · IA).
+- Desmembrar o `moduleType`.
+- Backend: `src/routes/index.ts` é um carregador antigo que nunca é chamado. Várias rotas (`secretarias-*`, `citizen-categories`, `unified-protocols`…) só são citadas por ele. Removê-las pede uma revisão rota a rota.
+

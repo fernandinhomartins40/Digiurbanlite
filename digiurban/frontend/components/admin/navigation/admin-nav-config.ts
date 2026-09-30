@@ -142,7 +142,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         },
         {
           title: 'Biometria Presencial',
-          href: '/admin/atendimento-presencial/biometria-facial',
+          href: '/admin/cidadaos/biometria-facial',
           icon: ScanFace,
           badge: 'NOVO',
         },
@@ -157,16 +157,11 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
       defaultCollapsed: false,
       items: [
         {
-          title: 'Catálogo de Serviços',
+          // Catálogo + Desempenho (abas dentro da página)
+          title: 'Serviços',
           href: '/admin/servicos',
           icon: Settings,
-          permissions: ['services:create', 'services:update'],
-        },
-        {
-          title: 'Gestão de Serviços',
-          href: '/admin/gerenciamento-servicos',
-          icon: TrendingUp,
-          permissions: ['services:read'],
+          permissions: ['services:create', 'services:update', 'services:read'],
         },
         // WORKFLOWS: disabled via FEATURE_FLAGS.WORKFLOWS
         // { title: 'Workflows', href: '/admin/workflows', icon: GitBranch, minRole: 'ADMIN' },
@@ -288,7 +283,7 @@ export const mayorPortalNavigation: AdminNavSection = {
     },
     { title: 'Mapa de Demandas', href: '/admin/gabinete/mapa-demandas', icon: Map, minRole: 'ADMIN' },
     { title: 'Agenda', href: '/admin/agenda', icon: Calendar, minRole: 'ADMIN' },
-    { title: 'Criar Chamado', href: '/admin/chamados', icon: AlertCircle, minRole: 'ADMIN' },
+    { title: 'Demandas do Gabinete', href: '/admin/chamados', icon: AlertCircle, minRole: 'ADMIN' },
   ],
 };
 

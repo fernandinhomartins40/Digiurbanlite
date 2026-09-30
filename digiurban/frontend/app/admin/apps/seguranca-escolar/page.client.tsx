@@ -1028,7 +1028,7 @@ export default function SegurancaEscolarPage() {
               </div>
 
               <Button asChild variant="outline" className="w-full">
-                <a href="/admin/atendimento-presencial/biometria-facial">
+                <a href="/admin/cidadaos/biometria-facial">
                   <UserRoundSearch className="mr-2 h-4 w-4" />
                   Atendimento presencial
                 </a>

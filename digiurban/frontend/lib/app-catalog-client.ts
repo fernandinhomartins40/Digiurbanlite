@@ -7,6 +7,8 @@
  * aparecerem na aba Apps e no menu Apps junto com os apps do catálogo.
  */
 
+import { FEATURE_FLAGS } from '@/lib/feature-flags'
+
 export interface CatalogApp {
   code: string
   name: string
@@ -37,11 +39,16 @@ export const EXTRA_APP_SCREENS: Record<string, ExtraAppScreen[]> = {
       description: 'Frota de veículos, rotas por turno e alunos transportados',
       route: '/admin/apps/educacao/transporte',
     },
-    {
-      name: 'Segurança Escolar',
-      description: 'Reconhecimento facial na entrada/saída com aviso aos responsáveis',
-      route: '/admin/apps/seguranca-escolar',
-    },
+    // Desligado por FEATURE_FLAGS.SEGURANCA_ESCOLAR (a página responde 404)
+    ...(FEATURE_FLAGS.SEGURANCA_ESCOLAR
+      ? [
+          {
+            name: 'Segurança Escolar',
+            description: 'Reconhecimento facial na entrada/saída com aviso aos responsáveis',
+            route: '/admin/apps/seguranca-escolar',
+          },
+        ]
+      : []),
   ],
   ASSISTENCIA_SOCIAL: [
     {

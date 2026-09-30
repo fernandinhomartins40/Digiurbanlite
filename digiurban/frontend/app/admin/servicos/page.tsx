@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { ServicosTabsNav } from '@/components/admin/services/ServicosTabsNav'
 import { useRouter } from 'next/navigation'
 import { useAdminAuth, useAdminPermissions } from '@/contexts/AdminAuthContext'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -248,10 +249,11 @@ export default function ServicesManagementPage() {
 
   return (
     <div className="space-y-4 sm:space-y-6">
+      <ServicosTabsNav />
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Gerenciamento de Serviços</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Serviços</h1>
           <p className="text-sm sm:text-base text-gray-600 mt-1">
             Gerencie o catálogo de serviços públicos do município
           </p>
