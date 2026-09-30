@@ -3,7 +3,6 @@ import {
   Store,
   LayoutGrid,
   AlertCircle,
-  Award,
   BarChart3,
   Bot,
   Building2,
@@ -13,7 +12,6 @@ import {
   Car,
   Cpu,
   DollarSign,
-  FileSignature,
   FileText,
   GitBranch,
   GraduationCap,
@@ -28,7 +26,6 @@ import {
   MessageCircle,
   Network,
   Palette,
-  ScrollText,
   ScanFace,
   Search,
   Settings,
@@ -196,57 +193,17 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
       ],
     },
 
-    // ── Documentos ─────────────────────────────────────────────────────────
+    // ── Documentos e análises ──────────────────────────────────────────────
     {
-      title: 'Documentos',
+      title: 'Documentos e análises',
       color: 'amber',
       collapsible: true,
       defaultCollapsed: true,
       items: [
-        { title: 'Meus Documentos', href: '/admin/meus-documentos', icon: FileText, minRole: 'USER' },
-        {
-          title: 'Templates',
-          href: '/admin/templates-documentos',
-          icon: ScrollText,
-          minRole: 'ADMIN',
-        },
-        {
-          title: 'Assinaturas Digitais',
-          href: '/admin/assinaturas-digitais',
-          icon: FileSignature,
-          minRole: 'COORDINATOR',
-          badge: 'NOVO',
-        },
-        {
-          title: 'Certificados Digitais',
-          href: '/admin/certificados-digitais',
-          icon: Award,
-          minRole: 'ADMIN',
-        },
-      ],
-    },
-
-    // ── Análises ───────────────────────────────────────────────────────────
-    {
-      title: 'Análises',
-      color: 'violet',
-      collapsible: true,
-      defaultCollapsed: true,
-      items: [
-        { title: 'Analytics', href: '/admin/analytics', icon: BarChart3, minRole: 'COORDINATOR' },
-        {
-          title: 'IA Centralizada',
-          href: '/admin/ia',
-          icon: Cpu,
-          minRole: 'ADMIN',
-          badge: 'NOVO',
-        },
-        {
-          title: 'Relatórios',
-          href: '/admin/relatorios',
-          icon: FileText,
-          permissions: ['reports:department', 'reports:full'],
-        },
+        // Meus documentos · Assinaturas · Modelos · Certificados (abas dentro da página)
+        { title: 'Documentos', href: '/admin/meus-documentos', icon: FileText, minRole: 'USER' },
+        // Painel · Relatórios · Assistente de IA (abas dentro da página)
+        { title: 'Análises e relatórios', href: '/admin/analytics', icon: BarChart3, minRole: 'COORDINATOR' },
         // PESQUISA_PRECOS: disabled via FEATURE_FLAGS.PESQUISA_PRECOS
         // { title: 'Pesquisa de Preços', href: '/admin/pesquisa-precos', icon: Search, minRole: 'COORDINATOR' },
         // SEGURANCA_ESCOLAR: disabled via FEATURE_FLAGS.SEGURANCA_ESCOLAR
@@ -359,7 +316,14 @@ export function canSeeSecretaria(
   return userDepartmentCodes.includes(code);
 }
 
+// Itens de menu que viraram abas: o item fica ativo em qualquer aba da seção
+const SECTION_TAB_PATHS: Record<string, string[]> = {
+  '/admin/servicos': ['/admin/gerenciamento-servicos'],
+  '/admin/meus-documentos': ['/admin/assinaturas-digitais', '/admin/templates-documentos', '/admin/certificados-digitais'],
+  '/admin/analytics': ['/admin/relatorios', '/admin/ia'],
+};
+
 export function isNavItemActive(pathname: string, href: string) {
   if (href === '/admin') return pathname === '/admin';
-  return pathname === href || pathname.startsWith(`${href}/`);
+  return [href, ...(SECTION_TAB_PATHS[href] || [])].some((base) => pathname === base || pathname.startsWith(`${base}/`));
 }

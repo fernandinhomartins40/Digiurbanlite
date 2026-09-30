@@ -193,16 +193,13 @@ router.get('/', adminAuthMiddleware, async (req, res) => {
   try {
     const userId = req.user!.id;
 
-    let preferences = await prisma.userPreferences.findUnique({
-      where: { userId }
+    // upsert: a tela pede preferências em paralelo no primeiro acesso; com
+    // findUnique + create, a segunda requisição falhava na unique de userId
+    const preferences = await prisma.userPreferences.upsert({
+      where: { userId },
+      create: { userId },
+      update: {}
     });
-
-    // Se não existir, criar com valores padrão
-    if (!preferences) {
-      preferences = await prisma.userPreferences.create({
-        data: { userId }
-      });
-    }
 
     res.json({ success: true, data: preferences });
   } catch (error: any) {
@@ -278,15 +275,13 @@ router.get('/shortcuts', adminAuthMiddleware, async (req, res) => {
     const userId = req.user!.id;
     const query = ShortcutQuerySchema.parse(req.query);
 
-    let preferences = await prisma.userPreferences.findUnique({
-      where: { userId }
+    // upsert: a tela pede preferências em paralelo no primeiro acesso; com
+    // findUnique + create, a segunda requisição falhava na unique de userId
+    const preferences = await prisma.userPreferences.upsert({
+      where: { userId },
+      create: { userId },
+      update: {}
     });
-
-    if (!preferences) {
-      preferences = await prisma.userPreferences.create({
-        data: { userId }
-      });
-    }
 
     const dashboardLayout = normalizeDashboardLayout(preferences.dashboardLayout);
     const normalizedUsage = normalizeQuickAccessUsage(dashboardLayout.quickAccessUsage);

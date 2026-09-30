@@ -289,7 +289,7 @@ Todas as fases são reversíveis e entram sem perder funcionalidade: URLs antiga
 | **4. Balcão** ✅ | Atendimento presencial em 3 passos, gerando protocolo | Une 4 fluxos espalhados | médio |
 | **5. Espaço da secretaria** ✅ | Modelo único com 4 abas; as 21 páginas viram configuração; menu "Apps" | Organiza o dia a dia da equipe | médio |
 | **6. Portal do cidadão** ✅ | Início "Do que você precisa?", "Meus pedidos", assistente no lugar da home de chat | Maior impacto em usuários leigos | médio |
-| **7. Consolidações e limpeza** ✅ (parcial) | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
+| **7. Consolidações e limpeza** ✅ | Demandas do Gabinete, Documentos em abas, Serviços (catálogo + desempenho), Relatórios; remover páginas de módulo, piloto, esboços e órfãos confirmados; desmembrar o `moduleType` | Só depois de tudo validado | baixo |
 
 **Como medir:**
 - itens de menu do servidor: de ~30 para ~12;
@@ -568,8 +568,18 @@ A migration `20260929120000_protocol_channel` é aditiva e idempotente, validada
 - Playwright, 7 passos das consolidações, todos OK.
 - Varredura de 33 telas (servidor e cidadão), cada uma numa aba isolada: todas abrem sem erro no navegador nem na API.
 
-**Fica para uma próxima rodada**
-- Documentos em abas (Modelos · Assinaturas · Certificados · Meus documentos) e Relatórios em abas (Analytics · Relatórios · IA).
-- Desmembrar o `moduleType`.
-- Backend: `src/routes/index.ts` é um carregador antigo que nunca é chamado. Várias rotas (`secretarias-*`, `citizen-categories`, `unified-protocols`…) só são citadas por ele. Removê-las pede uma revisão rota a rota.
+**Segunda rodada**
+- **Documentos:** Meus Documentos, Templates, Assinaturas Digitais e Certificados Digitais viraram um item de menu, **Documentos**, com as abas Meus documentos · Assinaturas · Modelos · Certificados.
+- **Análises:** Analytics, Relatórios e IA Centralizada viraram **Análises e relatórios**, com as abas Painel · Relatórios · Assistente de IA.
+- **Mesmas regras de acesso:** cada aba mantém a regra que o item tinha no menu. Quem só tem acesso a uma aba não vê a barra de abas.
+- **Menu:** as seções "Documentos" e "Análises" viraram uma só, "Documentos e análises". O item do menu fica marcado em qualquer aba da seção.
+- **Como foi feito:** grupos de rota do Next (`app/admin/(documentos)` e `app/admin/(analises)`). Os endereços não mudaram, e as telas internas (editor de modelo) não mostram as abas. O componente `SectionTabs` também passou a ser usado nas abas de Serviços.
+- **Backend:** foram removidos o carregador antigo `src/routes/index.ts`, que apontava para 11 arquivos que já não existiam, e 9 arquivos de rota que o servidor nunca carregava (`admin-secretarias`, `alerts`, `citizen-categories*`, `citizen-links-validation`, `enums`, `module-workflows`, `unified-protocols`, `admin-email-service`). Nenhum desses endereços respondia antes, então nada muda para quem usa.
+- **Defeito corrigido:** no primeiro acesso de um servidor, a tela inicial pedia as preferências em paralelo, a segunda requisição falhava (erro 500, atalhos vazios). Agora usa `upsert`.
+- **Validação:**
+  - Playwright com administrador, coordenadora e servidor, 7 passos: as abas certas para cada papel, a navegação entre abas, o item do menu marcado e os itens antigos fora do menu. Sem erros, fora a IA indisponível, que no ambiente de teste é esperado.
+  - Backend: verificação de tipos e 26 testes unitários passam.
+  - Build de produção sem erro novo.
 
+**Fica para uma próxima rodada**
+- Desmembrar o `moduleType`.
