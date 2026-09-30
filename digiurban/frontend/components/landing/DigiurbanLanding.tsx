@@ -420,11 +420,11 @@ function Hero() {
             alt="Mascote do Digiurban mostrando o aplicativo no celular"
             sizes="(max-width: 767px) 60vw, 40vw"
             eager
-            className="relative z-30 -mr-[8%] w-[60%] select-none md:absolute md:z-10 md:bottom-0 md:left-[-14%] md:mr-0 md:h-[84%] md:w-auto md:max-w-none lg:left-[-2%] lg:h-full"
+            className="relative z-30 -mb-[1%] -ml-[4%] -mr-[14%] w-[72%] select-none md:absolute md:z-10 md:bottom-0 md:left-[-14%] md:mr-0 md:h-[84%] md:w-auto md:max-w-none lg:left-[-2%] lg:h-full"
           />
-          <HeroPanel className="relative z-20 mb-8 w-[48%] md:absolute md:right-0 md:top-[14%] md:mb-0 md:w-[228px] lg:right-[-1%] lg:top-[12%] lg:w-[300px]" />
+          <HeroPanel className="relative z-20 mb-12 w-[46%] shrink-0 md:absolute md:right-0 md:top-[14%] md:mb-0 md:w-[228px] lg:right-[-1%] lg:top-[12%] lg:w-[300px]" />
         </div>
-        <div className="flex justify-center gap-1.5 pb-3 pt-1 md:hidden" aria-hidden>
+        <div className="absolute inset-x-0 bottom-3 z-40 flex justify-center gap-1.5 md:hidden" aria-hidden>
           <span className="h-1.5 w-1.5 rounded-full bg-white" />
           <span className="h-1.5 w-1.5 rounded-full bg-white/50" />
           <span className="h-1.5 w-1.5 rounded-full bg-white/50" />
