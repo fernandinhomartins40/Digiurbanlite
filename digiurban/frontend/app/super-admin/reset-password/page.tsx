@@ -94,7 +94,7 @@ function ResetPasswordForm() {
   if (validating) {
     return (
       <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
-        <LgAuthBackdrop withThemeScope />
+        <LgAuthBackdrop />
         <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Validando token...</p>
@@ -106,7 +106,7 @@ function ResetPasswordForm() {
   if (!tokenValid) {
     return (
       <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
-        <LgAuthBackdrop withThemeScope />
+        <LgAuthBackdrop />
         <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
             <XCircle className="w-8 h-8 text-red-600" />
@@ -134,7 +134,7 @@ function ResetPasswordForm() {
   if (success) {
     return (
       <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
-        <LgAuthBackdrop withThemeScope />
+        <LgAuthBackdrop />
         <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
             <CheckCircle2 className="w-8 h-8 text-green-600" />
@@ -154,7 +154,7 @@ function ResetPasswordForm() {
 
   return (
     <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
-        <LgAuthBackdrop withThemeScope />
+        <LgAuthBackdrop />
       <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md">
         <div className="text-center mb-8">
           <div className="mx-auto w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mb-4">
@@ -257,7 +257,7 @@ export default function AdminResetPasswordPage() {
   return (
     <Suspense fallback={
       <div className="lg-root relative min-h-screen flex items-center justify-center p-4">
-        <LgAuthBackdrop withThemeScope />
+        <LgAuthBackdrop />
         <div className="lg-glass lg-thick relative z-10 rounded-[32px] p-8 w-full max-w-md text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Carregando...</p>

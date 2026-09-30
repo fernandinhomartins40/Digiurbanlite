@@ -111,7 +111,7 @@ export function GlassTabBar({
                   <Icon className="h-[22px] w-[22px] md:h-5 md:w-5" strokeWidth={active ? 2.3 : 2} />
                   <Badge value={tab.badge || 0} />
                 </span>
-                <span>{tab.label}</span>
+                <span className="whitespace-nowrap">{tab.label}</span>
                 <Badge value={tab.badge || 0} inline />
               </Tag>
             );

@@ -697,3 +697,14 @@ O protótipo aprovado pelo usuário está no canvas "DigiUrban Liquid Glass".
 - **Validação:** prints no computador e no celular, claro e escuro, em Início, Protocolos, Apps, Análises, Serviços, secretaria, "Mais", busca e todas as telas de login. Sem erros no navegador nem na API.
 - **Próxima etapa:** super-admin (o login dele já está no novo estilo).
 
+**Etapa 3 — painel do super-admin (concluída)**
+- **Sem barra lateral:**
+  - barra inferior Visão · Municípios · Suporte · Sistema · E-mail, e a busca no círculo;
+  - a busca abre "Ir para…" com todas as telas (`GlassNavSheet`);
+  - dentro de cada grupo, as telas irmãs aparecem como abas no topo (`SegmentLinks`). Por exemplo, Municípios · Planos · Faturas · Leads, ou as 8 telas de E-mail.
+- **No topo:** "Plataforma DigiUrban", tema e conta (nome, e-mail, papel e Sair). Saíram a caixa "Buscar..." e o sino, que não funcionavam (o número nunca mudava de 0).
+- O tema é ligado uma vez para todo o painel, inclusive o login. As abas de seção do painel do servidor (Documentos, Análises, Serviços) passaram a usar o mesmo controle segmentado.
+- **Validação:** 8 prints no computador e no celular, claro e escuro (Visão, Municípios, Planos, Faturas, Domínios e a busca), com a aba certa marcada em cada grupo. Sem erros no navegador nem na API.
+
+**Com isso, os três painéis e todas as telas de entrada estão no DigiUrban Glass.** Fica para depois: o chat do Assistente (cabeçalho antigo) e o ajuste fino da Inter para aproximar da SF Pro.
+

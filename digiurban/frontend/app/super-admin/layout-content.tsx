@@ -1,98 +1,114 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import Link from 'next/link';
-import { SuperAdminAuthProvider, useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
+/**
+ * Casca do painel do super-admin — DigiUrban Glass (Liquid Glass).
+ *
+ * Sem barra lateral: barra inferior com os 5 grupos (Visão · Municípios ·
+ * Suporte · Sistema · E-mail) e a busca no círculo ("Ir para…" com todas as
+ * telas). Dentro de cada grupo, as telas irmãs aparecem como abas no topo.
+ * No topo: "Plataforma DigiUrban", tema e conta.
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import {
-  Building2,
-  LayoutDashboard,
-  UserCog,
-  Users,
   Activity,
-  Monitor,
-  FileText,
-  Settings,
-  LogOut,
-  Menu,
-  X,
-  ChevronDown,
-  ChevronRight,
-  Wrench,
-  Database,
-  Bell,
-  Search,
-  Mail,
   Bot,
-  Globe,
-  ScrollText,
+  Building2,
   CreditCard,
+  Database,
+  FileText,
+  Globe,
+  LayoutDashboard,
+  LifeBuoy,
+  LogOut,
+  Mail,
+  Monitor,
+  Package,
+  ScrollText,
+  Search,
+  Settings,
+  SlidersHorizontal,
+  UserCog,
   UserPlus,
-  Package
+  Users,
+  Wrench,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { SuperAdminAuthProvider, useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
+import { useLgThemeScope } from '@/lib/lg-theme';
+import { GlassTabBar, type GlassTab } from '@/components/liquid-glass/GlassTabBar';
+import { GlassNavSheet, type GlassNavGroup } from '@/components/liquid-glass/GlassNavSheet';
+import { LgAmbient } from '@/components/liquid-glass/LgAmbient';
+import { SegmentLinks } from '@/components/liquid-glass/SegmentLinks';
+import { ThemeToggleButton } from '@/components/liquid-glass/ThemeToggleButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
-interface MenuItem {
+interface Group {
+  key: string;
   title: string;
-  href: string;
-  icon: any;
-  children?: MenuItem[];
-  badge?: string;
-  badgeColor?: string;
+  icon: LucideIcon;
+  color: string;
+  items: { title: string; href: string; icon: LucideIcon }[];
 }
 
-interface User {
-  id: string;
-  name: string;
-  email: string;
-  role: string;
-}
-
-// Menu por tarefa (auditoria de produto do super-admin, 2026-09-29):
-// antes eram 14 itens soltos + 10 filhos, com "Usuários"/"Usuários Admin" e
-// "Planos"/"Faturamento" repetidos dentro de E-mail.
-const menuItems: MenuItem[] = [
+// Menu por tarefa (auditoria de produto do super-admin, 2026-09-29)
+const GROUPS: Group[] = [
   {
-    title: 'Visão da plataforma',
-    href: '/super-admin',
-    icon: LayoutDashboard
+    key: 'visao',
+    title: 'Visão',
+    icon: LayoutDashboard,
+    color: '#0A7CFF',
+    items: [{ title: 'Visão da plataforma', href: '/super-admin', icon: LayoutDashboard }],
   },
   {
+    key: 'municipios',
     title: 'Municípios',
-    href: '#municipios',
     icon: Building2,
-    children: [
+    color: '#2FB84F',
+    items: [
       { title: 'Municípios', href: '/super-admin/tenants', icon: Building2 },
       { title: 'Planos', href: '/super-admin/plans', icon: Package },
       { title: 'Faturas', href: '/super-admin/billing', icon: CreditCard },
       { title: 'Leads', href: '/super-admin/leads', icon: UserPlus },
-    ]
+    ],
   },
   {
+    key: 'suporte',
     title: 'Suporte',
-    href: '#suporte',
-    icon: Monitor,
-    children: [
+    icon: LifeBuoy,
+    color: '#5856D6',
+    items: [
       { title: 'Assistência remota', href: '/super-admin/assistencia-remota', icon: Monitor },
       { title: 'Super-admins', href: '/super-admin/users', icon: UserCog },
-    ]
+    ],
   },
   {
+    key: 'sistema',
     title: 'Sistema',
-    href: '#sistema',
-    icon: Wrench,
-    children: [
+    icon: SlidersHorizontal,
+    color: '#FF8A1F',
+    items: [
       { title: 'Monitoramento', href: '/super-admin/monitoring', icon: Activity },
       { title: 'Backups e operações', href: '/super-admin/operations', icon: Wrench },
       { title: 'Banco de dados', href: '/super-admin/settings/schema', icon: Database },
       { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
       { title: 'IA', href: '/super-admin/ia', icon: Bot },
-    ]
+    ],
   },
   {
+    key: 'email',
     title: 'E-mail',
-    href: '#email',
     icon: Mail,
-    children: [
+    color: '#12B5CB',
+    items: [
       { title: 'Visão geral', href: '/super-admin/email-server', icon: LayoutDashboard },
       { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Globe },
       { title: 'Servidor SMTP', href: '/super-admin/email-server/config', icon: Settings },
@@ -101,343 +117,130 @@ const menuItems: MenuItem[] = [
       { title: 'Planos de e-mail', href: '/super-admin/email-plans', icon: Package },
       { title: 'Assinaturas de e-mail', href: '/super-admin/email-subscriptions', icon: Users },
       { title: 'Faturamento de e-mail', href: '/super-admin/email-billing', icon: CreditCard },
-    ]
+    ],
   },
 ];
 
-const ALL_HREFS = menuItems.flatMap((m) => [m.href, ...(m.children || []).map((c) => c.href)]).filter((h) => h.startsWith('/'));
+const ALL_HREFS = GROUPS.flatMap((g) => g.items.map((i) => i.href));
 
-/** Item do menu mais específico para a página atual (ex.: Domínios, não Visão geral do e-mail) */
-function bestMenuMatch(pathname: string): string | undefined {
+/** Item mais específico para a página atual (ex.: Domínios, não Visão geral do e-mail) */
+function bestMatch(pathname: string): string | undefined {
   return ALL_HREFS.filter((h) => (h === '/super-admin' ? pathname === h : pathname === h || pathname.startsWith(`${h}/`)))
     .sort((a, b) => b.length - a.length)[0];
 }
 
-function SuperAdminLayoutContent({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const PUBLIC_PATHS = ['/super-admin/login', '/super-admin/forgot-password', '/super-admin/reset-password'];
+
+function SuperAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const pathname = usePathname();
+  const pathname = usePathname() || '';
   const { user, loading: authLoading, logout } = useSuperAdminAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [expandedMenus, setExpandedMenus] = useState<string[]>(['#municipios']);
+  const [searchOpen, setSearchOpen] = useState(false);
 
-  // Abre o grupo da página atual (ex.: entrou em Domínios → abre E-mail)
-  useEffect(() => {
-    const match = bestMenuMatch(pathname || '');
-    const group = menuItems.find((m) => m.children?.some((c) => c.href === match));
-    if (group) setExpandedMenus((prev) => (prev.includes(group.href) ? prev : [...prev, group.href]));
-  }, [pathname]);
-  const [notifications, setNotifications] = useState(0);
+  // Tema claro/escuro do DigiUrban Glass para todo o painel (inclusive o login)
+  useLgThemeScope();
 
-  // Auto-open sidebar on desktop
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth >= 768) {
-        setSidebarOpen(true);
-      } else {
-        setSidebarOpen(false);
-      }
-    };
-
-    // Set initial state
-    handleResize();
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  // Páginas públicas que não precisam de autenticação
-  const publicPaths = [
-    '/super-admin/login',
-    '/super-admin/forgot-password',
-    '/super-admin/reset-password'
-  ];
-  const isPublicPath = publicPaths.some(path => pathname?.startsWith(path));
+  const isPublicPath = PUBLIC_PATHS.some((path) => pathname.startsWith(path));
 
   useEffect(() => {
-    if (isPublicPath) {
-      return;
-    }
-
-    if (!authLoading && !user) {
-      router.push('/super-admin/login');
-    }
+    if (!isPublicPath && !authLoading && !user) router.push('/super-admin/login');
   }, [pathname, router, user, authLoading, isPublicPath]);
 
-  const toggleMenu = (href: string) => {
-    setExpandedMenus(prev =>
-      prev.includes(href)
-        ? prev.filter(item => item !== href)
-        : [...prev, href]
-    );
-  };
+  useEffect(() => setSearchOpen(false), [pathname]);
+  const closeSearch = useCallback(() => setSearchOpen(false), []);
 
-  const handleLogout = () => {
-    logout();
-  };
+  if (isPublicPath) return <>{children}</>;
 
-  const activeHref = bestMenuMatch(pathname || '');
-  const isActiveRoute = (href: string) => {
-    if (href.startsWith('#')) {
-      return !!menuItems.find((m) => m.href === href)?.children?.some((c) => c.href === activeHref);
-    }
-    return href === activeHref;
-  };
-
-  if (isPublicPath) {
-    return <>{children}</>;
-  }
-
-  if (authLoading) {
+  if (authLoading || !user) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-50">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 font-medium">Carregando Super Admin...</p>
+      <div className="lg-root min-h-screen flex items-center justify-center">
+        <LgAmbient colors={['#5856D6', '#1E9BFF', '#3DDC84']} />
+        <div className="relative text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[var(--lg-blue)] mx-auto mb-4" />
+          <p className="text-[var(--lg-ink2)] font-medium">Carregando o painel da plataforma...</p>
         </div>
       </div>
     );
   }
 
-  const currentPageTitle = menuItems.find(m => m.href === activeHref)?.title ||
-    menuItems.flatMap(m => m.children || []).find(c => c.href === activeHref)?.title ||
-    'Super Admin';
+  const active = bestMatch(pathname);
+  const currentGroup = GROUPS.find((g) => g.items.some((i) => i.href === active));
+  const tabs: GlassTab[] = GROUPS.map((group) => ({
+    key: group.key,
+    label: group.title,
+    href: group.items[0].href,
+    icon: group.icon,
+    active: !searchOpen && currentGroup?.key === group.key,
+  }));
+  const navGroups: GlassNavGroup[] = GROUPS.map((g) => ({ title: g.title, color: g.color, items: g.items }));
+  const roleLabel = user.role === 'PLATFORM_SUPPORT' ? 'Suporte da Plataforma' : 'Operador da Plataforma';
 
   return (
-    <div className="flex h-screen bg-gray-50 overflow-hidden">
-      {/* Mobile Overlay */}
-      {sidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
-          onClick={() => setSidebarOpen(false)}
-        />
-      )}
+    <div className="lg-root min-h-screen relative overflow-x-hidden">
+      <LgAmbient colors={['#5856D6', '#1E9BFF', '#FF8A1F']} />
 
-      {/* Sidebar */}
-      <aside className={`${
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'
-      } ${sidebarOpen ? 'w-64 md:w-72' : 'md:w-16 md:w-20'} w-64 bg-white border-r border-gray-200 transition-all duration-300 flex flex-col fixed left-0 top-0 bottom-0 z-40`}>
-        {/* Logo e Toggle */}
-        <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200 bg-gradient-to-r from-blue-600 to-blue-700">
-          {sidebarOpen ? (
-            <>
-              <div className="text-white">
-                <h1 className="text-lg font-bold">Super Admin</h1>
-                <p className="text-xs text-blue-100">DigiUrban</p>
-              </div>
-              <button
-                onClick={() => setSidebarOpen(false)}
-                className="text-white hover:bg-blue-600 p-2 rounded-lg transition-colors"
-              >
-                <X size={20} />
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="text-white hover:bg-blue-600 p-2 rounded-lg transition-colors mx-auto"
-            >
-              <Menu size={20} />
-            </button>
-          )}
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 px-3 sm:px-5 pt-[max(12px,env(safe-area-inset-top))] pointer-events-none">
+        <div className="pointer-events-auto lg-glass lg-bar rounded-full h-10 px-4 inline-flex items-center gap-2 text-sm font-semibold min-w-0">
+          <Globe className="h-4 w-4 shrink-0 text-[var(--lg-blue)]" />
+          <span className="truncate">Plataforma DigiUrban</span>
         </div>
-
-        {/* Navigation */}
-        <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-          {menuItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = isActiveRoute(item.href);
-            const hasChildren = item.children && item.children.length > 0;
-            const isExpanded = expandedMenus.includes(item.href);
-
-            return (
-              <div key={item.href}>
-                {hasChildren ? (
-                  <button
-                    onClick={() => toggleMenu(item.href)}
-                    className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon size={20} className={isActive ? 'text-blue-600' : 'text-gray-500'} />
-                      {sidebarOpen && (
-                        <span className="font-medium text-sm">{item.title}</span>
-                      )}
-                    </div>
-                    {sidebarOpen && (
-                      <div className="flex items-center gap-2">
-                        {item.badge && (
-                          <span className={`${item.badgeColor} text-white text-xs px-2 py-0.5 rounded-full font-semibold`}>
-                            {item.badge}
-                          </span>
-                        )}
-                        {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
-                      </div>
-                    )}
-                  </button>
-                ) : (
-                  <Link
-                    href={item.href}
-                    className={`flex items-center justify-between px-3 py-2.5 rounded-lg transition-all ${
-                      isActive
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon size={20} className={isActive ? 'text-blue-600' : 'text-gray-500'} />
-                      {sidebarOpen && (
-                        <span className="font-medium text-sm">{item.title}</span>
-                      )}
-                    </div>
-                    {sidebarOpen && item.badge && (
-                      <span className={`${item.badgeColor} text-white text-xs px-2 py-0.5 rounded-full font-semibold`}>
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                )}
-
-                {/* Submenu */}
-                {hasChildren && isExpanded && sidebarOpen && (
-                  <div className="ml-4 mt-1 space-y-1 border-l-2 border-gray-200 pl-4">
-                    {item.children!.map((child) => {
-                      const ChildIcon = child.icon;
-                      const isChildActive = isActiveRoute(child.href);
-
-                      return (
-                        <Link
-                          key={child.href}
-                          href={child.href}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-all ${
-                            isChildActive
-                              ? 'bg-blue-50 text-blue-700 font-medium'
-                              : 'text-gray-600 hover:bg-gray-50'
-                          }`}
-                        >
-                          <ChildIcon size={16} className={isChildActive ? 'text-blue-600' : 'text-gray-400'} />
-                          {child.title}
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </nav>
-
-        {/* User Info */}
-        {sidebarOpen && user && (
-          <div className="p-4 border-t border-gray-200 bg-gray-50">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">
-                {user.name.charAt(0).toUpperCase()}
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-gray-900 truncate">{user.name}</p>
-                <p className="text-xs text-gray-500 truncate">{user.email}</p>
-                {/* PAPEL EXPLÍCITO (2026-09-15): antes a sidebar mostrava só nome
-                    e email, sem dizer em qual identidade o usuário estava — parte
-                    da confusão de papel. Este painel é SEMPRE o console da
-                    plataforma (identidade PlatformUser, sem município). */}
-                <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700">
-                  <Globe size={11} />
-                  {user.role === 'PLATFORM_SUPPORT'
-                    ? 'Suporte da Plataforma'
-                    : 'Operador da Plataforma'}
-                </p>
-              </div>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
-            >
-              <LogOut size={16} />
-              Sair
-            </button>
-          </div>
-        )}
-      </aside>
-
-      {/* Main Content */}
-      <div className={`flex-1 flex flex-col ${sidebarOpen ? 'md:ml-64 md:ml-72' : 'md:ml-16 md:ml-20'} transition-all duration-300 overflow-x-hidden`}>
-        {/* Header */}
-        <header className={`h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 md:px-6 fixed right-0 left-0 z-20 ${sidebarOpen ? 'md:left-64 md:left-72' : 'md:left-16 md:left-20'} transition-all duration-300`}>
-          <div className="flex items-center gap-3 min-w-0 flex-shrink">
-            {/* Mobile Hamburger */}
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-            >
-              <Menu size={24} className="text-gray-700" />
-            </button>
-            <div className="min-w-0">
-              <h2 className="text-lg md:text-xl font-bold text-gray-900 truncate">{currentPageTitle}</h2>
-              <p className="text-xs text-gray-500 truncate hidden sm:block">{pathname}</p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2 md:gap-4 flex-shrink-0">
-            {/* Search */}
-            <div className="hidden lg:flex items-center gap-2 bg-gray-100 px-3 py-2 rounded-lg">
-              <Search size={16} className="text-gray-400" />
-              <input
-                type="text"
-                placeholder="Buscar..."
-                className="bg-transparent border-none outline-none text-sm w-32 xl:w-64"
-              />
-            </div>
-
-            {/* Notifications */}
-            <button className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors">
-              <Bell size={20} className="text-gray-600" />
-              {notifications > 0 && (
-                <span className="absolute top-1 right-1 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold">
-                  {notifications}
+        <div className="pointer-events-auto lg-glass lg-bar rounded-full p-1 flex items-center gap-0.5">
+          <ThemeToggleButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Minha conta"
+                className="h-10 w-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white bg-gradient-to-br from-[#6A5CFF] to-[#FF5FA8]"
+              >
+                {(user.name || '?').charAt(0).toUpperCase()}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-60 rounded-2xl">
+              <DropdownMenuLabel className="font-normal">
+                <p className="text-sm font-semibold truncate">{user.name}</p>
+                <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                <span className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-[var(--lg-fill)] px-2 py-0.5 text-[11px] font-semibold">
+                  <Globe className="h-3 w-3" />
+                  {roleLabel}
                 </span>
-              )}
-            </button>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-[var(--lg-red)] focus:text-[var(--lg-red)]">
+                <LogOut className="mr-2 h-4 w-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
-            {/* User Avatar */}
-            <div className="flex items-center gap-2">
-              {user && (
-                <div className="hidden md:flex items-center gap-2 px-3 py-2 bg-gray-100 rounded-lg">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-                    {user.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="text-sm font-medium hidden lg:inline">{user.name}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
+      <main className="relative z-10 mx-auto w-full max-w-[1440px] px-3 sm:px-5 lg:px-8 pt-20 pb-36">
+        {currentGroup && currentGroup.items.length > 1 && (
+          <SegmentLinks
+            label={currentGroup.title}
+            items={currentGroup.items.map((i) => ({ href: i.href, label: i.title }))}
+            className="mb-5"
+          />
+        )}
+        {children}
+      </main>
 
-        {/* Page Content */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden pt-20 md:pt-24 px-3 md:px-6 pb-6 w-full max-w-full">
-          {children}
-        </main>
-      </div>
+      <GlassNavSheet open={searchOpen} onClose={closeSearch} groups={navGroups} placeholder="Ir para… (ex.: faturas, domínios, backups)" />
+
+      <GlassTabBar
+        label="Seções da plataforma"
+        tabs={tabs}
+        trailing={{ label: 'Buscar no painel', icon: Search, onClick: () => setSearchOpen((v) => !v), active: searchOpen }}
+      />
     </div>
   );
 }
 
-export default function SuperAdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function SuperAdminLayout({ children }: { children: React.ReactNode }) {
   return (
     <SuperAdminAuthProvider>
-      <SuperAdminLayoutContent>
-        {children}
-      </SuperAdminLayoutContent>
+      <SuperAdminLayoutContent>{children}</SuperAdminLayoutContent>
     </SuperAdminAuthProvider>
   );
 }

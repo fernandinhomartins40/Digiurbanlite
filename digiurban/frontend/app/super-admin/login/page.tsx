@@ -61,7 +61,7 @@ export default function SuperAdminLoginPage() {
 
   return (
     <div className="lg-root min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
-      <LgAuthBackdrop primary="#5856D6" secondary="#1E9BFF" withThemeScope />
+      <LgAuthBackdrop primary="#5856D6" secondary="#1E9BFF" />
 
       <Card className="lg-glass lg-thick w-full max-w-md border-0 relative z-10 rounded-[32px]">
         <CardHeader className="space-y-4 pb-6">
