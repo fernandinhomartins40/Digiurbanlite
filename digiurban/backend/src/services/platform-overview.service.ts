@@ -7,6 +7,7 @@
  */
 
 import os from 'os';
+import { getMemoryUsage } from '../lib/memory-usage';
 import { prisma } from '../lib/prisma';
 import { runAsPlatform } from '../lib/tenant-context';
 
@@ -114,7 +115,7 @@ export async function getPlatformOverview() {
       health: {
         database: databaseOk,
         uptimeSeconds: Math.round(process.uptime()),
-        memoryUsedPct: Math.round((1 - os.freemem() / os.totalmem()) * 100),
+        memoryUsedPct: Math.round(getMemoryUsage().usagePercent),
       },
       attention: attention.sort((a, b) => b.reasons.length - a.reasons.length),
       generatedAt: now.toISOString(),

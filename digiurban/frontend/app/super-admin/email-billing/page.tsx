@@ -122,7 +122,7 @@ export default function EmailBillingDashboard() {
       <div>
         <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
           <DollarSign className="w-8 h-8 text-green-600" />
-          Billing - Email Service
+          Receita do serviço de e-mail
         </h1>
         <p className="text-gray-600 mt-2">
           Estatísticas financeiras do serviço de email

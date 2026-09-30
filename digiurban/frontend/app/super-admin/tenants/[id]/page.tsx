@@ -26,6 +26,7 @@ import {
   Users, FileText, UserCheck, Building2, CreditCard, Plus, Globe, Palette, Upload,
 } from 'lucide-react';
 import { LandingPreview } from '@/components/admin/LandingPreview';
+import { invoiceStatusLabel, tenantStatusLabel } from '@/components/super-admin/status-labels';
 
 // Paleta de cores sugeridas (institucionais comuns em prefeituras)
 const PALETA = ['#2563eb', '#0ea5e9', '#059669', '#16a34a', '#ca8a04', '#f59e0b', '#dc2626', '#9333ea', '#0f766e', '#1e40af'];
@@ -300,7 +301,7 @@ export default function TenantDetailPage() {
           <Link href="/super-admin/tenants"><Button size="sm" variant="ghost"><ArrowLeft className="h-4 w-4" /></Button></Link>
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2"><Building2 className="h-6 w-6" /> {tenant.nome}</h1>
-            <p className="text-sm text-muted-foreground">{tenant.nomeMunicipio}/{tenant.ufMunicipio} · slug <code>{tenant.slug}</code> · {tenant.status}</p>
+            <p className="text-sm text-muted-foreground">{tenant.nomeMunicipio}/{tenant.ufMunicipio} · slug <code>{tenant.slug}</code> · {tenantStatusLabel(tenant.status)}</p>
           </div>
         </div>
         {tenant.status === 'SUSPENDED' ? (
@@ -612,7 +613,7 @@ export default function TenantDetailPage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Badge className={INVOICE_BADGE[inv.status] || 'bg-gray-100'}>{inv.status}</Badge>
+                        <Badge className={INVOICE_BADGE[inv.status] || 'bg-gray-100'}>{invoiceStatusLabel(inv.status)}</Badge>
                         {inv.status === 'PENDING' && (
                           <>
                             <Button size="sm" variant="outline" onClick={() => setInvoiceStatus(inv.id, 'PAID')}>Marcar paga</Button>

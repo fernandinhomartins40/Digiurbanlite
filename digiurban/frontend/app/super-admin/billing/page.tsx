@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Loader2, TrendingUp, AlertCircle, CheckCircle } from 'lucide-react';
+import { invoiceStatusLabel } from '@/components/super-admin/status-labels';
 
 interface Invoice {
   id: string; tenantId: string | null; number: string; amount: number;
@@ -82,7 +83,7 @@ export default function BillingPage() {
       <div className="flex gap-2">
         {FILTERS.map((f) => (
           <Button key={f} size="sm" variant={filter === f ? 'default' : 'outline'} onClick={() => setFilter(f)}>
-            {f === 'all' ? 'Todas' : f}
+            {f === 'all' ? 'Todas' : invoiceStatusLabel(f)}
           </Button>
         ))}
       </div>
@@ -104,7 +105,7 @@ export default function BillingPage() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="font-medium">R$ {inv.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
-                    <Badge className={BADGE[inv.status] || 'bg-gray-100'}>{inv.status}</Badge>
+                    <Badge className={BADGE[inv.status] || 'bg-gray-100'}>{invoiceStatusLabel(inv.status)}</Badge>
                     {inv.status === 'PENDING' && (
                       <Button size="sm" variant="outline" onClick={() => setStatus(inv.id, 'PAID')}>Marcar paga</Button>
                     )}

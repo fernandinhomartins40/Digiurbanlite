@@ -168,7 +168,7 @@ export default function MonitoringPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">Memória</CardTitle>
+              <CardTitle className="text-sm font-medium">{(health.system.memory as any).scope === 'container' ? 'Memória do sistema' : 'Memória da máquina'}</CardTitle>
               <HardDrive className="h-5 w-5 text-purple-600" />
             </CardHeader>
             <CardContent>

@@ -78,6 +78,10 @@ const GROUPS: Group[] = [
       { title: 'Planos', href: '/super-admin/plans', icon: Package },
       { title: 'Faturas', href: '/super-admin/billing', icon: CreditCard },
       { title: 'Leads', href: '/super-admin/leads', icon: UserPlus },
+      // Cobrança do serviço de e-mail mora junto da cobrança principal
+      { title: 'Planos de e-mail', href: '/super-admin/email-plans', icon: Package },
+      { title: 'Assinaturas de e-mail', href: '/super-admin/email-subscriptions', icon: Users },
+      { title: 'Receita de e-mail', href: '/super-admin/email-billing', icon: CreditCard },
     ],
   },
   {
@@ -87,7 +91,7 @@ const GROUPS: Group[] = [
     color: '#5856D6',
     items: [
       { title: 'Assistência remota', href: '/super-admin/assistencia-remota', icon: Monitor },
-      { title: 'Super-admins', href: '/super-admin/users', icon: UserCog },
+      { title: 'Equipe da plataforma', href: '/super-admin/users', icon: UserCog },
     ],
   },
   {
@@ -97,7 +101,7 @@ const GROUPS: Group[] = [
     color: '#FF8A1F',
     items: [
       { title: 'Monitoramento', href: '/super-admin/monitoring', icon: Activity },
-      { title: 'Backups e operações', href: '/super-admin/operations', icon: Wrench },
+      { title: 'Backups', href: '/super-admin/operations', icon: Wrench },
       { title: 'Banco de dados', href: '/super-admin/settings/schema', icon: Database },
       { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
       { title: 'IA', href: '/super-admin/ia', icon: Bot },
@@ -111,12 +115,9 @@ const GROUPS: Group[] = [
     items: [
       { title: 'Visão geral', href: '/super-admin/email-server', icon: LayoutDashboard },
       { title: 'Domínios', href: '/super-admin/email-server/domains', icon: Globe },
-      { title: 'Servidor SMTP', href: '/super-admin/email-server/config', icon: Settings },
-      { title: 'Logs de envio', href: '/super-admin/email-server/logs', icon: FileText },
-      { title: 'Modelos de e-mail', href: '/super-admin/email-templates', icon: ScrollText },
-      { title: 'Planos de e-mail', href: '/super-admin/email-plans', icon: Package },
-      { title: 'Assinaturas de e-mail', href: '/super-admin/email-subscriptions', icon: Users },
-      { title: 'Faturamento de e-mail', href: '/super-admin/email-billing', icon: CreditCard },
+      { title: 'Servidor', href: '/super-admin/email-server/config', icon: Settings },
+      { title: 'Envios', href: '/super-admin/email-server/logs', icon: FileText },
+      { title: 'Modelos', href: '/super-admin/email-templates', icon: ScrollText },
     ],
   },
 ];

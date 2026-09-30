@@ -39,11 +39,11 @@ export default function AuditLogPage() {
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors`}
               >
                 <FileUser className="w-5 h-5" />
-                Audit Logs
+                Ações registradas
                 <span className={`${
                   activeTab === 'audit' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
                 } ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium`}>
-                  Ações Administrativas
+                  quem fez o quê
                 </span>
               </button>
 
@@ -56,11 +56,11 @@ export default function AuditLogPage() {
                 } whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm flex items-center gap-2 transition-colors`}
               >
                 <Terminal className="w-5 h-5" />
-                System Logs
+                Registros técnicos
                 <span className={`${
                   activeTab === 'system' ? 'bg-indigo-100 text-indigo-600' : 'bg-gray-100 text-gray-600'
                 } ml-2 py-0.5 px-2.5 rounded-full text-xs font-medium`}>
-                  Winston Logs
+                  do servidor
                 </span>
               </button>
             </nav>
@@ -80,10 +80,10 @@ export default function AuditLogPage() {
             <div>
               <h3 className="font-semibold text-indigo-900">Conformidade e Segurança</h3>
               <p className="text-indigo-700 text-sm mt-1">
-                <strong>Audit Logs:</strong> Armazenados de forma imutável e criptografada por no mínimo 7 anos (LGPD).
+                <strong>Ações registradas:</strong> Armazenados de forma imutável e criptografada por no mínimo 7 anos (LGPD).
                 Logs críticos mantidos indefinidamente.
                 <br />
-                <strong>System Logs:</strong> Logs técnicos do Winston mantidos por 3-7 dias dependendo do tipo.
+                <strong>Registros técnicos:</strong> Logs do servidor mantidos por 3-7 dias dependendo do tipo.
                 Incluem erros, avisos, requisições HTTP e eventos da aplicação.
               </p>
             </div>

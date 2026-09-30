@@ -46,7 +46,7 @@ interface ModuleDef { slug: string; label: string; }
 
 const STATUS_BADGE: Record<string, { label: string; className: string }> = {
   ACTIVE: { label: 'Ativo', className: 'bg-green-100 text-green-800' },
-  TRIAL: { label: 'Trial', className: 'bg-blue-100 text-blue-800' },
+  TRIAL: { label: 'Em teste', className: 'bg-blue-100 text-blue-800' },
   SUSPENDED: { label: 'Suspenso', className: 'bg-red-100 text-red-800' },
   INACTIVE: { label: 'Inativo', className: 'bg-gray-200 text-gray-700' },
   EXPIRED: { label: 'Expirado', className: 'bg-orange-100 text-orange-800' },

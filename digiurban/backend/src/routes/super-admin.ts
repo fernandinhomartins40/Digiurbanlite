@@ -29,6 +29,7 @@ import {
 import crypto from 'crypto';
 import { logAuditEvent, AUDIT_EVENTS } from '../utils/audit-logger';
 import { loginRateLimiter } from '../middleware/rate-limit';
+import { getMemoryUsage } from '../lib/memory-usage';
 import { accountLockoutMiddleware } from '../middleware/account-lockout';
 import os from 'os';
 import { exec } from 'child_process';
@@ -454,12 +455,8 @@ router.get('/system/health', adminAuthMiddleware, superAdminOnly, async (req: Re
       platform: os.platform(),
       arch: os.arch(),
       hostname: os.hostname(),
-      memory: {
-        total: os.totalmem(),
-        free: os.freemem(),
-        used: os.totalmem() - os.freemem(),
-        usagePercent: ((os.totalmem() - os.freemem()) / os.totalmem()) * 100
-      },
+      // Memória real (cache não conta como usado) — lib/memory-usage
+      memory: getMemoryUsage(),
       cpu: {
         cores: os.cpus().length,
         model: os.cpus()[0]?.model || 'Unknown'
