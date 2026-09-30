@@ -349,6 +349,7 @@ Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_C
 - `ProtocolEvaluationSimplified` não tem `evaluatedBy` — só `protocolId`, `rating`, `comment`, `wouldRecommend`
 
 ### Frontend
+- Visual DigiUrban Glass (Liquid Glass): classes `lg-*` em `app/liquid-glass.css`, componentes em `components/liquid-glass/`; vidro SÓ na navegação; tema via `useLgThemeScope()` no layout persistente do painel + `THEME_BOOT_SCRIPT`; modo escuro das cores fixas do Tailwind vem do tradutor no fim do CSS (não precisa de `dark:` por tela). Fonte SF/SF Symbols da Apple NÃO podem ser embutidas
 - TipTap requer custom Node extensions para preservar tags HTML (Node.create() com parseHTML/renderHTML)
 - `enableInputRules: false` e `enablePasteRules: false` obrigatórios no TipTap
 - `addGlobalAttributes()` para style/class em todos os node types

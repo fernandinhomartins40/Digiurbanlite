@@ -651,3 +651,30 @@ A auditoria das fases anteriores cobriu o painel do servidor e o portal do cidad
 
 **Fica como está:** as rotas antigas `/api/super-admin/stats`, `/settings/*` e `/users` continuam no backend, sem uso pelo painel, e podem ser removidas numa limpeza futura.
 
+## 11. Visual DigiUrban Glass (inspirado no Liquid Glass da Apple)
+
+**Base:** análise completa do material de design da Apple:
+- 60 páginas das diretrizes (Human Interface Guidelines), com cerca de 570 regras;
+- a página de recursos, SF Symbols e Icon Composer;
+- os vídeos "Meet Liquid Glass" e "Get to know the new design system".
+
+O protótipo aprovado pelo usuário está no canvas "DigiUrban Liquid Glass".
+
+**Regras adotadas**
+- O vidro é incolor, quase transparente, com borda de luz que pega a cor de baixo, volume de lente e sombra difusa. Fica **só na navegação**: barra inferior, botões flutuantes e menus. O conteúdo usa superfícies comuns, e nunca há vidro sobre vidro.
+- A cor aparece no conteúdo e nas ações principais (vidro colorido); o resto é neutro.
+- Menu inferior flutuante com **até 5 abas** e um círculo separado para a função de destaque. Não há barra lateral em nenhum tamanho de tela (decisão do usuário).
+- **Tema:** segue o aparelho, o botão de lua fixa claro ou escuro, e "Mais › Aparência" volta ao automático. O tema é aplicado antes da primeira pintura (`lib/lg-theme-boot.ts`).
+- **Licença:** a fonte SF Pro e os ícones SF Symbols **não podem ser embutidos em web** (licença da Apple). Usamos a fonte do sistema, que mostra a SF sozinha em iPhone e Mac, com Inter como alternativa, e os ícones Lucide.
+- **Acessibilidade:** respeita reduzir transparência, aumentar contraste e reduzir movimento.
+
+**Implementação**
+- `app/liquid-glass.css` tem as cores de claro e escuro, o material (`lg-glass`, `lg-bar`, `lg-thick`, `lg-tab-on`, `lg-tinted`) e o **tradutor do modo escuro**. O tradutor converte as cores fixas do Tailwind (cinzas, branco e fundos claros coloridos, inclusive com transparência) para o escuro sem mexer em cada tela; no claro nada muda.
+- Componentes reutilizáveis em `components/liquid-glass/`: `GlassTabBar`, `LgAmbient`, `ThemeToggleButton` e `AppearanceSetting`.
+
+**Etapa 1 — portal do cidadão (concluída)**
+- **Casca nova:** fundo ambiente; no topo, município ou Voltar, tema e conta (nome, CPF mascarado, nível, perfil e Sair); barra inferior Início · Serviços · Pedidos · Mais, com o Assistente no círculo. Saíram a barra lateral, a barra branca do topo e o botão flutuante antigo.
+- **Aviso real:** o número em "Pedidos" mostra quantos pedidos aguardam a pessoa. Ele substitui o sino decorativo, que tinha sempre uma bolinha vermelha e não fazia nada.
+- **Validação:** celular e computador, claro e escuro, nas telas Início, Serviços, Pedidos, Mais, Assistente e login. Sem erros no navegador nem na API.
+- **Próximas etapas:** painel do servidor, depois super-admin. O chat do Assistente ainda usa o cabeçalho antigo.
+

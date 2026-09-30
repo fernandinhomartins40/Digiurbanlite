@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { CitizenLayoutContent } from './layout-content'
+import { THEME_BOOT_SCRIPT } from '@/lib/lg-theme-boot'
 
 export const metadata: Metadata = {
   title: {
@@ -23,5 +24,11 @@ export default function CidadaoLayout({
 }: {
   children: React.ReactNode
 }) {
-  return <CitizenLayoutContent>{children}</CitizenLayoutContent>
+  return (
+    <>
+      {/* Aplica o tema antes da primeira pintura (evita piscar claro no modo escuro) */}
+      <script dangerouslySetInnerHTML={{ __html: THEME_BOOT_SCRIPT }} />
+      <CitizenLayoutContent>{children}</CitizenLayoutContent>
+    </>
+  )
 }

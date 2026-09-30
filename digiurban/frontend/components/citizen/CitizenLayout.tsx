@@ -1,360 +1,155 @@
 'use client';
 
+/**
+ * Casca do portal do cidadão — DigiUrban Glass (Liquid Glass).
+ *
+ * Sem barra lateral: a navegação é a barra inferior flutuante (Início ·
+ * Serviços · Pedidos · Mais + Assistente). No topo, só o essencial em vidro:
+ * município (ou Voltar nas telas internas), tema e a conta.
+ * O tema claro/escuro é ligado uma vez para todo o portal em
+ * app/cidadao/layout-content.tsx (useLgThemeScope).
+ */
+
 import { useState } from 'react';
-import { usePathname } from 'next/navigation';
 import Link from 'next/link';
-import { cn } from '@/lib/utils';
-import {
-  LayoutDashboard,
-  FileText,
-  Folder,
-  User,
-  Menu,
-  X,
-  LogOut,
-  Bell,
-  ChevronRight,
-  MapPin,
-  FileCheck,
-  MessageCircle,
-  ScanFace,
-  Users
-} from 'lucide-react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ChevronLeft, LogOut, MapPin, User } from 'lucide-react';
 import { useCitizenAuth, useCitizenProtectedRoute } from '@/contexts/CitizenAuthContext';
 import { RegistrationLevelBadge } from './RegistrationLevelBadge';
 import { LevelUpgradeModal } from './LevelUpgradeModal';
 import { mapVerificationStatusToLevel } from '@/lib/citizen-utils';
 import { BottomNavigation } from './mobile/BottomNavigation';
-import { MobileTopBar } from './mobile/MobileTopBar';
+import { LgAmbient } from '@/components/liquid-glass/LgAmbient';
+import { ThemeToggleButton } from '@/components/liquid-glass/ThemeToggleButton';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface CitizenLayoutProps {
   children: React.ReactNode;
+  /** Mantido por compatibilidade; o título fica no conteúdo de cada tela */
   title?: string;
 }
 
-export function CitizenLayout({ children, title }: CitizenLayoutProps) {
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [showLevelUpgradeModal, setShowLevelUpgradeModal] = useState(false);
-  const pathname = usePathname();
+// Telas de primeiro nível: mostram o município; as demais mostram "Voltar"
+const TOP_LEVEL = [
+  '/cidadao',
+  '/cidadao/servicos',
+  '/cidadao/protocolos',
+  '/cidadao/mais',
+  '/cidadao/documentos',
+  '/cidadao/perfil',
+  '/cidadao/familia',
+  '/cidadao/biometria-facial',
+];
 
-  // ✅ CORRIGIDO: Usar contexto centralizado de autenticação
+const initials = (name?: string) =>
+  (name || '')
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join('') || 'EU';
+
+export function CitizenLayout({ children }: CitizenLayoutProps) {
+  const [showLevelUpgradeModal, setShowLevelUpgradeModal] = useState(false);
+  const pathname = usePathname() || '';
+  const router = useRouter();
   const { citizen, isLoading } = useCitizenProtectedRoute();
   const { logout } = useCitizenAuth();
-  const tenant = (citizen as any)?.tenant; // TODO: Adicionar tenant no tipo Citizen
+  const tenant = (citizen as any)?.tenant;
 
-  const handleLogout = async () => {
-    await logout();
-  };
-
-  const navigationItems: Array<{ name: string; href: string; icon: any; badge?: string | number }> = [
-    {
-      name: 'Início',
-      href: '/cidadao',
-      icon: LayoutDashboard
-    },
-    {
-      name: 'Assistente',
-      href: '/cidadao/assistente',
-      icon: MessageCircle
-    },
-    {
-      name: 'Serviços',
-      href: '/cidadao/servicos',
-      icon: FileText
-    },
-    {
-      name: 'Meus pedidos',
-      href: '/cidadao/protocolos',
-      icon: Folder
-    },
-    {
-      name: 'Documentos',
-      href: '/cidadao/documentos',
-      icon: FileCheck
-    },
-    {
-      name: 'Minha Família',
-      href: '/cidadao/familia',
-      icon: Users
-    },
-    {
-      name: 'Perfil',
-      href: '/cidadao/perfil',
-      icon: User
-    },
-    {
-      name: 'Biometria',
-      href: '/cidadao/biometria-facial',
-      icon: ScanFace
-    },
-    {
-      name: 'Leitura',
-      href: '/cidadao/biometria-facial/leitura',
-      icon: ScanFace
-    },
-    {
-      name: 'Mais',
-      href: '/cidadao/mais',
-      icon: Menu
-    }
-  ];
-
-  // ✅ CORRIGIDO: Mostrar loading enquanto verifica autenticação
   if (isLoading || !citizen) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center gap-3">
-          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600"></div>
-          <p className="text-sm text-gray-600">Carregando...</p>
+      <div className="lg-root min-h-screen flex items-center justify-center">
+        <LgAmbient />
+        <div className="relative flex flex-col items-center gap-3">
+          <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-[var(--lg-blue)]" />
+          <p className="text-sm text-[var(--lg-ink2)]">Carregando...</p>
         </div>
       </div>
     );
   }
 
+  const isTopLevel = TOP_LEVEL.includes(pathname);
+
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      {/* Mobile Top Bar - Apenas Mobile */}
-      <MobileTopBar />
+    <div className="lg-root min-h-screen relative overflow-x-hidden">
+      <LgAmbient />
 
-      {/* Sidebar Desktop - Fixa */}
-      <aside className="hidden lg:block fixed left-0 top-0 z-30 w-64 h-screen bg-white border-r border-gray-200">
-        <div className="flex flex-col h-full">
-          {/* Logo no topo da sidebar */}
-          <div className="h-16 flex items-center px-4 border-b border-gray-200">
-            <Link href="/cidadao" className="flex items-center gap-2">
-              <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-sm">P</span>
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-gray-900">Portal</p>
-                <p className="text-xs text-gray-500">Cidadão</p>
-              </div>
-            </Link>
-          </div>
-
-          {/* Navegação */}
-          <div className="flex-1 px-3 pt-5 pb-4 overflow-y-auto">
-            <div className="space-y-1">
-              {navigationItems.map((item) => {
-                const Icon = item.icon;
-                const isActive = pathname === item.href;
-
-                return (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className={cn(
-                      'group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                      isActive
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                    )}
-                  >
-                    <div className="flex items-center gap-3">
-                      <Icon className="h-5 w-5" />
-                      <span>{item.name}</span>
-                    </div>
-                    {item.badge && (
-                      <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                        {item.badge}
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Logout na parte inferior */}
-          <div className="flex-shrink-0 p-4 border-t border-gray-200">
+      <header className="fixed inset-x-0 top-0 z-40 flex items-center justify-between gap-3 px-4 pt-[max(12px,env(safe-area-inset-top))] pointer-events-none">
+        <div className="pointer-events-auto min-w-0">
+          {isTopLevel ? (
+            tenant && (
+              <Link href="/cidadao" className="lg-glass lg-bar rounded-full h-10 px-4 inline-flex items-center gap-1.5 text-sm font-semibold min-w-0">
+                <MapPin className="h-4 w-4 shrink-0 text-[var(--lg-blue)]" />
+                <span className="truncate max-w-[46vw] sm:max-w-xs">
+                  {tenant.nomeMunicipio || tenant.name}
+                  {tenant.ufMunicipio ? ` - ${tenant.ufMunicipio}` : ''}
+                </span>
+              </Link>
+            )
+          ) : (
             <button
-              onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-red-600 rounded-md transition-colors"
+              type="button"
+              onClick={() => router.back()}
+              aria-label="Voltar"
+              className="lg-glass lg-bar lg-tab rounded-full h-10 w-10 flex items-center justify-center"
             >
-              <LogOut className="h-5 w-5" />
-              <span>Sair</span>
+              <ChevronLeft className="h-5 w-5" />
             </button>
-          </div>
+          )}
         </div>
-      </aside>
 
-      {/* Sidebar Mobile */}
-      {isSidebarOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-40 bg-gray-600 bg-opacity-75 lg:hidden"
-            onClick={() => setIsSidebarOpen(false)}
-          />
-          <div className="fixed inset-y-0 left-0 z-50 w-64 bg-white lg:hidden">
-            <div className="flex flex-col h-full">
-              <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-                <span className="text-sm font-semibold text-gray-900">Menu</span>
-                <button
-                  onClick={() => setIsSidebarOpen(false)}
-                  className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-
-              <div className="flex-1 px-3 py-4 space-y-1 overflow-y-auto">
-                {navigationItems.map((item) => {
-                  const Icon = item.icon;
-                  const isActive = pathname === item.href;
-
-                  return (
-                    <Link
-                      key={item.name}
-                      href={item.href}
-                      onClick={() => setIsSidebarOpen(false)}
-                      className={cn(
-                        'group flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md transition-colors',
-                        isActive
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <Icon className="h-5 w-5" />
-                        <span>{item.name}</span>
-                      </div>
-                      {item.badge && (
-                        <span className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">
-                          {item.badge}
-                        </span>
-                      )}
-                    </Link>
-                  );
-                })}
-              </div>
-
-              <div className="p-4 border-t border-gray-200">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-3 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-red-600 rounded-md transition-colors"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span>Sair</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Área de Conteúdo - À direita da sidebar */}
-      <div className="lg:pl-64">
-        {/* Header - Apenas Desktop */}
-        <header className="hidden lg:block bg-white border-b border-gray-200 sticky top-0 z-20">
-          <div className="px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              {/* Logo e Botão Menu - Mobile */}
-              <div className="flex items-center gap-4 lg:hidden">
-                <button
-                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-                  className="p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-                >
-                  {isSidebarOpen ? (
-                    <X className="h-5 w-5" />
-                  ) : (
-                    <Menu className="h-5 w-5" />
-                  )}
-                </button>
-
-                <Link href="/cidadao" className="flex items-center gap-2">
-                  <div className="h-8 w-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <span className="text-white font-bold text-sm">P</span>
-                  </div>
-                  <div className="hidden sm:block">
-                    <p className="text-sm font-semibold text-gray-900">Portal do Cidadão</p>
-                    {tenant && (
-                      <div className="flex items-center gap-1 text-xs text-blue-600">
-                        <MapPin className="h-3 w-3" />
-                        <span className="font-medium">
-                          {tenant.nomeMunicipio || tenant.name} - {tenant.ufMunicipio || 'BR'}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </Link>
-              </div>
-
-              {/* Tenant info - Desktop only */}
-              <div className="hidden lg:flex items-center gap-2">
-                {tenant && (
-                  <div className="flex items-center gap-1 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4" />
-                    <span className="font-medium">
-                      {tenant.nomeMunicipio || tenant.name} - {tenant.ufMunicipio || 'BR'}
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              {/* User Menu */}
-              <div className="flex items-center gap-2 sm:gap-3">
-                <button className="relative p-2 rounded-md text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-                  <Bell className="h-5 w-5" />
-                  <span className="absolute top-1 right-1 h-2 w-2 bg-red-500 rounded-full"></span>
-                </button>
-
-                {/* Desktop Menu - Compacto */}
-                <div className="hidden lg:flex items-center gap-3 xl:gap-4 pl-3 xl:pl-4 border-l border-gray-200">
-                  {/* Informações do Usuário - Compacto */}
-                  <div className="text-right min-w-[100px] max-w-[150px]">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {citizen.name?.split(' ')[0]}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">
-                      CPF: {citizen.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
-                    </p>
-                  </div>
-
-                  {/* Badge de Nível */}
+        <div className="pointer-events-auto lg-glass lg-bar rounded-full p-1 flex items-center gap-0.5">
+          <ThemeToggleButton />
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label="Minha conta"
+                className="h-10 w-10 rounded-full flex items-center justify-center text-[13px] font-bold text-white bg-gradient-to-br from-[#5AA9FF] to-[#6A5CFF]"
+              >
+                {initials(citizen.name)}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-64 rounded-2xl">
+              <DropdownMenuLabel className="font-normal">
+                <p className="text-sm font-semibold truncate">{citizen.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  CPF {citizen.cpf?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '***.$2.$3-**')}
+                </p>
+                <div className="mt-2">
                   <RegistrationLevelBadge
                     level={mapVerificationStatusToLevel(citizen.verificationStatus)}
                     onUpgradeClick={() => setShowLevelUpgradeModal(true)}
                   />
-
-                  {/* Botão de Logout */}
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors flex-shrink-0"
-                    title="Sair"
-                  >
-                    <LogOut className="h-5 w-5" />
-                  </button>
                 </div>
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => router.push('/cidadao/perfil')} className="cursor-pointer">
+                <User className="h-4 w-4 mr-2" />
+                Meu perfil
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => logout()} className="cursor-pointer text-[var(--lg-red)] focus:text-[var(--lg-red)]">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </header>
 
-                {/* Mobile Logout */}
-                <button
-                  onClick={handleLogout}
-                  className="lg:hidden p-2 rounded-md text-gray-600 hover:text-red-600 hover:bg-red-50 transition-colors"
-                  title="Sair"
-                >
-                  <LogOut className="h-5 w-5" />
-                </button>
-              </div>
-            </div>
-          </div>
-        </header>
+      <main className="relative z-10 max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-36">{children}</main>
 
-        {/* Main content */}
-        <main className="min-h-[calc(100vh-4rem)] pb-20 lg:pb-0">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            {children}
-          </div>
-        </main>
-      </div>
-
-      {/* Bottom Navigation - Apenas Mobile */}
       <BottomNavigation />
 
-      {/* Modal de Upgrade de Nível */}
-      <LevelUpgradeModal
-        isOpen={showLevelUpgradeModal}
-        onClose={() => setShowLevelUpgradeModal(false)}
-      />
+      <LevelUpgradeModal isOpen={showLevelUpgradeModal} onClose={() => setShowLevelUpgradeModal(false)} />
     </div>
   );
 }

@@ -1242,7 +1242,7 @@ export default function CitizenAssistantPage() {
 
       {/* Bottom Navigation - Mobile */}
       {(!isMobileView || showConversationsList || !selectedConversation) && (
-        <BottomNavigation />
+        <BottomNavigation hideOnDesktop />
       )}
 
       {/* Dialog de Nova Conversa */}

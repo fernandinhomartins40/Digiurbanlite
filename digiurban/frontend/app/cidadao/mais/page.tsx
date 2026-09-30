@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { MunicipioSwitcher } from '@/components/citizen/MunicipioSwitcher';
+import { AppearanceSetting } from '@/components/liquid-glass/AppearanceSetting';
 
 interface MenuItem {
   id: string;
@@ -158,6 +159,9 @@ export default function MaisPage() {
             );
           })}
         </div>
+
+        {/* Aparência: automático (segue o aparelho), claro ou escuro */}
+        <AppearanceSetting />
 
         {/* Separator */}
         <div className="border-t border-gray-200" />

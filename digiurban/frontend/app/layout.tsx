@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
-import { Manrope } from 'next/font/google'
+import { Inter, Manrope } from 'next/font/google'
 import './globals.css'
+import './liquid-glass.css'
 import { ToasterProvider } from '@/components/providers/ToasterProvider'
 import { QueryProvider } from '@/components/providers/QueryProvider'
 import { TenantProvider } from '@/components/providers/TenantProvider'
@@ -11,6 +12,13 @@ import { fetchTenantConfig, brandingToCssVars } from '@/lib/tenant'
 // (default) e serviria o mesmo branding/landing para TODOS os subdomínios.
 // force-dynamic garante SSR por-request → cada município resolve o seu tenant.
 export const dynamic = 'force-dynamic'
+
+// Inter: par da SF Pro fora dos aparelhos Apple (a SF não pode ser embutida)
+const interFont = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
+})
 
 const appFont = Manrope({
   subsets: ['latin'],
@@ -160,7 +168,7 @@ export default async function RootLayout({
         {/* OpenCV.js para jscanify (document scanner) - usando CDN com CORS habilitado */}
         <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/opencv.js" async></script>
       </head>
-      <body className={`${appFont.variable} font-sans antialiased`}>
+      <body className={`${appFont.variable} ${interFont.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>
           <QueryProvider>
             {children}
