@@ -151,10 +151,10 @@ const STATS: { value: string; label: string; icon: LucideIcon; fill?: boolean }[
   { value: '24/7', label: 'Plataforma disponível', icon: Clock3 },
 ];
 
-const ABOUT_FEATURES: { label: string; icon: LucideIcon }[] = [
-  { label: 'Mais transparência na gestão pública', icon: Settings },
-  { label: 'Serviços acessíveis de qualquer lugar', icon: MonitorSmartphone },
-  { label: 'Cidades mais eficientes e sustentáveis', icon: UsersRound },
+const ABOUT_FEATURES: { label: string; short: string; icon: LucideIcon }[] = [
+  { label: 'Mais transparência na gestão pública', short: 'Mais transparência', icon: Settings },
+  { label: 'Serviços acessíveis de qualquer lugar', short: 'De qualquer lugar', icon: MonitorSmartphone },
+  { label: 'Cidades mais eficientes e sustentáveis', short: 'Cidades eficientes', icon: UsersRound },
 ];
 
 const BOOKS = ['Cidadão', 'Prefeitura', 'Transparência', 'Inovação', 'Desenvolvimento'];
@@ -458,7 +458,29 @@ function About() {
   return (
     <section id="sobre" className="relative overflow-hidden">
       <Bg name="fundo-sobre" />
-      <Container className="grid grid-cols-[1.08fr_1fr] items-center gap-2 py-7 md:gap-6 md:py-9 lg:py-9">
+      <Container className="py-7 md:hidden">
+        <Chip>Sobre o Digiurban</Chip>
+        <h2 className="dl-h mt-3 text-[23px]">Tecnologia que aproxima a prefeitura das pessoas</h2>
+        <p className="mt-2 text-[14px] leading-snug">Serviços da prefeitura em um só lugar, com o cidadão no centro de tudo.</p>
+        <AboutArt className="mx-auto mt-2 aspect-[1.2/1] max-w-[440px]" mobile />
+        <div className="mt-1 flex justify-center">
+          <Link href="/apresentacao" className="dl-btn dl-btn-blue h-[46px] rounded-xl px-6 text-[15px]">
+            Conheça nossa história
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
+        <ul className="mt-5 grid grid-cols-3 gap-1">
+          {ABOUT_FEATURES.map(({ short, icon: Icon }, i) => (
+            <li key={short} className={`flex flex-col items-center text-center ${i > 0 ? 'border-l border-[#d6e4f7]' : ''}`}>
+              <span className="dl-glass flex h-11 w-11 items-center justify-center rounded-full text-[var(--dl-blue)]">
+                <Icon className="h-5 w-5" fill={i === 0 ? 'currentColor' : 'none'} />
+              </span>
+              <span className="mt-1.5 px-1 text-[12px] leading-tight text-[#3d4f70]">{short}</span>
+            </li>
+          ))}
+        </ul>
+      </Container>
+      <Container className="hidden grid-cols-[1.08fr_1fr] items-center gap-6 py-9 md:grid">
         <div className="relative z-10">
           <Chip>Sobre o Digiurban</Chip>
           <h2 className="dl-h mt-3 text-[18px] sm:text-[26px] md:text-[26px] lg:text-[48px]">
@@ -484,44 +506,51 @@ function About() {
           </ul>
         </div>
 
-        <div className="relative aspect-[1/1.05] w-full md:aspect-[1.25/1]">
-          <p className="dl-script absolute right-[2%] top-[0%] z-20 rotate-[-9deg] text-center text-[4.4vw] text-[#0f5bd8] md:text-[2.6vw] lg:text-[34px]">
-            Tecnologia
-            <br />a serviço
-            <br />
-            das pessoas!
-            <span className="mx-auto mt-1 block h-[3px] w-[80%] rounded-full bg-gradient-to-r from-[#3af6d6] to-[#13dbe7]" />
-          </p>
-          <Asset
-            name="mascote-sobre"
-            alt="Mascote do Digiurban com notebook"
-            sizes="(max-width: 767px) 40vw, 30vw"
-            className="absolute bottom-0 left-[-8%] z-10 w-[84%] md:left-[-6%] md:w-[80%]"
-          />
-          <div className="absolute bottom-[1%] right-[-4%] w-[54%] md:right-[-3%] md:w-[48%]">
-            <Asset name="livros-planta" alt="" sizes="(max-width: 767px) 30vw, 20vw" className="w-full" />
-            {/* Rótulos nas lombadas (a arte vem sem texto) */}
-            <ul aria-label="Pilares" className="absolute inset-0">
-              {BOOKS.map((label, i) => (
-                <li
-                  key={label}
-                  className="absolute left-[33%] font-bold uppercase leading-none tracking-[0.04em]"
-                  style={{
-                    top: `${[39, 49.5, 60.5, 70.3, 80.2][i]}%`,
-                    transform: 'translateY(-50%)',
-                    fontSize: 'clamp(6px, 1.1vw, 16px)',
-                    color: i >= 3 ? '#0b2a8c' : '#ffffff',
-                    textShadow: i >= 3 ? 'none' : '0 1px 2px rgba(0,30,90,0.35)',
-                  }}
-                >
-                  {label}
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <AboutArt className="aspect-[1.25/1]" />
       </Container>
     </section>
+  );
+}
+
+/** Mascote com notebook + livros "Cidadão… Desenvolvimento" + frase manuscrita */
+function AboutArt({ className = '', mobile }: { className?: string; mobile?: boolean }) {
+  return (
+    <div className={`relative w-full ${className}`}>
+      <p className={`dl-script absolute right-[2%] top-[0%] z-20 rotate-[-9deg] text-center text-[#0f5bd8] ${mobile ? 'text-[19px]' : 'text-[2.6vw] lg:text-[34px]'}`}>
+        Tecnologia
+        <br />a serviço
+        <br />
+        das pessoas!
+        <span className="mx-auto mt-1 block h-[3px] w-[80%] rounded-full bg-gradient-to-r from-[#3af6d6] to-[#13dbe7]" />
+      </p>
+      <Asset
+        name="mascote-sobre"
+        alt="Mascote do Digiurban com notebook"
+        sizes="(max-width: 767px) 75vw, 30vw"
+        className={`absolute bottom-0 z-10 ${mobile ? 'left-[-4%] w-[74%]' : 'left-[-6%] w-[80%]'}`}
+      />
+      <div className={`dl-cq absolute bottom-[1%] ${mobile ? 'right-[-2%] w-[50%]' : 'right-[-3%] w-[48%]'}`}>
+        <Asset name="livros-planta" alt="" sizes="(max-width: 767px) 50vw, 20vw" className="w-full" />
+        {/* Rótulos nas lombadas (a arte vem sem texto) */}
+        <ul aria-label="Pilares" className="absolute inset-0">
+          {BOOKS.map((label, i) => (
+            <li
+              key={label}
+              className="absolute left-[33%] font-bold uppercase leading-none tracking-[0.04em]"
+              style={{
+                top: `${[39, 49.5, 60.5, 70.3, 80.2][i]}%`,
+                transform: 'translateY(-50%)',
+                fontSize: '5.2cqw',
+                color: i >= 3 ? '#0b2a8c' : '#ffffff',
+                textShadow: i >= 3 ? 'none' : '0 1px 2px rgba(0,30,90,0.35)',
+              }}
+            >
+              {label}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -593,7 +622,7 @@ function Services() {
                 </span>
                 <div className="min-w-0">
                   <h3 className="dl-h text-[13.5px] md:text-[15px] lg:text-[21px]">{title}</h3>
-                  <p className="text-[11.5px] leading-snug md:max-w-[280px] md:text-[12.5px] lg:text-[17px]">{desc}</p>
+                  <p className="line-clamp-2 text-[11.5px] leading-snug md:line-clamp-none md:max-w-[280px] md:text-[12.5px] lg:text-[17px]">{desc}</p>
                 </div>
               </Link>
             </li>
@@ -610,7 +639,35 @@ function CitizenControl() {
     <section id="para-quem-e" className="relative overflow-hidden">
       <Bg name="fundo-cidade" />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-white/90 via-white/80 to-white/20 md:from-white/80 md:via-white/75" />
-      <Container className="grid grid-cols-[0.9fr_1.25fr_0.8fr] items-end gap-2 pt-4 md:grid-cols-[1fr_1.05fr_0.9fr] md:gap-4 md:pt-4 lg:pr-[5%]">
+      <Container className="pt-7 md:hidden">
+        <h2 className="dl-h text-[24px]">O cidadão no controle</h2>
+        <p className="mt-1.5 text-[14px] leading-snug">Menos filas e mais tempo para o que importa.</p>
+        <ul className="mt-3 grid grid-cols-2 gap-x-3 gap-y-2">
+          {CONTROL.map((item) => (
+            <li key={item} className="flex items-center gap-2 text-[13px] leading-tight text-[#28406b]">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-b from-[#3af6d6] to-[#12c9c9] text-white">
+                <Check className="h-3 w-3" strokeWidth={3.2} />
+              </span>
+              {item}
+            </li>
+          ))}
+        </ul>
+        <div className="relative mt-3 flex items-end justify-between">
+          <p className="dl-script absolute left-0 top-0 z-20 rotate-[-10deg] text-center text-[17px] text-[#0f5bd8]">
+            Mais tempo para
+            <br />o que importa!
+            <span className="mx-auto mt-1 block h-[3px] w-[80%] rounded-full bg-gradient-to-r from-[#3af6d6] to-[#13dbe7]" />
+          </p>
+          <Asset
+            name="mascote-cidadao"
+            alt="Mascote do Digiurban fazendo sinal de positivo"
+            sizes="70vw"
+            className="relative z-10 -mb-[3%] ml-[-4%] mt-[16%] w-[66%]"
+          />
+          <PhoneMock className="-mb-[10%] w-[36%]" sizes="40vw" />
+        </div>
+      </Container>
+      <Container className="hidden grid-cols-[1fr_1.05fr_0.9fr] items-end gap-4 pt-4 md:grid lg:pr-[5%]">
         <div className="relative flex flex-col justify-end self-stretch md:block">
           <p className="dl-script z-20 mb-1 rotate-[-10deg] text-center text-[3.4vw] text-[#0f5bd8] md:absolute md:left-[-4%] md:top-[4%] md:mb-0 md:text-[2vw] lg:text-[30px]">
             Mais
@@ -642,29 +699,36 @@ function CitizenControl() {
             ))}
           </ul>
         </div>
-        <div className="dl-cq relative -mb-[30%] self-end">
-          <Asset name="celular-tela-vazia" alt="" portrait sizes="(max-width: 767px) 25vw, 18vw" className="relative w-full" />
-          {/* Conteúdo da tela (a arte do celular vem com a tela vazia) */}
-          <div className="absolute left-[21.5%] right-[23.5%] top-[14%] text-[#07569d]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/landing/logo-colorida-480.png" alt="Digiurban" className="w-[62cqw] max-w-none" />
-            <p className="mt-[6cqw] text-[8cqw] font-bold leading-none">Olá, João!</p>
-            <p className="mt-[2cqw] text-[3.6cqw] leading-tight text-[#58718a]">Aqui você tem acesso a todos os serviços do seu município.</p>
-            <ul className="mt-[5cqw] space-y-[2.6cqw]">
-              {PHONE_ROWS.map(({ label, icon: Icon }) => (
-                <li key={label} className="flex items-center gap-[3cqw] rounded-[2.5cqw] bg-[#f3f9ff] px-[2.5cqw] py-[2.4cqw]">
-                  <span className="flex h-[7cqw] w-[7cqw] shrink-0 items-center justify-center rounded-[1.6cqw] bg-gradient-to-b from-[#1aa7ff] to-[#0b78e8] text-white">
-                    <Icon className="h-[4.4cqw] w-[4.4cqw]" />
-                  </span>
-                  <span className="min-w-0 flex-1 truncate text-[4.2cqw] font-medium">{label}</span>
-                  <ChevronRight className="h-[4.4cqw] w-[4.4cqw] shrink-0" />
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
+        <PhoneMock className="-mb-[30%] self-end" sizes="18vw" />
       </Container>
     </section>
+  );
+}
+
+/** Celular do kit com a tela do app desenhada por cima */
+function PhoneMock({ className = '', sizes }: { className?: string; sizes: string }) {
+  return (
+    <div className={`dl-cq relative ${className}`}>
+      <Asset name="celular-tela-vazia" alt="" portrait sizes={sizes} className="relative w-full" />
+      {/* Conteúdo da tela (a arte do celular vem com a tela vazia) */}
+      <div className="absolute left-[21.5%] right-[23.5%] top-[14%] text-[#07569d]">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/landing/logo-colorida-480.png" alt="Digiurban" className="w-[62cqw] max-w-none" />
+        <p className="mt-[6cqw] text-[8cqw] font-bold leading-none">Olá, João!</p>
+        <p className="mt-[2cqw] text-[3.6cqw] leading-tight text-[#58718a]">Aqui você tem acesso a todos os serviços do seu município.</p>
+        <ul className="mt-[5cqw] space-y-[2.6cqw]">
+          {PHONE_ROWS.map(({ label, icon: Icon }) => (
+            <li key={label} className="flex items-center gap-[3cqw] rounded-[2.5cqw] bg-[#f3f9ff] px-[2.5cqw] py-[2.4cqw]">
+              <span className="flex h-[7cqw] w-[7cqw] shrink-0 items-center justify-center rounded-[1.6cqw] bg-gradient-to-b from-[#1aa7ff] to-[#0b78e8] text-white">
+                <Icon className="h-[4.4cqw] w-[4.4cqw]" />
+              </span>
+              <span className="min-w-0 flex-1 truncate text-[4.2cqw] font-medium">{label}</span>
+              <ChevronRight className="h-[4.4cqw] w-[4.4cqw] shrink-0" />
+            </li>
+          ))}
+        </ul>
+      </div>
+    </div>
   );
 }
 
@@ -751,8 +815,9 @@ function Security() {
             <br />
             sempre
           </h2>
-          <p className="mt-1.5 text-[12.5px] leading-snug md:text-[12.5px] lg:text-[19px]">
-            O Digiurban segue as melhores práticas de segurança da informação e está em conformidade com a LGPD, garantindo a privacidade dos dados dos cidadãos.
+          <p className="mt-1.5 text-[14px] leading-snug sm:text-[12.5px] md:text-[12.5px] lg:text-[19px]">
+            <span className="sm:hidden">Boas práticas de segurança e conformidade com a LGPD.</span>
+            <span className="hidden sm:inline">O Digiurban segue as melhores práticas de segurança da informação e está em conformidade com a LGPD, garantindo a privacidade dos dados dos cidadãos.</span>
           </p>
           <a href="#seguranca" className="dl-btn dl-btn-blue mt-3 h-[38px] rounded-xl px-4 text-[13px] md:mt-4 md:h-[40px] md:px-5 md:text-[13.5px] lg:h-[50px] lg:px-8 lg:text-[17px]">
             Saiba mais sobre segurança
@@ -792,7 +857,30 @@ function FinalCta() {
     <section id="planos" className="relative overflow-hidden text-white">
       <Bg name="fundo-hero" />
       <div aria-hidden className="absolute inset-0 bg-gradient-to-r from-[#0b3ea8]/40 via-[#0a3a9e]/55 to-[#082f86]/80" />
-      <Container className="grid grid-cols-[0.62fr_1.4fr] items-end gap-2 pt-4 sm:grid-cols-[0.7fr_1.6fr_0.8fr] md:gap-4 lg:grid-cols-[0.62fr_1.6fr_0.7fr]">
+      <Container className="pt-8 text-center md:hidden">
+        <h2 className="text-[25px] font-bold leading-[1.1] tracking-[-0.02em]">Pronto para transformar o seu município?</h2>
+        <p className="mt-2 text-[14px] text-white/90">Junte-se às cidades que já estão no Digiurban.</p>
+        <div className="mx-auto mt-4 flex max-w-[320px] flex-col gap-2.5">
+          <a href={mailto('Quero uma demonstração do Digiurban')} className="dl-btn dl-btn-teal h-[48px] rounded-xl text-[15px]">
+            Solicitar uma Demonstração
+            <ArrowRight className="h-4 w-4" />
+          </a>
+          <a href={mailto('Quero falar com um especialista')} className="dl-btn dl-btn-ghost h-[46px] rounded-xl text-[15px]">
+            <Play className="h-4 w-4" />
+            Falar com um Especialista
+          </a>
+        </div>
+        <div className="relative mt-3 flex items-end">
+          <Asset name="mascote-cta" alt="Mascote do Digiurban comemorando" sizes="70vw" className="relative -mb-[4%] ml-[-4%] w-[62%]" />
+          <p className="dl-script mb-[14%] flex-1 rotate-[-10deg] text-[21px]">
+            Juntos por
+            <br />
+            cidades melhores!
+            <span className="mx-auto mt-1.5 block h-[3px] w-[80%] rounded-full bg-gradient-to-r from-[#3af6d6] to-[#13dbe7]" />
+          </p>
+        </div>
+      </Container>
+      <Container className="hidden grid-cols-[0.7fr_1.6fr_0.8fr] items-end gap-4 pt-4 md:grid lg:grid-cols-[0.62fr_1.6fr_0.7fr]">
         <Asset
           name="mascote-cta"
           alt="Mascote do Digiurban comemorando"
