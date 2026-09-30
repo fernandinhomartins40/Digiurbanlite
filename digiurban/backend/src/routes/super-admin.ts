@@ -47,6 +47,7 @@ import { syncUserPersonIdentity } from '../services/person-identity.service';
 import { normalizeEmail, normalizeNullableString } from '../utils/identity';
 
 const execAsync = promisify(exec);
+import { platformConsoleAuth } from '../middleware/platform-console-auth';
 const router = Router();
 
 
@@ -67,126 +68,113 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Senha é obrigatória')
 });
 
-// POST /api/super-admin/login - Login de super administrador
+// POST /api/super-admin/login — login do CONSOLE DA PLATAFORMA.
+//
+// A Equipe da plataforma (PlatformUser) é a fonte de verdade:
+//   1. existe PlatformUser com o e-mail → vale a senha/situação dele;
+//   2. senão, SUPER_ADMIN legado do tenant default → confere a senha do User e
+//      cria o espelho PlatformUser (ponte de identidade, mesmo hash).
+// SUPER_ADMIN legado de OUTRO tenant nunca ganha identidade de plataforma (R2).
+// O cookie de admin (User legado) só é emitido para PLATFORM_ADMIN — ele ainda
+// é usado por rotas antigas (ex.: IA); Suporte fica só com o cookie de plataforma.
 router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async (req: Request, res: Response) => {
   try {
     const data = loginSchema.parse(req.body);
+    const email = data.email.trim().toLowerCase();
 
-    // Buscar usuário pelo email — SUPER_ADMIN é identidade de PLATAFORMA:
-    // runAsPlatform evita que a tenant-extension esconda o usuário quando o
-    // contexto do host/cookie aponta para outro município (ex.: cookie
-    // digiurban_tenant_slug de um portal de cidadão). Sem isto, o login falha
-    // com "não autorizado" sempre que o navegador está escopado a um tenant
-    // diferente do do super-admin.
-    const user = await runAsPlatform(async () =>
-      prisma.user.findFirst({
-        where: {
-          email: data.email,
-          isActive: true,
-          role: 'SUPER_ADMIN'
-        },
-        include: {
-          department: true
-        }
-      })
-    );
-
-    // Verificar se existe e se é SUPER_ADMIN
-    if (!user || user.role !== 'SUPER_ADMIN') {
-      return res.status(401).json({ error: 'Credenciais inválidas ou acesso não autorizado' });
-    }
-
-    // Verificar senha
-    const validPassword = await bcrypt.compare(data.password, user.password);
-    if (!validPassword) {
-      return res.status(401).json({ error: 'Credenciais inválidas' });
-    }
-
-    // Registra o acesso (a tela Equipe da plataforma mostrava sempre "Nunca")
-    await runAsPlatform(async () =>
-      prisma.user.update({ where: { id: user.id }, data: { lastLogin: new Date() } })
-    ).catch(() => undefined);
-
-    // Gerar token JWT
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
       console.error('JWT_SECRET not configured');
       return res.status(500).json({ error: 'Erro de configuração do servidor' });
     }
+    const secure = process.env.NODE_ENV === 'production';
 
-    const token = jwt.sign(
-      {
-        userId: user.id,
-        role: user.role,
-        departmentId: user.departmentId,
-        type: 'admin',
-        // tenant DO USUÁRIO (não o do navegador): um município escolhido no
-        // portal do cidadão não pode "carimbar" a sessão do super-admin
-        tenantId: user.tenantId || DEFAULT_TENANT_ID
-      },
-      jwtSecret,
-      { expiresIn: '8h' }
+    // runAsPlatform: a tenant-extension não pode esconder o usuário pelo host/cookie
+    const [platformUserFound, legacyUser] = await runAsPlatform(async () =>
+      Promise.all([
+        prisma.platformUser.findFirst({ where: { email: { equals: email, mode: 'insensitive' } } }),
+        prisma.user.findFirst({
+          where: { email: { equals: email, mode: 'insensitive' }, isActive: true, role: 'SUPER_ADMIN' },
+          include: { department: true },
+        }),
+      ])
     );
+    const legacyFromDefault =
+      legacyUser && (!legacyUser.tenantId || legacyUser.tenantId === DEFAULT_TENANT_ID) ? legacyUser : null;
 
-    // Configurar cookie httpOnly
-    res.cookie('digiurban_admin_token', token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 8 * 60 * 60 * 1000 // 8 horas
-    });
+    let platformUser = platformUserFound;
+    let legacyVerified = false;
 
-    // ✅ PONTE DE IDENTIDADE (Fase 1 do plano 2026-07-13): o painel /super-admin
-    // consome /api/platform/* (PlatformUser). SUPER_ADMIN legado do tenant
-    // DEFAULT (operador da plataforma) é espelhado como PlatformUser no login
-    // e recebe também o cookie de plataforma — sem segundo login. SUPER_ADMIN
-    // de OUTRO tenant NÃO ganha identidade de plataforma (fechamento do R2).
-    // Municípios não conseguem criar SUPER_ADMIN (roles permitidos no cadastro
-    // municipal: USER/COORDINATOR/MANAGER/ADMIN), então o espelho é restrito
-    // por construção ao operador.
-    if (!user.tenantId || user.tenantId === DEFAULT_TENANT_ID) {
-      try {
-        const platformUser = await runAsPlatform(async () => {
-          const existing = await prisma.platformUser.findFirst({ where: { email: user.email } });
-          if (existing) return existing.isActive ? existing : null;
-          // Mesmo hash bcrypt do User — a senha já foi validada acima.
-          return prisma.platformUser.create({
-            data: { email: user.email, name: user.name, password: user.password, role: 'PLATFORM_ADMIN' },
-          });
-        });
-        if (platformUser) {
-          const platformToken = jwt.sign(
-            { platformUserId: platformUser.id, type: 'platform', role: platformUser.role },
-            jwtSecret,
-            { expiresIn: '8h' }
-          );
-          res.cookie('digiurban_platform_token', platformToken, {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
-            maxAge: 8 * 60 * 60 * 1000,
-          });
-          await runAsPlatform(async () =>
-            prisma.platformUser.update({ where: { id: platformUser.id }, data: { lastLoginAt: new Date() } })
-          ).catch(() => undefined);
-        }
-      } catch (bridgeError) {
-        // Ponte é best-effort: falha não bloqueia o login de admin.
-        console.error('Erro ao espelhar PlatformUser no login de super-admin:', bridgeError);
+    if (platformUser) {
+      if (!platformUser.isActive) {
+        return res.status(403).json({ error: 'Seu acesso foi desativado. Fale com um administrador da plataforma.' });
       }
+      if (!(await bcrypt.compare(data.password, platformUser.password))) {
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+      }
+    } else if (legacyUser) {
+      if (!(await bcrypt.compare(data.password, legacyUser.password))) {
+        return res.status(401).json({ error: 'Credenciais inválidas' });
+      }
+      legacyVerified = true;
+      if (legacyFromDefault) {
+        platformUser = await runAsPlatform(async () =>
+          prisma.platformUser.create({
+            data: { email: legacyUser.email, name: legacyUser.name, password: legacyUser.password, role: 'PLATFORM_ADMIN' },
+          })
+        ).catch(() => null);
+      }
+    } else {
+      return res.status(401).json({ error: 'Credenciais inválidas ou acesso não autorizado' });
+    }
+
+    // Cookie de plataforma (identidade do console)
+    if (platformUser) {
+      const platformToken = jwt.sign(
+        { platformUserId: platformUser.id, type: 'platform', role: platformUser.role },
+        jwtSecret,
+        { expiresIn: '8h' }
+      );
+      res.cookie('digiurban_platform_token', platformToken, { httpOnly: true, secure, sameSite: 'strict', maxAge: 8 * 60 * 60 * 1000 });
+      await runAsPlatform(async () =>
+        prisma.platformUser.update({ where: { id: platformUser!.id }, data: { lastLoginAt: new Date() } })
+      ).catch(() => undefined);
+    }
+
+    // Cookie de admin (User legado) — só para administrador da plataforma
+    const adminUser =
+      legacyVerified ? legacyUser : platformUser?.role === 'PLATFORM_ADMIN' ? legacyFromDefault : null;
+    if (adminUser) {
+      const token = jwt.sign(
+        {
+          userId: adminUser.id,
+          role: adminUser.role,
+          departmentId: adminUser.departmentId,
+          type: 'admin',
+          // tenant DO USUÁRIO (não o do navegador)
+          tenantId: adminUser.tenantId || DEFAULT_TENANT_ID,
+        },
+        jwtSecret,
+        { expiresIn: '8h' }
+      );
+      res.cookie('digiurban_admin_token', token, { httpOnly: true, secure, sameSite: 'lax', maxAge: 8 * 60 * 60 * 1000 });
+      await runAsPlatform(async () =>
+        prisma.user.update({ where: { id: adminUser.id }, data: { lastLogin: new Date() } })
+      ).catch(() => undefined);
+    } else {
+      // Sessão antiga de admin no navegador não pode "vazar" para um Suporte
+      res.clearCookie('digiurban_admin_token', { httpOnly: true, secure, sameSite: 'lax' });
     }
 
     return res.json({
       message: 'Login realizado com sucesso',
-      token,
       user: {
-        id: user.id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        departmentId: user.departmentId,
-        department: user.department
-      }
+        id: platformUser?.id || adminUser?.id,
+        name: platformUser?.name || adminUser?.name,
+        email: platformUser?.email || adminUser?.email,
+        role: platformUser?.role || adminUser?.role,
+        mustChangePassword: platformUser?.mustChangePassword || false,
+      },
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -440,7 +428,7 @@ router.get('/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, r
 });
 
 // GET /api/super-admin/system/health - Status de saúde do sistema
-router.get('/system/health', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/system/health', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const startTime = Date.now();
 
@@ -1564,7 +1552,7 @@ router.delete('/users/admins/:id', adminAuthMiddleware, superAdminOnly, async (r
 });
 
 // GET /api/super-admin/audit - Listar logs de auditoria
-router.get('/audit', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/audit', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const {
       dateRange = '24h',
@@ -1696,7 +1684,7 @@ router.get('/audit', adminAuthMiddleware, superAdminOnly, async (req: Request, r
 });
 
 // GET /api/super-admin/audit/stats - Estatísticas de auditoria
-router.get('/audit/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/audit/stats', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const { dateRange = '24h' } = req.query;
 
@@ -1777,7 +1765,7 @@ router.get('/audit/stats', adminAuthMiddleware, superAdminOnly, async (req: Requ
 });
 
 // POST /api/super-admin/audit/export - Exportar logs de auditoria
-router.post('/audit/export', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.post('/audit/export', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const { format = 'json', dateRange = '24h', filters = {} } = req.body;
 
@@ -1906,7 +1894,7 @@ interface LogLine {
 }
 
 // GET /api/super-admin/system-logs - Listar arquivos de log disponíveis
-router.get('/system-logs', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/system-logs', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const logsDir = process.env.LOGS_DIR || path.join(process.cwd(), 'logs');
 
@@ -1987,7 +1975,7 @@ router.get('/system-logs', adminAuthMiddleware, superAdminOnly, async (req: Requ
 });
 
 // GET /api/super-admin/system-logs/stats - Estatísticas agregadas
-router.get('/system-logs/stats', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/system-logs/stats', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const { dateRange = '24h' } = req.query;
 
@@ -2122,7 +2110,7 @@ router.get('/system-logs/stats', adminAuthMiddleware, superAdminOnly, async (req
 });
 
 // GET /api/super-admin/system-logs/:fileName - Ler conteúdo de um arquivo de log
-router.get('/system-logs/:fileName', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/system-logs/:fileName', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
     const {
@@ -2234,7 +2222,7 @@ router.get('/system-logs/:fileName', adminAuthMiddleware, superAdminOnly, async 
 });
 
 // GET /api/super-admin/system-logs/:fileName/download - Download do arquivo completo
-router.get('/system-logs/:fileName/download', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/system-logs/:fileName/download', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
 
@@ -2276,7 +2264,7 @@ router.get('/system-logs/:fileName/download', adminAuthMiddleware, superAdminOnl
 });
 
 // GET /api/super-admin/system-logs/:fileName/stream - Stream em tempo real (SSE)
-router.get('/system-logs/:fileName/stream', adminAuthMiddleware, superAdminOnly, async (req: Request, res: Response) => {
+router.get('/system-logs/:fileName/stream', platformConsoleAuth, async (req: Request, res: Response) => {
   try {
     const { fileName } = req.params;
 

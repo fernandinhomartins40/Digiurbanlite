@@ -54,6 +54,7 @@ import {
   removePlan,
 } from '../services/plan-config.service';
 import { logAuditEvent } from '../utils/audit-logger';
+import { changeOwnPassword, inviteMember, listTeam, resetMemberPassword, TeamError, updateMember } from '../services/platform-team.service';
 import { BACKUP_EXTENSION, createDatabaseBackup, RESTORE_INSTRUCTIONS } from '../services/database-backup.service';
 
 const router = Router();
@@ -66,6 +67,95 @@ const PLATFORM_ADMIN = requirePlatformRole('PLATFORM_ADMIN');
 function platformUserId(req: Request): string | undefined {
   return (req as PlatformAuthenticatedRequest).platformUser?.id;
 }
+
+// ============================================================================
+// EQUIPE DA PLATAFORMA (quem opera este console) e a própria senha
+// ============================================================================
+
+const TeamInviteSchema = z.object({
+  name: z.string().trim().min(2, 'Informe o nome').max(120),
+  email: z.string().trim().email('E-mail inválido').max(160),
+  role: z.enum(['PLATFORM_ADMIN', 'PLATFORM_SUPPORT']),
+});
+const TeamUpdateSchema = z.object({
+  name: z.string().trim().min(2).max(120).optional(),
+  role: z.enum(['PLATFORM_ADMIN', 'PLATFORM_SUPPORT']).optional(),
+  isActive: z.boolean().optional(),
+});
+
+function teamError(res: Response, error: any) {
+  if (error instanceof TeamError) return res.status(error.status).json({ error: error.message });
+  if (error instanceof z.ZodError) return res.status(400).json({ error: error.issues[0]?.message || 'Dados inválidos' });
+  console.error('[TEAM]', error);
+  return res.status(500).json({ error: 'Erro interno do servidor' });
+}
+
+// GET /api/platform/team — todos da equipe veem a lista
+router.get('/team', async (req: Request, res: Response) => {
+  try {
+    const me = platformUserId(req);
+    const team = await listTeam();
+    return res.json({ success: true, team: team.map((m) => ({ ...m, isYou: m.id === me })) });
+  } catch (error) {
+    return teamError(res, error);
+  }
+});
+
+// POST /api/platform/team — convidar (gera senha temporária)
+router.post('/team', PLATFORM_ADMIN, async (req: Request, res: Response) => {
+  try {
+    const result = await inviteMember(TeamInviteSchema.parse(req.body));
+    await logAuditEvent({
+      action: 'platform_team_invited', resource: req.originalUrl, method: req.method,
+      details: { context: 'platform', platformUserId: platformUserId(req), memberId: result.member.id, role: result.member.role },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    return res.status(201).json({ success: true, ...result });
+  } catch (error) {
+    return teamError(res, error);
+  }
+});
+
+// PATCH /api/platform/team/:id — nome, papel, ativar/desativar
+router.patch('/team/:id', PLATFORM_ADMIN, async (req: Request, res: Response) => {
+  try {
+    const member = await updateMember(platformUserId(req) || '', req.params.id, TeamUpdateSchema.parse(req.body));
+    await logAuditEvent({
+      action: 'platform_team_updated', resource: req.originalUrl, method: req.method,
+      details: { context: 'platform', platformUserId: platformUserId(req), memberId: member.id, changes: req.body },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    return res.json({ success: true, member });
+  } catch (error) {
+    return teamError(res, error);
+  }
+});
+
+// POST /api/platform/team/:id/reset-password — nova senha temporária
+router.post('/team/:id/reset-password', PLATFORM_ADMIN, async (req: Request, res: Response) => {
+  try {
+    const result = await resetMemberPassword(req.params.id);
+    await logAuditEvent({
+      action: 'platform_team_password_reset', resource: req.originalUrl, method: req.method,
+      details: { context: 'platform', platformUserId: platformUserId(req), memberId: req.params.id },
+      ip: req.ip, userAgent: req.headers['user-agent'], success: true,
+    }).catch(() => undefined);
+    return res.json({ success: true, ...result });
+  } catch (error) {
+    return teamError(res, error);
+  }
+});
+
+// POST /api/platform/me/password — trocar a própria senha (obrigatório após senha temporária)
+router.post('/me/password', async (req: Request, res: Response) => {
+  try {
+    const body = z.object({ currentPassword: z.string().min(1), newPassword: z.string() }).parse(req.body);
+    await changeOwnPassword(platformUserId(req) || '', body.currentPassword, body.newPassword);
+    return res.json({ success: true, message: 'Senha alterada' });
+  } catch (error) {
+    return teamError(res, error);
+  }
+});
 
 // ============================================================================
 // CATÁLOGO / INFO DA PLATAFORMA

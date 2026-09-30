@@ -136,6 +136,11 @@ export function registerRemoteAssistHandlers(io: Server, socket: AuthedSocket) {
     'assist:request',
     async (data: { assistedUserId: string; motivo?: string; modo?: Modo }, cb: Ack) => {
     try {
+      // Só a equipe da plataforma inicia assistência (antes, qualquer conexão
+      // autenticada podia convidar alguém — o aceite do assistido era a única barreira)
+      if (!socket.isPlatformOperator) {
+        return reply(cb, { success: false, error: 'Somente a equipe da plataforma pode iniciar uma assistência' });
+      }
       if (!data?.assistedUserId) {
         return reply(cb, { success: false, error: 'assistedUserId obrigatório' });
       }

@@ -16,6 +16,8 @@ export interface AuthenticatedSocket extends Socket {
   userType: ParticipantType;
   tenantId?: string; // Fase 6 Multi-Tenant
   userData: JwtPayload;
+  /** Equipe da plataforma (console /super-admin): pode iniciar assistência remota */
+  isPlatformOperator?: boolean;
 }
 
 export class WebSocketServer {
@@ -80,7 +82,8 @@ export class WebSocketServer {
               return acc;
             }, {} as Record<string, string>);
 
-            token = cookies.digiurban_admin_token || cookies.digiurban_citizen_token;
+            // Console da plataforma: o Suporte só tem o cookie de plataforma
+            token = cookies.digiurban_admin_token || cookies.digiurban_citizen_token || cookies.digiurban_platform_token;
           }
         }
 
@@ -103,6 +106,15 @@ export class WebSocketServer {
         // Mapeamos aqui, sem mexer no emissor do token: 'admin' é um SERVER
         // (servidor público) na taxonomia do messages-server; 'citizen' é
         // CITIZEN. Tokens que já trazem `userType` seguem valendo.
+        // Operador da plataforma (cookie digiurban_platform_token): identidade
+        // própria, sem município. Entra como SERVER com id "platform:<id>".
+        const platformUserId = (payload as any).type === 'platform' ? (payload as any).platformUserId : null;
+        if (platformUserId) {
+          payload.userId = `platform:${platformUserId}`;
+          payload.userType = 'SERVER' as ParticipantType;
+          payload.name = payload.name || 'Equipe DigiUrban';
+        }
+
         if (!payload.userType && (payload as any).type) {
           const tipo = (payload as any).type;
           payload.userType = (tipo === 'citizen' ? 'CITIZEN' : 'SERVER') as ParticipantType;
@@ -125,6 +137,7 @@ export class WebSocketServer {
         (socket as AuthenticatedSocket).userType = payload.userType;
         (socket as AuthenticatedSocket).tenantId = (payload as { tenantId?: string }).tenantId;
         (socket as AuthenticatedSocket).userData = payload;
+        (socket as AuthenticatedSocket).isPlatformOperator = Boolean(platformUserId) || payload.role === 'SUPER_ADMIN';
 
         // Registrar sessão WebSocket
         await prisma.webSocketSession.create({

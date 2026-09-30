@@ -101,6 +101,13 @@ const withPWA = require('@ducanh2912/next-pwa').default({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'standalone', // Necessário para Docker
+  // /api/* é do BACKEND. Em produção o nginx encaminha antes de chegar aqui;
+  // sem nginx (dev local) este rewrite faz o mesmo papel. Substitui as ~35
+  // rotas-proxy que existiam em app/api (nunca alcançadas em produção).
+  async rewrites() {
+    const backend = process.env.BACKEND_INTERNAL_URL || 'http://localhost:3001';
+    return [{ source: '/api/:path*', destination: `${backend}/api/:path*` }];
+  },
   typescript: {
     // Permitir build com erros TypeScript (para deploy)
     ignoreBuildErrors: true,

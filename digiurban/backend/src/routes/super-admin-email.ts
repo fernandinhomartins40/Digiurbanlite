@@ -1,12 +1,13 @@
 import { Router } from 'express';
-import { superAdminAuth } from '../middleware/super-admin-auth';
 import { prisma } from '../lib/prisma';
 
+import { platformConsoleAuth } from '../middleware/platform-console-auth';
 const router = Router();
 const SEND_ALLOWED_SUBSCRIPTION_STATUSES = new Set(['ACTIVE', 'TRIAL']);
 
 // Middleware de autenticação SuperAdmin
-router.use(superAdminAuth);
+// Console da plataforma: PlatformUser ou SUPER_ADMIN legado (Suporte = só leitura)
+router.use(platformConsoleAuth);
 
 /**
  * GET /api/super-admin/email-subscriptions

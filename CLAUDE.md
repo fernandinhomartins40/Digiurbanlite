@@ -322,6 +322,10 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Isolamento automático: models com campo `tenantId` são escopados pela extension (`lib/prisma-tenant-extension.ts`, detecção via DMMF) — novas tabelas municipais DEVEM ter `tenantId String?` + `@@index([tenantId])`
 - Uniques de catálogo são compostas `[tenantId, x]` — `findUnique({ where: { nome } })` não compila; usar `findFirst` (a extension escopa)
 - Endpoints de plataforma vivem em `/api/platform` (PlatformUser, cookie `digiurban_platform_token`); `/api/super-admin/tenants*` responde **410**
+- Console `/super-admin`: a **Equipe da plataforma** (PlatformUser, papéis PLATFORM_ADMIN/PLATFORM_SUPPORT) é a fonte de verdade do login (`/api/super-admin/login` tenta PlatformUser antes do SUPER_ADMIN legado). Rotas antigas usadas pelo console (e-mail, auditoria, logs, monitoramento, modelos) usam `platformConsoleAuth` — aceita as duas identidades e bloqueia escrita para Suporte. Equipe: `/api/platform/team*`, senha própria: `/api/platform/me/password`
+- `/api/*` é SEMPRE do backend: nginx em produção, `rewrites` do `next.config.js` em dev. Não criar rotas em `frontend/app/api` (foram removidas; nunca eram alcançadas)
+- Backup do painel = `pg_dump` completo (`services/database-backup.service.ts`, usa MIGRATE_DATABASE_URL por causa do RLS). Restaurar e rodar migrations pelo painel respondem 410 (procedimento de servidor)
+- Leads da landing: `POST /api/leads` (`routes/public-leads.routes.ts`); o antigo `routes/leads.ts` (trial público com senha) continua NÃO montado
 - Login do super-admin espelha SUPER_ADMIN do tenant default como PlatformUser (ponte de identidade) — o proxy Next repassa todos os Set-Cookie
 - Jobs/seeds: `runAsTenant()`/`forEachActiveTenant()`; seeds standalone têm normalização de `tenantId` NULL no fim do `seed-consolidated.ts`
 - Fluxos do bot são POR TENANT (`[tenantId, name]`); seeder do Messages Server itera tenants ativos

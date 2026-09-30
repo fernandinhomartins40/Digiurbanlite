@@ -732,3 +732,12 @@ O protótipo aprovado pelo usuário está no canvas "DigiUrban Liquid Glass".
 - Computador: ícones coloridos com aumento ao passar o mouse, nome em cima e ponto na tela aberta. Celular: Início + 3 primeiros atalhos (rótulo curto) + Mais; o resto fica no painel "Organizar atalhos".
 - Segurança: a lista salva é sempre filtrada pelo que o servidor pode abrir agora (permissão, plano do município, secretarias) — perdeu acesso, o atalho some.
 
+## 12. Console da plataforma (super-admin) — auditoria e correções (2026-09-30)
+
+Auditoria das 25 telas com ambiente de teste e login real. Correções em 4 fases:
+
+1. **Segurança dos dados:** backup real com `pg_dump` (antes: 12 de 213 tabelas em JSON); "Restaurar" e "Executar migrações" saíram do painel (o restaurar antigo apagava tabelas de todos os municípios). Tela Banco de dados com estado de erro.
+2. **Consertos:** leads da landing chegam ao painel (`/api/leads`, com proteção anti-robô); IA mostra "desativada" com o passo a passo; servidor de e-mail com teste de conexão real (Iniciar/Parar eram de mentira); catálogo de planos nasce com os 3 planos usados pelos municípios; último login gravado; "Sair" apaga os cookies (a rota só existia no Next).
+3. **Clareza:** status em português; E-mail enxuto (cobrança de e-mail foi para Municípios); memória real no Monitoramento (container/MemAvailable).
+4. **Equipe da plataforma:** papéis Administrador/Suporte, convite com senha temporária e troca obrigatória, limites (ninguém tira o próprio acesso; sempre há um administrador), desativação vale na hora. Assistência remota: só a equipe inicia e o Suporte consegue usar. 35 rotas mortas em `app/api` removidas (rewrite de `/api` no Next para dev).
+

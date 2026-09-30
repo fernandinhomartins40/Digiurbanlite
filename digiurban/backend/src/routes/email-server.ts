@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import net from 'net';
 import { prisma } from '../lib/prisma';
-import { authenticateToken, requireSuperAdmin } from '../middleware/auth';
+import { platformConsoleAuth } from '../middleware/platform-console-auth';
 import emailDomainsRouter from './email-domains';
 import { emailServerHealthService } from '../services/email-server-health.service';
 // SMTP Server agora roda em container separado (ultrazend-smtp)
@@ -32,8 +32,8 @@ export function probeSmtp(port: number, host = SMTP_PROBE_HOST, timeoutMs = 2500
 }
 
 // Aplicar middleware de autenticação e super admin em todas as rotas
-router.use(authenticateToken);
-router.use(requireSuperAdmin);
+// Console da plataforma: PlatformUser ou SUPER_ADMIN legado (Suporte = só leitura)
+router.use(platformConsoleAuth);
 
 // Mount domains routes
 router.use('/domains', emailDomainsRouter);

@@ -1,14 +1,15 @@
 import { Router, Response } from 'express';
-import { superAdminAuth } from '../middleware/super-admin-auth';
 import { AuthenticatedRequest } from '../types';
 import { asyncHandler } from '../utils/express-helpers';
 import { prisma } from '../lib/prisma';
 import { EmailPlan } from '@prisma/client';
 
+import { platformConsoleAuth } from '../middleware/platform-console-auth';
 const router = Router();
 
 // Middleware para autenticação de Super Admin
-router.use(superAdminAuth);
+// Console da plataforma: PlatformUser ou SUPER_ADMIN legado (Suporte = só leitura)
+router.use(platformConsoleAuth);
 
 /**
  * GET /api/super-admin/email/plans
@@ -221,7 +222,7 @@ router.post('/', asyncHandler(async (req: AuthenticatedRequest, res: Response) =
     // Log de auditoria
     await prisma.auditLog.create({
       data: {
-        userId: req.user.id,
+        userId: req.user?.id ?? null,
         action: 'EMAIL_PLAN_CREATED',
         resource: 'email_plan',
         details: {
@@ -335,7 +336,7 @@ router.put('/:id', asyncHandler(async (req: AuthenticatedRequest, res: Response)
     // Log de auditoria
     await prisma.auditLog.create({
       data: {
-        userId: req.user.id,
+        userId: req.user?.id ?? null,
         action: 'EMAIL_PLAN_UPDATED',
         resource: 'email_plan',
         details: {
@@ -420,7 +421,7 @@ router.delete('/:id', asyncHandler(async (req: AuthenticatedRequest, res: Respon
     // Log de auditoria
     await prisma.auditLog.create({
       data: {
-        userId: req.user.id,
+        userId: req.user?.id ?? null,
         action: 'EMAIL_PLAN_DELETED',
         resource: 'email_plan',
         details: {

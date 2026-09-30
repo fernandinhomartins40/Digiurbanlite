@@ -1,682 +1,286 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+/**
+ * Equipe da plataforma — quem opera este console.
+ * Papéis: Administrador (tudo) e Suporte (consulta e ajuda, sem mexer em
+ * cobrança, planos, municípios ou equipe). Senhas novas/redefinidas são
+ * temporárias: a pessoa troca no primeiro acesso.
+ * Substitui a antiga "Gestão de Super Admins" (usuários SUPER_ADMIN presos a
+ * um município).
+ */
+
+import { useCallback, useEffect, useState } from 'react';
+import { Copy, KeyRound, Loader2, ShieldCheck, UserCog, UserPlus, Users } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
-import {
-  UserCog,
-  Search,
-  Shield,
-  Mail,
-  Calendar,
-  CheckCircle,
-  XCircle,
-  Edit,
-  Trash2,
-  UserPlus,
-  Loader2,
-  AlertCircle,
-  Eye,
-  EyeOff
-} from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 
-interface SuperAdmin {
+type Role = 'PLATFORM_ADMIN' | 'PLATFORM_SUPPORT';
+
+interface Member {
   id: string;
   name: string;
   email: string;
+  role: Role;
   isActive: boolean;
+  mustChangePassword: boolean;
+  lastLoginAt: string | null;
   createdAt: string;
-  lastLogin: string | null;
-  department: {
-    id: string;
-    name: string;
-  } | null;
+  isYou?: boolean;
 }
 
-export default function SuperAdminUsersPage() {
+const ROLE_LABEL: Record<Role, string> = { PLATFORM_ADMIN: 'Administrador', PLATFORM_SUPPORT: 'Suporte' };
+const ROLE_HINT: Record<Role, string> = {
+  PLATFORM_ADMIN: 'Faz tudo: municípios, planos, cobrança, backups e equipe.',
+  PLATFORM_SUPPORT: 'Consulta tudo e ajuda os municípios, mas não altera nada.',
+};
+
+async function call(url: string, init?: RequestInit) {
+  const res = await fetch(url, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || 'Não foi possível concluir');
+  return data;
+}
+
+export default function PlatformTeamPage() {
   const { toast } = useToast();
-  const [admins, setAdmins] = useState<SuperAdmin[]>([]);
+  const { user } = useSuperAdminAuth();
+  const isAdmin = user?.role === 'PLATFORM_ADMIN';
+  const [team, setTeam] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedAdmin, setSelectedAdmin] = useState<SuperAdmin | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: ''
-  });
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [formError, setFormError] = useState('');
-  const [saving, setSaving] = useState(false);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [form, setForm] = useState<{ name: string; email: string; role: Role }>({ name: '', email: '', role: 'PLATFORM_SUPPORT' });
+  const [secret, setSecret] = useState<{ label: string; value: string } | null>(null);
 
-  useEffect(() => {
-    fetchAdmins();
-  }, []);
-
-  const fetchAdmins = async () => {
+  const load = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('/api/super-admin/users/admins');
-      if (response.ok) {
-        const data = await response.json();
-        setAdmins(data.data);
-      }
-    } catch (error) {
-      console.error('Erro ao buscar super admins:', error);
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível carregar os super admins',
-        variant: 'destructive'
-      });
+      const data = await call('/api/platform/team');
+      setTeam(data.team || []);
+    } catch (error: any) {
+      toast({ title: 'Erro ao carregar a equipe', description: error.message, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
-  };
+  }, [toast]);
 
-  // Função para calcular força da senha
-  const getPasswordStrength = (pwd: string): { score: number; label: string; color: string } => {
-    if (!pwd) return { score: 0, label: '', color: '' };
+  useEffect(() => {
+    load();
+  }, [load]);
 
-    let score = 0;
-
-    if (pwd.length >= 8) score++;
-    if (pwd.length >= 12) score++;
-    if (/[a-z]/.test(pwd)) score++;
-    if (/[A-Z]/.test(pwd)) score++;
-    if (/\d/.test(pwd)) score++;
-    if (/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) score++;
-
-    if (score <= 2) return { score, label: 'Fraca', color: 'bg-red-500' };
-    if (score <= 4) return { score, label: 'Média', color: 'bg-yellow-500' };
-    return { score, label: 'Forte', color: 'bg-green-500' };
-  };
-
-  const validateForm = (isEdit: boolean): string | null => {
-    if (!formData.name.trim()) return 'Nome é obrigatório';
-    if (!formData.email.trim()) return 'Email é obrigatório';
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) return 'Email inválido';
-
-    if (!isEdit) {
-      if (!formData.password) return 'Senha é obrigatória';
-      if (formData.password.length < 8) return 'Senha deve ter no mínimo 8 caracteres';
-      if (!/[A-Z]/.test(formData.password)) return 'Senha deve conter ao menos uma letra maiúscula';
-      if (!/[a-z]/.test(formData.password)) return 'Senha deve conter ao menos uma letra minúscula';
-      if (!/\d/.test(formData.password)) return 'Senha deve conter ao menos um número';
-      if (!/[!@#$%^&*(),.?":{}|<>]/.test(formData.password)) return 'Senha deve conter ao menos um caractere especial';
-      if (formData.password !== confirmPassword) return 'As senhas não coincidem';
-    }
-
-    return null;
-  };
-
-  const handleCreate = async () => {
-    setFormError('');
-
-    const validationError = validateForm(false);
-    if (validationError) {
-      setFormError(validationError);
-      return;
-    }
-
-    setSaving(true);
+  const invite = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setBusy('invite');
     try {
-      const response = await fetch('/api/super-admin/users/admins', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData)
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Super Admin Criado',
-          description: 'O super admin foi criado com sucesso'
-        });
-        setShowCreateModal(false);
-        setFormData({ name: '', email: '', password: '' });
-        setConfirmPassword('');
-        setShowPassword(false);
-        setShowConfirmPassword(false);
-        setFormError('');
-        fetchAdmins();
-      } else {
-        const error = await response.json();
-        throw new Error(error.error);
-      }
+      const data = await call('/api/platform/team', { method: 'POST', body: JSON.stringify(form) });
+      setSecret({ label: `Senha temporária de ${data.member.name}`, value: data.temporaryPassword });
+      setForm({ name: '', email: '', role: 'PLATFORM_SUPPORT' });
+      load();
     } catch (error: any) {
-      setFormError(error.message || 'Não foi possível criar o super admin');
+      toast({ title: 'Não foi possível convidar', description: error.message, variant: 'destructive' });
     } finally {
-      setSaving(false);
+      setBusy(null);
     }
   };
 
-  const handleUpdate = async () => {
-    if (!selectedAdmin) return;
-
-    setFormError('');
-
-    const validationError = validateForm(true);
-    if (validationError) {
-      setFormError(validationError);
-      return;
-    }
-
-    setSaving(true);
+  const update = async (m: Member, body: Partial<Pick<Member, 'role' | 'isActive'>>, success: string) => {
+    setBusy(m.id);
     try {
-      const response = await fetch(`/api/super-admin/users/admins/${selectedAdmin.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: formData.name,
-          email: formData.email
-        })
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Super Admin Atualizado',
-          description: 'O super admin foi atualizado com sucesso'
-        });
-        setShowEditModal(false);
-        setSelectedAdmin(null);
-        setFormData({ name: '', email: '', password: '' });
-        setFormError('');
-        fetchAdmins();
-      } else {
-        const error = await response.json();
-        throw new Error(error.error || 'Erro ao atualizar');
-      }
+      await call(`/api/platform/team/${m.id}`, { method: 'PATCH', body: JSON.stringify(body) });
+      toast({ title: success });
+      load();
     } catch (error: any) {
-      setFormError(error.message || 'Não foi possível atualizar o super admin');
+      toast({ title: 'Não foi possível alterar', description: error.message, variant: 'destructive' });
     } finally {
-      setSaving(false);
+      setBusy(null);
     }
   };
 
-  const handleToggleStatus = async (id: string, currentStatus: boolean) => {
+  const resetPassword = async (m: Member) => {
+    if (!confirm(`Gerar uma nova senha temporária para ${m.name}? A senha atual deixa de funcionar.`)) return;
+    setBusy(m.id);
     try {
-      const response = await fetch(`/api/super-admin/users/admins/${id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !currentStatus })
-      });
-
-      if (response.ok) {
-        toast({
-          title: currentStatus ? 'Desativado' : 'Ativado',
-          description: `Super admin ${currentStatus ? 'desativado' : 'ativado'} com sucesso`
-        });
-        fetchAdmins();
-      }
-    } catch (error) {
-      toast({
-        title: 'Erro',
-        description: 'Não foi possível alterar o status',
-        variant: 'destructive'
-      });
-    }
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm('Tem certeza que deseja desativar este super admin?')) return;
-
-    try {
-      const response = await fetch(`/api/super-admin/users/admins/${id}`, {
-        method: 'DELETE'
-      });
-
-      if (response.ok) {
-        toast({
-          title: 'Super Admin Removido',
-          description: 'O super admin foi desativado com sucesso'
-        });
-        fetchAdmins();
-      } else {
-        const error = await response.json();
-        throw new Error(error.error);
-      }
+      const data = await call(`/api/platform/team/${m.id}/reset-password`, { method: 'POST' });
+      setSecret({ label: `Nova senha temporária de ${m.name}`, value: data.temporaryPassword });
+      load();
     } catch (error: any) {
-      toast({
-        title: 'Erro',
-        description: error.message || 'Não foi possível remover o super admin',
-        variant: 'destructive'
-      });
+      toast({ title: 'Não foi possível redefinir', description: error.message, variant: 'destructive' });
+    } finally {
+      setBusy(null);
     }
   };
 
-  const openEditModal = (admin: SuperAdmin) => {
-    setSelectedAdmin(admin);
-    setFormData({
-      name: admin.name,
-      email: admin.email,
-      password: ''
-    });
-    setFormError('');
-    setShowEditModal(true);
-  };
-
-  const handleOpenCreateModal = () => {
-    setFormData({ name: '', email: '', password: '' });
-    setConfirmPassword('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setFormError('');
-    setShowCreateModal(true);
-  };
-
-  const filteredAdmins = admins.filter(admin =>
-    admin.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    admin.email.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const stats = {
-    total: admins.length,
-    active: admins.filter(a => a.isActive).length,
-    inactive: admins.filter(a => !a.isActive).length
-  };
+  const active = team.filter((m) => m.isActive);
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Gestão de Super Admins</h1>
-          <p className="text-gray-600">Gerencie os super administradores do sistema</p>
-        </div>
-        <Button onClick={handleOpenCreateModal}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Novo Super Admin
-        </Button>
+      <div>
+        <h1 className="flex items-center gap-2 text-3xl font-bold text-gray-900">
+          <UserCog className="h-7 w-7 text-blue-600" />
+          Equipe da plataforma
+        </h1>
+        <p className="text-gray-600">Quem opera este console. Cada pessoa tem o próprio login.</p>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Total</CardTitle>
-            <Shield className="h-5 w-5 text-purple-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.total}</div>
-            <p className="text-xs text-gray-500 mt-1">Super administradores</p>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Pessoas ativas</p>
+            <p className="text-2xl font-bold">{active.length}</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Ativos</CardTitle>
-            <CheckCircle className="h-5 w-5 text-green-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.active}</div>
-            <p className="text-xs text-gray-500 mt-1">Podem acessar o sistema</p>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Administradores</p>
+            <p className="text-2xl font-bold">{active.filter((m) => m.role === 'PLATFORM_ADMIN').length}</p>
           </CardContent>
         </Card>
-
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Inativos</CardTitle>
-            <XCircle className="h-5 w-5 text-red-600" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold">{stats.inactive}</div>
-            <p className="text-xs text-gray-500 mt-1">Bloqueados</p>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Suporte</p>
+            <p className="text-2xl font-bold">{active.filter((m) => m.role === 'PLATFORM_SUPPORT').length}</p>
           </CardContent>
         </Card>
       </div>
 
-      {/* Search */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-            <Input
-              type="text"
-              placeholder="Buscar por nome ou email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {secret && (
+        <Card className="border-green-300 bg-green-50">
+          <CardContent className="flex flex-wrap items-center justify-between gap-3 pt-6">
+            <div>
+              <p className="font-semibold text-green-900">{secret.label}</p>
+              <p className="text-sm text-green-800">
+                Envie para a pessoa por um canal seguro. Ela vai criar a própria senha no primeiro acesso. Esta senha não aparece de novo.
+              </p>
+              <code className="mt-2 inline-block rounded bg-white px-3 py-1.5 text-base font-bold tracking-wide">{secret.value}</code>
+            </div>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  navigator.clipboard?.writeText(secret.value);
+                  toast({ title: 'Senha copiada' });
+                }}
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Copiar
+              </Button>
+              <Button variant="ghost" onClick={() => setSecret(null)}>
+                Fechar
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
-      {/* Admins List */}
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <UserPlus className="h-5 w-5" />
+              Convidar pessoa
+            </CardTitle>
+            <CardDescription>{ROLE_HINT[form.role]}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={invite} className="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_1fr_200px_auto]">
+              <div>
+                <Label htmlFor="t-name">Nome</Label>
+                <Input id="t-name" required minLength={2} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="t-email">E-mail</Label>
+                <Input id="t-email" type="email" required value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} />
+              </div>
+              <div>
+                <Label htmlFor="t-role">Papel</Label>
+                <select
+                  id="t-role"
+                  value={form.role}
+                  onChange={(e) => setForm({ ...form, role: e.target.value as Role })}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                >
+                  <option value="PLATFORM_SUPPORT">Suporte</option>
+                  <option value="PLATFORM_ADMIN">Administrador</option>
+                </select>
+              </div>
+              <Button type="submit" disabled={busy === 'invite'}>
+                {busy === 'invite' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+                Convidar
+              </Button>
+            </form>
+          </CardContent>
+        </Card>
+      )}
+
       <Card>
         <CardHeader>
-          <CardTitle>Super Administradores ({filteredAdmins.length})</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Pessoas ({team.length})
+          </CardTitle>
+          {!isAdmin && <CardDescription>Seu acesso é de Suporte: você pode ver a equipe, mas não alterar.</CardDescription>}
         </CardHeader>
         <CardContent>
           {loading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-blue-600" />
-            </div>
-          ) : filteredAdmins.length === 0 ? (
-            <div className="text-center py-12">
-              <UserCog size={48} className="mx-auto text-gray-300 mb-3" />
-              <p className="text-gray-500 font-medium">Nenhum super admin encontrado</p>
+            <div className="flex justify-center py-10">
+              <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Usuário</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Departamento</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Último Login</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Criado em</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-700 uppercase">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredAdmins.map((admin) => (
-                    <tr key={admin.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3">
-                        <div>
-                          <div className="font-semibold text-gray-900 flex items-center gap-2">
-                            <Shield size={16} className="text-purple-600" />
-                            {admin.name}
-                          </div>
-                          <div className="text-sm text-gray-500 flex items-center gap-1">
-                            <Mail size={12} />
-                            {admin.email}
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {admin.department?.name || '-'}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className={`px-2 py-1 rounded-full text-xs font-semibold ${
-                          admin.isActive
-                            ? 'bg-green-100 text-green-800'
-                            : 'bg-red-100 text-red-800'
-                        }`}>
-                          {admin.isActive ? 'Ativo' : 'Inativo'}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <Calendar size={12} />
-                          {admin.lastLogin
-                            ? new Date(admin.lastLogin).toLocaleDateString('pt-BR')
-                            : 'Nunca'}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600">
-                        {new Date(admin.createdAt).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => openEditModal(admin)}
-                            className="p-2 text-gray-600 hover:bg-gray-100 rounded-lg"
-                            title="Editar"
-                          >
-                            <Edit size={18} />
-                          </button>
-                          <button
-                            onClick={() => handleToggleStatus(admin.id, admin.isActive)}
-                            className={`p-2 rounded-lg ${
-                              admin.isActive
-                                ? 'text-orange-600 hover:bg-orange-50'
-                                : 'text-green-600 hover:bg-green-50'
-                            }`}
-                            title={admin.isActive ? 'Desativar' : 'Ativar'}
-                          >
-                            {admin.isActive ? <XCircle size={18} /> : <CheckCircle size={18} />}
-                          </button>
-                          <button
-                            onClick={() => handleDelete(admin.id)}
-                            className="p-2 text-red-600 hover:bg-red-50 rounded-lg"
-                            title="Remover"
-                          >
-                            <Trash2 size={18} />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+            <div className="divide-y">
+              {team.map((m) => (
+                <div key={m.id} className={`flex flex-wrap items-center justify-between gap-3 py-3 ${m.isActive ? '' : 'opacity-60'}`}>
+                  <div className="min-w-0">
+                    <p className="flex flex-wrap items-center gap-2 font-medium">
+                      {m.name}
+                      {m.isYou && <Badge variant="outline">você</Badge>}
+                      <Badge className={m.role === 'PLATFORM_ADMIN' ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-700'}>
+                        {m.role === 'PLATFORM_ADMIN' && <ShieldCheck className="mr-1 h-3 w-3" />}
+                        {ROLE_LABEL[m.role]}
+                      </Badge>
+                      {!m.isActive && <Badge className="bg-red-100 text-red-800">Desativado</Badge>}
+                      {m.isActive && m.mustChangePassword && <Badge className="bg-amber-100 text-amber-800">Aguardando 1º acesso</Badge>}
+                    </p>
+                    <p className="text-sm text-gray-500">
+                      {m.email} · último acesso: {m.lastLoginAt ? new Date(m.lastLoginAt).toLocaleString('pt-BR') : 'nunca'}
+                    </p>
+                  </div>
+                  {isAdmin && !m.isYou && (
+                    <div className="flex flex-wrap gap-2">
+                      <select
+                        aria-label={`Papel de ${m.name}`}
+                        value={m.role}
+                        disabled={busy === m.id}
+                        onChange={(e) => update(m, { role: e.target.value as Role }, 'Papel alterado')}
+                        className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                      >
+                        <option value="PLATFORM_ADMIN">Administrador</option>
+                        <option value="PLATFORM_SUPPORT">Suporte</option>
+                      </select>
+                      <Button size="sm" variant="outline" disabled={busy === m.id} onClick={() => resetPassword(m)}>
+                        <KeyRound className="mr-1 h-4 w-4" />
+                        Nova senha
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={busy === m.id}
+                        className={m.isActive ? 'text-red-600' : 'text-green-700'}
+                        onClick={() => update(m, { isActive: !m.isActive }, m.isActive ? 'Acesso desativado' : 'Acesso reativado')}
+                      >
+                        {m.isActive ? 'Desativar' : 'Reativar'}
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
-
-      {/* Create Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Criar Novo Super Admin</CardTitle>
-              <p className="text-sm text-gray-500">Preencha os dados do novo super administrador</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{formError}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="create-name">Nome *</Label>
-                <Input
-                  id="create-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome completo"
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="create-email">Email *</Label>
-                <Input
-                  id="create-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@exemplo.com"
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="create-password">Senha *</Label>
-                <div className="relative">
-                  <Input
-                    id="create-password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={formData.password}
-                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Mínimo 8 caracteres"
-                    disabled={saving}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    tabIndex={-1}
-                    disabled={saving}
-                  >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-
-                {/* Indicador de força da senha */}
-                {formData.password && (
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted-foreground">Força da senha:</span>
-                      <span className={`text-xs font-medium ${
-                        getPasswordStrength(formData.password).label === 'Forte' ? 'text-green-600' :
-                        getPasswordStrength(formData.password).label === 'Média' ? 'text-yellow-600' :
-                        'text-red-600'
-                      }`}>
-                        {getPasswordStrength(formData.password).label}
-                      </span>
-                    </div>
-                    <div className="flex gap-1 h-1">
-                      {[...Array(6)].map((_, i) => (
-                        <div
-                          key={i}
-                          className={`flex-1 rounded-full ${
-                            i < getPasswordStrength(formData.password).score
-                              ? getPasswordStrength(formData.password).color
-                              : 'bg-gray-200'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <p className="text-xs text-muted-foreground">
-                  Deve conter: maiúscula, minúscula, número e caractere especial
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="create-confirm-password">Confirmar Senha *</Label>
-                <div className="relative">
-                  <Input
-                    id="create-confirm-password"
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    placeholder="Digite a senha novamente"
-                    disabled={saving}
-                    className="pr-10"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    tabIndex={-1}
-                    disabled={saving}
-                  >
-                    {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                  </button>
-                </div>
-                {confirmPassword && formData.password !== confirmPassword && (
-                  <p className="text-xs text-red-600">As senhas não coincidem</p>
-                )}
-                {confirmPassword && formData.password === confirmPassword && (
-                  <p className="text-xs text-green-600">✓ As senhas coincidem</p>
-                )}
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  onClick={() => {
-                    setShowCreateModal(false);
-                    setFormData({ name: '', email: '', password: '' });
-                    setConfirmPassword('');
-                    setFormError('');
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                  disabled={saving}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleCreate}
-                  className="flex-1"
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Criar
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
-
-      {/* Edit Modal */}
-      {showEditModal && selectedAdmin && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <Card className="w-full max-w-md max-h-[90vh] overflow-y-auto">
-            <CardHeader>
-              <CardTitle>Editar Super Admin</CardTitle>
-              <p className="text-sm text-gray-500">Edite as informações do super administrador</p>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {formError && (
-                <Alert variant="destructive">
-                  <AlertCircle className="h-4 w-4" />
-                  <AlertDescription>{formError}</AlertDescription>
-                </Alert>
-              )}
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Nome *</Label>
-                <Input
-                  id="edit-name"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  placeholder="Nome completo"
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">Email *</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  placeholder="email@exemplo.com"
-                  disabled={saving}
-                />
-              </div>
-
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-                <p className="text-xs text-blue-800 flex items-start gap-2">
-                  <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
-                  <span>Para alterar a senha, use a função "Redefinir Senha" na lista de usuários.</span>
-                </p>
-              </div>
-
-              <div className="flex gap-2 pt-4">
-                <Button
-                  onClick={() => {
-                    setShowEditModal(false);
-                    setSelectedAdmin(null);
-                    setFormData({ name: '', email: '', password: '' });
-                    setFormError('');
-                  }}
-                  variant="outline"
-                  className="flex-1"
-                  disabled={saving}
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  onClick={handleUpdate}
-                  className="flex-1"
-                  disabled={saving}
-                >
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Salvar Alterações
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,12 +3,13 @@ import { prisma } from '../lib/prisma';
 import { z } from 'zod';
 import { asyncHandler } from '../utils/express-helpers';
 import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
-import { superAdminAuth } from '../middleware/super-admin-auth';
 
+import { platformConsoleAuth } from '../middleware/platform-console-auth';
 const router = Router();
 
 // Templates transacionais da plataforma — só SUPER_ADMIN (antes: sem autenticação)
-router.use(superAdminAuth);
+// Console da plataforma: PlatformUser ou SUPER_ADMIN legado (Suporte = só leitura)
+router.use(platformConsoleAuth);
 
 // Schema de validação para template
 const templateSchema = z.object({

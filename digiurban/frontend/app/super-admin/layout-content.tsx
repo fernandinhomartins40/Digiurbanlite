@@ -42,6 +42,7 @@ import { GlassNavSheet, type GlassNavGroup } from '@/components/liquid-glass/Gla
 import { LgAmbient } from '@/components/liquid-glass/LgAmbient';
 import { SegmentLinks } from '@/components/liquid-glass/SegmentLinks';
 import { ThemeToggleButton } from '@/components/liquid-glass/ThemeToggleButton';
+import { ForcePasswordChange } from '@/components/super-admin/ForcePasswordChange';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -135,7 +136,7 @@ const PUBLIC_PATHS = ['/super-admin/login', '/super-admin/forgot-password', '/su
 function SuperAdminLayoutContent({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname() || '';
-  const { user, loading: authLoading, logout } = useSuperAdminAuth();
+  const { user, loading: authLoading, logout, refreshUser } = useSuperAdminAuth();
   const [searchOpen, setSearchOpen] = useState(false);
 
   // Tema claro/escuro do DigiUrban Glass para todo o painel (inclusive o login)
@@ -226,6 +227,9 @@ function SuperAdminLayoutContent({ children }: { children: React.ReactNode }) {
         )}
         {children}
       </main>
+
+      {/* Senha temporária (convite/redefinição na Equipe): troca obrigatória */}
+      {user.mustChangePassword && <ForcePasswordChange onDone={() => void refreshUser()} />}
 
       <GlassNavSheet open={searchOpen} onClose={closeSearch} groups={navGroups} placeholder="Ir para… (ex.: faturas, domínios, backups)" />
 
