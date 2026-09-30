@@ -130,14 +130,14 @@ export default function EmailServerDashboard() {
           <div className="flex items-center gap-3">
             <AlertCircle className="w-6 h-6 text-red-600" />
             <div>
-              <h3 className="font-semibold text-red-900">Servidor Offline</h3>
-              <p className="text-sm text-red-700">O servidor SMTP está parado. Acesse as configurações para iniciá-lo.</p>
+              <h3 className="font-semibold text-red-900">Servidor de e-mail sem resposta</h3>
+              <p className="text-sm text-red-700">O painel não conseguiu se conectar ao servidor de e-mail. Veja os detalhes em Servidor SMTP.</p>
             </div>
             <Link
               href="/super-admin/email-server/config"
               className="ml-auto px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
             >
-              Gerenciar Servidor
+              Ver detalhes
             </Link>
           </div>
         </div>

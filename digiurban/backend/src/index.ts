@@ -257,6 +257,8 @@ try {
 
 // Plataforma (Fase C Multi-Tenant): PlatformUser + gestão de municípios.
 // Corte executado (plano 2026-07-13): /api/super-admin/tenants* responde 410.
+// Formulários da landing institucional → Super-admin › Leads
+loadRoute('/api/leads', './routes/public-leads.routes');
 loadRoute('/api/platform', './routes/platform');
 // Painel de plataforma completo (Fases 1/6 do plano 2026-07-13): detalhe de
 // municípios, admins, billing, leads, métricas, schema, migrations, backups.

@@ -1,4 +1,5 @@
 import { Router, Request, Response } from 'express';
+import net from 'net';
 import { prisma } from '../lib/prisma';
 import { authenticateToken, requireSuperAdmin } from '../middleware/auth';
 import emailDomainsRouter from './email-domains';
@@ -7,6 +8,28 @@ import { emailServerHealthService } from '../services/email-server-health.servic
 // import { getEmailServerRuntimeStatus, startEmailServer, stopEmailServer } from '../lib/email/email-server-manager';
 
 const router = Router();
+
+/**
+ * Teste REAL do servidor de e-mail (container ultrazend-smtp): abre uma
+ * conexão TCP na porta de envio. Antes, "isRunning" vinha de uma marcação no
+ * banco que os botões Iniciar/Parar mudavam sem tocar no servidor.
+ */
+export const SMTP_PROBE_HOST = process.env.EMAIL_SERVER_PROBE_HOST || 'ultrazend-smtp';
+
+export function probeSmtp(port: number, host = SMTP_PROBE_HOST, timeoutMs = 2500): Promise<{ reachable: boolean; error: string | null; latencyMs: number | null }> {
+  return new Promise((resolve) => {
+    const started = Date.now();
+    const socket = net.createConnection({ host, port });
+    const done = (reachable: boolean, error: string | null) => {
+      socket.destroy();
+      resolve({ reachable, error, latencyMs: reachable ? Date.now() - started : null });
+    };
+    socket.setTimeout(timeoutMs);
+    socket.once('connect', () => done(true, null));
+    socket.once('timeout', () => done(false, 'sem resposta (tempo esgotado)'));
+    socket.once('error', (err: any) => done(false, err?.code === 'ENOTFOUND' ? 'servidor não encontrado na rede' : err?.code || err?.message || 'erro de conexão'));
+  });
+}
 
 // Aplicar middleware de autenticação e super admin em todas as rotas
 router.use(authenticateToken);
@@ -31,9 +54,12 @@ router.get('/status', async (req: Request, res: Response) => {
     });
 
     if (!emailServer) {
+      const probe = await probeSmtp(587);
       return res.json({
         status: {
-          isRunning: false,
+          isRunning: probe.reachable,
+          probe: { host: SMTP_PROBE_HOST, port: 587, ...probe },
+          recoveryConfigured: health.recoveryConfigured,
           uptime: 0,
           hostname: 'N/A',
           ports: { mx: 25, submission: 587 },
@@ -68,9 +94,13 @@ router.get('/status', async (req: Request, res: Response) => {
     // SMTP Server agora roda em container separado - status fixo
     // const runtimeStatus = getEmailServerRuntimeStatus();
 
+    const probe = await probeSmtp(emailServer.submissionPort || 587);
+
     res.json({
       status: {
-        isRunning: emailServer.isActive,  // Baseado no DB, não runtime
+        isRunning: probe.reachable, // conexão real com o servidor de e-mail
+        probe: { host: SMTP_PROBE_HOST, port: emailServer.submissionPort || 587, ...probe },
+        recoveryConfigured: health.recoveryConfigured,
         uptime: 0,  // Container separado não reporta uptime aqui
         hostname: emailServer.hostname,
         ports: {
@@ -110,7 +140,7 @@ router.get('/dashboard-stats', async (req: Request, res: Response) => {
     if (!emailServer) {
       return res.json({
         stats: {
-          server: { isRunning: false, uptime: 0, hostname: 'N/A' },
+          server: { isRunning: (await probeSmtp(587)).reachable, uptime: 0, hostname: 'N/A' },
           domains: { total: 0, verified: 0, pending: 0 },
           emails: { total: 0, sent: 0, delivered: 0, failed: 0, queued: 0, deliveryRate: 0 },
           recentActivity: []
@@ -159,7 +189,7 @@ router.get('/dashboard-stats', async (req: Request, res: Response) => {
     res.json({
       stats: {
         server: {
-          isRunning: emailServer.isActive,
+          isRunning: (await probeSmtp(emailServer.submissionPort || 587)).reachable,
           uptime: 0,
           hostname: emailServer.hostname
         },
@@ -305,76 +335,19 @@ router.put('/config', async (req: Request, res: Response) => {
 });
 
 /**
- * POST /api/super-admin/email-server/start
- * Inicia o servidor SMTP
+ * POST /api/super-admin/email-server/start | /stop — DESATIVADOS.
+ * O servidor de e-mail roda num container próprio (ultrazend-smtp) e é ligado
+ * junto com o sistema; estes botões só mudavam uma marcação no banco e
+ * mostravam "Online" sem nada acontecer.
  */
-router.post('/start', async (req: Request, res: Response) => {
-  try {
-    let emailServer = await prisma.emailServer.findFirst();
-
-    // Se não existir, criar com valores padrão
-    if (!emailServer) {
-      emailServer = await prisma.emailServer.create({
-        data: {
-          hostname: 'smtp.digiurban.com.br',
-          mxPort: 25,
-          submissionPort: 587,
-          tlsEnabled: true,
-          isPremiumService: true,
-          monthlyPrice: 99.00,
-          isActive: true
-        }
-      });
-    } else {
-      await prisma.emailServer.update({
-        where: { id: emailServer.id },
-        data: { isActive: true }
-      });
-    }
-
-    // SMTP Server agora roda em container separado
-    // Apenas atualiza o status no DB
-    // const status = await startEmailServer();
-    res.json({
-      success: true,
-      message: 'Server configuration updated (restart ultrazend-smtp container to apply)',
-      status: { isRunning: true, hostname: emailServer.hostname }
-    });
-  } catch (error) {
-    console.error('Error starting server:', error);
-    res.status(500).json({ error: 'Failed to start server' });
-  }
-});
-
-/**
- * POST /api/super-admin/email-server/stop
- * Para o servidor SMTP
- */
-router.post('/stop', async (req: Request, res: Response) => {
-  try {
-    const emailServer = await prisma.emailServer.findFirst();
-
-    if (!emailServer) {
-      return res.status(404).json({ error: 'Email server not configured' });
-    }
-
-    await prisma.emailServer.update({
-      where: { id: emailServer.id },
-      data: { isActive: false }
-    });
-
-    // SMTP Server agora roda em container separado
-    // await stopEmailServer();
-
-    res.json({
-      success: true,
-      message: 'Server configuration updated (restart ultrazend-smtp container to apply)'
-    });
-  } catch (error) {
-    console.error('Error stopping server:', error);
-    res.status(500).json({ error: 'Failed to stop server' });
-  }
-});
+const containerManaged = (_req: Request, res: Response) =>
+  res.status(410).json({
+    success: false,
+    error: 'O servidor de e-mail é ligado junto com o sistema e não é controlado pelo painel',
+    message: 'Use "Verificar agora" para testar a conexão, ou reinicie o container ultrazend-smtp no servidor.',
+  });
+router.post('/start', containerManaged);
+router.post('/stop', containerManaged);
 
 /**
  * POST /api/super-admin/email-server/restart
@@ -416,7 +389,7 @@ router.post('/restart', async (req: Request, res: Response) => {
       success: recovery.triggered,
       message: recovery.message,
       status: {
-        isRunning: true,
+        isRunning: (await probeSmtp(emailServer.submissionPort || 587)).reachable,
         hostname: emailServer.hostname,
         monitor: health
       },

@@ -119,24 +119,30 @@ export default function EmailServerConfigPage() {
     }
   };
 
-  const handleServerAction = async (action: 'start' | 'stop' | 'restart') => {
+  const [checking, setChecking] = useState(false);
+
+  // Testa a conexão real com o servidor de e-mail (container ultrazend-smtp)
+  const handleCheckNow = async () => {
+    setChecking(true);
     try {
-      await apiRequest(`/super-admin/email-server/${action}`, { method: 'POST' });
+      await fetchServerStatus();
+    } finally {
+      setChecking(false);
+    }
+  };
 
+  // Reinício só funciona quando a recuperação automática está configurada no servidor
+  const handleRestart = async () => {
+    try {
+      const result = await apiRequest('/super-admin/email-server/restart', { method: 'POST' });
       toast({
-        title: `Servidor ${action === 'start' ? 'iniciado' : action === 'stop' ? 'parado' : 'reiniciado'}`,
-        description: `O servidor foi ${action === 'start' ? 'iniciado' : action === 'stop' ? 'parado' : 'reiniciado'} com sucesso.`,
+        title: result?.success ? 'Reinício solicitado' : 'Não foi possível reiniciar',
+        description: result?.message,
+        variant: result?.success ? undefined : 'destructive',
       });
-
-      // Atualizar status após 2 segundos
-      setTimeout(() => fetchServerStatus(), 2000);
-    } catch (error) {
-      console.error(`Error ${action} server:`, error);
-      toast({
-        title: 'Erro',
-        description: `Não foi possível ${action === 'start' ? 'iniciar' : action === 'stop' ? 'parar' : 'reiniciar'} o servidor.`,
-        variant: 'destructive',
-      });
+      setTimeout(() => fetchServerStatus(), 3000);
+    } catch {
+      toast({ title: 'Erro', description: 'Não foi possível reiniciar o servidor.', variant: 'destructive' });
     }
   };
 
@@ -269,34 +275,36 @@ export default function EmailServerConfigPage() {
             <Server className="w-5 h-5" />
             Controle do Servidor
           </CardTitle>
-          <CardDescription>Inicie, pare ou reinicie o servidor SMTP</CardDescription>
+          <CardDescription>
+            O servidor de e-mail roda separado e liga junto com o sistema. Aqui você confere se ele está respondendo.
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex gap-3">
+          {(serverStatus as any)?.probe && (
+            <p className={`mb-3 text-sm ${serverStatus?.isRunning ? 'text-green-700' : 'text-red-700'}`}>
+              {serverStatus?.isRunning
+                ? `Respondendo em ${(serverStatus as any).probe.host}:${(serverStatus as any).probe.port} (${(serverStatus as any).probe.latencyMs} ms).`
+                : `Sem resposta em ${(serverStatus as any).probe.host}:${(serverStatus as any).probe.port} — ${(serverStatus as any).probe.error}. Um técnico precisa verificar o container ultrazend-smtp.`}
+            </p>
+          )}
+          <div className="flex flex-wrap gap-3">
             <button
-              onClick={() => handleServerAction('start')}
-              disabled={serverStatus?.isRunning}
-              className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
+              onClick={handleCheckNow}
+              disabled={checking}
+              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-60 transition-colors"
             >
-              <Play className="w-4 h-4" />
-              Iniciar Servidor
+              <Activity className="w-4 h-4" />
+              {checking ? 'Verificando…' : 'Verificar agora'}
             </button>
-            <button
-              onClick={() => handleServerAction('stop')}
-              disabled={!serverStatus?.isRunning}
-              className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              <Square className="w-4 h-4" />
-              Parar Servidor
-            </button>
-            <button
-              onClick={() => handleServerAction('restart')}
-              disabled={!serverStatus?.isRunning}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-            >
-              <RotateCw className="w-4 h-4" />
-              Reiniciar
-            </button>
+            {(serverStatus as any)?.recoveryConfigured && (
+              <button
+                onClick={handleRestart}
+                className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                <RotateCw className="w-4 h-4" />
+                Reiniciar servidor de e-mail
+              </button>
+            )}
             <button
               onClick={fetchLogs}
               className="flex items-center gap-2 px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors ml-auto"

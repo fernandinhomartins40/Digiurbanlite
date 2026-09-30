@@ -101,6 +101,11 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
       return res.status(401).json({ error: 'Credenciais inválidas' });
     }
 
+    // Registra o acesso (a tela Equipe da plataforma mostrava sempre "Nunca")
+    await runAsPlatform(async () =>
+      prisma.user.update({ where: { id: user.id }, data: { lastLogin: new Date() } })
+    ).catch(() => undefined);
+
     // Gerar token JWT
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
@@ -189,6 +194,16 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
     console.error('Erro no login super admin:', error);
     return res.status(500).json({ error: 'Erro interno do servidor' });
   }
+});
+
+// POST /api/super-admin/logout — encerra a sessão do console da plataforma.
+// Existia só como rota interna do Next (que o nginx nunca alcança): o "Sair"
+// deixava os dois cookies válidos no navegador.
+router.post('/logout', (_req: Request, res: Response) => {
+  const secure = process.env.NODE_ENV === 'production';
+  res.clearCookie('digiurban_admin_token', { httpOnly: true, secure, sameSite: 'lax' });
+  res.clearCookie('digiurban_platform_token', { httpOnly: true, secure, sameSite: 'strict' });
+  return res.json({ success: true, message: 'Sessão encerrada' });
 });
 
 // GET /api/super-admin/auth/me - Obter informações do super admin autenticado

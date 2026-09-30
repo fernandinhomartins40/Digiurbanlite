@@ -49,7 +49,84 @@ function toProviderForm(settings: AiProviderSettings): ProviderFormState {
   };
 }
 
+type AiAvailability = 'checking' | 'online' | 'not-configured' | 'offline';
+
+/**
+ * Antes de montar o console, confere se o serviço de IA existe neste servidor.
+ * A IA local (llama.cpp) saiu do deploy em 2026-09-14; sem AI_API_URL o proxy
+ * responde 503 — aqui isso vira um aviso claro em vez de erros vermelhos.
+ */
 export default function SuperAdminAiPage() {
+  const [availability, setAvailability] = useState<AiAvailability>('checking');
+
+  useEffect(() => {
+    fetch('/api/ai/health')
+      .then(async (res) => {
+        if (res.ok) return setAvailability('online');
+        const data = await res.json().catch(() => ({}));
+        setAvailability(data?.code === 'AI_SERVICE_NOT_CONFIGURED' ? 'not-configured' : 'offline');
+      })
+      .catch(() => setAvailability('offline'));
+  }, []);
+
+  if (availability === 'checking') {
+    return (
+      <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Verificando o serviço de IA…
+      </div>
+    );
+  }
+
+  if (availability !== 'online') {
+    const notConfigured = availability === 'not-configured';
+    return (
+      <div className="space-y-6 pb-8">
+        <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
+          <h1 className="text-2xl font-bold text-slate-900">IA da plataforma</h1>
+          <p className="mt-1 text-sm text-slate-600">Provedor, conhecimento e chaves de uso da IA.</p>
+        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PlugZap className="h-5 w-5 text-amber-600" />
+              {notConfigured ? 'IA desativada neste servidor' : 'Serviço de IA fora do ar'}
+            </CardTitle>
+            <CardDescription>
+              {notConfigured
+                ? 'A IA local foi retirada do servidor e a integração com um provedor externo ainda não foi ligada. Enquanto isso, os recursos de IA ficam indisponíveis para os municípios.'
+                : 'O serviço de IA está configurado, mas não respondeu. Tente de novo em alguns minutos.'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3 text-sm text-slate-700">
+            {notConfigured ? (
+              <>
+                <p className="font-medium">Para ligar a IA, um técnico precisa:</p>
+                <ol className="list-decimal space-y-1 pl-5">
+                  <li>Subir o serviço de IA (ou apontar para um provedor externo compatível).</li>
+                  <li>
+                    Definir <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">AI_API_URL</code> e{' '}
+                    <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">AI_SERVICE_TOKEN</code> no servidor.
+                  </li>
+                  <li>Reiniciar o sistema. Esta tela passa a mostrar o console completo.</li>
+                </ol>
+              </>
+            ) : (
+              <Button variant="outline" onClick={() => window.location.reload()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Verificar de novo
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  return <AiConsole />;
+}
+
+function AiConsole() {
   const { toast } = useToast();
 
   const [knowledge, setKnowledge] = useState<AiKnowledgeSource[]>([]);
@@ -294,14 +371,14 @@ export default function SuperAdminAiPage() {
   return (
     <div className="space-y-6 pb-8">
       <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">IA Centralizada</h1>
-        <p className="mt-1 text-sm text-slate-600">Governanca de providers, conhecimento e tokens da IA.</p>
+        <h1 className="text-2xl font-bold text-slate-900">IA da plataforma</h1>
+        <p className="mt-1 text-sm text-slate-600">Provedor, conhecimento e chaves de uso da IA.</p>
       </div>
 
       <Card>
         <CardHeader>
           <CardTitle className="text-base"><PlugZap className="mr-2 inline h-4 w-4" />Provider de inferencia</CardTitle>
-          <CardDescription>Configure o runtime local llama.cpp com Qwen3 1.7B Instruct.</CardDescription>
+          <CardDescription>Provedor e modelos usados pela IA do sistema.</CardDescription>
         </CardHeader>
         <CardContent>
           {loadingProvider ? (

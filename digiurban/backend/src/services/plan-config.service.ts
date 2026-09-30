@@ -30,9 +30,33 @@ export interface PlanConfigRecord {
   updatedAt: Date;
 }
 
+/**
+ * Catálogo inicial = os três planos que os municípios já usam no campo
+ * Tenant.plan (basic/professional/enterprise). Sem isso, o catálogo nascia
+ * vazio e a tela Planos mostrava "0 municípios" com todos eles tendo plano.
+ * Só roda com o catálogo VAZIO (nunca sobrescreve o que o operador editou).
+ */
+const DEFAULT_PLANS = [
+  { code: 'BASIC', name: 'Básico', description: 'Para municípios pequenos', monthlyPrice: 299, maxUsers: 20, maxCitizens: 20000, sortOrder: 1 },
+  { code: 'PROFESSIONAL', name: 'Profissional', description: 'Para municípios médios', monthlyPrice: 799, maxUsers: 100, maxCitizens: 100000, sortOrder: 2 },
+  { code: 'ENTERPRISE', name: 'Enterprise', description: 'Sem limites de uso', monthlyPrice: 1999, maxUsers: -1, maxCitizens: -1, sortOrder: 3 },
+];
+
+export async function ensureDefaultPlans(): Promise<void> {
+  const { prisma } = await import('../lib/prisma');
+  await runAsPlatform(async () => {
+    if ((await prisma.planConfig.count()) > 0) return;
+    await prisma.planConfig.createMany({
+      data: DEFAULT_PLANS.map((p) => ({ ...p, features: {}, isActive: true })),
+      skipDuplicates: true,
+    });
+  });
+}
+
 /** Lista planos ordenados (sortOrder, depois preço). Inclui contagem de municípios. */
 export async function listPlans(includeInactive = true): Promise<Array<PlanConfigRecord & { tenants: number }>> {
   const { prisma } = await import('../lib/prisma');
+  await ensureDefaultPlans();
   return runAsPlatform(async () => {
     const plans = await prisma.planConfig.findMany({
       where: includeInactive ? undefined : { isActive: true },

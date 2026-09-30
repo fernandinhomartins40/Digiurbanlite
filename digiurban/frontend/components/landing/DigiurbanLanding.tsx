@@ -60,6 +60,8 @@ import {
   Heart,
 } from 'lucide-react';
 
+import { LeadDialogProvider, sendLead, useOpenLead } from './LeadDialog';
+
 const CONTATO = 'suporte@digiurban.com.br';
 const mailto = (subject: string, body = '') =>
   `mailto:${CONTATO}?subject=${encodeURIComponent(subject)}${body ? `&body=${encodeURIComponent(body)}` : ''}`;
@@ -862,6 +864,7 @@ function Security() {
 }
 
 function FinalCta() {
+  const openLead = useOpenLead();
   return (
     <section id="planos" className="relative overflow-hidden text-white">
       <Bg name="fundo-hero" />
@@ -870,14 +873,14 @@ function FinalCta() {
         <h2 className="text-[25px] font-bold leading-[1.1] tracking-[-0.02em]">Pronto para transformar o seu município?</h2>
         <p className="mt-2 text-[14px] text-white/90">Junte-se às cidades que já estão no Digiurban.</p>
         <div className="mx-auto mt-4 flex max-w-[320px] flex-col gap-2.5">
-          <a href={mailto('Quero uma demonstração do Digiurban')} className="dl-btn dl-btn-teal h-[48px] rounded-xl text-[15px]">
+          <button type="button" onClick={() => openLead('demo')} className="dl-btn dl-btn-teal h-[48px] rounded-xl text-[15px]">
             Solicitar uma Demonstração
             <ArrowRight className="h-4 w-4" />
-          </a>
-          <a href={mailto('Quero falar com um especialista')} className="dl-btn dl-btn-ghost h-[46px] rounded-xl text-[15px]">
+          </button>
+          <button type="button" onClick={() => openLead('contact')} className="dl-btn dl-btn-ghost h-[46px] rounded-xl text-[15px]">
             <Play className="h-4 w-4" />
             Falar com um Especialista
-          </a>
+          </button>
         </div>
         <div className="relative mt-3 flex items-end">
           <Asset name="mascote-cta" alt="Mascote do Digiurban comemorando" sizes="70vw" className="relative -mb-[4%] ml-[-4%] w-[62%]" />
@@ -905,14 +908,14 @@ function FinalCta() {
             Junte-se a centenas de cidades que já estão construindo um futuro mais digital, eficiente e humano com o Digiurban.
           </p>
           <div className="mt-3 flex flex-wrap gap-2 md:mt-5 md:gap-3">
-            <a href={mailto('Quero uma demonstração do Digiurban')} className="dl-btn dl-btn-teal h-[36px] rounded-xl px-3 text-[12px] md:h-[42px] md:px-6 md:text-[13.5px] lg:h-[50px] lg:text-[16px]">
+            <button type="button" onClick={() => openLead('demo')} className="dl-btn dl-btn-teal h-[36px] rounded-xl px-3 text-[12px] md:h-[42px] md:px-6 md:text-[13.5px] lg:h-[50px] lg:text-[16px]">
               Solicitar uma Demonstração
               <ArrowRight className="h-4 w-4" />
-            </a>
-            <a href={mailto('Quero falar com um especialista')} className="dl-btn dl-btn-ghost h-[36px] rounded-xl px-3 text-[12px] md:h-[42px] md:px-6 md:text-[13.5px] lg:h-[50px] lg:text-[16px]">
+            </button>
+            <button type="button" onClick={() => openLead('contact')} className="dl-btn dl-btn-ghost h-[36px] rounded-xl px-3 text-[12px] md:h-[42px] md:px-6 md:text-[13.5px] lg:h-[50px] lg:text-[16px]">
               <Play className="h-3.5 w-3.5 md:h-4 md:w-4" />
               Falar com um Especialista
-            </a>
+            </button>
           </div>
         </div>
         <p className="dl-script hidden self-center rotate-[-10deg] pb-6 whitespace-nowrap text-center text-[2.4vw] sm:block lg:text-[36px]">
@@ -928,6 +931,7 @@ function FinalCta() {
 
 function Footer() {
   const [email, setEmail] = useState('');
+  const [news, setNews] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const social: { label: string; icon: LucideIcon }[] = [
     { label: 'Instagram', icon: Instagram },
     { label: 'Facebook', icon: Facebook },
@@ -976,10 +980,17 @@ function Footer() {
           <p className="text-[13px] font-semibold text-white md:text-[12.5px]">Receba novidades</p>
           <form
             className="mt-2.5 flex overflow-hidden rounded-xl border border-white/15 bg-white/[0.06] backdrop-blur"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
               if (!email.trim()) return;
-              window.location.href = mailto('Quero receber novidades do Digiurban', `Meu e-mail: ${email.trim()}`);
+              setNews('sending');
+              try {
+                await sendLead({ kind: 'newsletter', email: email.trim() });
+                setNews('sent');
+                setEmail('');
+              } catch {
+                setNews('error');
+              }
             }}
           >
             <label htmlFor="dl-news" className="sr-only">
@@ -994,10 +1005,12 @@ function Footer() {
               placeholder="Seu e-mail"
               className="min-w-0 flex-1 bg-transparent px-4 py-3 text-[14px] text-white placeholder:text-[#8ea0bb] outline-none"
             />
-            <button type="submit" aria-label="Enviar" className="dl-btn-blue flex w-12 items-center justify-center">
+            <button type="submit" aria-label="Enviar" disabled={news === 'sending'} className="dl-btn-blue flex w-12 items-center justify-center">
               <Send className="h-4 w-4" />
             </button>
           </form>
+          {news === 'sent' && <p className="mt-2 text-[12.5px] text-[#2ee6d6]">Pronto! Você vai receber nossas novidades.</p>}
+          {news === 'error' && <p className="mt-2 text-[12.5px] text-red-300">Não foi possível cadastrar agora. Tente de novo.</p>}
         </div>
       </Container>
       <div className="border-t border-white/10">
@@ -1029,6 +1042,7 @@ function YoutubeGlyph() {
 
 export function DigiurbanLanding() {
   return (
+    <LeadDialogProvider>
     <div className="dl min-h-screen">
       <Header />
       <main>
@@ -1045,5 +1059,6 @@ export function DigiurbanLanding() {
       </main>
       <Footer />
     </div>
+    </LeadDialogProvider>
   );
 }
