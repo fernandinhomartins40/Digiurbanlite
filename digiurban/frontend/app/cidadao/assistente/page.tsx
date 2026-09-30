@@ -1,5 +1,6 @@
 'use client';
 
+import { LgAmbient } from '@/components/liquid-glass/LgAmbient';
 import { useState, useEffect, useRef } from 'react';
 import { useCitizenAuth } from '@/contexts/CitizenAuthContext';
 import { useRouter } from 'next/navigation';
@@ -680,7 +681,8 @@ export default function CitizenAssistantPage() {
 
   if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-gray-50">
+      <div className="lg-root relative flex items-center justify-center h-screen">
+        <LgAmbient />
         <div className="flex flex-col items-center gap-3">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           <p className="text-sm text-gray-600">Carregando...</p>
@@ -690,7 +692,8 @@ export default function CitizenAssistantPage() {
   }
 
   return (
-    <div className="h-screen flex bg-gray-50 overflow-hidden">
+    <div className="lg-root relative h-screen flex overflow-hidden">
+      <LgAmbient />
       {/* Sidebar Menu Lateral */}
       {showSidebar && (
         <>
@@ -698,25 +701,25 @@ export default function CitizenAssistantPage() {
             className="fixed inset-0 z-40 bg-black/50"
             onClick={() => setShowSidebar(false)}
           />
-          <div className="fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-xl flex flex-col">
+          <div className="lg-glass lg-thick fixed inset-y-3 left-3 z-50 w-80 max-w-[calc(100vw-24px)] rounded-[32px] flex flex-col overflow-hidden">
             {/* Header Sidebar */}
-            <div className="p-4 border-b flex items-center justify-between bg-gradient-to-r from-blue-800 via-blue-700 to-teal-700">
+            <div className="p-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Avatar className="w-12 h-12 border-2 border-white">
-                  <AvatarFallback className="bg-white text-blue-600 font-bold">
+                <Avatar className="w-12 h-12">
+                  <AvatarFallback className="lg-tinted lg-tint-blue font-bold">
                     {getInitials(citizen?.name || '')}
                   </AvatarFallback>
                 </Avatar>
-                <div className="text-white">
+                <div>
                   <p className="font-semibold">{citizen?.name?.split(' ')[0]}</p>
-                  <p className="text-xs text-blue-100">{isConnected ? 'Online' : 'Offline'}</p>
+                  <p className="text-xs text-[var(--lg-ink2)]">{isConnected ? 'Online' : 'Offline'}</p>
                 </div>
               </div>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowSidebar(false)}
-                className="text-white hover:bg-white/20"
+                className="rounded-full hover:bg-[var(--lg-fill)]"
               >
                 <X className="w-5 h-5" />
               </Button>
@@ -732,10 +735,10 @@ export default function CitizenAssistantPage() {
                       key={item.name}
                       href={item.href}
                       onClick={() => setShowSidebar(false)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-gray-100 transition-colors group"
+                      className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--lg-fill)] transition-colors group"
                     >
-                      <Icon className="w-5 h-5 text-gray-600 group-hover:text-blue-600" />
-                      <span className="text-sm font-medium text-gray-700 group-hover:text-blue-600">
+                      <Icon className="w-5 h-5 text-[var(--lg-ink2)] group-hover:text-[var(--lg-blue)]" />
+                      <span className="text-sm font-medium group-hover:text-[var(--lg-blue)]">
                         {item.name}
                       </span>
                     </Link>
@@ -745,10 +748,10 @@ export default function CitizenAssistantPage() {
             </ScrollArea>
 
             {/* Logout */}
-            <div className="p-4 border-t">
+            <div className="p-3">
               <button
                 onClick={logout}
-                className="w-full flex items-center gap-3 px-4 py-3 rounded-lg hover:bg-red-50 transition-colors text-red-600"
+                className="w-full flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-[var(--lg-fill)] transition-colors text-[var(--lg-red)]"
               >
                 <LogOut className="w-5 h-5" />
                 <span className="text-sm font-medium">Sair</span>
@@ -762,31 +765,31 @@ export default function CitizenAssistantPage() {
       <div
         className={`${
           isMobileView
-            ? showConversationsList ? 'w-full' : 'hidden'
-            : 'w-96 border-r'
-        } bg-white flex flex-col`}
+            ? showConversationsList ? 'w-full pb-[88px]' : 'hidden'
+            : 'w-96 pb-[88px] lg:pb-0'
+        } flex flex-col min-h-0`}
       >
         {/* Header da Lista */}
-        <div className="p-4 border-b bg-gradient-to-r from-blue-800 via-blue-700 to-teal-700">
+        <div className="lg-glass lg-bar m-3 mb-2 rounded-[28px] p-3">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowSidebar(true)}
-                className="text-white hover:bg-white/20"
+                className="rounded-full hover:bg-[var(--lg-fill)]"
               >
                 <Menu className="w-5 h-5" />
               </Button>
-              <h2 className="text-lg font-bold text-white flex items-center gap-2">
-                Digiurban
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                Assistente
               </h2>
             </div>
 
             <Button
               size="icon"
               variant="ghost"
-              className="text-white hover:bg-white/20"
+              className="rounded-full text-[var(--lg-blue)] hover:bg-[var(--lg-fill)]"
               onClick={() => setShowNewConversation(true)}
               title="Nova conversa"
             >
@@ -796,19 +799,19 @@ export default function CitizenAssistantPage() {
 
           {/* Busca */}
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-[var(--lg-ink3)]" />
             <Input
               type="text"
               placeholder="Buscar conversas..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/90 border-0"
+              className="pl-10 rounded-full bg-[var(--lg-fill)] border-0 shadow-none"
             />
           </div>
         </div>
 
         {/* Lista de Conversas */}
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 bg-white mx-3 mb-3 rounded-[24px] overflow-hidden">
           {loading ? (
             <div className="flex items-center justify-center py-12">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -826,7 +829,7 @@ export default function CitizenAssistantPage() {
                 className={cn(
                   "p-4 border-b cursor-pointer hover:bg-gray-50 transition-colors",
                   selectedConversation?.id === conversation.id && "bg-blue-50",
-                  conversation.isBotConversation && "bg-blue-50/70 border-l-4 border-l-teal-600"
+                  conversation.isBotConversation && "bg-blue-50/70"
                 )}
               >
                 <div className="flex items-start gap-3">
@@ -836,7 +839,7 @@ export default function CitizenAssistantPage() {
                       conversation.isBotConversation && "ring-2 ring-blue-600"
                     )}>
                       {conversation.isBotConversation ? (
-                        <div className="w-full h-full bg-gradient-to-br from-blue-700 to-teal-700 flex items-center justify-center">
+                        <div className="w-full h-full lg-tinted lg-tint-blue flex items-center justify-center">
                           <Sparkles className="w-6 h-6 text-white" />
                         </div>
                       ) : (
@@ -902,15 +905,14 @@ export default function CitizenAssistantPage() {
         className={`${
           isMobileView
             ? showConversationsList ? 'hidden' : 'w-full'
-            : 'flex-1'
-        } flex flex-col bg-white`}
+            : 'flex-1 pb-[88px] lg:pb-0'
+        } flex flex-col min-h-0`}
       >
         {selectedConversation ? (
           <>
             {/* Header do Chat */}
             <div className={cn(
-              "p-4 border-b flex items-center justify-between",
-              selectedConversation.isBotConversation && "bg-gradient-to-r from-blue-800 via-blue-700 to-teal-700"
+              "lg-glass lg-bar m-3 mb-0 rounded-[28px] px-3 py-2 flex items-center justify-between"
             )}>
               <div className="flex items-center gap-3">
                 {isMobileView && (
@@ -918,7 +920,7 @@ export default function CitizenAssistantPage() {
                     variant="ghost"
                     size="icon"
                     onClick={handleBackToList}
-                    className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}
+                    className="rounded-full hover:bg-[var(--lg-fill)]"
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
@@ -926,10 +928,9 @@ export default function CitizenAssistantPage() {
 
                 <Avatar className={cn(
                   "w-10 h-10",
-                  selectedConversation.isBotConversation && "ring-2 ring-white"
                 )}>
                   {selectedConversation.isBotConversation ? (
-                    <div className="w-full h-full bg-white/15 border border-white/25 flex items-center justify-center">
+                    <div className="w-full h-full lg-tinted lg-tint-blue flex items-center justify-center">
                       <Sparkles className="w-5 h-5 text-white" />
                     </div>
                   ) : (
@@ -944,17 +945,16 @@ export default function CitizenAssistantPage() {
 
                 <div>
                   <h3 className={cn(
-                    "font-medium flex items-center gap-2",
-                    selectedConversation.isBotConversation && "text-white"
+                    "font-semibold flex items-center gap-2"
                   )}>
                     {selectedConversation.title || selectedConversation.citizenName}
                     {selectedConversation.isBotConversation && (
-                      <Badge className="bg-white/10 text-white border border-white/15 text-xs">IA</Badge>
+                      <Badge className="bg-[var(--lg-fill)] text-[var(--lg-blue)] border-0 text-xs">IA</Badge>
                     )}
                   </h3>
                   <p className={cn(
                     "text-xs",
-                    selectedConversation.isBotConversation ? "text-blue-50/90" : "text-gray-500"
+                    "text-[var(--lg-ink2)]"
                   )}>
                     {selectedConversation.isBotConversation ? 'Sempre disponível' : (isConnected ? 'Online' : 'Offline')}
                   </p>
@@ -974,7 +974,7 @@ export default function CitizenAssistantPage() {
                 )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className={selectedConversation.isBotConversation ? "text-white hover:bg-white/20" : ""}>
+                    <Button variant="ghost" size="icon" className="rounded-full hover:bg-[var(--lg-fill)]">
                       <MoreVertical className="w-5 h-5" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -1040,7 +1040,7 @@ export default function CitizenAssistantPage() {
             </div>
 
             {/* Mensagens */}
-            <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2.5 bg-gradient-to-b from-blue-50/45 via-slate-50 to-teal-50/30">
+            <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden p-2.5 bg-transparent">
               {isLoadingMessages ? (
                 <div className="flex items-center justify-center h-full">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -1074,7 +1074,7 @@ export default function CitizenAssistantPage() {
                       >
                         {showDate && (
                           <div className="flex justify-center my-4">
-                            <span className="bg-white px-3 py-1 rounded-md text-xs text-gray-500 shadow-sm">
+                            <span className="bg-white px-3 py-1 rounded-full text-xs text-gray-500 shadow-sm">
                               {new Date(message.sentAt).toLocaleDateString('pt-BR', {
                                 day: '2-digit',
                                 month: 'long',
@@ -1087,8 +1087,8 @@ export default function CitizenAssistantPage() {
                         <div className={`flex w-full min-w-0 overflow-hidden ${isOwnMessage ? 'justify-end' : 'justify-start'}`}>
                           {isBot ? (
                             <div className="w-full min-w-0 max-w-full overflow-hidden space-y-2">
-                              <div className="flex min-w-0 items-center gap-2 text-blue-800">
-                                <Sparkles className="w-4 h-4 text-teal-700" />
+                              <div className="flex min-w-0 items-center gap-2 text-[var(--lg-blue)]">
+                                <Sparkles className="w-4 h-4" />
                                 <span className="text-xs font-semibold">DigiBot</span>
                               </div>
                               <BotMessageRenderer
@@ -1103,9 +1103,9 @@ export default function CitizenAssistantPage() {
                           ) : (
                             <div
                               className={cn(
-                                "max-w-[86%] min-w-0 overflow-hidden rounded-lg px-3 py-2 shadow-sm",
+                                "max-w-[86%] min-w-0 overflow-hidden rounded-[20px] px-3.5 py-2 shadow-sm",
                                 isOwnMessage
-                                  ? 'bg-gradient-to-br from-blue-700 to-teal-700 text-white'
+                                  ? 'lg-tinted lg-tint-blue text-white'
                                   : 'bg-white text-gray-900'
                               )}
                             >
@@ -1156,7 +1156,7 @@ export default function CitizenAssistantPage() {
             </div>
 
             {/* Input de Mensagem */}
-            <form onSubmit={handleSendMessage} className="p-4 border-t bg-white">
+            <form onSubmit={handleSendMessage} className="lg-glass lg-bar m-3 mt-0 rounded-[28px] p-3">
               {botStructuredInput && (
                 <div className="flex items-center justify-center gap-2 py-2">
                   <div className="text-center text-sm text-gray-500">
@@ -1197,7 +1197,7 @@ export default function CitizenAssistantPage() {
                   <Button
                     type="submit"
                     size="icon"
-                    className="bg-gradient-to-br from-blue-700 to-teal-700 hover:from-blue-800 hover:to-teal-800"
+                    className="lg-tinted lg-tint-blue hover:opacity-95"
                     disabled={!isConnected || botStructuredInput || isBotTyping}
                   >
                     <Send className="w-5 h-5" />
@@ -1217,9 +1217,9 @@ export default function CitizenAssistantPage() {
             </form>
           </>
         ) : (
-          <div className="flex-1 flex items-center justify-center text-gray-500 bg-slate-50">
+          <div className="flex-1 flex items-center justify-center text-gray-500">
             <div className="text-center p-8">
-              <div className="w-24 h-24 mx-auto mb-4 bg-gradient-to-br from-blue-700 to-teal-700 rounded-lg flex items-center justify-center shadow-sm">
+              <div className="w-24 h-24 mx-auto mb-4 lg-tinted lg-tint-blue rounded-lg flex items-center justify-center shadow-sm">
                 <Sparkles className="w-12 h-12 text-white" />
               </div>
               <h3 className="text-lg font-bold text-gray-900 mb-2">Bem-vindo ao Digiurban!</h3>
@@ -1229,7 +1229,7 @@ export default function CitizenAssistantPage() {
               {conversations.find(c => c.isBotConversation) && (
                 <Button
                   onClick={() => handleSelectConversation(conversations.find(c => c.isBotConversation)!)}
-                  className="bg-gradient-to-br from-blue-700 to-teal-700 hover:from-blue-800 hover:to-teal-800"
+                  className="lg-tinted lg-tint-blue hover:opacity-95"
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
                   Conversar com DigiBot

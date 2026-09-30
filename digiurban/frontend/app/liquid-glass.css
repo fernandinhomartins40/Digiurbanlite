@@ -49,14 +49,25 @@
 
 /* Casca de um painel no estilo Liquid Glass */
 .lg-root {
+  /* camada própria: o fundo ambiente (z-index -1) fica sempre atrás do conteúdo */
+  isolation: isolate;
   font-family: var(--lg-font);
   color: var(--lg-ink);
   background: var(--lg-bg);
   -webkit-font-smoothing: antialiased;
 }
 
+/* Ajuste fino da Inter fora dos aparelhos Apple (onde a SF Pro não existe):
+   espaçamento "dinâmico" como o da SF — texto corrido levemente justo,
+   títulos grandes mais justos, letras miúdas mais abertas. */
+/* especificidade zero (:where) — qualquer tracking-* do Tailwind continua valendo */
+:where(html:not([data-font="sf"]) .lg-root) { letter-spacing: -0.011em; }
+:where(html:not([data-font="sf"]) .lg-root :is(h1, .text-2xl, .text-3xl, .text-4xl, .text-5xl)) { letter-spacing: -0.021em; }
+:where(html:not([data-font="sf"]) .lg-root :is(h2, h3, .text-xl, .text-lg)) { letter-spacing: -0.016em; }
+:where(html:not([data-font="sf"]) .lg-root :is(.text-xs, .text-\[11px\], .text-\[10px\], .text-\[10\.5px\])) { letter-spacing: 0; }
+
 /* Fundo ambiente: a cor que o vidro "pega" */
-.lg-ambient { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.lg-ambient { position: fixed; inset: 0; overflow: hidden; pointer-events: none; z-index: -1; }
 .lg-orb { position: absolute; border-radius: 9999px; filter: blur(90px); opacity: 0.45; }
 .dark .lg-orb { opacity: 0.32; }
 
@@ -601,3 +612,6 @@
 @media (prefers-reduced-transparency: reduce) {
   .lg-root :is(.bg-white, .bg-card):not(.lg-glass) { background-color: var(--lg-surface); -webkit-backdrop-filter: none; backdrop-filter: none; }
 }
+
+/* Vidro colorido azul (cabeçalhos e bolhas do Assistente, botões de ação) */
+.lg-tint-blue { --tint: #1e7bf0; }

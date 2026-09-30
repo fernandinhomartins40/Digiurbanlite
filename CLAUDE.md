@@ -329,6 +329,7 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Deploy: RLS só vale com role não-superuser (`digiurban_app` + `MIGRATE_DATABASE_URL` p/ migrations); flags `TENANT_STRICT*` no compose
 - Smoke de isolamento: `npm run smoke:tenant:isolation` (2 tenants efêmeros, requer banco)
 - `moduleType` (código técnico do serviço) é gerado NO SERVIDOR a partir do nome, sem repetir no município (`services/service-module-type.service.ts`); a tela não envia nem exibe. `ModuleWorkflow` é único por `[tenantId, moduleType]` — buscar com `findFirst`, nunca `findUnique({ moduleType })`. Destino do pedido é `destination`/`appAction`, não o `moduleType`
+- Checagem central de município (`middleware/tenant-context.ts`): rotas de login/logout/senha e sessões SUPER_ADMIN/plataforma são ISENTAS — sessão antiga de outro município não pode bloquear login
 - ⚠️ A extension injeta `tenantId` no `data` de TOPO de create/update, mas **NÃO** em nested create (`{ fields: { create: [...] } }`) — propagar explícito com `tryGetTenantId()` (visto na F6 do Registry)
 
 ### Registry — Motor de Dados Orientado a Metadados (plano F0–F7)
@@ -349,7 +350,7 @@ Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_C
 - `ProtocolEvaluationSimplified` não tem `evaluatedBy` — só `protocolId`, `rating`, `comment`, `wouldRecommend`
 
 ### Frontend
-- Visual DigiUrban Glass (Liquid Glass): classes `lg-*` em `app/liquid-glass.css`, componentes em `components/liquid-glass/`; vidro SÓ na navegação; tema via `useLgThemeScope()` no layout persistente do painel + `THEME_BOOT_SCRIPT`; modo escuro das cores fixas do Tailwind vem do tradutor no fim do CSS (não precisa de `dark:` por tela). Fonte SF/SF Symbols da Apple NÃO podem ser embutidas
+- Visual DigiUrban Glass (Liquid Glass): classes `lg-*` em `app/liquid-glass.css`, componentes em `components/liquid-glass/`; vidro SÓ na navegação; tema via `useLgThemeScope()` no layout persistente do painel + `THEME_BOOT_SCRIPT`; modo escuro das cores fixas do Tailwind vem do tradutor no fim do CSS (não precisa de `dark:` por tela). Espaçamento da Inter só fora da Apple via `html:not([data-font="sf"])` (marcado pelo boot script). Fonte SF/SF Symbols da Apple NÃO podem ser embutidas
 - TipTap requer custom Node extensions para preservar tags HTML (Node.create() com parseHTML/renderHTML)
 - `enableInputRules: false` e `enablePasteRules: false` obrigatórios no TipTap
 - `addGlobalAttributes()` para style/class em todos os node types

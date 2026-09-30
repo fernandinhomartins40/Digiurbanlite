@@ -18,6 +18,8 @@ const interFont = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
   display: 'swap',
+  // tamanho óptico: títulos grandes usam o desenho "display" (como a SF Pro Display)
+  axes: ['opsz'],
 })
 
 const appFont = Manrope({

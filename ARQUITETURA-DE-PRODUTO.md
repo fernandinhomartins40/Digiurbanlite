@@ -706,5 +706,20 @@ O protótipo aprovado pelo usuário está no canvas "DigiUrban Liquid Glass".
 - O tema é ligado uma vez para todo o painel, inclusive o login. As abas de seção do painel do servidor (Documentos, Análises, Serviços) passaram a usar o mesmo controle segmentado.
 - **Validação:** 8 prints no computador e no celular, claro e escuro (Visão, Municípios, Planos, Faturas, Domínios e a busca), com a aba certa marcada em cada grupo. Sem erros no navegador nem na API.
 
-**Com isso, os três painéis e todas as telas de entrada estão no DigiUrban Glass.** Fica para depois: o chat do Assistente (cabeçalho antigo) e o ajuste fino da Inter para aproximar da SF Pro.
+**Com isso, os três painéis e todas as telas de entrada estão no DigiUrban Glass.**
+
+### 11.4 Etapa 4 — Assistente e ajuste da fonte (2026-09-30)
+
+- **Assistente (chat):**
+  - saíram os cabeçalhos azuis chapados; lista, conversa e caixa de mensagem viraram barras de vidro sobre o fundo ambiente;
+  - o DigiBot tem o ícone azul (`lg-tinted lg-tint-blue`) e os balões são arredondados;
+  - o menu lateral virou uma folha de vidro;
+  - em tablet, a barra inferior não cobre mais a lista nem a caixa de mensagem.
+- **Fonte fora dos aparelhos Apple** (Windows e Android, onde a SF Pro não existe):
+  - o script de tema marca `data-font="sf"` no Mac, iPhone e iPad;
+  - nos outros aparelhos, a Inter recebe o espaçamento "dinâmico" da SF: texto −0,011em, títulos grandes −0,021em, h2/h3 −0,016em, letras miúdas 0;
+  - também usa o tamanho óptico (eixo `opsz`), então os títulos grandes saem com o desenho "display";
+  - as regras usam `:where()` (especificidade zero), então qualquer `tracking-*` do Tailwind continua valendo.
+
+**Com isso, o DigiUrban Glass está completo nos três painéis.**
 
