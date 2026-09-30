@@ -32,6 +32,14 @@ declare global {
   }
 }
 
+/**
+ * Portas de entrada da autenticação (login, logout, cadastro, senha): uma
+ * sessão ANTIGA de outro município guardada no navegador não pode impedir
+ * ninguém de entrar ou sair — o login emite um token novo e correto.
+ */
+const AUTH_ENTRY_PATH =
+  /^\/api\/(admin\/auth|citizen\/auth|super-admin|platform(\/auth)?)\/(login|logout|register|forgot-password|reset-password)\/?$/;
+
 export const tenantContextMiddleware = async (
   req: Request,
   _res: Response,
@@ -92,8 +100,14 @@ export const tenantContextMiddleware = async (
         citizenId?: string;
         tenantId?: string;
         type?: string;
+        role?: string;
       };
-      if (decoded.tenantId && decoded.tenantId !== tenantId) {
+      // SUPER_ADMIN é identidade de PLATAFORMA (não pertence a município):
+      // isento, como já é no adminAuthMiddleware. O claim de role vem
+      // assinado no login do super-admin.
+      const isPlatformIdentity = decoded.role === 'SUPER_ADMIN' || decoded.type === 'platform';
+      const isAuthEntry = AUTH_ENTRY_PATH.test(req.path);
+      if (decoded.tenantId && decoded.tenantId !== tenantId && !isPlatformIdentity && !isAuthEntry) {
         logAuditEvent({
           userId: decoded.userId,
           citizenId: decoded.citizenId,

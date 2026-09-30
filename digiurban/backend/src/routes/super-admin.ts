@@ -114,7 +114,9 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
         role: user.role,
         departmentId: user.departmentId,
         type: 'admin',
-        tenantId: req.tenantId || DEFAULT_TENANT_ID // Fase 4 Multi-Tenant
+        // tenant DO USUÁRIO (não o do navegador): um município escolhido no
+        // portal do cidadão não pode "carimbar" a sessão do super-admin
+        tenantId: user.tenantId || DEFAULT_TENANT_ID
       },
       jwtSecret,
       { expiresIn: '8h' }
