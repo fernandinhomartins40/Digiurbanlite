@@ -102,13 +102,13 @@ function Asset({
 }
 
 /** Fundo da seção: arte própria para celular (retrato), tablet e computador */
-function Bg({ name, className = '', eager }: { name: string; className?: string; eager?: boolean }) {
+function Bg({ name, className = '', imgClassName = '', eager }: { name: string; className?: string; imgClassName?: string; eager?: boolean }) {
   return (
     <picture className={`pointer-events-none absolute inset-0 ${className}`} aria-hidden>
       <source media="(max-width: 639px)" srcSet={`/landing/mobile/${name}.webp`} />
       <source media="(max-width: 1023px)" srcSet={`/landing/tablet/${name}.webp`} />
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={`/landing/desktop/${name}.webp`} alt="" className="h-full w-full object-cover" loading={eager ? 'eager' : 'lazy'} />
+      <img src={`/landing/desktop/${name}.webp`} alt="" className={`h-full w-full object-cover ${imgClassName}`} loading={eager ? 'eager' : 'lazy'} />
     </picture>
   );
 }
@@ -420,9 +420,9 @@ function Hero() {
             alt="Mascote do Digiurban mostrando o aplicativo no celular"
             sizes="(max-width: 767px) 60vw, 40vw"
             eager
-            className="relative z-30 -mb-[1%] -ml-[4%] -mr-[14%] w-[72%] select-none md:absolute md:z-10 md:bottom-0 md:left-[-14%] md:mr-0 md:h-[84%] md:w-auto md:max-w-none lg:left-[-2%] lg:h-full"
+            className="relative z-30 -mb-[1%] -ml-[4%] -mr-[14%] w-[72%] select-none md:absolute md:bottom-0 md:left-[-8%] md:mr-0 md:h-[70%] md:w-auto md:max-w-none lg:left-[-2%] lg:h-full"
           />
-          <HeroPanel className="relative z-20 mb-12 w-[46%] shrink-0 md:absolute md:right-0 md:top-[14%] md:mb-0 md:w-[228px] lg:right-[-1%] lg:top-[12%] lg:w-[300px]" />
+          <HeroPanel className="relative z-20 mb-12 w-[46%] shrink-0 md:absolute md:right-0 md:top-[14%] md:mb-0 md:w-[232px] lg:right-[-1%] lg:top-[12%] lg:w-[300px]" />
         </div>
         <div className="absolute inset-x-0 bottom-3 z-40 flex justify-center gap-1.5 md:hidden" aria-hidden>
           <span className="h-1.5 w-1.5 rounded-full bg-white" />
@@ -457,7 +457,7 @@ function Stats() {
 function About() {
   return (
     <section id="sobre" className="relative overflow-hidden">
-      <Bg name="fundo-sobre" />
+      <Bg name="fundo-sobre" imgClassName="md:object-[center_88%]" />
       <Container className="pb-4 pt-7 md:hidden">
         <Chip>Sobre o Digiurban</Chip>
         <h2 className="dl-h mt-3 text-[23px]">Tecnologia que aproxima a prefeitura das pessoas</h2>
@@ -672,8 +672,8 @@ function CitizenControl() {
         </div>
       </Container>
       <Container className="hidden grid-cols-[1fr_1.05fr_0.9fr] items-end gap-4 pt-4 md:grid lg:pr-[5%]">
-        <div className="relative flex flex-col justify-end self-stretch md:block">
-          <p className="dl-script z-20 mb-1 rotate-[-10deg] text-center text-[3.4vw] text-[#0f5bd8] md:absolute md:left-[-4%] md:top-[4%] md:mb-0 md:text-[2vw] lg:text-[30px]">
+        <div className="relative self-stretch">
+          <p className="dl-script absolute left-[-4%] top-[4%] z-20 rotate-[-10deg] text-center text-[2vw] text-[#0f5bd8] lg:left-[-8%] lg:top-[3%] lg:text-[26px]">
             Mais
             <br />
             tempo para
@@ -683,8 +683,8 @@ function CitizenControl() {
           <Asset
             name="mascote-cidadao"
             alt="Mascote do Digiurban fazendo sinal de positivo"
-            sizes="(max-width: 767px) 35vw, 30vw"
-            className="relative z-10 -mb-[8%] w-full max-w-none md:ml-[18%] md:mt-[16%] md:w-[92%]"
+            sizes="30vw"
+            className="absolute bottom-0 right-[-6%] z-10 h-[74%] w-auto max-w-none translate-y-[3.5%] lg:right-[-10%] lg:h-[90%]"
           />
         </div>
         <div className="self-center pb-5 md:pb-8">
@@ -715,10 +715,15 @@ function PhoneMock({ className = '', sizes }: { className?: string; sizes: strin
     <div className={`dl-cq relative ${className}`}>
       <Asset name="celular-tela-vazia" alt="" portrait sizes={sizes} className="relative w-full" />
       {/* Conteúdo da tela (a arte do celular vem com a tela vazia) */}
-      <div className="absolute left-[21.5%] right-[23.5%] top-[14%] text-[#07569d]">
+      {/* Área exata da tela na arte (medida no PNG): conteúdo recortado nos cantos e
+          com leve perspectiva — a tela é ~3% mais estreita em cima */}
+      <div
+        className="absolute bottom-[8.4%] left-[20.6%] right-[22.9%] top-[10.6%] overflow-hidden rounded-[6cqw] px-[3cqw] pt-[5cqw] text-[#07569d]"
+        style={{ transform: 'perspective(260cqw) rotateX(3deg)', transformOrigin: '50% 100%' }}
+      >
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src="/landing/logo-colorida-480.png" alt="Digiurban" className="w-[62cqw] max-w-none" />
-        <p className="mt-[6cqw] text-[8cqw] font-bold leading-none">Olá, João!</p>
+        <img src="/landing/logo-colorida-480.png" alt="Digiurban" className="w-[40cqw] max-w-full" />
+        <p className="mt-[5cqw] text-[7cqw] font-bold leading-none">Olá, João!</p>
         <p className="mt-[2cqw] text-[3.6cqw] leading-tight text-[#58718a]">Aqui você tem acesso a todos os serviços do seu município.</p>
         <ul className="mt-[5cqw] space-y-[2.6cqw]">
           {PHONE_ROWS.map(({ label, icon: Icon }) => (
@@ -726,7 +731,7 @@ function PhoneMock({ className = '', sizes }: { className?: string; sizes: strin
               <span className="flex h-[7cqw] w-[7cqw] shrink-0 items-center justify-center rounded-[1.6cqw] bg-gradient-to-b from-[#1aa7ff] to-[#0b78e8] text-white">
                 <Icon className="h-[4.4cqw] w-[4.4cqw]" />
               </span>
-              <span className="min-w-0 flex-1 truncate text-[4.2cqw] font-medium">{label}</span>
+              <span className="min-w-0 flex-1 truncate text-[3.9cqw] font-medium">{label}</span>
               <ChevronRight className="h-[4.4cqw] w-[4.4cqw] shrink-0" />
             </li>
           ))}
