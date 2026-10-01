@@ -754,3 +754,14 @@ Auditoria das 25 telas com ambiente de teste e login real. Correções em 4 fase
 - **Revenda:** créditos = custo US$ × cotação × margem ÷ valor do crédito (mínimo por chamada). Carteira por município, extrato com custo e receita, pacotes; o pedido gera fatura e o pagamento libera os créditos. Sem créditos o bot continua pelos menus.
 - **Telas:** Super-admin › IA (chaves, modelos e preços, cobrança e pacotes, municípios e lucro, teste) e Painel do servidor › IA e créditos (saldo, consumo, compra).
 
+### 13.1 Pendências fechadas (2026-10-01)
+
+- **DigiBot mais esperto:** entende pedido de atendente sem IA; quando a busca não acha o serviço pelas palavras, a IA escolhe pelo sentido ("carteirinha pra escola" → Cartão do Estudante); com dúvida, mostra as 3 opções mais prováveis sem gastar com texto; depois de 2 tentativas sem entender, oferece atendente. Cache de intenções repetidas (15 min) economiza créditos. Corrigido: "escola", "foi", "depois" eram lidos como "olá/oi" e devolviam o menu.
+- **Conversas seguras:** ninguém lê conversa de outro (nem por link, nem pela sala do socket); servidor só vê conversas do próprio município; listas de cidadãos com CPF mascarado; canal e envio em massa só para gestores; fila de atendimento e "assumir" por município.
+- **Token interno pelo painel:** Super-admin › Chaves de API › Comunicação interna gera um token aleatório guardado cifrado; o bot passa a usar sozinho e o padrão público deixa de valer.
+- **Assistente dos servidores** (Análises › Assistente) agora usa a IA da plataforma, cobra do município e responde números de protocolos sem expor dados pessoais.
+- **Prazo de guarda (LGPD):** Super-admin › Privacidade — prazos por tipo de conversa, prévia do que será apagado, botão "Aplicar agora" e rotina diária. Conversas de protocolo são preservadas.
+- **Saldo baixo:** aviso no sininho dos administradores quando o saldo cai abaixo do limite (padrão da plataforma, ajustável pelo município); faixa amarela na tela de créditos.
+- **Removidos:** serviço antigo `digiurban-ai` (vazava dados entre municípios) e o proxy `/api/ai` para ele. `multer` do messages-server atualizado para 2.x.
+- **Ainda manual:** a confirmação de pagamento da fatura de créditos (a plataforma marca como paga).
+

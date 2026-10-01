@@ -2,7 +2,7 @@
 
 ## Visão Geral
 
-Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot), SMTP Server. Tudo orquestrado via Docker Compose com PostgreSQL, Redis e llama.cpp.
+Plataforma de governo digital municipal. Monorepo com 4 serviços: Backend (Express), Frontend (Next.js), Messages Server (Socket.IO + Bot), SMTP Server. Tudo orquestrado via Docker Compose com PostgreSQL e Redis. IA por APIs externas via gateway no backend (sem IA local).
 
 ## Estrutura do Monorepo
 
@@ -291,7 +291,6 @@ BUILD_TIMESTAMP=$(date +%s) docker compose -f docker-compose.vps.yml up -d --bui
 | ultrazend-smtp | 25, 587 | 25, 587 |
 | digiurban-postgres | 5432 | 5432 |
 | digiurban-redis | 6379 | 6379 |
-| digiurban-llamacpp | 8080 | 8080 |
 
 ### Variáveis de Ambiente Obrigatórias
 ```env
@@ -325,7 +324,14 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - Console `/super-admin`: a **Equipe da plataforma** (PlatformUser, papéis PLATFORM_ADMIN/PLATFORM_SUPPORT) é a fonte de verdade do login (`/api/super-admin/login` tenta PlatformUser antes do SUPER_ADMIN legado). Rotas antigas usadas pelo console (e-mail, auditoria, logs, monitoramento, modelos) usam `platformConsoleAuth` — aceita as duas identidades e bloqueia escrita para Suporte. Equipe: `/api/platform/team*`, senha própria: `/api/platform/me/password`
 - `/api/*` é SEMPRE do backend: nginx em produção, `rewrites` do `next.config.js` em dev. Não criar rotas em `frontend/app/api` (foram removidas; nunca eram alcançadas)
 - Backup do painel = `pg_dump` completo (`services/database-backup.service.ts`, usa MIGRATE_DATABASE_URL por causa do RLS). Restaurar e rodar migrations pelo painel respondem 410 (procedimento de servidor)
-- **IA = gateway no backend** (`services/ai-gateway/`): provedores da PLATAFORMA (JEV p/ decisões; DeepSeek/Qwen/MiniMax/Kimi/GLM/DeepInfra/OpenRouter p/ texto), chaves cifradas (AI_KEYS_ENCRYPTION_KEY|JWT_SECRET), roteador por menor custo efetivo, PII mascarada (`pii.ts`) antes de sair. Toda chamada de município cobra da carteira (`AiTenantWallet`/`AiCreditLedger`); 402 sem créditos, 503 sem provedor — quem chama deve cair no caminho determinístico. Bot: `CitizenAiClient` → `/api/internal/ai/{decide,complete}`. O serviço `digiurban-ai` (llama.cpp) está DESCONTINUADO — não religar sem corrigir o vazamento entre municípios de `application-data.service.ts`
+- **IA = gateway no backend** (`services/ai-gateway/`): provedores da PLATAFORMA (JEV p/ decisões; DeepSeek/Qwen/MiniMax/Kimi/GLM/DeepInfra/OpenRouter p/ texto), chaves cifradas (AI_KEYS_ENCRYPTION_KEY|JWT_SECRET), roteador por menor custo efetivo, PII mascarada (`pii.ts`) antes de sair. Toda chamada de município cobra da carteira (`AiTenantWallet`/`AiCreditLedger`); 402 sem créditos, 503 sem provedor — quem chama deve cair no caminho determinístico. Bot: `CitizenAiClient` → `/api/internal/ai/{decide,complete}`. O serviço `digiurban-ai` (llama.cpp) foi REMOVIDO do repositório (consultas sem filtro de município)
+- **Assistente dos servidores** (`/api/ai`, `routes/admin-ai-assistant.routes.ts`): conversas em `AiAssistantConversation/Message` (dono = userId), resposta via `complete()` cobrando do município, stream NDJSON; contexto só agregado (contagens de protocolos; servidor comum vê só o próprio departamento). Rotas antigas da IA local → 410
+- **Token interno bot↔backend** é gerado no painel (Super-admin › Chaves de API › Comunicação interna) e guardado cifrado em `platform_secrets`; o messages-server lê do banco (`utils/serviceToken.ts`). Depois de gerado, o padrão público do compose deixa de valer
+- **Configuração nova = formulário no painel, nunca .env** (o operador não edita o .env)
+- **Prazo de guarda (LGPD)**: `PrivacyRetentionSettings` (Super-admin › Privacidade), job diário 03:30, desligado por padrão; apaga conteúdo de conversas do bot/chat SEM protocolo, estado de fluxos encerrados e conversas do Assistente
+- **Saldo baixo**: `checkLowBalance()` no `chargeUsage` avisa os ADMIN do município uma vez (Notification `AI_CREDITS_LOW`); limite padrão em `AiBillingSettings.lowBalanceCredits`, o município pode trocar em IA e créditos
+- **Messages-server — acesso às conversas**: sempre checar `canReadConversation()` (`src/server/accessControl.ts`) antes de devolver mensagens ou entrar na sala; listas de pessoas filtram `tenantId` e mascaram CPF
+- **Bot — saudação/palavras reservadas**: comparar PALAVRAS inteiras ("escola" contém "ola"); frases reservadas "contidas" só valem em mensagens de até 6 palavras
 - Leads da landing: `POST /api/leads` (`routes/public-leads.routes.ts`); o antigo `routes/leads.ts` (trial público com senha) continua NÃO montado
 - Login do super-admin espelha SUPER_ADMIN do tenant default como PlatformUser (ponte de identidade) — o proxy Next repassa todos os Set-Cookie
 - Jobs/seeds: `runAsTenant()`/`forEachActiveTenant()`; seeds standalone têm normalização de `tenantId` NULL no fim do `seed-consolidated.ts`

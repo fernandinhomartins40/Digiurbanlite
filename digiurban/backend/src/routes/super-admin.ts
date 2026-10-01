@@ -151,6 +151,7 @@ router.post('/login', loginRateLimiter, accountLockoutMiddleware('user'), async 
           role: adminUser.role,
           departmentId: adminUser.departmentId,
           type: 'admin',
+          userType: 'SERVER', // mesmo crachá do login normal (o messages-server lê este campo)
           // tenant DO USUÁRIO (não o do navegador)
           tenantId: adminUser.tenantId || DEFAULT_TENANT_ID,
         },
