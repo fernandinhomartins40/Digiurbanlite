@@ -259,6 +259,20 @@ server_name digiurban.com.br www.digiurban.com.br *.digiurban.com.br 72.60.10.10
 - `default_server` garante que Host desconhecido caia no DigiUrban, e não em
   outra aplicação do host.
 
+### Regressão de 2026-10-01 e proteção automática
+
+O curinga sumiu de novo (o arquivo foi reescrito sem ele) e, como o vhost
+`000-ultrazend` (Velomail) é o primeiro em ordem alfabética, todo subdomínio de
+município passou a ser redirecionado para `www.velomail.com.br`. Sintoma no PWA
+do cidadão instalado pelo subdomínio: a tela abria do cache, mas cards, apagar
+conversa e lista de municípios falhavam (as chamadas iam para o Velomail).
+
+- Corrigido no host (backup em `/root/nginx-digiurban.bak-*`).
+- O deploy (`.github/workflows/build-images.yml`) agora recoloca
+  `*.digiurban.com.br` se faltar, com `nginx -t` antes do reload.
+- A Cloudflare pode guardar o redirecionamento errado em cache (visto no
+  `sw.js`, cache de 4 h): depois de uma correção, **Purge** do host no painel.
+
 ### Certificado TLS
 
 O Let's Encrypt via HTTP-01 **não emite curinga** — cada subdomínio precisa ser

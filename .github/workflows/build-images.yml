@@ -138,6 +138,19 @@ jobs:
           . "$APP_DIR/scripts/vps-deploy-lib.sh"
           write_vps_env_file ".env" ".env.backup"
 
+          # Subdominios de municipio (palmital.digiurban.com.br...) dependem do
+          # curinga no nginx do HOST. Ele ja sumiu duas vezes quando outro projeto
+          # da VPS foi instalado (2026-09-15: caia no aprenderia; 2026-10-01: no
+          # velomail). O deploy recoloca se faltar — testa antes de aplicar e
+          # nunca derruba o deploy por isso.
+          HOST_NGINX="/etc/nginx/sites-available/digiurban"
+          if [ -f "$HOST_NGINX" ] && ! grep -q '\*\.digiurban\.com\.br' "$HOST_NGINX"; then
+            echo "=== Recolocando *.digiurban.com.br no nginx do host ==="
+            cp "$HOST_NGINX" "/root/nginx-digiurban.bak-$(date +%Y%m%d%H%M%S)" || true
+            sed -i 's/server_name digiurban.com.br www.digiurban.com.br/server_name digiurban.com.br www.digiurban.com.br *.digiurban.com.br/' "$HOST_NGINX"
+            if nginx -t >/dev/null 2>&1; then systemctl reload nginx && echo "nginx do host recarregado"; else echo "AVISO: nginx -t falhou; revise $HOST_NGINX"; fi
+          fi
+
           echo "=== Autenticando no GHCR ==="
           echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
 
