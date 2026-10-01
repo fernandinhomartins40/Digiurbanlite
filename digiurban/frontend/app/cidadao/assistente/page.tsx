@@ -555,11 +555,17 @@ export default function CitizenAssistantPage() {
         const data = await response.json().catch(() => ({}));
         throw new Error(data.error || 'Erro ao limpar mensagens');
       }
-      if (selectedConversation?.id === conversationId) {
+      const isBotConv = conversations.find((c) => c.id === conversationId)?.isBotConversation;
+      if (isBotConv) {
+        // DigiBot: apagar = começar de novo. Encerra o atendimento em andamento e
+        // traz o menu inicial (antes a tela ficava em branco, parecendo travada).
+        await fetch(`${MESSAGES_API_URL}/bot-flow/reset`, { method: 'POST', credentials: 'include' }).catch(() => undefined);
+        if (selectedConversation?.id === conversationId) await loadMessages(conversationId);
+      } else if (selectedConversation?.id === conversationId) {
         setMessages([]);
       }
       await loadConversations();
-      toast({ title: 'Mensagens limpas', description: 'As mensagens foram apagadas para você.' });
+      toast({ title: isBotConv ? 'Conversa apagada' : 'Mensagens limpas', description: isBotConv ? 'O DigiBot começou um novo atendimento.' : 'As mensagens foram apagadas para você.' });
     } catch (err: any) {
       toast({ title: 'Erro', description: err.message || 'Não foi possível limpar as mensagens', variant: 'destructive' });
     }
@@ -991,13 +997,14 @@ export default function CitizenAssistantPage() {
                         setConfirmAction({
                           type: 'clear-for-me',
                           conversationId: selectedConversation.id,
-                          title: 'Apagar para mim?',
+                          title: isProtectedConversation ? 'Apagar a conversa e recomeçar?' : 'Apagar para mim?',
                         })
                       }
                     >
                       <Eraser className="w-4 h-4 mr-2" />
-                      Apagar para mim
+                      {isProtectedConversation ? 'Apagar conversa' : 'Apagar para mim'}
                     </DropdownMenuItem>
+                    {!isProtectedConversation && (
                     <DropdownMenuItem
                       onClick={() =>
                         setConfirmAction({
@@ -1010,6 +1017,7 @@ export default function CitizenAssistantPage() {
                       <Trash2 className="w-4 h-4 mr-2" />
                       Apagar para todos
                     </DropdownMenuItem>
+                    )}
                     {!isProtectedConversation && (
                       <>
                         <DropdownMenuSeparator />
