@@ -1,7 +1,9 @@
 /**
  * Criptografia das chaves de API dos provedores de IA (AES-256-GCM).
- * Chave mestra: AI_KEYS_ENCRYPTION_KEY (recomendado) ou, na falta, JWT_SECRET
- * (obrigatório no deploy). NUNCA um valor fixo no código.
+ * Não exige configuração: a chave mestra deriva do JWT_SECRET, que o servidor
+ * já tem. AI_KEYS_ENCRYPTION_KEY é OPCIONAL (só para separar os segredos).
+ * NUNCA um valor fixo no código. As chaves são cadastradas pelo painel
+ * (Super-admin › Chaves de API), não por variável de ambiente.
  * A chave em claro só existe em memória no momento da chamada ao provedor;
  * a API devolve apenas os 4 últimos caracteres.
  */

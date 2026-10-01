@@ -19,6 +19,7 @@ import {
   Database,
   FileText,
   Globe,
+  KeyRound,
   LayoutDashboard,
   LifeBuoy,
   LogOut,
@@ -106,6 +107,7 @@ const GROUPS: Group[] = [
       { title: 'Banco de dados', href: '/super-admin/settings/schema', icon: Database },
       { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
       { title: 'IA', href: '/super-admin/ia', icon: Bot },
+      { title: 'Chaves de API', href: '/super-admin/ia/chaves', icon: KeyRound },
     ],
   },
   {

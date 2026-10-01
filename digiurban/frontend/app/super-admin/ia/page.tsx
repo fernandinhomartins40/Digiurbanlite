@@ -168,7 +168,7 @@ export default function PlatformAiPage() {
   }
 
   const tabs: Array<{ id: Tab; label: string }> = [
-    { id: 'providers', label: 'Provedores e chaves' },
+    { id: 'providers', label: 'Chaves' },
     { id: 'models', label: 'Modelos e preços' },
     { id: 'billing', label: 'Cobrança e pacotes' },
     { id: 'tenants', label: 'Municípios' },
@@ -230,7 +230,7 @@ export default function PlatformAiPage() {
         ))}
       </div>
 
-      {tab === 'providers' && <ProvidersTab providers={providers} isAdmin={isAdmin} onChange={loadAll} notify={notify} />}
+      {tab === 'providers' && <ProvidersShortcut providers={providers} />}
       {tab === 'models' && <ModelsTab models={models} providers={providers} isAdmin={isAdmin} onChange={loadAll} notify={notify} />}
       {tab === 'billing' && settings && <BillingTab settings={settings} packages={packages} isAdmin={isAdmin} onChange={loadAll} notify={notify} />}
       {tab === 'tenants' && report && settings && <TenantsTab report={report} isAdmin={isAdmin} creditValueBrl={settings.creditValueBrl} onChange={loadAll} notify={notify} />}
@@ -241,160 +241,34 @@ export default function PlatformAiPage() {
 
 type Notify = (title: string, error?: unknown) => void;
 
-// ---------------------------------------------------------------- provedores
+// ---------------------------------------------------------------- provedores (atalho)
 
-function ProvidersTab({ providers, isAdmin, onChange, notify }: { providers: Provider[]; isAdmin: boolean; onChange: () => void; notify: Notify }) {
-  const order = ['jev', 'deepinfra', 'qwen', 'deepseek', 'minimax', 'openrouter', 'moonshot', 'zhipu'];
-  const sorted = [...providers].sort((a, b) => order.indexOf(a.provider) - order.indexOf(b.provider));
+function ProvidersShortcut({ providers }: { providers: Provider[] }) {
+  const active = providers.filter((p) => p.isEnabled && p.hasKey);
   return (
-    <div className="space-y-4">
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="space-y-1 pt-6 text-sm text-blue-900">
-          <p className="font-semibold">Como funciona</p>
-          <p>
-            Cadastre a chave de API de cada provedor que você contratou (as chaves são suas — os municípios nunca as veem). O sistema usa o{' '}
-            <strong>JEV</strong> para decidir (classificar a mensagem, escolher o serviço), o que custa quase nada, e chama um{' '}
-            <strong>LLM chinês barato</strong> só quando precisa escrever texto. Ative pelo menos o JEV e um LLM rápido.
-          </p>
-        </CardContent>
-      </Card>
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        {sorted.map((p) => (
-          <ProviderCard key={p.provider} p={p} isAdmin={isAdmin} onChange={onChange} notify={notify} />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function ProviderCard({ p, isAdmin, onChange, notify }: { p: Provider; isAdmin: boolean; onChange: () => void; notify: Notify }) {
-  const [key, setKey] = useState('');
-  const [busy, setBusy] = useState<string | null>(null);
-  const region = REGION[p.dataRegion];
-
-  const save = async (body: Record<string, unknown>, ok: string) => {
-    setBusy(ok);
-    try {
-      await api(`/providers/${p.provider}`, { method: 'PUT', body: JSON.stringify(body) });
-      notify(ok);
-      setKey('');
-      onChange();
-    } catch (error) {
-      notify('Não foi possível salvar', error);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  const test = async () => {
-    setBusy('test');
-    try {
-      const { result } = await api(`/providers/${p.provider}/test`, { method: 'POST' });
-      notify(result.ok ? `Conexão ok — ${result.detail}` : 'Falhou', result.ok ? undefined : result.detail);
-      onChange();
-    } catch (error) {
-      notify('Falha no teste', error);
-    } finally {
-      setBusy(null);
-    }
-  };
-
-  return (
-    <Card className={p.isEnabled && p.hasKey ? 'border-green-300' : ''}>
-      <CardHeader className="pb-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
-            <CardTitle className="text-lg">{p.label}</CardTitle>
-            <CardDescription>{p.notes}</CardDescription>
-          </div>
-          {p.isEnabled && p.hasKey ? <Badge className="bg-green-100 text-green-800">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}
-        </div>
-        <div className="flex flex-wrap gap-2 pt-1">
-          <Badge className={region.className} title={region.hint}>
-            {region.label}
-          </Badge>
-          {p.zeroRetention && (
-            <Badge className="bg-green-100 text-green-800">
-              <ShieldCheck className="mr-1 h-3 w-3" />
-              Retenção zero
-            </Badge>
-          )}
-          {p.signupUrl && (
-            <a href={p.signupUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
-              Criar conta / chave <ExternalLink className="h-3 w-3" />
-            </a>
-          )}
-        </div>
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <KeyRound className="h-5 w-5" />
+          Chaves de API
+        </CardTitle>
+        <CardDescription>As chaves de cada serviço ficam numa página própria, com um formulário por serviço.</CardDescription>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex items-center gap-2 text-sm">
-          <KeyRound className="h-4 w-4 text-gray-400" />
-          {p.hasKey ? (
-            <span>
-              Chave cadastrada <code className="rounded bg-gray-100 px-1.5">••••{p.apiKeyLast4}</code>
-            </span>
-          ) : (
-            <span className="text-gray-500">Nenhuma chave cadastrada</span>
-          )}
-          {p.lastTestAt && (
-            <span className={`ml-auto inline-flex items-center gap-1 text-xs ${p.lastTestOk ? 'text-green-700' : 'text-red-600'}`} title={p.lastTestError || ''}>
-              {p.lastTestOk ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
-              teste {new Date(p.lastTestAt).toLocaleString('pt-BR')}
-            </span>
-          )}
+        <div className="flex flex-wrap gap-2">
+          {providers.map((p) => (
+            <Badge key={p.provider} className={p.isEnabled && p.hasKey ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'}>
+              {p.label.split(' (')[0]} {p.isEnabled && p.hasKey ? '· ativo' : p.hasKey ? '· chave salva' : ''}
+            </Badge>
+          ))}
         </div>
-        {isAdmin && (
-          <>
-            <form
-              className="flex gap-2"
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (key.trim()) save({ apiKey: key.trim() }, 'Chave salva (cifrada)');
-              }}
-            >
-              <Input
-                type="password"
-                autoComplete="off"
-                placeholder={p.hasKey ? 'Trocar chave de API' : 'Cole a chave de API'}
-                value={key}
-                onChange={(e) => setKey(e.target.value)}
-              />
-              <Button type="submit" disabled={!key.trim() || !!busy}>
-                {busy === 'Chave salva (cifrada)' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              </Button>
-            </form>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" disabled={!p.hasKey || !!busy} onClick={test}>
-                {busy === 'test' ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Activity className="mr-1 h-4 w-4" />}
-                Testar conexão
-              </Button>
-              <Button
-                size="sm"
-                variant={p.isEnabled ? 'outline' : 'default'}
-                disabled={!p.hasKey || !!busy}
-                onClick={() => save({ isEnabled: !p.isEnabled }, p.isEnabled ? 'Provedor desativado' : 'Provedor ativado')}
-              >
-                {p.isEnabled ? 'Desativar' : 'Ativar'}
-              </Button>
-              {p.hasKey && (
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="text-red-600"
-                  disabled={!!busy}
-                  onClick={() => confirm('Remover a chave deste provedor?') && save({ removeKey: true }, 'Chave removida')}
-                >
-                  <Trash2 className="mr-1 h-4 w-4" />
-                  Remover chave
-                </Button>
-              )}
-            </div>
-            <details className="text-xs text-gray-500">
-              <summary className="cursor-pointer">Endereço da API</summary>
-              <code className="mt-1 block break-all">{p.baseUrl}</code>
-            </details>
-          </>
-        )}
+        <p className="text-sm text-gray-600">{active.length} serviço(s) ativo(s).</p>
+        <a href="/super-admin/ia/chaves">
+          <Button>
+            <KeyRound className="mr-2 h-4 w-4" />
+            Abrir Chaves de API
+          </Button>
+        </a>
       </CardContent>
     </Card>
   );

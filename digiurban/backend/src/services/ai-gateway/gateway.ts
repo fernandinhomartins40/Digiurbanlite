@@ -57,12 +57,24 @@ export async function ensureCatalog(): Promise<void> {
   catalogReady = true;
 }
 
+function isReadable(enc: string): boolean {
+  try {
+    decryptSecret(enc);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export async function listProviders() {
   await ensureCatalog();
   const rows = await runAsPlatform(async () => prisma.aiProviderCredential.findMany({ orderBy: { provider: 'asc' } }));
   return rows.map(({ apiKeyEnc, ...r }) => ({
     ...r,
     hasKey: Boolean(apiKeyEnc),
+    // false = a chave foi cifrada com outro segredo do servidor (ex.: JWT_SECRET
+    // trocado) — precisa ser cadastrada de novo pelo formulário
+    keyReadable: apiKeyEnc ? isReadable(apiKeyEnc) : true,
     kind: providerDefault(r.provider)?.kind || 'openai',
     signupUrl: providerDefault(r.provider)?.signupUrl,
     notes: providerDefault(r.provider)?.notes,

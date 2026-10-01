@@ -459,9 +459,9 @@ services:
       # Enquanto a integracao nao entra, o chat com IA fica INDISPONIVEL --
       # estas URLs apontam para um servico que nao existe mais.
       # - AI_API_URL=http://digiurban-ai:9004/api/v1
-      # Gateway de IA (2026-09-30): chaves dos provedores ficam cifradas no banco.
-      # Defina uma chave longa e fixa; sem ela usa o JWT_SECRET (trocar o JWT_SECRET
-      # tornaria as chaves ilegíveis — seria preciso cadastrá-las de novo).
+      # Gateway de IA: as chaves dos provedores são cadastradas no painel
+      # (Super-admin › Chaves de API) e cifradas no banco. OPCIONAL: sem esta
+      # variável a cifra usa o JWT_SECRET (se ele mudar, recadastre as chaves).
       - AI_KEYS_ENCRYPTION_KEY=${AI_KEYS_ENCRYPTION_KEY:-}
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - AI_PROXY_TIMEOUT_MS=90000
