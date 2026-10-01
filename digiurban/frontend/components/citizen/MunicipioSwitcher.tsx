@@ -69,7 +69,10 @@ export function MunicipioSwitcher() {
           window.location.href = `${proto}//${data.slug}.${base}/cidadao`;
         } else if (typeof window !== 'undefined') {
           // grava a seleção (o backend também lê o cookie de slug no domínio raiz)
-          if (data.slug) document.cookie = `digiurban_tenant_slug=${data.slug}; path=/; SameSite=Lax`;
+          if (data.slug) {
+            document.cookie = `digiurban_tenant_slug=${data.slug}; path=/; max-age=31536000; SameSite=Lax`;
+            try { localStorage.setItem('digiurban_tenant_slug', data.slug); } catch {}
+          }
           window.location.href = '/cidadao';
         }
       } else {

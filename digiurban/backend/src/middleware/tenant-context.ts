@@ -40,6 +40,29 @@ declare global {
 const AUTH_ENTRY_PATH =
   /^\/api\/(admin\/auth|citizen\/auth|super-admin|platform(\/auth)?)\/(login|logout|register|forgot-password|reset-password)\/?$/;
 
+/**
+ * Catálogo público lido antes do login (lista de municípios do seletor e
+ * config pública). É igual para todos e não usa a sessão: uma sessão guardada
+ * de outro município não pode esvaziar o seletor do portal do cidadão.
+ */
+const PUBLIC_CATALOG_PATH = /^\/api\/public\/(municipios|tenant-config)\/?$/;
+
+/** Município gravado na própria sessão (JWT válido), para quando o navegador perdeu a seleção */
+function sessionTenantClaim(req: Request): string | null {
+  const token =
+    req.cookies?.digiurban_citizen_token ||
+    req.cookies?.digiurban_admin_token ||
+    (req.headers.authorization?.startsWith('Bearer ') ? req.headers.authorization.substring(7) : undefined);
+  if (!token || !process.env.JWT_SECRET) return null;
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET) as { tenantId?: string; role?: string; type?: string };
+    if (decoded.role === 'SUPER_ADMIN' || decoded.type === 'platform') return null;
+    return decoded.tenantId && decoded.tenantId !== DEFAULT_TENANT_ID ? decoded.tenantId : null;
+  } catch {
+    return null;
+  }
+}
+
 export const tenantContextMiddleware = async (
   req: Request,
   _res: Response,
@@ -65,6 +88,17 @@ export const tenantContextMiddleware = async (
         const bySelection = await TenantService.getBySlug(selected);
         if (bySelection && bySelection.status === 'ACTIVE') {
           tenant = bySelection;
+        }
+      } else {
+        // Sem seleção (ex.: o PWA foi fechado e o navegador apagou o cookie do
+        // seletor): vale o município da própria sessão logada — antes caía no
+        // default e a sessão válida era recusada como "de outro município".
+        const claimed = sessionTenantClaim(req);
+        if (claimed) {
+          const bySession = await TenantService.getById(claimed);
+          if (bySession && bySession.status === 'ACTIVE') {
+            tenant = bySession;
+          }
         }
       }
     }
@@ -106,7 +140,7 @@ export const tenantContextMiddleware = async (
       // isento, como já é no adminAuthMiddleware. O claim de role vem
       // assinado no login do super-admin.
       const isPlatformIdentity = decoded.role === 'SUPER_ADMIN' || decoded.type === 'platform';
-      const isAuthEntry = AUTH_ENTRY_PATH.test(req.path);
+      const isAuthEntry = AUTH_ENTRY_PATH.test(req.path) || PUBLIC_CATALOG_PATH.test(req.path);
       if (decoded.tenantId && decoded.tenantId !== tenantId && !isPlatformIdentity && !isAuthEntry) {
         logAuditEvent({
           userId: decoded.userId,

@@ -75,33 +75,54 @@ function CitizenLoginForm() {
   const [selectedSlug, setSelectedSlug] = useState<string>('')
   const [loadingMunicipios, setLoadingMunicipios] = useState(!hostResolvedTenant)
 
-  // Buscar lista de municípios (apenas quando o host NÃO define um específico)
+  const [municipiosError, setMunicipiosError] = useState(false)
+  const [municipiosReload, setMunicipiosReload] = useState(0)
+
+  // Buscar lista de municípios (apenas quando o host NÃO define um específico).
+  // A lista é pública: vai SEM a sessão (credentials 'omit') — uma sessão antiga
+  // de outro município fazia o servidor recusar a chamada e o seletor vinha vazio.
+  // Tenta 3 vezes; se a rede falhar, usa a última lista guardada no aparelho.
   useEffect(() => {
     if (hostResolvedTenant) return
+    let cancelled = false
     ;(async () => {
       setLoadingMunicipios(true)
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
-        const res = await fetch(`${apiUrl}/public/municipios`)
-        const data = await res.json()
-        if (data.success) {
-          setMunicipios(data.municipios)
-          // restaurar seleção anterior do cookie
-          const cookieSlug = document.cookie
-            .split('; ')
-            .find((c) => c.startsWith('digiurban_tenant_slug='))
-            ?.split('=')[1]
-          if (cookieSlug && data.municipios.some((m: Municipio) => m.slug === cookieSlug)) {
-            setSelectedSlug(cookieSlug)
-          }
+      setMunicipiosError(false)
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/api'
+      let list: Municipio[] | null = null
+      for (let attempt = 0; attempt < 3 && !list; attempt++) {
+        try {
+          const res = await fetch(`${apiUrl}/public/municipios`, { credentials: 'omit', cache: 'no-store' })
+          const data = await res.json()
+          if (res.ok && data.success && Array.isArray(data.municipios)) list = data.municipios
+        } catch {
+          // rede instável: tenta de novo
         }
-      } catch {
-        // silencioso: sem lista, o cidadão vê estado vazio
-      } finally {
-        setLoadingMunicipios(false)
+        if (!list && attempt < 2) await new Promise((r) => setTimeout(r, 800 * (attempt + 1)))
       }
+      if (list) {
+        try { localStorage.setItem(MUNICIPIOS_CACHE_KEY, JSON.stringify(list)) } catch {}
+      } else {
+        try { list = JSON.parse(localStorage.getItem(MUNICIPIOS_CACHE_KEY) || 'null') } catch { list = null }
+      }
+      if (cancelled) return
+      if (list && list.length) {
+        setMunicipios(list)
+        // restaurar a seleção anterior (cookie ou aparelho)
+        const saved = readSavedMunicipio()
+        if (saved && list.some((m) => m.slug === saved)) {
+          setSelectedSlug(saved)
+          saveMunicipio(saved)
+        }
+      } else {
+        setMunicipiosError(true)
+      }
+      setLoadingMunicipios(false)
     })()
-  }, [hostResolvedTenant])
+    return () => {
+      cancelled = true
+    }
+  }, [hostResolvedTenant, municipiosReload])
 
   // Município efetivo: o do host (se específico) ou o selecionado
   const selectedMunicipio = municipios.find((m) => m.slug === selectedSlug)
@@ -123,8 +144,7 @@ function CitizenLoginForm() {
   // Grava a seleção em cookie (o backend lê digiurban_tenant_slug ou X-Tenant-Slug)
   const handleSelectMunicipio = (slug: string) => {
     setSelectedSlug(slug)
-    // cookie de sessão, escopo raiz; enviado automaticamente e via header no auth
-    document.cookie = `digiurban_tenant_slug=${slug}; path=/; SameSite=Lax`
+    saveMunicipio(slug)
   }
 
   // Carregar credenciais salvas ao montar componente
@@ -367,8 +387,17 @@ function CitizenLoginForm() {
               ))}
             </select>
           </div>
-          {municipios.length === 0 && (
-            <p className="text-xs text-red-600">Nenhum município disponível no momento.</p>
+          {municipiosError && (
+            <div className="flex items-center justify-between gap-2 text-xs text-red-600">
+              <span>Não foi possível carregar os municípios. Verifique sua internet.</span>
+              <button
+                type="button"
+                onClick={() => setMunicipiosReload((n) => n + 1)}
+                className="shrink-0 rounded-lg border border-red-200 px-2 py-1 font-medium hover:bg-red-50"
+              >
+                Tentar de novo
+              </button>
+            </div>
           )}
         </div>
       )}
@@ -789,6 +818,24 @@ function CitizenLoginForm() {
 }
 
 // useSearchParams (aba via ?tab=register) exige Suspense boundary no Next 14.
+const MUNICIPIOS_CACHE_KEY = 'digiurban_municipios_cache'
+const MUNICIPIO_KEY = 'digiurban_tenant_slug'
+
+/** Município escolhido: cookie de 1 ano (o servidor lê) + cópia no aparelho (o PWA pode perder cookies) */
+function saveMunicipio(slug: string) {
+  document.cookie = `${MUNICIPIO_KEY}=${slug}; path=/; max-age=31536000; SameSite=Lax`
+  try { localStorage.setItem(MUNICIPIO_KEY, slug) } catch {}
+}
+
+function readSavedMunicipio(): string | null {
+  const fromCookie = document.cookie
+    .split('; ')
+    .find((c) => c.startsWith(`${MUNICIPIO_KEY}=`))
+    ?.split('=')[1]
+  if (fromCookie) return fromCookie
+  try { return localStorage.getItem(MUNICIPIO_KEY) } catch { return null }
+}
+
 export default function CitizenLoginPage() {
   return (
     <Suspense fallback={<div className="min-h-screen" />}>
