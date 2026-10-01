@@ -3,6 +3,7 @@
  * Orquestra FlowEngine + ConversationService + WebSocket
  */
 
+import crypto from 'crypto';
 import { FlowEngine } from '../bot/flow/FlowEngine';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
 import { citizenAiOrchestrator } from '../bot/ai/CitizenAiOrchestrator';
@@ -838,7 +839,9 @@ export class FlowEngineService {
 
     // Nome único preservando extensão original
     const ext = path.extname(file.originalname || '');
-    const uniqueName = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}${ext}`;
+    // UUID: nome impossível de adivinhar (antes: timestamp + 6 caracteres)
+    const safeExt = /^\.[a-z0-9]{1,8}$/i.test(ext) ? ext.toLowerCase() : '';
+    const uniqueName = `${crypto.randomUUID()}${safeExt}`;
     const destPath = path.join(destDir, uniqueName);
 
     // Mover de temp para permanente

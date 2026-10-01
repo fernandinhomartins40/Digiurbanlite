@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction, Application } from 'express';
+import { uploadsAccess } from '../middleware/uploadsAccess';
 import cors from 'cors';
 import helmet from 'helmet';
 import compression from 'compression';
@@ -80,7 +81,8 @@ export class ExpressServer {
     this.app.use(compression());
 
     // Static files (uploads)
-    this.app.use('/uploads', express.static(process.env.UPLOAD_DIR || './uploads'));
+    // Documentos de cidadãos: só com login (antes era público — LGPD art. 46)
+    this.app.use('/uploads', uploadsAccess, express.static(process.env.UPLOAD_DIR || './uploads'));
 
     // Rate limiting
     const limiter = rateLimit({
