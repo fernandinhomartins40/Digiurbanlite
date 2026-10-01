@@ -1151,7 +1151,7 @@ export class ExpressServer {
         );
         res.json(result);
       } catch (error) {
-        logger.error('Error in POST /bot-flow/start', { error });
+        logger.error('Error in POST /bot-flow/start', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       } finally {
         this.releaseBotFlowLock(lockKey);
@@ -1177,7 +1177,7 @@ export class ExpressServer {
         const result = await this.flowEngineService.processMessage(citizenId, message, conversationId);
         res.json(result);
       } catch (error) {
-        logger.error('Error in POST /bot-flow/message', { error });
+        logger.error('Error in POST /bot-flow/message', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       } finally {
         this.releaseBotFlowLock(lockKey);
@@ -1218,7 +1218,7 @@ export class ExpressServer {
         const result = await this.flowEngineService.handleUpload(citizenId, files, conversationId, uploadMetadata);
         res.json(result);
       } catch (error) {
-        logger.error('Error in POST /bot-flow/upload', { error });
+        logger.error('Error in POST /bot-flow/upload', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       } finally {
         this.releaseBotFlowLock(lockKey);
@@ -1232,7 +1232,7 @@ export class ExpressServer {
         await this.flowEngineService.cancelActiveFlow(citizenId);
         res.json({ success: true });
       } catch (error) {
-        logger.error('Error in POST /bot-flow/cancel', { error });
+        logger.error('Error in POST /bot-flow/cancel', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
@@ -1249,7 +1249,7 @@ export class ExpressServer {
         const result = await this.flowEngineService.startFlow(citizenId, 'ai_assistant');
         res.json(result);
       } catch (error) {
-        logger.error('Error in POST /bot-flow/reset', { error });
+        logger.error('Error in POST /bot-flow/reset', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
@@ -1295,7 +1295,7 @@ export class ExpressServer {
         await this.flowEngineService.pauseExecution(citizenId, conversationId);
         res.json({ success: true });
       } catch (error) {
-        logger.error('Error in POST /bot-flow/pause', { error });
+        logger.error('Error in POST /bot-flow/pause', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
@@ -1341,7 +1341,7 @@ export class ExpressServer {
         await this.flowEngineService.resumeExecution(citizenId, conversationId);
         res.json({ success: true });
       } catch (error) {
-        logger.error('Error in POST /bot-flow/resume', { error });
+        logger.error('Error in POST /bot-flow/resume', { error: error instanceof Error ? { message: error.message, stack: error.stack } : error });
         res.status(500).json({ error: 'Internal server error' });
       }
     });
