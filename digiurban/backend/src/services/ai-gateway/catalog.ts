@@ -143,7 +143,7 @@ export const providerDefault = (provider: string) => PROVIDER_DEFAULTS.find((p) 
 
 /** Pacotes iniciais (1 crédito = R$ 0,01 de venda). Editáveis na tela IA. */
 export const PACKAGE_DEFAULTS = [
-  { code: 'IA-START', name: 'IA Start', description: 'Para começar: ~5 mil atendimentos do DigiBot', credits: 20000, priceBrl: 200, sortOrder: 1 },
-  { code: 'IA-PRO', name: 'IA Profissional', description: '~15 mil atendimentos/mês', credits: 60000, priceBrl: 540, sortOrder: 2 },
-  { code: 'IA-MAX', name: 'IA Max', description: '~50 mil atendimentos/mês, melhor preço por crédito', credits: 200000, priceBrl: 1600, sortOrder: 3 },
+  { code: 'IA-START', name: 'IA Start', description: 'Para começar a usar o DigiBot inteligente', credits: 20000, priceBrl: 200, sortOrder: 1 },
+  { code: 'IA-PRO', name: 'IA Profissional', description: 'Para uso diário da prefeitura (10% de desconto)', credits: 60000, priceBrl: 540, sortOrder: 2 },
+  { code: 'IA-MAX', name: 'IA Max', description: 'Para alto volume, melhor preço por crédito (20% de desconto)', credits: 200000, priceBrl: 1600, sortOrder: 3 },
 ];

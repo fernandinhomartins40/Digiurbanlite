@@ -31,6 +31,7 @@ import {
   Settings,
   Shield,
   ShieldAlert,
+  Sparkles,
   Sprout,
   TreePine,
   TrendingUp,
@@ -223,6 +224,7 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         { title: 'Perfil', href: '/admin/perfil', icon: UserCircle, minRole: 'USER' },
         { title: 'Configurações', href: '/admin/configuracoes', icon: Settings, minRole: 'ADMIN' },
         { title: 'Integrações', href: '/admin/integracoes', icon: Zap, minRole: 'ADMIN' },
+        { title: 'IA e créditos', href: '/admin/ia-creditos', icon: Sparkles, minRole: 'ADMIN' },
       ],
     },
   ];

@@ -741,3 +741,16 @@ Auditoria das 25 telas com ambiente de teste e login real. Correções em 4 fase
 3. **Clareza:** status em português; E-mail enxuto (cobrança de e-mail foi para Municípios); memória real no Monitoramento (container/MemAvailable).
 4. **Equipe da plataforma:** papéis Administrador/Suporte, convite com senha temporária e troca obrigatória, limites (ninguém tira o próprio acesso; sempre há um administrador), desativação vale na hora. Assistência remota: só a equipe inicia e o Suporte consegue usar. 35 rotas mortas em `app/api` removidas (rewrite de `/api` no Next para dev).
 
+## 13. IA da plataforma — JEV + IAs chinesas com revenda de créditos (2026-09-30)
+
+**Decisão:** a IA local (llama.cpp numa VPS) foi abandonada — sobrecarregava o servidor sem entregar qualidade. A IA agora é um **gateway no backend** que usa APIs externas baratas, com chaves da plataforma, e revende o uso aos municípios.
+
+- **Duas camadas, mínimo de tokens:**
+  1. regras locais (zero custo): número de protocolo, CPF, e-mail, telefone, CEP, datas;
+  2. **JEV** (TypeSafe) para *decidir* — intenção, escolher serviço/opção, qual campo corrigir. Não gera texto: saída grátis, entrada ≈ US$ 0,04–0,08/milhão;
+  3. **LLM chinês barato** só para *escrever* (extrair texto livre, orientar o cidadão) — DeepSeek, Qwen, MiniMax, Kimi, GLM, ou os mesmos modelos hospedados nos EUA (DeepInfra/OpenRouter, retenção zero).
+- **Roteador:** em cada chamada escolhe o modelo ativo de menor custo efetivo (preço × taxa de falha × latência), troca de provedor se um falhar.
+- **LGPD:** CPF/CNPJ/e-mail/telefone/CEP/cartão são mascarados antes de sair e restaurados localmente; opção de bloquear provedores que processam na China; dados de cidadãos preferencialmente em provedores com retenção zero.
+- **Revenda:** créditos = custo US$ × cotação × margem ÷ valor do crédito (mínimo por chamada). Carteira por município, extrato com custo e receita, pacotes; o pedido gera fatura e o pagamento libera os créditos. Sem créditos o bot continua pelos menus.
+- **Telas:** Super-admin › IA (chaves, modelos e preços, cobrança e pacotes, municípios e lucro, teste) e Painel do servidor › IA e créditos (saldo, consumo, compra).
+

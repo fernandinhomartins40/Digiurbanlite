@@ -1,665 +1,837 @@
 'use client';
 
-import { FormEvent, useEffect, useState } from 'react';
-import { ChevronDown, Database, KeyRound, Loader2, PlugZap, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { useToast } from '@/hooks/use-toast';
-import {
-  aiPlatformService,
-  AiApiKey,
-  AiKnowledgeSource,
-  AiPlan,
-  AiProviderModel,
-  AiProviderSettings,
-  AiUsageSummary,
-} from '@/lib/services/ai-platform.service';
+/**
+ * IA da plataforma (console /super-admin) — gateway multi-provedor.
+ *
+ * Provedores: chaves DA PLATAFORMA (JEV, DeepSeek, Qwen, MiniMax, Kimi, GLM,
+ *   DeepInfra, OpenRouter), cifradas no servidor; só os 4 últimos dígitos voltam.
+ * Modelos: preço por milhão de tokens e desempenho real — o roteador sempre
+ *   usa o que entrega pelo menor custo.
+ * Cobrança: cotação, margem, valor do crédito e pacotes vendidos aos municípios.
+ * Municípios: saldo, consumo, custo × receita (lucro) e bônus de créditos.
+ */
 
-function formatDate(value?: string | null): string {
-  if (!value) return '-';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('pt-BR');
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  Activity,
+  BadgeDollarSign,
+  Building2,
+  CheckCircle2,
+  ExternalLink,
+  FlaskConical,
+  KeyRound,
+  Loader2,
+  PlugZap,
+  Plus,
+  Save,
+  ShieldCheck,
+  Trash2,
+  XCircle,
+} from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
+
+type Tab = 'providers' | 'models' | 'billing' | 'tenants' | 'test';
+
+interface Provider {
+  provider: string;
+  label: string;
+  baseUrl: string;
+  hasKey: boolean;
+  apiKeyLast4: string | null;
+  isEnabled: boolean;
+  dataRegion: 'CN' | 'GLOBAL' | 'US';
+  zeroRetention: boolean;
+  lastTestAt: string | null;
+  lastTestOk: boolean | null;
+  lastTestError: string | null;
+  kind: 'openai' | 'jev';
+  signupUrl?: string;
+  notes?: string;
 }
 
-type ProviderFormState = {
-  provider: 'LLAMACPP';
-  fallbackProvider: 'LLAMACPP' | 'NONE';
-  fastModel: string;
-  contextualModel: string;
-  qualityModel: string;
-  fallbackFastModel: string;
-  fallbackContextualModel: string;
-  fallbackQualityModel: string;
+interface ModelRow {
+  id: string;
+  provider: string;
+  modelId: string;
+  label: string;
+  tier: 'decision' | 'fast' | 'smart';
+  inputPricePerMUsd: number;
+  outputPricePerMUsd: number;
+  cachedInputPricePerMUsd: number | null;
   isEnabled: boolean;
+  calls: number;
+  failures: number;
+  avgLatencyMs: number;
+  lastError: string | null;
+}
+
+interface Settings {
+  usdToBrl: number;
+  markup: number;
+  creditValueBrl: number;
+  minChargeCredits: number;
+  allowChinaHosted: boolean;
+  redactPii: boolean;
+}
+
+interface Pkg {
+  id?: string;
+  code: string;
+  name: string;
+  description?: string | null;
+  credits: number;
+  priceBrl: number;
+  isActive: boolean;
+  sortOrder?: number;
+}
+
+interface ReportRow {
+  tenantId: string;
+  name: string;
+  status: string;
+  balance: number;
+  calls: number;
+  creditsUsed: number;
+  costBrl: number;
+  revenueBrl: number;
+  marginBrl: number;
+}
+
+const REGION: Record<string, { label: string; className: string; hint: string }> = {
+  CN: { label: 'Dados na China', className: 'bg-amber-100 text-amber-800', hint: 'Transferência internacional (LGPD art. 33). Os dados pessoais são mascarados antes do envio.' },
+  GLOBAL: { label: 'Endpoint internacional', className: 'bg-blue-100 text-blue-800', hint: 'Servidores fora da China continental (ex.: Singapura).' },
+  US: { label: 'Hospedado nos EUA', className: 'bg-green-100 text-green-800', hint: 'Modelos chineses rodando em data centers dos EUA.' },
 };
 
-function toProviderForm(settings: AiProviderSettings): ProviderFormState {
-  return {
-    provider: settings.provider,
-    fallbackProvider: settings.fallbackProvider || 'NONE',
-    fastModel: settings.fastModel || '',
-    contextualModel: settings.contextualModel || '',
-    qualityModel: settings.qualityModel || '',
-    fallbackFastModel: settings.fallbackFastModel || '',
-    fallbackContextualModel: settings.fallbackContextualModel || '',
-    fallbackQualityModel: settings.fallbackQualityModel || '',
-    isEnabled: settings.isEnabled,
-  };
+const TIER: Record<ModelRow['tier'], string> = { decision: 'Decisão (JEV)', fast: 'Rápido', smart: 'Inteligente' };
+
+const brl = (v: number, digits = 2) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+async function api(url: string, init?: RequestInit) {
+  const res = await fetch(`/api/platform/ai${url}`, { credentials: 'include', headers: { 'Content-Type': 'application/json' }, ...init });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erro ${res.status}`);
+  return data;
 }
 
-type AiAvailability = 'checking' | 'online' | 'not-configured' | 'offline';
-
-/**
- * Antes de montar o console, confere se o serviço de IA existe neste servidor.
- * A IA local (llama.cpp) saiu do deploy em 2026-09-14; sem AI_API_URL o proxy
- * responde 503 — aqui isso vira um aviso claro em vez de erros vermelhos.
- */
-export default function SuperAdminAiPage() {
-  const [availability, setAvailability] = useState<AiAvailability>('checking');
-
-  useEffect(() => {
-    fetch('/api/ai/health')
-      .then(async (res) => {
-        if (res.ok) return setAvailability('online');
-        const data = await res.json().catch(() => ({}));
-        setAvailability(data?.code === 'AI_SERVICE_NOT_CONFIGURED' ? 'not-configured' : 'offline');
-      })
-      .catch(() => setAvailability('offline'));
-  }, []);
-
-  if (availability === 'checking') {
-    return (
-      <div className="flex min-h-[40vh] items-center justify-center text-slate-500">
-        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-        Verificando o serviço de IA…
-      </div>
-    );
-  }
-
-  if (availability !== 'online') {
-    const notConfigured = availability === 'not-configured';
-    return (
-      <div className="space-y-6 pb-8">
-        <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-          <h1 className="text-2xl font-bold text-slate-900">IA da plataforma</h1>
-          <p className="mt-1 text-sm text-slate-600">Provedor, conhecimento e chaves de uso da IA.</p>
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <PlugZap className="h-5 w-5 text-amber-600" />
-              {notConfigured ? 'IA desativada neste servidor' : 'Serviço de IA fora do ar'}
-            </CardTitle>
-            <CardDescription>
-              {notConfigured
-                ? 'A IA local foi retirada do servidor e a integração com um provedor externo ainda não foi ligada. Enquanto isso, os recursos de IA ficam indisponíveis para os municípios.'
-                : 'O serviço de IA está configurado, mas não respondeu. Tente de novo em alguns minutos.'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3 text-sm text-slate-700">
-            {notConfigured ? (
-              <>
-                <p className="font-medium">Para ligar a IA, um técnico precisa:</p>
-                <ol className="list-decimal space-y-1 pl-5">
-                  <li>Subir o serviço de IA (ou apontar para um provedor externo compatível).</li>
-                  <li>
-                    Definir <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">AI_API_URL</code> e{' '}
-                    <code className="rounded bg-slate-100 px-1.5 py-0.5 text-xs">AI_SERVICE_TOKEN</code> no servidor.
-                  </li>
-                  <li>Reiniciar o sistema. Esta tela passa a mostrar o console completo.</li>
-                </ol>
-              </>
-            ) : (
-              <Button variant="outline" onClick={() => window.location.reload()}>
-                <RefreshCw className="mr-2 h-4 w-4" />
-                Verificar de novo
-              </Button>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return <AiConsole />;
-}
-
-function AiConsole() {
+export default function PlatformAiPage() {
   const { toast } = useToast();
+  const { user } = useSuperAdminAuth();
+  const isAdmin = user?.role === 'PLATFORM_ADMIN';
+  const [tab, setTab] = useState<Tab>('providers');
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [models, setModels] = useState<ModelRow[]>([]);
+  const [settings, setSettings] = useState<Settings | null>(null);
+  const [packages, setPackages] = useState<Pkg[]>([]);
+  const [report, setReport] = useState<{ rows: ReportRow[]; totals: { calls: number; costBrl: number; revenueBrl: number; marginBrl: number }; packagesSoldBrl: number } | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [knowledge, setKnowledge] = useState<AiKnowledgeSource[]>([]);
-  const [plans, setPlans] = useState<AiPlan[]>([]);
-  const [apiKeys, setApiKeys] = useState<AiApiKey[]>([]);
-  const [usage, setUsage] = useState<AiUsageSummary | null>(null);
-  const [providerSettings, setProviderSettings] = useState<AiProviderSettings | null>(null);
-  const [providerModels, setProviderModels] = useState<AiProviderModel[]>([]);
+  const notify = useCallback((title: string, error?: unknown) => {
+    toast(error ? { title, description: error instanceof Error ? error.message : String(error), variant: 'destructive' } : { title });
+  }, [toast]);
 
-  const [loadingKnowledge, setLoadingKnowledge] = useState(false);
-  const [bootstrapping, setBootstrapping] = useState(false);
-  const [ingestingId, setIngestingId] = useState<string | null>(null);
-  const [loadingTokens, setLoadingTokens] = useState(false);
-  const [loadingProvider, setLoadingProvider] = useState(false);
-  const [savingProvider, setSavingProvider] = useState(false);
-  const [testingProvider, setTestingProvider] = useState(false);
-  const [loadingModels, setLoadingModels] = useState(false);
-  const [revokingId, setRevokingId] = useState<string | null>(null);
-
-  const [newPlanName, setNewPlanName] = useState('');
-  const [newPlanRpm, setNewPlanRpm] = useState('60');
-  const [newPlanBudget, setNewPlanBudget] = useState('1000000');
-  const [newKeyName, setNewKeyName] = useState('');
-  const [newKeyPlanId, setNewKeyPlanId] = useState('');
-  const [revealedKey, setRevealedKey] = useState<string | null>(null);
-  const [modelSearch, setModelSearch] = useState('');
-  const [showAdvancedProviderConfig, setShowAdvancedProviderConfig] = useState(false);
-  const [providerForm, setProviderForm] = useState<ProviderFormState>({
-    provider: 'LLAMACPP',
-    fallbackProvider: 'NONE',
-    fastModel: '',
-    contextualModel: '',
-    qualityModel: '',
-    fallbackFastModel: '',
-    fallbackContextualModel: '',
-    fallbackQualityModel: '',
-    isEnabled: true,
-  });
-
-  const loadKnowledge = async (): Promise<void> => {
-    setLoadingKnowledge(true);
+  const loadAll = useCallback(async () => {
     try {
-      setKnowledge(await aiPlatformService.listKnowledgeSources());
+      const [p, m, b, r] = await Promise.all([api('/providers'), api('/models'), api('/billing'), api('/report')]);
+      setProviders(p.providers);
+      setModels(m.models);
+      setSettings(b.settings);
+      setPackages(b.packages);
+      setReport(r.report);
     } catch (error) {
-      toast({ title: 'Erro ao carregar conhecimento', description: error instanceof Error ? error.message : 'Falha ao listar fontes.', variant: 'destructive' });
+      notify('Erro ao carregar a IA', error);
     } finally {
-      setLoadingKnowledge(false);
+      setLoading(false);
     }
-  };
-
-  const loadTokens = async (): Promise<void> => {
-    setLoadingTokens(true);
-    try {
-      const [plansData, keysData, usageData] = await Promise.all([
-        aiPlatformService.listPlans(),
-        aiPlatformService.listApiKeys(),
-        aiPlatformService.usageSummary(),
-      ]);
-      setPlans(plansData);
-      setApiKeys(keysData);
-      setUsage(usageData);
-      if (!newKeyPlanId && plansData[0]) setNewKeyPlanId(plansData[0].id);
-    } catch (error) {
-      toast({ title: 'Erro ao carregar tokens', description: error instanceof Error ? error.message : 'Falha ao carregar planos e chaves.', variant: 'destructive' });
-    } finally {
-      setLoadingTokens(false);
-    }
-  };
-
-  const loadProviderSettings = async (): Promise<void> => {
-    setLoadingProvider(true);
-    try {
-      const settings = await aiPlatformService.getProviderSettings();
-      setProviderSettings(settings);
-      setProviderForm(toProviderForm(settings));
-    } catch (error) {
-      toast({ title: 'Erro ao carregar provider', description: error instanceof Error ? error.message : 'Falha ao carregar configuracao da IA.', variant: 'destructive' });
-    } finally {
-      setLoadingProvider(false);
-    }
-  };
+  }, [notify]);
 
   useEffect(() => {
-    void loadKnowledge();
-    void loadTokens();
-    void loadProviderSettings();
-  }, []);
+    loadAll();
+  }, [loadAll]);
 
-  const bootstrapKnowledge = async (): Promise<void> => {
-    setBootstrapping(true);
-    try {
-      const result = await aiPlatformService.bootstrapSystemKnowledge();
-      toast({ title: 'Base atualizada', description: `Criadas ${result.created}, atualizadas ${result.updated}, ingeridas ${result.ingestedSources}.` });
-      await loadKnowledge();
-    } catch (error) {
-      toast({ title: 'Erro no bootstrap', description: error instanceof Error ? error.message : 'Falha ao atualizar a base.', variant: 'destructive' });
-    } finally {
-      setBootstrapping(false);
-    }
-  };
+  const active = providers.filter((p) => p.isEnabled && p.hasKey);
+  const hasDecision = active.some((p) => p.kind === 'jev' || p.provider === 'openrouter');
 
-  const ingestSource = async (sourceId: string): Promise<void> => {
-    setIngestingId(sourceId);
-    try {
-      const result = await aiPlatformService.ingestKnowledgeSource(sourceId);
-      toast({ title: 'Fonte ingerida', description: `${result.chunks} chunks processados.` });
-      await loadKnowledge();
-    } catch (error) {
-      toast({ title: 'Erro na ingestao', description: error instanceof Error ? error.message : 'Falha ao ingerir fonte.', variant: 'destructive' });
-    } finally {
-      setIngestingId(null);
-    }
-  };
-
-  const createPlan = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
-    if (!newPlanName.trim()) return;
-    try {
-      await aiPlatformService.createPlan({ name: newPlanName.trim(), requestLimitPerMinute: Number(newPlanRpm) || 60, monthlyBudgetTokens: Number(newPlanBudget) || 1_000_000 });
-      setNewPlanName('');
-      await loadTokens();
-      toast({ title: 'Plano criado', description: 'Plano de tokens criado com sucesso.' });
-    } catch (error) {
-      toast({ title: 'Erro ao criar plano', description: error instanceof Error ? error.message : 'Falha ao criar plano.', variant: 'destructive' });
-    }
-  };
-
-  const createApiKey = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
-    if (!newKeyName.trim() || !newKeyPlanId) return;
-    try {
-      const created = await aiPlatformService.createApiKey({ name: newKeyName.trim(), planId: newKeyPlanId });
-      setNewKeyName('');
-      setRevealedKey(created.rawKey);
-      await loadTokens();
-      toast({ title: 'Chave criada', description: 'Copie a chave agora, ela nao sera exibida novamente.' });
-    } catch (error) {
-      toast({ title: 'Erro ao criar chave', description: error instanceof Error ? error.message : 'Falha ao criar chave.', variant: 'destructive' });
-    }
-  };
-
-  const revokeApiKey = async (keyId: string): Promise<void> => {
-    setRevokingId(keyId);
-    try {
-      await aiPlatformService.revokeApiKey(keyId);
-      await loadTokens();
-      toast({ title: 'Chave revogada', description: 'A chave foi desativada.' });
-    } catch (error) {
-      toast({ title: 'Erro ao revogar chave', description: error instanceof Error ? error.message : 'Falha ao revogar chave.', variant: 'destructive' });
-    } finally {
-      setRevokingId(null);
-    }
-  };
-
-  const saveProvider = async (event: FormEvent): Promise<void> => {
-    event.preventDefault();
-    setSavingProvider(true);
-    try {
-      const saved = await aiPlatformService.updateProviderSettings({
-        provider: providerForm.provider,
-        fallbackProvider: providerForm.fallbackProvider === 'NONE' ? null : providerForm.fallbackProvider,
-        fastModel: providerForm.fastModel.trim() || null,
-        contextualModel: providerForm.contextualModel.trim() || null,
-        qualityModel: providerForm.qualityModel.trim() || null,
-        fallbackFastModel: providerForm.fallbackFastModel.trim() || null,
-        fallbackContextualModel: providerForm.fallbackContextualModel.trim() || null,
-        fallbackQualityModel: providerForm.fallbackQualityModel.trim() || null,
-        isEnabled: providerForm.isEnabled,
-      });
-      setProviderSettings(saved);
-      setProviderForm(toProviderForm(saved));
-      toast({ title: 'Provider salvo', description: 'Configuracao de IA atualizada.' });
-    } catch (error) {
-      toast({ title: 'Erro ao salvar provider', description: error instanceof Error ? error.message : 'Falha ao salvar configuracao.', variant: 'destructive' });
-    } finally {
-      setSavingProvider(false);
-    }
-  };
-
-  const testProvider = async (): Promise<void> => {
-    setTestingProvider(true);
-    try {
-      const result = await aiPlatformService.testProvider({
-        provider: providerForm.provider,
-      });
-      toast({ title: 'Conexao validada', description: result.modelsChecked ? `${result.message}. ${result.modelsChecked} modelos detectados.` : result.message });
-    } catch (error) {
-      toast({ title: 'Erro ao testar provider', description: error instanceof Error ? error.message : 'Falha ao testar configuracao.', variant: 'destructive' });
-    } finally {
-      setTestingProvider(false);
-    }
-  };
-
-  const listModels = async (): Promise<void> => {
-    setLoadingModels(true);
-    try {
-      setProviderModels(await aiPlatformService.listProviderModels({
-        provider: providerForm.provider,
-      }));
-    } catch (error) {
-      toast({ title: 'Erro ao listar modelos', description: error instanceof Error ? error.message : 'Falha ao carregar modelos.', variant: 'destructive' });
-    } finally {
-      setLoadingModels(false);
-    }
-  };
-
-  useEffect(() => {
-    void listModels();
-  }, [providerForm.provider]);
-
-  const applyModelToField = (
-    field:
-      | 'fastModel'
-      | 'contextualModel'
-      | 'qualityModel'
-      | 'fallbackFastModel'
-      | 'fallbackContextualModel'
-      | 'fallbackQualityModel',
-    modelId: string,
-  ): void => {
-    setProviderForm((current) => ({ ...current, [field]: modelId }));
-  };
-
-  const visibleProviderModels = providerModels.filter((model) => {
-    if (!modelSearch.trim()) return true;
-    const query = modelSearch.trim().toLowerCase();
+  if (loading) {
     return (
-      model.name.toLowerCase().includes(query) ||
-      model.id.toLowerCase().includes(query) ||
-      model.huggingFaceId?.toLowerCase().includes(query)
+      <div className="flex min-h-[40vh] items-center justify-center text-gray-500">
+        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+        Carregando a IA da plataforma…
+      </div>
     );
-  });
+  }
 
-  const availableModelOptions = providerModels.length > 0
-      ? providerModels
-      : [
-          { id: providerForm.fastModel, name: providerForm.fastModel },
-          { id: providerForm.contextualModel, name: providerForm.contextualModel },
-          { id: providerForm.qualityModel, name: providerForm.qualityModel },
-        ].filter((model): model is AiProviderModel => Boolean(model.id));
+  const tabs: Array<{ id: Tab; label: string }> = [
+    { id: 'providers', label: 'Provedores e chaves' },
+    { id: 'models', label: 'Modelos e preços' },
+    { id: 'billing', label: 'Cobrança e pacotes' },
+    { id: 'tenants', label: 'Municípios' },
+    { id: 'test', label: 'Testar' },
+  ];
 
   return (
     <div className="space-y-6 pb-8">
-      <div className="rounded-xl border border-slate-200 bg-white px-6 py-5 shadow-sm">
-        <h1 className="text-2xl font-bold text-slate-900">IA da plataforma</h1>
-        <p className="mt-1 text-sm text-slate-600">Provedor, conhecimento e chaves de uso da IA.</p>
+      <div>
+        <h1 className="flex items-center gap-2 text-3xl font-bold text-gray-900">
+          <PlugZap className="h-7 w-7 text-blue-600" />
+          IA da plataforma
+        </h1>
+        <p className="text-gray-600">
+          Suas chaves de IA, o roteador que escolhe o modelo mais econômico e a revenda de créditos para os municípios.
+        </p>
       </div>
 
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Provedores ativos</p>
+            <p className="text-2xl font-bold">{active.length}</p>
+            <p className="text-xs text-gray-500">{hasDecision ? 'JEV pronto para decisões' : 'sem JEV: decisões vão para o LLM'}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Chamadas (30 dias)</p>
+            <p className="text-2xl font-bold">{report?.totals.calls.toLocaleString('pt-BR') ?? 0}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Custo × receita (30 dias)</p>
+            <p className="text-2xl font-bold">{brl(report?.totals.revenueBrl ?? 0)}</p>
+            <p className="text-xs text-gray-500">custo {brl(report?.totals.costBrl ?? 0, 4)}</p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="pt-6">
+            <p className="text-sm text-gray-500">Pacotes vendidos (30 dias)</p>
+            <p className="text-2xl font-bold text-green-700">{brl(report?.packagesSoldBrl ?? 0)}</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div role="tablist" aria-label="Seções da IA" className="inline-flex max-w-full flex-wrap gap-1 rounded-full bg-[var(--lg-fill)] p-1">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={tab === t.id}
+            onClick={() => setTab(t.id)}
+            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${tab === t.id ? 'bg-[var(--lg-surface)] text-[var(--lg-ink)] shadow-sm' : 'text-[var(--lg-ink2)] hover:text-[var(--lg-ink)]'}`}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === 'providers' && <ProvidersTab providers={providers} isAdmin={isAdmin} onChange={loadAll} notify={notify} />}
+      {tab === 'models' && <ModelsTab models={models} providers={providers} isAdmin={isAdmin} onChange={loadAll} notify={notify} />}
+      {tab === 'billing' && settings && <BillingTab settings={settings} packages={packages} isAdmin={isAdmin} onChange={loadAll} notify={notify} />}
+      {tab === 'tenants' && report && settings && <TenantsTab report={report} isAdmin={isAdmin} creditValueBrl={settings.creditValueBrl} onChange={loadAll} notify={notify} />}
+      {tab === 'test' && <TestTab isAdmin={isAdmin} notify={notify} onChange={loadAll} />}
+    </div>
+  );
+}
+
+type Notify = (title: string, error?: unknown) => void;
+
+// ---------------------------------------------------------------- provedores
+
+function ProvidersTab({ providers, isAdmin, onChange, notify }: { providers: Provider[]; isAdmin: boolean; onChange: () => void; notify: Notify }) {
+  const order = ['jev', 'deepinfra', 'qwen', 'deepseek', 'minimax', 'openrouter', 'moonshot', 'zhipu'];
+  const sorted = [...providers].sort((a, b) => order.indexOf(a.provider) - order.indexOf(b.provider));
+  return (
+    <div className="space-y-4">
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="space-y-1 pt-6 text-sm text-blue-900">
+          <p className="font-semibold">Como funciona</p>
+          <p>
+            Cadastre a chave de API de cada provedor que você contratou (as chaves são suas — os municípios nunca as veem). O sistema usa o{' '}
+            <strong>JEV</strong> para decidir (classificar a mensagem, escolher o serviço), o que custa quase nada, e chama um{' '}
+            <strong>LLM chinês barato</strong> só quando precisa escrever texto. Ative pelo menos o JEV e um LLM rápido.
+          </p>
+        </CardContent>
+      </Card>
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+        {sorted.map((p) => (
+          <ProviderCard key={p.provider} p={p} isAdmin={isAdmin} onChange={onChange} notify={notify} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ProviderCard({ p, isAdmin, onChange, notify }: { p: Provider; isAdmin: boolean; onChange: () => void; notify: Notify }) {
+  const [key, setKey] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const region = REGION[p.dataRegion];
+
+  const save = async (body: Record<string, unknown>, ok: string) => {
+    setBusy(ok);
+    try {
+      await api(`/providers/${p.provider}`, { method: 'PUT', body: JSON.stringify(body) });
+      notify(ok);
+      setKey('');
+      onChange();
+    } catch (error) {
+      notify('Não foi possível salvar', error);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const test = async () => {
+    setBusy('test');
+    try {
+      const { result } = await api(`/providers/${p.provider}/test`, { method: 'POST' });
+      notify(result.ok ? `Conexão ok — ${result.detail}` : 'Falhou', result.ok ? undefined : result.detail);
+      onChange();
+    } catch (error) {
+      notify('Falha no teste', error);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  return (
+    <Card className={p.isEnabled && p.hasKey ? 'border-green-300' : ''}>
+      <CardHeader className="pb-3">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <CardTitle className="text-lg">{p.label}</CardTitle>
+            <CardDescription>{p.notes}</CardDescription>
+          </div>
+          {p.isEnabled && p.hasKey ? <Badge className="bg-green-100 text-green-800">Ativo</Badge> : <Badge variant="outline">Inativo</Badge>}
+        </div>
+        <div className="flex flex-wrap gap-2 pt-1">
+          <Badge className={region.className} title={region.hint}>
+            {region.label}
+          </Badge>
+          {p.zeroRetention && (
+            <Badge className="bg-green-100 text-green-800">
+              <ShieldCheck className="mr-1 h-3 w-3" />
+              Retenção zero
+            </Badge>
+          )}
+          {p.signupUrl && (
+            <a href={p.signupUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs text-blue-600 hover:underline">
+              Criar conta / chave <ExternalLink className="h-3 w-3" />
+            </a>
+          )}
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex items-center gap-2 text-sm">
+          <KeyRound className="h-4 w-4 text-gray-400" />
+          {p.hasKey ? (
+            <span>
+              Chave cadastrada <code className="rounded bg-gray-100 px-1.5">••••{p.apiKeyLast4}</code>
+            </span>
+          ) : (
+            <span className="text-gray-500">Nenhuma chave cadastrada</span>
+          )}
+          {p.lastTestAt && (
+            <span className={`ml-auto inline-flex items-center gap-1 text-xs ${p.lastTestOk ? 'text-green-700' : 'text-red-600'}`} title={p.lastTestError || ''}>
+              {p.lastTestOk ? <CheckCircle2 className="h-3.5 w-3.5" /> : <XCircle className="h-3.5 w-3.5" />}
+              teste {new Date(p.lastTestAt).toLocaleString('pt-BR')}
+            </span>
+          )}
+        </div>
+        {isAdmin && (
+          <>
+            <form
+              className="flex gap-2"
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (key.trim()) save({ apiKey: key.trim() }, 'Chave salva (cifrada)');
+              }}
+            >
+              <Input
+                type="password"
+                autoComplete="off"
+                placeholder={p.hasKey ? 'Trocar chave de API' : 'Cole a chave de API'}
+                value={key}
+                onChange={(e) => setKey(e.target.value)}
+              />
+              <Button type="submit" disabled={!key.trim() || !!busy}>
+                {busy === 'Chave salva (cifrada)' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+              </Button>
+            </form>
+            <div className="flex flex-wrap gap-2">
+              <Button size="sm" variant="outline" disabled={!p.hasKey || !!busy} onClick={test}>
+                {busy === 'test' ? <Loader2 className="mr-1 h-4 w-4 animate-spin" /> : <Activity className="mr-1 h-4 w-4" />}
+                Testar conexão
+              </Button>
+              <Button
+                size="sm"
+                variant={p.isEnabled ? 'outline' : 'default'}
+                disabled={!p.hasKey || !!busy}
+                onClick={() => save({ isEnabled: !p.isEnabled }, p.isEnabled ? 'Provedor desativado' : 'Provedor ativado')}
+              >
+                {p.isEnabled ? 'Desativar' : 'Ativar'}
+              </Button>
+              {p.hasKey && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-red-600"
+                  disabled={!!busy}
+                  onClick={() => confirm('Remover a chave deste provedor?') && save({ removeKey: true }, 'Chave removida')}
+                >
+                  <Trash2 className="mr-1 h-4 w-4" />
+                  Remover chave
+                </Button>
+              )}
+            </div>
+            <details className="text-xs text-gray-500">
+              <summary className="cursor-pointer">Endereço da API</summary>
+              <code className="mt-1 block break-all">{p.baseUrl}</code>
+            </details>
+          </>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------- modelos
+
+function ModelsTab({ models, providers, isAdmin, onChange, notify }: { models: ModelRow[]; providers: Provider[]; isAdmin: boolean; onChange: () => void; notify: Notify }) {
+  const activeProviders = new Set(providers.filter((p) => p.isEnabled && p.hasKey).map((p) => p.provider));
+  const [draft, setDraft] = useState({ provider: 'deepseek', modelId: '', label: '', tier: 'fast' as ModelRow['tier'], inputPricePerMUsd: 0.1, outputPricePerMUsd: 0.4 });
+
+  const save = async (body: Record<string, unknown>, ok: string) => {
+    try {
+      await api('/models', { method: 'PUT', body: JSON.stringify(body) });
+      notify(ok);
+      onChange();
+    } catch (error) {
+      notify('Não foi possível salvar', error);
+    }
+  };
+
+  // Custo estimado de um atendimento típico (≈1.200 tokens entrada / 150 saída) para comparar
+  const typical = (m: ModelRow) => (1200 * m.inputPricePerMUsd + 150 * m.outputPricePerMUsd) / 1e6;
+
+  return (
+    <div className="space-y-4">
       <Card>
         <CardHeader>
-          <CardTitle className="text-base"><PlugZap className="mr-2 inline h-4 w-4" />Provider de inferencia</CardTitle>
-          <CardDescription>Provedor e modelos usados pela IA do sistema.</CardDescription>
+          <CardTitle>Modelos e preços</CardTitle>
+          <CardDescription>
+            Preços em US$ por milhão de tokens (confira no painel de cada provedor). O roteador escolhe, em cada chamada, o modelo ativo de menor custo
+            efetivo — penalizando os que falham ou demoram. Os marcados em cinza estão sem provedor ativo.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          {loadingProvider ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Carregando configuracao...</div>
-          ) : (
-            <form className="space-y-4" onSubmit={saveProvider}>
-              <div className="flex flex-wrap items-center gap-2">
-                {providerSettings ? (
-                  <>
-                    <Badge variant="outline">Principal: {providerSettings.provider}</Badge>
-                    <Badge variant="outline">Fallback: {providerSettings.fallbackProvider || 'Nenhum'}</Badge>
-                    <Badge className={providerSettings.isEnabled ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>{providerSettings.isEnabled ? 'ATIVO' : 'DESATIVADO'}</Badge>
-                  </>
-                ) : null}
-              </div>
-
-              <div className="grid gap-4 lg:grid-cols-3">
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.provider} onChange={(event) => setProviderForm((current) => ({ ...current, provider: event.target.value as ProviderFormState['provider'] }))}>
-                  <option value="LLAMACPP">llama.cpp local</option>
+        <CardContent className="overflow-x-auto">
+          <table className="w-full min-w-[820px] text-sm">
+            <thead className="border-b text-left text-xs uppercase text-gray-500">
+              <tr>
+                <th className="py-2">Modelo</th>
+                <th>Tipo</th>
+                <th>Entrada</th>
+                <th>Saída</th>
+                <th>Custo/atend.</th>
+                <th>Uso real</th>
+                <th className="text-right">Ativo</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {models.map((m) => (
+                <ModelRowEditor key={m.id} m={m} live={activeProviders.has(m.provider)} isAdmin={isAdmin} typical={typical(m)} onSave={save} />
+              ))}
+            </tbody>
+          </table>
+        </CardContent>
+      </Card>
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Plus className="h-5 w-5" />
+              Adicionar modelo
+            </CardTitle>
+            <CardDescription>Use o nome exato do modelo na API do provedor (o "Testar conexão" lista os disponíveis).</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form
+              className="grid grid-cols-2 items-end gap-3 md:grid-cols-7"
+              onSubmit={(e) => {
+                e.preventDefault();
+                save({ ...draft, label: draft.label || draft.modelId }, 'Modelo adicionado');
+              }}
+            >
+              <div>
+                <Label>Provedor</Label>
+                <select value={draft.provider} onChange={(e) => setDraft({ ...draft, provider: e.target.value })} className="h-10 w-full rounded-md border bg-background px-2 text-sm">
+                  {providers.map((p) => (
+                    <option key={p.provider} value={p.provider}>
+                      {p.provider}
+                    </option>
+                  ))}
                 </select>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.fallbackProvider} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackProvider: event.target.value as ProviderFormState['fallbackProvider'] }))}>
-                  <option value="NONE">Sem fallback</option>
-                  <option value="LLAMACPP">llama.cpp local</option>
+              </div>
+              <div className="col-span-2">
+                <Label>Modelo (id na API)</Label>
+                <Input required value={draft.modelId} onChange={(e) => setDraft({ ...draft, modelId: e.target.value })} />
+              </div>
+              <div>
+                <Label>Tipo</Label>
+                <select value={draft.tier} onChange={(e) => setDraft({ ...draft, tier: e.target.value as ModelRow['tier'] })} className="h-10 w-full rounded-md border bg-background px-2 text-sm">
+                  <option value="fast">Rápido</option>
+                  <option value="smart">Inteligente</option>
+                  <option value="decision">Decisão (JEV)</option>
                 </select>
-                <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={providerForm.isEnabled ? 'enabled' : 'disabled'} onChange={(event) => setProviderForm((current) => ({ ...current, isEnabled: event.target.value === 'enabled' }))}>
-                  <option value="enabled">Ativo</option>
-                  <option value="disabled">Desativado</option>
-                </select>
               </div>
-
-              <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
-                <div className="mb-3 flex flex-col gap-1">
-                  <p className="text-sm font-medium text-slate-900">Modelos em uso</p>
-                  <p className="text-xs text-slate-500">
-                    Selecione os perfis que o sistema vai usar. O chat administrativo e os modulos da IA consumirao sempre essa configuracao.
-                  </p>
-                </div>
-
-                <div className="grid gap-4 lg:grid-cols-3">
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Rapido</label>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={providerForm.fastModel}
-                      onChange={(event) => setProviderForm((current) => ({ ...current, fastModel: event.target.value }))}
-                    >
-                      <option value="">{loadingModels ? 'Carregando modelos...' : 'Selecione um modelo'}</option>
-                      {availableModelOptions.map((model) => (
-                        <option key={`fast-${model.id}`} value={model.id}>{model.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Contextual</label>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={providerForm.contextualModel}
-                      onChange={(event) => setProviderForm((current) => ({ ...current, contextualModel: event.target.value }))}
-                    >
-                      <option value="">{loadingModels ? 'Carregando modelos...' : 'Selecione um modelo'}</option>
-                      {availableModelOptions.map((model) => (
-                        <option key={`contextual-${model.id}`} value={model.id}>{model.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-medium uppercase tracking-wide text-slate-500">Qualidade</label>
-                    <select
-                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={providerForm.qualityModel}
-                      onChange={(event) => setProviderForm((current) => ({ ...current, qualityModel: event.target.value }))}
-                    >
-                      <option value="">{loadingModels ? 'Carregando modelos...' : 'Selecione um modelo'}</option>
-                      {availableModelOptions.map((model) => (
-                        <option key={`quality-${model.id}`} value={model.id}>{model.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
+              <div>
+                <Label>Entrada US$/M</Label>
+                <Input type="number" step="0.001" min="0" value={draft.inputPricePerMUsd} onChange={(e) => setDraft({ ...draft, inputPricePerMUsd: Number(e.target.value) })} />
               </div>
-
-              <div className="flex flex-wrap gap-3">
-                <Button type="submit" disabled={savingProvider}>{savingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Salvando...</> : <><ShieldCheck className="mr-2 h-4 w-4" />Salvar provider</>}</Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={testProvider}
-                  disabled={testingProvider}
-                >
-                  {testingProvider ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Testando...</> : 'Testar conexao'}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={listModels}
-                  disabled={loadingModels}
-                >
-                  {loadingModels ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</> : 'Atualizar catalogo'}
-                </Button>
-                <Button type="button" variant="ghost" onClick={() => setShowAdvancedProviderConfig((current) => !current)}>
-                  <ChevronDown className={`mr-2 h-4 w-4 transition-transform ${showAdvancedProviderConfig ? 'rotate-180' : ''}`} />
-                  Configuracoes avancadas
-                </Button>
+              <div>
+                <Label>Saída US$/M</Label>
+                <Input type="number" step="0.001" min="0" value={draft.outputPricePerMUsd} onChange={(e) => setDraft({ ...draft, outputPricePerMUsd: Number(e.target.value) })} />
               </div>
-
-              {showAdvancedProviderConfig ? (
-                <div className="space-y-4 rounded-lg border border-dashed border-slate-300 p-4">
-                  {providerForm.fallbackProvider !== 'NONE' ? (
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-sm font-medium text-slate-900">Modelos de fallback</p>
-                        <p className="text-xs text-slate-500">Use somente se quiser uma politica diferente do provider principal.</p>
-                      </div>
-                      <div className="grid gap-4 lg:grid-cols-3">
-                        <Input value={providerForm.fallbackFastModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackFastModel: event.target.value }))} placeholder="Modelo rapido fallback" />
-                        <Input value={providerForm.fallbackContextualModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackContextualModel: event.target.value }))} placeholder="Modelo contextual fallback" />
-                        <Input value={providerForm.fallbackQualityModel} onChange={(event) => setProviderForm((current) => ({ ...current, fallbackQualityModel: event.target.value }))} placeholder="Modelo qualidade fallback" />
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {providerModels.length > 0 ? (
-                    <div className="space-y-3 rounded-lg border p-3">
-                  <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-                    <div>
-                      <p className="text-sm font-medium text-slate-900">
-                        Catalogo llama.cpp local
-                      </p>
-                      <p className="text-xs text-slate-500">
-                        Use esta lista para consultar slugs, contexto e aplicar um modelo rapidamente aos perfis.
-                      </p>
-                    </div>
-                    <Input
-                      value={modelSearch}
-                      onChange={(event) => setModelSearch(event.target.value)}
-                      placeholder="Filtrar por nome, slug ou Hugging Face"
-                      className="w-full lg:w-80"
-                    />
-                  </div>
-                  <div className="max-h-[32rem] space-y-2 overflow-y-auto pr-1">
-                    {visibleProviderModels.map((model) => (
-                      <div key={model.id} className="rounded-lg border p-3 text-sm">
-                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                          <div className="min-w-0 space-y-1">
-                            <p className="font-medium text-slate-900">{model.name}</p>
-                            <p className="font-mono text-xs text-slate-500">{model.id}</p>
-                            {model.huggingFaceId ? (
-                              <p className="text-xs text-slate-500">HF: {model.huggingFaceId}</p>
-                            ) : null}
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fastModel', model.id)}>Rapido</Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('contextualModel', model.id)}>Contextual</Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('qualityModel', model.id)}>Qualidade</Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fallbackFastModel', model.id)}>Fallback rapido</Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fallbackContextualModel', model.id)}>Fallback contextual</Button>
-                            <Button type="button" variant="outline" size="sm" onClick={() => applyModelToField('fallbackQualityModel', model.id)}>Fallback qualidade</Button>
-                          </div>
-                        </div>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {typeof model.contextLength === 'number' ? <Badge variant="outline">{model.contextLength.toLocaleString('pt-BR')} ctx</Badge> : null}
-                          {model.promptPrice ? <Badge variant="outline">Prompt: {model.promptPrice}</Badge> : null}
-                          {model.completionPrice ? <Badge variant="outline">Completion: {model.completionPrice}</Badge> : null}
-                        </div>
-                      </div>
-                    ))}
-                    {visibleProviderModels.length === 0 ? (
-                      <div className="rounded-lg border border-dashed p-4 text-sm text-slate-500">
-                        Nenhum modelo encontrado para este filtro.
-                      </div>
-                    ) : null}
-                  </div>
-                    </div>
-                  ) : null}
-                </div>
-              ) : null}
+              <Button type="submit">Adicionar</Button>
             </form>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+}
+
+function ModelRowEditor({ m, live, isAdmin, typical, onSave }: { m: ModelRow; live: boolean; isAdmin: boolean; typical: number; onSave: (b: Record<string, unknown>, ok: string) => void }) {
+  const [inP, setIn] = useState(m.inputPricePerMUsd);
+  const [outP, setOut] = useState(m.outputPricePerMUsd);
+  const dirty = inP !== m.inputPricePerMUsd || outP !== m.outputPricePerMUsd;
+  const failRate = m.calls ? Math.round((m.failures / m.calls) * 100) : 0;
+  const base = { id: m.id, provider: m.provider, modelId: m.modelId, label: m.label, tier: m.tier, cachedInputPricePerMUsd: m.cachedInputPricePerMUsd };
+  return (
+    <tr className={live ? '' : 'text-gray-400'}>
+      <td className="py-2">
+        <p className="font-medium">{m.label}</p>
+        <p className="text-xs">
+          {m.provider} · <code>{m.modelId}</code>
+        </p>
+      </td>
+      <td>
+        <Badge variant="outline">{TIER[m.tier]}</Badge>
+      </td>
+      <td>
+        <Input className="h-8 w-24" type="number" step="0.001" min="0" disabled={!isAdmin} value={inP} onChange={(e) => setIn(Number(e.target.value))} />
+      </td>
+      <td>
+        <div className="flex items-center gap-1">
+          <Input className="h-8 w-24" type="number" step="0.001" min="0" disabled={!isAdmin} value={outP} onChange={(e) => setOut(Number(e.target.value))} />
+          {dirty && (
+            <Button size="sm" variant="ghost" onClick={() => onSave({ ...base, inputPricePerMUsd: inP, outputPricePerMUsd: outP, isEnabled: m.isEnabled }, 'Preço atualizado')}>
+              <Save className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
+      </td>
+      <td className="text-xs">US$ {typical.toFixed(5)}</td>
+      <td className="text-xs" title={m.lastError || ''}>
+        {m.calls ? `${m.calls} chamadas · ${failRate}% falha · ${m.avgLatencyMs} ms` : '—'}
+      </td>
+      <td className="text-right">
+        <input
+          type="checkbox"
+          aria-label={`Ativar ${m.label}`}
+          disabled={!isAdmin}
+          checked={m.isEnabled}
+          onChange={(e) => onSave({ ...base, inputPricePerMUsd: m.inputPricePerMUsd, outputPricePerMUsd: m.outputPricePerMUsd, isEnabled: e.target.checked }, e.target.checked ? 'Modelo ativado' : 'Modelo desativado')}
+        />
+      </td>
+    </tr>
+  );
+}
+
+// ---------------------------------------------------------------- cobrança
+
+function BillingTab({ settings, packages, isAdmin, onChange, notify }: { settings: Settings; packages: Pkg[]; isAdmin: boolean; onChange: () => void; notify: Notify }) {
+  const [s, setS] = useState(settings);
+  const [newPkg, setNewPkg] = useState<Pkg>({ code: '', name: '', credits: 10000, priceBrl: 100, isActive: true });
+
+  // Simulação: atendimento típico = 2 decisões JEV + 1 resposta curta de LLM rápido
+  const sim = useMemo(() => {
+    const costUsd = 2 * ((400 * 0.084) / 1e6) + (1200 * 0.1 + 150 * 0.4) / 1e6;
+    const credits = (c: number) => Math.max(s.minChargeCredits, (c * s.usdToBrl * s.markup) / s.creditValueBrl);
+    const charged = 2 * credits((400 * 0.084) / 1e6) + credits((1200 * 0.1 + 150 * 0.4) / 1e6);
+    return { costBrl: costUsd * s.usdToBrl, saleBrl: charged * s.creditValueBrl, credits: charged };
+  }, [s]);
+
+  const saveSettings = async () => {
+    try {
+      await api('/billing', { method: 'PUT', body: JSON.stringify(s) });
+      notify('Regras de cobrança salvas');
+      onChange();
+    } catch (error) {
+      notify('Não foi possível salvar', error);
+    }
+  };
+
+  const savePkg = async (pkg: Pkg, ok: string) => {
+    try {
+      await api('/packages', { method: 'PUT', body: JSON.stringify(pkg) });
+      notify(ok);
+      onChange();
+    } catch (error) {
+      notify('Não foi possível salvar o pacote', error);
+    }
+  };
+
+  const num = (k: keyof Settings) => ({
+    type: 'number',
+    step: 'any',
+    disabled: !isAdmin,
+    value: s[k] as number,
+    onChange: (e: React.ChangeEvent<HTMLInputElement>) => setS({ ...s, [k]: Number(e.target.value) }),
+  });
+
+  return (
+    <div className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <BadgeDollarSign className="h-5 w-5" />
+            Regras de cobrança
+          </CardTitle>
+          <CardDescription>Cada chamada cobra do município: custo em US$ × cotação × margem ÷ valor do crédito (com um mínimo por chamada).</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+            <div>
+              <Label>Cotação do dólar (R$)</Label>
+              <Input {...num('usdToBrl')} />
+            </div>
+            <div>
+              <Label>Margem (× o custo)</Label>
+              <Input {...num('markup')} />
+            </div>
+            <div>
+              <Label>Valor de 1 crédito (R$)</Label>
+              <Input {...num('creditValueBrl')} />
+            </div>
+            <div>
+              <Label>Mínimo por chamada (créditos)</Label>
+              <Input {...num('minChargeCredits')} />
+            </div>
+          </div>
+          <div className="flex flex-col gap-2 text-sm">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" disabled={!isAdmin} checked={s.redactPii} onChange={(e) => setS({ ...s, redactPii: e.target.checked })} />
+              Mascarar dados pessoais (CPF, CNPJ, e-mail, telefone, CEP, cartão) antes de enviar à IA — <strong>recomendado (LGPD)</strong>
+            </label>
+            <label className="flex items-center gap-2">
+              <input type="checkbox" disabled={!isAdmin} checked={s.allowChinaHosted} onChange={(e) => setS({ ...s, allowChinaHosted: e.target.checked })} />
+              Permitir provedores que processam dados na China (com dados pessoais mascarados)
+            </label>
+          </div>
+          <div className="rounded-xl bg-[var(--lg-fill)] p-3 text-sm">
+            <p className="font-semibold">Simulação de 1 atendimento típico do DigiBot</p>
+            <p>
+              Você paga aos provedores ≈ {brl(sim.costBrl, 4)} · cobra do município {sim.credits.toFixed(2)} créditos ≈ {brl(sim.saleBrl, 4)} · margem ≈{' '}
+              {brl(sim.saleBrl - sim.costBrl, 4)}. Em 10 mil atendimentos: custo {brl(sim.costBrl * 10000)} × receita {brl(sim.saleBrl * 10000)}.
+            </p>
+          </div>
+          {isAdmin && (
+            <Button onClick={saveSettings}>
+              <Save className="mr-2 h-4 w-4" />
+              Salvar regras
+            </Button>
           )}
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader className="pb-2">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <CardTitle className="text-base">Conhecimento</CardTitle>
-              <CardDescription>Ingestao de fontes do sistema centralizado</CardDescription>
-            </div>
-            <Button onClick={bootstrapKnowledge} disabled={bootstrapping}>{bootstrapping ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Atualizando...</> : <><RefreshCw className="mr-2 h-4 w-4" />Reindexar sistema</>}</Button>
-          </div>
+        <CardHeader>
+          <CardTitle>Pacotes à venda</CardTitle>
+          <CardDescription>O município compra pelo painel dele; a fatura cai em Faturas e, ao marcar como paga, os créditos entram na hora.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
-          {loadingKnowledge ? (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Carregando fontes...</div>
-          ) : knowledge.length === 0 ? (
-            <p className="text-sm text-muted-foreground">Nenhuma fonte encontrada.</p>
-          ) : knowledge.map((source) => (
-            <div key={source.id} className="flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <p className="font-medium">{source.name}</p>
-                  <Badge variant="outline">{source.type}</Badge>
-                  <Badge className={source.isActive ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>{source.isActive ? 'ATIVA' : 'INATIVA'}</Badge>
-                </div>
-                <p className="text-xs text-slate-500">Ultima ingestao: {formatDate(source.lastIngestedAt)}</p>
-              </div>
-              <Button variant="outline" onClick={() => ingestSource(source.id)} disabled={ingestingId === source.id}>{ingestingId === source.id ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Ingerindo...</> : <><RefreshCw className="mr-2 h-4 w-4" />Ingerir</>}</Button>
-            </div>
+          {packages.map((p) => (
+            <PackageRow key={p.id} pkg={p} isAdmin={isAdmin} creditValueBrl={s.creditValueBrl} onSave={savePkg} />
           ))}
+          {isAdmin && (
+            <form
+              className="grid grid-cols-2 items-end gap-3 border-t pt-4 md:grid-cols-6"
+              onSubmit={(e) => {
+                e.preventDefault();
+                savePkg(newPkg, 'Pacote criado');
+                setNewPkg({ code: '', name: '', credits: 10000, priceBrl: 100, isActive: true });
+              }}
+            >
+              <div>
+                <Label>Código</Label>
+                <Input required value={newPkg.code} onChange={(e) => setNewPkg({ ...newPkg, code: e.target.value })} />
+              </div>
+              <div className="col-span-2">
+                <Label>Nome</Label>
+                <Input required value={newPkg.name} onChange={(e) => setNewPkg({ ...newPkg, name: e.target.value })} />
+              </div>
+              <div>
+                <Label>Créditos</Label>
+                <Input type="number" min="1" value={newPkg.credits} onChange={(e) => setNewPkg({ ...newPkg, credits: Number(e.target.value) })} />
+              </div>
+              <div>
+                <Label>Preço (R$)</Label>
+                <Input type="number" min="0" step="0.01" value={newPkg.priceBrl} onChange={(e) => setNewPkg({ ...newPkg, priceBrl: Number(e.target.value) })} />
+              </div>
+              <Button type="submit">
+                <Plus className="mr-1 h-4 w-4" />
+                Criar pacote
+              </Button>
+            </form>
+          )}
         </CardContent>
       </Card>
-
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card><CardHeader className="pb-2"><CardDescription>Requests</CardDescription><CardTitle className="text-2xl">{usage?.totalRequests ?? 0}</CardTitle></CardHeader></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>Tokens</CardDescription><CardTitle className="text-2xl">{usage?.totalTokens ?? 0}</CardTitle></CardHeader></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>Input</CardDescription><CardTitle className="text-2xl">{usage?.totalInputTokens ?? 0}</CardTitle></CardHeader></Card>
-        <Card><CardHeader className="pb-2"><CardDescription>Output</CardDescription><CardTitle className="text-2xl">{usage?.totalOutputTokens ?? 0}</CardTitle></CardHeader></Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base"><Database className="mr-2 inline h-4 w-4" />Novo Plano</CardTitle></CardHeader>
-          <CardContent>
-            <form className="space-y-3" onSubmit={createPlan}>
-              <Input value={newPlanName} onChange={(event) => setNewPlanName(event.target.value)} placeholder="Nome do plano" />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input value={newPlanRpm} onChange={(event) => setNewPlanRpm(event.target.value)} placeholder="Req/min" />
-                <Input value={newPlanBudget} onChange={(event) => setNewPlanBudget(event.target.value)} placeholder="Tokens/mes" />
-              </div>
-              <Button type="submit">Criar plano</Button>
-            </form>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base"><KeyRound className="mr-2 inline h-4 w-4" />Nova Chave</CardTitle></CardHeader>
-          <CardContent>
-            <form className="space-y-3" onSubmit={createApiKey}>
-              <Input value={newKeyName} onChange={(event) => setNewKeyName(event.target.value)} placeholder="Nome da chave" />
-              <select className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={newKeyPlanId} onChange={(event) => setNewKeyPlanId(event.target.value)}>
-                <option value="">Selecione um plano</option>
-                {plans.map((plan) => <option key={plan.id} value={plan.id}>{plan.name}</option>)}
-              </select>
-              <Button type="submit">Gerar chave</Button>
-            </form>
-            {revealedKey ? <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3"><p className="text-xs font-semibold text-amber-700">Copie agora</p><p className="mt-1 break-all font-mono text-sm text-amber-900">{revealedKey}</p></div> : null}
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader><CardTitle className="text-base">Planos</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {loadingTokens ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Carregando...</div> : plans.map((plan) => (
-              <div key={plan.id} className="rounded-lg border p-3">
-                <p className="font-medium">{plan.name}</p>
-                <p className="text-xs text-slate-500">{plan.requestLimitPerMinute} req/min • {plan.monthlyBudgetTokens} tokens/mes</p>
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="text-base">Chaves</CardTitle></CardHeader>
-          <CardContent className="space-y-3">
-            {loadingTokens ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" />Carregando...</div> : apiKeys.map((key) => (
-              <div key={key.id} className="rounded-lg border p-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">{key.name}</p>
-                    <p className="text-xs text-slate-500">{key.keyPrefix}... • Ultimo uso: {formatDate(key.lastUsedAt)}</p>
-                  </div>
-                  <Badge className={key.status === 'ACTIVE' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}>{key.status}</Badge>
-                </div>
-                {key.status === 'ACTIVE' ? <div className="mt-2 flex justify-end"><Button size="sm" variant="destructive" onClick={() => revokeApiKey(key.id)} disabled={revokingId === key.id}>{revokingId === key.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}</Button></div> : null}
-              </div>
-            ))}
-          </CardContent>
-        </Card>
-      </div>
     </div>
+  );
+}
+
+function PackageRow({ pkg, isAdmin, creditValueBrl, onSave }: { pkg: Pkg; isAdmin: boolean; creditValueBrl: number; onSave: (p: Pkg, ok: string) => void }) {
+  const [p, setP] = useState(pkg);
+  const dirty = JSON.stringify(p) !== JSON.stringify(pkg);
+  const face = p.credits * creditValueBrl;
+  return (
+    <div className={`grid grid-cols-2 items-center gap-2 rounded-xl border p-3 md:grid-cols-[1fr_1.5fr_120px_120px_auto_auto] ${p.isActive ? '' : 'opacity-60'}`}>
+      <code className="text-xs">{p.code}</code>
+      <Input disabled={!isAdmin} value={p.name} onChange={(e) => setP({ ...p, name: e.target.value })} />
+      <Input disabled={!isAdmin} type="number" min="1" value={p.credits} onChange={(e) => setP({ ...p, credits: Number(e.target.value) })} title="Créditos" />
+      <Input disabled={!isAdmin} type="number" min="0" step="0.01" value={p.priceBrl} onChange={(e) => setP({ ...p, priceBrl: Number(e.target.value) })} title="Preço (R$)" />
+      <span className="text-xs text-gray-500">{face > p.priceBrl ? `${Math.round((1 - p.priceBrl / face) * 100)}% de desconto` : 'preço cheio'}</span>
+      {isAdmin && (
+        <div className="flex gap-1">
+          {dirty && (
+            <Button size="sm" onClick={() => onSave(p, 'Pacote atualizado')}>
+              <Save className="h-4 w-4" />
+            </Button>
+          )}
+          <Button size="sm" variant="outline" onClick={() => onSave({ ...p, isActive: !p.isActive }, p.isActive ? 'Pacote pausado' : 'Pacote reativado')}>
+            {p.isActive ? 'Pausar' : 'Ativar'}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------- municípios
+
+function TenantsTab({ report, isAdmin, creditValueBrl, onChange, notify }: { report: { rows: ReportRow[]; totals: any }; isAdmin: boolean; creditValueBrl: number; onChange: () => void; notify: Notify }) {
+  const grant = async (row: ReportRow) => {
+    const raw = prompt(`Quantos créditos dar para ${row.name}? (use número negativo para retirar)`, '1000');
+    if (!raw) return;
+    const credits = Number(raw.replace(',', '.'));
+    if (!Number.isFinite(credits) || credits === 0) return notify('Valor inválido', 'Informe um número diferente de zero');
+    const reason = prompt('Motivo (fica no extrato do município):', credits > 0 ? 'Bônus de lançamento' : 'Ajuste') || '';
+    if (reason.trim().length < 3) return notify('Informe o motivo', 'Mínimo de 3 caracteres');
+    try {
+      await api(`/wallets/${row.tenantId}/grant`, { method: 'POST', body: JSON.stringify({ credits, reason }) });
+      notify('Créditos lançados');
+      onChange();
+    } catch (error) {
+      notify('Não foi possível lançar', error);
+    }
+  };
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Building2 className="h-5 w-5" />
+          Municípios — últimos 30 dias
+        </CardTitle>
+        <CardDescription>Saldo de cada município, consumo e quanto a plataforma ganhou (receita − custo pago aos provedores).</CardDescription>
+      </CardHeader>
+      <CardContent className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-sm">
+          <thead className="border-b text-left text-xs uppercase text-gray-500">
+            <tr>
+              <th className="py-2">Município</th>
+              <th>Saldo</th>
+              <th>Chamadas</th>
+              <th>Custo</th>
+              <th>Receita</th>
+              <th>Lucro</th>
+              <th />
+            </tr>
+          </thead>
+          <tbody className="divide-y">
+            {report.rows.map((r) => (
+              <tr key={r.tenantId}>
+                <td className="py-2 font-medium">{r.name}</td>
+                <td className={r.balance <= 0 ? 'font-semibold text-red-600' : ''}>
+                  {r.balance.toLocaleString('pt-BR', { maximumFractionDigits: 1 })} <span className="text-xs text-gray-500">({brl(r.balance * creditValueBrl)})</span>
+                </td>
+                <td>{r.calls.toLocaleString('pt-BR')}</td>
+                <td>{brl(r.costBrl, 4)}</td>
+                <td>{brl(r.revenueBrl, 4)}</td>
+                <td className="text-green-700">{brl(r.marginBrl, 4)}</td>
+                <td className="text-right">
+                  {isAdmin && (
+                    <Button size="sm" variant="outline" onClick={() => grant(r)}>
+                      Lançar créditos
+                    </Button>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------- testar
+
+function TestTab({ isAdmin, notify, onChange }: { isAdmin: boolean; notify: Notify; onChange: () => void }) {
+  const [text, setText] = useState('Oi, meu CPF é 123.456.789-09 e quero pedir poda de árvore na frente de casa');
+  const [result, setResult] = useState<any>(null);
+  const [busy, setBusy] = useState(false);
+  const run = async (mode: 'decide' | 'complete') => {
+    setBusy(true);
+    setResult(null);
+    try {
+      const r = await api('/playground', { method: 'POST', body: JSON.stringify({ mode, text }) });
+      setResult(r.result);
+      onChange();
+    } catch (error) {
+      notify('Falhou', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <FlaskConical className="h-5 w-5" />
+          Testar o roteador
+        </CardTitle>
+        <CardDescription>Testes da plataforma não são cobrados de nenhum município. Os dados pessoais do texto são mascarados antes de sair.</CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <textarea value={text} onChange={(e) => setText(e.target.value)} rows={3} className="w-full rounded-xl border p-3 text-sm" />
+        <div className="flex gap-2">
+          <Button disabled={!isAdmin || busy} onClick={() => run('decide')}>
+            {busy && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Decidir intenção (JEV)
+          </Button>
+          <Button variant="outline" disabled={!isAdmin || busy} onClick={() => run('complete')}>
+            Gerar resposta (LLM)
+          </Button>
+        </div>
+        {result && <pre className="whitespace-pre-wrap rounded-xl bg-gray-900 p-3 text-xs text-green-200">{JSON.stringify(result, null, 2)}</pre>}
+      </CardContent>
+    </Card>
   );
 }

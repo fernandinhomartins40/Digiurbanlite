@@ -209,6 +209,8 @@ services:
       # A IA passa a ser externa (API DeepSeek, com creditos por municipio).
       # Enquanto a integracao nao entra, o chat com IA fica INDISPONIVEL --
       # estas URLs apontam para um servico que nao existe mais.
+      # DigiBot usa o gateway de IA do backend (/api/internal/ai) com o DIGIURBAN_SERVICE_TOKEN;
+      # CITIZEN_AI_ENABLED=false desliga a IA do bot (só menus).
       # - CITIZEN_AI_COMPLETIONS_URL=http://digiurban-ai:9004/api/v1/internal/chat/completions
       - CITIZEN_AI_TENANT_ID=${AI_DEFAULT_TENANT_ID:-default}
       - DIGIBOT_INACTIVITY_TIMEOUT_MS=${DIGIBOT_INACTIVITY_TIMEOUT_MS:-600000}
@@ -457,6 +459,10 @@ services:
       # Enquanto a integracao nao entra, o chat com IA fica INDISPONIVEL --
       # estas URLs apontam para um servico que nao existe mais.
       # - AI_API_URL=http://digiurban-ai:9004/api/v1
+      # Gateway de IA (2026-09-30): chaves dos provedores ficam cifradas no banco.
+      # Defina uma chave longa e fixa; sem ela usa o JWT_SECRET (trocar o JWT_SECRET
+      # tornaria as chaves ilegíveis — seria preciso cadastrá-las de novo).
+      - AI_KEYS_ENCRYPTION_KEY=${AI_KEYS_ENCRYPTION_KEY:-}
       - AI_SERVICE_TOKEN=${AI_SERVICE_TOKEN:-digiurban-ai-service-token}
       - AI_PROXY_TIMEOUT_MS=90000
 
