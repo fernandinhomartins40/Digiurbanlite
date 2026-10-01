@@ -964,9 +964,9 @@ model ServiceSimplified {
   // Para serviços COM_DADOS
   moduleType           String? // "ATENDIMENTOS_SAUDE", etc — unique composta [tenantId, moduleType]
   // Destino do pedido (ARQUITETURA-DE-PRODUTO.md 6.1): FILA | APP
-  destination  String?
+  destination          String?
   // Ação de entrada do app quando destination = APP (config/app-catalog.ts)
-  appAction    String?
+  appAction            String?
   formSchema           Json? // Schema do formulário
   linkedCitizensConfig Json? // Configuração de vinculação de cidadãos (alunos, dependentes, etc)
 
@@ -10039,7 +10039,7 @@ model ProdutorRural {
 }
 
 model PropriedadeRural {
-  id           String   @id @default(cuid())
+  id           String        @id @default(cuid())
   tenantId     String?
   produtorId   String
   produtor     ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
@@ -10052,9 +10052,9 @@ model PropriedadeRural {
   car          String?
   atividades   Json? // culturas/criações da propriedade
   fotos        Json? // [{url, descricao, data}]
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
 
   solicitacoes SolicitacaoAssistenciaTecnica[]
 
@@ -10086,22 +10086,22 @@ model TecnicoAgricola {
 }
 
 model SolicitacaoAssistenciaTecnica {
-  id              String   @id @default(cuid())
+  id              String            @id @default(cuid())
   tenantId        String?
-  protocolId      String?  @unique // quando nasce de protocolo aprovado
+  protocolId      String?           @unique // quando nasce de protocolo aprovado
   produtorId      String
-  produtor        ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
+  produtor        ProdutorRural     @relation(fields: [produtorId], references: [id], onDelete: Cascade)
   propriedadeId   String?
   propriedade     PropriedadeRural? @relation(fields: [propriedadeId], references: [id], onDelete: SetNull)
   tecnicoId       String?
-  tecnico         TecnicoAgricola? @relation(fields: [tecnicoId], references: [id], onDelete: SetNull)
+  tecnico         TecnicoAgricola?  @relation(fields: [tecnicoId], references: [id], onDelete: SetNull)
   tipoAssistencia String // 'Manejo de solo', 'Sanidade animal', 'Irrigação'...
   descricao       String?
-  prioridade      String   @default("NORMAL") // BAIXA | NORMAL | ALTA | URGENTE
-  status          String   @default("ABERTA") // ABERTA | AGENDADA | EM_ATENDIMENTO | CONCLUIDA | CANCELADA
+  prioridade      String            @default("NORMAL") // BAIXA | NORMAL | ALTA | URGENTE
+  status          String            @default("ABERTA") // ABERTA | AGENDADA | EM_ATENDIMENTO | CONCLUIDA | CANCELADA
   observacoes     String?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
 
   visitas VisitaAssistenciaTecnica[]
 
@@ -10112,22 +10112,22 @@ model SolicitacaoAssistenciaTecnica {
 }
 
 model VisitaAssistenciaTecnica {
-  id             String    @id @default(cuid())
-  tenantId       String?
-  solicitacaoId  String
-  solicitacao    SolicitacaoAssistenciaTecnica @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
-  tecnicoId      String?
-  tecnico        TecnicoAgricola? @relation(fields: [tecnicoId], references: [id], onDelete: SetNull)
-  dataAgendada   DateTime
-  dataInicio     DateTime?
-  dataConclusao  DateTime?
-  status         String    @default("AGENDADA") // AGENDADA | CONFIRMADA | EM_ANDAMENTO | CONCLUIDA | CANCELADA
-  diagnostico    String?
-  recomendacoes  String?
-  fotos          Json? // [{url, descricao}]
-  observacoes    String?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id            String                        @id @default(cuid())
+  tenantId      String?
+  solicitacaoId String
+  solicitacao   SolicitacaoAssistenciaTecnica @relation(fields: [solicitacaoId], references: [id], onDelete: Cascade)
+  tecnicoId     String?
+  tecnico       TecnicoAgricola?              @relation(fields: [tecnicoId], references: [id], onDelete: SetNull)
+  dataAgendada  DateTime
+  dataInicio    DateTime?
+  dataConclusao DateTime?
+  status        String                        @default("AGENDADA") // AGENDADA | CONFIRMADA | EM_ANDAMENTO | CONCLUIDA | CANCELADA
+  diagnostico   String?
+  recomendacoes String?
+  fotos         Json? // [{url, descricao}]
+  observacoes   String?
+  createdAt     DateTime                      @default(now())
+  updatedAt     DateTime                      @updatedAt
 
   @@index([solicitacaoId])
   @@index([status])
@@ -10161,20 +10161,20 @@ model EstoqueSemente {
 }
 
 model DistribuicaoSemente {
-  id               String   @id @default(cuid())
+  id               String         @id @default(cuid())
   tenantId         String?
-  protocolId       String?  @unique // quando nasce de protocolo aprovado
+  protocolId       String?        @unique // quando nasce de protocolo aprovado
   estoqueId        String
   estoque          EstoqueSemente @relation(fields: [estoqueId], references: [id], onDelete: Restrict)
   produtorId       String
-  produtor         ProdutorRural @relation(fields: [produtorId], references: [id], onDelete: Cascade)
+  produtor         ProdutorRural  @relation(fields: [produtorId], references: [id], onDelete: Cascade)
   quantidade       Float
-  dataDistribuicao DateTime @default(now())
+  dataDistribuicao DateTime       @default(now())
   safra            String? // ex.: '2026/2027'
   responsavelId    String? // User que registrou (join manual)
   observacoes      String?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   @@index([estoqueId])
   @@index([produtorId])
@@ -10225,7 +10225,7 @@ model OrdemServico {
 }
 
 model ApontamentoOS {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   tenantId       String?
   ordemServicoId String
   ordemServico   OrdemServico @relation(fields: [ordemServicoId], references: [id], onDelete: Cascade)
@@ -10236,7 +10236,7 @@ model ApontamentoOS {
   materiais      Json? // [{item, quantidade, unidade}]
   fotosAntes     Json?
   fotosDepois    Json?
-  createdAt      DateTime @default(now())
+  createdAt      DateTime     @default(now())
 
   @@index([ordemServicoId])
   @@index([tenantId])
@@ -10283,7 +10283,7 @@ model ProcessoLicenciamento {
 }
 
 model ParecerLicenciamento {
-  id         String   @id @default(cuid())
+  id         String                @id @default(cuid())
   tenantId   String?
   processoId String
   processo   ProcessoLicenciamento @relation(fields: [processoId], references: [id], onDelete: Cascade)
@@ -10292,7 +10292,7 @@ model ParecerLicenciamento {
   texto      String?
   fotos      Json?
   autorId    String? // User (join manual)
-  createdAt  DateTime @default(now())
+  createdAt  DateTime              @default(now())
 
   @@index([processoId])
   @@index([tenantId])
@@ -10345,7 +10345,7 @@ model ProcessoAmbiental {
 }
 
 model ParecerAmbiental {
-  id         String   @id @default(cuid())
+  id         String            @id @default(cuid())
   tenantId   String?
   processoId String
   processo   ProcessoAmbiental @relation(fields: [processoId], references: [id], onDelete: Cascade)
@@ -10354,7 +10354,7 @@ model ParecerAmbiental {
   texto      String?
   fotos      Json?
   autorId    String? // User (join manual)
-  createdAt  DateTime @default(now())
+  createdAt  DateTime          @default(now())
 
   @@index([processoId])
   @@index([tenantId])
@@ -10362,7 +10362,7 @@ model ParecerAmbiental {
 }
 
 model VistoriaAmbiental {
-  id            String    @id @default(cuid())
+  id            String            @id @default(cuid())
   tenantId      String?
   processoId    String
   processo      ProcessoAmbiental @relation(fields: [processoId], references: [id], onDelete: Cascade)
@@ -10374,8 +10374,8 @@ model VistoriaAmbiental {
   fotos         Json?
   latitude      Float?
   longitude     Float?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   @@index([processoId])
   @@index([fiscalId])
@@ -10384,7 +10384,7 @@ model VistoriaAmbiental {
 }
 
 model AutoInfracaoAmbiental {
-  id                String    @id @default(cuid())
+  id                String            @id @default(cuid())
   tenantId          String?
   processoId        String
   processo          ProcessoAmbiental @relation(fields: [processoId], references: [id], onDelete: Cascade)
@@ -10397,11 +10397,11 @@ model AutoInfracaoAmbiental {
   gravidade         String? // LEVE | MEDIA | GRAVE | GRAVISSIMA
   valorMulta        Float?
   prazoDefesa       DateTime?
-  status            String    @default("LAVRADO") // LAVRADO | NOTIFICADO | EM_DEFESA | MANTIDO | CANCELADO | PAGO
+  status            String            @default("LAVRADO") // LAVRADO | NOTIFICADO | EM_DEFESA | MANTIDO | CANCELADO | PAGO
   fiscalId          String? // User (join manual)
   fotos             Json?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
 
   @@unique([tenantId, numero])
   @@index([processoId])
@@ -10420,9 +10420,9 @@ model AutoInfracaoAmbiental {
 // ============================================================================
 
 model InscricaoHabitacional {
-  id                   String    @id @default(cuid())
+  id                   String                @id @default(cuid())
   tenantId             String?
-  protocolId           String?   @unique // quando nasce de protocolo
+  protocolId           String?               @unique // quando nasce de protocolo
   programaId           String?
   programa             ProgramaHabitacional? @relation(fields: [programaId], references: [id], onDelete: SetNull)
   citizenId            String? // join manual com Citizen
@@ -10431,15 +10431,15 @@ model InscricaoHabitacional {
   rendaFamiliar        Float?
   membrosFamilia       Int?
   criteriosAtendidos   Json? // códigos dos critérios do programa atendidos
-  pontuacao            Int       @default(0) // calculada dos critérios do programa
-  status               String    @default("INSCRITA") // INSCRITA | EM_ANALISE | CLASSIFICADA | SELECIONADA | CONTEMPLADA | INDEFERIDA | CANCELADA
+  pontuacao            Int                   @default(0) // calculada dos critérios do programa
+  status               String                @default("INSCRITA") // INSCRITA | EM_ANALISE | CLASSIFICADA | SELECIONADA | CONTEMPLADA | INDEFERIDA | CANCELADA
   conjuntoId           String? // ConjuntoHabitacional da unidade contemplada (join manual)
   unidadeIdentificacao String? // quadra/lote/apto
   contratoAssinadoEm   DateTime?
   observacoes          String?
   dados                Json? // formulário de origem
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime              @default(now())
+  updatedAt            DateTime              @updatedAt
 
   @@index([programaId])
   @@index([status])
@@ -10516,7 +10516,7 @@ model Abrigo {
 }
 
 model FamiliaAtingida {
-  id                String    @id @default(cuid())
+  id                String                 @id @default(cuid())
   tenantId          String?
   ocorrenciaId      String?
   ocorrencia        OcorrenciaDefesaCivil? @relation(fields: [ocorrenciaId], references: [id], onDelete: SetNull)
@@ -10525,13 +10525,13 @@ model FamiliaAtingida {
   responsavelNome   String?
   cpf               String? // dígitos apenas
   membros           Int? // pessoas na família
-  situacao          String    @default("DESALOJADA") // DESALOJADA | DESABRIGADA | EM_ABRIGO | RETORNOU
+  situacao          String                 @default("DESALOJADA") // DESALOJADA | DESABRIGADA | EM_ABRIGO | RETORNOU
   necessidades      String?
   entradaAbrigoEm   DateTime?
   saidaAbrigoEm     DateTime?
   observacoes       String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   @@index([ocorrenciaId])
   @@index([abrigoId])
@@ -10550,23 +10550,23 @@ model FamiliaAtingida {
 // ============================================================================
 
 model CasoMulher {
-  id                  String   @id @default(cuid())
+  id                  String    @id @default(cuid())
   tenantId            String?
-  protocolId          String?  @unique // quando nasce de protocolo
+  protocolId          String?   @unique // quando nasce de protocolo
   numero              String // CM-<ano>-<seq> por tenant
   tipo                String // VIOLENCIA_DOMESTICA | ASSEDIO | ACOLHIMENTO | MEDIDA_PROTETIVA | ACOMPANHAMENTO | OUTRO
-  risco               String   @default("MEDIO") // BAIXO | MEDIO | ALTO | IMINENTE
+  risco               String    @default("MEDIO") // BAIXO | MEDIO | ALTO | IMINENTE
   nomeAtendida        String? // PII — só visível à equipe do caso
   citizenId           String? // join manual com Citizen
   telefoneSeguro      String? // telefone seguro para contato (PII)
   equipeIds           Json? // userIds com acesso à ficha (equipe do caso)
   planoAcompanhamento String?
-  status              String   @default("ABERTO") // ABERTO | EM_ACOMPANHAMENTO | ENCERRADO
+  status              String    @default("ABERTO") // ABERTO | EM_ACOMPANHAMENTO | ENCERRADO
   dados               Json? // formulário de origem (PII)
   createdById         String? // User que abriu o caso (entra na equipe)
   encerradoEm         DateTime?
-  createdAt           DateTime @default(now())
-  updatedAt           DateTime @updatedAt
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
 
   atendimentos    AtendimentoCasoMulher[]
   encaminhamentos EncaminhamentoCasoMulher[]
@@ -10580,14 +10580,14 @@ model CasoMulher {
 }
 
 model AtendimentoCasoMulher {
-  id      String     @id @default(cuid())
-  tenantId String?
-  casoId  String
-  caso    CasoMulher @relation(fields: [casoId], references: [id], onDelete: Cascade)
-  tipo    String // ACOLHIMENTO | PSICOLOGICO | JURIDICO | SOCIAL | VISITA | CONTATO | NOTA
-  relato  String?
-  autorId String? // User (join manual)
-  createdAt DateTime @default(now())
+  id        String     @id @default(cuid())
+  tenantId  String?
+  casoId    String
+  caso      CasoMulher @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  tipo      String // ACOLHIMENTO | PSICOLOGICO | JURIDICO | SOCIAL | VISITA | CONTATO | NOTA
+  relato    String?
+  autorId   String? // User (join manual)
+  createdAt DateTime   @default(now())
 
   @@index([casoId])
   @@index([tenantId])
@@ -10595,16 +10595,16 @@ model AtendimentoCasoMulher {
 }
 
 model EncaminhamentoCasoMulher {
-  id       String     @id @default(cuid())
-  tenantId String?
-  casoId   String
-  caso     CasoMulher @relation(fields: [casoId], references: [id], onDelete: Cascade)
-  destino  String // DEAM | CASA_ABRIGO | MEDIDA_PROTETIVA | DEFENSORIA | MINISTERIO_PUBLICO | CRAS_CREAS | SAUDE | OUTRO
-  detalhes String?
-  status   String     @default("ENCAMINHADO") // ENCAMINHADO | CONFIRMADO | CONCLUIDO
-  autorId  String? // User (join manual)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id        String     @id @default(cuid())
+  tenantId  String?
+  casoId    String
+  caso      CasoMulher @relation(fields: [casoId], references: [id], onDelete: Cascade)
+  destino   String // DEAM | CASA_ABRIGO | MEDIDA_PROTETIVA | DEFENSORIA | MINISTERIO_PUBLICO | CRAS_CREAS | SAUDE | OUTRO
+  detalhes  String?
+  status    String     @default("ENCAMINHADO") // ENCAMINHADO | CONFIRMADO | CONCLUIDO
+  autorId   String? // User (join manual)
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
 
   @@index([casoId])
   @@index([tenantId])
@@ -10642,9 +10642,9 @@ model TurmaEscolinha {
 }
 
 model MatriculaEscolinha {
-  id                   String    @id @default(cuid())
+  id                   String          @id @default(cuid())
   tenantId             String?
-  protocolId           String?   @unique // quando nasce de protocolo
+  protocolId           String?         @unique // quando nasce de protocolo
   turmaId              String?
   turma                TurmaEscolinha? @relation(fields: [turmaId], references: [id], onDelete: SetNull)
   modalidadePretendida String? // do serviço de origem, antes de alocar turma
@@ -10653,11 +10653,11 @@ model MatriculaEscolinha {
   responsavelNome      String?
   telefone             String?
   citizenId            String? // join manual com Citizen
-  status               String    @default("INSCRITA") // INSCRITA | MATRICULADA | LISTA_ESPERA | DESLIGADA | CANCELADA
+  status               String          @default("INSCRITA") // INSCRITA | MATRICULADA | LISTA_ESPERA | DESLIGADA | CANCELADA
   observacoes          String?
   dados                Json? // formulário de origem
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  createdAt            DateTime        @default(now())
+  updatedAt            DateTime        @updatedAt
 
   @@index([turmaId])
   @@index([status])
@@ -10667,14 +10667,14 @@ model MatriculaEscolinha {
 }
 
 model FrequenciaEscolinha {
-  id            String   @id @default(cuid())
+  id            String         @id @default(cuid())
   tenantId      String?
   turmaId       String
   turma         TurmaEscolinha @relation(fields: [turmaId], references: [id], onDelete: Cascade)
   data          DateTime // dia da aula
   presentes     Json? // matriculaIds presentes
   registradoPor String? // User (join manual)
-  createdAt     DateTime @default(now())
+  createdAt     DateTime       @default(now())
 
   @@unique([turmaId, data])
   @@index([turmaId])
@@ -10683,10 +10683,10 @@ model FrequenciaEscolinha {
 }
 
 model ReservaEspaco {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   tenantId        String?
-  protocolId      String?  @unique // quando nasce de protocolo
-  area            String   @default("ESPORTES") // ESPORTES | CULTURA — app dono da reserva (conflito de horário é global por espaço)
+  protocolId      String?   @unique // quando nasce de protocolo
+  area            String    @default("ESPORTES") // ESPORTES | CULTURA — app dono da reserva (conflito de horário é global por espaço)
   espacoId        String? // EspacoPublico (join manual; atribuível na triagem)
   solicitanteNome String?
   citizenId       String? // join manual com Citizen
@@ -10694,11 +10694,11 @@ model ReservaEspaco {
   horaInicio      String? // "18:00"
   horaFim         String? // "20:00"
   finalidade      String?
-  status          String   @default("SOLICITADA") // SOLICITADA | CONFIRMADA | RECUSADA | CANCELADA
+  status          String    @default("SOLICITADA") // SOLICITADA | CONFIRMADA | RECUSADA | CANCELADA
   observacoes     String?
   dados           Json? // formulário de origem
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   @@index([espacoId, data])
   @@index([area, status])
@@ -10709,17 +10709,17 @@ model ReservaEspaco {
 }
 
 model Competicao {
-  id         String   @id @default(cuid())
+  id         String    @id @default(cuid())
   tenantId   String?
   nome       String
   modalidade String?
   dataInicio DateTime?
   dataFim    DateTime?
   local      String?
-  status     String   @default("INSCRICOES_ABERTAS") // INSCRICOES_ABERTAS | EM_ANDAMENTO | ENCERRADA | CANCELADA
+  status     String    @default("INSCRICOES_ABERTAS") // INSCRICOES_ABERTAS | EM_ANDAMENTO | ENCERRADA | CANCELADA
   descricao  String?
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   inscricoes InscricaoCompeticao[]
 
@@ -10730,19 +10730,19 @@ model Competicao {
 }
 
 model InscricaoCompeticao {
-  id            String   @id @default(cuid())
-  tenantId      String?
-  protocolId    String?  @unique // quando nasce de protocolo
-  competicaoId  String?
-  competicao    Competicao? @relation(fields: [competicaoId], references: [id], onDelete: SetNull)
-  participante  String? // atleta ou equipe
-  categoria     String?
-  citizenId     String? // join manual com Citizen
-  telefone      String?
-  status        String   @default("INSCRITA") // INSCRITA | CONFIRMADA | CANCELADA
-  dados         Json? // formulário de origem
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  id           String      @id @default(cuid())
+  tenantId     String?
+  protocolId   String?     @unique // quando nasce de protocolo
+  competicaoId String?
+  competicao   Competicao? @relation(fields: [competicaoId], references: [id], onDelete: SetNull)
+  participante String? // atleta ou equipe
+  categoria    String?
+  citizenId    String? // join manual com Citizen
+  telefone     String?
+  status       String      @default("INSCRITA") // INSCRITA | CONFIRMADA | CANCELADA
+  dados        Json? // formulário de origem
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 
   @@index([competicaoId])
   @@index([status])
@@ -10751,22 +10751,22 @@ model InscricaoCompeticao {
 }
 
 model EmprestimoMaterial {
-  id                     String    @id @default(cuid())
-  tenantId               String?
-  protocolId             String?   @unique // quando nasce de protocolo
-  item                   String?
-  quantidade             Int       @default(1)
-  solicitanteNome        String?
-  citizenId              String? // join manual com Citizen
-  telefone               String?
-  dataEmprestimo         DateTime?
-  dataPrevistaDevolucao  DateTime?
-  dataDevolucao          DateTime?
-  status                 String    @default("SOLICITADO") // SOLICITADO | EMPRESTADO | DEVOLVIDO | CANCELADO
-  observacoes            String?
-  dados                  Json? // formulário de origem
-  createdAt              DateTime  @default(now())
-  updatedAt              DateTime  @updatedAt
+  id                    String    @id @default(cuid())
+  tenantId              String?
+  protocolId            String?   @unique // quando nasce de protocolo
+  item                  String?
+  quantidade            Int       @default(1)
+  solicitanteNome       String?
+  citizenId             String? // join manual com Citizen
+  telefone              String?
+  dataEmprestimo        DateTime?
+  dataPrevistaDevolucao DateTime?
+  dataDevolucao         DateTime?
+  status                String    @default("SOLICITADO") // SOLICITADO | EMPRESTADO | DEVOLVIDO | CANCELADO
+  observacoes           String?
+  dados                 Json? // formulário de origem
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   @@index([status])
   @@index([citizenId])
@@ -10805,9 +10805,9 @@ model OficinaCultural {
 }
 
 model MatriculaOficina {
-  id                  String    @id @default(cuid())
+  id                  String           @id @default(cuid())
   tenantId            String?
-  protocolId          String?   @unique // quando nasce de protocolo
+  protocolId          String?          @unique // quando nasce de protocolo
   oficinaId           String?
   oficina             OficinaCultural? @relation(fields: [oficinaId], references: [id], onDelete: SetNull)
   atividadePretendida String? // do formulário de origem, antes de alocar oficina
@@ -10816,11 +10816,11 @@ model MatriculaOficina {
   responsavelNome     String?
   telefone            String?
   citizenId           String? // join manual com Citizen
-  status              String    @default("INSCRITA") // INSCRITA | MATRICULADA | LISTA_ESPERA | DESLIGADA | CANCELADA
+  status              String           @default("INSCRITA") // INSCRITA | MATRICULADA | LISTA_ESPERA | DESLIGADA | CANCELADA
   observacoes         String?
   dados               Json? // formulário de origem
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
 
   @@index([oficinaId])
   @@index([status])
@@ -10830,14 +10830,14 @@ model MatriculaOficina {
 }
 
 model FrequenciaOficina {
-  id            String   @id @default(cuid())
+  id            String          @id @default(cuid())
   tenantId      String?
   oficinaId     String
   oficina       OficinaCultural @relation(fields: [oficinaId], references: [id], onDelete: Cascade)
   data          DateTime // dia da aula
   presentes     Json? // matriculaIds presentes
   registradoPor String? // User (join manual)
-  createdAt     DateTime @default(now())
+  createdAt     DateTime        @default(now())
 
   @@unique([oficinaId, data])
   @@index([oficinaId])
@@ -10846,16 +10846,16 @@ model FrequenciaOficina {
 }
 
 model EditalCultural {
-  id                  String    @id @default(cuid())
-  tenantId            String?
-  nome                String
-  categoria           String? // ex.: "Fomento", "Lei Aldir Blanc", "Prêmio"
-  descricao           String?
+  id                   String    @id @default(cuid())
+  tenantId             String?
+  nome                 String
+  categoria            String? // ex.: "Fomento", "Lei Aldir Blanc", "Prêmio"
+  descricao            String?
   dataInicioInscricoes DateTime?
-  dataFimInscricoes   DateTime?
-  status              String    @default("INSCRICOES_ABERTAS") // INSCRICOES_ABERTAS | EM_ANALISE | RESULTADO_PUBLICADO | ENCERRADO | CANCELADO
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
+  dataFimInscricoes    DateTime?
+  status               String    @default("INSCRICOES_ABERTAS") // INSCRICOES_ABERTAS | EM_ANALISE | RESULTADO_PUBLICADO | ENCERRADO | CANCELADO
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   projetos ProjetoCultural[]
 
@@ -10866,9 +10866,9 @@ model EditalCultural {
 }
 
 model ProjetoCultural {
-  id              String   @id @default(cuid())
+  id              String          @id @default(cuid())
   tenantId        String?
-  protocolId      String?  @unique // quando nasce de protocolo
+  protocolId      String?         @unique // quando nasce de protocolo
   editalId        String?
   edital          EditalCultural? @relation(fields: [editalId], references: [id], onDelete: SetNull)
   titulo          String?
@@ -10878,10 +10878,10 @@ model ProjetoCultural {
   categoria       String?
   descricao       String?
   valorSolicitado Float?
-  status          String   @default("RECEBIDO") // RECEBIDO | EM_ANALISE | APROVADO | REPROVADO | CANCELADO
+  status          String          @default("RECEBIDO") // RECEBIDO | EM_ANALISE | APROVADO | REPROVADO | CANCELADO
   dados           Json? // formulário de origem
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
 
   pareceres ParecerProjetoCultural[]
 
@@ -10893,7 +10893,7 @@ model ProjetoCultural {
 }
 
 model ParecerProjetoCultural {
-  id           String   @id @default(cuid())
+  id           String          @id @default(cuid())
   tenantId     String?
   projetoId    String
   projeto      ProjetoCultural @relation(fields: [projetoId], references: [id], onDelete: Cascade)
@@ -10901,7 +10901,7 @@ model ParecerProjetoCultural {
   autorNome    String?
   recomendacao String? // APROVAR | REPROVAR | AJUSTES
   texto        String
-  createdAt    DateTime @default(now())
+  createdAt    DateTime        @default(now())
 
   @@index([projetoId])
   @@index([tenantId])
@@ -10971,9 +10971,9 @@ model CredencialTransporte {
 }
 
 model VistoriaVeiculo {
-  id              String    @id @default(cuid())
+  id              String                @id @default(cuid())
   tenantId        String?
-  protocolId      String?   @unique // quando nasce de protocolo
+  protocolId      String?               @unique // quando nasce de protocolo
   credencialId    String?
   credencial      CredencialTransporte? @relation(fields: [credencialId], references: [id], onDelete: SetNull)
   veiculoPlaca    String?
@@ -10984,11 +10984,11 @@ model VistoriaVeiculo {
   resultado       String? // APROVADO | REPROVADO | CONDICIONAL
   itens           String? // itens reprovados / condicionantes
   vistoriador     String?
-  status          String    @default("SOLICITADA") // SOLICITADA | AGENDADA | REALIZADA | CANCELADA
+  status          String                @default("SOLICITADA") // SOLICITADA | AGENDADA | REALIZADA | CANCELADA
   observacoes     String?
   dados           Json? // formulário de origem
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
 
   @@index([credencialId])
   @@index([status])
@@ -11124,4 +11124,147 @@ model RemoteAssistSession {
   @@index([operatorId])
   @@index([status, solicitadaEm])
   @@map("remote_assist_sessions")
+}
+
+// ============================================================================
+// IA DA PLATAFORMA — gateway multi-provedor + revenda de créditos (2026-09-30)
+// ============================================================================
+// Chaves das IAs são DA PLATAFORMA (o operador compra créditos nos provedores
+// a centavos e revende aos municípios como pacotes). Cada chamada é cobrada da
+// carteira do município, com a margem configurada em AiBillingSettings.
+
+/// Credencial de um provedor (plataforma — sem tenantId)
+model AiProviderCredential {
+  id            String    @id @default(cuid())
+  provider      String    @unique // deepseek | qwen | moonshot | zhipu | minimax | openrouter | deepinfra | jev
+  label         String
+  baseUrl       String
+  apiKeyEnc     String? // AES-256-GCM (services/ai-gateway/secrets.ts)
+  apiKeyLast4   String?
+  isEnabled     Boolean   @default(false)
+  dataRegion    String    @default("CN") // CN | US | GLOBAL — onde os dados são processados
+  zeroRetention Boolean   @default(false) // provedor declara não reter entradas/saídas
+  lastTestAt    DateTime?
+  lastTestOk    Boolean?
+  lastTestError String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("ai_provider_credentials")
+}
+
+/// Modelo disponível num provedor, com preço e estatísticas para o roteador
+model AiModelConfig {
+  id                      String    @id @default(cuid())
+  provider                String
+  modelId                 String
+  label                   String
+  tier                    String // decision (JEV) | fast | smart
+  inputPricePerMUsd       Float
+  outputPricePerMUsd      Float
+  cachedInputPricePerMUsd Float?
+  isEnabled               Boolean   @default(true)
+  calls                   Int       @default(0)
+  failures                Int       @default(0)
+  avgLatencyMs            Int       @default(0)
+  lastFailureAt           DateTime?
+  lastError               String?
+  createdAt               DateTime  @default(now())
+  updatedAt               DateTime  @updatedAt
+
+  @@unique([provider, modelId])
+  @@index([tier, isEnabled])
+  @@map("ai_model_configs")
+}
+
+/// Regras de cobrança (singleton da plataforma)
+model AiBillingSettings {
+  id               String   @id @default("singleton")
+  usdToBrl         Float    @default(5.5)
+  markup           Float    @default(3) // preço de venda = custo × markup
+  creditValueBrl   Float    @default(0.01) // 1 crédito = R$ 0,01
+  minChargeCredits Float    @default(0.1) // cobrança mínima por chamada
+  allowChinaHosted Boolean  @default(true) // permite provedores com dados na China
+  redactPii        Boolean  @default(true) // remove CPF/telefone/e-mail antes de enviar
+  updatedAt        DateTime @updatedAt
+
+  @@map("ai_billing_settings")
+}
+
+/// Pacote de créditos vendido aos municípios
+model AiCreditPackage {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  name        String
+  description String?
+  credits     Int
+  priceBrl    Float
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("ai_credit_packages")
+}
+
+/// Carteira de créditos de IA de um município
+model AiTenantWallet {
+  id             String   @id @default(cuid())
+  tenantId       String?  @unique
+  balance        Decimal  @default(0) @db.Decimal(14, 4)
+  totalPurchased Decimal  @default(0) @db.Decimal(14, 4)
+  totalConsumed  Decimal  @default(0) @db.Decimal(14, 4)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("ai_tenant_wallets")
+}
+
+/// Extrato da carteira (compra, consumo, bônus, ajuste) — base do relatório de lucro
+model AiCreditLedger {
+  id           String   @id @default(cuid())
+  tenantId     String?
+  kind         String // PURCHASE | USAGE | GRANT | REFUND | ADJUST
+  credits      Decimal  @db.Decimal(14, 4) // positivo entra, negativo sai
+  balanceAfter Decimal  @db.Decimal(14, 4)
+  description  String?
+  task         String? // intent | select_service | extract_fields | guidance | chat...
+  source       String? // bot | admin | api
+  provider     String?
+  modelId      String?
+  inputTokens  Int      @default(0)
+  outputTokens Int      @default(0)
+  costUsd      Decimal  @default(0) @db.Decimal(14, 8) // quanto a plataforma pagou
+  revenueBrl   Decimal  @default(0) @db.Decimal(14, 4) // quanto foi cobrado do município
+  latencyMs    Int?
+  orderId      String?
+  createdById  String?
+  createdAt    DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([kind, createdAt])
+  @@map("ai_credit_ledger")
+}
+
+/// Pedido de compra de pacote (vira fatura; ao pagar, os créditos entram)
+model AiCreditOrder {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  packageId     String
+  packageName   String
+  credits       Int
+  priceBrl      Float
+  status        String    @default("PENDING") // PENDING | PAID | CANCELLED
+  invoiceId     String?
+  requestedById String?
+  paidAt        DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([invoiceId])
+  @@map("ai_credit_orders")
 }

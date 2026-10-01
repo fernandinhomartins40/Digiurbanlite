@@ -7,6 +7,9 @@ import { Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
 import { internalTenantContextMiddleware } from '../middleware/internal-tenant-context';
 import { ensureProtocolDir, getProtocolFileUrl, uploadDocuments } from '../config/upload';
+import { complete as aiComplete, decide as aiDecide } from '../services/ai-gateway/gateway';
+import { tryGetTenantId } from '../lib/tenant-context';
+import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { validateServiceFormData } from '../lib/json-schema-validator';
 import { DocumentUploadService } from '../services/document-upload.service';
@@ -1497,6 +1500,58 @@ router.get('/departments/:deptId/services', async (req: Request, res: Response) 
   } catch (error) {
     console.error('[internal.routes] Error in GET /departments/:deptId/services', error);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ============================================================================
+// IA (gateway da plataforma) — usada pelo DigiBot. Cobra da carteira do
+// município da conversa (tenant resolvido pelo X-Tenant-Id do bot).
+// 402 = município sem créditos; 503 = nenhum provedor configurado. Nos dois
+// casos o bot segue no caminho determinístico (menus), sem travar o cidadão.
+// ============================================================================
+
+function aiError(res: Response, error: any) {
+  const status = error?.status || 500;
+  if (status >= 500 && status !== 503) console.error('[internal-ai]', error?.message);
+  return res.status(status).json({ error: error?.message || 'Erro na IA', code: status === 402 ? 'NO_CREDITS' : status === 503 ? 'AI_UNAVAILABLE' : 'AI_ERROR' });
+}
+
+router.post('/ai/decide', async (req: Request, res: Response) => {
+  try {
+    const body = z
+      .object({
+        task: z.string().min(2).max(60),
+        state: z.string().min(1).max(6000),
+        instructions: z.string().min(3).max(1000),
+        choices: z.record(z.string(), z.string().max(300)).refine((c) => Object.keys(c).length >= 2 && Object.keys(c).length <= 250),
+        minConfidence: z.number().min(0).max(1).optional(),
+      })
+      .parse(req.body);
+    const r = await aiDecide({ ...body, tenantId: tryGetTenantId() || null, source: 'bot' });
+    res.json({ success: true, ...r });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Pedido de decisão inválido' });
+    aiError(res, error);
+  }
+});
+
+router.post('/ai/complete', async (req: Request, res: Response) => {
+  try {
+    const body = z
+      .object({
+        task: z.string().min(2).max(60),
+        system: z.string().max(4000).optional(),
+        prompt: z.string().min(1).max(8000),
+        json: z.boolean().optional(),
+        tier: z.enum(['fast', 'smart']).optional(),
+        maxTokens: z.number().int().min(16).max(1200).optional(),
+      })
+      .parse(req.body);
+    const r = await aiComplete({ ...body, tenantId: tryGetTenantId() || null, source: 'bot' });
+    res.json({ success: true, ...r });
+  } catch (error: any) {
+    if (error instanceof z.ZodError) return res.status(400).json({ error: 'Pedido de IA inválido' });
+    aiError(res, error);
   }
 });
 

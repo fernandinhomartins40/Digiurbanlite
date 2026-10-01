@@ -1,5 +1,27 @@
+/**
+ * ============================================================================
+ * CLIENTE DE IA DO DIGIBOT — via gateway da plataforma (backend)
+ * ============================================================================
+ * Antes: chamava o serviço digiurban-ai (IA local llama.cpp), removido do
+ * deploy; e sempre com o tenant "default" (consumo sem dono).
+ *
+ * Agora, gastando o mínimo de tokens:
+ *   1. Regras locais (zero token): número de protocolo, CPF, e-mail,
+ *      telefone, CEP, datas — nunca saem do servidor.
+ *   2. DECISÕES (intenção, escolher serviço/opção, qual campo corrigir) →
+ *      POST /api/internal/ai/decide → JEV (saída grátis), LLM só se a
+ *      confiança for baixa.
+ *   3. TEXTO (extrair campos livres, orientar o cidadão) →
+ *      POST /api/internal/ai/complete → LLM chinês mais barato disponível.
+ *
+ * Cada chamada leva o município da conversa (X-Tenant-Id) e é cobrada da
+ * carteira de créditos dele. Sem créditos (402) ou sem provedor (503), os
+ * métodos devolvem null e o bot segue pelos menus — o cidadão nunca trava.
+ */
+
 import axios, { AxiosInstance } from 'axios';
 import logger from '../../utils/logger';
+import { getBotTenantId } from '../tenant-context';
 import {
   CitizenAiCorrectionExtraction,
   CitizenAiFieldExtraction,
@@ -8,280 +30,232 @@ import {
   CitizenAiSelection,
 } from './types';
 
-const DEFAULT_AI_URL = 'http://localhost:9004/api/v1/internal/chat/completions';
+type Field = {
+  id: string;
+  label: string;
+  type?: string;
+  required?: boolean;
+  options?: Array<{ id?: string; label?: string; value?: string }>;
+};
 
-function clampConfidence(value: unknown, fallback = 0): number {
-  const numeric = typeof value === 'number' ? value : Number.parseFloat(String(value ?? ''));
-  if (!Number.isFinite(numeric)) {
-    return fallback;
-  }
-  return Math.max(0, Math.min(1, numeric));
-}
+const INTENTS: Record<string, string> = {
+  greeting: 'cumprimento ou saudação sem pedido',
+  solicitar_servico: 'quer pedir, abrir, registrar ou solicitar um serviço da prefeitura',
+  consultar_protocolo: 'quer saber o andamento de um pedido/protocolo',
+  corrigir_dados: 'quer corrigir uma informação já dada neste atendimento',
+  meu_perfil: 'quer ver ou alterar seus dados cadastrais',
+  documentos: 'assunto sobre documentos emitidos ou enviados',
+  minha_familia: 'assunto sobre membros da família/dependentes',
+  notificacoes: 'avisos e notificações',
+  avaliacao: 'quer avaliar um atendimento',
+  ajuda: 'dúvida sobre como usar o sistema',
+  atendimento_humano: 'pede atendente, pessoa, servidor ou suporte humano',
+};
 
-function parseJsonContent(rawContent: string): Record<string, any> | null {
-  const trimmed = rawContent.trim();
-  if (!trimmed) {
-    return null;
-  }
+// ---------------------------------------------------------------- regras locais (0 token)
 
-  const candidates = [trimmed];
-  const objectMatch = trimmed.match(/\{[\s\S]*\}/);
-  if (objectMatch?.[0]) {
-    candidates.push(objectMatch[0]);
-  }
+const RE = {
+  protocol: /\b(?:\d{4}[-/.]?\d{4,8}|[A-Z]{2,5}-\d{4}-\d{3,8})\b/i,
+  cpf: /\b\d{3}\.?\d{3}\.?\d{3}-?\d{2}\b/,
+  email: /[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/,
+  phone: /(?:\+?55\s?)?\(?\d{2}\)?\s?9?\d{4}[-\s]?\d{4}/,
+  cep: /\b\d{5}-?\d{3}\b/,
+  date: /\b(\d{1,2})[/.-](\d{1,2})[/.-](\d{2,4})\b/,
+};
 
-  for (const candidate of candidates) {
-    try {
-      const parsed = JSON.parse(candidate);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-        return parsed as Record<string, any>;
-      }
-    } catch {
-      // Ignore and try the next candidate.
+function localValue(field: Field, message: string): string | undefined {
+  const key = `${field.id} ${field.label} ${field.type || ''}`.toLowerCase();
+  const pick = (re: RegExp) => message.match(re)?.[0];
+  if (key.includes('cpf')) return pick(RE.cpf)?.replace(/\D/g, '');
+  if (field.type === 'email' || key.includes('e-mail') || key.includes('email')) return pick(RE.email);
+  if (field.type === 'tel' || key.includes('telefone') || key.includes('celular') || key.includes('whatsapp')) return pick(RE.phone)?.replace(/\D/g, '');
+  if (key.includes('cep')) return pick(RE.cep)?.replace(/\D/g, '');
+  if (field.type === 'date' || key.includes('data')) {
+    const m = message.match(RE.date);
+    if (m) {
+      const year = m[3].length === 2 ? `20${m[3]}` : m[3];
+      return `${year}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
     }
   }
-
-  return null;
+  return undefined;
 }
 
+function optionChoices(field: Field): Record<string, string> | null {
+  if (!Array.isArray(field.options) || field.options.length < 2) return null;
+  const out: Record<string, string> = {};
+  field.options.slice(0, 200).forEach((o, i) => {
+    out[`op${i}`] = o.label || o.value || o.id || `opção ${i + 1}`;
+  });
+  return out;
+}
+
+function optionValue(field: Field, choiceId: string): string | undefined {
+  const idx = Number(choiceId.replace('op', ''));
+  const o = field.options?.[idx];
+  return o ? o.value || o.id || o.label : undefined;
+}
+
+const clamp = (v: unknown) => {
+  const n = typeof v === 'number' ? v : Number.parseFloat(String(v ?? ''));
+  return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
+};
+
+// ---------------------------------------------------------------- cliente
+
 export class CitizenAiClient {
-  private readonly httpClient: AxiosInstance;
-  private readonly serviceToken: string;
-  private readonly tenantId: string;
-  private readonly isConfigured: boolean;
+  private readonly http: AxiosInstance;
+  private readonly enabled: boolean;
+  /** Após 503 (sem provedor), evita repetir a chamada por 60 s */
+  private unavailableUntil = 0;
 
   constructor() {
-    // Otimização VPS (docs/PLANO-OTIMIZACAO-VPS.md, M4): a URL do serviço de IA precisa
-    // ser EXPLÍCITA. Antes, sem variável definida, caía no DEFAULT_AI_URL (localhost:9004)
-    // — que dentro do container não é ninguém — e o cliente ainda assim se considerava
-    // configurado, tentando chamar host morto a cada turno de conversa.
-    const explicitBaseURL =
-      process.env.CITIZEN_AI_COMPLETIONS_URL ||
-      process.env.DIGIURBAN_AI_COMPLETIONS_URL ||
-      '';
-    const baseURL = explicitBaseURL || DEFAULT_AI_URL;
-
-    this.serviceToken = process.env.AI_SERVICE_TOKEN || '';
-    this.tenantId = process.env.CITIZEN_AI_TENANT_ID || process.env.AI_DEFAULT_TENANT_ID || 'default';
-    // Exige token E URL explícita. Com a IA local removida (llama.cpp/digiurban-ai) e a
-    // externa (DeepSeek) ainda não integrada, isto faz o bot usar o caminho determinístico
-    // em vez de degradar por timeout. Quando a IA voltar, basta definir a variável.
-    this.isConfigured = Boolean(this.serviceToken) && Boolean(explicitBaseURL);
-
-    this.httpClient = axios.create({
-      baseURL,
-      timeout: Number.parseInt(process.env.CITIZEN_AI_TIMEOUT_MS || '30000', 10),
-      headers: {
-        Authorization: `Bearer ${this.serviceToken}`,
-        'x-tenant-id': this.tenantId,
-        'Content-Type': 'application/json',
-      },
+    const baseURL = process.env.DIGIURBAN_API_URL || 'http://localhost:3001/api';
+    const token = process.env.DIGIURBAN_SERVICE_TOKEN || '';
+    this.enabled = Boolean(token) && (process.env.CITIZEN_AI_ENABLED || 'true').toLowerCase() !== 'false';
+    this.http = axios.create({
+      baseURL: `${baseURL.replace(/\/$/, '')}/internal/ai`,
+      timeout: Number.parseInt(process.env.CITIZEN_AI_TIMEOUT_MS || '20000', 10),
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    });
+    this.http.interceptors.request.use((config: any) => {
+      const tenantId = getBotTenantId();
+      if (tenantId) (config.headers as Record<string, string>)['X-Tenant-Id'] = tenantId;
+      return config;
     });
   }
 
   available(): boolean {
-    return this.isConfigured;
+    return this.enabled && Date.now() >= this.unavailableUntil;
   }
 
-  async analyzeTurn(params: {
-    citizenId: string;
-    message: string;
-    recentMessages: string[];
-    sessionContext?: string;
-  }): Promise<CitizenAiIntentAnalysis | null> {
-    const prompt = [
-      'Voce e um classificador de intencao para atendimento municipal.',
-      'Responda apenas com JSON valido.',
-      'Intencoes permitidas: greeting, solicitar_servico, consultar_protocolo, corrigir_dados, meu_perfil, documentos, minha_familia, notificacoes, avaliacao, ajuda, atendimento_humano, unknown.',
-      'Campos obrigatorios do JSON: intent, confidence.',
-      'Campos opcionais: serviceQuery, protocolNumber, notes.',
-      'Regras:',
-      '- Use solicitar_servico quando o cidadao quer pedir, abrir, registrar ou solicitar um servico da prefeitura.',
-      '- Use consultar_protocolo quando o cidadao quiser consultar andamento e informar ou insinuar numero de protocolo.',
-      '- Use corrigir_dados quando o cidadao quer alterar uma informacao ja coletada no atendimento atual.',
-      '- Use atendimento_humano quando pedir atendente, humano, servidor ou suporte humano.',
-      '- serviceQuery deve ser uma consulta curta para buscar o servico correto.',
-      '- confidence deve variar de 0 a 1.',
-      params.sessionContext ? `Contexto do fluxo atual: ${params.sessionContext}` : 'Contexto do fluxo atual: nenhum',
-      `Historico recente: ${params.recentMessages.join(' | ') || 'sem historico relevante'}`,
-      `Mensagem atual: ${params.message}`,
-    ].join('\n');
-
-    const parsed = await this.requestJson(prompt, params.citizenId);
-    if (!parsed) {
+  private async call<T>(path: '/decide' | '/complete', body: Record<string, unknown>): Promise<T | null> {
+    if (!this.available()) return null;
+    try {
+      const { data } = await this.http.post(path, body);
+      return data as T;
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 503) this.unavailableUntil = Date.now() + 60000;
+      // 402 = município sem créditos: segue pelos menus (o painel avisa o gestor)
+      logger.warn('DigiBot IA: chamada não concluída', { path, status, code: error?.response?.data?.code });
       return null;
     }
-
-    return {
-      intent: this.normalizeIntent(parsed.intent),
-      confidence: clampConfidence(parsed.confidence),
-      serviceQuery:
-        typeof parsed.serviceQuery === 'string' && parsed.serviceQuery.trim()
-          ? parsed.serviceQuery.trim()
-          : undefined,
-      protocolNumber:
-        typeof parsed.protocolNumber === 'string' && parsed.protocolNumber.trim()
-          ? parsed.protocolNumber.trim()
-          : undefined,
-      notes: typeof parsed.notes === 'string' ? parsed.notes.trim() : undefined,
-    };
   }
 
-  async selectService(params: {
-    citizenId: string;
-    message: string;
-    candidates: Array<{ id: string; label: string; description?: string }>;
-  }): Promise<CitizenAiSelection | null> {
-    const candidateText = params.candidates
-      .map((candidate, index) => `${index + 1}. ${candidate.id} | ${candidate.label} | ${candidate.description || ''}`)
+  private decide(task: string, state: string, instructions: string, choices: Record<string, string>, minConfidence?: number) {
+    return this.call<{ choice: string | null; confidence: number; via: string }>('/decide', { task, state, instructions, choices, minConfidence });
+  }
+
+  private complete(task: string, prompt: string, system?: string, maxTokens = 300, tier: 'fast' | 'smart' = 'fast') {
+    return this.call<{ content: string; json?: any }>('/complete', { task, prompt, system, json: true, maxTokens, tier });
+  }
+
+  // ------------------------------------------------------------ API usada pelo orquestrador
+
+  async analyzeTurn(params: { citizenId: string; message: string; recentMessages: string[]; sessionContext?: string }): Promise<CitizenAiIntentAnalysis | null> {
+    const protocolNumber = params.message.match(RE.protocol)?.[0];
+    const state = [
+      params.sessionContext ? `Etapa atual: ${params.sessionContext}` : null,
+      params.recentMessages.length ? `Mensagens anteriores: ${params.recentMessages.slice(-4).join(' | ')}` : null,
+      `Mensagem do cidadão: ${params.message}`,
+    ]
+      .filter(Boolean)
       .join('\n');
 
-    const prompt = [
-      'Voce deve escolher um servico municipal dentre as opcoes informadas.',
-      'Responda apenas com JSON valido.',
-      'Campos obrigatorios: selectedId, confidence.',
-      'Se nenhuma opcao servir, retorne selectedId vazio e confidence baixa.',
-      `Mensagem do cidadao: ${params.message}`,
-      `Candidatos:\n${candidateText}`,
-    ].join('\n');
-
-    const parsed = await this.requestJson(prompt, params.citizenId);
-    if (!parsed) {
-      return null;
-    }
-
+    const r = await this.decide('intent', state, 'Qual é a intenção do cidadão nesta mensagem enviada ao atendimento da prefeitura?', INTENTS);
+    if (!r) return protocolNumber ? { intent: 'consultar_protocolo', confidence: 0.8, protocolNumber } : null;
+    const intent = (r.choice && r.choice in INTENTS ? r.choice : 'unknown') as CitizenAiIntentAnalysis['intent'];
     return {
-      selectedId:
-        typeof parsed.selectedId === 'string' && parsed.selectedId.trim()
-          ? parsed.selectedId.trim()
-          : undefined,
-      confidence: clampConfidence(parsed.confidence),
+      intent,
+      confidence: clamp(r.confidence),
+      serviceQuery: intent === 'solicitar_servico' ? params.message.trim().slice(0, 160) : undefined,
+      protocolNumber,
     };
   }
 
-  async extractFields(params: {
-    citizenId: string;
-    message: string;
-    serviceName: string;
-    sessionContext?: string;
-    fields: Array<{
-      id: string;
-      label: string;
-      type?: string;
-      required?: boolean;
-      options?: Array<{ id?: string; label?: string; value?: string }>;
-    }>;
-  }): Promise<CitizenAiFieldExtraction | null> {
-    const fieldText = params.fields
-      .map((field) => {
-        const options =
-          Array.isArray(field.options) && field.options.length > 0
-            ? ` opcoes=${field.options.map((option) => option.label || option.value || option.id).join(', ')}`
-            : '';
-        return `${field.id} | ${field.label} | tipo=${field.type || 'text'} | obrigatorio=${field.required ? 'sim' : 'nao'}${options}`;
+  async selectService(params: { citizenId: string; message: string; candidates: Array<{ id: string; label: string; description?: string }> }): Promise<CitizenAiSelection | null> {
+    if (params.candidates.length === 0) return null;
+    const choices: Record<string, string> = {};
+    params.candidates.slice(0, 240).forEach((c) => {
+      choices[c.id] = c.description ? `${c.label} — ${c.description}`.slice(0, 280) : c.label;
+    });
+    const r = await this.decide('select_option', `Mensagem do cidadão: ${params.message}`, 'Qual destas opções atende ao que o cidadão escreveu?', choices);
+    if (!r) return null;
+    return { selectedId: r.choice || undefined, confidence: r.choice ? clamp(r.confidence) : 0 };
+  }
+
+  async extractFields(params: { citizenId: string; message: string; serviceName: string; sessionContext?: string; fields: Field[] }): Promise<CitizenAiFieldExtraction | null> {
+    const values: Record<string, string | number | boolean> = {};
+    const pending: Field[] = [];
+
+    // 1) Dados com formato conhecido: regex local (não sai do servidor)
+    for (const field of params.fields) {
+      const v = localValue(field, params.message);
+      if (v) values[field.id] = v;
+      else pending.push(field);
+    }
+
+    // 2) Campo único com opções → decisão (JEV)
+    if (pending.length === 1 && optionChoices(pending[0])) {
+      const f = pending[0];
+      const r = await this.decide('extract_option', `Mensagem do cidadão: ${params.message}`, `Qual opção do campo "${f.label}" o cidadão informou?`, optionChoices(f)!);
+      if (r?.choice) values[f.id] = optionValue(f, r.choice) ?? r.choice;
+      return { values, confidence: r ? clamp(r.confidence) : Object.keys(values).length ? 0.9 : 0 };
+    }
+
+    if (pending.length === 0) return { values, confidence: 0.95 };
+
+    // 3) Texto livre → LLM barato (dados pessoais mascarados no gateway)
+    const fieldText = pending
+      .map((f) => {
+        const opts = Array.isArray(f.options) && f.options.length ? ` opções=${f.options.map((o) => o.label || o.value || o.id).join(', ')}` : '';
+        return `${f.id} | ${f.label} | tipo=${f.type || 'text'}${opts}`;
       })
       .join('\n');
-
-    const prompt = [
-      'Voce extrai dados estruturados de uma mensagem do cidadao para preenchimento de servico municipal.',
-      'Responda apenas com JSON valido.',
-      'Campos obrigatorios: values, confidence.',
-      'Campo opcional: description.',
-      'values deve ser um objeto onde cada chave corresponde exatamente a um field id informado.',
-      'Nao invente valores. Se um campo nao estiver presente, nao inclua.',
-      `Servico: ${params.serviceName}`,
-      params.sessionContext ? `Contexto atual: ${params.sessionContext}` : undefined,
-      `Campos disponiveis:\n${fieldText}`,
-      `Mensagem do cidadao: ${params.message}`,
-    ].filter(Boolean).join('\n');
-
-    const parsed = await this.requestJson(prompt, params.citizenId);
-    if (!parsed) {
-      return null;
+    const r = await this.complete(
+      'extract_fields',
+      [`Serviço: ${params.serviceName}`, params.sessionContext ? `Contexto: ${params.sessionContext}` : '', `Campos:\n${fieldText}`, `Mensagem do cidadão: ${params.message}`]
+        .filter(Boolean)
+        .join('\n'),
+      'Extraia dados de uma mensagem para um formulário municipal. Responda só JSON: {"values":{"<fieldId>":valor},"description":"opcional","confidence":0-1}. Não invente; omita o que não estiver na mensagem.',
+      350
+    );
+    const raw = r?.json?.values && typeof r.json.values === 'object' ? r.json.values : {};
+    const allowed = new Set(pending.map((f) => f.id));
+    for (const [k, v] of Object.entries(raw)) {
+      if (allowed.has(k) && (typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')) values[k] = v;
     }
-
-    const rawValues =
-      parsed.values && typeof parsed.values === 'object' && !Array.isArray(parsed.values)
-        ? (parsed.values as Record<string, unknown>)
-        : {};
-
-    const values: Record<string, string | number | boolean> = {};
-    for (const [key, value] of Object.entries(rawValues)) {
-      if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-        values[key] = value;
-      }
-    }
-
     return {
       values,
-      description:
-        typeof parsed.description === 'string' && parsed.description.trim()
-          ? parsed.description.trim()
-          : undefined,
-      confidence: clampConfidence(parsed.confidence),
+      description: typeof r?.json?.description === 'string' && r.json.description.trim() ? r.json.description.trim() : undefined,
+      confidence: r ? clamp(r.json?.confidence) : Object.keys(values).length ? 0.9 : 0,
     };
   }
 
-  async extractCorrection(params: {
-    citizenId: string;
-    message: string;
-    serviceName: string;
-    sessionContext: string;
-    fields: Array<{
-      id: string;
-      label: string;
-      type?: string;
-      required?: boolean;
-      options?: Array<{ id?: string; label?: string; value?: string }>;
-    }>;
-  }): Promise<CitizenAiCorrectionExtraction | null> {
-    const fieldText = params.fields
-      .map((field) => {
-        const options =
-          Array.isArray(field.options) && field.options.length > 0
-            ? ` opcoes=${field.options.map((option) => option.label || option.value || option.id).join(', ')}`
-            : '';
-        return `${field.id} | ${field.label} | tipo=${field.type || 'text'}${options}`;
-      })
-      .join('\n');
+  async extractCorrection(params: { citizenId: string; message: string; serviceName: string; sessionContext: string; fields: Field[] }): Promise<CitizenAiCorrectionExtraction | null> {
+    const choices: Record<string, string> = { descricao: 'a descrição geral do pedido' };
+    params.fields.slice(0, 200).forEach((f) => (choices[f.id] = f.label));
+    const which = await this.decide('correction_field', `Contexto: ${params.sessionContext}\nMensagem do cidadão: ${params.message}`, 'Qual informação o cidadão quer corrigir?', choices, 0.6);
+    if (!which?.choice) return which ? { confidence: 0 } : null;
 
-    const prompt = [
-      'Voce identifica correcoes em um atendimento municipal em andamento.',
-      'Responda apenas com JSON valido.',
-      'Campos obrigatorios: confidence.',
-      'Campos opcionais: fieldId, value, description.',
-      'Use fieldId apenas se a mensagem indicar claramente qual campo deve mudar.',
-      'Use description quando a correcao for sobre a descricao geral da solicitacao.',
-      'Nao invente dados e nao altere campos que nao foram citados.',
-      `Servico: ${params.serviceName}`,
-      `Contexto atual: ${params.sessionContext}`,
-      `Campos corrigiveis:\n${fieldText}`,
-      `Mensagem do cidadao: ${params.message}`,
-    ].join('\n');
-
-    const parsed = await this.requestJson(prompt, params.citizenId);
-    if (!parsed) {
-      return null;
+    if (which.choice === 'descricao') {
+      return { description: params.message.trim(), confidence: clamp(which.confidence) };
     }
-
-    const rawValue = parsed.value;
-    const value =
-      typeof rawValue === 'string' || typeof rawValue === 'number' || typeof rawValue === 'boolean'
-        ? rawValue
-        : undefined;
-
-    return {
-      fieldId:
-        typeof parsed.fieldId === 'string' && parsed.fieldId.trim()
-          ? parsed.fieldId.trim()
-          : undefined,
-      value,
-      description:
-        typeof parsed.description === 'string' && parsed.description.trim()
-          ? parsed.description.trim()
-          : undefined,
-      confidence: clampConfidence(parsed.confidence),
-    };
+    const field = params.fields.find((f) => f.id === which.choice)!;
+    const local = localValue(field, params.message);
+    if (local) return { fieldId: field.id, value: local, confidence: clamp(which.confidence) };
+    if (optionChoices(field)) {
+      const opt = await this.decide('correction_option', `Mensagem do cidadão: ${params.message}`, `Qual o novo valor do campo "${field.label}"?`, optionChoices(field)!);
+      return { fieldId: field.id, value: opt?.choice ? optionValue(field, opt.choice) : undefined, confidence: clamp(opt?.confidence ?? which.confidence) };
+    }
+    const r = await this.complete(
+      'correction_value',
+      `Campo: ${field.label} (tipo ${field.type || 'texto'})\nMensagem do cidadão: ${params.message}`,
+      'Diga qual é o novo valor do campo informado pelo cidadão. Responda só JSON: {"value":"...","confidence":0-1}. Se não houver valor, value vazio.',
+      120
+    );
+    const value = typeof r?.json?.value === 'string' || typeof r?.json?.value === 'number' ? r.json.value : undefined;
+    return { fieldId: field.id, value: value === '' ? undefined : value, confidence: clamp(r?.json?.confidence ?? which.confidence) };
   }
 
   async generateGuidance(params: {
@@ -292,108 +266,28 @@ export class CitizenAiClient {
     availableActions: Array<{ id: string; label: string; description?: string }>;
     serviceSearchSummary?: string;
   }): Promise<CitizenAiGuidance | null> {
-    const actions = params.availableActions
-      .map((action) => `${action.id} | ${action.label} | ${action.description || ''}`)
-      .join('\n');
-
-    const prompt = [
-      'Voce e o DigiBot, assistente municipal do Digiurban.',
-      'Responda apenas com JSON valido.',
-      'Campos obrigatorios: message, suggestedActionIds, confidence.',
-      'message deve ser curta, natural e contextual, com no maximo 2 frases.',
-      'suggestedActionIds deve conter no maximo 3 ids existentes na lista de acoes permitidas.',
-      'Nao invente servicos, protocolos, dados pessoais, prazos ou informacoes que nao estejam no contexto.',
-      'Se a mensagem estiver confusa, diga o que entendeu e conduza para a melhor proxima acao.',
-      'Se houver erro de digitacao, interprete a intencao provavel sem comentar o erro.',
-      'Mensagens curtas como "saude", "documentos", "perfil", "protocolo" ou "familia" devem ser conduzidas para a acao mais provavel.',
-      'Sempre sugira acoes interativas; nao deixe a conversa terminar sem uma proxima opcao clara.',
-      `Contexto do fluxo: ${params.sessionContext || 'triagem inicial'}`,
-      `Historico recente: ${params.recentMessages.join(' | ') || 'sem historico relevante'}`,
-      params.serviceSearchSummary ? `Resultado da busca interna: ${params.serviceSearchSummary}` : undefined,
-      `Acoes permitidas:\n${actions}`,
-      `Mensagem do cidadao: ${params.message}`,
-    ].filter(Boolean).join('\n');
-
-    const parsed = await this.requestJson(prompt, params.citizenId);
-    if (!parsed) {
-      return null;
-    }
-
-    const validActionIds = new Set(params.availableActions.map((action) => action.id));
-    const suggestedActionIds = Array.isArray(parsed.suggestedActionIds)
-      ? parsed.suggestedActionIds
-          .filter((id: unknown): id is string => typeof id === 'string' && validActionIds.has(id))
-          .slice(0, 3)
-      : [];
-
+    const actions = params.availableActions.map((a) => `${a.id} | ${a.label} | ${a.description || ''}`).join('\n');
+    const r = await this.complete(
+      'guidance',
+      [
+        `Etapa: ${params.sessionContext || 'triagem inicial'}`,
+        `Histórico: ${params.recentMessages.slice(-4).join(' | ') || 'nenhum'}`,
+        params.serviceSearchSummary ? `Busca interna: ${params.serviceSearchSummary}` : '',
+        `Ações permitidas:\n${actions}`,
+        `Mensagem do cidadão: ${params.message}`,
+      ]
+        .filter(Boolean)
+        .join('\n'),
+      'Você é o DigiBot, assistente da prefeitura. Responda só JSON: {"message":"até 2 frases curtas, naturais e empáticas, em português","suggestedActionIds":["até 3 ids da lista"],"confidence":0-1}. Não invente serviços, prazos ou dados; conduza para a próxima ação.',
+      220
+    );
+    if (!r?.json) return null;
+    const valid = new Set(params.availableActions.map((a) => a.id));
     return {
-      message:
-        typeof parsed.message === 'string' && parsed.message.trim()
-          ? parsed.message.trim()
-          : '',
-      suggestedActionIds,
-      confidence: clampConfidence(parsed.confidence),
+      message: typeof r.json.message === 'string' ? r.json.message.trim() : '',
+      suggestedActionIds: Array.isArray(r.json.suggestedActionIds) ? r.json.suggestedActionIds.filter((id: unknown) => typeof id === 'string' && valid.has(id)).slice(0, 3) : [],
+      confidence: clamp(r.json.confidence),
     };
-  }
-
-  private normalizeIntent(intent: unknown): CitizenAiIntentAnalysis['intent'] {
-    const value = typeof intent === 'string' ? intent.trim().toLowerCase() : '';
-    switch (value) {
-      case 'greeting':
-      case 'solicitar_servico':
-      case 'consultar_protocolo':
-      case 'corrigir_dados':
-      case 'meu_perfil':
-      case 'documentos':
-      case 'minha_familia':
-      case 'notificacoes':
-      case 'avaliacao':
-      case 'ajuda':
-      case 'atendimento_humano':
-        return value;
-      default:
-        return 'unknown';
-    }
-  }
-
-  private async requestJson(prompt: string, citizenId: string): Promise<Record<string, any> | null> {
-    if (!this.isConfigured) {
-      return null;
-    }
-
-    // Instrução alinhada ao fine-tuning do modelo DigiBot
-    const extraInstruction =
-      'Você é o DigiBot, assistente inteligente do sistema DigiUrban para atendimento municipal. ' +
-      'Você ajuda cidadãos a solicitar serviços, consultar protocolos, atualizar cadastros e navegar pelo sistema. ' +
-      'Responda sempre em português brasileiro de forma clara, objetiva e empática. ' +
-      'Retorne apenas JSON válido sem texto adicional.';
-
-    try {
-      const experience = prompt.length > 300 ? 'contextual' : 'fast';
-
-      const response = await this.httpClient.post('', {
-        prompt,
-        extraInstruction,
-        experience,
-        mode: 'free',
-        think: false,
-        responseFormat: 'json',
-        userId: citizenId,
-      });
-
-      const content = response.data?.data?.content;
-      if (typeof content !== 'string') {
-        return null;
-      }
-
-      return parseJsonContent(content);
-    } catch (error) {
-      logger.warn('Citizen AI request failed', {
-        citizenId,
-        error: error instanceof Error ? error.message : String(error),
-      });
-      return null;
-    }
   }
 }
 

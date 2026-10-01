@@ -215,6 +215,8 @@ import { requireFeature, requireAnyFeature } from './middleware/require-feature'
 
 // Rotas internas (Messages Server)
 loadRoute('/api/internal', './routes/internal.routes');
+// Créditos de IA do município (painel do servidor)
+loadRoute('/api/admin/ai-credits', './routes/admin-ai-credits.routes');
 
 // Registry — motor de dados orientado a metadados (F2: query + schema)
 loadRoute('/api/registry', './routes/registry.routes');
@@ -259,6 +261,8 @@ try {
 // Corte executado (plano 2026-07-13): /api/super-admin/tenants* responde 410.
 // Formulários da landing institucional → Super-admin › Leads
 loadRoute('/api/leads', './routes/public-leads.routes');
+// IA da plataforma (chaves, modelos, cobrança, pacotes) — console /super-admin
+loadRoute('/api/platform/ai', './routes/platform-ai.routes');
 loadRoute('/api/platform', './routes/platform');
 // Painel de plataforma completo (Fases 1/6 do plano 2026-07-13): detalhe de
 // municípios, admins, billing, leads, métricas, schema, migrations, backups.

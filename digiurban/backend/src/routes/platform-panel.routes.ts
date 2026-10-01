@@ -54,6 +54,7 @@ import {
   removePlan,
 } from '../services/plan-config.service';
 import { logAuditEvent } from '../utils/audit-logger';
+import { onInvoiceStatusChanged } from '../services/ai-gateway/billing';
 import { changeOwnPassword, inviteMember, listTeam, resetMemberPassword, TeamError, updateMember } from '../services/platform-team.service';
 import { BACKUP_EXTENSION, createDatabaseBackup, RESTORE_INSTRUCTIONS } from '../services/database-backup.service';
 
@@ -394,6 +395,10 @@ router.patch('/invoices/:invoiceId', PLATFORM_ADMIN, async (req: Request, res: R
     const parsed = schema.safeParse(req.body);
     if (!parsed.success) return res.status(400).json({ error: 'Status inválido' });
     const invoice = await updateInvoiceStatus(req.params.invoiceId, parsed.data.status);
+    // Fatura de pacote de IA paga → créditos entram na carteira do município
+    await onInvoiceStatusChanged(invoice.id, parsed.data.status).catch((err) =>
+      console.error('[ai-credits] falha ao liberar créditos da fatura', invoice.id, err?.message)
+    );
     res.json({ success: true, invoice });
   } catch (error: any) {
     if (error?.code === 'P2025') return res.status(404).json({ error: 'Fatura não encontrada' });
