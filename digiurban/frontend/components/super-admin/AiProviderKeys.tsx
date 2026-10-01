@@ -101,7 +101,76 @@ export function AiProviderKeys({ isAdmin }: { isAdmin: boolean }) {
           <ProviderForm key={p.provider} p={p} isAdmin={isAdmin} onChange={load} />
         ))}
       </div>
+      <InternalTokenCard isAdmin={isAdmin} />
     </div>
+  );
+}
+
+/**
+ * Token da comunicação interna (DigiBot ↔ sistema). Gerado e guardado pelo
+ * painel — substitui o valor padrão público que o servidor usava sem .env.
+ */
+function InternalTokenCard({ isAdmin }: { isAdmin: boolean }) {
+  const { toast } = useToast();
+  const [status, setStatus] = useState<{ generatedByPanel: boolean; rotatedAt: string | null; envUsesKnownDefault: boolean } | null>(null);
+  const [busy, setBusy] = useState(false);
+
+  const load = useCallback(() => {
+    api('/internal-token')
+      .then((d) => setStatus(d.status))
+      .catch(() => setStatus(null));
+  }, []);
+  useEffect(() => load(), [load]);
+
+  const rotate = async () => {
+    if (!confirm('Gerar um novo token interno? O DigiBot passa a usá-lo sozinho em até 30 segundos; o anterior continua valendo por 10 minutos.')) return;
+    setBusy(true);
+    try {
+      await api('/internal-token/rotate', { method: 'POST' });
+      toast({ title: 'Novo token gerado', description: 'O DigiBot já está usando o token novo.' });
+      load();
+    } catch (error: any) {
+      toast({ title: 'Não foi possível gerar', description: error.message, variant: 'destructive' });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  if (!status) return null;
+  const insecure = !status.generatedByPanel && status.envUsesKnownDefault;
+  return (
+    <Card className={insecure ? 'border-red-300' : 'border-green-300'}>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-lg">
+          <ShieldCheck className="h-5 w-5" />
+          Comunicação interna (DigiBot ↔ sistema)
+        </CardTitle>
+        <CardDescription>
+          Senha que o DigiBot usa para consultar serviços, protocolos e a IA. Não é de nenhum provedor: é gerada aqui e guardada cifrada.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3 text-sm">
+        {insecure ? (
+          <p className="flex items-start gap-2 rounded-lg bg-red-50 p-2 text-red-800">
+            <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0" />
+            Hoje o sistema usa um valor padrão conhecido publicamente. Gere um token próprio para fechar esse acesso.
+          </p>
+        ) : status.generatedByPanel ? (
+          <p className="flex items-center gap-2 text-green-800">
+            <CheckCircle2 className="h-4 w-4" />
+            Token próprio ativo{status.rotatedAt ? ` — gerado em ${new Date(status.rotatedAt).toLocaleString('pt-BR')}` : ''}.
+          </p>
+        ) : (
+          <p className="text-gray-600">Usando o token definido no servidor. Você pode gerar um pelo painel.</p>
+        )}
+        {isAdmin && (
+          <Button variant={insecure ? 'default' : 'outline'} disabled={busy} onClick={rotate}>
+            {busy ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <KeyRound className="mr-2 h-4 w-4" />}
+            {status.generatedByPanel ? 'Gerar novo token' : 'Gerar token próprio'}
+          </Button>
+        )}
+      </CardContent>
+    </Card>
   );
 }
 

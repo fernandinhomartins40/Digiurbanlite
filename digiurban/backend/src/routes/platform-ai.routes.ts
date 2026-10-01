@@ -9,6 +9,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { platformAuthMiddleware, requirePlatformRole, PlatformAuthenticatedRequest } from '../middleware/platform-auth';
 import { logAuditEvent } from '../utils/audit-logger';
+import { internalTokenStatus, rotateInternalToken } from '../services/platform-secrets.service';
 import {
   complete,
   decide,
@@ -87,6 +88,26 @@ router.post('/providers/:provider/test', ADMIN, async (req, res) => {
   }
 });
 
+// ---------------------------------------------------------------- token interno (bot ↔ sistema)
+
+router.get('/internal-token', async (_req, res) => {
+  try {
+    res.json({ success: true, status: await internalTokenStatus() });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
+router.post('/internal-token/rotate', ADMIN, async (req, res) => {
+  try {
+    const r = await rotateInternalToken();
+    audit(req, 'platform_internal_token_rotated', {});
+    res.json({ success: true, rotatedAt: r.rotatedAt });
+  } catch (e) {
+    fail(res, e);
+  }
+});
+
 // ---------------------------------------------------------------- modelos
 
 router.get('/models', async (_req, res) => {
@@ -139,6 +160,7 @@ router.put('/billing', ADMIN, async (req, res) => {
         minChargeCredits: z.number().min(0).max(100).optional(),
         allowChinaHosted: z.boolean().optional(),
         redactPii: z.boolean().optional(),
+        lowBalanceCredits: z.number().min(0).max(10000000).optional(),
       })
       .parse(req.body);
     const settings = await updateBillingSettings(body);

@@ -6,6 +6,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { getBotTenantId } from './tenant-context';
+import { withServiceToken } from '../utils/serviceToken';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -30,6 +31,9 @@ export class DigiUrbanIntegration {
     // Fase 6 Multi-Tenant: propaga o tenant do cidadão (ALS) em TODA chamada.
     // O backend (internal-tenant-context) prioriza este header sobre a
     // derivação por citizenId — cobre listServices/searchServices etc.
+    // Token interno: o gerado pelo painel (banco) ou o do .env
+    this.api.interceptors.request.use(withServiceToken);
+
     this.api.interceptors.request.use((config) => {
       const tenantId = getBotTenantId();
       if (tenantId) {

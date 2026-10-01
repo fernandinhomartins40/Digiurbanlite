@@ -11179,14 +11179,15 @@ model AiModelConfig {
 
 /// Regras de cobrança (singleton da plataforma)
 model AiBillingSettings {
-  id               String   @id @default("singleton")
-  usdToBrl         Float    @default(5.5)
-  markup           Float    @default(3) // preço de venda = custo × markup
-  creditValueBrl   Float    @default(0.01) // 1 crédito = R$ 0,01
-  minChargeCredits Float    @default(0.1) // cobrança mínima por chamada
-  allowChinaHosted Boolean  @default(true) // permite provedores com dados na China
-  redactPii        Boolean  @default(true) // remove CPF/telefone/e-mail antes de enviar
-  updatedAt        DateTime @updatedAt
+  id                String   @id @default("singleton")
+  usdToBrl          Float    @default(5.5)
+  markup            Float    @default(3) // preço de venda = custo × markup
+  creditValueBrl    Float    @default(0.01) // 1 crédito = R$ 0,01
+  minChargeCredits  Float    @default(0.1) // cobrança mínima por chamada
+  allowChinaHosted  Boolean  @default(true) // permite provedores com dados na China
+  redactPii         Boolean  @default(true) // remove CPF/telefone/e-mail antes de enviar
+  lowBalanceCredits Float    @default(500) // aviso de saldo baixo (padrão; o município pode trocar)
+  updatedAt         DateTime @updatedAt
 
   @@map("ai_billing_settings")
 }
@@ -11209,16 +11210,34 @@ model AiCreditPackage {
 
 /// Carteira de créditos de IA de um município
 model AiTenantWallet {
-  id             String   @id @default(cuid())
-  tenantId       String?  @unique
-  balance        Decimal  @default(0) @db.Decimal(14, 4)
-  totalPurchased Decimal  @default(0) @db.Decimal(14, 4)
-  totalConsumed  Decimal  @default(0) @db.Decimal(14, 4)
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id                   String    @id @default(cuid())
+  tenantId             String?   @unique
+  balance              Decimal   @default(0) @db.Decimal(14, 4)
+  totalPurchased       Decimal   @default(0) @db.Decimal(14, 4)
+  totalConsumed        Decimal   @default(0) @db.Decimal(14, 4)
+  // aviso de saldo baixo: limite do município (null = padrão da plataforma) e quando avisou
+  lowBalanceThreshold  Float?
+  lowBalanceNotifiedAt DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   @@index([tenantId])
   @@map("ai_tenant_wallets")
+}
+
+/// Prazo de guarda das conversas (LGPD) — configurado no Super-admin, vale para a plataforma.
+/// Conversas ligadas a protocolo seguem o protocolo (registro administrativo) e não entram aqui.
+model PrivacyRetentionSettings {
+  id             String    @id @default("singleton")
+  enabled        Boolean   @default(false)
+  botChatDays    Int       @default(365) // conversas com o DigiBot
+  humanChatDays  Int       @default(730) // conversas cidadão × servidor sem protocolo
+  assistantDays  Int       @default(180) // Assistente de IA dos servidores
+  lastRunAt      DateTime?
+  lastRunSummary Json?
+  updatedAt      DateTime  @updatedAt
+
+  @@map("privacy_retention_settings")
 }
 
 /// Extrato da carteira (compra, consumo, bônus, ajuste) — base do relatório de lucro
@@ -11267,4 +11286,53 @@ model AiCreditOrder {
   @@index([tenantId, status])
   @@index([invoiceId])
   @@map("ai_credit_orders")
+}
+
+/// Segredos da plataforma gerados/girados pelo painel (sem .env).
+/// Ex.: internal_service_token — token entre o bot (messages-server) e o backend.
+/// valueEnc cifrado com chave derivada do JWT_SECRET (os dois serviços o têm).
+model PlatformSecret {
+  key         String   @id
+  valueEnc    String
+  previousEnc String? // aceito por 10 min após a troca (sem queda do bot)
+  rotatedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("platform_secrets")
+}
+
+/// Assistente de IA dos servidores (Análises › Assistente) — conversas por servidor
+model AiAssistantConversation {
+  id            String   @id @default(cuid())
+  tenantId      String?
+  userId        String
+  title         String?
+  isArchived    Boolean  @default(false)
+  lastMessageAt DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  messages AiAssistantMessage[]
+
+  @@index([tenantId])
+  @@index([tenantId, userId, lastMessageAt])
+  @@map("ai_assistant_conversations")
+}
+
+model AiAssistantMessage {
+  id             String   @id @default(cuid())
+  tenantId       String?
+  conversationId String
+  role           String // USER | ASSISTANT
+  content        String   @db.Text
+  model          String?
+  totalTokens    Int      @default(0)
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  conversation AiAssistantConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([conversationId, createdAt])
+  @@map("ai_assistant_messages")
 }
