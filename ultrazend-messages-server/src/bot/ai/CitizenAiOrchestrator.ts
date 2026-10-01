@@ -182,6 +182,12 @@ export class CitizenAiOrchestrator {
     }
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Pedido explícito de atendente vale em QUALQUER etapa (antes só na tela
+    // inicial; no meio de um pedido o bot respondia "não consegui entender").
+    if (session.stage !== 'paused_human' && this.isDirectHumanRequest(message)) {
+      return this.requestHuman(execution, { ...session, lastIntent: 'atendimento_humano' });
+    }
+
     const globalShortcut = this.isFlowLockedStage(session.stage)
       ? await this.handleLockedFlowShortcut(execution, session, message)
       : await this.handleGlobalShortcut(execution, session, message);

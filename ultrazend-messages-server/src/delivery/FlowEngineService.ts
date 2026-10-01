@@ -482,6 +482,7 @@ export class FlowEngineService {
         participant1Type: true,
         participant2Id: true,
         participant2Type: true,
+        lastMessageAt: true,
       },
     });
 
@@ -491,6 +492,25 @@ export class FlowEngineService {
     let conversationMetadata = (conversation?.metadata as Record<string, any> | null) || null;
 
     this.cancelBotInactivityTimeout(conversationId);
+
+    // Atendimento parado há mais que o tempo de inatividade: recomeça do zero.
+    // Não depende do cronômetro em memória (que se perde quando o servidor
+    // reinicia) — antes, depois de um deploy o atendimento "nunca encerrava".
+    // A mensagem do cidadão NÃO é descartada: é atendida já no recomeço.
+    const lastActivity = conversation?.lastMessageAt?.getTime() || 0;
+    const isStale =
+      this.botInactivityTimeoutMs > 0 &&
+      lastActivity > 0 &&
+      Date.now() - lastActivity > this.botInactivityTimeoutMs &&
+      conversationMetadata?.botStatus !== 'HUMAN_TAKEOVER';
+    if (isStale || conversationMetadata?.inactivityResetPending) {
+      await this.flowEngine.cancelActiveFlow(citizenId);
+      conversationMetadata = this.mergeConversationMetadata(conversationMetadata, {
+        botStatus: 'ACTIVE',
+        botStatusUpdatedAt: new Date().toISOString(),
+        inactivityResetPending: false,
+      });
+    }
 
     // 2. Salvar mensagem do cidadão (✅ REFATORADO com campos queryable)
     const userMessageMetadata: any = {};
@@ -537,8 +557,27 @@ export class FlowEngineService {
     });
 
     // 3. Processar mensagem pelo orquestrador hibrido ou pelo fluxo legado
-    const activeExecution = await this.getActiveExecution(citizenId);
+    let activeExecution = await this.getActiveExecution(citizenId);
     const aiExecutionActive = this.isAiExecution(activeExecution as any);
+
+    // Card clicado que NÃO é uma opção do fluxo antigo em andamento (ex.: card do
+    // menu principal que continua visível mais acima na conversa). Antes o fluxo
+    // antigo respondia "Não entendi sua escolha" em loop e o cidadão ficava preso.
+    // Agora o fluxo antigo é encerrado e o clique vai para o assistente.
+    const clickedOptionId =
+      typeof message === 'object' && message !== null && typeof (message as any).optionId === 'string'
+        ? String((message as any).optionId)
+        : null;
+    if (clickedOptionId && activeExecution && !aiExecutionActive) {
+      const currentNodeId = (activeExecution as any).currentNodeId;
+      const flowNodes = (activeExecution as any).flow?.nodes;
+      const currentNode = Array.isArray(flowNodes) ? flowNodes.find((n: any) => n.id === currentNodeId) : null;
+      const nodeOptions: any[] = currentNode?.config?.options || currentNode?.options || [];
+      if (!nodeOptions.some((o: any) => o?.id === clickedOptionId)) {
+        await this.flowEngine.cancelActiveFlow(citizenId);
+        activeExecution = null;
+      }
+    }
 
     // Texto livre digitado pelo cidadão (não é seleção de opção estruturada)
     let isFreetextMessage =
@@ -565,15 +604,7 @@ export class FlowEngineService {
     let response;
     let botStatus = 'ACTIVE';
 
-    if (conversationMetadata?.inactivityResetPending) {
-      response = await this.restartAiAssistantFromMenu(citizenId, conversationId, conversationMetadata);
-      botStatus = 'ACTIVE';
-      conversationMetadata = this.mergeConversationMetadata(conversationMetadata, {
-        botStatus: 'ACTIVE',
-        botStatusUpdatedAt: new Date().toISOString(),
-        inactivityResetPending: false,
-      });
-    } else if (shouldUseAi) {
+    if (shouldUseAi) {
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
         throw new Error('Flow ai_assistant not found');

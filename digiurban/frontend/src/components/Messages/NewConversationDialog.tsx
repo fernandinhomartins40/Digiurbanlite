@@ -23,6 +23,8 @@ interface Contact {
 
 interface NewConversationDialogProps {
   isOpen: boolean;
+  /** Cidadão só conversa com servidores (o servidor de mensagens recusa cidadão × cidadão) */
+  allowCitizens?: boolean;
   onClose: () => void;
   onConversationCreated: (payload: {
     contactId: string;
@@ -35,8 +37,9 @@ export function NewConversationDialog({
   isOpen,
   onClose,
   onConversationCreated,
+  allowCitizens = true,
 }: NewConversationDialogProps) {
-  const [activeTab, setActiveTab] = useState<'citizens' | 'servers'>('citizens');
+  const [activeTab, setActiveTab] = useState<'citizens' | 'servers'>(allowCitizens ? 'citizens' : 'servers');
   const [searchQuery, setSearchQuery] = useState('');
   const [citizens, setCitizens] = useState<Contact[]>([]);
   const [servers, setServers] = useState<Contact[]>([]);
@@ -46,6 +49,7 @@ export function NewConversationDialog({
 
   // Debounce para busca
   useEffect(() => {
+    if (!isOpen) return;
     const timer = setTimeout(() => {
       if (searchQuery.trim()) {
         loadContacts(searchQuery);
@@ -55,7 +59,7 @@ export function NewConversationDialog({
     }, 300);
 
     return () => clearTimeout(timer);
-  }, [searchQuery, activeTab]);
+  }, [searchQuery, activeTab, isOpen]);
 
   const loadContacts = async (search?: string) => {
     setLoading(true);
@@ -134,6 +138,7 @@ export function NewConversationDialog({
 
         <div className="flex flex-col gap-4 flex-1 min-h-0">
           {/* Tabs */}
+          {allowCitizens && (
           <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="citizens" className="flex items-center gap-2">
@@ -146,6 +151,7 @@ export function NewConversationDialog({
               </TabsTrigger>
             </TabsList>
           </Tabs>
+          )}
 
           {/* Busca */}
           <div className="relative">

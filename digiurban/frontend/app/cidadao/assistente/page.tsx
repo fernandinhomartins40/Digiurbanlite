@@ -656,28 +656,22 @@ export default function CitizenAssistantPage() {
     .reverse()
     .find((msg) => msg.senderId === 'DIGIBOT_SYSTEM' && msg.senderType === 'SYSTEM');
   const lastBotType = lastBotMessage?.metadata?.messageType;
-  const botStructuredInput = Boolean(
+  // Etapa com cards/formulário: mostra a dica, mas a caixa de texto continua
+  // livre — antes ela travava e, se um card falhasse, o cidadão ficava preso
+  // sem conseguir digitar "menu" ou "sair".
+  const botAwaitingChoice = Boolean(
     selectedConversation?.isBotConversation &&
       lastBotMessage?.metadata?.needsInput &&
       ['menu', 'form', 'upload', 'location'].includes(lastBotType || '')
   );
-  const botInputHint = botStructuredInput
-    ? 'Selecione ou preencha as informacoes acima para continuar'
-    : '';
+  const botStructuredInput = false;
+  const botInputHint = botAwaitingChoice ? 'Toque numa opcao acima ou escreva o que precisa' : '';
+  // O bot responde por HTTP: não depende da conexão ao vivo para enviar
+  const inputOffline = !isConnected && !selectedConversation?.isBotConversation;
   const defaultPlaceholder = selectedConversation?.isBotConversation
     ? 'Digite sua mensagem...'
     : 'Digite uma mensagem...';
-  const botInputPlaceholder = botStructuredInput
-    ? lastBotType === 'menu'
-      ? 'Selecione uma opcao acima...'
-      : lastBotType === 'form'
-      ? 'Preencha o formulario acima...'
-      : lastBotType === 'upload'
-      ? 'Envie os arquivos acima...'
-      : lastBotType === 'location'
-      ? 'Informe a localizacao acima...'
-      : defaultPlaceholder
-    : defaultPlaceholder;
+  const botInputPlaceholder = botAwaitingChoice ? 'Ou escreva aqui (ex.: menu, sair)...' : defaultPlaceholder;
 
   if (authLoading) {
     return (
@@ -979,6 +973,19 @@ export default function CitizenAssistantPage() {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56">
+                    {selectedConversation.isBotConversation && (
+                      <>
+                        <DropdownMenuItem onClick={() => void handleBotMessage('menu')}>
+                          <Home className="w-4 h-4 mr-2" />
+                          Voltar ao menu
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => void handleBotMessage('sair')}>
+                          <X className="w-4 h-4 mr-2" />
+                          Encerrar atendimento
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                      </>
+                    )}
                     <DropdownMenuItem
                       onClick={() =>
                         setConfirmAction({
@@ -1157,7 +1164,7 @@ export default function CitizenAssistantPage() {
 
             {/* Input de Mensagem */}
             <form onSubmit={handleSendMessage} className="lg-glass lg-bar m-3 mt-0 rounded-[28px] p-3">
-              {botStructuredInput && (
+              {botInputHint && (
                 <div className="flex items-center justify-center gap-2 py-2">
                   <div className="text-center text-sm text-gray-500">
                     {botInputHint}
@@ -1170,7 +1177,7 @@ export default function CitizenAssistantPage() {
                   variant="ghost"
                   size="icon"
                   className="text-gray-500"
-                  disabled={!isConnected || botStructuredInput || isBotTyping}
+                  disabled={inputOffline || isBotTyping}
                 >
                   <Smile className="w-5 h-5" />
                 </Button>
@@ -1179,7 +1186,7 @@ export default function CitizenAssistantPage() {
                   variant="ghost"
                   size="icon"
                   className="text-gray-500"
-                  disabled={!isConnected || botStructuredInput}
+                  disabled={inputOffline}
                 >
                   <Paperclip className="w-5 h-5" />
                 </Button>
@@ -1190,7 +1197,7 @@ export default function CitizenAssistantPage() {
                   value={newMessage}
                   onChange={(e) => setNewMessage(e.target.value)}
                   className="flex-1"
-                  disabled={!isConnected || botStructuredInput}
+                  disabled={inputOffline}
                 />
 
                 {newMessage.trim() ? (
@@ -1198,7 +1205,7 @@ export default function CitizenAssistantPage() {
                     type="submit"
                     size="icon"
                     className="lg-tinted lg-tint-blue hover:opacity-95"
-                    disabled={!isConnected || botStructuredInput || isBotTyping}
+                    disabled={inputOffline || isBotTyping}
                   >
                     <Send className="w-5 h-5" />
                   </Button>
@@ -1208,7 +1215,7 @@ export default function CitizenAssistantPage() {
                     variant="ghost"
                     size="icon"
                     className="text-gray-500"
-                    disabled={!isConnected || botStructuredInput}
+                    disabled={inputOffline}
                   >
                     <Mic className="w-5 h-5" />
                   </Button>
@@ -1249,6 +1256,7 @@ export default function CitizenAssistantPage() {
       {citizen && (
         <NewConversationDialog
           isOpen={showNewConversation}
+          allowCitizens={false}
           onClose={() => setShowNewConversation(false)}
           onConversationCreated={async ({ contactId, contactType }) => {
             const newConv = await findOrCreateConversation(contactId, contactType);

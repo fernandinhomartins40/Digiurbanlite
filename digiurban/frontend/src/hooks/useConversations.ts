@@ -172,10 +172,15 @@ export function useConversations({
   };
 
   const MESSAGES_WS_URL = useMemo(() => {
+    // Endereço ATUAL primeiro (mesma correção de lib/messages-socket.ts): a env
+    // aponta para digiurban.com.br e, acessando por www ou subdomínio do
+    // município, a conexão virava cross-origin, o cookie não ia e a conexão ao
+    // vivo era recusada (a caixa de texto ficava desativada).
     const raw =
       wsUrl ||
+      (typeof window !== 'undefined' ? window.location.origin : '') ||
       process.env.NEXT_PUBLIC_MESSAGES_WS_URL ||
-      (typeof window !== 'undefined' ? window.location.origin : 'http://localhost:9001');
+      'http://localhost:9001';
 
     return normalizeSocketBaseUrl(raw);
   }, [wsUrl]);
@@ -639,8 +644,10 @@ export function useConversations({
         onNewMessageRef.current(data.message, data.conversationId);
       }
 
-      // Mostrar notificação se mensagem não é do próprio usuário
-      if (data.message.senderId !== userIdRef.current) {
+      // Mostrar notificação se mensagem não é do próprio usuário. Respostas do
+      // DigiBot não avisam: chegam na conversa que o cidadão acabou de usar, e o
+      // aviso cobria o topo da tela (e os cards) a cada resposta.
+      if (data.message.senderId !== userIdRef.current && data.message.senderId !== 'DIGIBOT_SYSTEM') {
         toast({
           title: 'Nova mensagem',
           description: data.message.content.substring(0, 100),
