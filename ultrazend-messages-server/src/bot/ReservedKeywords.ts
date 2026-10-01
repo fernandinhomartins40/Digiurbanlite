@@ -110,6 +110,8 @@ const KEYWORD_GROUPS: KeywordGroup[] = [
   },
 ];
 
+const MAX_WORDS_FOR_CONTAINS = 6;
+
 /** Remove acentos e converte para lowercase */
 export function normalizeKeyword(text: string): string {
   return text
@@ -128,9 +130,12 @@ export function detectReservedAction(message: string): ReservedAction | null {
   const normalized = normalizeKeyword(message);
   if (!normalized) return null;
 
+  // Frase contida só vale em mensagem curta: em pedido longo ("não entendi a
+  // cobrança do IPTU, quero revisar") a frase é parte do pedido, não um comando.
+  const isShort = normalized.split(' ').length <= MAX_WORDS_FOR_CONTAINS;
   for (const group of KEYWORD_GROUPS) {
     if (group.exact.includes(normalized)) return group.action;
-    if (group.contains.some((pattern) => normalized.includes(pattern))) return group.action;
+    if (isShort && group.contains.some((pattern) => normalized.includes(pattern))) return group.action;
   }
 
   return null;

@@ -23,6 +23,8 @@ const CONTEXTUAL_ACTIONS: MenuOption[] = [
   { id: 'avaliacao', label: 'Avaliar atendimento', description: 'Registrar uma avaliacao' },
 ];
 
+const HUMAN_ACTION: MenuOption = { id: 'falar_atendente', label: 'Falar com um atendente', description: 'Uma pessoa da prefeitura continua o atendimento' };
+
 const SERVICE_ENTRY_ACTIONS: MenuOption[] = [
   { id: 'descrever_solicitacao', label: 'Descrever com minhas palavras', description: 'Eu digo o que preciso e o bot sugere o servico' },
   { id: 'explorar_secretarias', label: 'Explorar por secretaria', description: 'Escolher primeiro a secretaria responsavel' },
@@ -45,6 +47,17 @@ const LEGACY_FLOW_BY_INTENT: Record<string, string> = {
   avaliacao: 'avaliacao',
   ajuda: 'ajuda',
 };
+
+const HUMAN_DIRECT_PATTERNS = [
+  'atendente',
+  'pessoa real',
+  'falar com alguem',
+  'falar com uma pessoa',
+  'falar com humano',
+  'falar com um humano',
+  'suporte humano',
+  'atendimento humano',
+];
 
 const HUMAN_PATTERNS = [
   'humano',
@@ -252,6 +265,11 @@ export class CitizenAiOrchestrator {
       return { session: next, response: this.buildWelcomeResponse(execution, next) };
     }
 
+    // Pedido de atendente humano: reconhecido sem IA (antes dependia da IA estar disponível)
+    if (this.isDirectHumanRequest(message)) {
+      return this.requestHuman(execution, { ...session, lastIntent: 'atendimento_humano' });
+    }
+
     if (explicitIntent === 'solicitar_servico') {
       const next: CitizenAiSessionState = { ...session, stage: 'awaiting_request_mode', lastIntent: 'solicitar_servico' };
       await this.persistSession(execution.id, next);
@@ -301,12 +319,7 @@ export class CitizenAiOrchestrator {
 
     if (analysis.intent === 'solicitar_servico') return this.beginServiceRequest(execution, next, message, analysis.serviceQuery || message, true);
     if (analysis.intent === 'corrigir_dados') return this.buildContextualCorrectionFallback(execution, next);
-    if (analysis.intent === 'atendimento_humano') {
-      this.stats.humanHandoverRequests += 1;
-      const paused = this.withStage(next, 'paused_human');
-      await this.persistSession(execution.id, paused);
-      return { session: paused, requestHumanHandover: true, handoverReason: 'citizen_request', response: { message: 'Entendi. Vou registrar que voce deseja atendimento humano.', messageType: 'text', metadata: this.meta(execution, paused, false) } };
-    }
+    if (analysis.intent === 'atendimento_humano') return this.requestHuman(execution, next);
 
     const legacyFlowName = LEGACY_FLOW_BY_INTENT[String(analysis.intent || '')];
     if (legacyFlowName) {
@@ -436,7 +449,24 @@ export class CitizenAiOrchestrator {
 
   private async beginServiceRequest(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string, searchQuery: string, guidedFallback: boolean = false): Promise<CitizenAiDecision> {
     const searchResult = await this.runAction('searchServices', { query: searchQuery, limit: 6 }, execution, session);
-    const services = Array.isArray(searchResult.services) ? searchResult.services as MenuOption[] : [];
+    let services = Array.isArray(searchResult.services) ? searchResult.services as MenuOption[] : [];
+
+    if (citizenAiClient.available()) {
+      if (!services.length) {
+        // A busca por palavra não achou: o JEV escolhe pelo SENTIDO entre todos os serviços do município
+        const semantic = await this.matchServiceBySense(execution, session, userMessage);
+        if (semantic?.selectedId) {
+          return this.selectServiceById(execution, session, userMessage, semantic.selectedId, semantic.catalog);
+        }
+        if (semantic?.suggestions.length) services = semantic.suggestions;
+      } else if (services.length > 1) {
+        // Vários resultados: o mais provável vem primeiro
+        const ranked = await citizenAiClient.matchService({ message: userMessage, services: services.map((s) => ({ id: s.id, label: s.label, description: s.description })) });
+        const first = ranked?.selectedId || ranked?.top[0];
+        if (first) services = [...services.filter((s) => s.id === first), ...services.filter((s) => s.id !== first)];
+      }
+    }
+
     if (!services.length) {
       const next = { ...session, stage: guidedFallback ? 'awaiting_request_mode' as const : session.stage, serviceSearchQuery: searchQuery, lowConfidenceFallbacks: (session.lowConfidenceFallbacks || 0) + 1 };
       await this.persistSession(execution.id, next);
@@ -1471,7 +1501,7 @@ export class CitizenAiOrchestrator {
   private withStage(session: CitizenAiSessionState, stage: CitizenAiStage): CitizenAiSessionState { return { ...session, stage }; }
 
   private meta(execution: FlowExecution, session: CitizenAiSessionState, waitingForInput: boolean, extra: Record<string, unknown> = {}): BotResponse['metadata'] {
-    return { flowId: execution.flowId, executionId: execution.id, nodeId: session.stage, waitingForInput, aiEngine: 'llamacpp-qwen3-1.7b-routing', aiStage: session.stage, ...extra };
+    return { flowId: execution.flowId, executionId: execution.id, nodeId: session.stage, waitingForInput, aiEngine: 'gateway', aiStage: session.stage, ...extra };
   }
 
   private async runAction(actionName: keyof typeof actionHandlers, params: Record<string, unknown>, execution: FlowExecution, session: CitizenAiSessionState): Promise<Record<string, any>> {
@@ -1539,8 +1569,20 @@ export class CitizenAiOrchestrator {
   }
 
   private matchesAny(value: string, patterns: string[]): boolean { return patterns.some((pattern) => value.includes(this.normalize(pattern))); }
-  private isGreeting(message: string): boolean { const normalized = this.normalize(message); return ['ola', 'oi', 'bom dia', 'boa tarde', 'boa noite'].some((pattern) => normalized.includes(pattern)); }
+  /**
+   * Só saudação pura ("oi", "olá, bom dia", "oi tudo bem?"). Compara palavras inteiras —
+   * antes "escola", "foi", "depois" contavam como "olá/oi" e o pedido virava menu.
+   */
+  private isGreeting(message: string): boolean {
+    const words = this.normalize(message).replace(/[^a-z0-9 ]/g, ' ').split(' ').filter(Boolean);
+    if (!words.length || words.length > 5) return false;
+    const filler = new Set(['ola', 'oi', 'oie', 'opa', 'eai', 'e', 'ai', 'bom', 'boa', 'dia', 'tarde', 'noite', 'tudo', 'bem', 'beleza', 'blz', 'digibot', 'prefeitura', 'tchau', 'obrigado', 'obrigada']);
+    const greets = ['ola', 'oi', 'oie', 'opa', 'eai', 'bom', 'boa'];
+    return words.some((w) => greets.includes(w)) && words.every((w) => filler.has(w));
+  }
   private isHumanRequest(message: string): boolean { return this.matchesAny(this.normalize(message), HUMAN_PATTERNS); }
+  /** Pedido explícito de pessoa (sem palavras soltas como "servidor"/"humano", que aparecem em pedidos comuns) */
+  private isDirectHumanRequest(message: string): boolean { return this.matchesAny(this.normalize(message), HUMAN_DIRECT_PATTERNS); }
   private isAmbiguousTinyMessage(normalized: string): boolean { return ['sim', 'nao', 'ok', 'oi', 'ola', 'bom', 'boa', 'e', 'a', 'o'].includes(normalized); }
   private isUnknownProtocolReply(message: string): boolean { return this.matchesAny(this.normalize(message), ['nao sei', 'nao lembro', 'esqueci', 'nao tenho', 'nao lembro do numero']); }
   private extractProtocolNumber(message: string): string | undefined {
@@ -1930,6 +1972,42 @@ export class CitizenAiOrchestrator {
     };
   }
 
+  /** Pausa o bot e pede atendimento humano (fila do servidor) */
+  private async requestHuman(execution: FlowExecution, session: CitizenAiSessionState): Promise<CitizenAiDecision> {
+    this.stats.humanHandoverRequests += 1;
+    const paused = this.withStage(session, 'paused_human');
+    await this.persistSession(execution.id, paused);
+    return {
+      session: paused,
+      requestHumanHandover: true,
+      handoverReason: 'citizen_request',
+      response: {
+        message: 'Certo! Vou chamar um atendente da prefeitura. Assim que alguém assumir, ele continua a conversa por aqui.',
+        messageType: 'text',
+        metadata: this.meta(execution, paused, false),
+      },
+    };
+  }
+
+  /**
+   * Serviço pelo sentido: carrega o catálogo do município (até 240) e pede ao
+   * JEV a melhor opção. Com certeza → escolhido; sem certeza → até 3 sugestões.
+   */
+  private async matchServiceBySense(
+    execution: FlowExecution,
+    session: CitizenAiSessionState,
+    userMessage: string
+  ): Promise<{ selectedId?: string; suggestions: MenuOption[]; catalog: MenuOption[] } | null> {
+    const list = await this.runAction('listServices', { limit: 240 }, execution, session);
+    const catalog = (Array.isArray(list.services) ? list.services : Array.isArray(list.options) ? list.options : []) as MenuOption[];
+    if (catalog.length < 2) return null;
+    this.stats.aiTurns += 1;
+    const match = await citizenAiClient.matchService({ message: userMessage, services: catalog.map((s) => ({ id: s.id, label: s.label, description: s.description })) });
+    if (!match) return null;
+    const suggestions = match.top.map((id) => catalog.find((s) => s.id === id)).filter((s): s is MenuOption => Boolean(s));
+    return { selectedId: match.selectedId, suggestions, catalog };
+  }
+
   private async buildAiGuidedFallback(
     execution: FlowExecution,
     session: CitizenAiSessionState,
@@ -1937,13 +2015,17 @@ export class CitizenAiOrchestrator {
     recentMessages: string[],
     serviceSearchSummary?: string
   ): Promise<CitizenAiDecision> {
-    const availableActions = session.stage === 'awaiting_request_mode'
-      ? SERVICE_ENTRY_ACTIONS
-      : CONTEXTUAL_ACTIONS;
+    const misses = (session.lowConfidenceFallbacks || 0) + 1;
+    session = { ...session, lowConfidenceFallbacks: misses };
+    const baseActions = session.stage === 'awaiting_request_mode' ? SERVICE_ENTRY_ACTIONS : CONTEXTUAL_ACTIONS;
+    // Depois de 2 tentativas sem entender, a primeira opção é falar com uma pessoa
+    const availableActions = misses >= 2 ? [HUMAN_ACTION, ...baseActions] : baseActions;
 
-    let responseMessage = session.stage === 'awaiting_request_mode'
-      ? 'Entendi sua necessidade, mas ainda preciso ligar isso a um servico correto. Posso buscar por secretaria ou voce pode descrever de outro jeito.'
-      : 'Entendi sua mensagem, mas preciso escolher o melhor caminho para continuar. Posso abrir uma solicitacao, consultar protocolo ou navegar por secretaria.';
+    let responseMessage = misses >= 2
+      ? 'Desculpe, ainda não consegui entender. Se preferir, posso chamar um atendente da prefeitura para continuar com você.'
+      : session.stage === 'awaiting_request_mode'
+        ? 'Entendi sua necessidade, mas ainda preciso ligar isso a um servico correto. Posso buscar por secretaria ou voce pode descrever de outro jeito.'
+        : 'Entendi sua mensagem, mas preciso escolher o melhor caminho para continuar. Posso abrir uma solicitacao, consultar protocolo ou navegar por secretaria.';
     let options = availableActions;
 
     if (citizenAiClient.available()) {
@@ -1957,7 +2039,7 @@ export class CitizenAiOrchestrator {
         serviceSearchSummary,
       });
 
-      if (guidance?.message && guidance.confidence >= 0.45) {
+      if (misses < 2 && guidance?.message && guidance.confidence >= 0.45) {
         responseMessage = guidance.message;
         if (guidance.suggestedActionIds.length > 0) {
           const suggested = availableActions.filter((action) => guidance.suggestedActionIds.includes(action.id));

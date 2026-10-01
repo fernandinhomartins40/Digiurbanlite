@@ -1525,6 +1525,7 @@ router.post('/ai/decide', async (req: Request, res: Response) => {
         instructions: z.string().min(3).max(1000),
         choices: z.record(z.string(), z.string().max(300)).refine((c) => Object.keys(c).length >= 2 && Object.keys(c).length <= 250),
         minConfidence: z.number().min(0).max(1).optional(),
+        returnTopOnLowConfidence: z.boolean().optional(),
       })
       .parse(req.body);
     const r = await aiDecide({ ...body, tenantId: tryGetTenantId() || null, source: 'bot' });

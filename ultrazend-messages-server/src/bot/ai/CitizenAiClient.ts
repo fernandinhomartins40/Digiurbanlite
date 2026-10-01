@@ -22,6 +22,7 @@
 import axios, { AxiosInstance } from 'axios';
 import logger from '../../utils/logger';
 import { getBotTenantId } from '../tenant-context';
+import { withServiceToken } from '../../utils/serviceToken';
 import {
   CitizenAiCorrectionExtraction,
   CitizenAiFieldExtraction,
@@ -110,13 +111,14 @@ export class CitizenAiClient {
 
   constructor() {
     const baseURL = process.env.DIGIURBAN_API_URL || 'http://localhost:3001/api';
-    const token = process.env.DIGIURBAN_SERVICE_TOKEN || '';
-    this.enabled = Boolean(token) && (process.env.CITIZEN_AI_ENABLED || 'true').toLowerCase() !== 'false';
+    // Token interno vem do painel (banco) ou do .env — resolvido a cada chamada
+    this.enabled = (process.env.CITIZEN_AI_ENABLED || 'true').toLowerCase() !== 'false';
     this.http = axios.create({
       baseURL: `${baseURL.replace(/\/$/, '')}/internal/ai`,
       timeout: Number.parseInt(process.env.CITIZEN_AI_TIMEOUT_MS || '20000', 10),
-      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json' },
     });
+    this.http.interceptors.request.use(withServiceToken);
     this.http.interceptors.request.use((config: any) => {
       const tenantId = getBotTenantId();
       if (tenantId) (config.headers as Record<string, string>)['X-Tenant-Id'] = tenantId;
@@ -142,8 +144,52 @@ export class CitizenAiClient {
     }
   }
 
-  private decide(task: string, state: string, instructions: string, choices: Record<string, string>, minConfidence?: number) {
-    return this.call<{ choice: string | null; confidence: number; via: string }>('/decide', { task, state, instructions, choices, minConfidence });
+  private decide(task: string, state: string, instructions: string, choices: Record<string, string>, minConfidence?: number, returnTopOnLowConfidence?: boolean) {
+    return this.call<{ choice: string | null; confidence: number; via: string; top?: Array<{ id: string; p: number }> }>('/decide', {
+      task,
+      state,
+      instructions,
+      choices,
+      minConfidence,
+      returnTopOnLowConfidence,
+    });
+  }
+
+  /**
+   * Memória curta de intenções por município: frases que se repetem muito
+   * ("oi", "quero segunda via", "como faço?") não gastam IA de novo.
+   * Só para mensagens SEM contexto de etapa (triagem) e sem números (podem
+   * conter dados pessoais). 15 min, até 500 frases.
+   */
+  private intentCache = new Map<string, { at: number; value: CitizenAiIntentAnalysis }>();
+
+  private cacheKey(message: string): string | null {
+    const normalized = message.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z ]/g, ' ').replace(/\s+/g, ' ').trim();
+    if (!normalized || normalized.length > 80 || /\d/.test(message)) return null;
+    return `${getBotTenantId() || 'default'}:${normalized}`;
+  }
+
+  /**
+   * Encontra o serviço pelo SENTIDO da descrição do cidadão, entre todos os
+   * serviços do município ("tem um buraco na minha rua" → Tapa-buraco), via
+   * JEV. Devolve o escolhido (se houver certeza) e as 3 opções mais prováveis.
+   */
+  async matchService(params: { message: string; services: Array<{ id: string; label: string; description?: string }> }): Promise<{ selectedId?: string; confidence: number; top: string[] } | null> {
+    if (params.services.length < 2) return null;
+    const choices: Record<string, string> = {};
+    params.services.slice(0, 240).forEach((s) => {
+      choices[s.id] = s.description ? `${s.label} — ${s.description}`.slice(0, 280) : s.label;
+    });
+    const r = await this.decide(
+      'match_service',
+      `Pedido do cidadão à prefeitura: ${params.message}`,
+      'Qual serviço da prefeitura atende a este pedido?',
+      choices,
+      0.7,
+      true
+    );
+    if (!r) return null;
+    return { selectedId: r.choice || undefined, confidence: clamp(r.confidence), top: (r.top || []).filter((t) => t.p >= 0.12).map((t) => t.id) };
   }
 
   private complete(task: string, prompt: string, system?: string, maxTokens = 300, tier: 'fast' | 'smart' = 'fast') {
@@ -162,15 +208,24 @@ export class CitizenAiClient {
       .filter(Boolean)
       .join('\n');
 
+    const key = params.sessionContext ? null : this.cacheKey(params.message);
+    const cached = key ? this.intentCache.get(key) : undefined;
+    if (cached && Date.now() - cached.at < 15 * 60000) return { ...cached.value, protocolNumber };
+
     const r = await this.decide('intent', state, 'Qual é a intenção do cidadão nesta mensagem enviada ao atendimento da prefeitura?', INTENTS);
     if (!r) return protocolNumber ? { intent: 'consultar_protocolo', confidence: 0.8, protocolNumber } : null;
     const intent = (r.choice && r.choice in INTENTS ? r.choice : 'unknown') as CitizenAiIntentAnalysis['intent'];
-    return {
+    const result: CitizenAiIntentAnalysis = {
       intent,
       confidence: clamp(r.confidence),
       serviceQuery: intent === 'solicitar_servico' ? params.message.trim().slice(0, 160) : undefined,
       protocolNumber,
     };
+    if (key && result.confidence >= 0.75) {
+      if (this.intentCache.size >= 500) this.intentCache.delete(this.intentCache.keys().next().value as string);
+      this.intentCache.set(key, { at: Date.now(), value: result });
+    }
+    return result;
   }
 
   async selectService(params: { citizenId: string; message: string; candidates: Array<{ id: string; label: string; description?: string }> }): Promise<CitizenAiSelection | null> {

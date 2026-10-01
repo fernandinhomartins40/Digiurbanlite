@@ -284,9 +284,11 @@ export interface DecideInput extends CallContext {
   choices: Record<string, string>;
   /** abaixo disto, confirma com um LLM (padrão 0.75) */
   minConfidence?: number;
+  /** com confiança baixa, devolve as 3 mais prováveis em vez de chamar o LLM (mais barato) */
+  returnTopOnLowConfidence?: boolean;
 }
 
-export async function decide(input: DecideInput): Promise<{ choice: string | null; confidence: number; via: string; credits: number }> {
+export async function decide(input: DecideInput): Promise<{ choice: string | null; confidence: number; via: string; credits: number; top: Array<{ id: string; p: number }> }> {
   if (input.tenantId) await assertHasCredits(input.tenantId);
   const settings = await getBillingSettings();
   const choices = { ...input.choices, nenhuma: input.choices.nenhuma || 'nenhuma das opções se aplica' };
@@ -304,8 +306,17 @@ export async function decide(input: DecideInput): Promise<{ choice: string | nul
       const charged = input.tenantId
         ? await chargeUsage({ tenantId: input.tenantId, task: input.task, source: input.source, provider: c.model.provider, modelId: c.model.modelId, inputTokens: r.inputTokens, outputTokens: 0, costUsd: costOf(c.model, r.inputTokens, 0), latencyMs: latency })
         : { credits: 0 };
+      // 3 opções mais prováveis (para o bot sugerir quando não há certeza)
+      const top = Object.entries(r.probabilities)
+        .filter(([id]) => id !== 'nenhuma' && id in choices)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 3)
+        .map(([id, p]) => ({ id, p }));
       if (r.confidence >= minConfidence) {
-        return { choice: r.choice === 'nenhuma' ? null : r.choice, confidence: r.confidence, via: `jev:${c.model.modelId}`, credits: charged.credits };
+        return { choice: r.choice === 'nenhuma' ? null : r.choice, confidence: r.confidence, via: `jev:${c.model.modelId}`, credits: charged.credits, top };
+      }
+      if (input.returnTopOnLowConfidence && top.length) {
+        return { choice: null, confidence: r.confidence, via: `jev:${c.model.modelId}`, credits: charged.credits, top };
       }
       break; // confiança baixa → confirma com LLM abaixo
     } catch (error: any) {
@@ -325,5 +336,5 @@ export async function decide(input: DecideInput): Promise<{ choice: string | nul
   });
   const choice = typeof r.json?.choice === 'string' && r.json.choice in choices ? r.json.choice : null;
   const confidence = Math.max(0, Math.min(1, Number(r.json?.confidence) || 0));
-  return { choice: choice === 'nenhuma' ? null : choice, confidence, via: `llm:${r.model}`, credits: r.credits };
+  return { choice: choice === 'nenhuma' ? null : choice, confidence, via: `llm:${r.model}`, credits: r.credits, top: choice && choice !== 'nenhuma' ? [{ id: choice, p: confidence }] : [] };
 }
