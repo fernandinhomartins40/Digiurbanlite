@@ -28,6 +28,7 @@ import {
   Package,
   ScrollText,
   Search,
+  ShieldCheck,
   Settings,
   SlidersHorizontal,
   UserCog,
@@ -108,6 +109,7 @@ const GROUPS: Group[] = [
       { title: 'Auditoria', href: '/super-admin/audit', icon: FileText },
       { title: 'IA', href: '/super-admin/ia', icon: Bot },
       { title: 'Chaves de API', href: '/super-admin/ia/chaves', icon: KeyRound },
+      { title: 'Privacidade', href: '/super-admin/privacidade', icon: ShieldCheck },
     ],
   },
   {

@@ -11,7 +11,7 @@
 
 import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
-import { runAsPlatform } from '../../lib/tenant-context';
+import { runAsPlatform, runAsTenant } from '../../lib/tenant-context';
 import { createInvoice } from '../platform-billing.service';
 import { PACKAGE_DEFAULTS } from './catalog';
 
@@ -28,7 +28,7 @@ export async function getBillingSettings() {
   );
 }
 
-export async function updateBillingSettings(data: Partial<{ usdToBrl: number; markup: number; creditValueBrl: number; minChargeCredits: number; allowChinaHosted: boolean; redactPii: boolean }>) {
+export async function updateBillingSettings(data: Partial<{ usdToBrl: number; markup: number; creditValueBrl: number; minChargeCredits: number; allowChinaHosted: boolean; redactPii: boolean; lowBalanceCredits: number }>) {
   return runAsPlatform(async () =>
     prisma.aiBillingSettings.upsert({ where: { id: 'singleton' }, create: { id: 'singleton', ...data }, update: data })
   );
@@ -93,6 +93,62 @@ export async function chargeUsage(entry: UsageEntry): Promise<{ credits: number;
       });
       return { credits: charged, balance: Number(updated.balance) };
     })
+  ).then((r) => {
+    void checkLowBalance(entry.tenantId, r.balance).catch((e) => console.error('[ai-billing] aviso de saldo', e));
+    return r;
+  });
+}
+
+// ---------------------------------------------------------------- aviso de saldo baixo
+
+export async function lowBalanceThresholdOf(tenantId: string): Promise<number> {
+  const [wallet, s] = await Promise.all([getWallet(tenantId), getBillingSettings()]);
+  return wallet.lowBalanceThreshold ?? s.lowBalanceCredits;
+}
+
+/**
+ * Avisa os administradores do município UMA vez quando o saldo cai abaixo do
+ * limite (notificação no sininho do painel). Volta a avisar depois que o saldo
+ * for recarregado acima do limite.
+ */
+export async function checkLowBalance(tenantId: string, balance: number): Promise<void> {
+  const threshold = await lowBalanceThresholdOf(tenantId);
+  if (threshold <= 0 || balance >= threshold) return;
+  // marca de forma atômica: só quem conseguir marcar envia (evita aviso duplicado em chamadas simultâneas)
+  const marked = await runAsPlatform(async () =>
+    prisma.aiTenantWallet.updateMany({ where: { tenantId, lowBalanceNotifiedAt: null }, data: { lowBalanceNotifiedAt: new Date() } })
+  );
+  if (marked.count === 0) return;
+  await runAsTenant(tenantId, async () => {
+    const admins = await prisma.user.findMany({
+      where: { tenantId, isActive: true, role: { in: ['ADMIN', 'SUPER_ADMIN'] } },
+      select: { id: true },
+      take: 50,
+    });
+    const empty = balance <= 0;
+    if (!admins.length) return;
+    await prisma.notification.createMany({
+      data: admins.map((a) => ({
+        tenantId,
+        userId: a.id,
+        title: empty ? 'Créditos de IA esgotados' : 'Créditos de IA acabando',
+        message: empty
+          ? 'O município ficou sem créditos de IA. O DigiBot e o Assistente funcionam sem IA até a recarga. Compre um pacote em Créditos de IA.'
+          : `Restam ${Math.floor(balance)} créditos de IA. Compre um pacote em Créditos de IA para não interromper o DigiBot e o Assistente.`,
+        type: 'AI_CREDITS_LOW',
+        channel: 'WEB',
+        metadata: { balance, threshold, link: '/admin/ia-creditos' },
+        sentAt: new Date(),
+      })),
+    });
+  });
+}
+
+/** Limite do aviso definido pelo próprio município (null = padrão da plataforma) */
+export async function setLowBalanceThreshold(tenantId: string, threshold: number | null) {
+  await getWallet(tenantId);
+  return runAsPlatform(async () =>
+    prisma.aiTenantWallet.update({ where: { tenantId }, data: { lowBalanceThreshold: threshold, lowBalanceNotifiedAt: null } })
   );
 }
 
@@ -122,7 +178,12 @@ export async function addCredits(tenantId: string, credits: number, kind: 'PURCH
       });
       return updated;
     })
-  );
+  ).then(async (updated) => {
+    if (updated.lowBalanceNotifiedAt && Number(updated.balance) >= (await lowBalanceThresholdOf(tenantId).catch(() => 0))) {
+      await runAsPlatform(async () => prisma.aiTenantWallet.update({ where: { id: updated.id }, data: { lowBalanceNotifiedAt: null } })).catch(() => undefined);
+    }
+    return updated;
+  });
 }
 
 // ---------------------------------------------------------------- pacotes
@@ -207,8 +268,11 @@ export async function tenantUsage(tenantId: string, days = 30) {
       }),
       prisma.aiCreditOrder.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' }, take: 10 }),
     ]);
+    const s = await getBillingSettings();
+    const threshold = wallet.lowBalanceThreshold ?? s.lowBalanceCredits;
     return {
       wallet: { balance: Number(wallet.balance), totalPurchased: Number(wallet.totalPurchased), totalConsumed: Number(wallet.totalConsumed) },
+      lowBalance: { threshold, custom: wallet.lowBalanceThreshold != null, platformDefault: s.lowBalanceCredits, isLow: threshold > 0 && Number(wallet.balance) < threshold },
       byTask: byTask.map((t) => ({ task: t.task, calls: t._count._all, credits: -Number(t._sum.credits || 0) })),
       ledger: ledger.map((l) => ({ ...l, credits: Number(l.credits), balanceAfter: Number(l.balanceAfter), costUsd: undefined, revenueBrl: undefined })),
       orders,

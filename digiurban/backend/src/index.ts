@@ -227,8 +227,8 @@ loadRoute('/api/prices', './routes/prices-proxy.routes');
 // Módulo de Processos Internos (proxy → digiurban-flow)
 loadRoute('/api/flow', './routes/flow-proxy.routes');
 
-// Módulo de IA Centralizada (proxy → digiurban-ai)
-loadRoute('/api/ai', './routes/ai-proxy.routes');
+// Assistente de IA dos servidores (gateway da plataforma; substitui o proxy do digiurban-ai)
+loadRoute('/api/ai', './routes/admin-ai-assistant.routes');
 
 // Administração de fluxos do bot
 loadRoute('/api/admin/flows', './routes/admin-flows.routes');
@@ -263,6 +263,7 @@ try {
 loadRoute('/api/leads', './routes/public-leads.routes');
 // IA da plataforma (chaves, modelos, cobrança, pacotes) — console /super-admin
 loadRoute('/api/platform/ai', './routes/platform-ai.routes');
+loadRoute('/api/platform/privacy', './routes/platform-privacy.routes');
 loadRoute('/api/platform', './routes/platform');
 // Painel de plataforma completo (Fases 1/6 do plano 2026-07-13): detalhe de
 // municípios, admins, billing, leads, métricas, schema, migrations, backups.
@@ -386,6 +387,8 @@ try { require('./jobs/notification.jobs'); } catch (e) { logger.error('Failed to
 try { require('./jobs/sla-monitor.job').initSlaMonitorJob(); } catch (e) { logger.error('Failed to start SLA monitor job', { error: e }); }
 // Reversão de delegações expiradas (o init existia mas nunca era chamado)
 try { require('./jobs/revertExpiredDelegations.job').initRevertExpiredDelegationsJob(); } catch (e) { logger.error('Failed to start delegation revert job', { error: e }); }
+// Prazo de guarda das conversas (LGPD) — só age se ativado em Super-admin › Privacidade
+try { require('./jobs/privacy-retention.job').initPrivacyRetentionJob(); } catch (e) { logger.error('Failed to start privacy retention job', { error: e }); }
 
 // Saúde - Apps integrados
 // REMOVIDO (Fase 0, achado do fail-fast): ./routes/saude-atendimento.routes não

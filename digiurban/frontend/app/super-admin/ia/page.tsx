@@ -78,6 +78,7 @@ interface Settings {
   minChargeCredits: number;
   allowChinaHosted: boolean;
   redactPii: boolean;
+  lowBalanceCredits: number;
 }
 
 interface Pkg {
@@ -496,6 +497,10 @@ function BillingTab({ settings, packages, isAdmin, onChange, notify }: { setting
             <div>
               <Label>Mínimo por chamada (créditos)</Label>
               <Input {...num('minChargeCredits')} />
+            </div>
+            <div>
+              <Label>Avisar saldo baixo abaixo de (créditos)</Label>
+              <Input {...num('lowBalanceCredits')} />
             </div>
           </div>
           <div className="flex flex-col gap-2 text-sm">

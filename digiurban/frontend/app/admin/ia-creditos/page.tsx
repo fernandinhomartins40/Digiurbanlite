@@ -7,10 +7,11 @@
  */
 
 import { useCallback, useEffect, useState } from 'react'
-import { Bot, CheckCircle2, Clock, Loader2, ShoppingCart, Sparkles, TriangleAlert } from 'lucide-react'
+import { Bell, Bot, CheckCircle2, Clock, Loader2, ShoppingCart, Sparkles, TriangleAlert } from 'lucide-react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { Input } from '@/components/ui/input'
 import { useToast } from '@/hooks/use-toast'
 
 interface Pkg {
@@ -23,6 +24,7 @@ interface Pkg {
 
 interface Summary {
   wallet: { balance: number; totalPurchased: number; totalConsumed: number }
+  lowBalance?: { threshold: number; custom: boolean; platformDefault: number; isLow: boolean }
   byTask: Array<{ task: string | null; calls: number; credits: number }>
   ledger: Array<{ id: string; kind: string; credits: number; balanceAfter: number; description: string | null; task: string | null; createdAt: string }>
   orders: Array<{ id: string; packageName: string; credits: number; priceBrl: number; status: string; createdAt: string }>
@@ -40,6 +42,8 @@ const TASK_LABEL: Record<string, string> = {
   correction_option: 'Correções de dados',
   correction_value: 'Correções de dados',
   guidance: 'Respostas e orientações',
+  match_service: 'Achar o serviço certo',
+  assistant: 'Assistente dos servidores',
 }
 
 const KIND_LABEL: Record<string, string> = { PURCHASE: 'Compra', USAGE: 'Uso', GRANT: 'Bônus', REFUND: 'Estorno', ADJUST: 'Ajuste' }
@@ -57,6 +61,8 @@ export default function AiCreditsPage() {
   const [data, setData] = useState<Summary | null>(null)
   const [loading, setLoading] = useState(true)
   const [buying, setBuying] = useState<string | null>(null)
+  const [alertValue, setAlertValue] = useState('')
+  const [savingAlert, setSavingAlert] = useState(false)
 
   const load = useCallback(async () => {
     try {
@@ -64,6 +70,7 @@ export default function AiCreditsPage() {
       const json = await res.json()
       if (!res.ok) throw new Error(json.error || 'Erro ao carregar')
       setData(json)
+      if (json.lowBalance) setAlertValue(String(Math.round(json.lowBalance.threshold)))
     } catch (error: any) {
       toast({ title: 'Erro ao carregar os créditos de IA', description: error.message, variant: 'destructive' })
     } finally {
@@ -96,6 +103,26 @@ export default function AiCreditsPage() {
     }
   }
 
+  const saveAlert = async (threshold: number | null) => {
+    setSavingAlert(true)
+    try {
+      const res = await fetch('/api/admin/ai-credits/alert', {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threshold }),
+      })
+      const json = await res.json()
+      if (!res.ok) throw new Error(json.error)
+      toast({ title: 'Aviso de saldo salvo' })
+      load()
+    } catch (error: any) {
+      toast({ title: 'Não foi possível salvar', description: error.message, variant: 'destructive' })
+    } finally {
+      setSavingAlert(false)
+    }
+  }
+
   if (!loading && !data) {
     return (
       <div className="flex min-h-[40vh] flex-col items-center justify-center gap-3 text-gray-600">
@@ -119,6 +146,7 @@ export default function AiCreditsPage() {
 
   const { wallet } = data
   const low = wallet.balance <= 0
+  const lowSoon = !low && Boolean(data.lowBalance?.isLow)
   const byGroup = new Map<string, { calls: number; credits: number }>()
   for (const t of data.byTask) {
     const label = TASK_LABEL[t.task || ''] || 'Outros usos'
@@ -146,6 +174,18 @@ export default function AiCreditsPage() {
             <div>
               <p className="font-semibold">Sem créditos de IA</p>
               <p>O DigiBot continua atendendo pelos menus, mas sem entender textos livres. Compre um pacote abaixo para reativar a inteligência.</p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {lowSoon && (
+        <Card className="border-amber-300 bg-amber-50">
+          <CardContent className="flex items-start gap-3 pt-6 text-sm text-amber-900">
+            <TriangleAlert className="mt-0.5 h-5 w-5 shrink-0" />
+            <div>
+              <p className="font-semibold">Créditos de IA acabando</p>
+              <p>O saldo está abaixo do aviso de {fmt(data.lowBalance!.threshold)} créditos. Compre um pacote para não interromper o DigiBot e o Assistente.</p>
             </div>
           </CardContent>
         </Card>
@@ -186,6 +226,40 @@ export default function AiCreditsPage() {
           </CardContent>
         </Card>
       </div>
+
+      {data.lowBalance && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Bell className="h-5 w-5" />
+              Aviso de saldo baixo
+            </CardTitle>
+            <CardDescription>
+              Os administradores recebem um aviso no sininho quando o saldo ficar abaixo deste valor. Use 0 para não avisar.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap items-center gap-3">
+            <Input
+              type="number"
+              min={0}
+              className="w-40"
+              value={alertValue}
+              onChange={(e) => setAlertValue(e.target.value)}
+              aria-label="Avisar quando o saldo ficar abaixo de"
+            />
+            <span className="text-sm text-gray-500">créditos</span>
+            <Button disabled={savingAlert || alertValue === '' || Number(alertValue) < 0} onClick={() => saveAlert(Number(alertValue))}>
+              {savingAlert && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Salvar
+            </Button>
+            {data.lowBalance.custom && (
+              <Button variant="ghost" disabled={savingAlert} onClick={() => saveAlert(null)}>
+                Voltar ao padrão ({fmt(data.lowBalance.platformDefault)})
+              </Button>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
