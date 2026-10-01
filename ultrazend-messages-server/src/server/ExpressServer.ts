@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction, Application } from 'express';
+import { canReadConversation, isServer, isServerAdmin, maskCpf, tenantOf } from './accessControl';
 import { uploadsAccess } from '../middleware/uploadsAccess';
 import cors from 'cors';
 import helmet from 'helmet';
@@ -357,6 +358,23 @@ export class ExpressServer {
       try {
         const { participant2Id, participant2Type, protocolId, departmentId } = req.body;
 
+        if (!participant2Id || !['CITIZEN', 'SERVER'].includes(participant2Type)) {
+          res.status(400).json({ error: 'Destinatário inválido' });
+          return;
+        }
+        if (req.user!.userType === 'CITIZEN' && participant2Type === 'CITIZEN') {
+          res.status(403).json({ error: 'Cidadãos conversam com a prefeitura, não com outros cidadãos' });
+          return;
+        }
+        const target =
+          participant2Type === 'CITIZEN'
+            ? await prisma.citizen.findUnique({ where: { id: participant2Id }, select: { tenantId: true } })
+            : await prisma.user.findUnique({ where: { id: participant2Id }, select: { tenantId: true } });
+        if (!target || (target.tenantId || tenantOf(undefined)) !== tenantOf(req.user as any)) {
+          res.status(404).json({ error: 'Destinatário não encontrado' });
+          return;
+        }
+
         const conversation = await conversationService.findOrCreateConversation({
           participant1Id: req.user!.userId,
           participant1Type: req.user!.userType,
@@ -377,8 +395,15 @@ export class ExpressServer {
     router.get('/:conversationId/messages', async (req: AuthRequest, res: Response) => {
       try {
         const { conversationId } = req.params;
-        const limit = parseInt(req.query.limit as string || '50', 10);
+        const limit = Math.min(200, parseInt(req.query.limit as string || '50', 10) || 50);
         const offset = parseInt(req.query.offset as string || '0', 10);
+
+        // Antes não havia checagem: qualquer usuário lia qualquer conversa pelo id
+        const conv = await prisma.conversation.findUnique({ where: { id: conversationId } });
+        if (!conv || !canReadConversation(conv as any, req.user as any)) {
+          res.status(404).json({ error: 'Conversa não encontrada' });
+          return;
+        }
 
         const messages = await conversationService.getConversationMessages(
           conversationId,
@@ -794,6 +819,10 @@ export class ExpressServer {
     // Enviar broadcast (apenas gerentes)
     router.post('/:channelId/broadcast', async (req: AuthRequest, res: Response) => {
       try {
+        if (!isServer(req.user as any)) {
+          res.status(403).json({ error: 'Apenas servidores enviam comunicados' });
+          return;
+        }
         const { channelId } = req.params;
         const { title, content, attachments, scheduledFor, priority } = req.body;
 
@@ -879,6 +908,15 @@ export class ExpressServer {
     const router = express.Router();
 
     // Estatísticas
+    // Área administrativa do chat: só gestores (antes, qualquer usuário logado criava canais)
+    router.use((req: AuthRequest, res: Response, next: NextFunction) => {
+      if (!isServerAdmin(req.user as any)) {
+        res.status(403).json({ error: 'Acesso restrito a gestores' });
+        return;
+      }
+      next();
+    });
+
     router.get('/stats', async (_req: AuthRequest, res: Response) => {
       try {
         const today = new Date();
@@ -918,11 +956,16 @@ export class ExpressServer {
     // Buscar todos os cidadãos (para criar conversa P2P)
     router.get('/citizens', async (req: AuthRequest, res: Response) => {
       try {
+        // Lista de cidadãos é só para servidores, e só do próprio município
+        if (!isServer(req.user as any)) {
+          res.status(403).json({ error: 'Acesso restrito aos servidores' });
+          return;
+        }
         const { search, limit = 50, offset = 0 } = req.query;
 
-        // Buscar cidadãos do banco digiurban
         const where: any = {
           isActive: true,
+          tenantId: tenantOf(req.user as any),
         };
 
         if (search && typeof search === 'string') {
@@ -949,7 +992,7 @@ export class ExpressServer {
           orderBy: { name: 'asc' },
         });
 
-        res.json(citizens);
+        res.json(citizens.map((c: any) => ({ ...c, cpf: maskCpf(c.cpf) })));
       } catch (error) {
         logger.error('Error in GET /contacts/citizens', { error });
         res.status(500).json({ error: 'Internal server error' });
@@ -963,6 +1006,7 @@ export class ExpressServer {
 
         const where: any = {
           isActive: true,
+          tenantId: tenantOf(req.user as any),
         };
 
         if (search && typeof search === 'string') {
@@ -1008,12 +1052,19 @@ export class ExpressServer {
     router.get('/:userId/:userType', async (req: AuthRequest, res: Response) => {
       try {
         const { userId, userType } = req.params;
+        const me = req.user as any;
+        const self = me?.userId === userId && me?.userType === userType;
 
         if (userType === 'CITIZEN') {
+          if (!self && !isServer(me)) {
+            res.status(403).json({ error: 'Acesso negado' });
+            return;
+          }
           const citizen = await prisma.citizen.findUnique({
             where: { id: userId },
             select: {
               id: true,
+              tenantId: true,
               name: true,
               email: true,
               cpf: true,
@@ -1023,12 +1074,13 @@ export class ExpressServer {
             },
           });
 
-          if (!citizen) {
+          if (!citizen || (!self && (citizen.tenantId || tenantOf(undefined)) !== tenantOf(me))) {
             res.status(404).json({ error: 'Citizen not found' });
             return;
           }
 
-          res.json(citizen);
+          const { tenantId: _t, ...pub } = citizen as any;
+          res.json(self ? pub : { ...pub, cpf: maskCpf(pub.cpf) });
         } else if (userType === 'SERVER') {
           const user = await prisma.user.findUnique({
             where: { id: userId },
@@ -1331,7 +1383,7 @@ export class ExpressServer {
 
         const { departmentId } = req.query;
         const handoverService = this.flowEngineService.getHandoverService();
-        const queue = await handoverService.getPendingHandoverQueue(departmentId as string);
+        const queue = await handoverService.getPendingHandoverQueue(departmentId as string, tenantOf(req.user as any));
 
         res.json({
           success: true,
@@ -1356,6 +1408,12 @@ export class ExpressServer {
         const { conversationId } = req.body;
         if (!conversationId) {
           res.status(400).json({ error: 'conversationId é obrigatório' });
+          return;
+        }
+
+        const conv = await prisma.conversation.findUnique({ where: { id: conversationId }, select: { tenantId: true } });
+        if (!conv || (conv.tenantId || tenantOf(undefined)) !== tenantOf(req.user as any)) {
+          res.status(404).json({ error: 'Conversa não encontrada' });
           return;
         }
 

@@ -1,4 +1,5 @@
 import { Server as SocketIOServer, Socket } from 'socket.io';
+import { canReadConversation } from './accessControl';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient, RedisClientType } from 'redis';
 import { Server as HTTPServer } from 'http';
@@ -434,7 +435,8 @@ export class WebSocketServer {
   }
 
   private async handleTypingStart(socket: AuthenticatedSocket, data: any) {
-    const { conversationId } = data;
+    const { conversationId } = data || {};
+    if (!socket.rooms.has(`conversation:${conversationId}`)) return; // só quem entrou na sala
     socket.to(`conversation:${conversationId}`).emit('typing:start', {
       conversationId,
       userId: socket.userId,
@@ -443,7 +445,8 @@ export class WebSocketServer {
   }
 
   private async handleTypingStop(socket: AuthenticatedSocket, data: any) {
-    const { conversationId } = data;
+    const { conversationId } = data || {};
+    if (!socket.rooms.has(`conversation:${conversationId}`)) return;
     socket.to(`conversation:${conversationId}`).emit('typing:stop', {
       conversationId,
       userId: socket.userId,
@@ -456,8 +459,24 @@ export class WebSocketServer {
     callback?: (response: any) => void
   ) {
     try {
-      const { conversationId } = data;
-      socket.join(`conversation:${conversationId}`);
+      const { conversationId } = data || {};
+      // Só entra na sala quem pode ler a conversa (antes: qualquer conexão
+      // ouvia as mensagens de qualquer conversa em tempo real)
+      const conversation = conversationId
+        ? await prisma.conversation.findUnique({ where: { id: String(conversationId) } })
+        : null;
+      if (
+        !conversation ||
+        !canReadConversation(conversation as any, {
+          userId: socket.userId,
+          userType: socket.userType,
+          tenantId: socket.tenantId,
+        })
+      ) {
+        callback?.({ error: 'Conversa não encontrada' });
+        return;
+      }
+      socket.join(`conversation:${conversation.id}`);
       callback?.({ success: true });
     } catch (error) {
       callback?.({ error: 'Failed to join conversation' });

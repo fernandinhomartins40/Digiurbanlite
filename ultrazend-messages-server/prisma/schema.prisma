@@ -37,6 +37,7 @@ model MunicipioConfig {
 }
 
 model User {
+  tenantId            String? // existe no banco (backend); usado para isolar contatos/perfis por município
   id                  String    @id @default(cuid())
   email               String    @unique
   name                String
@@ -317,6 +318,7 @@ model Department {
 }
 
 model Citizen {
+  tenantId            String? // existe no banco (backend); usado para isolar contatos/perfis por município
   id                  String             @id @default(cuid())
   cpf                 String
   name                String

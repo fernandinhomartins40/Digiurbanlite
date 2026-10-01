@@ -24,8 +24,10 @@ export class HandoverService {
   /**
    * Lista conversas aguardando atendimento humano (fila de handover)
    */
-  async getPendingHandoverQueue(departmentId?: string) {
+  async getPendingHandoverQueue(departmentId?: string, tenantId?: string) {
     const where: any = {
+      // isolamento por município (antes a fila misturava todas as prefeituras)
+      ...(tenantId ? { tenantId } : {}),
       isBotConversation: true,
       status: 'ACTIVE',
       activeFlowExecution: {
