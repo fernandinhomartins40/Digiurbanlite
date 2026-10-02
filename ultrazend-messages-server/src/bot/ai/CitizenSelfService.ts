@@ -38,6 +38,8 @@ export interface SelfServiceContext {
   persist: (session: CitizenAiSessionState) => Promise<void>;
   welcome: (session: CitizenAiSessionState) => BotResponse;
   requestHuman: (session: CitizenAiSessionState) => Promise<CitizenAiDecision>;
+  /** perguntas frequentes do município (painel › DigiBot); vazio = padrão */
+  faqs?: () => Array<{ id: string; question: string; answer: string }>;
 }
 
 const BACK: MenuOption = { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Retornar para as opções iniciais' };
@@ -55,7 +57,7 @@ const HOW_IT_WORKS = [
   'A qualquer momento escreva **menu** para voltar ao início ou **atendente** para falar com uma pessoa.',
 ].join('\n');
 
-const FAQ: Array<MenuOption & { answer: string }> = [
+const DEFAULT_FAQ: Array<MenuOption & { answer: string }> = [
   {
     id: 'faq_prazo',
     label: 'Quanto tempo leva um pedido?',
@@ -160,6 +162,12 @@ const fmtDate = (value: unknown) => {
 export class CitizenSelfService {
   constructor(private readonly ctx: SelfServiceContext) {}
 
+  /** Perguntas do município; sem cadastro, as padrão */
+  private faqList(): Array<MenuOption & { answer: string }> {
+    const custom = this.ctx.faqs?.() || [];
+    return custom.length ? custom.slice(0, 12).map((f) => ({ id: `faq_${f.id}`, label: f.question, answer: f.answer })) : DEFAULT_FAQ;
+  }
+
   private menu(session: CitizenAiSessionState, message: string, options: MenuOption[]): BotResponse {
     return { message, messageType: 'menu', data: { options }, metadata: this.ctx.meta(session, true) };
   }
@@ -251,18 +259,18 @@ export class CitizenSelfService {
     if (option.id === 'como_funciona') return this.showHelp(session, `${HOW_IT_WORKS}\n\nPosso ajudar em mais alguma coisa?`);
     if (option.id === 'perguntas') {
       const next: CitizenAiSessionState = { ...session, stage: 'faq_menu' };
-      return this.go(next, this.menu(next, 'Escolha a sua dúvida:', [...FAQ.map(({ answer, ...o }) => o), BACK]));
+      return this.go(next, this.menu(next, 'Escolha a sua dúvida:', [...this.faqList().map(({ answer, ...o }) => o), BACK]));
     }
     if (option.id === 'falar_atendente') return this.ctx.requestHuman({ ...session, lastIntent: 'atendimento_humano', selfService: undefined });
     return this.backToMenu(session);
   }
 
   private async onFaqMenu(session: CitizenAiSessionState, message: string): Promise<CitizenAiDecision | null> {
-    const options = [...FAQ.map(({ answer, ...o }) => o), BACK];
+    const options = [...this.faqList().map(({ answer, ...o }) => o), BACK];
     const option = pickOption(message, options);
     if (!option) return null;
     if (option.id === BACK.id) return this.backToMenu(session);
-    const item = FAQ.find((f) => f.id === option.id)!;
+    const item = this.faqList().find((f) => f.id === option.id)!;
     return this.go(session, this.menu(session, `**${item.label}**\n\n${item.answer}\n\nQuer ver outra dúvida?`, options));
   }
 

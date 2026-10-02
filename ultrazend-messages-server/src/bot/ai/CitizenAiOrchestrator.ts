@@ -5,8 +5,9 @@ import { BotResponse, ExecutionContext, FlowNode, MenuOption } from '../types';
 import { citizenAiClient } from './CitizenAiClient';
 import { getDigiUrbanIntegration } from '../DigiUrbanIntegration';
 import { CitizenAiDecision, CitizenAiSessionState, CitizenAiStage } from './types';
-import { detectReservedAction, RESERVED_RESPONSES } from '../ReservedKeywords';
+import { detectReservedAction } from '../ReservedKeywords';
 import { CitizenSelfService, SELF_SERVICE_STAGES, SelfServiceTool } from './CitizenSelfService';
+import { botConfig, botFaqs, botMenuOptions, ensureBotKnowledge } from './botKnowledge';
 
 const QUICK_ACTIONS: MenuOption[] = [
   { id: 'solicitar_servico', label: 'Solicitar servico', description: 'Abrir uma nova solicitacao guiada' },
@@ -106,6 +107,7 @@ export class CitizenAiOrchestrator {
   private readonly stats = { sessionsStarted: 0, aiTurns: 0, lowConfidenceFallbacks: 0, legacyRedirects: 0, protocolsCreated: 0, protocolLookups: 0, humanHandoverRequests: 0 };
 
   async startSession(params: { citizenId: string; flowId: string; conversationId: string; existingExecution?: ExecutionLike | null }): Promise<{ execution: FlowExecution; response: BotResponse }> {
+    await ensureBotKnowledge();
     const execution = await this.ensureExecution(params);
     const session = this.getSessionState(execution);
     this.stats.sessionsStarted += 1;
@@ -116,7 +118,20 @@ export class CitizenAiOrchestrator {
   }
 
   async processText(params: { citizenId: string; flowId: string; conversationId: string; message: string; existingExecution?: ExecutionLike | null; recentMessages: string[] }): Promise<CitizenAiDecision> {
+    await ensureBotKnowledge();
     const execution = await this.ensureExecution(params);
+    const before = this.getSessionState(execution).lowConfidenceFallbacks || 0;
+    const decision = await this.processTextTurn(execution, params);
+    // Só falhas SEGUIDAS contam para oferecer atendente: entendeu agora → zera
+    const after = decision.session.lowConfidenceFallbacks || 0;
+    if (after > 0 && after <= before) {
+      decision.session = { ...decision.session, lowConfidenceFallbacks: 0 };
+      await this.persistSession(execution.id, decision.session).catch(() => undefined);
+    }
+    return decision;
+  }
+
+  private async processTextTurn(execution: FlowExecution, params: { message: string; recentMessages: string[] }): Promise<CitizenAiDecision> {
     const session = this.getSessionState(execution);
     const message = params.message.trim();
 
@@ -129,9 +144,9 @@ export class CitizenAiOrchestrator {
       return {
         session: next,
         response: {
-          message: RESERVED_RESPONSES.cancel + '\n\nO que você gostaria de fazer?',
+          message: botConfig().farewellMessage + '\n\nO que você gostaria de fazer?',
           messageType: 'menu',
-          data: { options: QUICK_ACTIONS },
+          data: { options: this.menuOptions() },
           metadata: this.meta(execution, next, true),
         },
       };
@@ -146,7 +161,7 @@ export class CitizenAiOrchestrator {
         requestHumanHandover: true,
         handoverReason: 'citizen_request',
         response: {
-          message: RESERVED_RESPONSES.human,
+          message: botConfig().human.waitMessage,
           messageType: 'text',
           metadata: this.meta(execution, next, false),
         },
@@ -186,6 +201,12 @@ export class CitizenAiOrchestrator {
       }
     }
 
+    // Pergunta do cidadão: perguntas frequentes do município vêm antes dos atalhos
+    if (!this.isFlowLockedStage(session.stage) && this.isQuestionLike(message)) {
+      const faqDecision = await this.tryFaq(execution, session, message);
+      if (faqDecision) return faqDecision;
+    }
+
     const globalShortcut = this.isFlowLockedStage(session.stage)
       ? await this.handleLockedFlowShortcut(execution, session, message)
       : await this.handleGlobalShortcut(execution, session, message);
@@ -212,6 +233,7 @@ export class CitizenAiOrchestrator {
   }
 
   async processUpload(params: { citizenId: string; flowId: string; conversationId: string; files: Array<Record<string, unknown>>; existingExecution?: ExecutionLike | null }): Promise<CitizenAiDecision> {
+    await ensureBotKnowledge();
     const execution = await this.ensureExecution(params);
     const session = this.getSessionState(execution);
     if (session.stage === 'awaiting_protocol_pending_document_upload') {
@@ -257,6 +279,35 @@ export class CitizenAiOrchestrator {
 
   getStats() { return { ...this.stats, aiAvailable: citizenAiClient.available() }; }
 
+  /** Menu inicial configurado pelo município (painel › DigiBot) */
+  private menuOptions(): MenuOption[] {
+    const options = botMenuOptions();
+    return options.length ? options : QUICK_ACTIONS;
+  }
+
+  private isQuestionLike(message: string): boolean {
+    const n = this.normalize(message);
+    return message.includes('?') || /^(como|quanto|quantos|qual|quais|onde|quando|posso|pode|o que|preciso|e possivel|tem como|demora)\b/.test(n);
+  }
+
+  /** Pergunta frequente do município que responde ao texto (sem IA) */
+  private async tryFaq(execution: FlowExecution, session: CitizenAiSessionState, message: string): Promise<CitizenAiDecision | null> {
+    if (this.normalize(message).length < 6) return null;
+    const faq = await this.integration.matchBotFaq(message).catch(() => null);
+    if (!faq) return null;
+    const next: CitizenAiSessionState = { ...session, stage: 'triage', lastIntent: 'ajuda', lowConfidenceFallbacks: 0 };
+    await this.persistSession(execution.id, next);
+    return {
+      session: next,
+      response: {
+        message: `**${faq.question}**\n\n${faq.answer}`,
+        messageType: 'menu',
+        data: { options: [{ id: 'ajuda', label: 'Outras dúvidas', description: 'Perguntas frequentes' }, { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Opções iniciais' }] },
+        metadata: this.meta(execution, next, true, { faqId: faq.id }),
+      },
+    };
+  }
+
   /** Autoatendimento (perfil, documentos, ajuda...) usando as mesmas peças do assistente */
   private selfService(execution: FlowExecution): CitizenSelfService {
     return new CitizenSelfService({
@@ -266,6 +317,7 @@ export class CitizenAiOrchestrator {
       persist: (session) => this.persistSession(execution.id, session),
       welcome: (session) => this.buildWelcomeResponse(execution, session),
       requestHuman: (session) => this.requestHuman(execution, session),
+      faqs: () => botFaqs(),
     });
   }
 
@@ -284,6 +336,13 @@ export class CitizenAiOrchestrator {
     // Pedido de atendente humano: reconhecido sem IA (antes dependia da IA estar disponível)
     if (this.isDirectHumanRequest(message)) {
       return this.requestHuman(execution, { ...session, lastIntent: 'atendimento_humano' });
+    }
+
+    // Pergunta ("quanto tempo demora meu pedido?") vai às perguntas frequentes
+    // ANTES das palavras-chave — "pedido" abria uma solicitação nova
+    if (this.isQuestionLike(message)) {
+      const faqDecision = await this.tryFaq(execution, session, message);
+      if (faqDecision) return faqDecision;
     }
 
     if (explicitIntent === 'solicitar_servico') {
@@ -311,10 +370,16 @@ export class CitizenAiOrchestrator {
     if (departmentDecision) return departmentDecision;
 
     if (this.shouldTryDirectServiceSearch(message)) {
-      const serviceDecision = await this.beginServiceRequest(execution, { ...session, lastIntent: 'solicitar_servico' }, message, message, true);
+      const serviceDecision = await this.beginServiceRequest(execution, { ...session, lastIntent: 'solicitar_servico' }, message, message, true, true);
       if (serviceDecision.session.stage !== 'awaiting_request_mode') {
         return serviceDecision;
       }
+    }
+
+    // Não achou serviço: talvez seja uma dúvida já respondida pelo município
+    if (!this.isQuestionLike(message)) {
+      const faqDecision = await this.tryFaq(execution, session, message);
+      if (faqDecision) return faqDecision;
     }
 
     this.stats.aiTurns += 1;
@@ -457,7 +522,7 @@ export class CitizenAiOrchestrator {
     };
   }
 
-  private async beginServiceRequest(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string, searchQuery: string, guidedFallback: boolean = false): Promise<CitizenAiDecision> {
+  private async beginServiceRequest(execution: FlowExecution, session: CitizenAiSessionState, userMessage: string, searchQuery: string, guidedFallback: boolean = false, probe: boolean = false): Promise<CitizenAiDecision> {
     const searchResult = await this.runAction('searchServices', { query: searchQuery, limit: 6 }, execution, session);
     let services = Array.isArray(searchResult.services) ? searchResult.services as MenuOption[] : [];
 
@@ -475,6 +540,11 @@ export class CitizenAiOrchestrator {
         const first = ranked?.selectedId || ranked?.top[0];
         if (first) services = [...services.filter((s) => s.id === first), ...services.filter((s) => s.id !== first)];
       }
+    }
+
+    if (!services.length && probe) {
+      // sondagem da triagem: sem serviço, a triagem segue (sem contar tentativa nem registrar)
+      return { session: { ...session, stage: 'awaiting_request_mode' }, response: { message: '', messageType: 'text', metadata: this.meta(execution, session, true) } };
     }
 
     if (!services.length) {
@@ -793,7 +863,7 @@ export class CitizenAiOrchestrator {
         response: {
           message: 'Voce ainda nao possui protocolos cadastrados. Se quiser, posso te ajudar a abrir uma solicitacao agora.',
           messageType: 'menu',
-          data: { options: QUICK_ACTIONS },
+          data: { options: this.menuOptions() },
           metadata: this.meta(execution, next, true),
         },
       };
@@ -841,7 +911,7 @@ export class CitizenAiOrchestrator {
         response: {
           message: 'Voce ainda nao possui protocolos cadastrados. Se quiser, posso te ajudar a abrir uma solicitacao agora.',
           messageType: 'menu',
-          data: { options: QUICK_ACTIONS },
+          data: { options: this.menuOptions() },
           metadata: this.meta(execution, next, true),
         },
       };
@@ -1146,7 +1216,7 @@ export class CitizenAiOrchestrator {
       response: {
         message: `${pendingTitle} enviada para analise com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
         messageType: 'menu',
-        data: { options: QUICK_ACTIONS },
+        data: { options: this.menuOptions() },
         metadata: this.meta(execution, refreshed, true),
       },
     };
@@ -1261,7 +1331,7 @@ export class CitizenAiOrchestrator {
       response: {
         message: `${pendingTitle} enviada para analise com sucesso. Se precisar, posso consultar outro protocolo ou voltar ao menu.`,
         messageType: 'menu',
-        data: { options: QUICK_ACTIONS },
+        data: { options: this.menuOptions() },
         metadata: this.meta(execution, refreshed, true),
       },
     };
@@ -1448,9 +1518,9 @@ export class CitizenAiOrchestrator {
 
   private buildWelcomeResponse(execution: FlowExecution, session: CitizenAiSessionState): BotResponse {
     return {
-      message: 'Ola. Posso te ajudar com uma solicitacao, consultar protocolo ou navegar por secretaria. Escolha uma opcao ou escreva com suas palavras o que precisa.',
+      message: botConfig().welcomeMessage,
       messageType: 'menu',
-      data: { options: QUICK_ACTIONS },
+      data: { options: this.menuOptions() },
       metadata: this.meta(execution, session, true),
     };
   }
@@ -1992,7 +2062,7 @@ export class CitizenAiOrchestrator {
       requestHumanHandover: true,
       handoverReason: 'citizen_request',
       response: {
-        message: 'Certo! Vou chamar um atendente da prefeitura. Assim que alguém assumir, ele continua a conversa por aqui.',
+        message: botConfig().human.waitMessage,
         messageType: 'text',
         metadata: this.meta(execution, paused, false),
       },
@@ -2027,6 +2097,10 @@ export class CitizenAiOrchestrator {
   ): Promise<CitizenAiDecision> {
     const misses = (session.lowConfidenceFallbacks || 0) + 1;
     session = { ...session, lowConfidenceFallbacks: misses };
+    // vai para "Ensinar o bot" no painel (dados pessoais mascarados no sistema)
+    if (message && !/^[a-z_]+$/.test(message) && !/^Dados enviados/.test(message)) {
+      void this.integration.recordBotUnanswered(message).catch(() => undefined);
+    }
     const baseActions = session.stage === 'awaiting_request_mode' ? SERVICE_ENTRY_ACTIONS : CONTEXTUAL_ACTIONS;
     // Depois de 2 tentativas sem entender, a primeira opção é falar com uma pessoa
     const availableActions = misses >= 2 ? [HUMAN_ACTION, ...baseActions] : baseActions;

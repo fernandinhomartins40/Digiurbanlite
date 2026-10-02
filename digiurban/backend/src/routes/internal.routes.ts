@@ -3,6 +3,7 @@
  */
 
 import { Router, Request, Response } from 'express';
+import { ensureDefaultFaqs, getPublishedConfig, listFaqs, matchFaq, recordUnanswered, searchServicesForBot } from '../services/digibot/digibot.service';
 import { Prisma } from '@prisma/client';
 import { internalAuthMiddleware } from '../middleware/internal-auth';
 import { internalTenantContextMiddleware } from '../middleware/internal-tenant-context';
@@ -355,19 +356,16 @@ router.get('/services/search', async (req: Request, res: Response) => {
     };
 
     if (query) {
-      // Busca por query (texto)
-      services = await prisma.serviceSimplified.findMany({
-        where: {
-          isActive: true,
-          OR: [
-            { name: { contains: query as string, mode: 'insensitive' } },
-            { description: { contains: query as string, mode: 'insensitive' } },
-          ],
-        },
-        take: limitNum,
-        orderBy: { name: 'asc' },
+      // Busca tolerante do DigiBot (sem IA): palavras de enchimento, variações,
+      // erros de digitação, sinônimos e palavras cadastradas pelo município.
+      // Antes era "contém a frase inteira" e "quero o cartão do estudante" não
+      // achava "Cartão do Estudante".
+      const all = await prisma.serviceSimplified.findMany({
+        where: { isActive: true },
+        take: 500,
         select: selectFields,
       });
+      services = await searchServicesForBot(String(query), all as any[], limitNum);
     } else if (category) {
       // Busca por categoria
       services = await prisma.serviceSimplified.findMany({
@@ -438,6 +436,42 @@ router.get('/services', async (req: Request, res: Response) => {
     res.json(services);
   } catch (error) {
     console.error('[internal.routes] Error in GET /services', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ---------------------------------------------------------------- DigiBot: configuração e conhecimento
+
+// GET /api/internal/bot/knowledge — configuração publicada + perguntas frequentes do município
+router.get('/bot/knowledge', async (_req: Request, res: Response) => {
+  try {
+    await ensureDefaultFaqs();
+    const [config, faqs] = await Promise.all([getPublishedConfig(), listFaqs(true)]);
+    res.json({ config, faqs: faqs.map((f) => ({ id: f.id, question: f.question, answer: f.answer })) });
+  } catch (error) {
+    console.error('[internal.routes] Error in GET /bot/knowledge', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/internal/bot/faq-match — pergunta frequente que responde ao texto
+router.post('/bot/faq-match', async (req: Request, res: Response) => {
+  try {
+    const query = String(req.body?.query || '').slice(0, 500);
+    res.json({ faq: query ? await matchFaq(query) : null });
+  } catch (error) {
+    console.error('[internal.routes] Error in POST /bot/faq-match', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/internal/bot/unanswered — o bot não entendeu (texto com dados pessoais mascarados)
+router.post('/bot/unanswered', async (req: Request, res: Response) => {
+  try {
+    await recordUnanswered(String(req.body?.text || ''));
+    res.json({ success: true });
+  } catch (error) {
+    console.error('[internal.routes] Error in POST /bot/unanswered', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

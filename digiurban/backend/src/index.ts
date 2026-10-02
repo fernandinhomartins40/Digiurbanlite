@@ -233,6 +233,9 @@ loadRoute('/api/ai', './routes/admin-ai-assistant.routes');
 // Administração de fluxos do bot
 loadRoute('/api/admin/flows', './routes/admin-flows.routes');
 
+// Página DigiBot do painel (configuração sem JSON, perguntas, palavras, ensinar o bot)
+loadRoute('/api/admin/digibot', './routes/admin-digibot.routes');
+
 // Mensagens (conversas)
 loadRoute('/api/messages', './routes/messages');
 

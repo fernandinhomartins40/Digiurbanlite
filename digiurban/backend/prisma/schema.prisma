@@ -11336,3 +11336,90 @@ model AiAssistantMessage {
   @@index([conversationId, createdAt])
   @@map("ai_assistant_messages")
 }
+
+// ============================================================================
+// DIGIBOT — configuração por município (painel "DigiBot", sem JSON)
+// ============================================================================
+
+/// Configuração publicada do DigiBot do município + rascunho em edição.
+model BotSettings {
+  id          String   @id @default(cuid())
+  tenantId    String?  @unique
+  /// configuração em vigor (o que o cidadão vê)
+  published   Json
+  /// alterações ainda não publicadas (null = sem rascunho)
+  draft       Json?
+  version     Int      @default(1)
+  publishedAt DateTime @default(now())
+  publishedBy String?
+  updatedAt   DateTime @updatedAt
+
+  @@index([tenantId])
+  @@map("bot_settings")
+}
+
+/// Histórico de versões publicadas (para "voltar à versão anterior").
+model BotSettingsVersion {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  version   Int
+  data      Json
+  createdAt DateTime @default(now())
+  createdBy String?
+
+  @@index([tenantId])
+  @@index([tenantId, version])
+  @@map("bot_settings_versions")
+}
+
+/// Pergunta frequente que o DigiBot responde.
+model BotFaq {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  question  String
+  answer    String   @db.Text
+  /// outras formas de perguntar (ajudam o bot a reconhecer)
+  keywords  String[] @default([])
+  isActive  Boolean  @default(true)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([tenantId, isActive])
+  @@map("bot_faqs")
+}
+
+/// Palavras que o cidadão usa para um serviço (ex.: "carteirinha" → Cartão do Estudante).
+model BotServiceTerm {
+  id        String   @id @default(cuid())
+  tenantId  String?
+  serviceId String
+  term      String
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, serviceId, term])
+  @@index([tenantId])
+  @@index([serviceId])
+  @@map("bot_service_terms")
+}
+
+/// O que o DigiBot não entendeu (texto com dados pessoais mascarados) — tela "Ensinar o bot".
+model BotUnanswered {
+  id         String    @id @default(cuid())
+  tenantId   String?
+  text       String
+  normalized String
+  count      Int       @default(1)
+  status     String    @default("OPEN") // OPEN | RESOLVED | IGNORED
+  resolution Json?
+  lastSeenAt DateTime  @default(now())
+  resolvedAt DateTime?
+  resolvedBy String?
+  createdAt  DateTime  @default(now())
+
+  @@unique([tenantId, normalized])
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@map("bot_unanswered")
+}

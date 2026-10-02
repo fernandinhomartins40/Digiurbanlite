@@ -88,6 +88,23 @@ export class DigiUrbanIntegration {
     return response.data;
   }
 
+  /** Configuração publicada do DigiBot + perguntas frequentes do município */
+  async getBotKnowledge(): Promise<{ config: any; faqs: Array<{ id: string; question: string; answer: string }> }> {
+    const response = await this.api.get('/internal/bot/knowledge');
+    return response.data;
+  }
+
+  /** Pergunta frequente que responde ao texto (ou null) */
+  async matchBotFaq(query: string): Promise<{ id: string; question: string; answer: string; score: number } | null> {
+    const response = await this.api.post('/internal/bot/faq-match', { query });
+    return response.data?.faq || null;
+  }
+
+  /** O bot não entendeu esta frase (vai para "Ensinar o bot" no painel) */
+  async recordBotUnanswered(text: string): Promise<void> {
+    await this.api.post('/internal/bot/unanswered', { text });
+  }
+
   /**
    * Listar todos os serviços ativos
    */
