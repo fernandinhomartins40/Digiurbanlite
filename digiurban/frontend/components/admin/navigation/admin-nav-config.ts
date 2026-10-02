@@ -166,11 +166,10 @@ export function getAdminMainNavigation(stats?: AdminNavStats): AdminNavSection[]
         // PROCESSOS_INTERNOS: disabled via FEATURE_FLAGS.PROCESSOS_INTERNOS
         // { title: 'Processos Internos', href: '/admin/processos-internos', icon: Workflow, minRole: 'COORDINATOR', badge: 'NOVO' },
         {
-          title: 'Fluxos do Bot',
-          href: '/admin/bot-flows',
+          title: 'DigiBot',
+          href: '/admin/digibot',
           icon: Bot,
           minRole: 'ADMIN',
-          badge: 'NOVO',
         },
       ],
     },

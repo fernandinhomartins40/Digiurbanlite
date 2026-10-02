@@ -152,7 +152,7 @@ const getSearchItems = () => [
   { title: 'Relatorios', description: 'Relatorios e BI', href: '/admin/relatorios', category: 'Analise', keywords: ['relatorio', 'bi', 'analytics'] },
   { title: 'Analytics', description: 'Analise avancada de dados', href: '/admin/analytics', category: 'Analise', keywords: ['analytics', 'dados', 'metricas'] },
   { title: 'IA Centralizada', description: 'Chat operacional e API de IA', href: '/admin/ia', category: 'Automacao', keywords: ['ia', 'chat', 'api'] },
-  { title: 'Fluxos do Bot', description: 'Automacao de processos', href: '/admin/bot-flows', category: 'Automacao', keywords: ['bot', 'fluxos', 'automacao'] },
+  { title: 'DigiBot', description: 'Assistente do cidadão: mensagens, menu, perguntas', href: '/admin/digibot', category: 'Automacao', keywords: ['bot', 'digibot', 'assistente', 'chatbot', 'fluxos'] },
   { title: 'Meus Documentos', description: 'Documentos pessoais e assinados', href: '/admin/meus-documentos', category: 'Documentos', keywords: ['documentos', 'assinatura'] },
   { title: 'Templates de Documentos', description: 'Modelos oficiais', href: '/admin/templates-documentos', category: 'Documentos', keywords: ['template', 'modelo'] },
   { title: 'Assinaturas Digitais', description: 'Assinatura eletronica de documentos', href: '/admin/assinaturas-digitais', category: 'Documentos', keywords: ['assinatura', 'digital'] },
@@ -448,9 +448,9 @@ export default function AdminPage() {
         section: 'Atalhos',
       },
       hasMinRole('ADMIN') && {
-        title: 'Fluxos do Bot',
-        description: 'Automacao',
-        href: '/admin/bot-flows',
+        title: 'DigiBot',
+        description: 'Assistente do cidadão',
+        href: '/admin/digibot',
         icon: Cpu,
         color: 'text-cyan-600',
         bg: 'bg-cyan-50',
@@ -855,7 +855,7 @@ export default function AdminPage() {
           <ActionCard title="Painel do Prefeito" description="KPIs executivos" href="/admin/gabinete/painel-prefeito" icon={Building2} color="text-yellow-600" bg="bg-yellow-50" />
           <ActionCard title="Agenda" description="Compromissos e reunioes" href="/admin/agenda" icon={Calendar} color="text-blue-600" bg="bg-blue-50" />
           <ActionCard title="Mapa de Demandas" description="Protocolos no territorio" href="/admin/gabinete/mapa-demandas" icon={Map} color="text-green-600" bg="bg-green-50" />
-          <ActionCard title="Fluxos do Bot" description="Automacao do atendimento" href="/admin/bot-flows" icon={Cpu} color="text-cyan-600" bg="bg-cyan-50" />
+          <ActionCard title="DigiBot" description="Assistente do cidadão" href="/admin/digibot" icon={Cpu} color="text-cyan-600" bg="bg-cyan-50" />
         </section>
       )}
 
