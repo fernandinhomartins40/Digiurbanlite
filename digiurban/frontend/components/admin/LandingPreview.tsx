@@ -4,95 +4,106 @@
  * ============================================================================
  * PREVIEW AO VIVO DA LANDING DO MUNICÍPIO
  * ============================================================================
- * Mini-representação da landing (components/landing/MunicipioLanding) que
- * reage em tempo real às cores/logo em edição no painel de identidade visual.
+ * Miniatura da landing (components/landing/MunicipioLanding — padrão DigiUrban
+ * Glass: topo com a arte da cidade, mascote e painel "Olá, Cidadão!"), que
+ * reage em tempo real ao logo, nome e cor de destaque em edição.
  * Não busca dados — recebe branding + nome por props.
  */
 
-import { ArrowRight, FileText, Clock, MessageSquare, LogIn, UserCog } from 'lucide-react';
+import { ArrowRight, ChevronRight, ClipboardList, FilePlus2, FileText, Heart, LogIn, UserCog, UserPlus, Hammer } from 'lucide-react';
 
 interface Props {
   nome: string;
   nomeMunicipio: string;
   ufMunicipio?: string;
   primary: string;
-  secondary: string;
+  /** mantido por compatibilidade: o visual atual usa só a cor de destaque */
+  secondary?: string;
   logoUrl?: string | null;
 }
 
-export function LandingPreview({ nome, nomeMunicipio, ufMunicipio, primary, secondary, logoUrl }: Props) {
+export function LandingPreview({ nome, nomeMunicipio, ufMunicipio, primary, logoUrl }: Props) {
   const municipio = nomeMunicipio || nome;
+  const icon = (Icon: typeof FileText) => (
+    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-gradient-to-b from-[#f1f7ff] to-[#e0edff]" style={{ color: primary }}>
+      <Icon className="h-3 w-3" />
+    </span>
+  );
+
   return (
-    <div className="rounded-xl border overflow-hidden bg-white shadow-sm text-[11px] leading-tight select-none pointer-events-none">
-      {/* header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b" style={{ borderColor: `${primary}22` }}>
-        <div className="flex items-center gap-2">
+    <div className="pointer-events-none select-none overflow-hidden rounded-xl border bg-[#f4f8ff] text-[10px] leading-tight text-[#4d5f80] shadow-sm">
+      {/* topo de vidro */}
+      <div className="flex items-center justify-between border-b border-white bg-white/80 px-3 py-2">
+        <div className="flex min-w-0 items-center gap-1.5">
           {logoUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={logoUrl} alt="" className="h-5 w-auto max-w-[80px] object-contain" />
+            <img src={logoUrl} alt="" className="h-5 w-auto max-w-[70px] object-contain" />
           ) : (
-            <div className="h-5 w-5 rounded flex items-center justify-center text-white font-bold text-[10px]" style={{ background: primary }}>
+            <span className="flex h-5 w-5 items-center justify-center rounded-md bg-gradient-to-b from-[#f1f7ff] to-[#e0edff] text-[10px] font-bold" style={{ color: primary }}>
               {municipio.charAt(0)}
-            </div>
+            </span>
           )}
-          <div>
-            <div className="font-bold" style={{ color: primary }}>{nome || 'Prefeitura'}</div>
-            <div className="text-gray-400 text-[9px]">{municipio}{ufMunicipio ? `/${ufMunicipio}` : ''}</div>
-          </div>
+          <span className="min-w-0">
+            <span className="block truncate font-bold text-[#0b2a8c]">{nome || 'Prefeitura'}</span>
+            <span className="block truncate text-[8px]">{municipio}{ufMunicipio ? `/${ufMunicipio}` : ''}</span>
+          </span>
         </div>
         <div className="flex gap-1">
-          <span className="rounded px-2 py-0.5 text-white text-[9px] flex items-center gap-0.5" style={{ background: primary }}>
-            <LogIn className="h-2.5 w-2.5" /> Entrar
+          <span className="flex items-center gap-0.5 rounded-md border border-[#a0bee9] bg-white/70 px-1.5 py-0.5 text-[8px] text-[#122f6e]">
+            <LogIn className="h-2.5 w-2.5" style={{ color: primary }} /> Entrar
           </span>
-          <span className="rounded px-2 py-0.5 border text-[9px]" style={{ borderColor: primary, color: primary }}>Cadastrar</span>
+          <span className="flex items-center gap-0.5 rounded-md bg-gradient-to-r from-[#3af6d6] to-[#13dbe7] px-1.5 py-0.5 text-[8px] font-semibold text-[#06306e]">
+            <UserPlus className="h-2.5 w-2.5" /> Criar conta
+          </span>
         </div>
       </div>
 
-      {/* hero */}
-      <div className="px-3 py-4" style={{ background: `${primary}0a` }}>
-        <span className="inline-block rounded-full px-2 py-0.5 text-[9px] font-medium mb-1.5" style={{ background: `${secondary}22`, color: primary }}>
-          Portal do Cidadão
-        </span>
-        <div className="font-bold text-gray-900 text-[13px] leading-snug">
-          Os serviços de <span style={{ color: primary }}>{municipio}</span> na palma da mão
-        </div>
-        <p className="text-gray-500 text-[10px] mt-1">Solicite serviços e acompanhe seus protocolos online.</p>
-        <div className="mt-2 flex gap-1.5">
-          <span className="rounded px-2.5 py-1 text-white text-[9px] font-semibold flex items-center gap-0.5" style={{ background: primary }}>
-            Acessar <ArrowRight className="h-2.5 w-2.5" />
-          </span>
-          <span className="rounded px-2.5 py-1 border text-[9px] font-semibold" style={{ borderColor: primary, color: primary }}>Criar conta</span>
-        </div>
-      </div>
-
-      {/* serviços */}
-      <div className="px-3 py-3">
-        <div className="font-semibold text-gray-800 mb-1.5">Serviços disponíveis</div>
-        <div className="grid grid-cols-3 gap-1.5">
-          {[FileText, Clock, MessageSquare].map((Icon, i) => (
-            <div key={i} className="rounded-lg border p-1.5" style={{ borderColor: `${primary}1f` }}>
-              <div className="h-5 w-5 rounded flex items-center justify-center mb-1" style={{ background: `${primary}14`, color: primary }}>
-                <Icon className="h-3 w-3" />
+      {/* hero com a arte da cidade */}
+      <div className="relative overflow-hidden px-3 py-3 text-white">
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/landing/mobile/fundo-hero.webp" alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <div className="relative grid grid-cols-[1.2fr_1fr] items-end gap-2">
+          <div>
+            <span className="inline-block rounded-full border border-white/40 bg-white/10 px-1.5 py-0.5 text-[7px]">Portal do Cidadão</span>
+            <div className="mt-1 text-[12px] font-bold leading-[1.05]">
+              Os serviços de <span className="bg-gradient-to-r from-[#3ff5d9] to-[#20e3ea] bg-clip-text text-transparent">{municipio}</span> na palma da mão
+            </div>
+            <span className="mt-1.5 inline-flex items-center gap-0.5 rounded-md bg-gradient-to-r from-[#3af6d6] to-[#13dbe7] px-1.5 py-0.5 text-[8px] font-semibold text-[#06306e]">
+              Acessar o portal <ArrowRight className="h-2.5 w-2.5" />
+            </span>
+          </div>
+          <div className="rounded-lg bg-white/95 p-1.5 text-[#183e7e] shadow">
+            <div className="text-[8px] font-bold text-[#0b2a8c]">Olá, Cidadão!</div>
+            {[FilePlus2, ClipboardList].map((Icon, i) => (
+              <div key={i} className="mt-1 flex items-center gap-1">
+                {icon(Icon)}
+                <span className="h-1 flex-1 rounded bg-[#dbe7f7]" />
+                <ChevronRight className="h-2.5 w-2.5" />
               </div>
-              <div className="h-1.5 rounded bg-gray-200 w-4/5 mb-0.5" />
-              <div className="h-1.5 rounded bg-gray-100 w-3/5" />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* serviços em cartões de vidro */}
+      <div className="px-3 py-2.5">
+        <div className="mb-1.5 font-bold text-[#0b2a8c]">Serviços disponíveis</div>
+        <div className="grid grid-cols-3 gap-1.5">
+          {[Heart, Hammer, FileText].map((Icon, i) => (
+            <div key={i} className="rounded-lg border border-[#d0e0f8] bg-white/80 p-1.5">
+              {icon(Icon)}
+              <div className="mt-1 h-1.5 w-4/5 rounded bg-[#d6e2f3]" />
             </div>
           ))}
         </div>
       </div>
 
-      {/* CTA */}
-      <div className="px-3 py-3 text-center text-white" style={{ background: primary }}>
-        <div className="font-bold text-[12px]">Comece agora</div>
-        <span className="inline-block mt-1 rounded px-2.5 py-1 bg-white text-[9px] font-semibold" style={{ color: primary }}>
-          Criar minha conta
-        </span>
-      </div>
-
       {/* rodapé */}
-      <div className="px-3 py-1.5 border-t flex items-center justify-between text-gray-400 text-[9px]" style={{ borderColor: `${primary}22` }}>
-        <span>{nome || 'Prefeitura'} — Governo Digital</span>
-        <span className="flex items-center gap-0.5"><UserCog className="h-2.5 w-2.5" /> Servidores</span>
+      <div className="flex items-center justify-between bg-[#0b1d33] px-3 py-1.5 text-[8px] text-[#b9c7dc]">
+        <span className="truncate">{nome || 'Prefeitura'} — Governo Digital</span>
+        <span className="flex items-center gap-0.5 text-white">
+          <UserCog className="h-2.5 w-2.5" /> Servidores
+        </span>
       </div>
     </div>
   );
