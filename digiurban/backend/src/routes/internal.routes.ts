@@ -9,7 +9,7 @@ import { internalAuthMiddleware } from '../middleware/internal-auth';
 import { internalTenantContextMiddleware } from '../middleware/internal-tenant-context';
 import { ensureProtocolDir, getProtocolFileUrl, uploadDocuments } from '../config/upload';
 import { complete as aiComplete, decide as aiDecide } from '../services/ai-gateway/gateway';
-import { tryGetTenantId } from '../lib/tenant-context';
+import { runAsTenant, tryGetTenantId } from '../lib/tenant-context';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { validateServiceFormData } from '../lib/json-schema-validator';
@@ -524,19 +524,31 @@ router.get('/services/:serviceId', async (req: Request, res: Response) => {
 // PROTOCOLS
 // ========================================
 
+/**
+ * Recebe os anexos (multer) e devolve o controle DENTRO do município da
+ * chamada. O multer processa o envio em eventos de stream e perde o contexto
+ * do município: com arquivos anexados, a busca do serviço caía no município
+ * padrão e o bot respondia "Não encontrado" ao confirmar o pedido.
+ */
+function uploadWithinTenant(req: Request, res: Response, next: (err?: unknown) => void, onError?: (err: any) => void) {
+  uploadDocuments(req, res, (err?: unknown) => {
+    if (err) return onError ? onError(err) : next(err);
+    const tenantId = (req as any).tenantId as string | undefined;
+    if (tenantId) return runAsTenant(tenantId, () => next());
+    next();
+  });
+}
+
 // POST /api/internal/protocols - Criar protocolo
 router.post(
   '/protocols',
   (req, res, next) => {
-    uploadDocuments(req, res, (err) => {
-      if (err) {
-        console.error('[internal.routes] Multer error in POST /protocols:', err);
-        return res.status(400).json({
-          error: 'Erro ao processar upload de arquivos',
-          details: err.message,
-        });
-      }
-      next();
+    uploadWithinTenant(req, res, next, (err) => {
+      console.error('[internal.routes] Multer error in POST /protocols:', err);
+      res.status(400).json({
+        error: 'Erro ao processar upload de arquivos',
+        details: err?.message,
+      });
     });
   },
   async (req: Request, res: Response) => {
@@ -943,7 +955,7 @@ router.post('/protocols/:protocolId/pendings/:pendingId/resolve', async (req: Re
 });
 
 // POST /api/internal/protocols/:protocolId/pendings/:pendingId/resolve-document - Resolver pendencia com documento
-router.post('/protocols/:protocolId/pendings/:pendingId/resolve-document', uploadDocuments, async (req: Request, res: Response) => {
+router.post('/protocols/:protocolId/pendings/:pendingId/resolve-document', (req, res, next) => uploadWithinTenant(req, res, next), async (req: Request, res: Response) => {
   try {
     const { protocolId, pendingId } = req.params;
     const citizenId = String(req.body?.citizenId || '');

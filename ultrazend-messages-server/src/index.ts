@@ -1,3 +1,4 @@
+import './utils/multer-keep-context'; // antes de tudo: upload de arquivos mantém o município (ver o arquivo)
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import logger from './utils/logger';

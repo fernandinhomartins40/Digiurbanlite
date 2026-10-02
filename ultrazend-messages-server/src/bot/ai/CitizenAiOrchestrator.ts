@@ -83,14 +83,24 @@ const MENU_PATTERNS = [
   'novo atendimento',
 ];
 const HELP_PATTERNS = ['ajuda', 'preciso de ajuda', 'duvida', 'duvidas', 'como funciona'];
-const PROFILE_PATTERNS = ['meu perfil', 'perfil', 'meus dados', 'meus dados cadastrais', 'cadastro', 'cpf', 'telefone', 'endereco'];
-const DOCUMENT_PATTERNS = ['documentos', 'documento', 'meus documentos', 'meus arquivos', 'arquivos', 'anexos', '2 via', 'segunda via', 'certidao', 'carteira'];
+// Autoatendimento: só FRASES de intenção clara. Palavras soltas eram nomes de
+// serviço e desviavam o pedido ("cadastro de produtor rural" abria Meu perfil,
+// "certidão" e "segunda via" abriam Meus documentos, "Alerta de Segurança"
+// abria Avisos, "bolsa família" abria Minha família, "nota fiscal" abria Avaliação).
+// A palavra sozinha (ou o id do card) continua valendo como comando exato.
+const PROFILE_PATTERNS = ['meu perfil', 'meus dados', 'meus dados cadastrais', 'meu cadastro', 'atualizar meus dados', 'alterar meus dados', 'atualizar cadastro', 'mudar meu telefone', 'mudar meu endereco', 'trocar meu email'];
+const PROFILE_EXACT = ['perfil', 'meu_perfil', 'dados', 'cadastro'];
+const DOCUMENT_PATTERNS = ['meus documentos', 'meus arquivos', 'documentos enviados', 'arquivos enviados', 'meus anexos'];
+const DOCUMENT_EXACT = ['documentos', 'documento', 'arquivos', 'anexos', 'meus_documentos'];
 const PENDING_PATTERNS = ['pendencias', 'pendencia', 'minhas pendencias', 'pendencia do protocolo', 'pendencias do protocolo', 'resolver pendencia'];
 const SERVICE_PATTERNS = ['solicitar servico', 'servico', 'servicos', 'abrir solicitacao', 'nova solicitacao', 'novo protocolo', 'quero solicitar', 'pedido', 'solicitacao', 'chamado', 'criar chamado'];
 const DEPARTMENT_PATTERNS = ['secretaria', 'secretarias', 'explorar secretaria', 'explorar por secretaria', 'navegar por secretaria'];
-const FAMILY_PATTERNS = ['familia', 'minha familia', 'dependentes', 'composicao familiar'];
-const NOTIFICATION_PATTERNS = ['notificacoes', 'notificacao', 'avisos', 'comunicados', 'alertas'];
-const EVALUATION_PATTERNS = ['avaliacao', 'avaliar', 'avaliar atendimento', 'nota do atendimento', 'nota', 'satisfacao'];
+const FAMILY_PATTERNS = ['minha familia', 'meus dependentes', 'meus familiares', 'composicao familiar'];
+const FAMILY_EXACT = ['familia', 'minha_familia', 'dependentes'];
+const NOTIFICATION_PATTERNS = ['minhas notificacoes', 'meus avisos', 'ver avisos', 'ver notificacoes'];
+const NOTIFICATION_EXACT = ['notificacoes', 'notificacao', 'avisos', 'comunicados'];
+const EVALUATION_PATTERNS = ['avaliar atendimento', 'avaliar o atendimento', 'avaliar meu pedido', 'nota do atendimento', 'dar uma nota', 'pesquisa de satisfacao'];
+const EVALUATION_EXACT = ['avaliacao', 'avaliar', 'satisfacao'];
 const YES_PATTERNS = ['sim', 'confirmar', 'confirmo', 'ok', 'pode enviar', 'prosseguir'];
 const NO_PATTERNS = ['nao', 'não', 'cancelar', 'corrigir', 'voltar', 'outro'];
 
@@ -1693,8 +1703,8 @@ export class CitizenAiOrchestrator {
     if (this.matchesAny(normalized, SERVICE_PATTERNS)) return 'solicitar_servico';
     if (this.matchesAny(normalized, DEPARTMENT_PATTERNS)) return 'explorar_secretarias';
     if (normalized === 'consultar protocolo' || normalized === 'consultar_protocolo') return 'consultar_protocolo';
-    if (this.matchesAny(normalized, PROFILE_PATTERNS)) return 'meu_perfil';
-    if (this.matchesAny(normalized, DOCUMENT_PATTERNS)) return 'documentos';
+    if (this.matchesIntent(normalized, PROFILE_PATTERNS, PROFILE_EXACT)) return 'meu_perfil';
+    if (this.matchesIntent(normalized, DOCUMENT_PATTERNS, DOCUMENT_EXACT)) return 'documentos';
     if (this.matchesAny(normalized, PENDING_PATTERNS)) return 'consultar_protocolo';
     if (this.matchesAny(normalized, HELP_PATTERNS)) return 'ajuda';
     if (this.matchesAny(normalized, MENU_PATTERNS)) return 'voltar_menu';
@@ -1712,6 +1722,12 @@ export class CitizenAiOrchestrator {
     if (this.isHumanRequest(message)) return false;
     if (this.isAmbiguousTinyMessage(normalized)) return false;
     return true;
+  }
+
+  /** Frase de intenção contida no texto OU o texto inteiro é a palavra/id do comando */
+  private matchesIntent(value: string, phrases: string[], exact: string[]): boolean {
+    const v = value.trim();
+    return exact.includes(v) || exact.includes(v.replace(/\s+/g, '_')) || this.matchesAny(v, phrases);
   }
 
   private matchesAny(value: string, patterns: string[]): boolean { return patterns.some((pattern) => value.includes(this.normalize(pattern))); }
@@ -2295,23 +2311,23 @@ export class CitizenAiOrchestrator {
       return this.selfService(execution).enter('ajuda', session);
     }
 
-    if (this.matchesAny(normalized, PROFILE_PATTERNS)) {
+    if (this.matchesIntent(normalized, PROFILE_PATTERNS, PROFILE_EXACT)) {
       return this.selfService(execution).enter('meu_perfil', session);
     }
 
-    if (this.matchesAny(normalized, DOCUMENT_PATTERNS)) {
+    if (this.matchesIntent(normalized, DOCUMENT_PATTERNS, DOCUMENT_EXACT)) {
       return this.selfService(execution).enter('documentos', session);
     }
 
-    if (this.matchesAny(normalized, FAMILY_PATTERNS)) {
+    if (this.matchesIntent(normalized, FAMILY_PATTERNS, FAMILY_EXACT)) {
       return this.selfService(execution).enter('minha_familia', session);
     }
 
-    if (this.matchesAny(normalized, NOTIFICATION_PATTERNS)) {
+    if (this.matchesIntent(normalized, NOTIFICATION_PATTERNS, NOTIFICATION_EXACT)) {
       return this.selfService(execution).enter('notificacoes', session);
     }
 
-    if (this.matchesAny(normalized, EVALUATION_PATTERNS)) {
+    if (this.matchesIntent(normalized, EVALUATION_PATTERNS, EVALUATION_EXACT)) {
       return this.selfService(execution).enter('avaliacao', session);
     }
 

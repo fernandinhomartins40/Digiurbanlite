@@ -1,3 +1,4 @@
+import './lib/multer-keep-context'; // antes de tudo: upload de arquivos mantém o município (ver o arquivo)
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
