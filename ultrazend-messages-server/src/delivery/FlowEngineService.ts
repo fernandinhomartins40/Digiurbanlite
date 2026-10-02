@@ -325,8 +325,9 @@ export class FlowEngineService {
   async startFlow(citizenId: string, flowName: string, conversationId?: string) {
     console.log('[FlowEngineService.startFlow]', { citizenId, flowName, conversationId });
     const requestedFlowName = flowName || 'ai_assistant';
-    const normalizedFlowName =
-      requestedFlowName === 'menu_principal' ? 'ai_assistant' : requestedFlowName;
+    // Motor único: qualquer pedido de início abre o assistente
+    void requestedFlowName;
+    const normalizedFlowName = 'ai_assistant' as string;
 
     // 1. Buscar/criar conversa do bot
     if (!conversationId) {
@@ -561,51 +562,18 @@ export class FlowEngineService {
     let activeExecution = await this.getActiveExecution(citizenId);
     const aiExecutionActive = this.isAiExecution(activeExecution as any);
 
-    // Card clicado que NÃO é uma opção do fluxo antigo em andamento (ex.: card do
-    // menu principal que continua visível mais acima na conversa). Antes o fluxo
-    // antigo respondia "Não entendi sua escolha" em loop e o cidadão ficava preso.
-    // Agora o fluxo antigo é encerrado e o clique vai para o assistente.
-    const clickedOptionId =
-      typeof message === 'object' && message !== null && typeof (message as any).optionId === 'string'
-        ? String((message as any).optionId)
-        : null;
-    if (clickedOptionId && activeExecution && !aiExecutionActive) {
-      const currentNodeId = (activeExecution as any).currentNodeId;
-      const flowNodes = (activeExecution as any).flow?.nodes;
-      const currentNode = Array.isArray(flowNodes) ? flowNodes.find((n: any) => n.id === currentNodeId) : null;
-      const nodeOptions: any[] = currentNode?.config?.options || currentNode?.options || [];
-      if (!nodeOptions.some((o: any) => o?.id === clickedOptionId)) {
-        await this.flowEngine.cancelActiveFlow(citizenId);
-        activeExecution = null;
-      }
+    // Motor único (2026-10-02): todo atendimento do cidadão é do assistente.
+    // Atendimento ainda aberto no motor antigo de fluxos (Ajuda, Perfil...) é
+    // encerrado e a mensagem segue para o assistente, que tem as mesmas funções.
+    if (activeExecution && !aiExecutionActive) {
+      await this.flowEngine.cancelActiveFlow(citizenId);
+      activeExecution = null;
     }
-
-    // Texto livre digitado pelo cidadão (não é seleção de opção estruturada)
-    let isFreetextMessage =
-      typeof message === 'string' &&
-      message.trim().length > 2 &&
-      !(message as string).startsWith('/');
-
-    // Se há execução legada ativa, verificar se o nó atual é do tipo 'question'.
-    // Nesse caso o cidadão está respondendo a uma pergunta do fluxo — não interceptar com IA.
-    if (isFreetextMessage && activeExecution && !aiExecutionActive) {
-      const currentNodeId = (activeExecution as any).currentNodeId;
-      const flowNodes = (activeExecution as any).flow?.nodes;
-      if (currentNodeId && Array.isArray(flowNodes)) {
-        const currentNode = flowNodes.find((n: any) => n.id === currentNodeId);
-        if (currentNode?.type === 'question') {
-          isFreetextMessage = false;
-        }
-      }
-    }
-
-    // Usar IA quando: sem execução ativa, em fluxo de IA, ou texto livre em fluxo legado
-    const shouldUseAi = !activeExecution || aiExecutionActive || isFreetextMessage;
 
     let response;
     let botStatus = 'ACTIVE';
 
-    if (shouldUseAi) {
+    {
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
         throw new Error('Flow ai_assistant not found');
@@ -628,14 +596,7 @@ export class FlowEngineService {
         recentMessages,
       });
 
-      if (aiDecision.redirectToFlowName) {
-        await this.flowEngine.cancelActiveFlow(citizenId);
-        response = await this.flowEngine.startFlow(citizenId, aiDecision.redirectToFlowName, conversationId);
-        const redirectedExecution = await this.getActiveExecution(citizenId);
-        if (redirectedExecution) {
-          await this.linkConversationToExecution(conversationId, redirectedExecution.id, 'ACTIVE');
-        }
-      } else {
+      {
         response = aiDecision.response;
         const refreshedExecution = await this.getActiveExecution(citizenId);
         if (refreshedExecution) {
@@ -646,9 +607,6 @@ export class FlowEngineService {
           botStatus = 'HUMAN_TAKEOVER';
         }
       }
-    } else {
-      response = await this.flowEngine.processMessage(citizenId, message, conversationId);
-      botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
     }
 
     const botMetadata = this.buildBotMetadata(response);
@@ -979,7 +937,9 @@ export class FlowEngineService {
         botStatusUpdatedAt: new Date().toISOString(),
         inactivityResetPending: false,
       });
-    } else if (!activeExecution || aiExecutionActive) {
+    } else {
+      // motor único: atendimento antigo aberto é encerrado
+      if (activeExecution && !aiExecutionActive) await this.flowEngine.cancelActiveFlow(citizenId);
       const aiFlow = await this.getFlowDefinitionByName('ai_assistant');
       if (!aiFlow) {
         throw new Error('Flow ai_assistant not found');
@@ -989,7 +949,7 @@ export class FlowEngineService {
         flowId: aiFlow.id,
         conversationId,
         files: uploadedFiles as any,
-        existingExecution: activeExecution as any,
+        existingExecution: (aiExecutionActive ? activeExecution : null) as any,
       });
       response = aiDecision.response;
       const refreshedExecution = await this.getActiveExecution(citizenId);
@@ -1000,9 +960,6 @@ export class FlowEngineService {
         await this.pauseExecution(citizenId, conversationId, undefined, aiDecision.handoverReason);
         botStatus = 'HUMAN_TAKEOVER';
       }
-    } else {
-      response = await this.flowEngine.processMessage(citizenId, uploadedFiles, conversationId);
-      botStatus = response.metadata?.paused ? 'HUMAN_TAKEOVER' : 'ACTIVE';
     }
 
     const botMetadata = this.buildBotMetadata(response);

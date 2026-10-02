@@ -303,7 +303,7 @@ jobs:
 
             # ===== EXECUTAR SEED DOS FLUXOS DO BOT =====
             echo "=== Populando fluxos do sistema de bot ==="
-            docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "as i  Seed de fluxos falhou mas continuando deploy"
+            # fluxos do DigiBot: criados pelo proprio servidor do bot (e recriados sob demanda)
             echo "a... Fluxos do bot populados"
 
             # ===== VALIDACOES MULTI-TENANT (plano 2026-07-13) =====

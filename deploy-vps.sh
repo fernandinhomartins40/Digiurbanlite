@@ -520,7 +520,7 @@ echo ""
 # ============================================================================
 
 echo "=== Populando fluxos do sistema de bot ==="
-docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js || echo "⚠️ Seed de fluxos falhou mas continuando deploy"
+# fluxos do DigiBot: criados pelo proprio servidor do bot (e recriados sob demanda)
 echo "✅ Fluxos do bot populados"
 echo ""
 

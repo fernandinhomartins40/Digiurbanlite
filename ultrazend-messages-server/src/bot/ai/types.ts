@@ -29,7 +29,19 @@ export type CitizenAiStage =
   | 'awaiting_documents'
   | 'awaiting_review_confirmation'
   | 'awaiting_correction_field'
-  | 'paused_human';
+  | 'paused_human'
+  // autoatendimento (antes eram fluxos do motor antigo) — ver CitizenSelfService.ts
+  | 'help_menu'
+  | 'faq_menu'
+  | 'profile_menu'
+  | 'profile_update_choice'
+  | 'profile_collect'
+  | 'documents_menu'
+  | 'documents_protocol_selection'
+  | 'notifications_menu'
+  | 'evaluation_selection'
+  | 'evaluation_rating'
+  | 'evaluation_comment';
 
 export interface CitizenAiIntentAnalysis {
   intent: CitizenAiIntent;
@@ -102,6 +114,16 @@ export interface CitizenAiSessionState {
   createdProtocolAt?: string;
   lowConfidenceFallbacks?: number;
   legacyFallbackCount?: number;
+  /** estado das etapas de autoatendimento (perfil, avaliação, documentos...) */
+  selfService?: {
+    profileField?: string;
+    addressStep?: number;
+    addressDraft?: Record<string, string>;
+    candidates?: MenuOption[];
+    evalProtocolId?: string;
+    evalProtocolLabel?: string;
+    evalRating?: number;
+  };
 }
 
 export interface CitizenAiDecision {

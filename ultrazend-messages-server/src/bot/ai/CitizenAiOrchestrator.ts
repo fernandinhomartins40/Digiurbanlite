@@ -6,6 +6,7 @@ import { citizenAiClient } from './CitizenAiClient';
 import { getDigiUrbanIntegration } from '../DigiUrbanIntegration';
 import { CitizenAiDecision, CitizenAiSessionState, CitizenAiStage } from './types';
 import { detectReservedAction, RESERVED_RESPONSES } from '../ReservedKeywords';
+import { CitizenSelfService, SELF_SERVICE_STAGES, SelfServiceTool } from './CitizenSelfService';
 
 const QUICK_ACTIONS: MenuOption[] = [
   { id: 'solicitar_servico', label: 'Solicitar servico', description: 'Abrir uma nova solicitacao guiada' },
@@ -39,14 +40,9 @@ const PROTOCOL_ENTRY_ACTIONS: MenuOption[] = [
   { id: 'voltar_menu', label: 'Voltar ao menu', description: 'Retornar para as opcoes iniciais' },
 ];
 
-const LEGACY_FLOW_BY_INTENT: Record<string, string> = {
-  meu_perfil: 'meu_perfil',
-  documentos: 'documentos',
-  minha_familia: 'minha_familia',
-  notificacoes: 'notificacoes',
-  avaliacao: 'avaliacao',
-  ajuda: 'ajuda',
-};
+/** Intenções atendidas pelo autoatendimento (antes: fluxos do motor antigo) */
+const SELF_SERVICE_TOOLS = new Set<SelfServiceTool>(['meu_perfil', 'documentos', 'minha_familia', 'notificacoes', 'avaliacao', 'ajuda']);
+const isSelfServiceTool = (value: unknown): value is SelfServiceTool => SELF_SERVICE_TOOLS.has(value as SelfServiceTool);
 
 const HUMAN_DIRECT_PATTERNS = [
   'atendente',
@@ -164,14 +160,7 @@ export class CitizenAiOrchestrator {
     }
 
     if (reservedAction === 'help') {
-      const next = { ...session, lastIntent: 'ajuda' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.ajuda,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('ajuda', session);
     }
 
     if (reservedAction === 'back') {
@@ -186,6 +175,15 @@ export class CitizenAiOrchestrator {
     // inicial; no meio de um pedido o bot respondia "não consegui entender").
     if (session.stage !== 'paused_human' && this.isDirectHumanRequest(message)) {
       return this.requestHuman(execution, { ...session, lastIntent: 'atendimento_humano' });
+    }
+
+    // Etapas de autoatendimento: a opção é desta etapa? Senão segue o fluxo normal
+    if (SELF_SERVICE_STAGES.includes(session.stage)) {
+      const freeText = session.stage === 'profile_collect' || session.stage === 'evaluation_comment';
+      if (!(freeText && this.isCompetingGlobalIntent(message))) {
+        const handled = await this.selfService(execution).handle(session, message);
+        if (handled) return handled;
+      }
     }
 
     const globalShortcut = this.isFlowLockedStage(session.stage)
@@ -259,6 +257,18 @@ export class CitizenAiOrchestrator {
 
   getStats() { return { ...this.stats, aiAvailable: citizenAiClient.available() }; }
 
+  /** Autoatendimento (perfil, documentos, ajuda...) usando as mesmas peças do assistente */
+  private selfService(execution: FlowExecution): CitizenSelfService {
+    return new CitizenSelfService({
+      execution,
+      runAction: (name, params, session) => this.runAction(name as keyof typeof actionHandlers, params, execution, session),
+      meta: (session, waiting, extra) => this.meta(execution, session, waiting, extra),
+      persist: (session) => this.persistSession(execution.id, session),
+      welcome: (session) => this.buildWelcomeResponse(execution, session),
+      requestHuman: (session) => this.requestHuman(execution, session),
+    });
+  }
+
   private async handleTriage(execution: FlowExecution, session: CitizenAiSessionState, message: string, recentMessages: string[]): Promise<CitizenAiDecision> {
     const normalized = this.normalize(message);
     const protocolNumber = this.extractProtocolNumber(message);
@@ -293,11 +303,8 @@ export class CitizenAiOrchestrator {
       return this.handleProtocolIntent(execution, next, message);
     }
 
-    if (explicitIntent && LEGACY_FLOW_BY_INTENT[explicitIntent]) {
-      const next = { ...session, lastIntent: explicitIntent as CitizenAiSessionState['lastIntent'] };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return { session: next, redirectToFlowName: LEGACY_FLOW_BY_INTENT[explicitIntent], response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) } };
+    if (isSelfServiceTool(explicitIntent)) {
+      return this.selfService(execution).enter(explicitIntent, session);
     }
 
     const departmentDecision = await this.tryDepartmentShortcut(execution, { ...session, lastIntent: 'solicitar_servico' }, message);
@@ -327,11 +334,8 @@ export class CitizenAiOrchestrator {
     if (analysis.intent === 'corrigir_dados') return this.buildContextualCorrectionFallback(execution, next);
     if (analysis.intent === 'atendimento_humano') return this.requestHuman(execution, next);
 
-    const legacyFlowName = LEGACY_FLOW_BY_INTENT[String(analysis.intent || '')];
-    if (legacyFlowName) {
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return { session: next, redirectToFlowName: legacyFlowName, response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) } };
+    if (isSelfServiceTool(analysis.intent)) {
+      return this.selfService(execution).enter(analysis.intent, next);
     }
 
     if (Number(analysis.confidence || 0) < 0.45) this.stats.lowConfidenceFallbacks += 1;
@@ -2148,69 +2152,27 @@ export class CitizenAiOrchestrator {
     }
 
     if (this.matchesAny(normalized, HELP_PATTERNS)) {
-      const next = { ...session, lastIntent: 'ajuda' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.ajuda,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('ajuda', session);
     }
 
     if (this.matchesAny(normalized, PROFILE_PATTERNS)) {
-      const next = { ...session, lastIntent: 'meu_perfil' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.meu_perfil,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('meu_perfil', session);
     }
 
     if (this.matchesAny(normalized, DOCUMENT_PATTERNS)) {
-      const next = { ...session, lastIntent: 'documentos' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.documentos,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('documentos', session);
     }
 
     if (this.matchesAny(normalized, FAMILY_PATTERNS)) {
-      const next = { ...session, lastIntent: 'minha_familia' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.minha_familia,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('minha_familia', session);
     }
 
     if (this.matchesAny(normalized, NOTIFICATION_PATTERNS)) {
-      const next = { ...session, lastIntent: 'notificacoes' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.notificacoes,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('notificacoes', session);
     }
 
     if (this.matchesAny(normalized, EVALUATION_PATTERNS)) {
-      const next = { ...session, lastIntent: 'avaliacao' as const };
-      this.stats.legacyRedirects += 1;
-      await this.persistSession(execution.id, next);
-      return {
-        session: next,
-        redirectToFlowName: LEGACY_FLOW_BY_INTENT.avaliacao,
-        response: { message: '', messageType: 'text', metadata: this.meta(execution, next, false) },
-      };
+      return this.selfService(execution).enter('avaliacao', session);
     }
 
     if (this.matchesAny(normalized, DEPARTMENT_PATTERNS)) {

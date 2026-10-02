@@ -216,8 +216,7 @@ jobs:
           echo "=== Seeds ==="
           docker exec digiurban-vps sh -c "cd /app/backend && npm run db:seed:deploy-safe" \
             || echo "AVISO: seed seguro falhou, deploy continua"
-          docker exec digiurban-vps node /app/backend/dist/scripts/seed-flows.js \
-            || echo "AVISO: seed de fluxos falhou, deploy continua"
+          # fluxos do DigiBot: criados pelo proprio servidor do bot (e recriados sob demanda)
 
           echo "=== Validacao de seguranca: endpoints legados de plataforma = 410 ==="
           LEGACY_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3060/api/super-admin/tenants || echo "000")
