@@ -14,7 +14,7 @@ import { Prisma } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { tryGetTenantId } from '../../lib/tenant-context';
 import { redact } from '../ai-gateway/pii';
-import { normalizeText, scoreMatch } from './text-match';
+import { normalizeText, scoreMatch, tokenScores } from './text-match';
 
 // ---------------------------------------------------------------- configuração
 
@@ -243,19 +243,37 @@ export async function searchServicesForBot<T extends SearchableService>(query: s
   const termsBy = new Map<string, string[]>();
   for (const t of terms) termsBy.set(t.serviceId, [...(termsBy.get(t.serviceId) || []), t.term]);
 
-  const scored = services
-    .map((s) => {
-      const own = termsBy.get(s.id) || [];
-      const matchScore = scoreMatch(query, {
+  const perService = services.map((s) => {
+    const own = termsBy.get(s.id) || [];
+    return {
+      service: s,
+      ...tokenScores(query, {
         fields: [
           { text: s.name, weight: 3 },
           { text: own.join(' '), weight: 3 },
           { text: `${s.category || ''} ${s.department?.name || ''}`, weight: 1.2 },
-          { text: s.description || '', weight: 1 },
+          { text: s.description || '', weight: 1.5 },
         ],
         phrases: [s.name, ...own],
-      });
-      return { ...s, matchScore };
+      }),
+    };
+  });
+
+  // Palavras que não combinam com NENHUM serviço do município ("esquina",
+  // "queimou", "enorme") não dizem nada sobre o pedido: saem da conta. Antes,
+  // cada palavra solta derrubava a nota e "lâmpada do poste da esquina
+  // queimou" não achava Iluminação pública.
+  const allWords = perService[0] ? Array.from(perService[0].scores.keys()) : [];
+  const informative = allWords.filter((w) => perService.some((p) => (p.scores.get(w) || 0) > 0));
+  if (!informative.length && !perService.some((p) => p.phrase)) return [];
+  const coverage = allWords.length ? informative.length / allWords.length : 0;
+
+  const scored = perService
+    .map((p) => {
+      const sum = informative.reduce((acc, w) => acc + (p.scores.get(w) || 0), 0);
+      let matchScore = informative.length ? (sum / informative.length) * (0.7 + 0.3 * coverage) : 0;
+      if (p.phrase) matchScore = Math.max(matchScore, 0.9);
+      return { ...p.service, matchScore: Math.min(1, matchScore) };
     })
     .filter((s) => s.matchScore >= 0.45)
     .sort((a, b) => b.matchScore - a.matchScore);

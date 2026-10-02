@@ -41,9 +41,9 @@ const GLOBAL_SYNONYMS: Record<string, string[]> = {
   escola: ['estudante', 'escolar', 'educacao'],
   escolar: ['estudante', 'escola'],
   aluno: ['estudante', 'escolar'],
-  buraco: ['asfalto', 'pavimentacao', 'tapa', 'via'],
+  buraco: ['asfalto', 'pavimentacao', 'tapa', 'pavimento'],
   asfalto: ['pavimentacao', 'buraco'],
-  rua: ['via', 'logradouro'],
+  rua: ['vias', 'pavimentacao', 'logradouro'],
   lampada: ['iluminacao', 'luz', 'poste'],
   poste: ['iluminacao', 'lampada'],
   luz: ['iluminacao'],
@@ -63,7 +63,7 @@ const GLOBAL_SYNONYMS: Record<string, string[]> = {
   vacina: ['imunizacao', 'saude'],
   iptu: ['imposto', 'tributo', 'imovel'],
   imposto: ['tributo', 'iptu', 'taxa'],
-  boleto: ['guia', 'pagamento', 'segunda', 'via'],
+  boleto: ['guia', 'pagamento', 'segunda'],
   certidao: ['certidao', 'declaracao', 'documento'],
   alvara: ['licenca', 'funcionamento'],
   obra: ['construcao', 'alvara', 'licenca'],
@@ -112,6 +112,7 @@ function levenshtein(a: string, b: string, max: number): number {
 /** Quão bem duas palavras casam: 1 igual, 0.85 mesma raiz, 0.7 erro de digitação, 0 nada */
 export function tokenSimilarity(a: string, b: string): number {
   if (a === b) return 1;
+  if (a.length >= 3 && (a + 's' === b || b + 's' === a)) return 0.9;
   if (a.length >= 4 && b.length >= 4 && stem(a) === stem(b)) return 0.85;
   const longest = Math.max(a.length, b.length);
   if (longest >= 5) {
@@ -158,6 +159,32 @@ export interface MatchDoc {
  * Nota de 0 a 1 de quanto o texto do cidadão combina com o documento.
  * Cada palavra do cidadão conta pelo melhor casamento encontrado.
  */
+/** Melhor casamento de cada palavra do cidadão com o documento (0 a 1) + frase inteira */
+export function tokenScores(query: string, doc: MatchDoc): { scores: Map<string, number>; phrase: boolean } {
+  const expanded = expandQuery(query);
+  const originals = Array.from(new Set(expanded.map((e) => e.original)));
+  const docTokens: Array<{ token: string; weight: number }> = [];
+  for (const f of doc.fields) for (const t of tokens(f.text)) docTokens.push({ token: t, weight: f.weight });
+  const maxWeight = Math.max(1, ...doc.fields.map((f) => f.weight));
+  const scores = new Map<string, number>();
+  for (const original of originals) {
+    let best = 0;
+    for (const q of expanded.filter((e) => e.original === original)) {
+      for (const d of docTokens) {
+        const sim = tokenSimilarity(q.token, d.token);
+        if (sim > 0) best = Math.max(best, sim * q.weight * (d.weight / maxWeight));
+      }
+    }
+    scores.set(original, best);
+  }
+  const nq = ` ${normalizeText(query)} `;
+  const phrase = (doc.phrases || []).some((p) => {
+    const np = normalizeText(p);
+    return np.length >= 3 && nq.includes(` ${np} `);
+  });
+  return { scores, phrase };
+}
+
 export function scoreMatch(query: string, doc: MatchDoc): number {
   const expanded = expandQuery(query);
   const originals = Array.from(new Set(expanded.map((e) => e.original)));

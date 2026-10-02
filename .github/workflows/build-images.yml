@@ -41,6 +41,32 @@ env:
   OWNER: fernandinhomartins40
 
 jobs:
+  # Testes automaticos (sem banco): DigiBot (entendimento sem IA, autoatendimento,
+  # palavras reservadas) e demais unitarios. Falhou -> nao implanta.
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            digiurban/backend/package-lock.json
+            ultrazend-messages-server/package-lock.json
+      - name: Backend - testes unitarios
+        working-directory: digiurban/backend
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund
+          npx prisma generate
+          npx jest __tests__/unit --ci
+      - name: Servidor do bot - testes
+        working-directory: ultrazend-messages-server
+        run: |
+          npm install --legacy-peer-deps --ignore-scripts --no-audit --no-fund
+          npx prisma generate
+          npx jest --ci
+
   build:
     runs-on: ubuntu-latest
     strategy:
@@ -110,7 +136,7 @@ jobs:
 
   deploy:
     # Só implanta se TODAS as imagens foram publicadas com sucesso.
-    needs: build
+    needs: [build, tests]
     runs-on: self-hosted
     steps:
       - name: Deploy to VPS (pull only, sem build)
