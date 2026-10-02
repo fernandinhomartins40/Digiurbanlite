@@ -1015,6 +1015,45 @@ export class ExpressServer {
       }
     });
 
+    // GET /api/bot-flow/status - Situação real do atendimento do cidadão:
+    // com o bot, aguardando atendente (posição na fila) ou com um atendente.
+    // Antes a tela mostrava "Atendente humano conectado" assim que a pessoa
+    // PEDIA, mesmo sem ninguém ter assumido.
+    router.get('/status', async (req: AuthRequest, res: Response) => {
+      try {
+        const citizenId = req.user!.userId;
+        const tenantId = tenantOf(req.user as any);
+        const conv = await prisma.conversation.findFirst({
+          where: { participant1Id: citizenId, participant1Type: 'CITIZEN', isBotConversation: true },
+          orderBy: { updatedAt: 'desc' },
+          select: { id: true, tenantId: true, metadata: true, activeFlowExecution: { select: { isPaused: true, pausedAt: true } } },
+        });
+        if (!conv || !conv.activeFlowExecution?.isPaused) {
+          res.json({ status: 'bot' });
+          return;
+        }
+        const meta = (conv.metadata as Record<string, any> | null) || {};
+        if (meta.takenOverBy) {
+          const attendant = await prisma.user.findUnique({ where: { id: String(meta.takenOverBy) }, select: { name: true } }).catch(() => null);
+          res.json({ status: 'human', attendantName: attendant?.name?.split(' ')[0] || null });
+          return;
+        }
+        // posição: conversas do mesmo município aguardando e ainda não assumidas, por ordem de pedido
+        const waiting = await prisma.conversation.findMany({
+          where: { tenantId: conv.tenantId || tenantId, isBotConversation: true, status: 'ACTIVE', activeFlowExecution: { isPaused: true } },
+          select: { id: true, metadata: true, activeFlowExecution: { select: { pausedAt: true } } },
+        });
+        const queue = waiting
+          .filter((c) => !((c.metadata as Record<string, any> | null) || {}).takenOverBy)
+          .sort((a, b) => (a.activeFlowExecution?.pausedAt?.getTime() || 0) - (b.activeFlowExecution?.pausedAt?.getTime() || 0));
+        const position = queue.findIndex((c) => c.id === conv.id) + 1;
+        res.json({ status: 'waiting', position: position > 0 ? position : null });
+      } catch (error) {
+        logger.error('Error in GET /bot-flow/status', { error: error instanceof Error ? error.message : error });
+        res.status(500).json({ error: 'Internal server error' });
+      }
+    });
+
     // POST /api/bot-flow/upload - Upload de arquivos
     router.post('/upload', upload.array('files', 5), async (req: AuthRequest, res: Response) => {
       let lockKey: BotLock | null = null;

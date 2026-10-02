@@ -93,6 +93,10 @@ export default function CitizenAssistantPage() {
   const [showSidebar, setShowSidebar] = useState(false);
   const [showNewConversation, setShowNewConversation] = useState(false);
   const [isBotTyping, setIsBotTyping] = useState(false);
+  // situação real do atendimento (bot, na fila com posição, ou com atendente)
+  const [attendance, setAttendance] = useState<{ status: 'bot' | 'waiting' | 'human'; position?: number | null; attendantName?: string | null }>({ status: 'bot' });
+  // respostas que chegaram AGORA (animadas); as do histórico aparecem prontas
+  const liveBotIdsRef = useRef<Set<string>>(new Set());
   const [confirmAction, setConfirmAction] = useState<{
     type: 'clear-for-me' | 'clear' | 'archive' | 'delete';
     conversationId: string;
@@ -138,8 +142,11 @@ export default function CitizenAssistantPage() {
 
       // ✅ NOVO: Parar indicador de digitação do bot quando mensagem chegar
       if (message.senderId === 'DIGIBOT_SYSTEM') {
+        liveBotIdsRef.current.add(message.id);
         setIsBotTyping(false);
       }
+      // mensagem de um atendente: a situação do atendimento pode ter mudado
+      if (message.senderType === 'SERVER') void refreshAttendance();
     },
   });
 
@@ -232,6 +239,25 @@ export default function CitizenAssistantPage() {
     }
   }, [citizen?.id, conversations.length, ensureBotConversation]);
 
+  /** Situação real do atendimento (consulta leve; repetida enquanto aguarda atendente) */
+  async function refreshAttendance() {
+    try {
+      const res = await fetch(`${MESSAGES_API_URL}/bot-flow/status`, { credentials: 'include' });
+      if (res.ok) setAttendance(await res.json());
+    } catch {
+      // sem conexão: mantém o que estava
+    }
+  }
+
+  useEffect(() => {
+    if (!selectedConversation?.isBotConversation) return;
+    void refreshAttendance();
+    if (attendance.status === 'bot') return;
+    const timer = setInterval(() => void refreshAttendance(), 15000);
+    return () => clearInterval(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedConversation?.id, attendance.status]);
+
   /**
    * Carregar mensagens de uma conversa
    */
@@ -316,12 +342,14 @@ export default function CitizenAssistantPage() {
       }
 
       if (data.botMessage) {
+        liveBotIdsRef.current.add(data.botMessage.id);
         setMessages((prev) =>
           prev.some((item) => item.id === data.botMessage.id)
             ? prev
             : [...prev, data.botMessage]
         );
       }
+      void refreshAttendance();
 
     } catch (error) {
       console.error('Erro ao enviar mensagem para o bot:', error);
@@ -956,7 +984,13 @@ export default function CitizenAssistantPage() {
                     "text-xs",
                     "text-[var(--lg-ink2)]"
                   )}>
-                    {selectedConversation.isBotConversation ? 'Sempre disponível' : (isConnected ? 'Online' : 'Offline')}
+                    {selectedConversation.isBotConversation
+                      ? attendance.status === 'waiting'
+                        ? `Aguardando atendente${attendance.position ? ` · você é o ${attendance.position}º da fila` : ''}`
+                        : attendance.status === 'human'
+                          ? `Com ${attendance.attendantName || 'um atendente'}, da prefeitura`
+                          : 'Online'
+                      : (isConnected ? 'Online' : 'Offline')}
                   </p>
                 </div>
               </div>
@@ -1063,12 +1097,16 @@ export default function CitizenAssistantPage() {
               ) : (
                 <div className="w-full min-w-0 overflow-hidden space-y-4">
                   {/* ✅ NOVO: Alert de status do bot */}
-                  {selectedConversation.isBotConversation && selectedConversation.metadata?.botStatus === 'HUMAN_TAKEOVER' && (
-                    <Alert className="bg-orange-50 border-orange-200">
-                      <UserCheck className="h-4 w-4 text-orange-600" />
-                      <AlertTitle className="text-orange-900">Atendente humano conectado</AlertTitle>
-                      <AlertDescription className="text-orange-700">
-                        Um servidor assumiu sua conversa. Responderemos em breve!
+                  {selectedConversation.isBotConversation && attendance.status !== 'bot' && (
+                    <Alert className={attendance.status === 'human' ? 'bg-emerald-50 border-emerald-200' : 'bg-orange-50 border-orange-200'}>
+                      <UserCheck className={`h-4 w-4 ${attendance.status === 'human' ? 'text-emerald-600' : 'text-orange-600'}`} />
+                      <AlertTitle className={attendance.status === 'human' ? 'text-emerald-900' : 'text-orange-900'}>
+                        {attendance.status === 'human' ? 'Atendente conectado' : 'Aguardando um atendente'}
+                      </AlertTitle>
+                      <AlertDescription className={attendance.status === 'human' ? 'text-emerald-700' : 'text-orange-700'}>
+                        {attendance.status === 'human'
+                          ? `${attendance.attendantName || 'Um atendente'} está com a sua conversa. É só escrever por aqui.`
+                          : `${attendance.position ? `Você é o ${attendance.position}º da fila. ` : ''}Assim que alguém assumir, ele continua a conversa por aqui. Se preferir, escreva "menu" para voltar ao DigiBot.`}
                       </AlertDescription>
                     </Alert>
                   )}
@@ -1109,7 +1147,9 @@ export default function CitizenAssistantPage() {
                               <BotMessageRenderer
                                 message={message}
                                 onInteraction={handleBotInteraction}
-                                disabled={isBotTyping}
+                                // só os cards da ÚLTIMA resposta ficam tocáveis (os antigos ficam apagados)
+                                disabled={isBotTyping || message.id !== lastBotMessage?.id}
+                                animate={liveBotIdsRef.current.has(message.id) && message.id === lastBotMessage?.id}
                               />
                               <div className="flex items-center justify-end gap-1 mt-1 text-gray-500">
                                 <span className="text-xs">{formatTime(message.sentAt)}</span>

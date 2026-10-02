@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import {
@@ -44,6 +44,30 @@ interface BotMessageRendererProps {
   message: any;
   onInteraction: (data: any) => void;
   disabled?: boolean;
+  /** resposta que acabou de chegar: o texto aparece aos poucos e os cards depois */
+  animate?: boolean;
+}
+
+/** Revela o texto em ~0,7 s (rápido o bastante para não atrasar quem lê) */
+function useReveal(text: string, animate: boolean): { shown: string; done: boolean } {
+  const [count, setCount] = useState(animate ? 0 : text.length);
+  useEffect(() => {
+    if (!animate) {
+      setCount(text.length);
+      return;
+    }
+    setCount(0);
+    const step = Math.max(2, Math.ceil(text.length / 35));
+    const timer = setInterval(() => {
+      setCount((c) => {
+        const next = c + step;
+        if (next >= text.length) clearInterval(timer);
+        return Math.min(text.length, next);
+      });
+    }, 20);
+    return () => clearInterval(timer);
+  }, [text, animate]);
+  return { shown: text.slice(0, count), done: count >= text.length };
 }
 
 interface OptionVisual {
@@ -103,7 +127,8 @@ const markdownComponents = {
   code: ({ children }: any) => <code className="text-xs bg-slate-100 px-1 rounded break-all">{children}</code>,
 };
 
-export function BotMessageRenderer({ message, onInteraction, disabled = false }: BotMessageRendererProps) {
+export function BotMessageRenderer({ message, onInteraction, disabled = false, animate = false }: BotMessageRendererProps) {
+  const reveal = useReveal(String(message?.content || ''), animate);
   const metadata = message?.metadata || {};
   const messageType = message?.messageType || metadata.messageType || 'text';
   const options = Array.isArray(metadata.options) ? metadata.options : [];
@@ -333,7 +358,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
         <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 shadow-sm overflow-hidden">
           <div className="min-w-0 text-sm leading-6 text-slate-800 break-words [overflow-wrap:anywhere]">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {message.content}
+              {reveal.shown}
             </ReactMarkdown>
           </div>
         </div>
@@ -347,13 +372,13 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false }:
         <ReviewCard data={metadata.reviewCard} />
       )}
 
-      {structuredInput && (
+      {structuredInput && reveal.done && (
         <div className={`w-full min-w-0 max-w-full overflow-hidden ${disabled ? 'pointer-events-none opacity-60' : ''}`} aria-disabled={disabled}>
           {structuredInput}
         </div>
       )}
 
-      {metadata?.quickReplies && (
+      {metadata?.quickReplies && reveal.done && (
         <QuickReplies
           replies={metadata.quickReplies}
           onSelect={(reply) => {
