@@ -121,7 +121,11 @@ export class CitizenAiOrchestrator {
     await ensureBotKnowledge();
     const execution = await this.ensureExecution(params);
     const before = this.getSessionState(execution).lowConfidenceFallbacks || 0;
-    const decision = await this.processTextTurn(execution, params);
+    const decision = await citizenAiClient.withBudget(
+      `${execution.citizenId}:${params.conversationId}`,
+      botConfig().aiCallsPerConversation,
+      () => this.processTextTurn(execution, params)
+    );
     // Só falhas SEGUIDAS contam para oferecer atendente: entendeu agora → zera
     const after = decision.session.lowConfidenceFallbacks || 0;
     if (after > 0 && after <= before) {
@@ -161,7 +165,7 @@ export class CitizenAiOrchestrator {
         requestHumanHandover: true,
         handoverReason: 'citizen_request',
         response: {
-          message: botConfig().human.waitMessage,
+          message: this.humanWaitMessage(),
           messageType: 'text',
           metadata: this.meta(execution, next, false),
         },
@@ -278,6 +282,12 @@ export class CitizenAiOrchestrator {
   }
 
   getStats() { return { ...this.stats, aiAvailable: citizenAiClient.available() }; }
+
+  /** Mensagem ao chamar atendente + horário configurado no painel */
+  private humanWaitMessage(): string {
+    const h = botConfig().human;
+    return h.hours ? `${h.waitMessage}\n\nHorário do atendimento: ${h.hours}.` : h.waitMessage;
+  }
 
   /** Menu inicial configurado pelo município (painel › DigiBot) */
   private menuOptions(): MenuOption[] {
@@ -719,6 +729,34 @@ export class CitizenAiOrchestrator {
       if (description.length < 10) return { session, response: this.buildDescriptionPrompt(execution, session, 'Descreva com um pouco mais de detalhes para eu registrar corretamente.') };
       const next: CitizenAiSessionState = { ...session, description, currentFieldId: undefined, currentFieldLabel: undefined, pendingFieldIds: (session.pendingFieldIds || []).filter((fieldId) => fieldId !== 'description') };
       return this.finishCollectionStep(execution, next);
+    }
+
+    // Resposta longa pode trazer vários dados ("é para o João, 12 anos, estuda na
+    // Escola Centro"): a IA preenche todos os campos pendentes que ela cobrir
+    const pendingFields = (session.pendingFieldIds || [])
+      .map((id) => questions.find((f) => f.id === id))
+      .filter((f): f is FieldDef => Boolean(f));
+    if (userMessage.trim().length >= 25 && pendingFields.length > 1 && citizenAiClient.available()) {
+      this.stats.aiTurns += 1;
+      const multi = await citizenAiClient.extractFields({
+        citizenId: execution.citizenId,
+        message: userMessage,
+        serviceName: session.selectedServiceName || 'servico',
+        fields: pendingFields.slice(0, 8),
+        sessionContext: this.buildSessionContext(session),
+      });
+      const filled = Object.entries(multi?.values || {}).filter(([id, v]) => pendingFields.some((f) => f.id === id) && v !== undefined && v !== null && v !== '');
+      if (filled.length > 1 || (filled.length === 1 && filled[0][0] === currentField.id)) {
+        const values = Object.fromEntries(filled);
+        const next: CitizenAiSessionState = {
+          ...session,
+          collectedFormData: { ...(session.collectedFormData || {}), ...values },
+          currentFieldId: undefined,
+          currentFieldLabel: undefined,
+          pendingFieldIds: (session.pendingFieldIds || []).filter((id) => !(id in values)),
+        };
+        return this.finishCollectionStep(execution, next);
+      }
     }
 
     const parsedValue = this.parseFieldValue(currentField, userMessage);
@@ -2062,7 +2100,7 @@ export class CitizenAiOrchestrator {
       requestHumanHandover: true,
       handoverReason: 'citizen_request',
       response: {
-        message: botConfig().human.waitMessage,
+        message: this.humanWaitMessage(),
         messageType: 'text',
         metadata: this.meta(execution, paused, false),
       },

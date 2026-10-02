@@ -14,6 +14,8 @@ export interface BotKnowledgeConfig {
   welcomeMessage: string;
   farewellMessage: string;
   tone: 'simples' | 'formal';
+  /** máximo de usos de IA por conversa (1 hora); 0 = bot sem IA */
+  aiCallsPerConversation: number;
   menu: Array<{ id: string; label: string; description?: string; enabled: boolean }>;
   human: { hours: string; waitMessage: string; outOfHoursMessage: string };
 }
@@ -29,6 +31,7 @@ const DEFAULT_CONFIG: BotKnowledgeConfig = {
   welcomeMessage: 'Olá! Sou o DigiBot, o assistente da prefeitura. Escolha uma opção ou escreva com suas palavras o que você precisa.',
   farewellMessage: 'Atendimento encerrado. Quando precisar, é só mandar uma mensagem.',
   tone: 'simples',
+  aiCallsPerConversation: 15,
   menu: [
     { id: 'solicitar_servico', label: 'Solicitar serviço', description: 'Abrir um novo pedido', enabled: true },
     { id: 'explorar_secretarias', label: 'Explorar por secretaria', description: 'Ver serviços por secretaria', enabled: true },

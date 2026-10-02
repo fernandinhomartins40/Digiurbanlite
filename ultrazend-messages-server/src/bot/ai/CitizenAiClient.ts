@@ -1,3 +1,4 @@
+import { AsyncLocalStorage } from 'async_hooks';
 /**
  * ============================================================================
  * CLIENTE DE IA DO DIGIBOT — via gateway da plataforma (backend)
@@ -101,6 +102,28 @@ const clamp = (v: unknown) => {
   return Number.isFinite(n) ? Math.max(0, Math.min(1, n)) : 0;
 };
 
+// ---------------------------------------------------------------- teto de usos por conversa
+
+const budgetStore = new AsyncLocalStorage<{ key: string; limit: number }>();
+const usage = new Map<string, number[]>();
+const WINDOW_MS = 60 * 60 * 1000;
+
+function usageInWindow(key: string): number {
+  const now = Date.now();
+  const list = (usage.get(key) || []).filter((t) => now - t < WINDOW_MS);
+  usage.set(key, list);
+  return list.length;
+}
+
+function countUsage(key: string) {
+  usageInWindow(key);
+  usage.get(key)!.push(Date.now());
+  if (usage.size > 5000) {
+    // limpeza simples: remove chaves sem uso recente
+    for (const [k, v] of usage) if (!v.length || Date.now() - v[v.length - 1] > WINDOW_MS) usage.delete(k);
+  }
+}
+
 // ---------------------------------------------------------------- cliente
 
 export class CitizenAiClient {
@@ -127,11 +150,28 @@ export class CitizenAiClient {
   }
 
   available(): boolean {
-    return this.enabled && Date.now() >= this.unavailableUntil;
+    if (!this.enabled || Date.now() < this.unavailableUntil) return false;
+    // teto de usos de IA da conversa atual (painel › DigiBot): acima dele, segue sem IA
+    const budget = budgetStore.getStore();
+    if (budget) {
+      const used = usageInWindow(budget.key);
+      if (budget.limit <= 0 || used >= budget.limit) return false;
+    }
+    return true;
+  }
+
+  /**
+   * Executa o turno do cidadão com um teto de usos de IA por conversa (janela de
+   * 1 hora). Protege o crédito do município de conversas longas ou repetitivas.
+   */
+  withBudget<T>(key: string, limit: number, fn: () => Promise<T>): Promise<T> {
+    return budgetStore.run({ key, limit }, fn);
   }
 
   private async call<T>(path: '/decide' | '/complete', body: Record<string, unknown>): Promise<T | null> {
     if (!this.available()) return null;
+    const budget = budgetStore.getStore();
+    if (budget) countUsage(budget.key);
     try {
       const { data } = await this.http.post(path, body);
       return data as T;

@@ -30,6 +30,8 @@ export interface BotConfig {
   welcomeMessage: string;
   farewellMessage: string;
   tone: 'simples' | 'formal';
+  /** máximo de usos de IA por conversa (janela de 1 hora); 0 = bot sem IA */
+  aiCallsPerConversation: number;
   menu: BotMenuItem[];
   human: {
     hours: string;
@@ -58,6 +60,7 @@ export const DEFAULT_CONFIG: BotConfig = {
   welcomeMessage: 'Olá! Sou o DigiBot, o assistente da prefeitura. Escolha uma opção ou escreva com suas palavras o que você precisa.',
   farewellMessage: 'Atendimento encerrado. Quando precisar, é só mandar uma mensagem.',
   tone: 'simples',
+  aiCallsPerConversation: 15,
   menu: DEFAULT_MENU,
   human: {
     hours: 'Segunda a sexta, das 8h às 17h',
@@ -96,6 +99,9 @@ export function sanitizeConfig(input: unknown): BotConfig {
     welcomeMessage: clip(c.welcomeMessage, 400, DEFAULT_CONFIG.welcomeMessage),
     farewellMessage: clip(c.farewellMessage, 300, DEFAULT_CONFIG.farewellMessage),
     tone: c.tone === 'formal' ? 'formal' : 'simples',
+    aiCallsPerConversation: Number.isFinite(Number(c.aiCallsPerConversation))
+      ? Math.max(0, Math.min(50, Math.round(Number(c.aiCallsPerConversation))))
+      : DEFAULT_CONFIG.aiCallsPerConversation,
     menu,
     human: {
       hours: clip(human.hours, 120, DEFAULT_CONFIG.human.hours),
