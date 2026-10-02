@@ -156,7 +156,7 @@ npm run diagnose     # teste de carregamento de rotas
 /admin/organograma/         — Unidades, cargos, funções, equipes
 /admin/certificados-digitais/— Certificados
 /admin/email/               — Email (inbox, sent, drafts, trash)
-/admin/bot-flows/           — Editor de fluxos do chatbot
+/admin/digibot/             — DigiBot: mensagens, menu, perguntas, palavras, ensinar o bot (sem JSON)
 /admin/analytics/           — Dashboard analítico
 /admin/relatorios/          — Templates de relatórios
 /admin/configuracoes/       — 8 abas de configuração
@@ -213,23 +213,15 @@ npm run lint         # next lint
 - Prisma 6.19 (PostgreSQL compartilhado)
 - JWT (mesmo secret do backend)
 
-### Arquitetura do Bot
+### Arquitetura do Bot (motor único, 2026-10-02)
 ```
-Frontend → HTTP(:9001) → FlowEngineService → FlowEngine → ActionHandlers → DigiUrbanIntegration → Backend(:3001, /api/internal)
+Frontend → HTTP(:9001) → FlowEngineService → CitizenAiOrchestrator (+ CitizenSelfService) → ActionHandlers → DigiUrbanIntegration → Backend(:3001, /api/internal)
 ```
-
-### Fluxos JSON (`src/bot/flow/flows/`)
-9 fluxos pré-configurados, auto-seeded no boot via `FlowDefinitionSeeder`:
-- `menu-principal.json` (v1.1) — 8 opções
-- `solicitar-servico.json` — Abertura de protocolo
-- `consultar-protocolo.json` (v1.1) — Consulta + histórico + documentos
-- `meu-perfil.json` (v1.1) — Edição de dados pessoais
-- `documentos.json`, `avaliacao.json`, `minha-familia.json`, `notificacoes.json`, `ajuda.json`
-
-### Tipos de Nodo (9)
-`message`, `question`, `menu`, `action`, `condition`, `form`, `upload`, `location`, `end`
-
-**NÃO existem:** `api_call`, `wait` (foram removidos)
+- **Um motor só:** o assistente (`bot/ai/CitizenAiOrchestrator.ts`) atende tudo. Ajuda, Meu perfil, Documentos, Família, Avisos e Avaliação são etapas do `bot/ai/CitizenSelfService.ts` (não existem mais fluxos JSON do motor antigo; só `bot/flows/ai-assistant.json`, que dá o id do fluxo). Atendimento antigo aberto é encerrado e a mensagem segue para o assistente
+- **Entende sem IA** (backend `services/digibot/`): busca de serviços tolerante (`text-match.ts`: enchimento, variações, erro de digitação, sinônimos de prefeitura, palavras do município em `BotServiceTerm`), perguntas frequentes (`BotFaq`) e registro do não entendido (`BotUnanswered`, PII mascarada)
+- **Configuração por município** (`BotSettings`, rascunho → publicar → versões): nome, boas-vindas, despedida, menu inicial (essenciais travados), atendimento humano, teto de usos de IA por conversa. O bot lê via `GET /api/internal/bot/knowledge` (cache 60 s, `bot/ai/botKnowledge.ts`)
+- Trava "uma mensagem por vez" no Redis (`utils/botLock.ts`); inatividade por timestamp (não depende de cronômetro em memória); município sem fluxos é recriado sob demanda (`ensureTenantFlows`)
+- Testes: `npx jest` no servidor do bot e `npx jest __tests__/unit` no backend — rodam no CI antes do deploy
 
 ### Rotas Bot
 ```
@@ -241,6 +233,7 @@ POST /api/bot-flow/reset     — Voltar ao menu principal
 POST /api/bot-flow/pause     — Pausar (atendimento humano)
 POST /api/bot-flow/resume    — Retomar
 GET  /api/bot-flow/health    — Health check
+GET  /api/bot-flow/status    — Situação do atendimento (bot | waiting + posição | human)
 ```
 
 ### WebSocket Events
@@ -372,8 +365,9 @@ Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_C
 - Evitar `window.location.reload()` — usar CustomEvent
 
 ### Messages Server
-- NodeType tem APENAS 9 tipos (message, question, menu, action, condition, form, upload, location, end)
-- `startFlow` é handled pelo FlowEngine, NÃO pelos ActionHandlers
+- Motor único: NÃO criar fluxos JSON novos nem voltar a "redirecionar" para o motor antigo — função nova do bot = etapa no `CitizenSelfService` ou no orquestrador
+- Configuração/textos do bot vêm do painel (`/admin/digibot`), nunca hardcoded por município
+- Não existe WhatsApp/Telegram no produto (sobras removidas em 2026-10-02); o canal de aviso "chat" (antigo nome "whatsapp") manda mensagem no chat do app
 - ConversationService no FlowEngineService NÃO é usado diretamente
 - Socket.IO paths são DIFERENTES: admin `:3001/api/socket` vs messages `:9001` default
 

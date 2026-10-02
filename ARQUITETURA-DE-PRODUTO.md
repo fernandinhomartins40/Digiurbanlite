@@ -754,6 +754,16 @@ Auditoria das 25 telas com ambiente de teste e login real. Correções em 4 fase
 - **Revenda:** créditos = custo US$ × cotação × margem ÷ valor do crédito (mínimo por chamada). Carteira por município, extrato com custo e receita, pacotes; o pedido gera fatura e o pagamento libera os créditos. Sem créditos o bot continua pelos menus.
 - **Telas:** Super-admin › IA (chaves, modelos e preços, cobrança e pacotes, municípios e lucro, teste) e Painel do servidor › IA e créditos (saldo, consumo, compra).
 
+### 13.2 DigiBot refeito (2026-10-02)
+
+- **Motor único:** o assistente atende tudo (antes: dois motores emendados — origem dos cards presos e do "Não entendi sua escolha" sem fim). Ajuda, perfil, documentos, família, avisos e avaliação viraram etapas do assistente.
+- **Entende sem IA:** busca tolerante a erros e variações ("carterinha de estudnte" → Cartão do Estudante), sinônimos de prefeitura, palavras cadastradas pelo município e perguntas frequentes respondidas por texto livre.
+- **Painel › DigiBot** (substitui "Fluxos do Bot", que era um editor de JSON): visão geral, mensagens, menu inicial, serviços e palavras do cidadão, perguntas frequentes, **Ensinar o bot** (o que ele não entendeu → um clique), atendimento humano, histórico de versões. Rascunho, prévia num celular e publicar/voltar versão.
+- **IA com teto:** preenche vários campos de uma resposta; limite de usos por conversa definido pelo município (protege os créditos).
+- **Chat do cidadão:** situação real do atendimento (na fila com posição, ou com o atendente), cards antigos apagados, resposta aparecendo aos poucos.
+- **Qualidade:** testes automáticos do bot e do entendimento rodam no CI; teste falhou = não implanta.
+- **Limpeza:** removidas sobras nunca usadas de WhatsApp/Telegram.
+
 ### 13.1 Pendências fechadas (2026-10-01)
 
 - **DigiBot mais esperto:** entende pedido de atendente sem IA; quando a busca não acha o serviço pelas palavras, a IA escolhe pelo sentido ("carteirinha pra escola" → Cartão do Estudante); com dúvida, mostra as 3 opções mais prováveis sem gastar com texto; depois de 2 tentativas sem entender, oferece atendente. Cache de intenções repetidas (15 min) economiza créditos. Corrigido: "escola", "foi", "depois" eram lidos como "olá/oi" e devolviam o menu.
