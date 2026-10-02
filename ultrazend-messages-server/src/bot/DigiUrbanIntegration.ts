@@ -6,7 +6,7 @@
 
 import axios, { AxiosInstance } from 'axios';
 import { getBotTenantId } from './tenant-context';
-import { withServiceToken } from '../utils/serviceToken';
+import { getServiceToken, withServiceToken } from '../utils/serviceToken';
 import fs from 'fs/promises';
 import path from 'path';
 
@@ -14,6 +14,19 @@ export class DigiUrbanIntegration {
   private api: AxiosInstance;
   private apiUrl: string;
   private serviceToken: string;
+
+  /**
+   * Cabeçalhos das chamadas internas feitas com fetch (envio de arquivos):
+   * token atual (painel ou .env) + município do cidadão. Antes iam só com o
+   * token do .env e SEM município — o sistema procurava o serviço no
+   * município padrão e respondia "Service not found" ao criar o protocolo.
+   */
+  async internalHeaders(): Promise<Record<string, string>> {
+    const headers: Record<string, string> = { Authorization: `Bearer ${(await getServiceToken()) || this.serviceToken}` };
+    const tenantId = getBotTenantId();
+    if (tenantId) headers['X-Tenant-Id'] = tenantId;
+    return headers;
+  }
 
   constructor() {
     this.apiUrl = process.env.DIGIURBAN_API_URL || 'http://localhost:3001/api';
@@ -197,9 +210,7 @@ export class DigiUrbanIntegration {
     const url = `${this.apiUrl}/internal/protocols`;
     const response = await fetch(url, {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.serviceToken}`,
-      },
+      headers: await this.internalHeaders(),
       body: formData,
     });
 
@@ -303,9 +314,7 @@ export class DigiUrbanIntegration {
       `${this.apiUrl}/internal/protocols/${data.protocolId}/pendings/${data.pendingId}/resolve-document`,
       {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${this.serviceToken}`,
-        },
+        headers: await this.internalHeaders(),
         body: formData,
       }
     );
@@ -546,9 +555,7 @@ export default DigiUrbanIntegration;
     `${this.apiUrl}/internal/protocols/${data.protocolId}/pendings/${data.pendingId}/resolve-document`,
     {
       method: 'POST',
-      headers: {
-        Authorization: `Bearer ${this.serviceToken}`,
-      },
+      headers: await this.internalHeaders(),
       body: formData,
     }
   );

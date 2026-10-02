@@ -5,6 +5,14 @@ module.exports = {
     './pages/**/*.{js,ts,jsx,tsx,mdx}',
     './components/**/*.{js,ts,jsx,tsx,mdx}',
     './app/**/*.{js,ts,jsx,tsx,mdx}',
+    // Componentes do chat do DigiBot, mensagens e outros vivem em src/ — sem
+    // esta linha, as classes usadas SÓ ali não eram geradas (ex.: o gradiente
+    // dos botões "Enviar" dos documentos/formulário ficava sem fundo: texto
+    // branco sobre branco).
+    './src/**/*.{js,ts,jsx,tsx,mdx}',
+    './lib/**/*.{js,ts,jsx,tsx}',
+    './hooks/**/*.{js,ts,jsx,tsx}',
+    './contexts/**/*.{js,ts,jsx,tsx}',
   ],
   theme: {
     container: {
