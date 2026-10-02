@@ -4,6 +4,7 @@
  */
 
 import crypto from 'crypto';
+import { ensureTenantFlows } from '../bot/flow/FlowDefinitionSeeder';
 import { FlowEngine } from '../bot/flow/FlowEngine';
 import { actionHandlers } from '../bot/flow/ActionHandlers';
 import { citizenAiOrchestrator } from '../bot/ai/CitizenAiOrchestrator';
@@ -1095,13 +1096,14 @@ export class FlowEngineService {
     };
   }
 
-  private async getFlowDefinitionByName(name: string): Promise<{ id: string; name: string } | null> {
+  private async getFlowDefinitionByName(name: string, healed = false): Promise<{ id: string; name: string } | null> {
     // Onda 8 multi-tenant: fluxo do tenant do contexto; fallback legado (NULL).
     const tenantId = getBotTenantId() || process.env.DEFAULT_TENANT_ID || 'tenant-default';
     const flow = await prisma.flowDefinition.findFirst({
       where: {
         name,
-        isActive: true,
+        // o assistente principal é essencial: vale mesmo se alguém o desligou no painel
+        ...(name === 'ai_assistant' ? {} : { isActive: true }),
         tenantId,
       },
       select: {
@@ -1111,6 +1113,11 @@ export class FlowEngineService {
     });
 
     if (flow) return flow;
+
+    // Município sem fluxos: recria e tenta de novo (uma vez)
+    if (!healed && (await ensureTenantFlows(tenantId).catch(() => false))) {
+      return this.getFlowDefinitionByName(name, true);
+    }
 
     return prisma.flowDefinition.findFirst({
       where: {

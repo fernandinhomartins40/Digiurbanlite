@@ -34,7 +34,7 @@ import facePlatformService from '@/lib/services/face-platform.service';
 const defaultConfig = {
   notifyOnEntry: true,
   notifyOnExit: true,
-  preferredChannel: 'whatsapp',
+  preferredChannel: 'chat',
   dedupeWindowSecs: 180,
   entryMessageTemplate: '',
   exitMessageTemplate: '',
@@ -190,7 +190,7 @@ export default function SegurancaEscolarPage() {
         ? {
             notifyOnEntry: config.notifyOnEntry,
             notifyOnExit: config.notifyOnExit,
-            preferredChannel: config.preferredChannel || 'whatsapp',
+            preferredChannel: config.preferredChannel === 'whatsapp' || !config.preferredChannel ? 'chat' : config.preferredChannel,
             dedupeWindowSecs: config.dedupeWindowSecs || 180,
             entryMessageTemplate: config.entryMessageTemplate || '',
             exitMessageTemplate: config.exitMessageTemplate || '',
@@ -898,7 +898,7 @@ export default function SegurancaEscolarPage() {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                      <SelectItem value="chat">Mensagem no app (chat)</SelectItem>
                       <SelectItem value="web">Web</SelectItem>
                       <SelectItem value="email">E-mail</SelectItem>
                       <SelectItem value="sms">SMS</SelectItem>

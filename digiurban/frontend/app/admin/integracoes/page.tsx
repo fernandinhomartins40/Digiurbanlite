@@ -148,16 +148,6 @@ const INTEGRATION_PROVIDERS: IntegrationProvider[] = [
     features: ['SMS em massa', 'Confirmação entrega', 'Templates'],
     setupRequired: true
   },
-  {
-    id: 'whatsapp-business',
-    name: 'WhatsApp Business',
-    type: 'communication',
-    icon: <MessageSquare className="h-5 w-5" />,
-    description: 'Atendimento cidadão via WhatsApp oficial',
-    status: 'available',
-    features: ['Chat automatizado', 'Templates aprovados', 'API oficial'],
-    setupRequired: true
-  },
 
   // Financeiro
   {

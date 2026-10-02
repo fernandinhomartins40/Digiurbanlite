@@ -5,7 +5,8 @@
  */
 
 export type RecipientType = 'user' | 'citizen';
-export type NotificationChannel = 'web' | 'push' | 'email' | 'sms' | 'whatsapp';
+// 'chat' = mensagem no chat do app; 'whatsapp' é o nome antigo do mesmo canal
+export type NotificationChannel = 'web' | 'push' | 'email' | 'sms' | 'chat' | 'whatsapp';
 export type NotificationPriority = 'high' | 'normal' | 'low';
 export type NotificationStatus = 'PENDING' | 'SENT' | 'FAILED' | 'DELIVERED' | 'CLICKED';
 

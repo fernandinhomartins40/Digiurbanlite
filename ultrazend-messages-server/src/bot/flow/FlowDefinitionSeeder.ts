@@ -70,7 +70,7 @@ const buildMetadata = (
   };
 };
 
-export async function seedFlowDefinitions(): Promise<SeedSummary> {
+export async function seedFlowDefinitions(options: { onlyTenantIds?: string[] } = {}): Promise<SeedSummary> {
   const flowsDir = resolveFlowsDir();
   const seedMode = (process.env.BOT_FLOWS_SEED_MODE || 'upsert').toLowerCase();
   const summary: SeedSummary = {
@@ -123,7 +123,7 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
     }
   }
 
-  const tenantIds = await listActiveTenantIds();
+  const tenantIds = options.onlyTenantIds?.length ? options.onlyTenantIds : await listActiveTenantIds();
   summary.tenants = tenantIds.length;
 
   for (const tenantId of tenantIds) {
@@ -210,3 +210,19 @@ export async function seedFlowDefinitions(): Promise<SeedSummary> {
 }
 
 export default seedFlowDefinitions;
+
+const healAttempts = new Map<string, number>();
+
+/**
+ * Município sem os fluxos do bot (ex.: criado depois do último boot, ou o seed
+ * falhou como em Palmital, 2026-10-01): cria na hora em vez de responder 500.
+ * No máximo uma tentativa a cada 5 minutos por município.
+ */
+export async function ensureTenantFlows(tenantId: string): Promise<boolean> {
+  const last = healAttempts.get(tenantId) || 0;
+  if (Date.now() - last < 5 * 60 * 1000) return false;
+  healAttempts.set(tenantId, Date.now());
+  const summary = await seedFlowDefinitions({ onlyTenantIds: [tenantId] });
+  logger.warn('DigiBot: fluxos ausentes recriados para o município', { tenantId, created: summary.created, errors: summary.errors });
+  return summary.created > 0 || summary.updated > 0;
+}

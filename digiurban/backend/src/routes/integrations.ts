@@ -140,7 +140,6 @@ interface ProviderCredentials {
   'correios'?: { username: string; password: string };
   'viacep'?: Record<string, never>; // Não precisa credenciais
   'zenvia-sms'?: { apiToken: string };
-  'whatsapp-business'?: { phoneNumberId: string; accessToken: string };
   'pix-bacen'?: { clientId: string; clientSecret: string };
   [provider: string]: Record<string, unknown> | undefined;
 }
@@ -190,7 +189,6 @@ router.post(
       'correios',
       'viacep',
       'zenvia-sms',
-      'whatsapp-business',
       'pix-bacen',
     ];
 

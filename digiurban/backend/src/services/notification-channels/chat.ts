@@ -1,3 +1,8 @@
+/**
+ * Canal "chat": entrega o aviso como mensagem no chat do app do DigiUrban
+ * (servidor de mensagens). Antes se chamava "whatsapp", mas nunca enviou
+ * WhatsApp — o nome antigo continua aceito para dados já salvos.
+ */
 import { UserRole } from '@prisma/client';
 import { prisma } from '../../lib/prisma';
 import { NotificationPayload } from '../../types/notification.types';
@@ -23,7 +28,7 @@ async function resolveSenderUserId(recipientId: string, recipientType: 'user' | 
   return adminUser?.id || 'system';
 }
 
-export async function sendWhatsApp(payload: NotificationPayload): Promise<{ success: boolean }> {
+export async function sendChatMessage(payload: NotificationPayload): Promise<{ success: boolean }> {
   const senderUserId = await resolveSenderUserId(payload.recipientId, payload.recipientType);
 
   try {
@@ -47,7 +52,7 @@ export async function sendWhatsApp(payload: NotificationPayload): Promise<{ succ
 
     return { success: true };
   } catch (error: any) {
-    console.error('[WhatsApp] Error sending notification:', error);
+    console.error('[chat] Erro ao enviar aviso pelo chat:', error);
     throw error;
   }
 }

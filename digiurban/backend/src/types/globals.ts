@@ -346,7 +346,6 @@ declare global {
       REDIS_PASSWORD?: string;
 
       // ========== INTEGRATIONS ==========
-      WHATSAPP_API_KEY?: string;
       SMS_API_KEY?: string;
       WEBHOOK_SECRET?: string;
 

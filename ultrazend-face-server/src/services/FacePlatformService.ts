@@ -546,7 +546,7 @@ export class FacePlatformService {
       update: {
         notifyOnEntry: input.notifyOnEntry ?? true,
         notifyOnExit: input.notifyOnExit ?? true,
-        preferredChannel: input.preferredChannel || 'whatsapp',
+        preferredChannel: input.preferredChannel || 'chat',
         dedupeWindowSecs: input.dedupeWindowSecs || 180,
         entryMessageTemplate: input.entryMessageTemplate || null,
         exitMessageTemplate: input.exitMessageTemplate || null,
@@ -559,7 +559,7 @@ export class FacePlatformService {
         unidadeEducacaoId: input.unidadeEducacaoId,
         notifyOnEntry: input.notifyOnEntry ?? true,
         notifyOnExit: input.notifyOnExit ?? true,
-        preferredChannel: input.preferredChannel || 'whatsapp',
+        preferredChannel: input.preferredChannel || 'chat',
         dedupeWindowSecs: input.dedupeWindowSecs || 180,
         entryMessageTemplate: input.entryMessageTemplate || null,
         exitMessageTemplate: input.exitMessageTemplate || null,
@@ -1444,15 +1444,17 @@ export class FacePlatformService {
         : configuration?.exitMessageTemplate;
 
     const message = renderTemplate(template, variables) || fallbackMessage;
-    const preferredChannel = (configuration?.preferredChannel || 'whatsapp') as
+    // 'whatsapp' é o nome antigo do canal "chat do app" (nunca enviou WhatsApp)
+    const savedChannel = configuration?.preferredChannel || 'chat';
+    const preferredChannel = (savedChannel === 'whatsapp' ? 'chat' : savedChannel) as
       | 'web'
       | 'push'
       | 'email'
       | 'sms'
-      | 'whatsapp';
+      | 'chat';
     const channels = Array.from(
       new Set<typeof preferredChannel>([preferredChannel, 'web'])
-    ).filter((channel) => ['web', 'push', 'email', 'sms', 'whatsapp'].includes(channel));
+    ).filter((channel) => ['web', 'push', 'email', 'sms', 'chat'].includes(channel));
 
     try {
       await digiUrbanIntegration.dispatchNotification({

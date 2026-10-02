@@ -11,7 +11,7 @@ import { sendSSE } from '../services/notification-channels/sse';
 import { sendPush } from '../services/notification-channels/push';
 import { sendEmail } from '../services/notification-channels/email';
 import { sendSMS } from '../services/notification-channels/sms';
-import { sendWhatsApp } from '../services/notification-channels/whatsapp';
+import { sendChatMessage } from '../services/notification-channels/chat';
 import { NotificationPayload, NotificationChannel } from '../types/notification.types';
 import { runAsTenant, DEFAULT_TENANT_ID } from '../lib/tenant-context';
 
@@ -63,8 +63,9 @@ async function processNotificationJob(job: Job<NotificationJobData>) {
         case 'sms':
           result = await sendSMS(payload);
           break;
-        case 'whatsapp':
-          result = await sendWhatsApp(payload);
+        case 'chat':
+        case 'whatsapp': // nome antigo do canal de chat (dados salvos antes da renomeação)
+          result = await sendChatMessage(payload);
           break;
         default:
           throw new Error(`Unknown channel: ${channel}`);

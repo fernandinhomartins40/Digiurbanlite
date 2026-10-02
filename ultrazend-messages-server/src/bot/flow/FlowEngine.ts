@@ -4,6 +4,7 @@
  */
 
 import prisma from '../../utils/prisma';
+import { ensureTenantFlows } from './FlowDefinitionSeeder';
 import {
   FlowDefinition,
   FlowExecution,
@@ -593,6 +594,11 @@ export class FlowEngine {
           tenantId: null,
         },
       });
+    }
+
+    // Município sem fluxos: recria e tenta de novo
+    if (!flow && (await ensureTenantFlows(tenantId).catch(() => false))) {
+      flow = await prisma.flowDefinition.findFirst({ where: { name, isActive: true, tenantId } });
     }
 
     return flow ? this.mapToFlowDefinition(flow) : null;

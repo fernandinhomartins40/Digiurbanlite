@@ -230,13 +230,13 @@ export class NotificationService {
       if (typePrefs.push && preferences.pushEnabled) channels.push('push');
       if (typePrefs.email && preferences.emailEnabled) channels.push('email');
       if (typePrefs.sms && preferences.smsEnabled) channels.push('sms');
-      if (typePrefs.whatsapp && preferences.whatsappEnabled) channels.push('whatsapp');
+      if (typePrefs.whatsapp && preferences.whatsappEnabled) channels.push('chat');
     } else {
       // Usar preferências globais
       if (preferences.webEnabled) channels.push('web');
       if (preferences.pushEnabled) channels.push('push');
       if (preferences.whatsappEnabled && this.isImportantNotification(notificationType)) {
-        channels.push('whatsapp');
+        channels.push('chat');
       }
       // Email e SMS apenas para tipos importantes
       if (

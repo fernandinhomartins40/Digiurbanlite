@@ -7,7 +7,7 @@ export interface InternalNotificationPayload {
   title: string;
   message: string;
   data?: Record<string, unknown>;
-  channels?: Array<'web' | 'push' | 'email' | 'sms' | 'whatsapp'>;
+  channels?: Array<'web' | 'push' | 'email' | 'sms' | 'chat'>;
   priority?: 'high' | 'normal' | 'low';
 }
 

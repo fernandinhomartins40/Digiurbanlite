@@ -9,6 +9,9 @@ import { adminAuthMiddleware, requireMinRole } from '../middleware/admin-auth';
 import { UserRole } from '@prisma/client';
 
 const router = express.Router();
+
+/** Fluxo principal do DigiBot — sem ele o bot de todo o município para */
+const ESSENTIAL_FLOW = 'ai_assistant';
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
 // src/lib/prisma — cada `new PrismaClient()` abria um pool próprio (esgotava o
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
@@ -242,6 +245,11 @@ const updateFlowHandler = async (req: Request, res: Response) => {
       });
     }
 
+    // O assistente principal é essencial: desligar ou renomear derrubava o bot
+    if (flow.name === ESSENTIAL_FLOW && (isActive === false || (name !== undefined && name !== flow.name))) {
+      return res.status(400).json({ success: false, error: 'O assistente principal do DigiBot não pode ser desligado nem renomeado' });
+    }
+
     const updateData: any = {};
 
     if (name !== undefined && name !== flow.name) {
@@ -315,6 +323,10 @@ router.delete('/:id', async (req: Request, res: Response) => {
         success: false,
         error: 'Fluxo não encontrado',
       });
+    }
+
+    if (flow.name === ESSENTIAL_FLOW) {
+      return res.status(400).json({ success: false, error: 'O assistente principal do DigiBot não pode ser excluído' });
     }
 
     // Verifica se tem execuções ativas

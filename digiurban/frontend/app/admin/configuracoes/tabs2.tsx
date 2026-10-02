@@ -452,18 +452,6 @@ export function TabIntegracao({ user }: TabIntegracaoProps) {
 
           <div className="flex items-center justify-between p-4 border rounded-lg">
             <div>
-              <h4 className="font-medium">WhatsApp Business</h4>
-              <p className="text-sm text-gray-500">
-                Notificações via WhatsApp
-              </p>
-            </div>
-            <Badge variant="outline" className="text-gray-600 border-gray-600">
-              Não Configurado
-            </Badge>
-          </div>
-
-          <div className="flex items-center justify-between p-4 border rounded-lg">
-            <div>
               <h4 className="font-medium">SMS Gateway</h4>
               <p className="text-sm text-gray-500">
                 Envio de SMS para cidadãos
