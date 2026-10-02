@@ -44,30 +44,81 @@ interface BotMessageRendererProps {
   message: any;
   onInteraction: (data: any) => void;
   disabled?: boolean;
-  /** resposta que acabou de chegar: o texto aparece aos poucos e os cards depois */
+  /** resposta que acabou de chegar: os elementos aparecem um a um, como numa conversa */
   animate?: boolean;
+  /** chamado a cada elemento que aparece (a tela acompanha rolando) */
+  onReveal?: () => void;
 }
 
-/** Revela o texto em ~0,7 s (rápido o bastante para não atrasar quem lê) */
-function useReveal(text: string, animate: boolean): { shown: string; done: boolean } {
-  const [count, setCount] = useState(animate ? 0 : text.length);
+/** Texto longo vira até 3 balões (quebra em parágrafos), como numa conversa */
+function splitBubbles(content: string): string[] {
+  const parts = String(content || '')
+    .split(/\n{2,}/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+  if (parts.length <= 1) return parts;
+  // listas ("- item", "1. item", "• item") ficam junto do parágrafo anterior
+  const merged: string[] = [];
+  for (const part of parts) {
+    if (merged.length && /^([-•*]|\d+[.)])\s/.test(part)) merged[merged.length - 1] += `\n\n${part}`;
+    else merged.push(part);
+  }
+  if (merged.length <= 3) return merged;
+  return [merged[0], merged[1], merged.slice(2).join('\n\n')];
+}
+
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+
+/**
+ * Sequência de chegada: cada passo tem a sua espera (balão: "digitando" curto;
+ * card: 110 ms). Sem animação (histórico ou "reduzir movimento"), tudo de uma vez.
+ */
+function useSequence(delays: number[], animate: boolean, onReveal?: () => void): number {
+  const reduced = prefersReducedMotion();
+  const total = delays.length;
+  const [shown, setShown] = useState(animate && !reduced ? 0 : total);
+  const key = delays.join(',');
   useEffect(() => {
-    if (!animate) {
-      setCount(text.length);
+    if (!animate || reduced) {
+      setShown(total);
       return;
     }
-    setCount(0);
-    const step = Math.max(2, Math.ceil(text.length / 35));
-    const timer = setInterval(() => {
-      setCount((c) => {
-        const next = c + step;
-        if (next >= text.length) clearInterval(timer);
-        return Math.min(text.length, next);
-      });
-    }, 20);
-    return () => clearInterval(timer);
-  }, [text, animate]);
-  return { shown: text.slice(0, count), done: count >= text.length };
+    setShown(0);
+    let cancelled = false;
+    let step = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const next = () => {
+      if (cancelled || step >= total) return;
+      timer = setTimeout(() => {
+        if (cancelled) return;
+        step += 1;
+        setShown(step);
+        next();
+      }, delays[step]);
+    };
+    next();
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, animate]);
+  useEffect(() => {
+    if (shown > 0) onReveal?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [shown]);
+  return shown;
+}
+
+function TypingDots() {
+  return (
+    <div className="du-pop inline-flex items-center gap-1 rounded-lg border border-blue-100 bg-white px-4 py-3 shadow-sm" aria-label="DigiBot digitando">
+      <span className="h-2 w-2 animate-bounce rounded-full bg-blue-600" style={{ animationDelay: '0ms' }} />
+      <span className="h-2 w-2 animate-bounce rounded-full bg-teal-600" style={{ animationDelay: '150ms' }} />
+      <span className="h-2 w-2 animate-bounce rounded-full bg-amber-500" style={{ animationDelay: '300ms' }} />
+    </div>
+  );
 }
 
 interface OptionVisual {
@@ -127,8 +178,7 @@ const markdownComponents = {
   code: ({ children }: any) => <code className="text-xs bg-slate-100 px-1 rounded break-all">{children}</code>,
 };
 
-export function BotMessageRenderer({ message, onInteraction, disabled = false, animate = false }: BotMessageRendererProps) {
-  const reveal = useReveal(String(message?.content || ''), animate);
+export function BotMessageRenderer({ message, onInteraction, disabled = false, animate = false, onReveal }: BotMessageRendererProps) {
   const metadata = message?.metadata || {};
   const messageType = message?.messageType || metadata.messageType || 'text';
   const options = Array.isArray(metadata.options) ? metadata.options : [];
@@ -222,6 +272,29 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false, a
     }
   };
 
+  // ---- sequência de chegada: balões → cartões extras → cards (um a um) → respostas rápidas
+  const bubbles = splitBubbles(message?.content || '');
+  const isPlainMenu = messageType === 'menu' && options.length > 0 && !['department_carousel', 'service_carousel'].includes(metadata?.displayMode);
+  const extras = [metadata?.protocolDetailCard, metadata?.reviewCard].filter(Boolean).length;
+  const hasStructured = Boolean(
+    (messageType === 'menu' && options.length > 0) ||
+      ['card', 'form', 'upload', 'location', 'date', 'time', 'file_upload', 'searchable_select', 'selection', 'multiple_choice', 'confirmation', 'rating', 'interactive'].includes(messageType)
+  );
+  const delays: number[] = [
+    ...bubbles.map((b, i) => (i === 0 ? 350 : Math.min(900, 300 + b.length * 4))),
+    ...Array.from({ length: extras }, () => 220),
+    ...(isPlainMenu ? options.map((_: unknown, i: number) => (i === 0 ? 260 : 110)) : hasStructured ? [260] : []),
+    ...(metadata?.quickReplies ? [180] : []),
+  ];
+  const shown = useSequence(delays, animate, onReveal);
+  const bubblesShown = Math.min(bubbles.length, shown);
+  const extrasShown = Math.max(0, Math.min(extras, shown - bubbles.length));
+  const afterExtras = shown - bubbles.length - extras;
+  const visibleOptions = isPlainMenu ? Math.max(0, Math.min(options.length, afterExtras)) : options.length;
+  const structuredShown = isPlainMenu ? afterExtras > 0 : afterExtras >= 1;
+  const quickShown = afterExtras >= (isPlainMenu ? options.length : hasStructured ? 1 : 0) + 1;
+  const typing = animate && shown < delays.length && shown < bubbles.length;
+
   const renderStructuredInput = () => {
     if (messageType === 'menu' && options.length > 0) {
       const displayMode = metadata?.displayMode;
@@ -248,7 +321,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false, a
 
       return (
         <div className="flex w-full min-w-0 flex-col gap-2">
-          {options.map((option: any, index: number) => {
+          {options.slice(0, visibleOptions).map((option: any, index: number) => {
             const visual = getOptionVisual(option, index);
             const Icon = visual.Icon;
 
@@ -256,7 +329,7 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false, a
               <button
                 key={option.id}
                 onClick={() => onInteraction(option)}
-                className={`group w-full min-w-0 rounded-lg border ${visual.border} bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-teal-500 hover:bg-blue-50/45 overflow-hidden`}
+                className={`du-pop group w-full min-w-0 rounded-lg border ${visual.border} bg-white p-3 text-left shadow-sm transition-colors duration-200 hover:border-teal-500 hover:bg-blue-50/45 overflow-hidden`}
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <div className={`shrink-0 rounded-lg ${visual.bg} p-2 ring-1 ring-black/5`}>
@@ -351,41 +424,49 @@ export function BotMessageRenderer({ message, onInteraction, disabled = false, a
   const structuredInput = renderStructuredInput() || (messageType === 'interactive' && renderLegacyInteractive());
 
   return (
-    <div className="space-y-3 w-full min-w-0 max-w-full overflow-hidden">
+    <div className="space-y-2 w-full min-w-0 max-w-full overflow-hidden">
       {renderProgress()}
 
-      {message?.content && (
-        <div className="w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 shadow-sm overflow-hidden">
+      {bubbles.slice(0, bubblesShown).map((text, i) => (
+        <div key={i} className="du-pop w-full min-w-0 max-w-full rounded-lg border border-blue-100 bg-white p-3.5 shadow-sm overflow-hidden">
           <div className="min-w-0 text-sm leading-6 text-slate-800 break-words [overflow-wrap:anywhere]">
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
-              {reveal.shown}
+              {text}
             </ReactMarkdown>
           </div>
         </div>
+      ))}
+
+      {typing && <TypingDots />}
+
+      {metadata?.protocolDetailCard && extrasShown >= 1 && (
+        <div className="du-pop">
+          <ProtocolDetailCard data={metadata.protocolDetailCard} />
+        </div>
       )}
 
-      {metadata?.protocolDetailCard && (
-        <ProtocolDetailCard data={metadata.protocolDetailCard} />
+      {metadata?.reviewCard && extrasShown >= (metadata?.protocolDetailCard ? 2 : 1) && (
+        <div className="du-pop">
+          <ReviewCard data={metadata.reviewCard} />
+        </div>
       )}
 
-      {metadata?.reviewCard && (
-        <ReviewCard data={metadata.reviewCard} />
-      )}
-
-      {structuredInput && reveal.done && (
-        <div className={`w-full min-w-0 max-w-full overflow-hidden ${disabled ? 'pointer-events-none opacity-60' : ''}`} aria-disabled={disabled}>
+      {structuredInput && structuredShown && (
+        <div className={`${isPlainMenu ? '' : 'du-pop '}w-full min-w-0 max-w-full overflow-hidden ${disabled ? 'pointer-events-none opacity-60' : ''}`} aria-disabled={disabled}>
           {structuredInput}
         </div>
       )}
 
-      {metadata?.quickReplies && reveal.done && (
-        <QuickReplies
-          replies={metadata.quickReplies}
-          onSelect={(reply) => {
-            if (!disabled) onInteraction(reply)
-          }}
-          className={disabled ? 'pointer-events-none opacity-60' : undefined}
-        />
+      {metadata?.quickReplies && quickShown && (
+        <div className="du-pop">
+          <QuickReplies
+            replies={metadata.quickReplies}
+            onSelect={(reply) => {
+              if (!disabled) onInteraction(reply)
+            }}
+            className={disabled ? 'pointer-events-none opacity-60' : undefined}
+          />
+        </div>
       )}
     </div>
   );

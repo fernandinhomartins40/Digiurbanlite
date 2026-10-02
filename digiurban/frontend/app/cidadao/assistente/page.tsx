@@ -207,7 +207,10 @@ export default function CitizenAssistantPage() {
       const firstBotMessage = newMessages.find(isSystemBotMessage);
       const lastNewMessage = newMessages[newMessages.length - 1];
 
-      if (firstBotMessage) {
+      if (firstBotMessage && liveBotIdsRef.current.has(firstBotMessage.id)) {
+        // resposta chegando agora: a rolagem acompanha cada item (keepInView)
+        scrollToBottom();
+      } else if (firstBotMessage) {
         scrollToMessage(firstBotMessage.id, 'start');
       } else if (lastNewMessage?.senderId === citizen?.id) {
         scrollToBottom();
@@ -567,6 +570,22 @@ export default function CitizenAssistantPage() {
         inline: 'nearest',
       });
     }, 100);
+  };
+
+  /**
+   * Conforme balões e cards vão chegando, a conversa sobe junto (como no
+   * WhatsApp). Mensagem maior que a tela: mantém o começo dela visível.
+   */
+  const keepInView = (messageId: string) => {
+    const el = messageRefs.current[messageId];
+    const box = el?.closest('.overflow-y-auto') as HTMLElement | null;
+    if (!el || !box) return;
+    // posição da mensagem dentro da área rolável
+    const top = el.getBoundingClientRect().top - box.getBoundingClientRect().top + box.scrollTop;
+    const bottomAligned = top + el.offsetHeight - box.clientHeight + 16; // fim da mensagem no fim da tela
+    const topVisible = top - 8; // nunca esconder o começo da mensagem
+    const target = Math.max(box.scrollTop, Math.min(bottomAligned, topVisible)); // só desce
+    if (target > box.scrollTop + 1) box.scrollTo({ top: target, behavior: 'smooth' });
   };
 
   const isSystemBotMessage = (message: Message) =>
@@ -1150,6 +1169,7 @@ export default function CitizenAssistantPage() {
                                 // só os cards da ÚLTIMA resposta ficam tocáveis (os antigos ficam apagados)
                                 disabled={isBotTyping || message.id !== lastBotMessage?.id}
                                 animate={liveBotIdsRef.current.has(message.id) && message.id === lastBotMessage?.id}
+                                onReveal={() => keepInView(message.id)}
                               />
                               <div className="flex items-center justify-end gap-1 mt-1 text-gray-500">
                                 <span className="text-xs">{formatTime(message.sentAt)}</span>

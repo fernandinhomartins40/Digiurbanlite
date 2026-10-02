@@ -134,3 +134,14 @@
     overflow: hidden;
   }
 }
+
+
+/* Chat do DigiBot: cada balão/card "chega" subindo, como numa conversa */
+@keyframes du-pop {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
+.du-pop { animation: du-pop 0.22s ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .du-pop { animation: none; }
+}

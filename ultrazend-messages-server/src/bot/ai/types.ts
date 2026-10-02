@@ -114,6 +114,8 @@ export interface CitizenAiSessionState {
   createdProtocolAt?: string;
   lowConfidenceFallbacks?: number;
   legacyFallbackCount?: number;
+  /** tocou "Descrever com minhas palavras": a próxima mensagem é a descrição do pedido */
+  awaitingDescription?: boolean;
   /** estado das etapas de autoatendimento (perfil, avaliação, documentos...) */
   selfService?: {
     profileField?: string;

@@ -205,6 +205,31 @@ export class CitizenAiOrchestrator {
       }
     }
 
+    // "Descrever com minhas palavras": pede o texto e espera (antes a palavra
+    // "solicitação" disparava um atalho que mostrava os cards de novo)
+    if (this.matchExplicitIntent(this.normalize(message)) === 'descrever_solicitacao') {
+      const next: CitizenAiSessionState = { ...session, stage: 'awaiting_request_mode', lastIntent: 'solicitar_servico', awaitingDescription: true };
+      await this.persistSession(execution.id, next);
+      return {
+        session: next,
+        response: {
+          message: 'Perfeito! Escreva aqui com suas palavras o que você precisa. Ex.: "tem um buraco na minha rua" ou "quero a carteirinha de estudante".',
+          messageType: 'text',
+          metadata: this.meta(execution, next, true),
+        },
+      };
+    }
+
+    // Depois de "Descrever com minhas palavras", o texto É o pedido: vai direto
+    // para a busca do serviço, sem passar pelos atalhos de palavras ("segunda
+    // via do documento" não pode abrir "Meus documentos")
+    if (session.awaitingDescription && session.stage === 'awaiting_request_mode' && this.normalize(message).length >= 3) {
+      const described: CitizenAiSessionState = { ...session, awaitingDescription: false, lastIntent: 'solicitar_servico' };
+      const faqDecision = this.isQuestionLike(message) ? await this.tryFaq(execution, described, message) : null;
+      if (faqDecision) return faqDecision;
+      return this.beginServiceRequest(execution, described, message, message, true);
+    }
+
     // Pergunta do cidadão: perguntas frequentes do município vêm antes dos atalhos
     if (!this.isFlowLockedStage(session.stage) && this.isQuestionLike(message)) {
       const faqDecision = await this.tryFaq(execution, session, message);
@@ -1662,6 +1687,9 @@ export class CitizenAiOrchestrator {
 
   private matchExplicitIntent(normalized: string): string | undefined {
     if (!normalized) return undefined;
+    // antes de "solicitação": "descrever_solicitacao" contém essa palavra e
+    // virava "solicitar serviço" (o botão mostrava os cards de novo)
+    if (normalized === 'descrever solicitacao' || normalized === 'descrever com minhas palavras' || normalized === 'descrever_solicitacao') return 'descrever_solicitacao';
     if (this.matchesAny(normalized, SERVICE_PATTERNS)) return 'solicitar_servico';
     if (this.matchesAny(normalized, DEPARTMENT_PATTERNS)) return 'explorar_secretarias';
     if (normalized === 'consultar protocolo' || normalized === 'consultar_protocolo') return 'consultar_protocolo';
