@@ -115,7 +115,6 @@ export function useConversations({
   const processedMessageIdsRef = useRef<Set<string>>(new Set());
   const botEnsureAttemptedRef = useRef(false);
   const conversationRefreshInFlightRef = useRef(false);
-  const audioRef = useRef<HTMLAudioElement | null>(null); // ✅ NOVO: Áudio de notificação
   const MAX_RECONNECT_ATTEMPTS = 5;
 
   // Refs para callbacks e valores para evitar recriação do socket
@@ -126,11 +125,30 @@ export function useConversations({
   const userTypeRef = useRef(userType);
   const departmentIdRef = useRef(departmentId); // ✅ NOVO
 
-  // ✅ NOVO: Inicializar áudio de notificação
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      audioRef.current = new Audio('/notification.mp3');
-      audioRef.current.volume = 0.5;
+  // Som de nova mensagem gerado pelo navegador (antes buscava /notification.mp3,
+  // que não existe no app: erro 404 no console e nenhum som)
+  const playNotificationSound = useCallback(() => {
+    try {
+      const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+      if (!Ctx) return;
+      const ctx = new Ctx();
+      const now = ctx.currentTime;
+      [880, 1320].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.value = freq;
+        const t = now + i * 0.12;
+        gain.gain.setValueAtTime(0.0001, t);
+        gain.gain.exponentialRampToValueAtTime(0.18, t + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.25);
+        osc.connect(gain).connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + 0.26);
+      });
+      setTimeout(() => ctx.close().catch(() => undefined), 700);
+    } catch {
+      // navegador sem áudio ou bloqueado até o primeiro toque: segue sem som
     }
   }, []);
 
@@ -724,7 +742,7 @@ export function useConversations({
       console.log('[useConversations] Nova conversa na fila de handover:', data);
 
       // Tocar som de notificação
-      audioRef.current?.play().catch((err) => console.warn('Erro ao tocar som:', err));
+      playNotificationSound();
 
       // Mostrar toast com ação
       toast({

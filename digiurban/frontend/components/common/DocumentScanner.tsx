@@ -134,53 +134,71 @@ interface DocumentFormat {
 }
 
 /**
- * FASE 7: Função helper para garantir que OpenCV.js está carregado
- * Aguarda até 10 segundos com retry, com fallback para CDN alternativo
+ * OpenCV.js (9 MB) — carregado SÓ quando o scanner é aberto (antes ia no
+ * layout de TODAS as páginas) e de endereços que existem: os dois usados
+ * antes respondiam 404, por isso "Digitalizar" nunca funcionava.
+ * Tenta o jsDelivr e, se falhar, a cópia oficial do opencv.org.
  */
-async function waitForOpenCV(timeoutMs: number = 10000): Promise<boolean> {
-  const startTime = Date.now()
+const OPENCV_SOURCES = [
+  'https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/dist/opencv.js',
+  'https://docs.opencv.org/4.7.0/opencv.js',
+]
 
-  // Polling: verificar a cada 100ms se cv está disponível
-  while (Date.now() - startTime < timeoutMs) {
-    if (typeof window !== 'undefined' && (window as any).cv && (window as any).cv.Mat) {
-      console.log('[OpenCV] ✓ OpenCV.js carregado com sucesso')
-      return true
-    }
-    await new Promise(resolve => setTimeout(resolve, 100))
-  }
+let openCvPromise: Promise<boolean> | null = null
 
-  console.error('[OpenCV] ✗ Timeout aguardando OpenCV.js após', timeoutMs, 'ms')
-
-  // Tentar carregar de CDN alternativo (jsdelivr)
-  if (typeof window !== 'undefined' && typeof document !== 'undefined') {
-    console.log('[OpenCV] Tentando CDN alternativo (jsdelivr)...')
-
-    try {
-      const script = document.createElement('script')
-      script.src = 'https://cdn.jsdelivr.net/npm/opencv.js@4.7.0/opencv.js'
-      script.async = true
-
-      await new Promise<void>((resolve, reject) => {
-        script.onload = () => resolve()
-        script.onerror = () => reject(new Error('Falha ao carregar OpenCV.js do CDN alternativo'))
-        document.head.appendChild(script)
-      })
-
-      // Aguardar mais 3 segundos para o script alternativo carregar
-      const altStartTime = Date.now()
-      while (Date.now() - altStartTime < 3000) {
-        if ((window as any).cv && (window as any).cv.Mat) {
-          console.log('[OpenCV] ✓ OpenCV.js carregado do CDN alternativo')
-          return true
-        }
-        await new Promise(resolve => setTimeout(resolve, 100))
+async function cvReady(timeoutMs: number): Promise<boolean> {
+  const start = Date.now()
+  while (Date.now() - start < timeoutMs) {
+    const cv = typeof window !== 'undefined' ? (window as any).cv : undefined
+    if (cv?.Mat) return true
+    // algumas versões expõem "cv" como promessa: resolve e guarda o módulo pronto
+    if (cv && typeof cv.then === 'function') {
+      try {
+        ;(window as any).cv = await cv
+        if ((window as any).cv?.Mat) return true
+      } catch {
+        return false
       }
-    } catch (err) {
-      console.error('[OpenCV] Erro ao carregar CDN alternativo:', err)
     }
+    await new Promise((resolve) => setTimeout(resolve, 150))
   }
-
   return false
+}
+
+function injectScript(src: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement('script')
+    script.src = src
+    script.async = true
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error(`Falha ao carregar ${src}`))
+    document.head.appendChild(script)
+  })
+}
+
+async function waitForOpenCV(timeoutMs: number = 30000): Promise<boolean> {
+  if (typeof window === 'undefined' || typeof document === 'undefined') return false
+  if ((window as any).cv?.Mat) return true
+  if (!openCvPromise) {
+    openCvPromise = (async () => {
+      for (const src of OPENCV_SOURCES) {
+        try {
+          await injectScript(src)
+          if (await cvReady(timeoutMs)) {
+            console.log('[OpenCV] ✓ carregado de', src)
+            return true
+          }
+        } catch (err) {
+          console.warn('[OpenCV] fonte indisponível, tentando a próxima:', src, err)
+        }
+      }
+      console.warn('[OpenCV] não carregou — o scanner segue sem recorte automático')
+      return false
+    })()
+  }
+  const ok = await openCvPromise
+  if (!ok) openCvPromise = null // permite tentar de novo numa próxima abertura
+  return ok
 }
 
 export function DocumentScanner({
@@ -219,12 +237,12 @@ export function DocumentScanner({
   // Cache de OpenCV e jscanify — carregados uma única vez na montagem
   const cvRef = useRef<any>(null)
   const scannerRef = useRef<any>(null)
-  const opencvLoadingRef = useRef<Promise<boolean> | null>(null)
+  const opencvLoadingRef = useRef<Promise<void> | null>(null)
 
   // Pré-carrega OpenCV + jscanify assim que o componente monta
   useEffect(() => {
     const load = async () => {
-      const ready = await waitForOpenCV(10000)
+      const ready = await waitForOpenCV(30000)
       if (!ready) return
       cvRef.current = (window as any).cv
       try {

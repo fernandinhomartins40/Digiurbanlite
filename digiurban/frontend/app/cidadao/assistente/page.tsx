@@ -832,6 +832,15 @@ export default function CitizenAssistantPage() {
                 Assistente
               </h2>
             </div>
+            <div className="flex items-center gap-1">
+            {/* Volta direto ao painel do cidadão (antes só pelo menu ☰) */}
+            <Link
+              href="/cidadao"
+              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium bg-[var(--lg-fill)] hover:opacity-80 transition-opacity"
+            >
+              <Home className="w-4 h-4" />
+              Painel
+            </Link>
 
             <Button
               size="icon"
@@ -842,6 +851,7 @@ export default function CitizenAssistantPage() {
             >
               <Plus className="w-5 h-5" />
             </Button>
+            </div>
           </div>
 
           {/* Busca */}
@@ -971,6 +981,16 @@ export default function CitizenAssistantPage() {
                   >
                     <ArrowLeft className="w-5 h-5" />
                   </Button>
+                )}
+                {!isMobileView && (
+                  <Link
+                    href="/cidadao"
+                    title="Voltar ao painel"
+                    className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium hover:bg-[var(--lg-fill)] transition-colors"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                    Voltar ao painel
+                  </Link>
                 )}
 
                 <Avatar className={cn(

@@ -167,8 +167,7 @@ export default async function RootLayout({
         {brandStyle ? (
           <style dangerouslySetInnerHTML={{ __html: `:root{${brandStyle}}` }} />
         ) : null}
-        {/* OpenCV.js para jscanify (document scanner) - usando CDN com CORS habilitado */}
-        <script src="https://cdn.jsdelivr.net/npm/@techstark/opencv-js@4.7.0-release.1/opencv.js" async></script>
+        {/* OpenCV.js (scanner de documentos) é carregado só quando o scanner abre — ver DocumentScanner */}
       </head>
       <body className={`${appFont.variable} ${interFont.variable} font-sans antialiased`}>
         <TenantProvider config={tenantConfig}>
