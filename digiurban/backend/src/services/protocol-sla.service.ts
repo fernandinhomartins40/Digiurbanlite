@@ -2,6 +2,7 @@
  * Serviço para gerenciamento de SLA de Protocolos
  */
 
+import { Prisma } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import { addDays, differenceInCalendarDays, differenceInBusinessDays, isWeekend } from 'date-fns';
 
@@ -124,6 +125,35 @@ export async function pauseSLA(protocolId: string, reason: string) {
       pausedReason: reason
         }
         });
+}
+
+/**
+ * Retoma o prazo pausado por pendência, empurrando o vencimento pelos dias
+ * parados. Tolerante: sem SLA, já rodando ou já encerrado = nada a fazer.
+ * Aceita a transação de quem chama (motor de status).
+ */
+export async function resumePausedSla(
+  protocolId: string,
+  db: Prisma.TransactionClient | typeof prisma = prisma
+): Promise<boolean> {
+  const sla = await db.protocolSLA.findUnique({ where: { protocolId } });
+  if (!sla || !sla.isPaused || !sla.pausedAt || sla.actualEndDate) return false;
+
+  const daysPaused = Math.max(0, differenceInCalendarDays(new Date(), sla.pausedAt));
+  const newExpectedEndDate = addDays(sla.expectedEndDate, daysPaused);
+
+  await db.protocolSLA.update({
+    where: { protocolId },
+    data: {
+      isPaused: false,
+      pausedAt: null,
+      pausedReason: null,
+      totalPausedDays: sla.totalPausedDays + daysPaused,
+      expectedEndDate: newExpectedEndDate,
+      calendarDays: differenceInCalendarDays(newExpectedEndDate, sla.startDate)
+    }
+  });
+  return true;
 }
 
 /**

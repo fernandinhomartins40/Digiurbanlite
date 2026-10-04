@@ -207,7 +207,8 @@ export function ProtocolDocumentsTab({
       })
 
       if (!response.ok) {
-        throw new Error('Erro ao aprovar documento')
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error || 'Erro ao aprovar documento')
       }
 
       toast({
@@ -247,7 +248,8 @@ export function ProtocolDocumentsTab({
       })
 
       if (!response.ok) {
-        throw new Error('Erro ao rejeitar documento')
+        const payload = await response.json().catch(() => ({}))
+        throw new Error(payload?.error || 'Erro ao rejeitar documento')
       }
 
       toast({

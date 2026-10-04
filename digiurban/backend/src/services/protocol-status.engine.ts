@@ -11,7 +11,8 @@
  * diretamente.
  */
 
-import { ProtocolStatus, UserRole, Prisma } from '@prisma/client';
+import { PendingStatus, ProtocolStatus, UserRole, Prisma } from '@prisma/client';
+import { resumePausedSla } from './protocol-sla.service';
 import { differenceInCalendarDays } from 'date-fns';
 import { prisma } from '../lib/prisma';
 import {
@@ -146,6 +147,28 @@ export class ProtocolStatusEngine {
       // 3.3 - Status terminal finaliza o SLA na MESMA transação
       if (isTerminalStatus(input.newStatus)) {
         await this.finalizeSLA(txc, input.protocolId);
+      }
+
+      // 3.4 - Encerrar o protocolo fecha as pendências que ficaram abertas
+      // (antes continuavam mandando lembretes ao cidadão por até 30 dias)
+      if (isTerminalStatus(input.newStatus)) {
+        await txc.protocolPending.updateMany({
+          where: {
+            protocolId: input.protocolId,
+            status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW] }
+          },
+          data: {
+            status: PendingStatus.CANCELLED,
+            resolvedAt: new Date(),
+            resolution: `Encerrada automaticamente: o protocolo foi ${input.newStatus === ProtocolStatus.CONCLUIDO ? 'concluído' : 'cancelado'}.`
+          }
+        });
+      }
+
+      // 3.5 - Voltar ao andamento retoma o prazo pausado por pendência
+      // (inclusive quando o servidor muda a situação manualmente)
+      if (input.newStatus === ProtocolStatus.PROGRESSO) {
+        await resumePausedSla(input.protocolId, txc);
       }
 
       return {

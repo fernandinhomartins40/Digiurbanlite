@@ -1,8 +1,15 @@
-import { InteractionType, PendingStatus, PendingType, Prisma } from '@prisma/client';
+import { DocumentStatus, InteractionType, PendingStatus, PendingType, Prisma, ProtocolStatus } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
 import notificationService from './notification.service';
 import * as interactionService from './protocol-interaction.service';
+import {
+  FINAL_REMINDER_DAYS_BEFORE_EXPIRY,
+  PendingActionError,
+  PendingReminderType,
+  STALE_PENDING_DAYS,
+  pickPendingReminder,
+} from './pending-rules';
 
 export interface CreatePendingData {
   protocolId: string;
@@ -39,6 +46,59 @@ type PendingWithProtocol = Prisma.ProtocolPendingGetPayload<{
     };
   };
 }>;
+
+export {
+  PendingActionError,
+  STALE_PENDING_DAYS,
+  parsePendingDueDate,
+  pickPendingReminder,
+} from './pending-rules';
+export type { PendingReminderType } from './pending-rules';
+
+const TERMINAL_PROTOCOL_STATUSES: ProtocolStatus[] = [ProtocolStatus.CONCLUIDO, ProtocolStatus.CANCELADO];
+
+const REMINDER_METADATA_KEY: Record<PendingReminderType, string> = {
+  upcoming: 'lastUpcomingReminderAt',
+  overdue: 'lastOverdueReminderAt',
+  final: 'lastFinalReminderAt',
+};
+
+function assertActivePending(status: PendingStatus, action: string) {
+  if (!ACTIVE_PENDING_STATUSES.includes(status)) {
+    throw new PendingActionError(
+      `Não é possível ${action}: a pendência já foi ${status === PendingStatus.RESOLVED ? 'resolvida' : status === PendingStatus.EXPIRED ? 'encerrada por prazo' : 'cancelada'}.`
+    );
+  }
+}
+
+async function closeAndContinue(
+  pending: { id: string; protocolId: string; blocksProgress: boolean },
+  actorId: string,
+  kind: 'RESOLVED' | 'CANCELLED' | 'EXPIRED' | 'DELETED'
+) {
+  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+  await workflowOrchestrator.onPendingClosed({
+    protocolId: pending.protocolId,
+    pendingId: pending.id,
+    blocksProgress: pending.blocksProgress,
+    actorId,
+    kind,
+  });
+}
+
+/** Documentos que o cidadão mandou como resposta desta pendência */
+function getSubmittedDocumentIds(metadata: Record<string, any>): string[] {
+  const ids = new Set<string>();
+  if (Array.isArray(metadata.submittedDocuments)) {
+    for (const item of metadata.submittedDocuments) {
+      if (item && typeof item.id === 'string') ids.add(item.id);
+    }
+  }
+  if (typeof metadata.lastSubmittedDocumentId === 'string') {
+    ids.add(metadata.lastSubmittedDocumentId);
+  }
+  return Array.from(ids);
+}
 
 const ACTIVE_PENDING_STATUSES: PendingStatus[] = [
   PendingStatus.OPEN,
@@ -493,14 +553,19 @@ async function notifyPendingCancelled(
 
 async function notifyPendingReminder(
   pending: NonNullable<PendingWithProtocol>,
-  reminderType: 'upcoming' | 'overdue'
+  reminder: PendingReminderType
 ) {
   if (!pending.protocol || !isCitizenActionPending(pending)) return;
+
+  const isFinal = reminder === 'final';
+  const reminderType: 'upcoming' | 'overdue' = reminder === 'upcoming' ? 'upcoming' : 'overdue';
 
   const dueDateLabel = pending.dueDate
     ? new Date(pending.dueDate).toLocaleDateString('pt-BR')
     : null;
-  const title = reminderType === 'overdue'
+  const title = isFinal
+    ? `Ultimo aviso: pendencia do protocolo ${pending.protocol.number} sera encerrada em ${FINAL_REMINDER_DAYS_BEFORE_EXPIRY} dias`
+    : reminderType === 'overdue'
     ? `Pendencia vencida no protocolo ${pending.protocol.number}`
     : `Pendencia aguardando resposta no protocolo ${pending.protocol.number}`;
   const message = reminderType === 'overdue'
@@ -570,6 +635,23 @@ async function notifyPendingReminder(
  * Cria uma nova pendencia em um protocolo
  */
 export async function createPending(data: CreatePendingData) {
+  const protocol = await prisma.protocolSimplified.findUnique({
+    where: { id: data.protocolId },
+    select: { status: true },
+  });
+
+  if (!protocol) {
+    throw new PendingActionError('Protocolo não encontrado', 404);
+  }
+
+  if (TERMINAL_PROTOCOL_STATUSES.includes(protocol.status)) {
+    throw new PendingActionError('Este protocolo já foi encerrado. Reabra o protocolo antes de pedir algo ao cidadão.');
+  }
+
+  if (!Object.values(PendingType).includes(data.type)) {
+    throw new PendingActionError('Tipo de pendência inválido', 400);
+  }
+
   const metadata = getPendingMetadata(data.metadata);
   const dedupeKey = buildPendingDedupeKey(data);
 
@@ -690,7 +772,15 @@ export async function submitPendingResponse(
 ) {
   const current = await getPendingById(pendingId);
   if (!current) {
-    throw new Error('Pendencia nao encontrada');
+    throw new PendingActionError('Pendência não encontrada', 404);
+  }
+
+  if (current.status !== PendingStatus.OPEN && current.status !== PendingStatus.IN_PROGRESS) {
+    throw new PendingActionError(
+      current.status === PendingStatus.UNDER_REVIEW
+        ? 'A pendência já recebeu resposta e aguarda análise da equipe'
+        : 'Pendência já foi resolvida ou cancelada'
+    );
   }
 
   const mergedMetadata = {
@@ -730,6 +820,25 @@ export async function reopenPending(
   reopenedBy: string,
   reason: string
 ) {
+  const current = await getPendingById(pendingId);
+  if (!current) {
+    throw new PendingActionError('Pendência não encontrada', 404);
+  }
+
+  if (current.status !== PendingStatus.UNDER_REVIEW && current.status !== PendingStatus.RESOLVED) {
+    throw new PendingActionError('Só dá para pedir novo ajuste de uma pendência respondida ou resolvida.');
+  }
+
+  if (TERMINAL_PROTOCOL_STATUSES.includes(current.protocol.status)) {
+    throw new PendingActionError('Este protocolo já foi encerrado. Reabra o protocolo antes de pedir algo ao cidadão.');
+  }
+
+  // Pedir novo envio = recusar o arquivo que veio (antes o documento ficava
+  // "enviado" e a análise na aba Documentos não batia com a da pendência)
+  if (current.type === PendingType.DOCUMENT) {
+    await rejectSubmittedDocuments(current.protocolId, getPendingMetadata(current.metadata), reopenedBy, reason);
+  }
+
   const reopened = await prisma.protocolPending.update({
     where: { id: pendingId },
     data: {
@@ -737,22 +846,92 @@ export async function reopenPending(
       reviewedAt: new Date(),
       reviewedBy: reopenedBy,
       reviewNotes: reason,
+      resolvedAt: null,
+      resolvedBy: null,
     },
   });
 
   await notifyPendingReopened(pendingId, reopenedBy);
 
+  // Pendência resolvida voltando a valer: o protocolo trava de novo
+  if (current.status === PendingStatus.RESOLVED) {
+    const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+    await workflowOrchestrator.onPendingCreated(pendingId);
+  }
+
   return reopened;
 }
 
+async function rejectSubmittedDocuments(
+  protocolId: string,
+  metadata: Record<string, any>,
+  rejectedBy: string,
+  reason: string
+) {
+  const ids = getSubmittedDocumentIds(metadata);
+  if (ids.length === 0) return;
+
+  const documents = await prisma.protocolDocument.findMany({
+    where: {
+      id: { in: ids },
+      protocolId,
+      status: { in: [DocumentStatus.UPLOADED, DocumentStatus.UNDER_REVIEW] },
+    },
+    select: { id: true, documentType: true },
+  });
+
+  for (const document of documents) {
+    await prisma.protocolDocument.update({
+      where: { id: document.id },
+      data: {
+        status: DocumentStatus.REJECTED,
+        validatedBy: rejectedBy,
+        rejectedAt: new Date(),
+        rejectionReason: reason,
+      },
+    });
+
+    await prisma.protocolHistorySimplified.create({
+      data: {
+        protocolId,
+        action: 'DOCUMENTO_REJEITADO',
+        comment: `Documento "${document.documentType}" recusado. Motivo: ${reason}`,
+        userId: rejectedBy,
+      },
+    }).catch((error) => console.error('[protocol-pending.service] Falha ao registrar histórico:', error));
+  }
+}
+
 /**
- * Resolve uma pendencia
+ * Resolve uma pendencia.
+ *
+ * Com `approveSubmittedDocuments` (análise feita pela equipe na aba
+ * Pendências), os documentos enviados como resposta são APROVADOS junto —
+ * antes a pendência fechava mas o documento seguia "enviado" e a etapa de
+ * análise documental nunca avançava.
  */
 export async function resolvePending(
   pendingId: string,
   resolvedBy: string,
-  resolution: string
+  resolution: string,
+  options: { approveSubmittedDocuments?: boolean } = {}
 ) {
+  const current = await getPendingById(pendingId);
+  if (!current) {
+    throw new PendingActionError('Pendência não encontrada', 404);
+  }
+
+  // Idempotente: aprovar o documento já resolve a pendência
+  if (current.status === PendingStatus.RESOLVED) {
+    return current;
+  }
+  assertActivePending(current.status, 'resolver');
+
+  const approvedDocuments =
+    options.approveSubmittedDocuments && current.type === PendingType.DOCUMENT
+      ? await approveSubmittedDocuments(current.protocolId, getPendingMetadata(current.metadata), resolvedBy)
+      : 0;
+
   const resolved = await prisma.protocolPending.update({
     where: { id: pendingId },
     data: {
@@ -766,11 +945,40 @@ export async function resolvePending(
   });
 
   await notifyPendingResolved(pendingId, resolvedBy);
+  await closeAndContinue(current, resolvedBy, 'RESOLVED');
 
-  const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
-  await workflowOrchestrator.onPendingResolved(pendingId, resolvedBy);
+  if (approvedDocuments > 0) {
+    const { workflowOrchestrator } = await import('./protocol-workflow-orchestrator.service');
+    await workflowOrchestrator.advanceIfAllDocumentsApproved(current.protocolId, resolvedBy);
+  }
 
   return resolved;
+}
+
+async function approveSubmittedDocuments(
+  protocolId: string,
+  metadata: Record<string, any>,
+  approvedBy: string
+): Promise<number> {
+  const ids = getSubmittedDocumentIds(metadata);
+  if (ids.length === 0) return 0;
+
+  const documents = await prisma.protocolDocument.findMany({
+    where: {
+      id: { in: ids },
+      protocolId,
+      fileUrl: { not: null },
+      status: { in: [DocumentStatus.UPLOADED, DocumentStatus.UNDER_REVIEW] },
+    },
+    select: { id: true },
+  });
+
+  const { approveDocument } = await import('./protocol-document.service');
+  for (const document of documents) {
+    // sem orquestrador: o fechamento da pendência e o avanço vêm logo depois
+    await approveDocument(document.id, approvedBy, { skipWorkflow: true });
+  }
+  return documents.length;
 }
 
 /**
@@ -781,6 +989,12 @@ export async function cancelPending(
   resolvedBy: string,
   reason: string
 ) {
+  const current = await getPendingById(pendingId);
+  if (!current) {
+    throw new PendingActionError('Pendência não encontrada', 404);
+  }
+  assertActivePending(current.status, 'cancelar');
+
   const cancelled = await prisma.protocolPending.update({
     where: { id: pendingId },
     data: {
@@ -792,6 +1006,8 @@ export async function cancelPending(
   });
 
   await notifyPendingCancelled(pendingId, resolvedBy);
+  // Antes o protocolo ficava parado em "Pendência" com o prazo pausado
+  await closeAndContinue(current, resolvedBy, 'CANCELLED');
 
   return cancelled;
 }
@@ -858,21 +1074,24 @@ export async function checkExpiredPendings(protocolId: string) {
     },
     data: {
       status: PendingStatus.EXPIRED,
+      resolvedAt: now,
+      resolution: 'Pendencia encerrada: o prazo terminou sem resposta.',
     },
   });
+
+  for (const pending of expired) {
+    await closeAndContinue(pending, pending.createdBy, 'EXPIRED');
+  }
 
   return expired;
 }
 
 export async function processPendingReminders(options?: {
   upcomingWindowHours?: number;
-  minimumIntervalHours?: number;
 }) {
   const now = new Date();
   const upcomingWindowHours = options?.upcomingWindowHours ?? 48;
-  const minimumIntervalHours = options?.minimumIntervalHours ?? 12;
   const upcomingLimit = new Date(now.getTime() + upcomingWindowHours * 60 * 60 * 1000);
-  const minimumIntervalMs = minimumIntervalHours * 60 * 60 * 1000;
 
   const candidates = await prisma.protocolPending.findMany({
     where: {
@@ -882,6 +1101,10 @@ export async function processPendingReminders(options?: {
       dueDate: {
         not: null,
         lte: upcomingLimit,
+      },
+      // protocolo encerrado não manda mais lembrete
+      protocol: {
+        status: { notIn: TERMINAL_PROTOCOL_STATUSES },
       },
     },
     include: {
@@ -899,30 +1122,24 @@ export async function processPendingReminders(options?: {
   for (const pending of candidates) {
     if (!pending.dueDate || !isCitizenActionPending(pending as any)) continue;
 
-    const reminderType: 'upcoming' | 'overdue' =
-      new Date(pending.dueDate).getTime() < now.getTime() ? 'overdue' : 'upcoming';
     const metadata = getPendingMetadata(pending.metadata);
-    const reminderKey = reminderType === 'overdue' ? 'lastOverdueReminderAt' : 'lastUpcomingReminderAt';
-    const lastReminderAt = metadata[reminderKey] ? new Date(metadata[reminderKey]) : null;
+    const reminder = pickPendingReminder(new Date(pending.dueDate), metadata, now, upcomingWindowHours);
+    if (!reminder) continue;
 
-    if (lastReminderAt && now.getTime() - lastReminderAt.getTime() < minimumIntervalMs) {
-      continue;
-    }
-
-    await notifyPendingReminder(pending as any, reminderType);
+    await notifyPendingReminder(pending as any, reminder);
 
     await prisma.protocolPending.update({
       where: { id: pending.id },
       data: {
         metadata: {
           ...metadata,
-          [reminderKey]: now.toISOString(),
+          [REMINDER_METADATA_KEY[reminder]]: now.toISOString(),
         },
       },
     });
 
-    if (reminderType === 'overdue') overdueSent += 1;
-    else upcomingSent += 1;
+    if (reminder === 'upcoming') upcomingSent += 1;
+    else overdueSent += 1;
   }
 
   return {
@@ -932,8 +1149,22 @@ export async function processPendingReminders(options?: {
   };
 }
 
-export async function expireStalePendings(daysOverdue: number = 30) {
+export async function expireStalePendings(daysOverdue: number = STALE_PENDING_DAYS) {
   const threshold = new Date(Date.now() - daysOverdue * 24 * 60 * 60 * 1000);
+
+  // Sobras de protocolos já encerrados: fecha em silêncio (sem avisar ninguém)
+  await prisma.protocolPending.updateMany({
+    where: {
+      status: { in: ACTIVE_PENDING_STATUSES },
+      protocol: { status: { in: TERMINAL_PROTOCOL_STATUSES } },
+    },
+    data: {
+      status: PendingStatus.CANCELLED,
+      resolvedAt: new Date(),
+      resolution: 'Encerrada automaticamente: o protocolo já estava encerrado.',
+    },
+  });
+
   const stalePendings = await prisma.protocolPending.findMany({
     where: {
       status: {
@@ -941,6 +1172,9 @@ export async function expireStalePendings(daysOverdue: number = 30) {
       },
       dueDate: {
         lt: threshold,
+      },
+      protocol: {
+        status: { notIn: TERMINAL_PROTOCOL_STATUSES },
       },
     },
     include: {
@@ -957,6 +1191,7 @@ export async function expireStalePendings(daysOverdue: number = 30) {
       where: { id: pending.id },
       data: {
         status: PendingStatus.EXPIRED,
+        resolvedAt: new Date(),
         resolution: 'Pendencia expirada automaticamente por falta de resposta dentro do prazo.',
       },
     });
@@ -986,6 +1221,28 @@ export async function expireStalePendings(daysOverdue: number = 30) {
     }).catch((error) => {
       console.error('[protocol-pending.service] Failed to notify citizen about expired pending:', error);
     });
+
+    if (pending.protocol.currentAssignedUserId) {
+      await notificationService.notify({
+        recipientType: 'user',
+        recipientId: pending.protocol.currentAssignedUserId,
+        type: 'PROTOCOL_PENDING_EXPIRED',
+        title: `Pendencia sem resposta no protocolo ${pending.protocol.number}`,
+        message: `${pending.protocol.citizen?.name || 'O cidadao'} nao respondeu: ${pending.title}. O protocolo voltou para a equipe decidir.`,
+        data: {
+          protocolId: pending.protocol.id,
+          protocolNumber: pending.protocol.number,
+          pendingId: pending.id,
+          url: `/admin/protocolos/${pending.protocol.id}`,
+        },
+        priority: 'high',
+      }).catch((error) => {
+        console.error('[protocol-pending.service] Failed to notify server about expired pending:', error);
+      });
+    }
+
+    // Antes o protocolo ficava parado em "Pendência" com o prazo pausado
+    await closeAndContinue(pending, pending.createdBy, 'EXPIRED');
   }
 
   return {
@@ -996,10 +1253,16 @@ export async function expireStalePendings(daysOverdue: number = 30) {
 /**
  * Deleta uma pendencia
  */
-export async function deletePending(pendingId: string) {
-  return prisma.protocolPending.delete({
+export async function deletePending(pendingId: string, deletedBy: string) {
+  const deleted = await prisma.protocolPending.delete({
     where: { id: pendingId },
   });
+
+  if (ACTIVE_PENDING_STATUSES.includes(deleted.status)) {
+    await closeAndContinue(deleted, deletedBy, 'DELETED');
+  }
+
+  return deleted;
 }
 
 /**

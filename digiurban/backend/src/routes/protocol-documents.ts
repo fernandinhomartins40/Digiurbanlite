@@ -8,9 +8,60 @@ import { UserRole } from '@prisma/client';
 import * as documentService from '../services/protocol-document.service';
 import { getProtocolFilePath, extractFilename } from '../config/upload';
 import { prisma } from '../lib/prisma';
-import { canAccessProtocol } from '../services/protocol-access.service';
+import { assertProtocolAccess, canAccessProtocol } from '../services/protocol-access.service';
 
 const router = express.Router();
+
+/**
+ * O servidor só vê/analisa documentos de protocolos que ele pode acessar
+ * (mesma regra da tela do protocolo). Antes só o download conferia isso:
+ * qualquer servidor do município aprovava, recusava ou baixava versões
+ * de documentos pessoais de qualquer protocolo.
+ */
+const protocolAccess: express.RequestHandler = async (req, res, next) => {
+  try {
+    const user = (req as AuthenticatedRequest).user as any;
+    await assertProtocolAccess(
+      { id: user?.id, role: user?.role, departmentId: user?.departmentId },
+      req.params.protocolId
+    );
+    next();
+  } catch (error: any) {
+    res.status(error?.statusCode || 500).json({
+      success: false,
+      error: error?.statusCode ? error.message : 'Erro ao verificar acesso ao protocolo'
+    });
+  }
+};
+
+/** O documento do endereço precisa ser deste protocolo */
+const documentOfProtocol: express.RequestHandler = async (req, res, next) => {
+  try {
+    const document = await prisma.protocolDocument.findUnique({
+      where: { id: req.params.documentId },
+      select: { protocolId: true }
+    });
+    if (!document || document.protocolId !== req.params.protocolId) {
+      res.status(404).json({ success: false, error: 'Documento não encontrado' });
+      return;
+    }
+    next();
+  } catch (error) {
+    sendError(res, error, 'Erro ao carregar documento');
+  }
+};
+
+function sendError(res: express.Response, error: unknown, fallback: string) {
+  if (error instanceof documentService.DocumentActionError) {
+    return res.status(error.statusCode).json({ success: false, error: error.message });
+  }
+  console.error(`${fallback}:`, error);
+  return res.status(500).json({
+    success: false,
+    error: fallback,
+    details: error instanceof Error ? error.message : 'Erro desconhecido'
+  });
+}
 
 /**
  * Auth híbrida para download de documento: aceita cookie de servidor (admin)
@@ -60,6 +111,7 @@ router.post(
   '/:protocolId/documents',
   adminAuthMiddleware,
   requireMinRole(UserRole.USER),
+  protocolAccess,
   async (req, res) => {
     try {
       const { protocolId } = req.params;
@@ -93,6 +145,7 @@ router.post(
 router.get(
   '/:protocolId/documents',
   adminAuthMiddleware,
+  protocolAccess,
   async (req, res) => {
     try {
       const { protocolId } = req.params;
@@ -121,6 +174,7 @@ router.get(
 router.get(
   '/:protocolId/documents/check-required',
   adminAuthMiddleware,
+  protocolAccess,
   async (req, res) => {
     try {
       const { protocolId } = req.params;
@@ -149,6 +203,7 @@ router.get(
 router.get(
   '/:protocolId/documents/check-approved',
   adminAuthMiddleware,
+  protocolAccess,
   async (req, res) => {
     try {
       const { protocolId } = req.params;
@@ -182,6 +237,7 @@ router.get(
   '/:protocolId/documents/audit',
   adminAuthMiddleware,
   requireMinRole(UserRole.MANAGER),
+  protocolAccess,
   async (req, res) => {
     try {
       const { protocolId } = req.params;
@@ -211,6 +267,8 @@ router.get(
 router.get(
   '/:protocolId/documents/:documentId',
   adminAuthMiddleware,
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const { documentId } = req.params;
@@ -246,6 +304,9 @@ router.get(
 router.put(
   '/:protocolId/documents/:documentId/upload',
   adminAuthMiddleware,
+  requireMinRole(UserRole.USER),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const authReq = req as AuthenticatedRequest;
@@ -272,12 +333,7 @@ router.put(
         data: document
         });
     } catch (error) {
-      console.error('Erro ao fazer upload de documento:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao fazer upload de documento',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      return sendError(res, error, 'Erro ao fazer upload de documento');
     }
   }
 );
@@ -290,6 +346,8 @@ router.put(
   '/:protocolId/documents/:documentId/approve',
   adminAuthMiddleware,
   requireMinRole(UserRole.USER),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const authReq = req as AuthenticatedRequest;
@@ -305,12 +363,7 @@ router.put(
         data: document
         });
     } catch (error) {
-      console.error('Erro ao aprovar documento:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao aprovar documento',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      return sendError(res, error, 'Erro ao aprovar documento');
     }
   }
 );
@@ -323,6 +376,8 @@ router.put(
   '/:protocolId/documents/:documentId/reject',
   adminAuthMiddleware,
   requireMinRole(UserRole.USER),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const authReq = req as AuthenticatedRequest;
@@ -347,12 +402,7 @@ router.put(
         data: document
         });
     } catch (error) {
-      console.error('Erro ao rejeitar documento:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao rejeitar documento',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      return sendError(res, error, 'Erro ao rejeitar documento');
     }
   }
 );
@@ -365,6 +415,8 @@ router.put(
   '/:protocolId/documents/:documentId/review',
   adminAuthMiddleware,
   requireMinRole(UserRole.USER),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const { documentId } = req.params;
@@ -378,12 +430,7 @@ router.put(
         data: document
         });
     } catch (error) {
-      console.error('Erro ao marcar documento em análise:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao marcar documento em análise',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-        });
+      return sendError(res, error, 'Erro ao marcar documento em análise');
     }
   }
 );
@@ -504,6 +551,8 @@ router.delete(
   // requireRole respondia 401 sempre — a rota estava inoperante.
   adminAuthMiddleware,
   requireRole(UserRole.ADMIN),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const { documentId } = req.params;
@@ -532,6 +581,8 @@ router.delete(
 router.get(
   '/:protocolId/documents/:documentId/integrity',
   adminAuthMiddleware,
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const { documentId } = req.params;
@@ -562,6 +613,8 @@ router.post(
   '/:protocolId/documents/:documentId/reconcile',
   adminAuthMiddleware,
   requireMinRole(UserRole.MANAGER),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const { documentId } = req.params;
@@ -620,51 +673,32 @@ router.get(
 
 /**
  * GET /api/protocols/:protocolId/documents/:documentId/versions
- * Lista todas as versões de um documento
+ * Lista todas as versões de um documento (envios anteriores + o atual).
+ * Antes navegava por previousDocId, que apontava para o próprio documento
+ * depois de um reenvio: a busca entrava em laço infinito.
  */
 router.get(
   '/:protocolId/documents/:documentId/versions',
   adminAuthMiddleware,
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
-      const { documentId } = req.params;
+      const result = await documentService.getDocumentVersions(req.params.documentId);
 
-      // Buscar documento atual
-      let currentDoc = await documentService.getDocumentById(documentId);
-
-      if (!currentDoc) {
-        return res.status(404).json({
-          success: false,
-          error: 'Documento não encontrado'
-        });
+      if (!result) {
+        return res.status(404).json({ success: false, error: 'Documento não encontrado' });
       }
-
-      // Buscar todas as versões (navegando por previousDocId)
-      const versions: any[] = [currentDoc];
-      let previousDocId = currentDoc.previousDocId;
-
-      while (previousDocId) {
-        const previousDoc = await documentService.getDocumentById(previousDocId);
-
-        if (!previousDoc) break;
-
-        versions.push(previousDoc);
-        previousDocId = previousDoc.previousDocId;
-      }
-
-      // Ordenar por versão (mais antiga primeiro)
-      versions.reverse();
 
       return res.json({
         success: true,
         data: {
-          totalVersions: versions.length,
-          currentVersion: currentDoc.version,
-          versions: versions.map((v, index) => ({
+          totalVersions: result.versions.length,
+          currentVersion: result.current.version,
+          versions: result.versions.map((v: any) => ({
             id: v.id,
             version: v.version,
             fileName: v.fileName,
-            fileUrl: v.fileUrl,
             fileSize: v.fileSize,
             mimeType: v.mimeType,
             status: v.status,
@@ -674,17 +708,12 @@ router.get(
             validatedBy: v.validatedBy,
             rejectedAt: v.rejectedAt,
             rejectionReason: v.rejectionReason,
-            isCurrent: index === versions.length - 1
+            isCurrent: v.isCurrent
           }))
         }
       });
     } catch (error) {
-      console.error('Erro ao listar versões do documento:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao listar versões do documento',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      return sendError(res, error, 'Erro ao listar versões do documento');
     }
   }
 );
@@ -696,152 +725,80 @@ router.get(
 router.get(
   '/:protocolId/documents/:documentId/version/:versionId/download',
   adminAuthMiddleware,
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
-      const { protocolId, versionId } = req.params;
+      const { protocolId, documentId, versionId } = req.params;
       const inline = req.query.inline === 'true';
 
-      // Buscar versão específica
-      const document = await documentService.getDocumentById(versionId);
+      const document = await documentService.getDocumentVersionFile(documentId, versionId);
 
       if (!document) {
-        return res.status(404).json({
-          success: false,
-          error: 'Versão do documento não encontrada'
-        });
+        return res.status(404).json({ success: false, error: 'Versão do documento não encontrada' });
       }
 
       if (!document.fileUrl) {
-        return res.status(404).json({
-          success: false,
-          error: 'Arquivo não disponível para esta versão'
-        });
+        return res.status(404).json({ success: false, error: 'Arquivo não disponível para esta versão' });
       }
 
-      // Se fileUrl é uma URL externa
       if (document.fileUrl.startsWith('http')) {
         return res.redirect(document.fileUrl);
       }
 
-      // Caminho local
       const filename = extractFilename(document.fileUrl);
-      const filePath = getProtocolFilePath(document.protocolId, filename);
+      const filePath = getProtocolFilePath(protocolId, filename);
 
       if (!fs.existsSync(filePath)) {
-        return res.status(404).json({
-          success: false,
-          error: 'Arquivo físico não encontrado para esta versão'
-        });
+        return res.status(404).json({ success: false, error: 'Arquivo físico não encontrado para esta versão' });
       }
 
       const mimeType = document.mimeType || guessMimeFromExtension(document.fileName || undefined, 'application/octet-stream');
-
-      // Configurar headers
       const disposition = inline ? 'inline' : 'attachment';
       res.setHeader('Content-Disposition', `${disposition}; filename="${document.fileName || 'documento'} (v${document.version})"`);
       res.setHeader('Content-Type', mimeType);
       res.setHeader('X-Document-Version', document.version.toString());
 
-      // Stream do arquivo
-      const fileStream = fs.createReadStream(filePath);
-      fileStream.pipe(res);
+      fs.createReadStream(filePath).pipe(res);
     } catch (error) {
-      console.error('Erro ao fazer download da versão:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao fazer download da versão',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      return sendError(res, error, 'Erro ao fazer download da versão');
     }
   }
 );
 
 /**
  * POST /api/protocols/:protocolId/documents/:documentId/restore-version
- * Restaura uma versão anterior do documento
+ * Volta um envio anterior como atual (o atual vai para o histórico)
  * Body: { versionId: string }
  */
 router.post(
   '/:protocolId/documents/:documentId/restore-version',
   adminAuthMiddleware,
   requireMinRole(UserRole.MANAGER),
+  protocolAccess,
+  documentOfProtocol,
   async (req, res) => {
     try {
       const authReq = req as AuthenticatedRequest;
-      const { documentId } = req.params;
       const { versionId } = req.body;
 
       if (!versionId) {
-        return res.status(400).json({
-          success: false,
-          error: 'versionId é obrigatório'
-        });
+        return res.status(400).json({ success: false, error: 'versionId é obrigatório' });
       }
 
-      // Buscar versão antiga
-      const oldVersion = await documentService.getDocumentById(versionId);
-
-      if (!oldVersion) {
-        return res.status(404).json({
-          success: false,
-          error: 'Versão não encontrada'
-        });
-      }
-
-      // Buscar documento atual
-      const currentDoc = await documentService.getDocumentById(documentId);
-
-      if (!currentDoc) {
-        return res.status(404).json({
-          success: false,
-          error: 'Documento atual não encontrado'
-        });
-      }
-
-      // Criar nova versão baseada na versão antiga
-      const newVersion = currentDoc.version + 1;
-
-      const restoredDoc = await prisma.protocolDocument.update({
-        where: { id: documentId },
-        data: {
-          fileName: oldVersion.fileName,
-          fileUrl: oldVersion.fileUrl,
-          fileSize: oldVersion.fileSize,
-          mimeType: oldVersion.mimeType,
-          version: newVersion,
-          previousDocId: documentId,
-          uploadedAt: new Date(),
-          uploadedBy: authReq.userId,
-          status: 'UPLOADED', // Resetar status
-          validatedAt: null,
-          validatedBy: null,
-          rejectedAt: null,
-          rejectionReason: null
-        }
-      });
-
-      // Criar histórico
-      await prisma.protocolHistorySimplified.create({
-        data: {
-          protocolId: currentDoc.protocolId,
-          action: 'DOCUMENTO_RESTAURADO',
-          comment: `Documento "${currentDoc.documentType}" restaurado para versão ${oldVersion.version}`,
-          userId: authReq.userId
-        }
-      });
+      const { restored, restoredFromVersion } = await documentService.restoreDocumentVersion(
+        req.params.documentId,
+        versionId,
+        authReq.userId
+      );
 
       return res.json({
         success: true,
-        data: restoredDoc,
-        message: `Documento restaurado para versão ${oldVersion.version}`
+        data: restored,
+        message: `Documento restaurado para versão ${restoredFromVersion}`
       });
     } catch (error) {
-      console.error('Erro ao restaurar versão:', error);
-      return res.status(500).json({
-        success: false,
-        error: 'Erro ao restaurar versão',
-        details: error instanceof Error ? error.message : 'Erro desconhecido'
-      });
+      return sendError(res, error, 'Erro ao restaurar versão');
     }
   }
 );

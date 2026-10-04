@@ -4,6 +4,16 @@ import { syncProtocolRequiredDocuments } from './required-protocol-documents.ser
 import { matchDocumentType, resolveCanonicalDocumentType } from '../utils/document-mapping';
 import { normalizeDocumentConfigs } from '../utils/document-validation';
 
+/** Erro de regra (documento não enviado, versão inexistente...): vira 4xx */
+export class DocumentActionError extends Error {
+  public statusCode: number;
+  constructor(message: string, statusCode = 409) {
+    super(message);
+    this.name = 'DocumentActionError';
+    this.statusCode = statusCode;
+  }
+}
+
 export interface CreateDocumentData {
   protocolId: string;
   documentType: string;
@@ -341,9 +351,11 @@ export async function uploadDocument(
 
   let updatedDocument;
 
-  // Se já existe um arquivo, criar nova versão
+  // Se já existe um arquivo, guardar o envio atual no histórico e gravar o novo.
+  // Antes o reenvio sobrescrevia o arquivo recusado (sumia o histórico) e o
+  // registro passava a apontar para si mesmo como "versão anterior".
   if (currentDoc.fileUrl) {
-    const newVersion = currentDoc.version + 1;
+    await archiveCurrentVersion(currentDoc);
 
     updatedDocument = await prisma.protocolDocument.update({
       where: { id: documentId },
@@ -355,10 +367,14 @@ export async function uploadDocument(
         uploadedBy: fileData.uploadedBy,
         uploadedAt: new Date(),
         status: DocumentStatus.UPLOADED,
-        version: newVersion,
-        previousDocId: documentId, // Referência à versão anterior
+        version: currentDoc.version + 1,
+        previousDocId: null,
+        validatedAt: null,
+        validatedBy: null,
+        rejectedAt: null,
+        rejectionReason: null,
       }
-        });
+    });
   } else {
     // Primeiro upload
     updatedDocument = await prisma.protocolDocument.update({
@@ -371,8 +387,8 @@ export async function uploadDocument(
         uploadedBy: fileData.uploadedBy,
         uploadedAt: new Date(),
         status: DocumentStatus.UPLOADED
-        }
-        });
+      }
+    });
   }
 
   // Quando o cidadão reenviar um documento, a pendência deve ficar em revisão.
@@ -426,16 +442,26 @@ export async function uploadDocument(
  */
 export async function approveDocument(
   documentId: string,
-  validatedBy: string
+  validatedBy: string,
+  options: { skipWorkflow?: boolean } = {}
 ) {
   // Buscar documento para obter protocolId
   const document = await prisma.protocolDocument.findUnique({
     where: { id: documentId },
-    select: { protocolId: true, documentType: true }
+    select: { protocolId: true, documentType: true, fileUrl: true, status: true }
   });
 
   if (!document) {
-    throw new Error('Documento não encontrado');
+    throw new DocumentActionError('Documento não encontrado', 404);
+  }
+
+  if (!document.fileUrl) {
+    throw new DocumentActionError('O cidadão ainda não enviou este documento.');
+  }
+
+  // Aprovar de novo não repete histórico, avisos nem avanço do fluxo
+  if (document.status === DocumentStatus.APPROVED) {
+    return prisma.protocolDocument.findUnique({ where: { id: documentId } });
   }
 
   // Atualizar documento
@@ -458,6 +484,10 @@ export async function approveDocument(
       userId: validatedBy
     }
   }).catch(err => console.error('Erro ao criar histórico:', err));
+
+  if (options.skipWorkflow) {
+    return updatedDocument;
+  }
 
   // ✨ NOVO: Disparar orquestrador de workflow
   try {
@@ -486,11 +516,19 @@ export async function rejectDocument(
   // Buscar documento para obter protocolId
   const document = await prisma.protocolDocument.findUnique({
     where: { id: documentId },
-    select: { protocolId: true, documentType: true }
+    select: { protocolId: true, documentType: true, fileUrl: true, status: true }
   });
 
   if (!document) {
-    throw new Error('Documento não encontrado');
+    throw new DocumentActionError('Documento não encontrado', 404);
+  }
+
+  if (!document.fileUrl) {
+    throw new DocumentActionError('O cidadão ainda não enviou este documento.');
+  }
+
+  if (document.status === DocumentStatus.REJECTED) {
+    throw new DocumentActionError('Este documento já foi recusado e aguarda novo envio do cidadão.');
   }
 
   // Atualizar documento
@@ -531,9 +569,143 @@ export async function rejectDocument(
 }
 
 /**
+ * Guarda o envio atual no histórico antes de ser substituído
+ */
+async function archiveCurrentVersion(document: {
+  id: string;
+  tenantId: string | null;
+  protocolId: string;
+  version: number;
+  fileName: string | null;
+  fileUrl: string | null;
+  fileSize: number | null;
+  mimeType: string | null;
+  status: DocumentStatus;
+  uploadedAt: Date | null;
+  uploadedBy: string | null;
+  validatedAt: Date | null;
+  validatedBy: string | null;
+  rejectedAt: Date | null;
+  rejectionReason: string | null;
+}) {
+  await prisma.protocolDocumentVersion.create({
+    data: {
+      tenantId: document.tenantId,
+      documentId: document.id,
+      protocolId: document.protocolId,
+      version: document.version,
+      fileName: document.fileName,
+      fileUrl: document.fileUrl,
+      fileSize: document.fileSize,
+      mimeType: document.mimeType,
+      status: document.status,
+      uploadedAt: document.uploadedAt,
+      uploadedBy: document.uploadedBy,
+      validatedAt: document.validatedAt,
+      validatedBy: document.validatedBy,
+      rejectedAt: document.rejectedAt,
+      rejectionReason: document.rejectionReason,
+    },
+  });
+}
+
+/**
+ * Todas as versões de um documento: as guardadas + a atual (mais antiga primeiro)
+ */
+export async function getDocumentVersions(documentId: string) {
+  const current = await prisma.protocolDocument.findUnique({ where: { id: documentId } });
+  if (!current) return null;
+
+  const archived = await prisma.protocolDocumentVersion.findMany({
+    where: { documentId },
+    orderBy: [{ version: 'asc' }, { archivedAt: 'asc' }],
+  });
+
+  return {
+    current,
+    versions: [
+      ...archived.map((version) => ({ ...version, isCurrent: false })),
+      { ...current, documentId: current.id, isCurrent: true },
+    ],
+  };
+}
+
+/**
+ * Arquivo de uma versão: o id pode ser de uma versão guardada ou do próprio documento
+ */
+export async function getDocumentVersionFile(documentId: string, versionId: string) {
+  if (versionId === documentId) {
+    return prisma.protocolDocument.findUnique({ where: { id: documentId } });
+  }
+  return prisma.protocolDocumentVersion.findFirst({ where: { id: versionId, documentId } });
+}
+
+/**
+ * Volta um arquivo antigo como envio atual (o atual vai para o histórico)
+ */
+export async function restoreDocumentVersion(documentId: string, versionId: string, restoredBy: string) {
+  const current = await prisma.protocolDocument.findUnique({ where: { id: documentId } });
+  if (!current) {
+    throw new DocumentActionError('Documento não encontrado', 404);
+  }
+
+  const old = await prisma.protocolDocumentVersion.findFirst({ where: { id: versionId, documentId } });
+  if (!old) {
+    throw new DocumentActionError('Versão não encontrada', 404);
+  }
+
+  if (current.fileUrl) {
+    await archiveCurrentVersion(current);
+  }
+
+  const restored = await prisma.protocolDocument.update({
+    where: { id: documentId },
+    data: {
+      fileName: old.fileName,
+      fileUrl: old.fileUrl,
+      fileSize: old.fileSize,
+      mimeType: old.mimeType,
+      version: current.version + 1,
+      previousDocId: null,
+      uploadedAt: new Date(),
+      uploadedBy: restoredBy,
+      status: DocumentStatus.UPLOADED,
+      validatedAt: null,
+      validatedBy: null,
+      rejectedAt: null,
+      rejectionReason: null,
+    },
+  });
+
+  await prisma.protocolHistorySimplified.create({
+    data: {
+      protocolId: current.protocolId,
+      action: 'DOCUMENTO_RESTAURADO',
+      comment: `Documento "${current.documentType}" restaurado para a versão ${old.version}`,
+      userId: restoredBy,
+    },
+  }).catch((error) => console.error('[protocol-document.service] Falha ao registrar histórico:', error));
+
+  return { restored, restoredFromVersion: old.version };
+}
+
+/**
  * Marca documento como em análise
  */
 export async function markDocumentUnderReview(documentId: string) {
+  const document = await prisma.protocolDocument.findUnique({
+    where: { id: documentId },
+    select: { fileUrl: true, status: true },
+  });
+
+  if (!document) {
+    throw new DocumentActionError('Documento não encontrado', 404);
+  }
+
+  if (!document.fileUrl || document.status !== DocumentStatus.UPLOADED) {
+    throw new DocumentActionError('Só dá para colocar em análise um documento enviado e ainda não analisado.');
+  }
+
   return prisma.protocolDocument.update({
     where: { id: documentId },
     data: {

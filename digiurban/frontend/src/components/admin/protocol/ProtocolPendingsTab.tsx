@@ -6,7 +6,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Textarea } from '@/components/ui/textarea'
-import { AlertCircle, CheckCircle2, Clock, Plus, RotateCcw, SearchCheck, XCircle } from 'lucide-react'
+import { AlertCircle, CheckCircle2, Clock, FileText, Plus, RotateCcw, SearchCheck, XCircle } from 'lucide-react'
 import { ProtocolPending, PendingStatus } from '@/types/protocol-enhancements'
 import { useToast } from '@/hooks/use-toast'
 import { format } from 'date-fns'
@@ -30,8 +30,20 @@ export function ProtocolPendingsTab({
   creationContext,
 }: ProtocolPendingsTabProps) {
   const { toast } = useToast()
-  const [resolvingPending, setResolvingPending] = useState<string | null>(null)
-  const [resolution, setResolution] = useState('')
+  // Uma ação aberta por vez, com o texto escrito no próprio cartão
+  // (antes cancelar e reabrir usavam a caixinha do navegador)
+  const [action, setAction] = useState<{ pendingId: string; kind: 'resolve' | 'cancel' | 'reopen' } | null>(null)
+  const [actionText, setActionText] = useState('')
+  const [sending, setSending] = useState(false)
+
+  const openAction = (pendingId: string, kind: 'resolve' | 'cancel' | 'reopen') => {
+    setAction({ pendingId, kind })
+    setActionText('')
+  }
+  const closeAction = () => {
+    setAction(null)
+    setActionText('')
+  }
 
   const openPendings = useMemo(
     () => pendings.filter((pending) => pending.status === PendingStatus.OPEN || pending.status === PendingStatus.IN_PROGRESS),
@@ -69,105 +81,76 @@ export function ProtocolPendingsTab({
     )
   }
 
-  const handleResolvePending = async (pendingId: string) => {
-    if (!resolution.trim()) {
+  const sendAction = async (
+    pendingId: string,
+    kind: 'resolve' | 'cancel' | 'reopen',
+    text: string
+  ) => {
+    const endpoint = kind === 'resolve' ? 'resolve' : kind === 'cancel' ? 'cancel' : 'reopen'
+    const body = kind === 'resolve' ? { resolution: text } : { reason: text }
+
+    setSending(true)
+    try {
+      const response = await fetch(getFullApiUrl(`/protocols/${protocolId}/pendings/${pendingId}/${endpoint}`), {
+        method: 'PUT',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      })
+      const payload = await response.json().catch(() => ({}))
+
+      if (!response.ok || payload?.success === false) {
+        throw new Error(payload?.error || 'Não foi possível concluir a ação.')
+      }
+
       toast({
-        title: 'Descrição obrigatória',
-        description: 'Descreva o parecer ou a resolução final.',
+        title:
+          kind === 'resolve' ? 'Pendência resolvida'
+          : kind === 'cancel' ? 'Pendência cancelada'
+          : 'Novo ajuste pedido',
+        description:
+          kind === 'resolve' ? 'A pendência foi concluída e o protocolo pode seguir.'
+          : kind === 'cancel' ? 'A pendência foi cancelada e o protocolo voltou a andar.'
+          : 'O cidadão foi avisado para enviar um novo ajuste.',
+      })
+      closeAction()
+      onRefresh()
+    } catch (error) {
+      toast({
+        title: 'Não deu certo',
+        description: error instanceof Error ? error.message : 'Não foi possível concluir a ação.',
+        variant: 'destructive',
+      })
+    } finally {
+      setSending(false)
+    }
+  }
+
+  const confirmAction = (pending: ProtocolPending) => {
+    if (!action) return
+    const text = actionText.trim()
+    if (!text) {
+      toast({
+        title: action.kind === 'resolve' ? 'Escreva o parecer' : 'Escreva o motivo',
+        description: action.kind === 'resolve'
+          ? 'Conte em poucas palavras como a pendência foi resolvida.'
+          : 'O cidadão vai ver esse motivo.',
         variant: 'destructive',
       })
       return
     }
-
-    try {
-      const response = await fetch(getFullApiUrl(`/protocols/${protocolId}/pendings/${pendingId}/resolve`), {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ resolution }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || 'Erro ao resolver pendência')
-      }
-
-      toast({
-        title: 'Pendência resolvida',
-        description: 'A pendência foi concluída e o protocolo pode seguir.',
-      })
-      setResolvingPending(null)
-      setResolution('')
-      onRefresh()
-    } catch (error) {
-      toast({
-        title: 'Erro ao resolver pendência',
-        description: error instanceof Error ? error.message : 'Não foi possível resolver a pendência.',
-        variant: 'destructive',
-      })
-    }
+    sendAction(pending.id, action.kind, text)
   }
 
-  const handleCancelPending = async (pendingId: string) => {
-    const reason = window.prompt('Informe o motivo do cancelamento da pendência:')?.trim()
-    if (!reason) return
-
-    try {
-      const response = await fetch(getFullApiUrl(`/protocols/${protocolId}/pendings/${pendingId}/cancel`), {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || 'Erro ao cancelar pendência')
-      }
-
-      toast({
-        title: 'Pendência cancelada',
-        description: 'A pendência foi cancelada com sucesso.',
-      })
-      onRefresh()
-    } catch (error) {
-      toast({
-        title: 'Erro ao cancelar pendência',
-        description: error instanceof Error ? error.message : 'Não foi possível cancelar a pendência.',
-        variant: 'destructive',
-      })
-    }
-  }
-
-  const handleReopenPending = async (pendingId: string) => {
-    const reason = window.prompt('Informe o motivo para solicitar um novo ajuste ao cidadão:')?.trim()
-    if (!reason) return
-
-    try {
-      const response = await fetch(getFullApiUrl(`/protocols/${protocolId}/pendings/${pendingId}/reopen`), {
-        method: 'PUT',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason }),
-      })
-      const payload = await response.json()
-
-      if (!response.ok || payload?.success === false) {
-        throw new Error(payload?.error || 'Erro ao reabrir pendência')
-      }
-
-      toast({
-        title: 'Pendência reaberta',
-        description: 'O cidadão foi notificado para enviar um novo ajuste.',
-      })
-      onRefresh()
-    } catch (error) {
-      toast({
-        title: 'Erro ao reabrir pendência',
-        description: error instanceof Error ? error.message : 'Não foi possível reabrir a pendência.',
-        variant: 'destructive',
-      })
-    }
+  // Arquivos que o cidadão mandou como resposta (para analisar sem trocar de aba)
+  const getSubmittedDocuments = (pending: ProtocolPending) => {
+    const metadata = ((pending as any).metadata || {}) as Record<string, any>
+    const items = Array.isArray(metadata.submittedDocuments) ? metadata.submittedDocuments : []
+    return items.filter((item: any) => item && typeof item.id === 'string') as Array<{
+      id: string
+      documentType?: string
+      fileName?: string
+    }>
   }
 
   const renderPendingCard = (pending: ProtocolPending, mode: 'open' | 'review' | 'closed') => (
@@ -216,6 +199,27 @@ export function ProtocolPendingsTab({
               </div>
             )}
 
+            {mode === 'review' && getSubmittedDocuments(pending).length > 0 && (
+              <div className="rounded-md border bg-white/80 p-3 text-sm">
+                <p className="font-medium text-foreground">Arquivos enviados pelo cidadão</p>
+                <ul className="mt-2 space-y-1">
+                  {getSubmittedDocuments(pending).map((document) => (
+                    <li key={document.id}>
+                      <a
+                        href={getFullApiUrl(`/protocols/${protocolId}/documents/${document.id}/download?inline=true`)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-blue-700 hover:underline"
+                      >
+                        <FileText className="h-3.5 w-3.5" />
+                        {document.documentType || document.fileName || 'Documento'}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
             {pending.reviewNotes && (
               <div className="rounded-md border border-amber-200 bg-amber-50 p-3 text-sm">
                 <p className="font-medium text-amber-900">Observação da análise</p>
@@ -225,35 +229,55 @@ export function ProtocolPendingsTab({
           </div>
 
           <div className="flex w-full flex-col gap-2 xl:ml-4 xl:max-w-xs">
-            {resolvingPending === pending.id ? (
+            {action?.pendingId === pending.id ? (
               <>
+                <p className="text-sm font-medium">
+                  {action.kind === 'resolve'
+                    ? mode === 'review'
+                      ? getSubmittedDocuments(pending).length > 0
+                        ? 'Aprovar a resposta (os arquivos enviados serão aprovados)'
+                        : 'Aprovar a resposta'
+                      : 'Resolver pendência'
+                    : action.kind === 'cancel'
+                      ? 'Cancelar pendência'
+                      : 'Pedir novo ajuste ao cidadão'}
+                </p>
                 <Textarea
-                  placeholder={mode === 'review' ? 'Informe o parecer da análise...' : 'Descreva como a pendência foi resolvida...'}
-                  value={resolution}
-                  onChange={(e) => setResolution(e.target.value)}
+                  autoFocus
+                  placeholder={
+                    action.kind === 'resolve'
+                      ? 'Escreva o parecer...'
+                      : action.kind === 'cancel'
+                        ? 'Por que a pendência não é mais necessária?'
+                        : 'O que o cidadão precisa corrigir ou enviar de novo?'
+                  }
+                  value={actionText}
+                  onChange={(e) => setActionText(e.target.value)}
                   rows={3}
                   className="text-sm"
                 />
                 <div className="flex gap-2">
-                  <Button size="sm" onClick={() => handleResolvePending(pending.id)}>Confirmar</Button>
-                  <Button size="sm" variant="outline" onClick={() => { setResolvingPending(null); setResolution('') }}>Fechar</Button>
+                  <Button size="sm" disabled={sending} onClick={() => confirmAction(pending)}>
+                    {sending ? 'Enviando...' : 'Confirmar'}
+                  </Button>
+                  <Button size="sm" variant="outline" disabled={sending} onClick={closeAction}>Voltar</Button>
                 </div>
               </>
             ) : (
               <div className="flex flex-wrap gap-2 xl:justify-end">
                 {(mode === 'open' || mode === 'review') && (
-                  <Button size="sm" variant="outline" onClick={() => setResolvingPending(pending.id)}>
-                    {mode === 'review' ? 'Concluir análise' : 'Resolver'}
+                  <Button size="sm" variant="outline" onClick={() => openAction(pending.id, 'resolve')}>
+                    {mode === 'review' ? 'Aprovar resposta' : 'Resolver'}
                   </Button>
                 )}
                 {mode === 'review' && (
-                  <Button size="sm" variant="outline" onClick={() => handleReopenPending(pending.id)}>
+                  <Button size="sm" variant="outline" onClick={() => openAction(pending.id, 'reopen')}>
                     <RotateCcw className="mr-2 h-3.5 w-3.5" />
-                    Reabrir
+                    Pedir novo ajuste
                   </Button>
                 )}
-                {mode === 'open' && (
-                  <Button size="sm" variant="ghost" onClick={() => handleCancelPending(pending.id)}>
+                {(mode === 'open' || mode === 'review') && (
+                  <Button size="sm" variant="ghost" onClick={() => openAction(pending.id, 'cancel')}>
                     Cancelar
                   </Button>
                 )}
@@ -271,7 +295,7 @@ export function ProtocolPendingsTab({
         <div>
           <h3 className="flex items-center gap-2 text-lg font-semibold">
             <AlertCircle className="h-5 w-5" />
-            Pendências ({openPendings.length} ativas)
+            Pendências ({openPendings.length + underReviewPendings.length} ativas)
           </h3>
           {creationContext?.stageName && (
             <p className="text-sm text-muted-foreground">

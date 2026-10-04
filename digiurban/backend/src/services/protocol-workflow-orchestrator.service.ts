@@ -85,6 +85,21 @@ function getPendingRequestedDocumentTypes(metadata: unknown): string[] {
   return Array.from(requestedTypes);
 }
 
+const TERMINAL_STATUSES: ProtocolStatus[] = [ProtocolStatus.CONCLUIDO, ProtocolStatus.CANCELADO];
+const ACTIVE_PENDING: PendingStatus[] = [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW];
+
+export { isDocumentAnalysisStage } from './pending-rules';
+import { isDocumentAnalysisStage } from './pending-rules';
+
+export type PendingCloseKind = 'RESOLVED' | 'CANCELLED' | 'EXPIRED' | 'DELETED';
+
+const CLOSE_MESSAGES: Record<PendingCloseKind, string> = {
+  RESOLVED: '✅ Pendências resolvidas! Seu protocolo voltou ao andamento normal.',
+  CANCELLED: 'A equipe cancelou a pendência. Seu protocolo voltou ao andamento normal.',
+  EXPIRED: 'O prazo da pendência terminou sem resposta. Seu protocolo voltou para a equipe decidir os próximos passos.',
+  DELETED: 'A pendência foi retirada pela equipe. Seu protocolo voltou ao andamento normal.',
+};
+
 // ============================================================================
 // CLASSE PRINCIPAL
 // ============================================================================
@@ -163,47 +178,55 @@ export class ProtocolWorkflowOrchestrator {
       }
     }
 
-    // 1. Verificar se TODOS documentos obrigatórios estão aprovados
-    const allDocsApproved = await documentService.checkAllDocumentsApproved(doc.protocolId);
+    await this.advanceIfAllDocumentsApproved(doc.protocolId, approvedBy);
+  }
 
-    if (allDocsApproved.allApproved) {
-      console.log(`✅ [Orchestrator] Todos documentos aprovados!`);
+  /**
+   * Quando TODOS os documentos obrigatórios estão aprovados: conclui a etapa
+   * de análise documental em andamento ou tira o protocolo de "Vinculado".
+   */
+  async advanceIfAllDocumentsApproved(protocolId: string, approvedBy: string) {
+    const allDocsApproved = await documentService.checkAllDocumentsApproved(protocolId);
+    if (!allDocsApproved.allApproved) return;
 
-      // 2. Encontrar stage atual de "Análise Documental"
-      const currentStage = doc.protocol.stages.find(s =>
-        s.status === StageStatus.IN_PROGRESS &&
-        (s.stageName.toLowerCase().includes('análise') ||
-         s.stageName.toLowerCase().includes('documen'))
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: protocolId },
+      include: { stages: true }
+    });
+    if (!protocol || TERMINAL_STATUSES.includes(protocol.status)) return;
+
+    console.log(`✅ [Orchestrator] Todos documentos aprovados!`);
+    let advanced = false;
+
+    const currentStage = protocol.stages.find(s =>
+      s.status === StageStatus.IN_PROGRESS && isDocumentAnalysisStage(s)
+    );
+
+    if (currentStage) {
+      console.log(`🎯 [Orchestrator] Completando stage: ${currentStage.stageName}`);
+      await stageService.completeStage(
+        currentStage.id,
+        approvedBy,
+        'APPROVED',
+        'Todos os documentos obrigatórios foram aprovados'
       );
+      advanced = true;
+    } else if (protocol.status === ProtocolStatus.VINCULADO) {
+      await protocolStatusEngine.updateStatus({
+        protocolId,
+        newStatus: ProtocolStatus.PROGRESSO,
+        actorRole: 'SYSTEM', // transição automática do orquestrador
+        actorId: approvedBy,
+        comment: 'Documentação completa e aprovada'
+      });
+      advanced = true;
+    }
 
-      if (currentStage) {
-        // 3. Completar stage automaticamente
-        console.log(`🎯 [Orchestrator] Completando stage: ${currentStage.stageName}`);
-        await stageService.completeStage(
-          currentStage.id,
-          approvedBy,
-          'APPROVED',
-          'Todos os documentos obrigatórios foram aprovados'
-        );
-
-        // 4. Isso vai disparar onStageCompleted() automaticamente
-      } else {
-        // Se não há stage de análise documental, só mudar protocolo para PROGRESSO
-        if (doc.protocol.status === ProtocolStatus.VINCULADO) {
-          await protocolStatusEngine.updateStatus({
-            protocolId: doc.protocolId,
-            newStatus: ProtocolStatus.PROGRESSO,
-            actorRole: 'SYSTEM', // transição automática do orquestrador
-            actorId: approvedBy,
-            comment: 'Documentação completa e aprovada'
-          });
-        }
-      }
-
-      // 5. Criar interação de sucesso
+    // Só avisa quando algo andou (antes repetia a cada documento aprovado)
+    if (advanced) {
       const approver = await prisma.user.findUnique({ where: { id: approvedBy }, select: { name: true } });
       await interactionService.createInteraction({
-        protocolId: doc.protocolId,
+        protocolId,
         type: 'STATUS_CHANGED',
         authorType: 'SERVER',
         authorId: approvedBy,
@@ -222,51 +245,65 @@ export class ProtocolWorkflowOrchestrator {
   async onDocumentRejected(documentId: string, rejectedBy: string, reason: string) {
     const doc = await prisma.protocolDocument.findUnique({
       where: { id: documentId },
-      select: { protocolId: true, documentType: true }
+      select: { protocolId: true, documentType: true, protocol: { select: { status: true } } }
     });
 
-    if (!doc) return;
+    if (!doc || TERMINAL_STATUSES.includes(doc.protocol.status)) return;
 
     console.log(`❌ [Orchestrator] Documento rejeitado: ${doc.documentType}`);
 
-    // 1. ✅ FASE 3: Criar pendência automática (sem duplicar rejectionReason)
-    await pendingService.createDocumentPending(
-      doc.protocolId,
-      doc.documentType,
-      rejectedBy,
-      new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-      {
-        documentId,
-        sourceType: 'DOCUMENT_REJECTION',
-      }
+    // 1. Já existe pendência pedindo este documento? Reaproveita (antes nascia
+    //    uma segunda e a primeira ficava "em análise" travando o protocolo)
+    const activeDocumentPendings = await prisma.protocolPending.findMany({
+      where: { protocolId: doc.protocolId, type: PendingType.DOCUMENT, status: { in: ACTIVE_PENDING } }
+    });
+    const related = activeDocumentPendings.filter((pending) =>
+      getPendingRequestedDocumentTypes(pending.metadata).some((requestedType) =>
+        matchDocumentType(doc.documentType, requestedType)
+      )
     );
 
-    // 2. ✅ FASE 1: Mudar protocolo para ATUALIZACAO (aguarda ação do cidadão)
-    const protocol = await prisma.protocolSimplified.findUnique({
-      where: { id: doc.protocolId }
-    });
-
-    if (protocol?.status !== ProtocolStatus.ATUALIZACAO) {
+    if (related.length > 0) {
+      for (const pending of related) {
+        if (pending.status === PendingStatus.UNDER_REVIEW) {
+          await pendingService.reopenPending(pending.id, rejectedBy, reason);
+        }
+      }
+    } else {
+      // 2. Situação vai direto para "Atualização" (aguarda o cidadão reenviar).
+      //    Antes passava por "Pendência" e logo "Atualização": dois avisos seguidos
       await protocolStatusEngine.updateStatus({
         protocolId: doc.protocolId,
-        newStatus: ProtocolStatus.ATUALIZACAO, // Aguardando cidadão reenviar documento
+        newStatus: ProtocolStatus.ATUALIZACAO,
         actorRole: 'SYSTEM',
         actorId: rejectedBy,
         comment: `Documento "${doc.documentType}" rejeitado - Aguardando reenvio`,
         reason: reason
       });
+
+      await pendingService.createDocumentPending(
+        doc.protocolId,
+        doc.documentType,
+        rejectedBy,
+        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        {
+          documentId,
+          sourceType: 'DOCUMENT_REJECTION',
+        }
+      );
     }
 
     // 3. Pausar SLA
     await this.pauseSLA(doc.protocolId, `Aguardando reenvio de documento: ${doc.documentType}`);
 
     // 4. Criar interação para cidadão
+    const rejector = await prisma.user.findUnique({ where: { id: rejectedBy }, select: { name: true } });
     await interactionService.createInteraction({
       protocolId: doc.protocolId,
       type: 'STATUS_CHANGED', // Usar tipo existente
       authorType: 'SERVER',
       authorId: rejectedBy,
-      authorName: 'Analista',
+      authorName: rejector?.name || 'Analista',
       message: `⚠️ O documento "${doc.documentType}" foi rejeitado. Motivo: ${reason}. Por favor, envie um novo documento.`,
       isInternal: false
     });
@@ -509,8 +546,13 @@ export class ProtocolWorkflowOrchestrator {
 
     console.log(`⚠️ [Orchestrator] Pendência bloqueante criada: ${pending.title}`);
 
-    // 1. Mudar protocolo para PENDENCIA (se ainda não estiver)
-    if (pending.protocol.status !== ProtocolStatus.PENDENCIA) {
+    if (TERMINAL_STATUSES.includes(pending.protocol.status)) return;
+
+    // 1. Mudar protocolo para PENDENCIA (se já não estiver aguardando o cidadão)
+    if (
+      pending.protocol.status !== ProtocolStatus.PENDENCIA &&
+      pending.protocol.status !== ProtocolStatus.ATUALIZACAO
+    ) {
       await protocolStatusEngine.updateStatus({
         protocolId: pending.protocolId,
         newStatus: ProtocolStatus.PENDENCIA,
@@ -533,57 +575,76 @@ export class ProtocolWorkflowOrchestrator {
   async onPendingResolved(pendingId: string, resolvedBy: string) {
     const pending = await prisma.protocolPending.findUnique({
       where: { id: pendingId },
-      select: { protocolId: true, blocksProgress: true, title: true }
+      select: { protocolId: true, blocksProgress: true }
     });
+    if (!pending) return;
 
-    if (!pending || !pending.blocksProgress) return;
+    await this.onPendingClosed({ ...pending, pendingId, actorId: resolvedBy, kind: 'RESOLVED' });
+  }
 
-    console.log(`✅ [Orchestrator] Pendência resolvida: ${pending.title}`);
+  /**
+   * Pendência fechada de QUALQUER jeito (resolvida, cancelada, expirada,
+   * apagada). Se era a última que travava, o protocolo volta ao andamento e o
+   * prazo é retomado. Antes só a resolução fazia isso: cancelar ou expirar
+   * deixava o protocolo parado em "Pendência" com o prazo pausado para sempre.
+   */
+  async onPendingClosed(input: {
+    protocolId: string;
+    pendingId: string;
+    blocksProgress: boolean;
+    actorId: string;
+    kind: PendingCloseKind;
+  }) {
+    if (!input.blocksProgress) return;
 
-    // 1. Verificar se ainda há outras pendências bloqueantes
     const otherBlockers = await prisma.protocolPending.count({
       where: {
-        protocolId: pending.protocolId,
-        id: { not: pendingId },
+        protocolId: input.protocolId,
+        id: { not: input.pendingId },
         blocksProgress: true,
-        status: { in: [PendingStatus.OPEN, PendingStatus.IN_PROGRESS, PendingStatus.UNDER_REVIEW] }
+        status: { in: ACTIVE_PENDING }
       }
     });
+    if (otherBlockers > 0) return;
 
-    if (otherBlockers === 0) {
-      console.log(`✅ [Orchestrator] Todas pendências resolvidas! Retomando workflow.`);
+    const protocol = await prisma.protocolSimplified.findUnique({
+      where: { id: input.protocolId },
+      select: { status: true }
+    });
+    if (!protocol || TERMINAL_STATUSES.includes(protocol.status)) return;
 
-      // 2. Voltar protocolo para PROGRESSO
+    console.log(`✅ [Orchestrator] Nenhuma pendência travando (${input.kind}). Retomando workflow.`);
+
+    if (protocol.status === ProtocolStatus.PENDENCIA || protocol.status === ProtocolStatus.ATUALIZACAO) {
+      // o motor de status também retoma o prazo ao entrar em PROGRESSO
       await protocolStatusEngine.updateStatus({
-        protocolId: pending.protocolId,
+        protocolId: input.protocolId,
         newStatus: ProtocolStatus.PROGRESSO,
         actorRole: 'SYSTEM', // transição automática do orquestrador
-        actorId: resolvedBy,
-        comment: 'Pendências resolvidas, protocolo retomado',
-        metadata: { pendingId }
-      });
-
-      // 3. Retomar SLA
-      await this.resumeSLA(pending.protocolId);
-
-      // 4. Verificar se stage atual pode ser iniciada/continuada
-      const currentStage = await stageService.getCurrentStage(pending.protocolId);
-      if (currentStage && currentStage.status === StageStatus.PENDING) {
-        await stageService.startStage(currentStage.id, resolvedBy);
-      }
-
-      // 5. Notificar
-      const resolver = await prisma.user.findUnique({ where: { id: resolvedBy }, select: { name: true } });
-      await interactionService.createInteraction({
-        protocolId: pending.protocolId,
-        type: 'STATUS_CHANGED',
-        authorType: 'SERVER',
-        authorId: resolvedBy,
-        authorName: resolver?.name || 'Servidor',
-        message: '✅ Pendências resolvidas! Seu protocolo voltou ao andamento normal.',
-        isInternal: false
+        actorId: input.actorId,
+        comment: input.kind === 'EXPIRED'
+          ? 'Pendência encerrada por falta de resposta, protocolo retomado'
+          : 'Pendências resolvidas, protocolo retomado',
+        metadata: { pendingId: input.pendingId }
       });
     }
+    await this.resumeSLA(input.protocolId);
+
+    const currentStage = await stageService.getCurrentStage(input.protocolId);
+    if (currentStage && currentStage.status === StageStatus.PENDING) {
+      await stageService.startStage(currentStage.id, input.actorId);
+    }
+
+    const actor = await prisma.user.findUnique({ where: { id: input.actorId }, select: { name: true } });
+    await interactionService.createInteraction({
+      protocolId: input.protocolId,
+      type: 'STATUS_CHANGED',
+      authorType: actor ? 'SERVER' : 'SYSTEM',
+      authorId: actor ? input.actorId : undefined,
+      authorName: actor?.name || 'Sistema',
+      message: CLOSE_MESSAGES[input.kind],
+      isInternal: false
+    });
   }
 
   /**
@@ -706,31 +767,9 @@ export class ProtocolWorkflowOrchestrator {
   }
 
   private async resumeSLA(protocolId: string) {
-    const sla = await prisma.protocolSLA.findUnique({
-      where: { protocolId }
-    });
-
-    if (!sla || !sla.isPaused) return;
-
-    const pausedDays = Math.floor(
-      (Date.now() - sla.pausedAt!.getTime()) / (1000 * 60 * 60 * 24)
-    );
-
-    await prisma.protocolSLA.update({
-      where: { protocolId },
-      data: {
-        isPaused: false,
-        pausedAt: null,
-        pausedReason: null,
-        totalPausedDays: sla.totalPausedDays + pausedDays,
-        // Estender prazo final
-        expectedEndDate: new Date(
-          sla.expectedEndDate.getTime() + pausedDays * 24 * 60 * 60 * 1000
-        )
-      }
-    });
-
-    console.log(`▶️ [Orchestrator] SLA retomado (pausado por ${pausedDays} dias)`);
+    if (await slaService.resumePausedSla(protocolId)) {
+      console.log(`▶️ [Orchestrator] SLA retomado`);
+    }
   }
 
   private async recalculateSLA(protocolId: string) {

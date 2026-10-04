@@ -352,6 +352,8 @@ Substitui o padrão "módulo-por-serviço" (metadados hardcoded em `MANAGEMENT_C
 - Prisma `groupBy` não suporta nested relations — usar `_count` ou aggregation
 - CSV export precisa de UTF-8 BOM (`\uFEFF`) para Excel
 - `ProtocolEvaluationSimplified` não tem `evaluatedBy` — só `protocolId`, `rating`, `comment`, `wouldRecommend`
+- **Pendências**: toda forma de fechar (resolver, cancelar, expirar, apagar) passa por `workflowOrchestrator.onPendingClosed()` — destrava o protocolo e retoma o prazo. Encerrar o protocolo (CONCLUIDO/CANCELADO) fecha as pendências abertas no motor de status; entrar em PROGRESSO retoma o SLA pausado (`resumePausedSla`). Regras puras (prazo em Brasília, lembrete uma vez por tipo) em `services/pending-rules.ts`; resposta do cidadão (portal E bot) em `services/pending-response.service.ts`
+- **Documentos**: reenvio guarda o envio anterior em `ProtocolDocumentVersion` (o registro em `protocol_documents` é sempre o atual; `previousDocId` não é mais usado). Aprovar a resposta de uma pendência aprova os arquivos enviados; pedir novo ajuste os recusa. Rotas de pendência/documento do servidor checam `assertProtocolAccess` e se o item é do protocolo do endereço. Smoke: `npm run smoke:pendings` (requer banco)
 
 ### Frontend
 - Visual DigiUrban Glass (Liquid Glass): classes `lg-*` em `app/liquid-glass.css`, componentes em `components/liquid-glass/`; vidro SÓ na navegação; tema via `useLgThemeScope()` no layout persistente do painel + `THEME_BOOT_SCRIPT`; modo escuro das cores fixas do Tailwind vem do tradutor no fim do CSS (não precisa de `dark:` por tela). Espaçamento da Inter só fora da Apple via `html:not([data-font="sf"])` (marcado pelo boot script). Fonte SF/SF Symbols da Apple NÃO podem ser embutidas

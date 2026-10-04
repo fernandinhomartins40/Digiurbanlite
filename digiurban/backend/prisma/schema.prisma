@@ -1300,11 +1300,45 @@ model ProtocolDocument {
   updatedAt DateTime @updatedAt
 
   protocol ProtocolSimplified @relation(fields: [protocolId], references: [id], onDelete: Cascade)
+  versions ProtocolDocumentVersion[]
 
   @@index([protocolId, documentType])
   @@index([protocolId])
   @@index([tenantId])
   @@map("protocol_documents")
+}
+
+// Envios anteriores de um documento (o registro em protocol_documents é sempre
+// o envio atual). Antes o reenvio sobrescrevia o arquivo recusado e a equipe
+// perdia o histórico do que foi analisado.
+model ProtocolDocumentVersion {
+  id         String  @id @default(cuid())
+  tenantId   String?
+  documentId String
+  protocolId String
+  version    Int
+
+  fileName String?
+  fileUrl  String?
+  fileSize Int?
+  mimeType String?
+  status   DocumentStatus
+
+  uploadedAt      DateTime?
+  uploadedBy      String?
+  validatedAt     DateTime?
+  validatedBy     String?
+  rejectedAt      DateTime?
+  rejectionReason String?
+
+  archivedAt DateTime @default(now())
+
+  document ProtocolDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@index([documentId, version])
+  @@index([protocolId])
+  @@index([tenantId])
+  @@map("protocol_document_versions")
 }
 
 enum DocumentStatus {

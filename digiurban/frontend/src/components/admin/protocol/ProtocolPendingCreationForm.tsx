@@ -1,5 +1,7 @@
 'use client'
 
+import { format } from 'date-fns'
+
 import { useEffect, useState } from 'react'
 import { AlertCircle, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
@@ -440,7 +442,9 @@ export function ProtocolPendingCreationForm({
       type: draft.type,
       title: draft.title.trim(),
       description: draft.description.trim(),
-      dueDate: draft.dueDate ? new Date(draft.dueDate).toISOString() : undefined,
+      // só a data: o servidor considera o fim do dia no horário de Brasília
+      // (new Date('AAAA-MM-DD') virava 21h do dia anterior e o prazo saía um dia antes)
+      dueDate: draft.dueDate || undefined,
       blocksProgress: draft.blocksProgress,
       stageId: creationContext?.stageId,
       requiresReview: draft.requiresReview,
@@ -598,7 +602,7 @@ export function ProtocolPendingCreationForm({
 
         <div className="space-y-2">
           <Label>Prazo</Label>
-          <Input type="date" value={draft.dueDate} onChange={(e) => setDraft((prev) => ({ ...prev, dueDate: e.target.value }))} />
+          <Input type="date" min={format(new Date(), 'yyyy-MM-dd')} value={draft.dueDate} onChange={(e) => setDraft((prev) => ({ ...prev, dueDate: e.target.value }))} />
         </div>
       </div>
 

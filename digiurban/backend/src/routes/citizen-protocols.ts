@@ -21,6 +21,12 @@ import {
   uploadDocument as uploadProtocolDocument,
 } from '../services/protocol-document.service';
 import * as pendingService from '../services/protocol-pending.service';
+import {
+  PendingResponseError,
+  loadAnswerablePending,
+  submitPendingDocuments,
+  submitPendingText,
+} from '../services/pending-response.service';
 import * as dataFieldService from '../services/protocol-data-field.service';
 import fs from 'fs';
 import path from 'path';
@@ -133,295 +139,16 @@ async function createPendingDocumentsForProtocol(
   }
 }
 
-function parseCitizenResolutionInput(rawResolution: unknown) {
-  if (typeof rawResolution !== 'string') {
-    return { text: '', payload: null as Record<string, any> | null };
-  }
-
-  const trimmed = rawResolution.trim();
-  if (!trimmed) {
-    return { text: '', payload: null as Record<string, any> | null };
-  }
-
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
-      return { text: trimmed, payload: parsed as Record<string, any> };
-    }
-  } catch {
-    // Segue como texto simples
-  }
-
-  return { text: trimmed, payload: null as Record<string, any> | null };
-}
-
 function normalizeCitizenPendingResponse(pending: any) {
   return pendingService.serializePendingForCitizen(pending);
 }
 
-function getPendingFieldRequests(pending: any) {
-  const metadata = pending?.metadata && typeof pending.metadata === 'object'
-    ? pending.metadata as Record<string, any>
-    : {};
-
-  if (Array.isArray(metadata.fields) && metadata.fields.length > 0) {
-    return metadata.fields.map((field: any) => ({
-      fieldId: typeof field?.id === 'string' ? field.id : undefined,
-      fieldKey: typeof field?.key === 'string' ? field.key : undefined,
-      fieldLabel: typeof field?.label === 'string' ? field.label : undefined,
-      fieldType: typeof field?.type === 'string' ? field.type : undefined,
-      required: field?.required !== false,
-    }));
+function sendPendingError(res: any, error: any, fallback: string) {
+  if (error instanceof PendingResponseError) {
+    return res.status(error.statusCode).json({ success: false, error: error.message });
   }
-
-  if (metadata.fieldId || metadata.fieldKey || metadata.fieldLabel) {
-    return [{
-      fieldId: typeof metadata.fieldId === 'string' ? metadata.fieldId : undefined,
-      fieldKey: typeof metadata.fieldKey === 'string' ? metadata.fieldKey : undefined,
-      fieldLabel: typeof metadata.fieldLabel === 'string' ? metadata.fieldLabel : undefined,
-      fieldType: typeof metadata.fieldType === 'string' ? metadata.fieldType : undefined,
-      required: true,
-    }];
-  }
-
-  return [];
-}
-
-function getPendingDocumentRequests(pending: any) {
-  const metadata = pending?.metadata && typeof pending.metadata === 'object'
-    ? pending.metadata as Record<string, any>
-    : {};
-
-  if (Array.isArray(metadata.documentRequests) && metadata.documentRequests.length > 0) {
-    return metadata.documentRequests.map((document: any, index: number) => ({
-      id: String(document?.id || document?.documentId || document?.documentType || document?.name || `document-${index}`),
-      documentId: typeof document?.documentId === 'string' ? document.documentId : undefined,
-      documentType: String(document?.documentType || document?.name || pending.title || `Documento ${index + 1}`),
-      label: String(document?.label || document?.name || document?.documentType || pending.title || `Documento ${index + 1}`),
-      required: document?.required !== false,
-    }));
-  }
-
-  return [{
-    id: String(metadata.documentId || metadata.documentType || pending.id),
-    documentId: typeof metadata.documentId === 'string' ? metadata.documentId : undefined,
-    documentType: String(metadata.documentType || pending.title || 'DOCUMENTO_PENDENCIA'),
-    label: String(metadata.documentLabel || metadata.documentType || pending.title || 'Documento solicitado'),
-    required: true,
-  }];
-}
-
-function parsePendingUploadMetadata(rawMetadata: unknown, filesCount: number) {
-  if (!rawMetadata || typeof rawMetadata !== 'string') {
-    return [];
-  }
-
-  try {
-    const parsed = JSON.parse(rawMetadata);
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.slice(0, filesCount).map((item: any) => ({
-      documentId: item?.docId || item?.documentId || undefined,
-      documentType: item?.documentType || item?.name || undefined,
-      required: item?.required !== false,
-    }));
-  } catch {
-    return [];
-  }
-}
-
-async function resolveCitizenPendingText(
-  protocolId: string,
-  pending: any,
-  citizenId: string,
-  resolution: string
-) {
-  const metadata = pending?.metadata && typeof pending.metadata === 'object'
-    ? pending.metadata as Record<string, any>
-    : {};
-  const { text, payload } = parseCitizenResolutionInput(resolution);
-
-  const fieldRequests = getPendingFieldRequests(pending);
-  if (fieldRequests.length > 0) {
-    const submittedFields = fieldRequests.map((field, index) => {
-      const candidateValue =
-        typeof payload?.[String(field.fieldId || '')] === 'string' ? payload?.[String(field.fieldId || '')] :
-        typeof payload?.[String(field.fieldKey || '')] === 'string' ? payload?.[String(field.fieldKey || '')] :
-        fieldRequests.length === 1 && typeof payload?.value === 'string' ? payload.value :
-        fieldRequests.length === 1 ? text :
-        '';
-
-      return {
-        ...field,
-        value: candidateValue?.trim(),
-        index,
-      };
-    });
-
-    const missingFields = submittedFields.filter((field) => field.required !== false && !field.value);
-    if (missingFields.length > 0) {
-      throw new Error(`Informe os dados solicitados: ${missingFields.map((field) => field.fieldLabel || field.fieldKey || `campo ${field.index + 1}`).join(', ')}`);
-    }
-
-    await dataFieldService.applyPendingFieldResponses(
-      submittedFields
-        .filter((field) => field.value)
-        .map((field) => ({
-          protocolId,
-          fieldId: field.fieldId,
-          fieldKey: field.fieldKey,
-          fieldLabel: field.fieldLabel,
-          fieldType: field.fieldType,
-          value: String(field.value),
-          correctedBy: citizenId,
-          required: field.required,
-        }))
-    );
-
-    const summary = submittedFields
-      .filter((field) => field.value)
-      .map((field) => `${field.fieldLabel || field.fieldKey || 'Campo'}: ${field.value}`)
-      .join('\n');
-
-    await pendingService.submitPendingResponse(pending.id, citizenId, summary, {
-      fields: submittedFields.map((field) => ({
-        id: field.fieldId || field.fieldKey,
-        key: field.fieldKey || field.fieldId,
-        label: field.fieldLabel || field.fieldKey || 'Campo',
-        type: field.fieldType || 'text',
-        required: field.required !== false,
-      })),
-      submittedFields: submittedFields
-        .filter((field) => field.value)
-        .map((field) => ({
-          id: field.fieldId || field.fieldKey,
-          key: field.fieldKey || field.fieldId,
-          label: field.fieldLabel || field.fieldKey || 'Campo',
-          value: field.value,
-        })),
-    });
-
-    return prisma.protocolPending.findUnique({ where: { id: pending.id } });
-  }
-
-  if (!text) {
-    throw new Error('Resolucao e obrigatoria.');
-  }
-
-  await pendingService.submitPendingResponse(pending.id, citizenId, text);
-  return prisma.protocolPending.findUnique({ where: { id: pending.id } });
-}
-
-async function resolveCitizenPendingWithDocument(
-  protocolId: string,
-  pending: any,
-  citizenId: string,
-  files: Express.Multer.File[],
-  rawUploadMetadata?: unknown
-) {
-  if (pending.type !== 'DOCUMENT') {
-    throw new Error('Esta pendencia nao aceita envio de documento.');
-  }
-
-  if (!Array.isArray(files) || files.length === 0) {
-    throw new Error('Documento é obrigatório.');
-  }
-
-  const requestedDocuments = getPendingDocumentRequests(pending);
-  const uploadMetadata = parsePendingUploadMetadata(rawUploadMetadata, files.length);
-
-  const mapping = mapUploadedFilesToDocuments(
-    files.map((file, index) => ({
-      documentId: sanitizeDocumentId(
-        String(
-          uploadMetadata[index]?.documentId ||
-          uploadMetadata[index]?.documentType ||
-          file.originalname
-        )
-      ),
-      name: file.originalname,
-    })),
-    requestedDocuments.map((document) => ({
-      id: sanitizeDocumentId(document.id || document.documentType || document.label),
-      name: document.label,
-      required: document.required !== false,
-    }))
-  );
-
-  if (mapping.missingRequired.length > 0) {
-    throw new Error(`Ainda faltam documentos obrigatórios: ${mapping.missingRequired.join(', ')}`);
-  }
-
-  const uploadedDocuments: Array<{ id: string; documentType: string; fileName: string }> = [];
-  const protocolDir = ensureProtocolDir(protocolId);
-
-  for (const requestedDocument of requestedDocuments) {
-    const requiredId = sanitizeDocumentId(requestedDocument.id || requestedDocument.documentType || requestedDocument.label);
-    const fileIndex = mapping.mapped.get(requiredId);
-    if (fileIndex === undefined) {
-      continue;
-    }
-
-    const file = files[fileIndex];
-    const newPath = path.join(protocolDir, file.filename);
-    moveUploadedFileSync(file.path, newPath);
-
-    let targetDocumentId = requestedDocument.documentId;
-    if (!targetDocumentId) {
-      const existingDocument = await prisma.protocolDocument.findFirst({
-        where: {
-          protocolId,
-          documentType: requestedDocument.documentType,
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
-      });
-
-      if (existingDocument) {
-        targetDocumentId = existingDocument.id;
-      } else {
-        const created = await prisma.protocolDocument.create({
-          data: {
-            protocolId,
-            documentType: requestedDocument.documentType,
-            isRequired: requestedDocument.required !== false,
-            status: DocumentStatus.PENDING,
-          },
-        });
-        targetDocumentId = created.id;
-      }
-    }
-
-    const updatedDocument = await uploadProtocolDocument(targetDocumentId, {
-      fileName: file.originalname,
-      fileUrl: getProtocolFileUrl(protocolId, file.filename),
-      fileSize: file.size,
-      mimeType: file.mimetype,
-      uploadedBy: citizenId,
-    }, {
-      skipPendingSubmission: true,
-    });
-
-    uploadedDocuments.push({
-      id: updatedDocument.id,
-      documentType: updatedDocument.documentType,
-      fileName: updatedDocument.fileName || file.originalname,
-    });
-  }
-
-  const resolutionText = uploadedDocuments.length === 1
-    ? `Documento enviado: ${uploadedDocuments[0].documentType}`
-    : `Documentos enviados: ${uploadedDocuments.map((document) => document.documentType).join(', ')}`;
-
-  await pendingService.submitPendingResponse(pending.id, citizenId, resolutionText, {
-    documentRequests: requestedDocuments,
-    submittedDocuments: uploadedDocuments,
-  });
-
-  return prisma.protocolPending.findUnique({ where: { id: pending.id } });
+  console.error(fallback, error);
+  return res.status(500).json({ success: false, error: fallback });
 }
 
 // Middleware de autenticação do cidadão
@@ -1239,43 +966,15 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
       });
     }
 
-    const pending = await prisma.protocolPending.findFirst({
-      where: { id: pendingId, protocolId }
-    });
-
-    if (!pending) {
-      return res.status(404).json({
-        success: false,
-        error: 'Pendência não encontrada'
-      });
-    }
-
-    if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
-      return res.status(400).json({
-        success: false,
-        error: pending.status === 'UNDER_REVIEW'
-          ? 'A pendência já recebeu sua resposta e aguarda análise da equipe'
-          : 'Pendência já foi resolvida ou cancelada'
-      });
-    }
-
-    const updatedPending = await resolveCitizenPendingText(
-      protocolId,
-      pending,
-      citizenId,
-      String(resolution)
-    );
+    const pending = await loadAnswerablePending(protocolId, pendingId);
+    const updatedPending = await submitPendingText(protocolId, pending, citizenId, String(resolution));
 
     return res.json({
       success: true,
       data: normalizeCitizenPendingResponse(updatedPending)
     });
   } catch (error: any) {
-    console.error('Error resolving pending:', error);
-    return res.status(500).json({
-      success: false,
-      error: error?.message || 'Erro ao resolver pendência'
-    });
+    return sendPendingError(res, error, 'Erro ao resolver pendência');
   }
 });
 
@@ -1284,12 +983,15 @@ router.patch('/:id/pendings/:pendingId/resolve', async (req, res) => {
  * Resolver uma pendência enviando um documento
  */
 router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.any(), async (req, res) => {
+  const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
+  const discard = () => files.forEach((file) => fs.promises.unlink(file.path).catch(() => undefined));
+
   try {
     const citizenId = (req as any).citizen?.id;
     const { id: protocolId, pendingId } = req.params;
-    const files = Array.isArray(req.files) ? req.files as Express.Multer.File[] : [];
 
     if (!citizenId) {
+      discard();
       return res.status(401).json({ error: 'Cidadão não autenticado' });
     }
 
@@ -1302,33 +1004,19 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.any(), asy
     });
 
     if (!protocol) {
+      discard();
       return res.status(404).json({
         success: false,
         error: 'Protocolo não encontrado'
       });
     }
 
-    const pending = await prisma.protocolPending.findFirst({
-      where: { id: pendingId, protocolId }
+    const pending = await loadAnswerablePending(protocolId, pendingId).catch((error) => {
+      discard();
+      throw error;
     });
 
-    if (!pending) {
-      return res.status(404).json({
-        success: false,
-        error: 'Pendência não encontrada'
-      });
-    }
-
-    if (!['OPEN', 'IN_PROGRESS'].includes(pending.status)) {
-      return res.status(400).json({
-        success: false,
-        error: pending.status === 'UNDER_REVIEW'
-          ? 'A pendência já recebeu sua resposta e aguarda análise da equipe'
-          : 'Pendência já foi resolvida ou cancelada'
-      });
-    }
-
-    const updatedPending = await resolveCitizenPendingWithDocument(
+    const updatedPending = await submitPendingDocuments(
       protocolId,
       pending,
       citizenId,
@@ -1341,11 +1029,7 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.any(), asy
       data: normalizeCitizenPendingResponse(updatedPending)
     });
   } catch (error: any) {
-    console.error('Error resolving pending with document:', error);
-    return res.status(500).json({
-      success: false,
-      error: error?.message || 'Erro ao enviar documento'
-    });
+    return sendPendingError(res, error, 'Erro ao enviar documento');
   }
 });
 
@@ -1360,7 +1044,11 @@ router.patch('/:id/pendings/:pendingId/resolve-with-document', upload.any(), asy
 router.get('/:id/citizen-links', async (req, res) => {
   try {
     const { id: protocolId } = req.params;
-    const citizenId = (req as any).citizenId;
+    const citizenId = (req as any).citizen?.id || (req as any).citizenId;
+
+    if (!citizenId) {
+      return res.status(401).json({ error: 'Cidadão não autenticado' });
+    }
 
     // Verificar se o protocolo pertence ao cidadão logado
     const protocol = await prisma.protocolSimplified.findFirst({
