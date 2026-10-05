@@ -121,6 +121,10 @@ export function startMailWorker() {
     limiter: { max: 30, duration: 60_000 },
     settings: { backoffStrategy: backoff },
   });
+  // modelos padrão no visual atual (não mexe no que foi editado no painel)
+  import('../lib/email/TransactionalEmailService')
+    .then(({ transactionalEmailService }) => runAsPlatform(async () => transactionalEmailService.createDefaultTemplates('')))
+    .catch((error) => logger.warn('E-mail transacional: modelos padrão não atualizados', { error: error?.message }));
   worker.on('failed', (job, error) => {
     if (job) logger.warn('E-mail transacional: tentativa falhou', { emailId: job.data?.emailId, attempt: job.attemptsMade, error: error?.message });
   });

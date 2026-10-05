@@ -25,6 +25,7 @@ import {
 } from '../services/mail/mail-settings.service';
 import { isValidEmail, mailQueueCounts, sendMail } from '../services/mail/mailer';
 import { verifyVeloMailSignature } from '../services/mail/velomail.client';
+import { mailParagraph, renderMailLayout } from '../services/mail/layout';
 import { logAuditEvent } from '../utils/audit-logger';
 
 // ---------------------------------------------------------------------------
@@ -199,7 +200,13 @@ platformMailRouter.post('/test', PLATFORM_ADMIN, async (req, res) => {
     priority: 'critical',
     kind: 'platform-test',
     subject: 'Teste de envio — DigiUrban',
-    html: '<p>Este é um e-mail de teste do DigiUrban.</p><p>Se chegou na caixa de entrada (e não no spam), o envio pelo VeloMail está funcionando.</p>',
+    html: renderMailLayout({
+      title: 'O envio de e-mails está funcionando',
+      preheader: 'E-mail de teste do DigiUrban',
+      bodyHtml:
+        mailParagraph('Este é um <strong>e-mail de teste</strong> do DigiUrban.') +
+        mailParagraph('Se ele chegou na caixa de entrada (e não no spam), está tudo certo: avisos de protocolo, troca de senha e documentos já podem sair.'),
+    }),
   });
   audit(req, 'platform_mail_test', { to: maskEmail(to), queued: result.queued });
   res.json({ success: result.queued, ...result });

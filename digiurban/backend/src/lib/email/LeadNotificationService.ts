@@ -9,6 +9,7 @@ import {
         } from '../../types/lead';
 import { getSystemEmail, getPrimaryEmailDomain } from '../../utils/email-domain.utils';
 import { sendMail } from '../../services/mail/mailer';
+import { escapeMailHtml, mailInfoBox, mailParagraph, renderMailLayout } from '../../services/mail/layout';
 import { getPlatformMail } from '../../services/mail/mail-settings.service';
 
 export class LeadNotificationService {
@@ -38,28 +39,23 @@ export class LeadNotificationService {
       console.warn('[LEADS] "E-mail da equipe" não configurado no painel (Super-admin › E-mail) — aviso não enviado');
       return;
     }
-    const esc = (value: unknown) =>
-      String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const title = kind === 'demo' ? 'Pedido de demonstração' : 'Mensagem de contato';
-    const rows: Array<[string, unknown]> = [
-      ['Nome', lead.name],
-      ['E-mail', lead.email],
-      ['Telefone', safeStringWithDefault(lead.phone, DEFAULT_VALUES.PHONE)],
-      ['Prefeitura / empresa', safeStringWithDefault(lead.company, DEFAULT_VALUES.COMPANY)],
-      ['Cargo', safeStringWithDefault(lead.position, DEFAULT_VALUES.POSITION)],
-      ['Recebido em', lead.createdAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })],
-    ];
-    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"></head>
-<body style="font-family:Arial,Helvetica,sans-serif;color:#111827;background:#f3f4f6;padding:24px">
-  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:28px">
-    <h2 style="margin:0 0 16px">${title}</h2>
-    <table style="width:100%;border-collapse:collapse;font-size:14px">
-      ${rows.map(([label, value]) => `<tr><td style="padding:6px 8px;color:#6b7280;width:40%">${label}</td><td style="padding:6px 8px">${esc(value)}</td></tr>`).join('')}
-    </table>
-    ${lead.message ? `<p style="margin:20px 0 6px;color:#6b7280;font-size:14px">Mensagem</p><p style="margin:0;font-size:14px;white-space:pre-wrap">${esc(lead.message)}</p>` : ''}
-    <p style="margin:24px 0 0;font-size:12px;color:#9ca3af">Responda direto a este e-mail para falar com ${esc(lead.name)}.</p>
-  </div>
-</body></html>`;
+    const html = renderMailLayout({
+      title,
+      preheader: `${lead.name} — ${lead.company || lead.email}`,
+      senderName: 'Site do DigiUrban',
+      bodyHtml:
+        mailInfoBox([
+          ['Nome', lead.name],
+          ['E-mail', lead.email],
+          ['Telefone', safeStringWithDefault(lead.phone, DEFAULT_VALUES.PHONE)],
+          ['Prefeitura / empresa', safeStringWithDefault(lead.company, DEFAULT_VALUES.COMPANY)],
+          ['Cargo', safeStringWithDefault(lead.position, DEFAULT_VALUES.POSITION)],
+          ['Recebido em', lead.createdAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })],
+        ]) +
+        (lead.message ? mailParagraph(`<strong>Mensagem</strong><br>${escapeMailHtml(lead.message).replace(/\n/g, '<br>')}`) : ''),
+      footerNote: `Responda a este e-mail para falar direto com ${lead.name}.`,
+    });
 
     const result = await sendMail({
       to,

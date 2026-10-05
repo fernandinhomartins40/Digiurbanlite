@@ -15,10 +15,10 @@ import {
   generateDocumentHash
 } from '../utils/validation-code.utils';
 import { sendMail } from './mail/mailer';
+import { mailSenderName } from './mail/links';
+import { escapeMailHtml, mailInfoBox, mailParagraph, renderMailLayout } from './mail/layout';
 import { resolveUploadTenantId, getTenantUploadDir, getTenantUploadUrl } from '../config/upload';
 
-const escapeMailHtml = (value: unknown) =>
-  String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 
 // ============================================================================
@@ -602,27 +602,21 @@ export async function sendDocumentByEmail(input: SendDocumentInput) {
   }
   const fileContent = await fs.readFile(filePath);
 
-  // Montar HTML
-  const htmlContent = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #0066cc; color: white; padding: 20px; text-align: center;">
-      <h2>Documento Disponível</h2>
-    </div>
-    <div style="padding: 20px; background: #f9f9f9;">
-      <p>Olá <strong>${escapeMailHtml(recipientName)}</strong>,</p>
-      <p>${escapeMailHtml(emailMessage)}</p>
-      <p><strong>Documento:</strong> ${escapeMailHtml(doc.fileName)}</p>
-      <p>O documento está anexado a este email.</p>
-      <br>
-      <p>Atenciosamente,<br>Equipe de Atendimento</p>
-    </div>
-    <div style="text-align: center; padding: 10px; font-size: 12px; color: #666;">
-      <p>Este é um email automático, por favor não responda.</p>
-    </div>
-  </div>
-</body></html>`;
+  // Montar HTML (visual padrão dos e-mails)
+  const htmlContent = renderMailLayout({
+    title: 'Seu documento está disponível',
+    preheader: emailMessage,
+    senderName: await mailSenderName(),
+    bodyHtml:
+      mailParagraph(`Olá, <strong>${escapeMailHtml(recipientName)}</strong>!`) +
+      mailParagraph(escapeMailHtml(emailMessage)) +
+      mailInfoBox([
+        ['Protocolo', doc.protocol.number],
+        ['Serviço', doc.protocol.service.name],
+        ['Documento', doc.fileName],
+      ]) +
+      mailParagraph('O documento vai <strong>anexado</strong> a este e-mail.'),
+  });
 
   // Fila do e-mail transacional (VeloMail) — entrega com novas tentativas
   const result = await sendMail({

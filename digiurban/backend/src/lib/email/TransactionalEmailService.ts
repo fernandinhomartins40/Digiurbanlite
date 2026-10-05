@@ -1,5 +1,8 @@
 import { prisma } from '../prisma';
 import { sendMail } from '../../services/mail/mailer';
+import { mailSenderName } from '../../services/mail/links';
+import { escapeMailHtml } from '../../services/mail/layout';
+import { buildDefaultTemplates } from './default-templates';
 import {
   IEmailService,
   EmailTemplate as CentralEmailTemplate,
@@ -155,9 +158,10 @@ export class TransactionalEmailService {
         throw new Error(`Email template '${templateName}' not found`);
       }
 
-      const subject = this.processTemplate(template.subject, variables);
-      const html = this.processTemplate(template.htmlContent, variables);
-      const text = template.textContent ? this.processTemplate(template.textContent, variables) : this.convertHtmlToText(html);
+      const vars = { senderName: await mailSenderName(), ...variables } as EmailTemplateVariables;
+      const subject = this.processTemplate(template.subject, vars);
+      const html = this.processTemplate(template.htmlContent, vars, true);
+      const text = template.textContent ? this.processTemplate(template.textContent, vars) : this.convertHtmlToText(html);
 
       const result = await sendMail({
         to,
@@ -282,6 +286,7 @@ export class TransactionalEmailService {
       to: recipientEmail,
       variables: {
         recipientName,
+        subject,
         message,
         documentName: documentFileName
       },
@@ -365,15 +370,18 @@ export class TransactionalEmailService {
   /**
    * Processa template substituindo variáveis
    */
-  private processTemplate(template: string, variables: EmailTemplateVariables): string {
+  private processTemplate(template: string, variables: EmailTemplateVariables, html = false): string {
     let processed = template;
 
     for (const [key, value] of Object.entries(variables)) {
       const regex = new RegExp(`{{\\s*${key}\\s*}}`, 'g');
-      processed = processed.replace(regex, String(value));
+      // no HTML o valor entra escapado: nome ou mensagem digitada não vira código
+      const text = html ? escapeMailHtml(value) : String(value ?? '');
+      processed = processed.replace(regex, () => text);
     }
 
-    return processed;
+    // variável que não veio some, em vez de aparecer "{{assim}}" no e-mail
+    return processed.replace(/{{\s*[\w.]+\s*}}/g, '');
   }
 
   /**
@@ -396,388 +404,20 @@ export class TransactionalEmailService {
    * DIA 3: Changed parameter from tenantId to emailServerId
    */
   async createDefaultTemplates(emailServerId: string): Promise<void> {
-    const defaultTemplates: Omit<EmailTemplate, 'id'>[] = [
-      {
-        name: 'user-confirmation',
-        subject: 'Confirme seu cadastro - {{tenantName}}',
-        htmlContent: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Confirmação de Cadastro</title>
-          </head>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #007bff;">Bem-vindo ao {{tenantName}}!</h1>
-              </div>
+    const defaultTemplates = buildDefaultTemplates();
 
-              <p>Olá <strong>{{userName}}</strong>,</p>
-
-              <p>Obrigado por se cadastrar em nossa plataforma. Para confirmar seu cadastro e ativar sua conta, clique no botão abaixo:</p>
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="{{confirmationUrl}}"
-                   style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                  Confirmar Cadastro
-                </a>
-              </div>
-
-              <p>Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</p>
-              <p style="word-break: break-all; color: #666;">{{confirmationUrl}}</p>
-
-              <p>Se você não se cadastrou em nossa plataforma, pode ignorar este email com segurança.</p>
-
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-              <p style="font-size: 12px; color: #666; text-align: center;">
-                Este é um email automático, não responda.<br>
-                {{tenantName}} - Gestão Municipal Digital
-              </p>
-            </div>
-          </body>
-          </html>
-        `,
-        textContent: `
-Bem-vindo ao {{tenantName}}!
-
-Olá {{userName}},
-
-Obrigado por se cadastrar em nossa plataforma. Para confirmar seu cadastro e ativar sua conta, acesse o link abaixo:
-
-{{confirmationUrl}}
-
-Se você não se cadastrou em nossa plataforma, pode ignorar este email com segurança.
-
----
-Este é um email automático, não responda.
-{{tenantName}} - Gestão Municipal Digital
-        `,
-        variables: ['userName', 'confirmationUrl', 'tenantName'],
-        category: 'transactional'
-        },
-      {
-        name: 'password-recovery',
-        subject: 'Recuperação de senha - {{tenantName}}',
-        htmlContent: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Recuperação de Senha</title>
-          </head>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #28a745;">Recuperação de Senha</h1>
-              </div>
-
-              <p>Olá <strong>{{userName}}</strong>,</p>
-
-              <p>Você solicitou a recuperação de sua senha. Clique no botão abaixo para criar uma nova senha:</p>
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="{{recoveryUrl}}"
-                   style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                  Recuperar Senha
-                </a>
-              </div>
-
-              <p>Se o botão não funcionar, copie e cole o link abaixo no seu navegador:</p>
-              <p style="word-break: break-all; color: #666;">{{recoveryUrl}}</p>
-
-              <div style="background: #fff3cd; border: 1px solid #ffeeba; padding: 15px; border-radius: 5px; margin: 20px 0;">
-                <p style="margin: 0; color: #856404;">
-                  <strong>⚠️ Importante:</strong> Este link expira em 24 horas por segurança.
-                </p>
-              </div>
-
-              <p>Se você não solicitou esta recuperação, pode ignorar este email com segurança.</p>
-
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-              <p style="font-size: 12px; color: #666; text-align: center;">
-                Este é um email automático, não responda.<br>
-                {{tenantName}} - Gestão Municipal Digital
-              </p>
-            </div>
-          </body>
-          </html>
-        `,
-        textContent: `
-Recuperação de Senha - {{tenantName}}
-
-Olá {{userName}},
-
-Você solicitou a recuperação de sua senha. Acesse o link abaixo para criar uma nova senha:
-
-{{recoveryUrl}}
-
-IMPORTANTE: Este link expira em 24 horas por segurança.
-
-Se você não solicitou esta recuperação, pode ignorar este email com segurança.
-
----
-Este é um email automático, não responda.
-{{tenantName}} - Gestão Municipal Digital
-        `,
-        variables: ['userName', 'recoveryUrl', 'tenantName'],
-        category: 'transactional'
-        },
-      {
-        name: 'protocol-confirmation',
-        subject: 'Protocolo {{protocolNumber}} confirmado - {{tenantName}}',
-        htmlContent: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Protocolo Confirmado</title>
-          </head>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #007bff;">Protocolo Confirmado</h1>
-              </div>
-
-              <p>Olá <strong>{{citizenName}}</strong>,</p>
-
-              <p>Sua solicitação foi registrada com sucesso em nossa plataforma!</p>
-
-              <div style="background: #f8f9fa; border-left: 4px solid #007bff; padding: 20px; margin: 30px 0; border-radius: 0 5px 5px 0;">
-                <h3 style="margin: 0 0 15px 0; color: #007bff;">Detalhes do Protocolo</h3>
-                <p style="margin: 5px 0;"><strong>Número:</strong> {{protocolNumber}}</p>
-                <p style="margin: 5px 0;"><strong>Serviço:</strong> {{serviceName}}</p>
-                <p style="margin: 5px 0;"><strong>Data:</strong> {{createdAt}}</p>
-                <p style="margin: 5px 0;"><strong>Status:</strong> <span style="color: #28a745;">{{status}}</span></p>
-              </div>
-
-              <p>Você pode acompanhar o andamento do seu protocolo a qualquer momento clicando no botão abaixo:</p>
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="{{trackingUrl}}"
-                   style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                  Acompanhar Protocolo
-                </a>
-              </div>
-
-              <p>Guarde este número de protocolo para futuras consultas: <strong>{{protocolNumber}}</strong></p>
-
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-              <p style="font-size: 12px; color: #666; text-align: center;">
-                Este é um email automático, não responda.<br>
-                {{tenantName}} - Gestão Municipal Digital
-              </p>
-            </div>
-          </body>
-          </html>
-        `,
-        textContent: `
-Protocolo Confirmado - {{tenantName}}
-
-Olá {{citizenName}},
-
-Sua solicitação foi registrada com sucesso!
-
-DETALHES DO PROTOCOLO:
-- Número: {{protocolNumber}}
-- Serviço: {{serviceName}}
-- Data: {{createdAt}}
-- Status: {{status}}
-
-Acompanhe o andamento em: {{trackingUrl}}
-
-Guarde este número de protocolo: {{protocolNumber}}
-
----
-Este é um email automático, não responda.
-{{tenantName}} - Gestão Municipal Digital
-        `,
-        variables: [
-          'citizenName',
-          'protocolNumber',
-          'serviceName',
-          'createdAt',
-          'status',
-          'trackingUrl',
-          'tenantName',
-        ],
-        category: 'transactional'
-        },
-      {
-        name: 'protocol-update',
-        subject: 'Atualização no protocolo {{protocolNumber}} - {{tenantName}}',
-        htmlContent: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Atualização de Protocolo</title>
-          </head>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #ffc107;">Atualização de Protocolo</h1>
-              </div>
-
-              <p>Olá <strong>{{citizenName}}</strong>,</p>
-
-              <p>Há uma atualização no seu protocolo <strong>{{protocolNumber}}</strong>:</p>
-
-              <div style="background: #f8f9fa; border-left: 4px solid #ffc107; padding: 20px; margin: 30px 0; border-radius: 0 5px 5px 0;">
-                <h3 style="margin: 0 0 15px 0; color: #ffc107;">Status Atualizado</h3>
-                <p style="margin: 5px 0;"><strong>Serviço:</strong> {{serviceName}}</p>
-                <p style="margin: 5px 0;"><strong>Novo Status:</strong> <span style="color: #007bff;">{{status}}</span></p>
-                {{#if comment}}
-                <p style="margin: 15px 0 5px 0;"><strong>Observações:</strong></p>
-                <p style="background: #e9ecef; padding: 10px; border-radius: 5px; margin: 5px 0;">{{comment}}</p>
-                {{/if}}
-              </div>
-
-              <p>Para ver todos os detalhes e acompanhar o andamento:</p>
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="{{trackingUrl}}"
-                   style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                  Ver Detalhes
-                </a>
-              </div>
-
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-              <p style="font-size: 12px; color: #666; text-align: center;">
-                Este é um email automático, não responda.<br>
-                {{tenantName}} - Gestão Municipal Digital
-              </p>
-            </div>
-          </body>
-          </html>
-        `,
-        textContent: `
-Atualização de Protocolo - {{tenantName}}
-
-Olá {{citizenName}},
-
-Há uma atualização no seu protocolo {{protocolNumber}}:
-
-NOVO STATUS:
-- Serviço: {{serviceName}}
-- Status: {{status}}
-{{#if comment}}
-- Observações: {{comment}}
-{{/if}}
-
-Acompanhe em: {{trackingUrl}}
-
----
-Este é um email automático, não responda.
-{{tenantName}} - Gestão Municipal Digital
-        `,
-        variables: [
-          'citizenName',
-          'protocolNumber',
-          'serviceName',
-          'status',
-          'comment',
-          'trackingUrl',
-          'tenantName',
-        ],
-        category: 'transactional'
-        },
-      {
-        name: 'citizen-welcome',
-        subject: 'Bem-vindo ao {{tenantName}}!',
-        htmlContent: `
-          <!DOCTYPE html>
-          <html>
-          <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Bem-vindo</title>
-          </head>
-          <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-            <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-              <div style="text-align: center; margin-bottom: 30px;">
-                <h1 style="color: #007bff;">Bem-vindo ao {{tenantName}}!</h1>
-              </div>
-
-              <p>Olá <strong>{{citizenName}}</strong>,</p>
-
-              <p>É um prazer recebê-lo em nossa plataforma! Seu cadastro foi realizado com sucesso.</p>
-
-              <div style="background: #f8f9fa; border-left: 4px solid #28a745; padding: 20px; margin: 30px 0; border-radius: 0 5px 5px 0;">
-                <h3 style="margin: 0 0 15px 0; color: #28a745;">O que você pode fazer agora?</h3>
-                <ul style="margin: 0; padding-left: 20px;">
-                  <li>Acessar serviços públicos digitais</li>
-                  <li>Abrir protocolos e acompanhar solicitações</li>
-                  <li>Consultar informações municipais</li>
-                  <li>Receber notificações importantes</li>
-                </ul>
-              </div>
-
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="{{siteUrl}}"
-                   style="background: #007bff; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; display: inline-block; font-weight: bold;">
-                  Acessar Portal
-                </a>
-              </div>
-
-              <p>Se precisar de ajuda, nossa equipe está à disposição em <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
-
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-
-              <p style="font-size: 12px; color: #666; text-align: center;">
-                Este é um email automático, não responda.<br>
-                {{tenantName}} - Gestão Municipal Digital
-              </p>
-            </div>
-          </body>
-          </html>
-        `,
-        textContent: `
-Bem-vindo ao {{tenantName}}!
-
-Olá {{citizenName}},
-
-É um prazer recebê-lo em nossa plataforma! Seu cadastro foi realizado com sucesso.
-
-O QUE VOCÊ PODE FAZER AGORA?
-- Acessar serviços públicos digitais
-- Abrir protocolos e acompanhar solicitações
-- Consultar informações municipais
-- Receber notificações importantes
-
-Acesse: {{siteUrl}}
-
-Se precisar de ajuda: {{supportEmail}}
-
----
-Este é um email automático, não responda.
-{{tenantName}} - Gestão Municipal Digital
-        `,
-        variables: ['citizenName', 'tenantName', 'siteName', 'siteUrl', 'supportEmail'],
-        category: 'transactional'
-        },
-    ];
-
-    // Single tenant: Criar templates no banco
     for (const template of defaultTemplates) {
-      await prisma.emailTemplate.upsert({
-        where: {
-          name: template.name
-        },
-        update: {},
-        create: {
-          ...template,
-          variables: template.variables || []
-        }
-      });
+      const existing = await prisma.emailTemplate.findFirst({ where: { name: template.name } });
+      if (!existing) {
+        await prisma.emailTemplate.create({ data: { ...template } });
+        continue;
+      }
+      // Modelo que ninguém editou no painel ganha o visual novo; o que foi
+      // personalizado fica como está.
+      const neverEdited = Math.abs(existing.updatedAt.getTime() - existing.createdAt.getTime()) < 5000;
+      if (neverEdited && existing.htmlContent !== template.htmlContent) {
+        await prisma.emailTemplate.update({ where: { id: existing.id }, data: { ...template } });
+      }
     }
   }
 

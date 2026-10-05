@@ -22,6 +22,8 @@ import { uploadDocuments } from '../config/upload';
 import path from 'path';
 import fs from 'fs/promises';
 import { sendMail } from '../services/mail/mailer';
+import { mailSenderName } from '../services/mail/links';
+import { escapeMailHtml, mailInfoBox, mailParagraph, renderMailLayout } from '../services/mail/layout';
 
 const router = Router();
 // Otimização VPS (docs/VPS-OPTIMIZATION-AUDIT.md, P0-2): usar o singleton de
@@ -29,8 +31,6 @@ const router = Router();
 // PostgreSQL) e NÃO passava pela tenantExtension (furo de isolamento multi-tenant).
 import { prisma } from '../lib/prisma';
 
-const escapeMailHtml = (value: unknown) =>
-  String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // ============================================================================
 // CRUD DE TEMPLATES (ADMIN+)
@@ -835,25 +835,23 @@ router.post('/generated-documents/send-multiple', adminAuthMiddleware, uploadDoc
       const fileList = additionalFiles.map(f => `• ${escapeMailHtml(f.originalname)}`).join('<br>');
       const totalCount = documents.length + additionalFiles.length;
 
-      const htmlContent = `<!DOCTYPE html>
-<html><head><meta charset="UTF-8"></head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
-  <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background: #0066cc; color: white; padding: 20px; text-align: center;">
-      <h2>Documentos Disponíveis</h2>
-    </div>
-    <div style="padding: 20px; background: #f9f9f9;">
-      <p>Olá <strong>${escapeMailHtml(recipientName)}</strong>,</p>
-      ${message ? `<p>${escapeMailHtml(message)}</p>` : ''}
-      <p>Você recebeu <strong>${totalCount} documento(s)</strong> do protocolo <strong>${escapeMailHtml(protocolNumber)}</strong>:</p>
-      ${documents.length > 0 ? `<p><strong>Documentos Gerados:</strong></p><p style="margin-left: 20px;">${docList}</p>` : ''}
-      ${additionalFiles.length > 0 ? `<p><strong>Arquivos Adicionais:</strong></p><p style="margin-left: 20px;">${fileList}</p>` : ''}
-      <p>Os documentos estão anexados a este email e também disponíveis na área "Meus Documentos".</p>
-      <br>
-      <p>Atenciosamente,<br>Equipe de Atendimento</p>
-    </div>
-  </div>
-</body></html>`;
+      const htmlContent = renderMailLayout({
+        title: totalCount > 1 ? 'Seus documentos estão disponíveis' : 'Seu documento está disponível',
+        preheader: `Documentos do protocolo ${protocolNumber}`,
+        senderName: await mailSenderName(),
+        bodyHtml:
+          mailParagraph(`Olá, <strong>${escapeMailHtml(recipientName)}</strong>!`) +
+          (message ? mailParagraph(escapeMailHtml(message)) : '') +
+          mailParagraph(`Você recebeu <strong>${totalCount} documento(s)</strong> do protocolo <strong>${escapeMailHtml(protocolNumber)}</strong>:`) +
+          mailInfoBox(
+            [
+              ['Documentos', documents.length > 0 ? docList : ''],
+              ['Outros arquivos', additionalFiles.length > 0 ? fileList : ''],
+            ],
+            { raw: true }
+          ) +
+          mailParagraph('Os arquivos vão <strong>anexados</strong> a este e-mail e também ficam em "Meus Documentos" no portal.'),
+      });
 
       // Fila do e-mail transacional (VeloMail). Os arquivos são lidos agora:
       // os enviados no formulário são temporários e podem sumir antes da entrega.
