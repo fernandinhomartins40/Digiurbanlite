@@ -49,7 +49,7 @@ Um rosto só entra numa busca se houver consentimento ativo para aquela finalida
 
 1. O navegador só **guia** a captura: centraliza o rosto e pede o giro.
 2. O **servidor** sorteia um lado (esquerda ou direita) e recebe 3 fotos: de frente, virando para o lado sorteado e de frente de novo.
-3. O motor de reconhecimento (UniFace, rodando no servidor da plataforma, sem envio a terceiros) mede e confere quatro pontos:
+3. O motor de reconhecimento (biblioteca UniFace, rodando no servidor da plataforma, sem envio a terceiros) mede e confere quatro pontos:
    - **rosto:** se há exatamente um;
    - **pose:** se o giro foi para o lado pedido;
    - **mesma pessoa:** se é a mesma pessoa nas três fotos;
@@ -106,12 +106,27 @@ Os prazos são configuráveis em Super-admin › Privacidade e a limpeza é auto
 | Vazamento de banco ou disco | Fotos cifradas, assinatura sem fotos nas telas, separação por município |
 | Uso para outra finalidade | Consentimento por finalidade e busca restrita a quem consentiu |
 
-## 10. Licença do modelo de reconhecimento
+## 10. Licenças dos modelos
 
-O código do UniFace é livre (MIT), mas os **pesos** dos modelos de reconhecimento foram treinados em bases de fotos de uso **não comercial** (InsightFace, WebFace, MS1M).
+Desde 05/10/2026, todo o caminho padrão do motor usa modelos com licença que **permite uso comercial**:
 
-- Para uso comercial em produção, a plataforma deve obter **licença comercial** dos pesos (por exemplo, do InsightFace) ou trocar por um modelo com licença comercial.
-- A troca é feita em Super-admin › Privacidade › Biometria facial. As biometrias são recalculadas a partir das fotos de cadastro, sem pedir nada aos cidadãos.
+| Etapa | Modelo | Licença |
+|---|---|---|
+| Achar o rosto | BlazeFace (Google/MediaPipe) | Apache 2.0 |
+| Pontos do rosto (alinhamento e giro) | FaceMesh (Google/MediaPipe) | Apache 2.0 |
+| Assinatura do rosto | AuraFace v1 (fal.ai), treinado com dados de uso comercial | Apache 2.0 |
+| Anti-fraude (foto ou tela) | MiniFASNet (Minivision) | Apache 2.0 |
+| Giro do rosto e qualidade da foto | Calculados pela geometria e pela imagem | Sem modelo |
+| Biblioteca | UniFace | MIT |
+
+Saíram três modelos treinados em bases de pesquisa:
+- o detector RetinaFace (base WIDER FACE);
+- o medidor de pose (base 300W-LP);
+- a nota de qualidade eDifFIQA (base VGGFace2).
+
+**Opções de teste:** os modelos ArcFace e MobileFace continuam no painel, marcados como "uso NÃO comercial". Só devem ser usados com licença comercial do InsightFace.
+
+**Cuidado:** o autor do AuraFace avisa que o desempenho pode variar conforme a etnia. Avalie com dados locais (item 9).
 
 ## 11. Aprovação
 

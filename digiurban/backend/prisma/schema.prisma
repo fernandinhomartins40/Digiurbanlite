@@ -11377,7 +11377,7 @@ model FaceAccessLog {
 /// Motor facial (plataforma): modelo e limites de decisão, alterados no painel
 model FaceEngineSettings {
   id                  String   @id @default("singleton")
-  recognitionModel    String   @default("arcface_mnet")
+  recognitionModel    String   @default("auraface")
   matchThreshold      Float    @default(0.5) // similaridade para reconhecer sem revisão
   reviewThreshold     Float    @default(0.4) // entre este e o anterior: revisão humana
   minQuality          Float    @default(0.55) // qualidade mínima da foto de cadastro

@@ -2,8 +2,8 @@
  * Rotinas automáticas da biometria (sem ação de ninguém):
  *
  * 1. Reprocessamento: cadastros aprovados que ainda não têm assinatura no
- *    modelo escolhido no painel (ex.: os feitos com o face-api.js antigo, ou
- *    depois de trocar o modelo) são recalculados a partir da foto do cadastro.
+ *    modelo escolhido no painel (ex.: os feitos com o face-api.js antigo, os
+ *    do ArcFace antes da troca para o AuraFace, ou depois de trocar o modelo) são recalculados a partir da foto do cadastro.
  *    O cidadão não precisa refazer nada. Sem foto utilizável: fica marcado para
  *    novo cadastro.
  * 2. Prazo de guarda (LGPD): apaga fotos de quem a câmera não reconheceu, fotos

@@ -380,7 +380,7 @@ model FaceAccessLog {
 
 model FaceEngineSettings {
   id                  String   @id @default("singleton")
-  recognitionModel    String   @default("arcface_mnet")
+  recognitionModel    String   @default("auraface")
   matchThreshold      Float    @default(0.5)
   reviewThreshold     Float    @default(0.4)
   minQuality          Float    @default(0.55)

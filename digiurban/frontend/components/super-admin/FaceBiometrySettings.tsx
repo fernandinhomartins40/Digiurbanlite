@@ -48,7 +48,7 @@ export function FaceBiometrySettings({ isAdmin, retention, onSaved }: { isAdmin:
   const { toast } = useToast();
   const [models, setModels] = useState<FaceModel[]>([]);
   const [engine, setEngine] = useState<Record<keyof FaceSettings, string>>({
-    recognitionModel: 'arcface_mnet',
+    recognitionModel: 'auraface',
     matchThreshold: '0.5',
     reviewThreshold: '0.4',
     minQuality: '0.55',

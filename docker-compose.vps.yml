@@ -268,7 +268,7 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
-    # Medido em teste: ~0,3 s por foto com 2 threads; modelos leves ~90 MB.
+    # Medido em teste (AuraFace, 2026-10-05): ~565 MB de RAM, ~0,5 s por foto com 2 threads.
     mem_limit: 900m
     cpus: 1.5
     pids_limit: 128

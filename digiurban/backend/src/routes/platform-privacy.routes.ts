@@ -76,27 +76,33 @@ router.post('/retention/run', ADMIN, async (req, res) => {
 /** Modelos de reconhecimento disponíveis no motor e a situação da licença dos PESOS */
 export const FACE_MODELS = [
   {
+    id: 'auraface',
+    label: 'AuraFace (padrão — uso comercial liberado)',
+    description: 'Mesma família do ArcFace, treinado com fotos de uso comercial. ~0,13 s por rosto.',
+    license: 'Apache 2.0: uso comercial liberado, sem custo (fal.ai). Todo o caminho padrão do motor é liberado para uso comercial.',
+  },
+  {
     id: 'arcface_mnet',
-    label: 'ArcFace leve (padrão)',
-    description: 'Rápido e leve para a VPS. Boa precisão.',
+    label: 'ArcFace leve (uso NÃO comercial)',
+    description: 'O mais rápido. Só para testes.',
     license: 'Pesos do InsightFace: uso NÃO comercial. Exige licença comercial do InsightFace para produção paga.',
   },
   {
     id: 'arcface_resnet',
-    label: 'ArcFace completo',
+    label: 'ArcFace completo (uso NÃO comercial)',
     description: 'Mais preciso, ~15x mais lento e baixa 174 MB na primeira vez.',
     license: 'Pesos do InsightFace: uso NÃO comercial. Exige licença comercial do InsightFace para produção paga.',
   },
   {
     id: 'mobileface_v3l',
-    label: 'MobileFace',
+    label: 'MobileFace (uso NÃO comercial)',
     description: 'Leve, precisão um pouco menor.',
     license: 'Treinado em base de pesquisa (MS1MV2). Verifique a licença antes do uso comercial.',
   },
 ] as const;
 
 const faceSettingsSchema = z.object({
-  recognitionModel: z.enum(['arcface_mnet', 'arcface_resnet', 'mobileface_v3l']).optional(),
+  recognitionModel: z.enum(['auraface', 'arcface_mnet', 'arcface_resnet', 'mobileface_v3l']).optional(),
   matchThreshold: z.number().min(0.3, 'Mínimo de 0,30').max(0.9, 'Máximo de 0,90').optional(),
   reviewThreshold: z.number().min(0.2, 'Mínimo de 0,20').max(0.85, 'Máximo de 0,85').optional(),
   minQuality: z.number().min(0.3).max(0.95).optional(),

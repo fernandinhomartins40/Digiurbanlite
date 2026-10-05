@@ -347,7 +347,7 @@ npx ts-node prisma/seeds/seed-system-certificate.ts
 - **Consentimento por finalidade** (`FaceConsent`: IDENTITY_VERIFICATION | SCHOOL_SECURITY; menor = responsável, art. 14); busca 1:N só entre quem consentiu; revogar tudo apaga a biometria. Registro de acesso em `FaceAccessLog`
 - Vetores NUNCA saem do face-server; fotos cifradas (AES-GCM, chave do JWT_SECRET) e só via `/api/admin/face-platform/media` (coordenador+). Sem porta pública
 - Modelo/limites no painel (`FaceEngineSettings`, Super-admin › Privacidade); trocar modelo = reprocessamento automático pelas fotos (job do face-server). Prazos de foto/evento em `PrivacyRetentionSettings.face*` (rotina diária sempre ligada)
-- ⚠️ Pesos de reconhecimento do UniFace = licença NÃO comercial (InsightFace/WebFace). Ver `docs/LGPD-RIPD-BIOMETRIA-FACIAL.md`
+- Caminho padrão 100% de uso comercial (2026-10-05): BlazeFace + FaceMesh (Google) + **AuraFace** (padrão, Apache 2.0, SHA-256 fixado) + MiniFASNet; giro e qualidade calculados sem modelo. ArcFace/MobileFace do UniFace = uso NÃO comercial (só teste). NÃO voltar RetinaFace/HeadPose/eDifFIQA (treinados em bases de pesquisa). Ver `docs/LGPD-RIPD-BIOMETRIA-FACIAL.md`
 - Smoke ponta a ponta: `backend/scripts/smoke-biometria.ts` (requer banco + motor + face-server + fotos de teste)
 - `PrismaPromise` é preguiçosa: em `runAsTenant(id, () => prisma.x.create())` a consulta roda FORA do contexto — usar `async () =>`
 

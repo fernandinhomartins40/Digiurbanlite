@@ -14,7 +14,7 @@ let cache: { at: number; value: EngineSettings } | null = null;
 
 export async function getEngineSettings(): Promise<EngineSettings> {
   if (cache && Date.now() - cache.at < 60000) return cache.value;
-  let value: EngineSettings = { recognitionModel: 'arcface_mnet', ...DEFAULT_SETTINGS };
+  let value: EngineSettings = { recognitionModel: 'auraface', ...DEFAULT_SETTINGS };
   try {
     const row = await prisma.faceEngineSettings.findUnique({ where: { id: 'singleton' } });
     if (row) {

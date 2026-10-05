@@ -207,7 +207,7 @@ async function main() {
     });
     const reprocess = await axios.post(`${base}/api/face-platform/maintenance/reprocess`, {}, { headers: { Authorization: `Bearer ${process.env.FACE_PLATFORM_SERVICE_TOKEN}` } });
     const after = await runAsTenant(tenantA.id, async () => prisma.faceEmbedding.findMany({ where: { identity: { citizenId: outro.id } }, select: { modelName: true } }));
-    check('cadastro antigo recalculado no modelo novo pela foto', reprocess.data.converted >= 1 && after.length === 1 && after[0].modelName === 'arcface_mnet', { reprocess: reprocess.data, after });
+    check('cadastro antigo recalculado no modelo novo pela foto', reprocess.data.converted >= 1 && after.length === 1 && after[0].modelName === 'auraface', { reprocess: reprocess.data, after });
 
     console.log('\n6. Prazo de guarda e exclusão');
     await runAsTenant(tenantA.id, async () =>
