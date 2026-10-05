@@ -16,7 +16,13 @@ import { logLoginSuccess, logLoginFailed, AUDIT_EVENTS, logAuditEvent } from '..
 import { sanitizeForLog } from '../utils/logger';
 import { transactionalEmailService } from '../lib/email/TransactionalEmailService';
 import messageNotificationService from '../lib/messages/MessageNotificationService';
-import { getSystemEmail } from '../utils/email-domain.utils';
+import { getPlatformMail, getTenantMailSettings } from '../services/mail/mail-settings.service';
+
+/** E-mail de contato mostrado ao cidadão: o de respostas do município, senão o da equipe */
+async function contactEmailFor(tenantId: string | null) {
+  const [tenant, platform] = await Promise.all([getTenantMailSettings(tenantId), getPlatformMail()]);
+  return tenant?.replyTo || platform.settings.teamEmail || 'suporte@digiurban.com.br';
+}
 import { syncCitizenPersonIdentity } from '../services/person-identity.service';
 import { isCpfLike, normalizeCpf, normalizeEmail, normalizeNullableString } from '../utils/identity';
 import { citizenAuthMiddleware } from '../middleware/citizen-auth';
@@ -252,14 +258,14 @@ router.post('/register', registerRateLimiter, asyncHandler(async (req: Request, 
       const portalUrl = await tenantPortalUrl(citizen.tenantId || null);
 
       // Fila do e-mail transacional (não bloqueia a resposta nem falha o cadastro)
-      getSystemEmail('suporte').then(supportEmail =>
+      contactEmailFor(citizen.tenantId || null).then(supportEmail =>
         transactionalEmailService.sendWelcomeEmail(
           '',
           citizen.email,
           citizen.name,
           tenantOfCitizen?.nome || 'DigiUrban',
           portalUrl,
-          process.env.SUPPORT_EMAIL || supportEmail
+          supportEmail
         )
       ).catch(error => {
         console.error('Erro ao enviar email de boas-vindas:', error);

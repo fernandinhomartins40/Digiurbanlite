@@ -145,7 +145,12 @@ export class TransactionalEmailService {
     try {
       const { templateName, to, variables, from, priority = 3, scheduledFor, tags = ['transactional'], attachments = [] } = options;
 
-      const template = await prisma.emailTemplate.findFirst({ where: { name: templateName } });
+      let template = await prisma.emailTemplate.findFirst({ where: { name: templateName } });
+      if (!template) {
+        // banco sem os modelos padrão (instalação nova): cria e tenta de novo
+        await this.createDefaultTemplates('');
+        template = await prisma.emailTemplate.findFirst({ where: { name: templateName } });
+      }
       if (!template) {
         throw new Error(`Email template '${templateName}' not found`);
       }

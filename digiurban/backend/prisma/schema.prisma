@@ -11398,6 +11398,8 @@ model TransactionalMailSettings {
   fromEmail String   @default("nao-responda@notificacoes.digiurban.com.br")
   fromName  String   @default("DigiUrban")
   apiBaseUrl String  @default("https://www.velomail.com.br/api")
+  /// caixa da equipe DigiUrban que recebe avisos de leads/contato da landing
+  teamEmail String?
   updatedBy String?
   updatedAt DateTime @updatedAt
 

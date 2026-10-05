@@ -17,7 +17,6 @@
 import { PrismaClient } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { migrateDocumentsToTable } from './migrations-data/migrate-documents-to-table';
-import { seedEmailServer } from './seeds/email-server.seed';
 import { seedServiceWorkflows } from './seeds/service-workflows.seed';
 
 const prisma = new PrismaClient();
@@ -488,22 +487,8 @@ async function main() {
       // Não falhar o seed se migração der erro
     }
 
-    // ========================================================================
-    // 6. PLANOS DE EMAIL (Configuráveis) - EXECUTAR PRIMEIRO!
-    // ========================================================================
-    console.log('\n6️⃣  Planos de Email (Configuráveis)');
-    console.log('   ─────────────────────────────\n');
-
-    const { seedEmailPlans } = await import('./seeds/email-plans.seed');
-    await seedEmailPlans();
-
-    // ========================================================================
-    // 7. SERVIDOR DE EMAIL (Precisa dos planos já criados)
-    // ========================================================================
-    console.log('\n7️⃣  Servidor de Email');
-    console.log('   ─────────────────────────────\n');
-
-    await seedEmailServer();
+    // 6/7. Planos e servidor de e-mail próprio: REMOVIDOS (2026-10-05). O DigiUrban
+    // só envia e-mail transacional pelo VeloMail, configurado em Super-admin › E-mail.
 
     // ========================================================================
     // 8. CATEGORIAS DE CIDADÃOS

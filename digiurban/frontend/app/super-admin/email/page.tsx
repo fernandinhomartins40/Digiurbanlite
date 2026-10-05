@@ -17,7 +17,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useSuperAdminAuth } from '@/contexts/SuperAdminAuthContext';
 
 interface Status {
-  settings: { enabled: boolean; fromEmail: string; fromName: string; apiBaseUrl: string; updatedAt: string };
+  settings: { enabled: boolean; fromEmail: string; fromName: string; apiBaseUrl: string; teamEmail: string | null; updatedAt: string };
   hasApiKey: boolean;
   apiKeyPreview: string | null;
   hasWebhookSecret: boolean;
@@ -48,7 +48,7 @@ export default function TransactionalMailPage() {
   const { toast } = useToast();
   const [status, setStatus] = useState<Status | null>(null);
   const [loadError, setLoadError] = useState('');
-  const [form, setForm] = useState({ enabled: false, fromEmail: '', fromName: '' });
+  const [form, setForm] = useState({ enabled: false, fromEmail: '', fromName: '', teamEmail: '' });
   const [apiKey, setApiKey] = useState('');
   const [webhookSecret, setWebhookSecret] = useState('');
   const [newSecret, setNewSecret] = useState('');
@@ -57,7 +57,7 @@ export default function TransactionalMailPage() {
 
   const apply = (data: Status) => {
     setStatus(data);
-    setForm({ enabled: data.settings.enabled, fromEmail: data.settings.fromEmail, fromName: data.settings.fromName });
+    setForm({ enabled: data.settings.enabled, fromEmail: data.settings.fromEmail, fromName: data.settings.fromName, teamEmail: data.settings.teamEmail || '' });
   };
 
   const load = useCallback(async () => {
@@ -224,6 +224,18 @@ export default function TransactionalMailPage() {
               <Input value={form.fromEmail} disabled={!isAdmin} onChange={(e) => setForm((f) => ({ ...f, fromEmail: e.target.value }))} />
               <p className="text-xs text-muted-foreground">Precisa ser do domínio verificado no VeloMail.</p>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label>E-mail da equipe DigiUrban</Label>
+            <Input
+              type="email"
+              placeholder="contato@digiurban.com.br"
+              value={form.teamEmail}
+              disabled={!isAdmin}
+              onChange={(e) => setForm((f) => ({ ...f, teamEmail: e.target.value }))}
+            />
+            <p className="text-xs text-muted-foreground">Recebe os pedidos de demonstração e as mensagens de contato do site.</p>
           </div>
 
           <div className="space-y-1.5">

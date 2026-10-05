@@ -8,6 +8,8 @@ import {
   DEFAULT_VALUES
         } from '../../types/lead';
 import { getSystemEmail, getPrimaryEmailDomain } from '../../utils/email-domain.utils';
+import { sendMail } from '../../services/mail/mailer';
+import { getPlatformMail } from '../../services/mail/mail-settings.service';
 
 export class LeadNotificationService {
   private emailService: TransactionalEmailService;
@@ -17,110 +19,60 @@ export class LeadNotificationService {
   }
 
   /**
-   * Envia notificação para equipe de vendas quando um lead solicita demo
+   * Avisa a equipe DigiUrban de um pedido de demonstração da landing.
+   * Vai para o "E-mail da equipe" do painel (Super-admin › E-mail).
    */
   async notifyDemoRequest(lead: LeadData): Promise<void> {
-    try {
-      const salesTeamEmail = process.env.SALES_TEAM_EMAIL || await getSystemEmail('vendas');
-      const noreplyEmail = await getSystemEmail('noreply');
-      // DIA 3: Removed systemTenant, using default emailServerId
-      const defaultEmailServerId = process.env.DEFAULT_EMAIL_SERVER_ID || 'system';
-
-      await this.emailService.sendEmail({
-        emailServerId: defaultEmailServerId, // DIA 3: Changed from tenantId
-        templateName: 'lead-demo-notification',
-        to: salesTeamEmail,
-        variables: {
-          leadName: lead.name,
-          leadEmail: lead.email,
-          leadPhone: safeStringWithDefault(lead.phone, DEFAULT_VALUES.PHONE),
-          company: lead.company,
-          position: safeStringWithDefault(lead.position, DEFAULT_VALUES.POSITION),
-          message: safeStringWithDefault(lead.message, DEFAULT_VALUES.MESSAGE),
-          createdAt: lead.createdAt.toLocaleString('pt-BR', {
-            timeZone: 'America/Sao_Paulo'
-        }),
-          leadId: lead.id
-        },
-        from: {
-          name: 'DigiUrban Sistema',
-          email: noreplyEmail
-        },
-        priority: 1, // Alta prioridade
-        tags: ['lead', 'demo', 'sales']
-        });
-
-      // Log da notificação
-      await prisma.email.create({
-        data: {
-          messageId: `lead-${lead.id}-${Date.now()}`,
-          fromEmail: noreplyEmail,
-          toEmail: salesTeamEmail,
-          subject: `Novo Lead - Solicitação de Demo: ${lead.company}`,
-          htmlContent: `<p>Novo lead recebido de ${lead.company}</p>`,
-          headers: {
-            leadId: lead.id,
-            source: lead.source,
-            company: lead.company
-        }
-        }
-        });
-    } catch (error) {
-      console.error('Erro ao enviar notificação de demo:', error);
-      throw new Error('Falha ao notificar equipe de vendas');
-    }
+    await this.notifyTeam(lead, 'demo');
   }
 
-  /**
-   * Envia notificação para equipe de suporte quando um lead envia mensagem de contato
-   */
+  /** Avisa a equipe DigiUrban de uma mensagem do formulário de contato */
   async notifyContactForm(lead: LeadData): Promise<void> {
-    try {
-      const supportTeamEmail = process.env.SUPPORT_TEAM_EMAIL || await getSystemEmail('suporte');
-      const noreplyEmail = await getSystemEmail('noreply');
-      // DIA 3: Removed systemTenant, using default emailServerId
-      const defaultEmailServerId = process.env.DEFAULT_EMAIL_SERVER_ID || 'system';
+    await this.notifyTeam(lead, 'contact');
+  }
 
-      await this.emailService.sendEmail({
-        emailServerId: defaultEmailServerId, // DIA 3: Changed from tenantId
-        templateName: 'lead-contact-notification',
-        to: supportTeamEmail,
-        variables: {
-          leadName: lead.name,
-          leadEmail: lead.email,
-          leadPhone: safeStringWithDefault(lead.phone, DEFAULT_VALUES.PHONE),
-          company: safeStringWithDefault(lead.company, DEFAULT_VALUES.COMPANY),
-          message: safeStringWithDefault(lead.message, ''),
-          createdAt: lead.createdAt.toLocaleString('pt-BR', {
-            timeZone: 'America/Sao_Paulo'
-        }),
-          leadId: lead.id
-        },
-        from: {
-          name: 'DigiUrban Sistema',
-          email: noreplyEmail
-        },
-        priority: 2,
-        tags: ['lead', 'contact', 'support']
-        });
-
-      await prisma.email.create({
-        data: {
-          messageId: `contact-${lead.id}-${Date.now()}`,
-          fromEmail: noreplyEmail,
-          toEmail: supportTeamEmail,
-          subject: `Nova Mensagem de Contato: ${lead.name}`,
-          htmlContent: `<p>Nova mensagem de contato de ${lead.name}</p>`,
-          headers: {
-            leadId: lead.id,
-            source: lead.source
-        }
-        }
-        });
-    } catch (error) {
-      console.error('Erro ao enviar notificação de contato:', error);
-      throw new Error('Falha ao notificar equipe de suporte');
+  private async notifyTeam(lead: LeadData, kind: 'demo' | 'contact'): Promise<void> {
+    const { settings } = await getPlatformMail();
+    const to = settings.teamEmail || process.env.SALES_TEAM_EMAIL || null;
+    if (!to) {
+      console.warn('[LEADS] "E-mail da equipe" não configurado no painel (Super-admin › E-mail) — aviso não enviado');
+      return;
     }
+    const esc = (value: unknown) =>
+      String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    const title = kind === 'demo' ? 'Pedido de demonstração' : 'Mensagem de contato';
+    const rows: Array<[string, unknown]> = [
+      ['Nome', lead.name],
+      ['E-mail', lead.email],
+      ['Telefone', safeStringWithDefault(lead.phone, DEFAULT_VALUES.PHONE)],
+      ['Prefeitura / empresa', safeStringWithDefault(lead.company, DEFAULT_VALUES.COMPANY)],
+      ['Cargo', safeStringWithDefault(lead.position, DEFAULT_VALUES.POSITION)],
+      ['Recebido em', lead.createdAt.toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })],
+    ];
+    const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"></head>
+<body style="font-family:Arial,Helvetica,sans-serif;color:#111827;background:#f3f4f6;padding:24px">
+  <div style="max-width:560px;margin:0 auto;background:#fff;border-radius:12px;padding:28px">
+    <h2 style="margin:0 0 16px">${title}</h2>
+    <table style="width:100%;border-collapse:collapse;font-size:14px">
+      ${rows.map(([label, value]) => `<tr><td style="padding:6px 8px;color:#6b7280;width:40%">${label}</td><td style="padding:6px 8px">${esc(value)}</td></tr>`).join('')}
+    </table>
+    ${lead.message ? `<p style="margin:20px 0 6px;color:#6b7280;font-size:14px">Mensagem</p><p style="margin:0;font-size:14px;white-space:pre-wrap">${esc(lead.message)}</p>` : ''}
+    <p style="margin:24px 0 0;font-size:12px;color:#9ca3af">Responda direto a este e-mail para falar com ${esc(lead.name)}.</p>
+  </div>
+</body></html>`;
+
+    const result = await sendMail({
+      to,
+      tenantId: null,
+      subject: `${title}: ${lead.company || lead.name}`,
+      html,
+      replyTo: lead.email,
+      fromName: 'DigiUrban — Site',
+      priority: 'normal',
+      tags: ['lead', kind],
+      kind: `lead:${kind}`,
+    });
+    if (!result.queued) console.warn('[LEADS] aviso não enfileirado:', result.reason);
   }
 
   /**

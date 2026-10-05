@@ -133,7 +133,7 @@ async function platformStatus() {
     ),
   ]);
   return {
-    settings: { enabled: settings.enabled, fromEmail: settings.fromEmail, fromName: settings.fromName, apiBaseUrl: settings.apiBaseUrl, updatedAt: settings.updatedAt },
+    settings: { enabled: settings.enabled, fromEmail: settings.fromEmail, fromName: settings.fromName, apiBaseUrl: settings.apiBaseUrl, teamEmail: settings.teamEmail, updatedAt: settings.updatedAt },
     hasApiKey: Boolean(apiKey),
     apiKeyPreview: apiKey ? `${apiKey.slice(0, 6)}…${apiKey.slice(-4)}` : null,
     hasWebhookSecret: Boolean(webhookSecret),
@@ -161,12 +161,14 @@ platformMailRouter.put('/', PLATFORM_ADMIN, async (req, res) => {
         fromEmail: z.string().email('Remetente inválido').max(254).optional(),
         fromName: z.string().min(2).max(80).optional(),
         apiBaseUrl: z.string().url().max(200).optional(),
+        teamEmail: z.union([z.string().email('E-mail da equipe inválido').max(254), z.literal(''), z.null()]).optional(),
         apiKey: z.string().regex(/^re_[A-Za-z0-9_-]{10,}$/, 'A chave de envio do VeloMail começa com re_').optional(),
         webhookSecret: z.string().min(16, 'Segredo do webhook muito curto').max(200).optional(),
       })
       .parse(req.body);
 
-    const { apiKey, webhookSecret, ...settings } = body;
+    const { apiKey, webhookSecret, teamEmail, ...rest } = body;
+    const settings = { ...rest, ...(teamEmail !== undefined ? { teamEmail: teamEmail || null } : {}) };
     if (apiKey) await savePlatformSecret(VELOMAIL_API_KEY, apiKey);
     if (webhookSecret) await savePlatformSecret(VELOMAIL_WEBHOOK_SECRET, webhookSecret);
     if (Object.keys(settings).length) await updatePlatformMailSettings(settings, (req as PlatformAuthenticatedRequest).platformUser?.id);

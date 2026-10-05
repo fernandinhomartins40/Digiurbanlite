@@ -62,7 +62,7 @@ export async function savePlatformSecret(key: string, plain: string | null) {
 }
 
 export async function updatePlatformMailSettings(
-  data: Partial<{ enabled: boolean; fromEmail: string; fromName: string; apiBaseUrl: string }>,
+  data: Partial<{ enabled: boolean; fromEmail: string; fromName: string; apiBaseUrl: string; teamEmail: string | null }>,
   updatedBy?: string | null
 ) {
   const settings = await runAsPlatform(async () =>

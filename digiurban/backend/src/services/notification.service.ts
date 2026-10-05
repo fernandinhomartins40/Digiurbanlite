@@ -72,7 +72,14 @@ export class NotificationService {
       }
 
       // 3. Determinar canais
-      const channels = payload.channels || this.getEnabledChannels(preferences, payload.type);
+      // canais pedidos por quem disparou ainda respeitam o "não quero e-mail/SMS" da pessoa
+      const channels = payload.channels
+        ? payload.channels.filter(
+            (channel) =>
+              (channel !== 'email' || preferences?.emailEnabled !== false) &&
+              (channel !== 'sms' || preferences?.smsEnabled !== false)
+          )
+        : this.getEnabledChannels(preferences, payload.type);
 
       if (channels.length === 0) {
         console.log(`[Notification] No channels enabled for ${payload.type}`);
